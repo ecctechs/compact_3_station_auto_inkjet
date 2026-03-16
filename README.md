@@ -1,0 +1,1 @@
+# compact_3_station_auto_inkjet
