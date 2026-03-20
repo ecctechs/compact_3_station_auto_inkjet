@@ -1,0 +1,16 @@
+C:\Users\theer\Documents\GitHub\Compact_demo\Compact_demo\bin\Debug\Compact_demo.exe.config
+C:\Users\theer\Documents\GitHub\Compact_demo\Compact_demo\bin\Debug\Compact_demo.exe
+C:\Users\theer\Documents\GitHub\Compact_demo\Compact_demo\bin\Debug\Compact_demo.pdb
+C:\Users\theer\Documents\GitHub\Compact_demo\Compact_demo\obj\Debug\Compact_demo.csproj.AssemblyReference.cache
+C:\Users\theer\Documents\GitHub\Compact_demo\Compact_demo\obj\Debug\Compact_demo.Properties.Resources.resources
+C:\Users\theer\Documents\GitHub\Compact_demo\Compact_demo\obj\Debug\Compact_demo.csproj.GenerateResource.cache
+C:\Users\theer\Documents\GitHub\Compact_demo\Compact_demo\obj\Debug\Compact_demo.csproj.CoreCompileInputs.cache
+C:\Users\theer\Documents\GitHub\Compact_demo\Compact_demo\obj\Debug\Compact_demo.exe
+C:\Users\theer\Documents\GitHub\Compact_demo\Compact_demo\obj\Debug\Compact_demo.pdb
+C:\Users\theer\Documents\GitHub\Compact_demo\Compact_demo\bin\Debug\System.Data.SQLite.dll
+C:\Users\theer\Documents\GitHub\Compact_demo\Compact_demo\bin\Debug\System.Data.SQLite.xml
+C:\Users\theer\Documents\GitHub\Compact_demo\Compact_demo\obj\Debug\Compact_demo.exe.config
+C:\Users\theer\Documents\GitHub\Compact_demo\Compact_demo\obj\Debug\Compact_.ED24FF0A.Up2Date
+C:\Users\theer\Documents\GitHub\Compact_demo\Compact_demo\obj\Debug\BotClickApp.FormPatternLookup.resources
+C:\Users\theer\Documents\GitHub\Compact_demo\Compact_demo\obj\Debug\BotClickApp.PatternEditorControl.resources
+C:\Users\theer\Documents\GitHub\Compact_demo\Compact_demo\obj\Debug\BotClickApp.FormEditPattern.resources

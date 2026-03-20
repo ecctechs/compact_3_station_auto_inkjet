@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<ArrayOfPattern xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Pattern>
+    <Name>CCCC</Name>
+    <Description>test</Description>
+    <Rules />
+    <TestBarcode>C240801-027</TestBarcode>
+    <TestBlockText>CCCC-01 CPI291</TestBlockText>
+    <TestPreview>C240801-027-01 CPI291</TestPreview>
+  </Pattern>
+  <Pattern>
+    <Name>DDDD</Name>
+    <Description />
+    <Rules>
+      <Rule>
+        <SourceStart>1</SourceStart>
+        <SourceEnd>1</SourceEnd>
+        <TransformRule>DELETE</TransformRule>
+        <Parameter />
+        <IsActive>true</IsActive>
+      </Rule>
+      <Rule>
+        <SourceStart>2</SourceStart>
+        <SourceEnd>3</SourceEnd>
+        <TransformRule>YEAR_AZ</TransformRule>
+        <Parameter>15</Parameter>
+        <IsActive>true</IsActive>
+      </Rule>
+      <Rule>
+        <SourceStart>4</SourceStart>
+        <SourceEnd>5</SourceEnd>
+        <TransformRule>AZ_UPPER</TransformRule>
+        <Parameter />
+        <IsActive>true</IsActive>
+      </Rule>
+      <Rule>
+        <SourceStart>6</SourceStart>
+        <SourceEnd>7</SourceEnd>
+        <TransformRule>COPY</TransformRule>
+        <Parameter />
+        <IsActive>true</IsActive>
+      </Rule>
+      <Rule>
+        <SourceStart>8</SourceStart>
+        <SourceEnd>8</SourceEnd>
+        <TransformRule>FIX_TEXT</TransformRule>
+        <Parameter>-</Parameter>
+        <IsActive>true</IsActive>
+      </Rule>
+      <Rule>
+        <SourceStart>9</SourceStart>
+        <SourceEnd>11</SourceEnd>
+        <TransformRule>TAKE_RIGHT</TransformRule>
+        <Parameter>2</Parameter>
+        <IsActive>true</IsActive>
+      </Rule>
+    </Rules>
+    <TestBarcode>DND0665M2</TestBarcode>
+    <TestBlockText>DDDD-012</TestBlockText>
+    <TestPreview>F65--012</TestPreview>
+  </Pattern>
+</ArrayOfPattern>
