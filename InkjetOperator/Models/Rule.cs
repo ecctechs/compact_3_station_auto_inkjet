@@ -12,12 +12,6 @@ namespace InkjetOperator.Models
 
         public Rule() { Parameter = string.Empty; IsActive = true; }
 
-        /// <summary>ดึงส่วนของ input ที่ rule นี้จะ transform (expose สำหรับ preview)</summary>
-        public string ExtractSource(string input)
-        {
-            return Extract(input ?? string.Empty);
-        }
-
         public string Apply(string input)
         {
             if (!IsActive) return string.Empty;

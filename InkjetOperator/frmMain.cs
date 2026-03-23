@@ -470,14 +470,22 @@ public partial class frmMain : Form
 
     private void button2_Click(object sender, EventArgs e)
     {
-        using (var dlg = new FormEditPattern())
+        string xmlPath = Path.Combine(Application.StartupPath, "patterns.xml");
+
+        // แสดง path ไฟล์
+        Log($"XML path: {xmlPath}");
+        Log($"File exists: {File.Exists(xmlPath)}");
+
+        // แสดง patterns ที่โหลดอยู่ใน memory
+        Log($"Patterns count: {PatternStore.Patterns.Count}");
+        foreach (var p in PatternStore.Patterns)
         {
-            dlg.ShowDialog(this);
+            Log($"  [{p.Name}] {p.Description} — {p.Rules.Count} rules");
         }
 
-        // reload patterns หลังปิด editor
-        string xmlPath = Path.Combine(Application.StartupPath, "patterns.xml");
-        PatternStore.Load(xmlPath);
-        Log($"Patterns reloaded: {PatternStore.Patterns.Count} patterns");
+        // ทดสอบ PatternEngine
+        string barcode = "C200521-001";
+        string result = PatternEngine.Process(barcode, "CCCC-CPI");
+        Log($"Test: '{barcode}' + 'DDDD' → '{result}'");
     }
 }
