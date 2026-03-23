@@ -470,22 +470,25 @@ public partial class frmMain : Form
 
     private void button2_Click(object sender, EventArgs e)
     {
-        string xmlPath = Path.Combine(Application.StartupPath, "patterns.xml");
-
-        // แสดง path ไฟล์
-        Log($"XML path: {xmlPath}");
-        Log($"File exists: {File.Exists(xmlPath)}");
-
-        // แสดง patterns ที่โหลดอยู่ใน memory
-        Log($"Patterns count: {PatternStore.Patterns.Count}");
-        foreach (var p in PatternStore.Patterns)
+        // ใช้ Invoke เพื่อความปลอดภัยว่าทำงานบน UI Thread (STA)
+        this.Invoke(new Action(() =>
         {
-            Log($"  [{p.Name}] {p.Description} — {p.Rules.Count} rules");
-        }
+            using (frmPatternEditor editor = new frmPatternEditor())
+            {
+                editor.StartPosition = FormStartPosition.CenterParent;
+                editor.ShowDialog();
+            }
+        }));
 
-        // ทดสอบ PatternEngine
-        string barcode = "C200521-001";
-        string result = PatternEngine.Process(barcode, "CCCC-CPI");
-        Log($"Test: '{barcode}' + 'DDDD' → '{result}'");
+        //string lot = "C240801-027";
+        //string blockText = "DDDD-01"; // ใน blockText มีคำว่า "CCCC" ซึ่งตรงกับชื่อ Pattern
+
+        //// เรียกใช้งาน Engine
+        //string result = PatternEngine.Process(lot, blockText);
+
+        //// แสดงผลลัพธ์
+        //Log(result);
+
+
     }
 }

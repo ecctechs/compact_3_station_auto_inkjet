@@ -5,9 +5,9 @@ namespace InkjetOperator;
 
 static class Program
 {
-    [STAThread]
     [DllImport("user32.dll")]
     private static extern bool SetProcessDPIAware();
+    [STAThread]
     static void Main()
     {
         SetProcessDPIAware();
