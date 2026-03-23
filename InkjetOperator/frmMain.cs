@@ -326,10 +326,10 @@ public partial class frmMain : Form
             }
 
             // Send conveyor speed + servo to PLC
-            if (!hasError && resolved.Pattern.ConveyorSpeed != null)
+            if (!hasError && resolved.Pattern.ConveyorSpeeds != null)
             {
-                var spd = resolved.Pattern.ConveyorSpeed;
-                await _plc.WriteSpeedAsync(spd.Speed1, spd.Speed2, spd.Speed3);
+                var spd = resolved.Pattern.ConveyorSpeeds;
+                await _plc.WriteSpeedAsync(spd.Speed1 ?? 0, spd.Speed2 ?? 0, spd.Speed3 ?? 0);
                 Log($"PLC speed: {spd.Speed1}/{spd.Speed2}/{spd.Speed3}");
             }
 
@@ -337,7 +337,7 @@ public partial class frmMain : Form
             {
                 foreach (var servo in resolved.Pattern.ServoConfigs)
                 {
-                    await _plc.WriteServoAsync(servo.Ordinal, servo.Position, servo.PostAct, servo.Delay, servo.Trigger);
+                    await _plc.WriteServoAsync(servo.Ordinal, servo.Position ?? 0, servo.PostAct ?? 0, servo.Delay ?? 0, servo.Trigger ?? 0);
                     Log($"PLC servo ordinal={servo.Ordinal}: pos={servo.Position}");
                 }
             }
@@ -448,5 +448,23 @@ public partial class frmMain : Form
 
         string line = $"[{DateTime.Now:HH:mm:ss}] {message}";
         txtLog.AppendText(line + Environment.NewLine);
+    }
+
+    private void button1_Click(object sender, EventArgs e)
+    {
+        var steps = new[]
+        {
+        new BotStep { Name = "Document",   X = 2325, Y = 59,  VerifyArea = new Rectangle(2100, 0, 400, 300) },
+        new BotStep { Name = "Open",       X = 2207, Y = 133, VerifyArea = new Rectangle(2100, 100, 400, 400) },
+        new BotStep { Name = "SelectFile", X = 1506, Y = 654, VerifyArea = new Rectangle(800, 400, 800, 600) },
+        new BotStep { Name = "OpenBtn",    X = 1652, Y = 946, VerifyArea = new Rectangle(1500, 800, 500, 300) },
+    };
+
+        BotClickHelper.RunAsync("uvinkjet", steps, result =>
+        {
+            if (this.IsHandleCreated)
+                this.Invoke((MethodInvoker)(() =>
+                    MessageBox.Show(result.Success ? "สำเร็จ!" : result.Error)));
+        });
     }
 }
