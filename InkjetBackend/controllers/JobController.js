@@ -27,7 +27,7 @@ class JobController {
    */
   static async create(req, res) {
     try {
-      const { barcode_raw, created_by } = req.body;
+      const { barcode_raw, created_by, order_no, customer_name, type, qty } = req.body;
       const { lotNumber, patternCode } = parseBarcode(barcode_raw);
 
       const pattern = await Pattern.findOne({
@@ -39,6 +39,10 @@ class JobController {
         pattern_id: pattern ? pattern.id : null,
         lot_number: lotNumber,
         created_by,
+        order_no,
+        customer_name,
+        type,
+        qty,
       });
 
       const data = job.toJSON();

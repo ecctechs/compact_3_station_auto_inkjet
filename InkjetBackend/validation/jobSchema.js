@@ -3,6 +3,10 @@ const { z } = require("zod");
 const createJobSchema = z.object({
   barcode_raw: z.string().min(1),
   created_by: z.enum(["scanner", "operator"]).default("scanner"),
+  order_no: z.string().optional(),
+  customer_name: z.string().optional(),
+  type: z.string().optional(),
+  qty: z.number().int().optional(),
 });
 
 const jobFilterSchema = z.object({

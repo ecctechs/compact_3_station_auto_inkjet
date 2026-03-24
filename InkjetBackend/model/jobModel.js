@@ -36,6 +36,18 @@ const PrintJob = sequelize.define(
       allowNull: false,
       defaultValue: 0,
     },
+    order_no: {
+      type: DataTypes.STRING,
+    },
+    customer_name: {
+      type: DataTypes.STRING,
+    },
+    type: {
+      type: DataTypes.STRING,
+    },
+    qty: {
+      type: DataTypes.INTEGER,
+    },
   },
   { timestamps: true, createdAt: "created_at", updatedAt: "updated_at" }
 );
