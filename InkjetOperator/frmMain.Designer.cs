@@ -20,6 +20,7 @@ partial class frmMain
         components = new System.ComponentModel.Container();
         tmrPoll = new System.Windows.Forms.Timer(components);
         pnlConnection = new Panel();
+        button2 = new Button();
         button1 = new Button();
         grpInkjet12 = new GroupBox();
         lblCom1 = new Label();
@@ -67,7 +68,6 @@ partial class frmMain
         pnlLog = new Panel();
         txtLog = new TextBox();
         lblLogTitle = new Label();
-        button2 = new Button();
         pnlConnection.SuspendLayout();
         grpInkjet12.SuspendLayout();
         grpInkjet34.SuspendLayout();
@@ -101,13 +101,23 @@ partial class frmMain
         pnlConnection.Size = new Size(1143, 153);
         pnlConnection.TabIndex = 3;
         // 
+        // button2
+        // 
+        button2.Location = new Point(884, 15);
+        button2.Name = "button2";
+        button2.Size = new Size(126, 62);
+        button2.TabIndex = 4;
+        button2.Text = "TEST Pattern";
+        button2.UseVisualStyleBackColor = true;
+        button2.Click += button2_Click;
+        // 
         // button1
         // 
-        button1.Location = new Point(834, 28);
+        button1.Location = new Point(747, 12);
         button1.Name = "button1";
-        button1.Size = new Size(94, 29);
+        button1.Size = new Size(122, 65);
         button1.TabIndex = 3;
-        button1.Text = "button1";
+        button1.Text = "Test Bot Click";
         button1.UseVisualStyleBackColor = true;
         button1.Click += button1_Click;
         // 
@@ -628,16 +638,6 @@ partial class frmMain
         lblLogTitle.Size = new Size(1131, 27);
         lblLogTitle.TabIndex = 1;
         lblLogTitle.Text = "Log";
-        // 
-        // button2
-        // 
-        button2.Location = new Point(993, 38);
-        button2.Name = "button2";
-        button2.Size = new Size(94, 29);
-        button2.TabIndex = 4;
-        button2.Text = "button2";
-        button2.UseVisualStyleBackColor = true;
-        button2.Click += button2_Click;
         // 
         // frmMain
         // 
