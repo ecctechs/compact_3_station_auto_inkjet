@@ -3,7 +3,7 @@ const sequelize = require("./database");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 
-sequelize.sync();
+sequelize.sync({ alter: true });
 
 const patternRoute = require("./routes/Pattern");
 const jobRoute = require("./routes/Job");

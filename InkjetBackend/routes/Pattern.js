@@ -7,6 +7,8 @@ const {
   createPatternSchema,
   updatePatternSchema,
   patternFilterSchema,
+  createPatternRuleSchema,
+  updatePatternRuleSchema,
 } = require("../validation/patternSchema");
 
 Route.get(
@@ -32,5 +34,24 @@ Route.put(
 );
 
 Route.delete(RouteName + "/delete/:id", PatternController.delete);
+
+// ========== PatternRule Standalone Routes ==========
+Route.get(RouteName + "/rule/getAll", PatternController.getAllRules);
+
+Route.get(RouteName + "/rule/getById/:id", PatternController.getRuleById);
+
+Route.post(
+  RouteName + "/rule/create",
+  validate(createPatternRuleSchema),
+  PatternController.createRule
+);
+
+Route.put(
+  RouteName + "/rule/update/:id",
+  validate(updatePatternRuleSchema),
+  PatternController.updateRule
+);
+
+Route.delete(RouteName + "/rule/delete/:id", PatternController.deleteRule);
 
 module.exports = Route;

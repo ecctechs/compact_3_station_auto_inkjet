@@ -9,6 +9,9 @@ const Pattern = sequelize.define(
       autoIncrement: true,
       primaryKey: true,
     },
+    name: {
+      type: DataTypes.STRING,
+    },
     barcode: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -164,6 +167,51 @@ const ServoConfig = sequelize.define(
   { timestamps: false }
 );
 
+const PatternRule = sequelize.define(
+  "pattern_rules",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+    },
+    pattern_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    ordinal: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    source_start: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    source_end: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    transform_rule: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    parameter: {
+      type: DataTypes.STRING,
+    },
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+  },
+  { timestamps: false }
+);
+
 // Associations
 Pattern.hasMany(InkjetConfig, { foreignKey: "pattern_id", as: "inkjet_configs" });
 InkjetConfig.belongsTo(Pattern, { foreignKey: "pattern_id" });
@@ -177,4 +225,7 @@ ConveyorSpeed.belongsTo(Pattern, { foreignKey: "pattern_id" });
 Pattern.hasMany(ServoConfig, { foreignKey: "pattern_id", as: "servo_configs" });
 ServoConfig.belongsTo(Pattern, { foreignKey: "pattern_id" });
 
-module.exports = { Pattern, InkjetConfig, TextBlock, ConveyorSpeed, ServoConfig };
+Pattern.hasMany(PatternRule, { foreignKey: "pattern_id", as: "rules" });
+PatternRule.belongsTo(Pattern, { foreignKey: "pattern_id" });
+
+module.exports = { Pattern, InkjetConfig, TextBlock, ConveyorSpeed, ServoConfig, PatternRule };

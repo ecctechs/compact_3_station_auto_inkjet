@@ -205,3 +205,25 @@ public class CommandResult
     [JsonPropertyName("sent_at")]
     public string? SentAt { get; set; }
 }
+
+// เพิ่ม DTO สำหรับสร้าง job
+public class CreateJobRequest
+{
+    [JsonPropertyName("barcode_raw")]
+    public string BarcodeRaw { get; set; }
+
+    [JsonPropertyName("created_by")]
+    public string CreatedBy { get; set; }
+
+    [JsonPropertyName("order_no")]
+    public string OrderNo { get; set; }
+
+    [JsonPropertyName("customer_name")]
+    public string CustomerName { get; set; }
+
+    [JsonPropertyName("type")]
+    public string Type { get; set; }
+
+    [JsonPropertyName("qty")]
+    public int Qty { get; set; }
+}

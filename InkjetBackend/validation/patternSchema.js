@@ -41,21 +41,52 @@ const servoConfigSchema = z.object({
   trigger: z.number().int().optional(),
 });
 
+const patternRuleSchema = z.object({
+  name: z.string().min(1).optional(),
+  pattern_id: z.number().int().min(1),
+  ordinal: z.number().int().min(1),
+  source_start: z.number().int().min(1).max(999),
+  source_end: z.number().int().min(1).max(999),
+  transform_rule: z.enum(["COPY", "DELETE", "AZ_UPPER", "AZ_LOWER", "TAKE_RIGHT", "PAD_LEFT"]),
+  parameter: z.string().optional(),
+  is_active: z.boolean().default(true),
+});
+
+// Schema for rules within Pattern (name is optional, pattern_id is auto-set)
+const patternRuleInPatternSchema = z.object({
+  name: z.string().min(1).optional(),
+  ordinal: z.number().int().min(1),
+  source_start: z.number().int().min(1).max(999),
+  source_end: z.number().int().min(1).max(999),
+  transform_rule: z.enum(["COPY", "DELETE", "AZ_UPPER", "AZ_LOWER", "TAKE_RIGHT", "PAD_LEFT"]),
+  parameter: z.string().optional(),
+  is_active: z.boolean().default(true),
+});
+
+const createPatternRuleSchema = patternRuleSchema;
+const updatePatternRuleSchema = patternRuleSchema.partial().extend({
+  name: z.string().min(1).optional(),
+});
+
 const createPatternSchema = z.object({
+  name: z.string().optional(),
   barcode: z.string().min(1),
   description: z.string().optional(),
   inkjet_configs: z.array(inkjetConfigSchema).optional(),
   conveyor_speeds: conveyorSpeedSchema.optional(),
   servo_configs: z.array(servoConfigSchema).optional(),
+  rules: z.array(patternRuleInPatternSchema).optional(),
 });
 
 const updatePatternSchema = z.object({
+  name: z.string().optional(),
   barcode: z.string().min(1).optional(),
   description: z.string().optional(),
   is_active: z.boolean().optional(),
   inkjet_configs: z.array(inkjetConfigSchema).optional(),
   conveyor_speeds: conveyorSpeedSchema.optional(),
   servo_configs: z.array(servoConfigSchema).optional(),
+  rules: z.array(patternRuleInPatternSchema).optional(),
 });
 
 const patternFilterSchema = z.object({
@@ -72,4 +103,6 @@ module.exports = {
   createPatternSchema,
   updatePatternSchema,
   patternFilterSchema,
+  createPatternRuleSchema,
+  updatePatternRuleSchema,
 };

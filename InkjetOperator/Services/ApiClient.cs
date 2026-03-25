@@ -130,4 +130,28 @@ public class ApiClient
             return false;
         }
     }
+
+    /// <summary>POST /job/create — create new job (with improved error logging).</summary>
+    public async Task<PrintJob?> CreateJobAsync(CreateJobRequest newJob)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync("/job/create", newJob, JsonOptions);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string body = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"CreateJob failed: {(int)response.StatusCode} {response.ReasonPhrase} - Body: {body}");
+                return null;
+            }
+
+            var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<PrintJob>>(JsonOptions);
+            return wrapper?.Data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("CreateJob error: " + ex.Message);
+            return null;
+        }
+    }
 }

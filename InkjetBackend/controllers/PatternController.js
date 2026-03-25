@@ -5,6 +5,7 @@ const {
   TextBlock,
   ConveyorSpeed,
   ServoConfig,
+  PatternRule,
 } = require("../model/patternModel");
 const sequelize = require("../database");
 const { Op } = require("sequelize");
@@ -17,6 +18,7 @@ const PATTERN_INCLUDE = [
   },
   { model: ConveyorSpeed, as: "conveyor_speeds" },
   { model: ServoConfig, as: "servo_configs" },
+  { model: PatternRule, as: "rules" },
 ];
 
 class PatternController {
@@ -95,7 +97,7 @@ class PatternController {
   static async create(req, res) {
     const t = await sequelize.transaction();
     try {
-      const { barcode, description, inkjet_configs, conveyor_speeds, servo_configs } = req.body;
+      const { name, barcode, description, inkjet_configs, conveyor_speeds, servo_configs, rules } = req.body;
 
       const existing = await Pattern.findOne({ where: { barcode } });
       if (existing) {
@@ -108,7 +110,7 @@ class PatternController {
         );
       }
 
-      const pattern = await Pattern.create({ barcode, description }, { transaction: t });
+      const pattern = await Pattern.create({ name, barcode, description }, { transaction: t });
 
       if (inkjet_configs) {
         for (const cfg of inkjet_configs) {
@@ -145,6 +147,19 @@ class PatternController {
         }
       }
 
+      if (rules) {
+        let ruleOrdinal = 1;
+        for (const rule of rules) {
+          // Generate name if not provided
+          const ruleName = rule.name || `RULE_${pattern.id}_${ruleOrdinal}`;
+          await PatternRule.create(
+            { ...rule, name: ruleName, pattern_id: pattern.id },
+            { transaction: t }
+          );
+          ruleOrdinal++;
+        }
+      }
+
       await t.commit();
 
       const result = await Pattern.findByPk(pattern.id, {
@@ -172,9 +187,9 @@ class PatternController {
         );
       }
 
-      const { inkjet_configs, conveyor_speeds, servo_configs, ...patternData } = req.body;
+      const { name, inkjet_configs, conveyor_speeds, servo_configs, rules, ...patternData } = req.body;
 
-      await pattern.update(patternData, { transaction: t });
+      await pattern.update({ name, ...patternData }, { transaction: t });
 
       if (inkjet_configs) {
         // Delete old configs and their text blocks, then re-insert
@@ -235,6 +250,22 @@ class PatternController {
         }
       }
 
+      if (rules) {
+        await PatternRule.destroy({
+          where: { pattern_id: pattern.id },
+          transaction: t,
+        });
+        let ruleOrdinal = 1;
+        for (const rule of rules) {
+          const ruleName = rule.name || `RULE_${pattern.id}_${ruleOrdinal}`;
+          await PatternRule.create(
+            { ...rule, name: ruleName, pattern_id: pattern.id },
+            { transaction: t }
+          );
+          ruleOrdinal++;
+        }
+      }
+
       await t.commit();
 
       const result = await Pattern.findByPk(pattern.id, {
@@ -267,6 +298,177 @@ class PatternController {
         res,
         200,
         "Pattern deactivated"
+      );
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  // ========== PatternRule Standalone CRUD ==========
+  static async getAllRules(req, res) {
+    try {
+      const { pattern_id, is_active } = req.query;
+      const where = {};
+
+      if (pattern_id) {
+        where.pattern_id = pattern_id;
+      }
+      if (is_active !== undefined) {
+        where.is_active = is_active === "true";
+      }
+
+      const rules = await PatternRule.findAll({
+        where,
+        order: [["pattern_id", "ASC"], ["ordinal", "ASC"]],
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 200, {
+        data: rules,
+        total: rules.length,
+      });
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  static async getRuleById(req, res) {
+    try {
+      const rule = await PatternRule.findByPk(req.params.id);
+
+      if (!rule) {
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          404,
+          "Pattern rule not found"
+        );
+      }
+
+      return ResponseManager.SuccessResponse(req, res, 200, rule);
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  static async createRule(req, res) {
+    try {
+      const { name, pattern_id, ordinal, source_start, source_end, transform_rule, parameter, is_active } = req.body;
+
+      // Check unique name
+      const existingByName = await PatternRule.findOne({ where: { name } });
+      if (existingByName) {
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          400,
+          "Pattern rule name already exists"
+        );
+      }
+
+      // Check pattern exists
+      const pattern = await Pattern.findByPk(pattern_id);
+      if (!pattern) {
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          400,
+          "Pattern not found"
+        );
+      }
+
+      const rule = await PatternRule.create({
+        name,
+        pattern_id,
+        ordinal,
+        source_start,
+        source_end,
+        transform_rule,
+        parameter,
+        is_active,
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 201, rule);
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  static async updateRule(req, res) {
+    try {
+      const rule = await PatternRule.findByPk(req.params.id);
+      if (!rule) {
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          404,
+          "Pattern rule not found"
+        );
+      }
+
+      const { name, pattern_id, ordinal, source_start, source_end, transform_rule, parameter, is_active } = req.body;
+
+      // Check unique name (exclude current record)
+      if (name && name !== rule.name) {
+        const existingByName = await PatternRule.findOne({ where: { name } });
+        if (existingByName) {
+          return ResponseManager.ErrorResponse(
+            req,
+            res,
+            400,
+            "Pattern rule name already exists"
+          );
+        }
+      }
+
+      // Check pattern exists if pattern_id is being changed
+      if (pattern_id && pattern_id !== rule.pattern_id) {
+        const pattern = await Pattern.findByPk(pattern_id);
+        if (!pattern) {
+          return ResponseManager.ErrorResponse(
+            req,
+            res,
+            400,
+            "Pattern not found"
+          );
+        }
+      }
+
+      await rule.update({
+        name,
+        pattern_id,
+        ordinal,
+        source_start,
+        source_end,
+        transform_rule,
+        parameter,
+        is_active,
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 200, rule);
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  static async deleteRule(req, res) {
+    try {
+      const rule = await PatternRule.findByPk(req.params.id);
+      if (!rule) {
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          404,
+          "Pattern rule not found"
+        );
+      }
+
+      await rule.update({ is_active: false });
+
+      return ResponseManager.SuccessResponse(
+        req,
+        res,
+        200,
+        "Pattern rule deactivated"
       );
     } catch (err) {
       return ResponseManager.CatchResponse(req, res, err.message);

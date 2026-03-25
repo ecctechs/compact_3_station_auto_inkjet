@@ -4,6 +4,7 @@ using InkjetOperator.Managers;
 using InkjetOperator.Models;
 using InkjetOperator.PlcAdapter;
 using InkjetOperator.Services;
+using Microsoft.Data.Sqlite;
 
 namespace InkjetOperator;
 
@@ -179,6 +180,31 @@ public partial class frmMain : Form
     //  Job selection
     // ════════════════════════════════════════
 
+    //private async void dgvJobs_SelectionChanged(object sender, EventArgs e)
+    //{
+    //    if (dgvJobs.SelectedRows.Count == 0) return;
+
+    //    var row = dgvJobs.SelectedRows[0];
+    //    if (row.Cells["Id"].Value == null) return;
+
+    //    int jobId = (int)row.Cells["Id"].Value;
+    //    string rawbarcode = row.Cells["BarcodeRaw"].Value?.ToString() ?? "";
+    //    if (jobId == _selectedJobId) return;
+    //    _selectedJobId = jobId;
+
+    //    try
+    //    {
+    //        MessageBox.Show($"Selected job ID: {rawbarcode}");
+    //        var resolved = await _api.GetResolvedJobAsync(jobId);
+    //        _currentResolved = resolved;
+    //        UpdateDetailPanel();
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        Log("Load job detail error: " + ex.Message);
+    //    }
+    //}
+
     private async void dgvJobs_SelectionChanged(object sender, EventArgs e)
     {
         if (dgvJobs.SelectedRows.Count == 0) return;
@@ -187,14 +213,152 @@ public partial class frmMain : Form
         if (row.Cells["Id"].Value == null) return;
 
         int jobId = (int)row.Cells["Id"].Value;
+        string rawbarcode = row.Cells["BarcodeRaw"].Value?.ToString() ?? "";
         if (jobId == _selectedJobId) return;
         _selectedJobId = jobId;
 
+        // Helpers
+        static bool ReaderHasColumn(SqliteDataReader r, string name)
+        {
+            for (int i = 0; i < r.FieldCount; i++)
+            {
+                if (string.Equals(r.GetName(i), name, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
+
+        static string? GetStringSafe(SqliteDataReader r, string name)
+        {
+            if (!ReaderHasColumn(r, name)) return null;
+            int idx = r.GetOrdinal(name);
+            return r.IsDBNull(idx) ? null : r.GetString(idx);
+        }
+
+        static int? GetIntSafe(SqliteDataReader r, string name)
+        {
+            var s = GetStringSafe(r, name);
+            if (string.IsNullOrWhiteSpace(s)) return null;
+            return int.TryParse(s, out var v) ? v : null;
+        }
+
         try
         {
-            var resolved = await _api.GetResolvedJobAsync(jobId);
-            _currentResolved = resolved;
-            UpdateDetailPanel();
+            string dbPath = @"D:\DB\uv_data.db3";
+            string connStr = $"Data Source={dbPath}";
+            bool found = false;
+
+            try
+            {
+                await using var conn = new SqliteConnection(connStr);
+                await conn.OpenAsync();
+
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT * FROM config_data WHERE pattern_no_erp = @rawbarcode LIMIT 1";
+                cmd.Parameters.AddWithValue("@rawbarcode", rawbarcode);
+
+                await using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    // Build PatternDetail from known schema columns.
+                    var pattern = new PatternDetail
+                    {
+                        Barcode = GetStringSafe(reader, "pattern_no_erp") ?? GetStringSafe(reader, "pattern_no_erp2") ?? rawbarcode,
+                        Description = GetStringSafe(reader, "model_plan_code") ?? GetStringSafe(reader, "program_name") ?? ""
+                    };
+
+                    // Helper to build MK config (mk1 / mk2)
+                    InkjetConfigDto BuildMkConfig(string prefix, int ordinal, string programNameColumn)
+                    {
+                        var cfg = new InkjetConfigDto
+                        {
+                            Ordinal = ordinal,
+                            ProgramNumber = GetIntSafe(reader, $"{prefix}program_no") ?? GetIntSafe(reader, $"{prefix}program_no") ?? null,
+                            ProgramName = GetStringSafe(reader, programNameColumn),
+                            Width = GetIntSafe(reader, $"{prefix}width"),
+                            Height = GetIntSafe(reader, $"{prefix}height"),
+                            TriggerDelay = GetIntSafe(reader, $"{prefix}trigger_delay"),
+                            Direction = GetIntSafe(reader, $"{prefix}text_direction"),
+                            SteelType = null,
+                            Suspended = false
+                        };
+
+                        // text blocks 1..5
+                        for (int b = 1; b <= 5; b++)
+                        {
+                            string textCol = $"{prefix}block{b}_text";
+                            if (ReaderHasColumn(reader, textCol))
+                            {
+                                var text = GetStringSafe(reader, textCol);
+                                if (!string.IsNullOrEmpty(text))
+                                {
+                                    var tb = new TextBlockDto
+                                    {
+                                        BlockNumber = b,
+                                        Text = text,
+                                        X = GetIntSafe(reader, $"{prefix}block{b}_x"),
+                                        Y = GetIntSafe(reader, $"{prefix}block{b}_y"),
+                                        Size = GetIntSafe(reader, $"{prefix}block{b}_size"),
+                                        Scale = GetIntSafe(reader, $"{prefix}block{b}_scale_side")
+                                    };
+                                    cfg.TextBlocks.Add(tb);
+                                }
+                            }
+                        }
+
+                        return cfg;
+                    }
+
+                    // mk1 fields use prefix "mk1_"; program name fallback to "program_name"
+                    var mk1 = BuildMkConfig("mk1_", 1, "program_name");
+                    // mk2 fields use prefix "mk2_"; program name fallback to "program_name3"
+                    var mk2 = BuildMkConfig("mk2_", 2, "program_name3");
+
+                    pattern.InkjetConfigs = new List<InkjetConfigDto> { mk1, mk2 };
+
+                    // Conveyor speeds / servo configs - attempt to map if available (optional)
+                    var spd1 = GetIntSafe(reader, "belt1_inkjet");
+                    var spd2 = GetIntSafe(reader, "belt2_feed_inkjet");
+                    if (spd1.HasValue || spd2.HasValue)
+                    {
+                        pattern.ConveyorSpeeds = new ConveyorSpeedDto
+                        {
+                            Speed1 = spd1,
+                            Speed2 = spd2,
+                            Speed3 = GetIntSafe(reader, "belt3")
+                        };
+                    }
+
+                    // Minimal job + resolved response
+                    _currentResolved = new ResolvedJobResponse
+                    {
+                        Job = new PrintJob
+                        {
+                            Id = jobId,
+                            BarcodeRaw = rawbarcode,
+                            LotNumber = row.Cells["LotNumber"].Value?.ToString(),
+                            Status = row.Cells["Status"].Value?.ToString()
+                        },
+                        Pattern = pattern
+                    };
+
+                    found = true;
+                    UpdateDetailPanel();
+                }
+
+                await conn.CloseAsync();
+            }
+            catch (Exception dbEx)
+            {
+                Log("SQLite query error: " + dbEx.Message);
+            }
+
+            if (!found)
+            {
+                var resolved = await _api.GetResolvedJobAsync(jobId);
+                _currentResolved = resolved;
+                UpdateDetailPanel();
+            }
         }
         catch (Exception ex)
         {
@@ -479,16 +643,17 @@ public partial class frmMain : Form
                 editor.ShowDialog();
             }
         }));
+    }
 
-        //string lot = "C240801-027";
-        //string blockText = "DDDD-01"; // ใน blockText มีคำว่า "CCCC" ซึ่งตรงกับชื่อ Pattern
+    private async void button3_Click(object sender, EventArgs e)
+    {
+        //await SendTextBlocksToIjAsync(3);
+        var form = new frmCreateJob(_api);
+        form.ShowDialog();
+    }
 
-        //// เรียกใช้งาน Engine
-        //string result = PatternEngine.Process(lot, blockText);
-
-        //// แสดงผลลัพธ์
-        //Log(result);
-
-
+    private async void button4_Click(object sender, EventArgs e)
+    {
+       
     }
 }

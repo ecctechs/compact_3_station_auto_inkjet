@@ -20,6 +20,8 @@ partial class frmMain
         components = new System.ComponentModel.Container();
         tmrPoll = new System.Windows.Forms.Timer(components);
         pnlConnection = new Panel();
+        button4 = new Button();
+        button3 = new Button();
         button2 = new Button();
         button1 = new Button();
         grpInkjet12 = new GroupBox();
@@ -89,6 +91,8 @@ partial class frmMain
         // 
         // pnlConnection
         // 
+        pnlConnection.Controls.Add(button4);
+        pnlConnection.Controls.Add(button3);
         pnlConnection.Controls.Add(button2);
         pnlConnection.Controls.Add(button1);
         pnlConnection.Controls.Add(grpInkjet12);
@@ -101,11 +105,31 @@ partial class frmMain
         pnlConnection.Size = new Size(1143, 153);
         pnlConnection.TabIndex = 3;
         // 
+        // button4
+        // 
+        button4.Location = new Point(878, 50);
+        button4.Name = "button4";
+        button4.Size = new Size(123, 29);
+        button4.TabIndex = 6;
+        button4.Text = "test send text block";
+        button4.UseVisualStyleBackColor = true;
+        button4.Click += button4_Click;
+        // 
+        // button3
+        // 
+        button3.Location = new Point(747, 50);
+        button3.Name = "button3";
+        button3.Size = new Size(122, 29);
+        button3.TabIndex = 5;
+        button3.Text = "Add Job";
+        button3.UseVisualStyleBackColor = true;
+        button3.Click += button3_Click;
+        // 
         // button2
         // 
-        button2.Location = new Point(884, 15);
+        button2.Location = new Point(875, 12);
         button2.Name = "button2";
-        button2.Size = new Size(126, 62);
+        button2.Size = new Size(126, 32);
         button2.TabIndex = 4;
         button2.Text = "TEST Pattern";
         button2.UseVisualStyleBackColor = true;
@@ -115,7 +139,7 @@ partial class frmMain
         // 
         button1.Location = new Point(747, 12);
         button1.Name = "button1";
-        button1.Size = new Size(122, 65);
+        button1.Size = new Size(122, 32);
         button1.TabIndex = 3;
         button1.Text = "Test Bot Click";
         button1.UseVisualStyleBackColor = true;
@@ -205,7 +229,7 @@ partial class frmMain
         lblStatusIj1.Size = new Size(40, 24);
         lblStatusIj1.TabIndex = 6;
         lblStatusIj1.Text = "IJ1";
-        lblStatusIj1.TextAlign = ContentAlignment.MiddleCenter;
+        lblStatusIj1.TextAlign = ContentAlignment.TopCenter;
         // 
         // lblStatusIj2
         // 
@@ -737,4 +761,6 @@ partial class frmMain
     private TextBox txtLog;
     private Button button1;
     private Button button2;
+    private Button button3;
+    private Button button4;
 }
