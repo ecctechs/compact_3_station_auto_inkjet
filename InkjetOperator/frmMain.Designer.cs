@@ -277,7 +277,7 @@ partial class frmMain
         txtTcpHost.Name = "txtTcpHost";
         txtTcpHost.Size = new Size(137, 27);
         txtTcpHost.TabIndex = 1;
-        txtTcpHost.Text = "192.168.1.100";
+        txtTcpHost.Text = "192.168.3.77";
         // 
         // lblTcpPort
         // 
@@ -295,7 +295,7 @@ partial class frmMain
         txtTcpPort.Name = "txtTcpPort";
         txtTcpPort.Size = new Size(68, 27);
         txtTcpPort.TabIndex = 3;
-        txtTcpPort.Text = "9100";
+        txtTcpPort.Text = "9004";
         // 
         // btnConnectTcp
         // 
