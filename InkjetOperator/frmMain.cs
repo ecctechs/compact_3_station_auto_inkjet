@@ -654,6 +654,59 @@ public partial class frmMain : Form
 
     private async void button4_Click(object sender, EventArgs e)
     {
-       
+        await TestSendToIj3TcpAsync();
+    }
+
+    // Example usage: send blocks from dgvTextBlocks to IJ3 via TCP (simple demo)
+    private async Task TestSendToIj3TcpAsync()
+    {
+        // read TCP host/port from UI controls
+        string host = txtTcpHost.Text.Trim();
+        if (!int.TryParse(txtTcpPort.Text.Trim(), out int port))
+        {
+            Log("Invalid TCP port");
+            return;
+        }
+
+        using var client = new InkjetOperator.Adapters.Simple.SocketDeviceClient();
+        try
+        {
+            await client.ConnectAsync(host, port);
+        }
+        catch (Exception ex)
+        {
+            Log("TCP connect failed: " + ex.Message);
+            return;
+        }
+
+        // Example: change program to 13
+        var progResp = await InkjetOperator.Services.InkjetProtocol.SendChangeProgramAsync(client, 13);
+        Log($"ChangeProgram resp: {progResp}");
+
+        // Send each row in dgvTextBlocks
+        foreach (DataGridViewRow row in dgvTextBlocks.Rows)
+        {
+            if (row.IsNewRow) continue;
+
+            int blockNumber = 1;
+            if (dgvTextBlocks.Columns.Contains("BlockNumber") && int.TryParse(row.Cells["BlockNumber"].Value?.ToString(), out var bn))
+                blockNumber = bn;
+
+            string text = row.Cells["Text"].Value?.ToString() ?? row.Cells["text"].Value?.ToString() ?? "";
+            int x = int.TryParse(row.Cells["X"].Value?.ToString(), out var tx) ? tx : 0;
+            int y = int.TryParse(row.Cells["Y"].Value?.ToString(), out var ty) ? ty : 0;
+            int size = int.TryParse(row.Cells["Size"].Value?.ToString(), out var ts) ? ts : 1;
+            int scale = int.TryParse(row.Cells["Scale"].Value?.ToString(), out var tsc) ? tsc : 1;
+
+            var block = new InkjetOperator.Services.SimpleTextBlock(blockNumber, text, x, y, size, scale);
+            var (fsResp, f1Resp) = await InkjetOperator.Services.InkjetProtocol.SendTextBlockAsync(client, 13, block);
+            Log($"IJ3 TextBlock({blockNumber}) FS='{fsResp}' F1='{f1Resp}'");
+
+            // If adapter or device returns empty error, you can decide to continue or break.
+            await Task.Delay(30);
+        }
+
+        var resume = await InkjetOperator.Services.InkjetProtocol.SendResumeAsync(client);
+        Log($"Resume resp: {resume}");
     }
 }
