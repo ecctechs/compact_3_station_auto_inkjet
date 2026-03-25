@@ -1,0 +1,4526 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+Adapters/IInkjetAdapter.cs
+Adapters/InkjetProtocol.cs
+Adapters/MkCompactAdapter.cs
+Adapters/SimpleDeviceClient.cs
+Adapters/SqliteInkjetAdapter.cs
+Controls/PatternEditorControl.cs
+FormEditPattern.cs
+frmCreateJob.cs
+frmCreateJob.Designer.cs
+frmCreateJob.resx
+frmMain.cs
+frmMain.Designer.cs
+frmMain.resx
+frmPatternEditor.cs
+frmPatternEditor.Designer.cs
+frmPatternEditor.resx
+InkjetOperator.csproj
+Managers/Rs232Manager.cs
+Managers/TcpManager.cs
+Models/ApiModels.cs
+Models/Pattern.cs
+Models/Rule.cs
+Models/TransformRuleType.cs
+PlcAdapter/PlcManager.cs
+Program.cs
+Services/ApiClient.cs
+Services/BotClickHelper.cs
+Services/PatternEngine.cs
+Services/PatternStore.cs
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="Adapters/IInkjetAdapter.cs">
+using InkjetOperator.Models;
+
+namespace InkjetOperator.Adapters;
+
+public interface IInkjetAdapter
+{
+    Task<bool> ConnectAsync();
+    Task DisconnectAsync();
+    bool IsConnected();
+    Task<CommandResult> SuspendAsync();
+    Task<CommandResult> ResumeAsync();
+    Task<CommandResult> ChangeProgramAsync(int programNumber);
+    Task<CommandResult> SendTextBlockAsync(TextBlockDto block, int deviceBlock);
+    Task<CommandResult> SendConfigAsync(InkjetConfigDto config);
+}
+</file>
+
+<file path="Adapters/InkjetProtocol.cs">
+using System.Text;
+using InkjetOperator.Adapters.Simple;
+
+namespace InkjetOperator.Services
+{
+    // Simple DTO for a text block (matches existing TextBlockDto shape)
+    public record SimpleTextBlock(int BlockNumber, string Text, int X = 0, int Y = 0, int Size = 1, int Scale = 1);
+
+    public static class InkjetProtocol
+    {
+        // Change program: FW,<prog>
+        public static async Task<string> SendChangeProgramAsync(IDeviceClient client, int programNumber, CancellationToken ct = default)
+        {
+            return await client.SendCommandAsync($"FW,{programNumber}", 2000, ct);
+        }
+
+        // FS: set text content (FS,{prog},{deviceBlock},0,{text})
+        public static async Task<string> SendFsAsync(IDeviceClient client, int programNumber, int deviceBlock, string text, CancellationToken ct = default)
+        {
+            // ensure ASCII-safe text or sanitize as required
+            string safe = text ?? "";
+            return await client.SendCommandAsync($"FS,{programNumber},{deviceBlock},0,{safe}", 2000, ct);
+        }
+
+        // F1: format: F1,{prog},{block},{scale},{sizeConverted},{x},{y},1,1,1,0,00,0
+        // here sizeConverted is kept equal to size for simplicity; adapt conversion if needed.
+        public static async Task<string> SendF1Async(IDeviceClient client, int programNumber, int deviceBlock, int scale, int size, int x = 0, int y = 0, CancellationToken ct = default)
+        {
+            int sizeConverted = size; // map if required
+            return await client.SendCommandAsync($"F1,{programNumber},{deviceBlock},{scale},{sizeConverted},{x},{y},1,1,1,0,00,0", 2000, ct);
+        }
+
+        // Send a single text block (FS then F1)
+        public static async Task<(string fsResp, string f1Resp)> SendTextBlockAsync(IDeviceClient client, int programNumber, SimpleTextBlock block, CancellationToken ct = default)
+        {
+            int deviceBlock = block.BlockNumber + 5; // mapping 1->6
+            string fs = await SendFsAsync(client, programNumber, deviceBlock, block.Text, ct);
+            if (string.IsNullOrEmpty(fs)) { /* no response but continue */ }
+
+            string f1 = await SendF1Async(client, programNumber, deviceBlock, block.Scale, block.Size, block.X, block.Y, ct);
+            return (fs, f1);
+        }
+
+        // Send config (FM) — simplified form, adapt parameters as needed
+        public static async Task<string> SendConfigAsync(IDeviceClient client, int programNumber, string programName, int triggerDelay = 0, int height = 100, int width = 200, int direction = 0, CancellationToken ct = default)
+        {
+            // Program name normalization is not necessary here; ensure no commas that break protocol.
+            string safeName = programName?.Replace(",", " ") ?? "";
+            string fm = $"FM,{programNumber},0,{safeName},0,{direction},0,0,01,20,500,{triggerDelay},300,1000,{height},{width},15,0,0,6";
+            return await client.SendCommandAsync(fm, 2000, ct);
+        }
+
+        public static Task<string> SendSuspendAsync(IDeviceClient client, CancellationToken ct = default)
+            => client.SendCommandAsync("SR", 1000, ct);
+
+        public static Task<string> SendResumeAsync(IDeviceClient client, CancellationToken ct = default)
+            => client.SendCommandAsync("SQ", 1000, ct);
+    }
+}
+</file>
+
+<file path="Adapters/MkCompactAdapter.cs">
+using System.Globalization;
+using System.Text;
+using InkjetOperator.Managers;
+using InkjetOperator.Models;
+
+namespace InkjetOperator.Adapters;
+
+/// <summary>
+/// MK Compact inkjet adapter — formats FW/FS/F1/FM/SR/SQ commands.
+/// Ported from rs232_connector.py + socket_client.py.
+/// Can use either Rs232Manager (COM port) or TcpManager (TCP/IP).
+/// </summary>
+public class MkCompactAdapter : IInkjetAdapter
+{
+    private readonly Rs232Manager? _rs232;
+    private readonly TcpManager? _tcp;
+    private int _programNumber;
+
+    /// <summary>
+    /// Size conversion dict — from rs232_connector.py lines 8-22.
+    /// Maps logical size to device encoding.
+    /// </summary>
+    private static readonly Dictionary<string, string> SizeConversion = new()
+    {
+        { "1", "0" },
+        { "2", "1" },
+        { "3", "17" },
+        { "4", "3" },
+        { "5", "18" },
+        { "6", "20" },
+        { "7", "5" },
+        { "8", "6" },
+        { "9", "7" },
+        { "10", "8" },
+        { "11", "9" },
+        { "12", "10" },
+        { "13", "11" },
+    };
+
+    /// <summary>Constructor for RS232 connection (COM port).</summary>
+    public MkCompactAdapter(Rs232Manager rs232)
+    {
+        _rs232 = rs232;
+    }
+
+    /// <summary>Constructor for TCP connection.</summary>
+    public MkCompactAdapter(TcpManager tcp)
+    {
+        _tcp = tcp;
+    }
+
+    public Task<bool> ConnectAsync()
+    {
+        // Connection is managed by the underlying manager
+        return Task.FromResult(IsConnected());
+    }
+
+    public Task DisconnectAsync()
+    {
+        _rs232?.CloseSerialPort();
+        _tcp?.Disconnect();
+        return Task.CompletedTask;
+    }
+
+    public bool IsConnected()
+    {
+        if (_rs232 != null) return _rs232.IsOpen();
+        if (_tcp != null) return _tcp.IsConnected();
+        return false;
+    }
+
+    private async Task<string> SendAsync(string command)
+    {
+        if (_rs232 != null)
+            return await _rs232.SendCommandAsync(command);
+        if (_tcp != null)
+            return await _tcp.SendCommandAsync(command);
+        return "";
+    }
+
+    private CommandResult MakeResult(string command, string response, int? ordinal = null)
+    {
+        return new CommandResult
+        {
+            Command = command,
+            Response = response,
+            Success = response != "", // empty = connection problem (rs232_connector.py line 33)
+            SentAt = DateTime.UtcNow.ToString("o"),
+            Ordinal = ordinal,
+        };
+    }
+
+    /// <summary>
+    /// Send SR (suspend/stop printing).
+    /// From rs232_connector.py send_suspend() lines 46-51: sends "SR\r"
+    /// </summary>
+    public async Task<CommandResult> SuspendAsync()
+    {
+        string response = await SendAsync("SR\r");
+        return MakeResult("suspend", response);
+    }
+
+    /// <summary>
+    /// Send SQ (resume printing).
+    /// From rs232_connector.py send_resume() lines 54-59: sends "SQ\r"
+    /// </summary>
+    public async Task<CommandResult> ResumeAsync()
+    {
+        string response = await SendAsync("SQ\r");
+        return MakeResult("resume", response);
+    }
+
+    /// <summary>
+    /// Send FW (change program/message number).
+    /// From rs232_connector.py send_change_prog() lines 36-43: sends "FW,{n}\r"
+    /// </summary>
+    public async Task<CommandResult> ChangeProgramAsync(int programNumber)
+    {
+        _programNumber = programNumber;
+        string response = await SendAsync($"FW,{programNumber}\r");
+        return MakeResult("change_prog", response);
+    }
+
+    /// <summary>
+    /// Send FS + F1 (text block content + format).
+    /// From rs232_connector.py send_text() lines 62-71:
+    ///   FS,{prog},{block},0,{text}\r
+    ///   F1,{prog},{block},{scale},{sizeConverted},{x},{y},1,1,1,0,00,0\r
+    /// </summary>
+    public async Task<CommandResult> SendTextBlockAsync(TextBlockDto block, int deviceBlock)
+    {
+        string text = block.Text ?? "";
+        string x = (block.X ?? 0).ToString();
+        string y = (block.Y ?? 0).ToString();
+        string scale = (block.Scale ?? 1).ToString();
+        string sizeKey = (block.Size ?? 1).ToString();
+
+        string sizeConverted = SizeConversion.GetValueOrDefault(sizeKey, "0");
+
+        // FS command — set text content
+        string fsCmd = $"FS,{_programNumber},{deviceBlock},0,{text}\r";
+        string fsResponse = await SendAsync(fsCmd);
+
+        if (fsResponse == "")
+        {
+            return MakeResult("text_block", "", null);
+        }
+
+        // F1 command — set text format
+        string f1Cmd = $"F1,{_programNumber},{deviceBlock},{scale},{sizeConverted},{x},{y},1,1,1,0,00,0\r";
+        string f1Response = await SendAsync(f1Cmd);
+
+        return MakeResult("text_block", f1Response);
+    }
+
+    /// <summary>
+    /// Send FM (program/message configuration).
+    /// From rs232_connector.py send_config() lines 74-83:
+    ///   FM,{prog},0,{name},0,{dir},0,0,01,20,500,{delay},300,1000,{height},{width},15,0,0,6\r
+    /// Program name is Unicode-normalized (NFKD) like Python unicodedata.normalize.
+    /// </summary>
+    public async Task<CommandResult> SendConfigAsync(InkjetConfigDto config)
+    {
+        string progName = config.ProgramName ?? "";
+        // Normalize like Python: unicodedata.normalize('NFKD', ch)
+        string normalizedName = progName.Normalize(NormalizationForm.FormKD);
+
+        string direction = (config.Direction ?? 0).ToString();
+        string delay = (config.TriggerDelay ?? 0).ToString();
+        string height = (config.Height ?? 100).ToString();
+        string width = (config.Width ?? 200).ToString();
+
+        string fmCmd = $"FM,{_programNumber},0,{normalizedName},0,{direction},0,0,01,20,500,{delay},300,1000,{height},{width},15,0,0,6\r";
+        string response = await SendAsync(fmCmd);
+
+        return MakeResult("config", response);
+    }
+}
+</file>
+
+<file path="Adapters/SimpleDeviceClient.cs">
+using System.Diagnostics;
+using System.IO.Ports;
+using System.Net.Sockets;
+using System.Text;
+
+namespace InkjetOperator.Adapters.Simple
+{
+    public interface IDeviceClient : IDisposable
+    {
+        Task ConnectAsync(string hostOrPort, int? port = null, CancellationToken ct = default);
+        Task<string> SendCommandAsync(string command, int timeoutMs = 2000, CancellationToken ct = default);
+        bool IsConnected { get; }
+    }
+
+    // TCP socket implementation (port required)
+    public class SocketDeviceClient : IDeviceClient
+    {
+        private TcpClient? _tcp;
+        private NetworkStream? _stream;
+        private readonly Encoding _enc = Encoding.ASCII;
+
+        public bool IsConnected => _tcp?.Connected ?? false;
+
+        public async Task ConnectAsync(string host, int? port = null, CancellationToken ct = default)
+        {
+            if (!port.HasValue) throw new ArgumentException("port required for SocketDeviceClient");
+            _tcp = new TcpClient();
+            await _tcp.ConnectAsync(host, port.Value, ct);
+            _stream = _tcp.GetStream();
+            _stream.ReadTimeout = 4000;
+            _stream.WriteTimeout = 4000;
+        }
+
+        public async Task<string> SendCommandAsync(string command, int timeoutMs = 2000, CancellationToken ct = default)
+        {
+            if (_stream == null) throw new InvalidOperationException("Not connected");
+            byte[] data = _enc.GetBytes(command + "\r");
+            await _stream.WriteAsync(data, 0, data.Length, ct);
+
+            // read response (non-blocking with timeout)
+            var sb = new StringBuilder();
+            var buffer = new byte[1024];
+            var readCts = new CancellationTokenSource(timeoutMs);
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct, readCts.Token);
+            try
+            {
+                // read available bytes until timeout or newline/carriage return
+                while (!linked.IsCancellationRequested)
+                {
+                    if (_stream.DataAvailable)
+                    {
+                        int n = await _stream.ReadAsync(buffer, 0, buffer.Length, linked.Token);
+                        if (n == 0) break;
+                        sb.Append(_enc.GetString(buffer, 0, n));
+                        // break early if CR or LF seen
+                        if (sb.ToString().IndexOf('\r') >= 0 || sb.ToString().IndexOf('\n') >= 0) break;
+                    }
+                    else
+                    {
+                        await Task.Delay(20, linked.Token);
+                    }
+                }
+            }
+            catch (OperationCanceledException) { /* timeout or cancel */ }
+
+            return sb.ToString().Trim();
+        }
+
+        public void Dispose()
+        {
+            try { _stream?.Close(); } catch { }
+            try { _tcp?.Close(); } catch { }
+            _stream = null;
+            _tcp = null;
+        }
+    }
+
+    // Serial (RS232) implementation using System.IO.Ports.SerialPort
+    public class SerialDeviceClient : IDeviceClient
+    {
+        private SerialPort? _port;
+        private readonly Encoding _enc = Encoding.ASCII;
+
+        public bool IsConnected => _port != null && _port.IsOpen;
+
+        // hostOrPort for serial is COM port name, port parameter unused
+        public Task ConnectAsync(string comName, int? unused = null, CancellationToken ct = default)
+        {
+            _port = new SerialPort(comName)
+            {
+                BaudRate = 9600,
+                DataBits = 8,
+                Parity = Parity.None,
+                StopBits = StopBits.One,
+                ReadTimeout = 3000,
+                WriteTimeout = 3000,
+                Encoding = _enc
+            };
+            _port.Open();
+            return Task.CompletedTask;
+        }
+
+        public Task<string> SendCommandAsync(string command, int timeoutMs = 2000, CancellationToken ct = default)
+        {
+            if (_port == null || !_port.IsOpen) throw new InvalidOperationException("Serial port not open");
+            string cmd = command + "\r";
+            _port.DiscardInBuffer();
+            _port.Write(cmd);
+            var sw = Stopwatch.StartNew();
+            var sb = new StringBuilder();
+            while (sw.ElapsedMilliseconds < timeoutMs)
+            {
+                try
+                {
+                    string? line = _port.ReadExisting();
+                    if (!string.IsNullOrEmpty(line))
+                    {
+                        sb.Append(line);
+                        if (line.IndexOf('\r') >= 0 || line.IndexOf('\n') >= 0) break;
+                    }
+                }
+                catch (TimeoutException) { }
+                Thread.Sleep(20);
+            }
+            return Task.FromResult(sb.ToString().Trim());
+        }
+
+        public void Dispose()
+        {
+            try { if (_port != null && _port.IsOpen) _port.Close(); } catch { }
+            _port = null;
+        }
+    }
+}
+</file>
+
+<file path="Adapters/SqliteInkjetAdapter.cs">
+using InkjetOperator.Managers;
+using InkjetOperator.Models;
+
+namespace InkjetOperator.Adapters;
+
+/// <summary>
+/// Stub adapter for inkjet 3 & 4 (different brand, TCP → SQLite .db3).
+/// Implements IInkjetAdapter so it can be used interchangeably with MkCompactAdapter.
+/// Actual implementation TBD — needs: exact table/column names from the machine's .db3 schema.
+/// </summary>
+public class SqliteInkjetAdapter : IInkjetAdapter
+{
+    private readonly TcpManager _tcp;
+    private readonly string _dbPath;
+
+    public SqliteInkjetAdapter(TcpManager tcp, string dbPath)
+    {
+        _tcp = tcp;
+        _dbPath = dbPath;
+    }
+
+    public Task<bool> ConnectAsync()
+    {
+        // TODO: Connect to inkjet machine via TCP, then open .db3 database
+        return Task.FromResult(false);
+    }
+
+    public Task DisconnectAsync()
+    {
+        _tcp.Disconnect();
+        return Task.CompletedTask;
+    }
+
+    public bool IsConnected()
+    {
+        return _tcp.IsConnected();
+    }
+
+    public Task<CommandResult> SuspendAsync()
+    {
+        // TODO: SQL UPDATE to pause printing
+        return Task.FromResult(new CommandResult
+        {
+            Command = "suspend",
+            Success = false,
+            Response = "SqliteInkjetAdapter not implemented",
+        });
+    }
+
+    public Task<CommandResult> ResumeAsync()
+    {
+        // TODO: SQL UPDATE to resume printing
+        return Task.FromResult(new CommandResult
+        {
+            Command = "resume",
+            Success = false,
+            Response = "SqliteInkjetAdapter not implemented",
+        });
+    }
+
+    public Task<CommandResult> ChangeProgramAsync(int programNumber)
+    {
+        // TODO: SQL UPDATE to change active message/program
+        return Task.FromResult(new CommandResult
+        {
+            Command = "change_prog",
+            Success = false,
+            Response = "SqliteInkjetAdapter not implemented",
+        });
+    }
+
+    public Task<CommandResult> SendTextBlockAsync(TextBlockDto block, int deviceBlock)
+    {
+        // TODO: SQL UPDATE on the .db3 text content table
+        return Task.FromResult(new CommandResult
+        {
+            Command = "text_block",
+            Success = false,
+            Response = "SqliteInkjetAdapter not implemented",
+        });
+    }
+
+    public Task<CommandResult> SendConfigAsync(InkjetConfigDto config)
+    {
+        // TODO: SQL UPDATE for print configuration
+        return Task.FromResult(new CommandResult
+        {
+            Command = "config",
+            Success = false,
+            Response = "SqliteInkjetAdapter not implemented",
+        });
+    }
+}
+</file>
+
+<file path="Controls/PatternEditorControl.cs">
+
+</file>
+
+<file path="FormEditPattern.cs">
+
+</file>
+
+<file path="frmCreateJob.cs">
+using InkjetOperator.Models;
+using InkjetOperator.Services;
+
+namespace InkjetOperator
+{
+    public partial class frmCreateJob : Form
+    {
+        private ApiClient _api;
+
+        public frmCreateJob(ApiClient api)
+        {
+            InitializeComponent();
+            _api = api;
+        }
+
+        private void frmCreateJob_Load(object sender, EventArgs e)
+        {
+            cmbType.Items.AddRange(new string[]
+            {
+                "กล่อง",
+                "ถุง",
+                "ขวด",
+                "อื่นๆ"
+            });
+
+            cmbType.SelectedIndex = 0;
+        }
+
+        private async void btnCreate_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var req = new CreateJobRequest
+                {
+                    BarcodeRaw = "BARCODE123", // หรือ generate
+                    CreatedBy = "operator",     // อาจเอาจาก login
+
+                    OrderNo = txtOrderNo.Text.Trim(),
+                    CustomerName = txtCustomerName.Text.Trim(),
+                    Type = cmbType.SelectedItem?.ToString(),
+                    Qty = (int)numQty.Value
+                };
+
+                // validation
+                if (string.IsNullOrWhiteSpace(req.OrderNo))
+                {
+                    MessageBox.Show("กรุณาใส่ Order No");
+                    return;
+                }
+
+                var created = await _api.CreateJobAsync(req);
+
+                if (created != null)
+                {
+                    MessageBox.Show($"สร้าง Job สำเร็จ ID: {created.Id}");
+                    ClearForm();
+                }
+                else
+                {
+                    MessageBox.Show("Create job failed");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message);
+            }
+        }
+
+        private void btnReset_Click(object sender, EventArgs e)
+        {
+            ClearForm();
+        }
+
+        private void ClearForm()
+        {
+            txtOrderNo.Text = "";
+            txtCustomerName.Text = "";
+            cmbType.SelectedIndex = 0;
+            numQty.Value = 1;
+        }
+    }
+}
+</file>
+
+<file path="frmCreateJob.Designer.cs">
+namespace InkjetOperator
+{
+    partial class frmCreateJob
+    {
+        private System.ComponentModel.IContainer components = null;
+
+        private TextBox txtOrderNo;
+        private TextBox txtCustomerName;
+        private ComboBox cmbType;
+        private NumericUpDown numQty;
+        private Button btnCreate;
+        private Button btnReset;
+        private Label lblOrderNo;
+        private Label lblCustomer;
+        private Label lblType;
+        private Label lblQty;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+                components.Dispose();
+            base.Dispose(disposing);
+        }
+
+        private void InitializeComponent()
+        {
+            txtOrderNo = new TextBox();
+            txtCustomerName = new TextBox();
+            cmbType = new ComboBox();
+            numQty = new NumericUpDown();
+            btnCreate = new Button();
+            btnReset = new Button();
+            lblOrderNo = new Label();
+            lblCustomer = new Label();
+            lblType = new Label();
+            lblQty = new Label();
+            ((System.ComponentModel.ISupportInitialize)numQty).BeginInit();
+            SuspendLayout();
+            // 
+            // txtOrderNo
+            // 
+            txtOrderNo.Location = new Point(150, 25);
+            txtOrderNo.Name = "txtOrderNo";
+            txtOrderNo.Size = new Size(200, 27);
+            txtOrderNo.TabIndex = 1;
+            // 
+            // txtCustomerName
+            // 
+            txtCustomerName.Location = new Point(150, 65);
+            txtCustomerName.Name = "txtCustomerName";
+            txtCustomerName.Size = new Size(300, 27);
+            txtCustomerName.TabIndex = 3;
+            // 
+            // cmbType
+            // 
+            cmbType.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbType.Items.AddRange(new object[] { "กล่อง", "ชิ้น" });
+            cmbType.Location = new Point(150, 105);
+            cmbType.Name = "cmbType";
+            cmbType.Size = new Size(200, 28);
+            cmbType.TabIndex = 5;
+            // 
+            // numQty
+            // 
+            numQty.Location = new Point(150, 145);
+            numQty.Maximum = new decimal(new int[] { 100000, 0, 0, 0 });
+            numQty.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            numQty.Name = "numQty";
+            numQty.Size = new Size(120, 27);
+            numQty.TabIndex = 7;
+            numQty.Value = new decimal(new int[] { 1, 0, 0, 0 });
+            // 
+            // btnCreate
+            // 
+            btnCreate.Location = new Point(150, 200);
+            btnCreate.Name = "btnCreate";
+            btnCreate.Size = new Size(75, 30);
+            btnCreate.TabIndex = 8;
+            btnCreate.Text = "Create Job";
+            btnCreate.Click += btnCreate_Click;
+            // 
+            // btnReset
+            // 
+            btnReset.Location = new Point(280, 200);
+            btnReset.Name = "btnReset";
+            btnReset.Size = new Size(75, 30);
+            btnReset.TabIndex = 9;
+            btnReset.Text = "Reset";
+            btnReset.Click += btnReset_Click;
+            // 
+            // lblOrderNo
+            // 
+            lblOrderNo.Location = new Point(30, 30);
+            lblOrderNo.Name = "lblOrderNo";
+            lblOrderNo.Size = new Size(100, 23);
+            lblOrderNo.TabIndex = 0;
+            lblOrderNo.Text = "Order No";
+            // 
+            // lblCustomer
+            // 
+            lblCustomer.Location = new Point(30, 70);
+            lblCustomer.Name = "lblCustomer";
+            lblCustomer.Size = new Size(100, 23);
+            lblCustomer.TabIndex = 2;
+            lblCustomer.Text = "Customer";
+            // 
+            // lblType
+            // 
+            lblType.Location = new Point(30, 110);
+            lblType.Name = "lblType";
+            lblType.Size = new Size(100, 23);
+            lblType.TabIndex = 4;
+            lblType.Text = "Type";
+            // 
+            // lblQty
+            // 
+            lblQty.Location = new Point(30, 150);
+            lblQty.Name = "lblQty";
+            lblQty.Size = new Size(100, 23);
+            lblQty.TabIndex = 6;
+            lblQty.Text = "Quantity";
+            // 
+            // frmCreateJob
+            // 
+            ClientSize = new Size(500, 270);
+            Controls.Add(lblOrderNo);
+            Controls.Add(txtOrderNo);
+            Controls.Add(lblCustomer);
+            Controls.Add(txtCustomerName);
+            Controls.Add(lblType);
+            Controls.Add(cmbType);
+            Controls.Add(lblQty);
+            Controls.Add(numQty);
+            Controls.Add(btnCreate);
+            Controls.Add(btnReset);
+            Name = "frmCreateJob";
+            Text = "Create Job";
+            ((System.ComponentModel.ISupportInitialize)numQty).EndInit();
+            ResumeLayout(false);
+            PerformLayout();
+        }
+    }
+}
+</file>
+
+<file path="frmCreateJob.resx">
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+</root>
+</file>
+
+<file path="frmMain.cs">
+using System.ComponentModel;
+using System.IO.Ports;
+using InkjetOperator.Adapters;
+using InkjetOperator.Managers;
+using InkjetOperator.Models;
+using InkjetOperator.PlcAdapter;
+using InkjetOperator.Services;
+using Microsoft.Data.Sqlite;
+
+namespace InkjetOperator;
+
+/// <summary>
+/// Main operator form — polls backend for pending jobs, displays pattern detail,
+/// sends commands to inkjet adapters, posts results back.
+/// Follows Linx frmMain pattern: timer polling, Invoke() for thread safety,
+/// manager instances created directly (no DI).
+/// </summary>
+public partial class frmMain : Form
+{
+    // ── Hardware managers ──
+    private Rs232Manager _rs232Ij1 = new();
+    private Rs232Manager _rs232Ij2 = new();
+    private TcpManager _tcpIj3 = new();
+    private TcpManager _tcpIj4 = new();
+    private PlcManager _plc = new();
+
+    // ── Adapters ──
+    private MkCompactAdapter _adapterIj1;
+    private MkCompactAdapter _adapterIj2;
+    private SqliteInkjetAdapter _adapterIj3;
+    private SqliteInkjetAdapter _adapterIj4;
+
+    // ── API ──
+    private ApiClient _api;
+
+    // ── State ──
+    private List<PrintJob> _pendingJobs = new();
+    private ResolvedJobResponse? _currentResolved;
+    private int _selectedJobId = -1;
+
+    public frmMain()
+    {
+        InitializeComponent();
+
+        _adapterIj1 = new MkCompactAdapter(_rs232Ij1);
+        _adapterIj2 = new MkCompactAdapter(_rs232Ij2);
+        _adapterIj3 = new SqliteInkjetAdapter(_tcpIj3, ""); // db path TBD
+        _adapterIj4 = new SqliteInkjetAdapter(_tcpIj4, ""); // db path TBD
+
+        _api = new ApiClient("http://localhost:3000");
+    }
+
+    // ════════════════════════════════════════
+    //  Form events
+    // ════════════════════════════════════════
+
+    private void frmMain_Load(object sender, EventArgs e)
+    {
+        // Populate COM port dropdowns
+        string[] ports = SerialPort.GetPortNames();
+        cmbCom1.Items.AddRange(ports);
+        cmbCom2.Items.AddRange(ports);
+        if (cmbCom1.Items.Count > 0) cmbCom1.SelectedIndex = 0;
+        if (cmbCom2.Items.Count > 1) cmbCom2.SelectedIndex = 1;
+        else if (cmbCom2.Items.Count > 0) cmbCom2.SelectedIndex = 0;
+
+        tmrPoll.Start();
+        Log("Application started. Polling every 5s.");
+    }
+
+    private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
+    {
+        tmrPoll.Stop();
+        _rs232Ij1.CloseSerialPort();
+        _rs232Ij2.CloseSerialPort();
+        _tcpIj3.Disconnect();
+        _tcpIj4.Disconnect();
+        _plc.Disconnect();
+    }
+
+    // ════════════════════════════════════════
+    //  Connection handlers
+    // ════════════════════════════════════════
+
+    private void btnConnectRs232_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            if (cmbCom1.SelectedItem != null)
+            {
+                _rs232Ij1.ConfigureSerialPort(cmbCom1.SelectedItem.ToString()!);
+                _rs232Ij1.OpenSerialPort();
+            }
+            if (cmbCom2.SelectedItem != null)
+            {
+                _rs232Ij2.ConfigureSerialPort(cmbCom2.SelectedItem.ToString()!);
+                _rs232Ij2.OpenSerialPort();
+            }
+            UpdateDeviceStatus();
+            Log("RS232 connected.");
+        }
+        catch (Exception ex)
+        {
+            Log("RS232 connect error: " + ex.Message);
+        }
+    }
+
+    private void btnDisconnectRs232_Click(object sender, EventArgs e)
+    {
+        _rs232Ij1.CloseSerialPort();
+        _rs232Ij2.CloseSerialPort();
+        UpdateDeviceStatus();
+        Log("RS232 disconnected.");
+    }
+
+    private async void btnConnectTcp_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            string host = txtTcpHost.Text.Trim();
+            int port = int.Parse(txtTcpPort.Text.Trim());
+            await _tcpIj3.ConnectAsync(host, port);
+            await _tcpIj4.ConnectAsync(host, port + 1); // IJ4 on next port
+            UpdateDeviceStatus();
+            Log("TCP connected.");
+        }
+        catch (Exception ex)
+        {
+            Log("TCP connect error: " + ex.Message);
+        }
+    }
+
+    private void btnDisconnectTcp_Click(object sender, EventArgs e)
+    {
+        _tcpIj3.Disconnect();
+        _tcpIj4.Disconnect();
+        UpdateDeviceStatus();
+        Log("TCP disconnected.");
+    }
+
+    private void btnApplyApi_Click(object sender, EventArgs e)
+    {
+        string url = txtApiUrl.Text.Trim();
+        _api = new ApiClient(url);
+        lblApiStatus.Text = "Applied";
+        Log($"API URL set to: {url}");
+    }
+
+    // ════════════════════════════════════════
+    //  Polling
+    // ════════════════════════════════════════
+
+    private async void tmrPoll_Tick(object sender, EventArgs e)
+    {
+        tmrPoll.Stop(); // Prevent re-entry
+        try
+        {
+            var jobs = await _api.GetPendingJobsAsync();
+            _pendingJobs = jobs;
+            UpdateJobGrid();
+            UpdateDeviceStatus();
+            lblApiStatus.Text = "OK";
+        }
+        catch (Exception ex)
+        {
+            lblApiStatus.Text = "Error";
+            Log("Poll error: " + ex.Message);
+        }
+        finally
+        {
+            tmrPoll.Start();
+        }
+    }
+
+    private void btnRefresh_Click(object sender, EventArgs e)
+    {
+        tmrPoll_Tick(sender, e);
+    }
+
+    // ════════════════════════════════════════
+    //  Job selection
+    // ════════════════════════════════════════
+
+    //private async void dgvJobs_SelectionChanged(object sender, EventArgs e)
+    //{
+    //    if (dgvJobs.SelectedRows.Count == 0) return;
+
+    //    var row = dgvJobs.SelectedRows[0];
+    //    if (row.Cells["Id"].Value == null) return;
+
+    //    int jobId = (int)row.Cells["Id"].Value;
+    //    string rawbarcode = row.Cells["BarcodeRaw"].Value?.ToString() ?? "";
+    //    if (jobId == _selectedJobId) return;
+    //    _selectedJobId = jobId;
+
+    //    try
+    //    {
+    //        MessageBox.Show($"Selected job ID: {rawbarcode}");
+    //        var resolved = await _api.GetResolvedJobAsync(jobId);
+    //        _currentResolved = resolved;
+    //        UpdateDetailPanel();
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        Log("Load job detail error: " + ex.Message);
+    //    }
+    //}
+
+    private async void dgvJobs_SelectionChanged(object sender, EventArgs e)
+    {
+        if (dgvJobs.SelectedRows.Count == 0) return;
+
+        var row = dgvJobs.SelectedRows[0];
+        if (row.Cells["Id"].Value == null) return;
+
+        int jobId = (int)row.Cells["Id"].Value;
+        string rawbarcode = row.Cells["BarcodeRaw"].Value?.ToString() ?? "";
+        if (jobId == _selectedJobId) return;
+        _selectedJobId = jobId;
+
+        // Helpers
+        static bool ReaderHasColumn(SqliteDataReader r, string name)
+        {
+            for (int i = 0; i < r.FieldCount; i++)
+            {
+                if (string.Equals(r.GetName(i), name, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
+
+        static string? GetStringSafe(SqliteDataReader r, string name)
+        {
+            if (!ReaderHasColumn(r, name)) return null;
+            int idx = r.GetOrdinal(name);
+            return r.IsDBNull(idx) ? null : r.GetString(idx);
+        }
+
+        static int? GetIntSafe(SqliteDataReader r, string name)
+        {
+            var s = GetStringSafe(r, name);
+            if (string.IsNullOrWhiteSpace(s)) return null;
+            return int.TryParse(s, out var v) ? v : null;
+        }
+
+        try
+        {
+            string dbPath = @"D:\DB\uv_data.db3";
+            string connStr = $"Data Source={dbPath}";
+            bool found = false;
+
+            try
+            {
+                await using var conn = new SqliteConnection(connStr);
+                await conn.OpenAsync();
+
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT * FROM config_data WHERE pattern_no_erp = @rawbarcode LIMIT 1";
+                cmd.Parameters.AddWithValue("@rawbarcode", rawbarcode);
+
+                await using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    // Build PatternDetail from known schema columns.
+                    var pattern = new PatternDetail
+                    {
+                        Barcode = GetStringSafe(reader, "pattern_no_erp") ?? GetStringSafe(reader, "pattern_no_erp2") ?? rawbarcode,
+                        Description = GetStringSafe(reader, "model_plan_code") ?? GetStringSafe(reader, "program_name") ?? ""
+                    };
+
+                    // Helper to build MK config (mk1 / mk2)
+                    InkjetConfigDto BuildMkConfig(string prefix, int ordinal, string programNameColumn)
+                    {
+                        var cfg = new InkjetConfigDto
+                        {
+                            Ordinal = ordinal,
+                            ProgramNumber = GetIntSafe(reader, $"{prefix}program_no") ?? GetIntSafe(reader, $"{prefix}program_no") ?? null,
+                            ProgramName = GetStringSafe(reader, programNameColumn),
+                            Width = GetIntSafe(reader, $"{prefix}width"),
+                            Height = GetIntSafe(reader, $"{prefix}height"),
+                            TriggerDelay = GetIntSafe(reader, $"{prefix}trigger_delay"),
+                            Direction = GetIntSafe(reader, $"{prefix}text_direction"),
+                            SteelType = null,
+                            Suspended = false
+                        };
+
+                        // text blocks 1..5
+                        for (int b = 1; b <= 5; b++)
+                        {
+                            string textCol = $"{prefix}block{b}_text";
+                            if (ReaderHasColumn(reader, textCol))
+                            {
+                                var text = GetStringSafe(reader, textCol);
+                                if (!string.IsNullOrEmpty(text))
+                                {
+                                    var tb = new TextBlockDto
+                                    {
+                                        BlockNumber = b,
+                                        Text = text,
+                                        X = GetIntSafe(reader, $"{prefix}block{b}_x"),
+                                        Y = GetIntSafe(reader, $"{prefix}block{b}_y"),
+                                        Size = GetIntSafe(reader, $"{prefix}block{b}_size"),
+                                        Scale = GetIntSafe(reader, $"{prefix}block{b}_scale_side")
+                                    };
+                                    cfg.TextBlocks.Add(tb);
+                                }
+                            }
+                        }
+
+                        return cfg;
+                    }
+
+                    // mk1 fields use prefix "mk1_"; program name fallback to "program_name"
+                    var mk1 = BuildMkConfig("mk1_", 1, "program_name");
+                    // mk2 fields use prefix "mk2_"; program name fallback to "program_name3"
+                    var mk2 = BuildMkConfig("mk2_", 2, "program_name3");
+
+                    pattern.InkjetConfigs = new List<InkjetConfigDto> { mk1, mk2 };
+
+                    // Conveyor speeds / servo configs - attempt to map if available (optional)
+                    var spd1 = GetIntSafe(reader, "belt1_inkjet");
+                    var spd2 = GetIntSafe(reader, "belt2_feed_inkjet");
+                    if (spd1.HasValue || spd2.HasValue)
+                    {
+                        pattern.ConveyorSpeeds = new ConveyorSpeedDto
+                        {
+                            Speed1 = spd1,
+                            Speed2 = spd2,
+                            Speed3 = GetIntSafe(reader, "belt3")
+                        };
+                    }
+
+                    // Minimal job + resolved response
+                    _currentResolved = new ResolvedJobResponse
+                    {
+                        Job = new PrintJob
+                        {
+                            Id = jobId,
+                            BarcodeRaw = rawbarcode,
+                            LotNumber = row.Cells["LotNumber"].Value?.ToString(),
+                            Status = row.Cells["Status"].Value?.ToString()
+                        },
+                        Pattern = pattern
+                    };
+
+                    found = true;
+                    UpdateDetailPanel();
+                }
+
+                await conn.CloseAsync();
+            }
+            catch (Exception dbEx)
+            {
+                Log("SQLite query error: " + dbEx.Message);
+            }
+
+            if (!found)
+            {
+                var resolved = await _api.GetResolvedJobAsync(jobId);
+                _currentResolved = resolved;
+                UpdateDetailPanel();
+            }
+        }
+        catch (Exception ex)
+        {
+            Log("Load job detail error: " + ex.Message);
+        }
+    }
+
+    private void dgvConfigs_SelectionChanged(object sender, EventArgs e)
+    {
+        if (dgvConfigs.SelectedRows.Count == 0 || _currentResolved?.Pattern == null) return;
+
+        int idx = dgvConfigs.SelectedRows[0].Index;
+        var configs = _currentResolved.Pattern.InkjetConfigs;
+        if (configs == null || idx >= configs.Count) return;
+
+        var config = configs[idx];
+        dgvTextBlocks.DataSource = config.TextBlocks;
+    }
+
+    // ════════════════════════════════════════
+    //  Send to devices
+    // ════════════════════════════════════════
+
+    private async void btnSend_Click(object sender, EventArgs e)
+    {
+        if (_currentResolved == null || _selectedJobId < 0)
+        {
+            MessageBox.Show("No job selected.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        btnSend.Enabled = false;
+        var commandResults = new List<CommandResult>();
+
+        try
+        {
+            // Mark job as executing
+            bool ok = await _api.ExecuteJobAsync(_selectedJobId);
+            if (!ok)
+            {
+                Log("Failed to mark job as executing.");
+                btnSend.Enabled = true;
+                return;
+            }
+
+            // Re-fetch resolved data (templates may depend on attempt number)
+            var resolved = await _api.GetResolvedJobAsync(_selectedJobId);
+            if (resolved?.Pattern == null)
+            {
+                Log("Failed to get resolved job.");
+                btnSend.Enabled = true;
+                return;
+            }
+
+            _currentResolved = resolved;
+            UpdateDetailPanel();
+
+            // Send to each inkjet by ordinal
+            var configs = resolved.Pattern.InkjetConfigs ?? new List<InkjetConfigDto>();
+            bool hasError = false;
+
+            foreach (var config in configs.OrderBy(c => c.Ordinal))
+            {
+                if (config.Suspended)
+                {
+                    Log($"IJ{config.Ordinal} suspended — skipping.");
+                    continue;
+                }
+
+                IInkjetAdapter adapter = GetAdapterByOrdinal(config.Ordinal);
+
+                if (!adapter.IsConnected())
+                {
+                    Log($"IJ{config.Ordinal} not connected — skipping.");
+                    commandResults.Add(new CommandResult
+                    {
+                        Ordinal = config.Ordinal,
+                        Command = "connect_check",
+                        Success = false,
+                        Response = "Not connected",
+                        SentAt = DateTime.UtcNow.ToString("o"),
+                    });
+                    hasError = true;
+                    break; // Sequential error — stop (csv_extractor.py line 281)
+                }
+
+                // 1. Change program
+                if (config.ProgramNumber.HasValue)
+                {
+                    var r = await adapter.ChangeProgramAsync(config.ProgramNumber.Value);
+                    r.Ordinal = config.Ordinal;
+                    commandResults.Add(r);
+                    Log($"IJ{config.Ordinal} ChangeProgram({config.ProgramNumber}): {(r.Success ? "OK" : "FAIL")}");
+
+                    if (!r.Success) { hasError = true; break; }
+                }
+
+                // 2. Send config
+                var cfgResult = await adapter.SendConfigAsync(config);
+                cfgResult.Ordinal = config.Ordinal;
+                commandResults.Add(cfgResult);
+                Log($"IJ{config.Ordinal} SendConfig: {(cfgResult.Success ? "OK" : "FAIL")}");
+
+                if (!cfgResult.Success) { hasError = true; break; }
+
+                // 3. Send text blocks (device blocks 6-10)
+                var blocks = config.TextBlocks ?? new List<TextBlockDto>();
+                foreach (var block in blocks.OrderBy(b => b.BlockNumber))
+                {
+                    int deviceBlock = block.BlockNumber + 5; // blocks 6-10
+                    var tbResult = await adapter.SendTextBlockAsync(block, deviceBlock);
+                    tbResult.Ordinal = config.Ordinal;
+                    commandResults.Add(tbResult);
+                    Log($"IJ{config.Ordinal} TextBlock({block.BlockNumber}): {(tbResult.Success ? "OK" : "FAIL")}");
+
+                    if (!tbResult.Success) { hasError = true; break; }
+                    await Task.Delay(30); // 30ms delay between blocks (csv_extractor.py line 274)
+                }
+
+                if (hasError) break;
+
+                // 4. Resume printing
+                var resumeResult = await adapter.ResumeAsync();
+                resumeResult.Ordinal = config.Ordinal;
+                commandResults.Add(resumeResult);
+                Log($"IJ{config.Ordinal} Resume: {(resumeResult.Success ? "OK" : "FAIL")}");
+
+                if (!resumeResult.Success) { hasError = true; break; }
+            }
+
+            // Send conveyor speed + servo to PLC
+            if (!hasError && resolved.Pattern.ConveyorSpeeds != null)
+            {
+                var spd = resolved.Pattern.ConveyorSpeeds;
+                await _plc.WriteSpeedAsync(spd.Speed1 ?? 0, spd.Speed2 ?? 0, spd.Speed3 ?? 0);
+                Log($"PLC speed: {spd.Speed1}/{spd.Speed2}/{spd.Speed3}");
+            }
+
+            if (!hasError && resolved.Pattern.ServoConfigs != null)
+            {
+                foreach (var servo in resolved.Pattern.ServoConfigs)
+                {
+                    await _plc.WriteServoAsync(servo.Ordinal, servo.Position ?? 0, servo.PostAct ?? 0, servo.Delay ?? 0, servo.Trigger ?? 0);
+                    Log($"PLC servo ordinal={servo.Ordinal}: pos={servo.Position}");
+                }
+            }
+
+            // Post results back to backend
+            var payload = new JobResultsPayload
+            {
+                Success = !hasError,
+                ErrorMessage = hasError ? "One or more commands failed" : null,
+                Commands = commandResults,
+            };
+
+            await _api.PostResultsAsync(_selectedJobId, payload);
+            Log(hasError ? "Job completed with errors." : "Job completed successfully.");
+        }
+        catch (Exception ex)
+        {
+            Log("Send error: " + ex.Message);
+        }
+        finally
+        {
+            btnSend.Enabled = true;
+        }
+    }
+
+    private async void btnRetry_Click(object sender, EventArgs e)
+    {
+        if (_selectedJobId < 0) return;
+
+        bool ok = await _api.RetryJobAsync(_selectedJobId);
+        Log(ok ? $"Job {_selectedJobId} retried." : $"Retry failed for job {_selectedJobId}.");
+    }
+
+    // ════════════════════════════════════════
+    //  Helpers
+    // ════════════════════════════════════════
+
+    private IInkjetAdapter GetAdapterByOrdinal(int ordinal)
+    {
+        return ordinal switch
+        {
+            1 => _adapterIj1,
+            2 => _adapterIj2,
+            3 => _adapterIj3,
+            4 => _adapterIj4,
+            _ => _adapterIj1,
+        };
+    }
+
+    private void UpdateDeviceStatus()
+    {
+        if (InvokeRequired) { Invoke(UpdateDeviceStatus); return; }
+
+        lblStatusIj1.BackColor = _adapterIj1.IsConnected() ? Color.Green : Color.Gray;
+        lblStatusIj2.BackColor = _adapterIj2.IsConnected() ? Color.Green : Color.Gray;
+        lblStatusIj3.BackColor = _adapterIj3.IsConnected() ? Color.Green : Color.Gray;
+        lblStatusIj4.BackColor = _adapterIj4.IsConnected() ? Color.Green : Color.Gray;
+    }
+
+    private void UpdateJobGrid()
+    {
+        if (InvokeRequired) { Invoke(UpdateJobGrid); return; }
+
+        dgvJobs.DataSource = null;
+        dgvJobs.DataSource = _pendingJobs.Select(j => new
+        {
+            j.Id,
+            j.BarcodeRaw,
+            j.LotNumber,
+            j.Status,
+            j.Attempt,
+        }).ToList();
+    }
+
+    private void UpdateDetailPanel()
+    {
+        if (InvokeRequired) { Invoke(UpdateDetailPanel); return; }
+
+        if (_currentResolved == null) return;
+
+        var job = _currentResolved.Job;
+        var pattern = _currentResolved.Pattern;
+
+        txtBarcode.Text = job?.BarcodeRaw ?? "";
+        txtLot.Text = job?.LotNumber ?? "";
+        txtStatus.Text = job?.Status ?? "";
+        txtPattern.Text = pattern?.Barcode ?? "";
+
+        dgvConfigs.DataSource = pattern?.InkjetConfigs?.Select(c => new
+        {
+            c.Ordinal,
+            c.ProgramNumber,
+            c.ProgramName,
+            c.Width,
+            c.Height,
+            c.TriggerDelay,
+            Dir = c.Direction,
+            c.Suspended,
+            Blocks = c.TextBlocks?.Count ?? 0,
+        }).ToList();
+
+        dgvTextBlocks.DataSource = null;
+    }
+
+    private void Log(string message)
+    {
+        if (InvokeRequired) { Invoke(() => Log(message)); return; }
+
+        string line = $"[{DateTime.Now:HH:mm:ss}] {message}";
+        txtLog.AppendText(line + Environment.NewLine);
+    }
+
+    private void button1_Click(object sender, EventArgs e)
+    {
+        var steps = new[]
+        {
+        new BotStep { Name = "Document",   X = 2325, Y = 59,  VerifyArea = new Rectangle(2100, 0, 400, 300) },
+        new BotStep { Name = "Open",       X = 2207, Y = 133, VerifyArea = new Rectangle(2100, 100, 400, 400) },
+        new BotStep { Name = "SelectFile", X = 1506, Y = 654, VerifyArea = new Rectangle(800, 400, 800, 600) },
+        new BotStep { Name = "OpenBtn",    X = 1652, Y = 946, VerifyArea = new Rectangle(1500, 800, 500, 300) },
+    };
+
+        BotClickHelper.RunAsync("uvinkjet", steps, result =>
+        {
+            if (this.IsHandleCreated)
+                this.Invoke((MethodInvoker)(() =>
+                    MessageBox.Show(result.Success ? "สำเร็จ!" : result.Error)));
+        });
+    }
+
+    private void button2_Click(object sender, EventArgs e)
+    {
+        // ใช้ Invoke เพื่อความปลอดภัยว่าทำงานบน UI Thread (STA)
+        this.Invoke(new Action(() =>
+        {
+            using (frmPatternEditor editor = new frmPatternEditor())
+            {
+                editor.StartPosition = FormStartPosition.CenterParent;
+                editor.ShowDialog();
+            }
+        }));
+    }
+
+    private async void button3_Click(object sender, EventArgs e)
+    {
+        //await SendTextBlocksToIjAsync(3);
+        var form = new frmCreateJob(_api);
+        form.ShowDialog();
+    }
+
+    private async void button4_Click(object sender, EventArgs e)
+    {
+        await TestSendToIj3TcpAsync();
+    }
+
+    // Example usage: send blocks from dgvTextBlocks to IJ3 via TCP (simple demo)
+    private async Task TestSendToIj3TcpAsync()
+    {
+        // read TCP host/port from UI controls
+        string host = txtTcpHost.Text.Trim();
+        if (!int.TryParse(txtTcpPort.Text.Trim(), out int port))
+        {
+            Log("Invalid TCP port");
+            return;
+        }
+
+        using var client = new InkjetOperator.Adapters.Simple.SocketDeviceClient();
+        try
+        {
+            await client.ConnectAsync(host, port);
+        }
+        catch (Exception ex)
+        {
+            Log("TCP connect failed: " + ex.Message);
+            return;
+        }
+
+        // Example: change program to 13
+        var progResp = await InkjetOperator.Services.InkjetProtocol.SendChangeProgramAsync(client, 13);
+        Log($"ChangeProgram resp: {progResp}");
+
+        // Send each row in dgvTextBlocks
+        foreach (DataGridViewRow row in dgvTextBlocks.Rows)
+        {
+            if (row.IsNewRow) continue;
+
+            int blockNumber = 1;
+            if (dgvTextBlocks.Columns.Contains("BlockNumber") && int.TryParse(row.Cells["BlockNumber"].Value?.ToString(), out var bn))
+                blockNumber = bn;
+
+            string text = row.Cells["Text"].Value?.ToString() ?? row.Cells["text"].Value?.ToString() ?? "";
+            int x = int.TryParse(row.Cells["X"].Value?.ToString(), out var tx) ? tx : 0;
+            int y = int.TryParse(row.Cells["Y"].Value?.ToString(), out var ty) ? ty : 0;
+            int size = int.TryParse(row.Cells["Size"].Value?.ToString(), out var ts) ? ts : 1;
+            int scale = int.TryParse(row.Cells["Scale"].Value?.ToString(), out var tsc) ? tsc : 1;
+
+            var block = new InkjetOperator.Services.SimpleTextBlock(blockNumber, text, x, y, size, scale);
+            var (fsResp, f1Resp) = await InkjetOperator.Services.InkjetProtocol.SendTextBlockAsync(client, 13, block);
+            Log($"IJ3 TextBlock({blockNumber}) FS='{fsResp}' F1='{f1Resp}'");
+
+            // If adapter or device returns empty error, you can decide to continue or break.
+            await Task.Delay(30);
+        }
+
+        var resume = await InkjetOperator.Services.InkjetProtocol.SendResumeAsync(client);
+        Log($"Resume resp: {resume}");
+    }
+}
+</file>
+
+<file path="frmMain.Designer.cs">
+namespace InkjetOperator;
+
+partial class frmMain
+{
+    private System.ComponentModel.IContainer components = null;
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing && (components != null))
+        {
+            components.Dispose();
+        }
+        base.Dispose(disposing);
+    }
+
+    #region Windows Form Designer generated code
+
+    private void InitializeComponent()
+    {
+        components = new System.ComponentModel.Container();
+        tmrPoll = new System.Windows.Forms.Timer(components);
+        pnlConnection = new Panel();
+        button4 = new Button();
+        button3 = new Button();
+        button2 = new Button();
+        button1 = new Button();
+        grpInkjet12 = new GroupBox();
+        lblCom1 = new Label();
+        cmbCom1 = new ComboBox();
+        lblCom2 = new Label();
+        cmbCom2 = new ComboBox();
+        btnConnectRs232 = new Button();
+        btnDisconnectRs232 = new Button();
+        lblStatusIj1 = new Label();
+        lblStatusIj2 = new Label();
+        grpInkjet34 = new GroupBox();
+        lblTcpHost = new Label();
+        txtTcpHost = new TextBox();
+        lblTcpPort = new Label();
+        txtTcpPort = new TextBox();
+        btnConnectTcp = new Button();
+        btnDisconnectTcp = new Button();
+        lblStatusIj3 = new Label();
+        lblStatusIj4 = new Label();
+        grpBackend = new GroupBox();
+        lblApiUrl = new Label();
+        txtApiUrl = new TextBox();
+        btnApplyApi = new Button();
+        lblApiStatus = new Label();
+        pnlJobs = new Panel();
+        dgvJobs = new DataGridView();
+        btnRefresh = new Button();
+        lblJobsTitle = new Label();
+        pnlDetail = new Panel();
+        groupBox1 = new GroupBox();
+        dgvUVBlocks = new DataGridView();
+        lblDetailTitle = new Label();
+        lblBarcode = new Label();
+        txtBarcode = new TextBox();
+        lblLot = new Label();
+        txtLot = new TextBox();
+        lblStatus = new Label();
+        txtStatus = new TextBox();
+        lblPattern = new Label();
+        txtPattern = new TextBox();
+        grpInkjetConfigs = new GroupBox();
+        dgvConfigs = new DataGridView();
+        grpTextBlocks = new GroupBox();
+        dgvTextBlocks = new DataGridView();
+        btnSend = new Button();
+        btnRetry = new Button();
+        pnlLog = new Panel();
+        txtLog = new TextBox();
+        lblLogTitle = new Label();
+        pnlConnection.SuspendLayout();
+        grpInkjet12.SuspendLayout();
+        grpInkjet34.SuspendLayout();
+        grpBackend.SuspendLayout();
+        pnlJobs.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)dgvJobs).BeginInit();
+        pnlDetail.SuspendLayout();
+        groupBox1.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)dgvUVBlocks).BeginInit();
+        grpInkjetConfigs.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)dgvConfigs).BeginInit();
+        grpTextBlocks.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)dgvTextBlocks).BeginInit();
+        pnlLog.SuspendLayout();
+        SuspendLayout();
+        // 
+        // tmrPoll
+        // 
+        tmrPoll.Interval = 5000;
+        tmrPoll.Tick += tmrPoll_Tick;
+        // 
+        // pnlConnection
+        // 
+        pnlConnection.Controls.Add(button4);
+        pnlConnection.Controls.Add(button3);
+        pnlConnection.Controls.Add(button2);
+        pnlConnection.Controls.Add(button1);
+        pnlConnection.Controls.Add(grpInkjet12);
+        pnlConnection.Controls.Add(grpInkjet34);
+        pnlConnection.Controls.Add(grpBackend);
+        pnlConnection.Dock = DockStyle.Top;
+        pnlConnection.Location = new Point(0, 0);
+        pnlConnection.Margin = new Padding(3, 4, 3, 4);
+        pnlConnection.Name = "pnlConnection";
+        pnlConnection.Size = new Size(1143, 153);
+        pnlConnection.TabIndex = 3;
+        // 
+        // button4
+        // 
+        button4.Location = new Point(878, 50);
+        button4.Name = "button4";
+        button4.Size = new Size(123, 29);
+        button4.TabIndex = 6;
+        button4.Text = "test send text block";
+        button4.UseVisualStyleBackColor = true;
+        button4.Click += button4_Click;
+        // 
+        // button3
+        // 
+        button3.Location = new Point(747, 50);
+        button3.Name = "button3";
+        button3.Size = new Size(122, 29);
+        button3.TabIndex = 5;
+        button3.Text = "Add Job";
+        button3.UseVisualStyleBackColor = true;
+        button3.Click += button3_Click;
+        // 
+        // button2
+        // 
+        button2.Location = new Point(875, 12);
+        button2.Name = "button2";
+        button2.Size = new Size(126, 32);
+        button2.TabIndex = 4;
+        button2.Text = "TEST Pattern";
+        button2.UseVisualStyleBackColor = true;
+        button2.Click += button2_Click;
+        // 
+        // button1
+        // 
+        button1.Location = new Point(747, 12);
+        button1.Name = "button1";
+        button1.Size = new Size(122, 32);
+        button1.TabIndex = 3;
+        button1.Text = "Test Bot Click";
+        button1.UseVisualStyleBackColor = true;
+        button1.Click += button1_Click;
+        // 
+        // grpInkjet12
+        // 
+        grpInkjet12.Controls.Add(lblCom1);
+        grpInkjet12.Controls.Add(cmbCom1);
+        grpInkjet12.Controls.Add(lblCom2);
+        grpInkjet12.Controls.Add(cmbCom2);
+        grpInkjet12.Controls.Add(btnConnectRs232);
+        grpInkjet12.Controls.Add(btnDisconnectRs232);
+        grpInkjet12.Controls.Add(lblStatusIj1);
+        grpInkjet12.Controls.Add(lblStatusIj2);
+        grpInkjet12.Location = new Point(6, 7);
+        grpInkjet12.Margin = new Padding(3, 4, 3, 4);
+        grpInkjet12.Name = "grpInkjet12";
+        grpInkjet12.Padding = new Padding(3, 4, 3, 4);
+        grpInkjet12.Size = new Size(714, 67);
+        grpInkjet12.TabIndex = 0;
+        grpInkjet12.TabStop = false;
+        grpInkjet12.Text = "Inkjet 1 & 2 (RS232)";
+        // 
+        // lblCom1
+        // 
+        lblCom1.AutoSize = true;
+        lblCom1.Location = new Point(11, 29);
+        lblCom1.Name = "lblCom1";
+        lblCom1.Size = new Size(84, 20);
+        lblCom1.TabIndex = 0;
+        lblCom1.Text = "COM1 (IJ1):";
+        // 
+        // cmbCom1
+        // 
+        cmbCom1.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbCom1.Location = new Point(103, 25);
+        cmbCom1.Margin = new Padding(3, 4, 3, 4);
+        cmbCom1.Name = "cmbCom1";
+        cmbCom1.Size = new Size(102, 28);
+        cmbCom1.TabIndex = 1;
+        // 
+        // lblCom2
+        // 
+        lblCom2.AutoSize = true;
+        lblCom2.Location = new Point(217, 29);
+        lblCom2.Name = "lblCom2";
+        lblCom2.Size = new Size(84, 20);
+        lblCom2.TabIndex = 2;
+        lblCom2.Text = "COM2 (IJ2):";
+        // 
+        // cmbCom2
+        // 
+        cmbCom2.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbCom2.Location = new Point(309, 25);
+        cmbCom2.Margin = new Padding(3, 4, 3, 4);
+        cmbCom2.Name = "cmbCom2";
+        cmbCom2.Size = new Size(102, 28);
+        cmbCom2.TabIndex = 3;
+        // 
+        // btnConnectRs232
+        // 
+        btnConnectRs232.Location = new Point(423, 24);
+        btnConnectRs232.Margin = new Padding(3, 4, 3, 4);
+        btnConnectRs232.Name = "btnConnectRs232";
+        btnConnectRs232.Size = new Size(86, 33);
+        btnConnectRs232.TabIndex = 4;
+        btnConnectRs232.Text = "Connect";
+        btnConnectRs232.Click += btnConnectRs232_Click;
+        // 
+        // btnDisconnectRs232
+        // 
+        btnDisconnectRs232.Location = new Point(514, 24);
+        btnDisconnectRs232.Margin = new Padding(3, 4, 3, 4);
+        btnDisconnectRs232.Name = "btnDisconnectRs232";
+        btnDisconnectRs232.Size = new Size(91, 33);
+        btnDisconnectRs232.TabIndex = 5;
+        btnDisconnectRs232.Text = "Disconnect";
+        btnDisconnectRs232.Click += btnDisconnectRs232_Click;
+        // 
+        // lblStatusIj1
+        // 
+        lblStatusIj1.BackColor = Color.Gray;
+        lblStatusIj1.ForeColor = Color.White;
+        lblStatusIj1.Location = new Point(617, 29);
+        lblStatusIj1.Name = "lblStatusIj1";
+        lblStatusIj1.Size = new Size(40, 24);
+        lblStatusIj1.TabIndex = 6;
+        lblStatusIj1.Text = "IJ1";
+        lblStatusIj1.TextAlign = ContentAlignment.TopCenter;
+        // 
+        // lblStatusIj2
+        // 
+        lblStatusIj2.BackColor = Color.Gray;
+        lblStatusIj2.ForeColor = Color.White;
+        lblStatusIj2.Location = new Point(663, 29);
+        lblStatusIj2.Name = "lblStatusIj2";
+        lblStatusIj2.Size = new Size(40, 24);
+        lblStatusIj2.TabIndex = 7;
+        lblStatusIj2.Text = "IJ2";
+        lblStatusIj2.TextAlign = ContentAlignment.MiddleCenter;
+        // 
+        // grpInkjet34
+        // 
+        grpInkjet34.Controls.Add(lblTcpHost);
+        grpInkjet34.Controls.Add(txtTcpHost);
+        grpInkjet34.Controls.Add(lblTcpPort);
+        grpInkjet34.Controls.Add(txtTcpPort);
+        grpInkjet34.Controls.Add(btnConnectTcp);
+        grpInkjet34.Controls.Add(btnDisconnectTcp);
+        grpInkjet34.Controls.Add(lblStatusIj3);
+        grpInkjet34.Controls.Add(lblStatusIj4);
+        grpInkjet34.Location = new Point(6, 77);
+        grpInkjet34.Margin = new Padding(3, 4, 3, 4);
+        grpInkjet34.Name = "grpInkjet34";
+        grpInkjet34.Padding = new Padding(3, 4, 3, 4);
+        grpInkjet34.Size = new Size(617, 67);
+        grpInkjet34.TabIndex = 1;
+        grpInkjet34.TabStop = false;
+        grpInkjet34.Text = "Inkjet 3 & 4 (TCP)";
+        // 
+        // lblTcpHost
+        // 
+        lblTcpHost.AutoSize = true;
+        lblTcpHost.Location = new Point(11, 29);
+        lblTcpHost.Name = "lblTcpHost";
+        lblTcpHost.Size = new Size(43, 20);
+        lblTcpHost.TabIndex = 0;
+        lblTcpHost.Text = "Host:";
+        // 
+        // txtTcpHost
+        // 
+        txtTcpHost.Location = new Point(57, 25);
+        txtTcpHost.Margin = new Padding(3, 4, 3, 4);
+        txtTcpHost.Name = "txtTcpHost";
+        txtTcpHost.Size = new Size(137, 27);
+        txtTcpHost.TabIndex = 1;
+        txtTcpHost.Text = "192.168.3.77";
+        // 
+        // lblTcpPort
+        // 
+        lblTcpPort.AutoSize = true;
+        lblTcpPort.Location = new Point(206, 29);
+        lblTcpPort.Name = "lblTcpPort";
+        lblTcpPort.Size = new Size(38, 20);
+        lblTcpPort.TabIndex = 2;
+        lblTcpPort.Text = "Port:";
+        // 
+        // txtTcpPort
+        // 
+        txtTcpPort.Location = new Point(246, 25);
+        txtTcpPort.Margin = new Padding(3, 4, 3, 4);
+        txtTcpPort.Name = "txtTcpPort";
+        txtTcpPort.Size = new Size(68, 27);
+        txtTcpPort.TabIndex = 3;
+        txtTcpPort.Text = "9004";
+        // 
+        // btnConnectTcp
+        // 
+        btnConnectTcp.Location = new Point(326, 24);
+        btnConnectTcp.Margin = new Padding(3, 4, 3, 4);
+        btnConnectTcp.Name = "btnConnectTcp";
+        btnConnectTcp.Size = new Size(86, 33);
+        btnConnectTcp.TabIndex = 4;
+        btnConnectTcp.Text = "Connect";
+        btnConnectTcp.Click += btnConnectTcp_Click;
+        // 
+        // btnDisconnectTcp
+        // 
+        btnDisconnectTcp.Location = new Point(417, 24);
+        btnDisconnectTcp.Margin = new Padding(3, 4, 3, 4);
+        btnDisconnectTcp.Name = "btnDisconnectTcp";
+        btnDisconnectTcp.Size = new Size(91, 33);
+        btnDisconnectTcp.TabIndex = 5;
+        btnDisconnectTcp.Text = "Disconnect";
+        btnDisconnectTcp.Click += btnDisconnectTcp_Click;
+        // 
+        // lblStatusIj3
+        // 
+        lblStatusIj3.BackColor = Color.Gray;
+        lblStatusIj3.ForeColor = Color.White;
+        lblStatusIj3.Location = new Point(520, 29);
+        lblStatusIj3.Name = "lblStatusIj3";
+        lblStatusIj3.Size = new Size(40, 24);
+        lblStatusIj3.TabIndex = 6;
+        lblStatusIj3.Text = "IJ3";
+        lblStatusIj3.TextAlign = ContentAlignment.MiddleCenter;
+        // 
+        // lblStatusIj4
+        // 
+        lblStatusIj4.BackColor = Color.Gray;
+        lblStatusIj4.ForeColor = Color.White;
+        lblStatusIj4.Location = new Point(566, 29);
+        lblStatusIj4.Name = "lblStatusIj4";
+        lblStatusIj4.Size = new Size(40, 24);
+        lblStatusIj4.TabIndex = 7;
+        lblStatusIj4.Text = "IJ4";
+        lblStatusIj4.TextAlign = ContentAlignment.MiddleCenter;
+        // 
+        // grpBackend
+        // 
+        grpBackend.Controls.Add(lblApiUrl);
+        grpBackend.Controls.Add(txtApiUrl);
+        grpBackend.Controls.Add(btnApplyApi);
+        grpBackend.Controls.Add(lblApiStatus);
+        grpBackend.Location = new Point(629, 77);
+        grpBackend.Margin = new Padding(3, 4, 3, 4);
+        grpBackend.Name = "grpBackend";
+        grpBackend.Padding = new Padding(3, 4, 3, 4);
+        grpBackend.Size = new Size(423, 67);
+        grpBackend.TabIndex = 2;
+        grpBackend.TabStop = false;
+        grpBackend.Text = "Backend API";
+        // 
+        // lblApiUrl
+        // 
+        lblApiUrl.AutoSize = true;
+        lblApiUrl.Location = new Point(11, 29);
+        lblApiUrl.Name = "lblApiUrl";
+        lblApiUrl.Size = new Size(34, 20);
+        lblApiUrl.TabIndex = 0;
+        lblApiUrl.Text = "API:";
+        // 
+        // txtApiUrl
+        // 
+        txtApiUrl.Location = new Point(46, 25);
+        txtApiUrl.Margin = new Padding(3, 4, 3, 4);
+        txtApiUrl.Name = "txtApiUrl";
+        txtApiUrl.Size = new Size(228, 27);
+        txtApiUrl.TabIndex = 1;
+        txtApiUrl.Text = "http://localhost:3000";
+        // 
+        // btnApplyApi
+        // 
+        btnApplyApi.Location = new Point(280, 24);
+        btnApplyApi.Margin = new Padding(3, 4, 3, 4);
+        btnApplyApi.Name = "btnApplyApi";
+        btnApplyApi.Size = new Size(63, 33);
+        btnApplyApi.TabIndex = 2;
+        btnApplyApi.Text = "Apply";
+        btnApplyApi.Click += btnApplyApi_Click;
+        // 
+        // lblApiStatus
+        // 
+        lblApiStatus.AutoSize = true;
+        lblApiStatus.Location = new Point(354, 29);
+        lblApiStatus.Name = "lblApiStatus";
+        lblApiStatus.Size = new Size(27, 20);
+        lblApiStatus.TabIndex = 3;
+        lblApiStatus.Text = "---";
+        // 
+        // pnlJobs
+        // 
+        pnlJobs.Controls.Add(dgvJobs);
+        pnlJobs.Controls.Add(btnRefresh);
+        pnlJobs.Controls.Add(lblJobsTitle);
+        pnlJobs.Dock = DockStyle.Left;
+        pnlJobs.Location = new Point(0, 153);
+        pnlJobs.Margin = new Padding(3, 4, 3, 4);
+        pnlJobs.Name = "pnlJobs";
+        pnlJobs.Padding = new Padding(6, 7, 6, 7);
+        pnlJobs.Size = new Size(400, 774);
+        pnlJobs.TabIndex = 1;
+        // 
+        // dgvJobs
+        // 
+        dgvJobs.AllowUserToAddRows = false;
+        dgvJobs.AllowUserToDeleteRows = false;
+        dgvJobs.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        dgvJobs.ColumnHeadersHeight = 29;
+        dgvJobs.Dock = DockStyle.Fill;
+        dgvJobs.Location = new Point(6, 40);
+        dgvJobs.Margin = new Padding(3, 4, 3, 4);
+        dgvJobs.MultiSelect = false;
+        dgvJobs.Name = "dgvJobs";
+        dgvJobs.ReadOnly = true;
+        dgvJobs.RowHeadersWidth = 51;
+        dgvJobs.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+        dgvJobs.Size = new Size(388, 687);
+        dgvJobs.TabIndex = 0;
+        dgvJobs.SelectionChanged += dgvJobs_SelectionChanged;
+        // 
+        // btnRefresh
+        // 
+        btnRefresh.Dock = DockStyle.Bottom;
+        btnRefresh.Location = new Point(6, 727);
+        btnRefresh.Margin = new Padding(3, 4, 3, 4);
+        btnRefresh.Name = "btnRefresh";
+        btnRefresh.Size = new Size(388, 40);
+        btnRefresh.TabIndex = 1;
+        btnRefresh.Text = "Refresh";
+        btnRefresh.Click += btnRefresh_Click;
+        // 
+        // lblJobsTitle
+        // 
+        lblJobsTitle.Dock = DockStyle.Top;
+        lblJobsTitle.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        lblJobsTitle.Location = new Point(6, 7);
+        lblJobsTitle.Name = "lblJobsTitle";
+        lblJobsTitle.Size = new Size(388, 33);
+        lblJobsTitle.TabIndex = 2;
+        lblJobsTitle.Text = "Pending Jobs";
+        // 
+        // pnlDetail
+        // 
+        pnlDetail.Controls.Add(groupBox1);
+        pnlDetail.Controls.Add(lblDetailTitle);
+        pnlDetail.Controls.Add(lblBarcode);
+        pnlDetail.Controls.Add(txtBarcode);
+        pnlDetail.Controls.Add(lblLot);
+        pnlDetail.Controls.Add(txtLot);
+        pnlDetail.Controls.Add(lblStatus);
+        pnlDetail.Controls.Add(txtStatus);
+        pnlDetail.Controls.Add(lblPattern);
+        pnlDetail.Controls.Add(txtPattern);
+        pnlDetail.Controls.Add(grpInkjetConfigs);
+        pnlDetail.Controls.Add(grpTextBlocks);
+        pnlDetail.Controls.Add(btnSend);
+        pnlDetail.Controls.Add(btnRetry);
+        pnlDetail.Dock = DockStyle.Fill;
+        pnlDetail.Location = new Point(400, 153);
+        pnlDetail.Margin = new Padding(3, 4, 3, 4);
+        pnlDetail.Name = "pnlDetail";
+        pnlDetail.Padding = new Padding(6, 7, 6, 7);
+        pnlDetail.Size = new Size(743, 774);
+        pnlDetail.TabIndex = 0;
+        // 
+        // groupBox1
+        // 
+        groupBox1.Controls.Add(dgvUVBlocks);
+        groupBox1.Location = new Point(9, 484);
+        groupBox1.Margin = new Padding(3, 4, 3, 4);
+        groupBox1.Name = "groupBox1";
+        groupBox1.Padding = new Padding(3, 4, 3, 4);
+        groupBox1.Size = new Size(720, 173);
+        groupBox1.TabIndex = 13;
+        groupBox1.TabStop = false;
+        groupBox1.Text = "Uv Block";
+        // 
+        // dgvUVBlocks
+        // 
+        dgvUVBlocks.AllowUserToAddRows = false;
+        dgvUVBlocks.AllowUserToDeleteRows = false;
+        dgvUVBlocks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        dgvUVBlocks.ColumnHeadersHeight = 29;
+        dgvUVBlocks.Dock = DockStyle.Fill;
+        dgvUVBlocks.Location = new Point(3, 24);
+        dgvUVBlocks.Margin = new Padding(3, 4, 3, 4);
+        dgvUVBlocks.Name = "dgvUVBlocks";
+        dgvUVBlocks.ReadOnly = true;
+        dgvUVBlocks.RowHeadersWidth = 51;
+        dgvUVBlocks.Size = new Size(714, 145);
+        dgvUVBlocks.TabIndex = 0;
+        // 
+        // lblDetailTitle
+        // 
+        lblDetailTitle.AutoSize = true;
+        lblDetailTitle.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        lblDetailTitle.Location = new Point(6, 7);
+        lblDetailTitle.Name = "lblDetailTitle";
+        lblDetailTitle.Size = new Size(92, 23);
+        lblDetailTitle.TabIndex = 0;
+        lblDetailTitle.Text = "Job Detail";
+        // 
+        // lblBarcode
+        // 
+        lblBarcode.AutoSize = true;
+        lblBarcode.Location = new Point(6, 40);
+        lblBarcode.Name = "lblBarcode";
+        lblBarcode.Size = new Size(67, 20);
+        lblBarcode.TabIndex = 1;
+        lblBarcode.Text = "Barcode:";
+        // 
+        // txtBarcode
+        // 
+        txtBarcode.Location = new Point(91, 36);
+        txtBarcode.Margin = new Padding(3, 4, 3, 4);
+        txtBarcode.Name = "txtBarcode";
+        txtBarcode.ReadOnly = true;
+        txtBarcode.Size = new Size(228, 27);
+        txtBarcode.TabIndex = 2;
+        // 
+        // lblLot
+        // 
+        lblLot.AutoSize = true;
+        lblLot.Location = new Point(331, 40);
+        lblLot.Name = "lblLot";
+        lblLot.Size = new Size(33, 20);
+        lblLot.TabIndex = 3;
+        lblLot.Text = "Lot:";
+        // 
+        // txtLot
+        // 
+        txtLot.Location = new Point(366, 36);
+        txtLot.Margin = new Padding(3, 4, 3, 4);
+        txtLot.Name = "txtLot";
+        txtLot.ReadOnly = true;
+        txtLot.Size = new Size(171, 27);
+        txtLot.TabIndex = 4;
+        // 
+        // lblStatus
+        // 
+        lblStatus.AutoSize = true;
+        lblStatus.Location = new Point(549, 40);
+        lblStatus.Name = "lblStatus";
+        lblStatus.Size = new Size(52, 20);
+        lblStatus.TabIndex = 5;
+        lblStatus.Text = "Status:";
+        // 
+        // txtStatus
+        // 
+        txtStatus.Location = new Point(606, 36);
+        txtStatus.Margin = new Padding(3, 4, 3, 4);
+        txtStatus.Name = "txtStatus";
+        txtStatus.ReadOnly = true;
+        txtStatus.Size = new Size(114, 27);
+        txtStatus.TabIndex = 6;
+        // 
+        // lblPattern
+        // 
+        lblPattern.AutoSize = true;
+        lblPattern.Location = new Point(6, 73);
+        lblPattern.Name = "lblPattern";
+        lblPattern.Size = new Size(58, 20);
+        lblPattern.TabIndex = 7;
+        lblPattern.Text = "Pattern:";
+        // 
+        // txtPattern
+        // 
+        txtPattern.Location = new Point(91, 69);
+        txtPattern.Margin = new Padding(3, 4, 3, 4);
+        txtPattern.Name = "txtPattern";
+        txtPattern.ReadOnly = true;
+        txtPattern.Size = new Size(228, 27);
+        txtPattern.TabIndex = 8;
+        // 
+        // grpInkjetConfigs
+        // 
+        grpInkjetConfigs.Controls.Add(dgvConfigs);
+        grpInkjetConfigs.Location = new Point(6, 107);
+        grpInkjetConfigs.Margin = new Padding(3, 4, 3, 4);
+        grpInkjetConfigs.Name = "grpInkjetConfigs";
+        grpInkjetConfigs.Padding = new Padding(3, 4, 3, 4);
+        grpInkjetConfigs.Size = new Size(720, 173);
+        grpInkjetConfigs.TabIndex = 9;
+        grpInkjetConfigs.TabStop = false;
+        grpInkjetConfigs.Text = "Inkjet Configs";
+        // 
+        // dgvConfigs
+        // 
+        dgvConfigs.AllowUserToAddRows = false;
+        dgvConfigs.AllowUserToDeleteRows = false;
+        dgvConfigs.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        dgvConfigs.ColumnHeadersHeight = 29;
+        dgvConfigs.Dock = DockStyle.Fill;
+        dgvConfigs.Location = new Point(3, 24);
+        dgvConfigs.Margin = new Padding(3, 4, 3, 4);
+        dgvConfigs.Name = "dgvConfigs";
+        dgvConfigs.ReadOnly = true;
+        dgvConfigs.RowHeadersWidth = 51;
+        dgvConfigs.Size = new Size(714, 145);
+        dgvConfigs.TabIndex = 0;
+        dgvConfigs.SelectionChanged += dgvConfigs_SelectionChanged;
+        // 
+        // grpTextBlocks
+        // 
+        grpTextBlocks.Controls.Add(dgvTextBlocks);
+        grpTextBlocks.Location = new Point(6, 287);
+        grpTextBlocks.Margin = new Padding(3, 4, 3, 4);
+        grpTextBlocks.Name = "grpTextBlocks";
+        grpTextBlocks.Padding = new Padding(3, 4, 3, 4);
+        grpTextBlocks.Size = new Size(720, 173);
+        grpTextBlocks.TabIndex = 10;
+        grpTextBlocks.TabStop = false;
+        grpTextBlocks.Text = "Text Blocks";
+        // 
+        // dgvTextBlocks
+        // 
+        dgvTextBlocks.AllowUserToAddRows = false;
+        dgvTextBlocks.AllowUserToDeleteRows = false;
+        dgvTextBlocks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        dgvTextBlocks.ColumnHeadersHeight = 29;
+        dgvTextBlocks.Dock = DockStyle.Fill;
+        dgvTextBlocks.Location = new Point(3, 24);
+        dgvTextBlocks.Margin = new Padding(3, 4, 3, 4);
+        dgvTextBlocks.Name = "dgvTextBlocks";
+        dgvTextBlocks.ReadOnly = true;
+        dgvTextBlocks.RowHeadersWidth = 51;
+        dgvTextBlocks.Size = new Size(714, 145);
+        dgvTextBlocks.TabIndex = 0;
+        // 
+        // btnSend
+        // 
+        btnSend.BackColor = Color.FromArgb(0, 120, 215);
+        btnSend.FlatStyle = FlatStyle.Flat;
+        btnSend.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+        btnSend.ForeColor = Color.White;
+        btnSend.Location = new Point(9, 713);
+        btnSend.Margin = new Padding(3, 4, 3, 4);
+        btnSend.Name = "btnSend";
+        btnSend.Size = new Size(229, 53);
+        btnSend.TabIndex = 11;
+        btnSend.Text = "SEND TO DEVICES";
+        btnSend.UseVisualStyleBackColor = false;
+        btnSend.Click += btnSend_Click;
+        // 
+        // btnRetry
+        // 
+        btnRetry.Location = new Point(244, 714);
+        btnRetry.Margin = new Padding(3, 4, 3, 4);
+        btnRetry.Name = "btnRetry";
+        btnRetry.Size = new Size(137, 53);
+        btnRetry.TabIndex = 12;
+        btnRetry.Text = "Retry Failed";
+        btnRetry.Click += btnRetry_Click;
+        // 
+        // pnlLog
+        // 
+        pnlLog.Controls.Add(txtLog);
+        pnlLog.Controls.Add(lblLogTitle);
+        pnlLog.Dock = DockStyle.Bottom;
+        pnlLog.Location = new Point(0, 927);
+        pnlLog.Margin = new Padding(3, 4, 3, 4);
+        pnlLog.Name = "pnlLog";
+        pnlLog.Padding = new Padding(6, 7, 6, 7);
+        pnlLog.Size = new Size(1143, 187);
+        pnlLog.TabIndex = 2;
+        // 
+        // txtLog
+        // 
+        txtLog.Dock = DockStyle.Fill;
+        txtLog.Font = new Font("Consolas", 8.5F);
+        txtLog.Location = new Point(6, 34);
+        txtLog.Margin = new Padding(3, 4, 3, 4);
+        txtLog.Multiline = true;
+        txtLog.Name = "txtLog";
+        txtLog.ReadOnly = true;
+        txtLog.ScrollBars = ScrollBars.Vertical;
+        txtLog.Size = new Size(1131, 146);
+        txtLog.TabIndex = 0;
+        // 
+        // lblLogTitle
+        // 
+        lblLogTitle.Dock = DockStyle.Top;
+        lblLogTitle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        lblLogTitle.Location = new Point(6, 7);
+        lblLogTitle.Name = "lblLogTitle";
+        lblLogTitle.Size = new Size(1131, 27);
+        lblLogTitle.TabIndex = 1;
+        lblLogTitle.Text = "Log";
+        // 
+        // frmMain
+        // 
+        AutoScaleDimensions = new SizeF(8F, 20F);
+        AutoScaleMode = AutoScaleMode.Font;
+        ClientSize = new Size(1143, 1114);
+        Controls.Add(pnlDetail);
+        Controls.Add(pnlJobs);
+        Controls.Add(pnlLog);
+        Controls.Add(pnlConnection);
+        Margin = new Padding(3, 4, 3, 4);
+        Name = "frmMain";
+        StartPosition = FormStartPosition.CenterScreen;
+        Text = "Inkjet Operator";
+        FormClosing += frmMain_FormClosing;
+        Load += frmMain_Load;
+        pnlConnection.ResumeLayout(false);
+        grpInkjet12.ResumeLayout(false);
+        grpInkjet12.PerformLayout();
+        grpInkjet34.ResumeLayout(false);
+        grpInkjet34.PerformLayout();
+        grpBackend.ResumeLayout(false);
+        grpBackend.PerformLayout();
+        pnlJobs.ResumeLayout(false);
+        ((System.ComponentModel.ISupportInitialize)dgvJobs).EndInit();
+        pnlDetail.ResumeLayout(false);
+        pnlDetail.PerformLayout();
+        groupBox1.ResumeLayout(false);
+        ((System.ComponentModel.ISupportInitialize)dgvUVBlocks).EndInit();
+        grpInkjetConfigs.ResumeLayout(false);
+        ((System.ComponentModel.ISupportInitialize)dgvConfigs).EndInit();
+        grpTextBlocks.ResumeLayout(false);
+        ((System.ComponentModel.ISupportInitialize)dgvTextBlocks).EndInit();
+        pnlLog.ResumeLayout(false);
+        pnlLog.PerformLayout();
+        ResumeLayout(false);
+    }
+
+    #endregion
+
+    // Timer
+    private System.Windows.Forms.Timer tmrPoll;
+
+    // Connection panel
+    private Panel pnlConnection;
+    private GroupBox grpInkjet12;
+    private Label lblCom1;
+    private ComboBox cmbCom1;
+    private Label lblCom2;
+    private ComboBox cmbCom2;
+    private Button btnConnectRs232;
+    private Button btnDisconnectRs232;
+    private Label lblStatusIj1;
+    private Label lblStatusIj2;
+
+    private GroupBox grpInkjet34;
+    private Label lblTcpHost;
+    private TextBox txtTcpHost;
+    private Label lblTcpPort;
+    private TextBox txtTcpPort;
+    private Button btnConnectTcp;
+    private Button btnDisconnectTcp;
+    private Label lblStatusIj3;
+    private Label lblStatusIj4;
+
+    private GroupBox grpBackend;
+    private Label lblApiUrl;
+    private TextBox txtApiUrl;
+    private Button btnApplyApi;
+    private Label lblApiStatus;
+
+    // Jobs panel
+    private Panel pnlJobs;
+    private Label lblJobsTitle;
+    private DataGridView dgvJobs;
+    private Button btnRefresh;
+
+    // Detail panel
+    private Panel pnlDetail;
+    private Label lblDetailTitle;
+    private Label lblBarcode;
+    private TextBox txtBarcode;
+    private Label lblLot;
+    private TextBox txtLot;
+    private Label lblStatus;
+    private TextBox txtStatus;
+    private Label lblPattern;
+    private TextBox txtPattern;
+    private GroupBox grpInkjetConfigs;
+    private DataGridView dgvConfigs;
+    private GroupBox grpTextBlocks;
+    private DataGridView dgvTextBlocks;
+    private Button btnSend;
+    private Button btnRetry;
+
+    // Log panel
+    private Panel pnlLog;
+    private Label lblLogTitle;
+    private TextBox txtLog;
+    private Button button1;
+    private Button button2;
+    private Button button3;
+    private Button button4;
+    private GroupBox groupBox1;
+    private DataGridView dgvUVBlocks;
+}
+</file>
+
+<file path="frmMain.resx">
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <metadata name="tmrPoll.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
+  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>25</value>
+  </metadata>
+</root>
+</file>
+
+<file path="frmPatternEditor.cs">
+using System;
+using System.ComponentModel;
+using System.IO;
+using System.Windows.Forms;
+using InkjetOperator.Models;
+using InkjetOperator.Services;
+
+namespace InkjetOperator
+{
+    public partial class frmPatternEditor : Form
+    {
+        private BindingList<Pattern>? _patterns;
+        private BindingList<Rule>? _currentRules;
+        private Pattern? _selectedPattern;
+
+        public frmPatternEditor()
+        {
+            InitializeComponent();
+            SetupDataGridView();
+            LoadData();
+        }
+
+        private void SetupDataGridView()
+        {
+            dgvRules.AutoGenerateColumns = false;
+            colFrom.DataPropertyName = "SourceStart";
+            colTo.DataPropertyName = "SourceEnd";
+            colTransform.DataPropertyName = "TransformRule";
+            colParameter.DataPropertyName = "Parameter";
+
+            // ตั้งค่า Enum ให้กับ ComboBox ในตาราง
+            // แก้ไขส่วนนี้: เพื่อให้ ComboBox แสดงชื่อตาม Description
+            colTransform.DataSource = Enum.GetValues(typeof(TransformRuleType))
+                .Cast<TransformRuleType>()
+                .Select(e => new
+                {
+                    Value = e,
+                    Name = GetEnumDescription(e)
+                }).ToList();
+            colTransform.ValueMember = "Value";
+            colTransform.DisplayMember = "Name";
+        }
+
+        // เพิ่มฟังก์ชันช่วยอ่านค่า Description ไว้ข้างล่าง SetupDataGridView
+        private string GetEnumDescription(Enum value)
+        {
+            var field = value.GetType().GetField(value.ToString());
+            var attribute = field?.GetCustomAttributes(typeof(DescriptionAttribute), false)
+                                  .FirstOrDefault() as DescriptionAttribute;
+            return attribute != null ? attribute.Description : value.ToString();
+        }
+
+        private void LoadData()
+        {
+            _patterns = new BindingList<Pattern>(PatternStore.Patterns);
+            lstPatterns.DataSource = _patterns;
+            lstPatterns.DisplayMember = "Name";
+        }
+
+        private void lstPatterns_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            _selectedPattern = lstPatterns.SelectedItem as Pattern;
+            if (_selectedPattern == null) return;
+
+            // ดึงค่าจาก Object มาแสดง (รวมถึงค่าที่โหลดจาก XML)
+            txtPatternName.Text = _selectedPattern.Name;
+            txtDescription.Text = _selectedPattern.Description;
+            txtBarcodeTest.Text = _selectedPattern.TestBarcode;
+            txtBlockText.Text = _selectedPattern.TestBlockText;
+
+            _currentRules = new BindingList<Rule>(_selectedPattern.Rules);
+            dgvRules.DataSource = _currentRules;
+
+            UpdatePreview();
+        }
+
+        private void UpdatePreview()
+        {
+            if (_selectedPattern == null) return;
+
+            // จำลองการใช้กฎกับ Barcode ที่กรอกในช่อง Lot test
+            string result = _selectedPattern.Apply(txtBarcodeTest.Text);
+
+            // ถ้าใน Block text มีชื่อ Pattern อยู่ ให้แทนที่ด้วยผลลัพธ์
+            if (!string.IsNullOrEmpty(txtPatternName.Text) && txtBlockText.Text.Contains(txtPatternName.Text))
+                lblPreview.Text = txtBlockText.Text.Replace(txtPatternName.Text, result);
+            else
+                lblPreview.Text = result;
+        }
+
+        private void dgvRules_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // ตรวจสอบว่าคลิกที่ปุ่มในคอลัมน์ colDelete หรือไม่
+            if (e.RowIndex >= 0 && dgvRules.Columns[e.ColumnIndex].Name == "colDelete")
+            {
+                _currentRules?.RemoveAt(e.RowIndex);
+                UpdatePreview();
+            }
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            if (_selectedPattern != null)
+            {
+                _selectedPattern.Name = txtPatternName.Text;
+                _selectedPattern.Description = txtDescription.Text;
+                _selectedPattern.TestBarcode = txtBarcodeTest.Text; // บันทึกค่าทดสอบลง XML
+                _selectedPattern.TestBlockText = txtBlockText.Text;   // บันทึกค่าทดสอบลง XML
+            }
+
+            string xmlPath = Path.Combine(Application.StartupPath, "patterns.xml");
+            PatternStore.Save(xmlPath);
+            MessageBox.Show("บันทึกข้อมูลรูปแบบและค่าทดสอบลงไฟล์เรียบร้อยแล้ว", "บันทึกสำเร็จ");
+        }
+
+        private void btnAddRule_Click(object sender, EventArgs e)
+        {
+            _currentRules?.Add(new Rule());
+        }
+
+        private void btnAddPattern_Click(object sender, EventArgs e)
+        {
+            var newP = new Pattern { Name = "NEW_PATTERN" };
+            _patterns?.Add(newP);
+            lstPatterns.SelectedItem = newP;
+        }
+
+        private void btnDeletePattern_Click(object sender, EventArgs e)
+        {
+            if (_selectedPattern != null && MessageBox.Show("ยืนยันการลบ Pattern นี้?", "ยืนยัน", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                _patterns?.Remove(_selectedPattern);
+        }
+
+        private void InputChanged(object sender, EventArgs e) => UpdatePreview();
+        private void dgvRules_CellValueChanged(object sender, DataGridViewCellEventArgs e) => UpdatePreview();
+    }
+}
+</file>
+
+<file path="frmPatternEditor.Designer.cs">
+namespace InkjetOperator
+{
+    partial class frmPatternEditor
+    {
+        private System.ComponentModel.IContainer components = null;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows Form Designer generated code
+
+        private void InitializeComponent()
+        {
+            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.lstPatterns = new System.Windows.Forms.ListBox();
+            this.pnlLeftBottom = new System.Windows.Forms.Panel();
+            this.btnDelPattern = new System.Windows.Forms.Button();
+            this.btnNewPattern = new System.Windows.Forms.Button();
+            this.lblPreview = new System.Windows.Forms.Label();
+            this.label5 = new System.Windows.Forms.Label();
+            this.dgvRules = new System.Windows.Forms.DataGridView();
+            this.colFrom = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colTo = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colTransform = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.colParameter = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colDelete = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.btnSave = new System.Windows.Forms.Button();
+            this.btnAddRule = new System.Windows.Forms.Button();
+            this.txtBlockText = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.txtBarcodeTest = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.txtDescription = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.txtPatternName = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
+            this.splitContainer1.Panel1.SuspendLayout();
+            this.splitContainer1.Panel2.SuspendLayout();
+            this.splitContainer1.SuspendLayout();
+            this.pnlLeftBottom.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvRules)).BeginInit();
+            this.SuspendLayout();
+            // 
+            // splitContainer1
+            // 
+            this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer1.Location = new System.Drawing.Point(0, 0);
+            this.splitContainer1.Name = "splitContainer1";
+            this.splitContainer1.Panel1.Controls.Add(this.lstPatterns);
+            this.splitContainer1.Panel1.Controls.Add(this.pnlLeftBottom);
+            this.splitContainer1.Panel1.Padding = new System.Windows.Forms.Padding(10);
+            this.splitContainer1.Panel2.Controls.Add(this.lblPreview);
+            this.splitContainer1.Panel2.Controls.Add(this.label5);
+            this.splitContainer1.Panel2.Controls.Add(this.dgvRules);
+            this.splitContainer1.Panel2.Controls.Add(this.btnSave);
+            this.splitContainer1.Panel2.Controls.Add(this.btnAddRule);
+            this.splitContainer1.Panel2.Controls.Add(this.txtBlockText);
+            this.splitContainer1.Panel2.Controls.Add(this.label4);
+            this.splitContainer1.Panel2.Controls.Add(this.txtBarcodeTest);
+            this.splitContainer1.Panel2.Controls.Add(this.label3);
+            this.splitContainer1.Panel2.Controls.Add(this.txtDescription);
+            this.splitContainer1.Panel2.Controls.Add(this.label2);
+            this.splitContainer1.Panel2.Controls.Add(this.txtPatternName);
+            this.splitContainer1.Panel2.Controls.Add(this.label1);
+            this.splitContainer1.Panel2.Padding = new System.Windows.Forms.Padding(10);
+            this.splitContainer1.Size = new System.Drawing.Size(900, 545);
+            this.splitContainer1.SplitterDistance = 220;
+            this.splitContainer1.TabIndex = 0;
+            // 
+            // lstPatterns
+            // 
+            this.lstPatterns.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lstPatterns.FormattingEnabled = true;
+            this.lstPatterns.ItemHeight = 15;
+            this.lstPatterns.Location = new System.Drawing.Point(10, 10);
+            this.lstPatterns.Name = "lstPatterns";
+            this.lstPatterns.Size = new System.Drawing.Size(200, 485);
+            this.lstPatterns.TabIndex = 0;
+            this.lstPatterns.SelectedIndexChanged += new System.EventHandler(this.lstPatterns_SelectedIndexChanged);
+            // 
+            // pnlLeftBottom
+            // 
+            this.pnlLeftBottom.Controls.Add(this.btnDelPattern);
+            this.pnlLeftBottom.Controls.Add(this.btnNewPattern);
+            this.pnlLeftBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.pnlLeftBottom.Location = new System.Drawing.Point(10, 495);
+            this.pnlLeftBottom.Name = "pnlLeftBottom";
+            this.pnlLeftBottom.Size = new System.Drawing.Size(200, 40);
+            // 
+            // btnDelPattern
+            // 
+            this.btnDelPattern.Location = new System.Drawing.Point(54, 10);
+            this.btnDelPattern.Name = "btnDelPattern";
+            this.btnDelPattern.Size = new System.Drawing.Size(45, 25);
+            this.btnDelPattern.Text = "Del";
+            this.btnDelPattern.Click += new System.EventHandler(this.btnDeletePattern_Click);
+            // 
+            // btnNewPattern
+            // 
+            this.btnNewPattern.Location = new System.Drawing.Point(3, 10);
+            this.btnNewPattern.Name = "btnNewPattern";
+            this.btnNewPattern.Size = new System.Drawing.Size(45, 25);
+            this.btnNewPattern.Text = "New";
+            this.btnNewPattern.Click += new System.EventHandler(this.btnAddPattern_Click);
+            // 
+            // lblPreview
+            // 
+            this.lblPreview.AutoSize = true;
+            this.lblPreview.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+            this.lblPreview.ForeColor = System.Drawing.Color.Blue;
+            this.lblPreview.Location = new System.Drawing.Point(115, 145);
+            this.lblPreview.Name = "lblPreview";
+            this.lblPreview.Size = new System.Drawing.Size(24, 21);
+            this.lblPreview.Text = "---";
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(15, 150);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(51, 15);
+            this.label5.Text = "Preview:";
+            // 
+            // dgvRules
+            // 
+            this.dgvRules.AllowUserToAddRows = false;
+            this.dgvRules.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvRules.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.colFrom,
+            this.colTo,
+            this.colTransform,
+            this.colParameter,
+            this.colDelete});
+            this.dgvRules.Location = new System.Drawing.Point(15, 180);
+            this.dgvRules.Name = "dgvRules";
+            this.dgvRules.Size = new System.Drawing.Size(645, 300);
+            this.dgvRules.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvRules_CellContentClick);
+            this.dgvRules.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvRules_CellValueChanged);
+            // 
+            // colFrom
+            // 
+            this.colFrom.HeaderText = "From";
+            this.colFrom.Name = "colFrom";
+            this.colFrom.Width = 60;
+            // 
+            // colTo
+            // 
+            this.colTo.HeaderText = "To";
+            this.colTo.Name = "colTo";
+            this.colTo.Width = 60;
+            // 
+            // colTransform
+            // 
+            this.colTransform.HeaderText = "Transform Rule";
+            this.colTransform.Name = "colTransform";
+            this.colTransform.Width = 150;
+            // 
+            // colParameter
+            // 
+            this.colParameter.HeaderText = "Value";
+            this.colParameter.Name = "colParameter";
+            this.colParameter.Width = 120;
+            // 
+            // colDelete
+            // 
+            this.colDelete.HeaderText = "Del";
+            this.colDelete.Name = "colDelete";
+            this.colDelete.Text = "Remove";
+            this.colDelete.UseColumnTextForButtonValue = true;
+            this.colDelete.Width = 80;
+            // 
+            // btnSave
+            // 
+            this.btnSave.BackColor = System.Drawing.Color.PaleGreen;
+            this.btnSave.Location = new System.Drawing.Point(560, 495);
+            this.btnSave.Name = "btnSave";
+            this.btnSave.Size = new System.Drawing.Size(100, 35);
+            this.btnSave.Text = "Save Rule";
+            this.btnSave.UseVisualStyleBackColor = false;
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+            // 
+            // btnAddRule
+            // 
+            this.btnAddRule.Location = new System.Drawing.Point(15, 495);
+            this.btnAddRule.Name = "btnAddRule";
+            this.btnAddRule.Size = new System.Drawing.Size(100, 35);
+            this.btnAddRule.Text = "Add Rule";
+            this.btnAddRule.Click += new System.EventHandler(this.btnAddRule_Click);
+            // 
+            // txtBlockText
+            // 
+            this.txtBlockText.Location = new System.Drawing.Point(115, 110);
+            this.txtBlockText.Name = "txtBlockText";
+            this.txtBlockText.Size = new System.Drawing.Size(300, 23);
+            this.txtBlockText.TextChanged += new System.EventHandler(this.InputChanged);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(15, 113);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(63, 15);
+            this.label4.Text = "Block text:";
+            // 
+            // txtBarcodeTest
+            // 
+            this.txtBarcodeTest.Location = new System.Drawing.Point(115, 80);
+            this.txtBarcodeTest.Name = "txtBarcodeTest";
+            this.txtBarcodeTest.Size = new System.Drawing.Size(300, 23);
+            this.txtBarcodeTest.TextChanged += new System.EventHandler(this.InputChanged);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(15, 83);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(53, 15);
+            this.label3.Text = "Lot test:";
+            // 
+            // txtDescription
+            // 
+            this.txtDescription.Location = new System.Drawing.Point(115, 50);
+            this.txtDescription.Name = "txtDescription";
+            this.txtDescription.Size = new System.Drawing.Size(300, 23);
+            this.txtDescription.TextChanged += new System.EventHandler(this.InputChanged);
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(15, 53);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(70, 15);
+            this.label2.Text = "Description:";
+            // 
+            // txtPatternName
+            // 
+            this.txtPatternName.Location = new System.Drawing.Point(115, 20);
+            this.txtPatternName.Name = "txtPatternName";
+            this.txtPatternName.Size = new System.Drawing.Size(300, 23);
+            this.txtPatternName.TextChanged += new System.EventHandler(this.InputChanged);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(15, 23);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(68, 15);
+            this.label1.Text = "Rule name:";
+            // 
+            // frmPatternEditor
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(900, 545);
+            this.Controls.Add(this.splitContainer1);
+            this.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.Name = "frmPatternEditor";
+            this.Text = "Pattern Editor";
+            this.splitContainer1.Panel1.ResumeLayout(false);
+            this.splitContainer1.Panel2.ResumeLayout(false);
+            this.splitContainer1.Panel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
+            this.splitContainer1.ResumeLayout(false);
+            this.pnlLeftBottom.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dgvRules)).EndInit();
+            this.ResumeLayout(false);
+
+        }
+
+        #endregion
+
+        private System.Windows.Forms.SplitContainer splitContainer1;
+        private System.Windows.Forms.ListBox lstPatterns;
+        private System.Windows.Forms.Panel pnlLeftBottom;
+        private System.Windows.Forms.Button btnDelPattern;
+        private System.Windows.Forms.Button btnNewPattern;
+        private System.Windows.Forms.TextBox txtPatternName;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.TextBox txtDescription;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.TextBox txtBarcodeTest;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.TextBox txtBlockText;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.DataGridView dgvRules;
+        private System.Windows.Forms.Button btnSave;
+        private System.Windows.Forms.Button btnAddRule;
+        private System.Windows.Forms.Label lblPreview;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colFrom;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colTo;
+        private System.Windows.Forms.DataGridViewComboBoxColumn colTransform;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colParameter;
+        private System.Windows.Forms.DataGridViewButtonColumn colDelete;
+    }
+}
+</file>
+
+<file path="frmPatternEditor.resx">
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+</root>
+</file>
+
+<file path="InkjetOperator.csproj">
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.IO.Ports" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>
+</file>
+
+<file path="Managers/Rs232Manager.cs">
+using System.IO.Ports;
+using System.Text;
+
+namespace InkjetOperator.Managers;
+
+/// <summary>
+/// Serial port manager for MK Compact inkjets — follows Linx SerialPortManager pattern.
+/// MK Compact uses text-based protocol: send command string, read until '\r'.
+/// Ported from rs232_connector.py send_data() (lines 25-34).
+/// </summary>
+public class Rs232Manager
+{
+    private SerialPort _serialPort;
+
+    public event EventHandler<DataReceivedEventArgs>? DataReceived;
+
+    public Rs232Manager()
+    {
+        _serialPort = new SerialPort();
+    }
+
+    public void ConfigureSerialPort(string portName, int baudRate = 9600,
+        int dataBits = 8, StopBits stopBits = StopBits.One, Parity parity = Parity.None)
+    {
+        try
+        {
+            _serialPort.PortName = portName;
+            _serialPort.BaudRate = baudRate;
+            _serialPort.DataBits = dataBits;
+            _serialPort.StopBits = stopBits;
+            _serialPort.Parity = parity;
+            _serialPort.ReadTimeout = 2000; // 2s timeout, matching Python s.timeout = 2
+            _serialPort.Encoding = Encoding.ASCII;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Configuration error: " + ex.Message);
+        }
+    }
+
+    public void OpenSerialPort()
+    {
+        try
+        {
+            if (!_serialPort.IsOpen)
+            {
+                _serialPort.Open();
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Error opening serial port: " + ex.Message, "Error",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    public void CloseSerialPort()
+    {
+        try
+        {
+            if (_serialPort.IsOpen)
+            {
+                _serialPort.Close();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error closing serial port: " + ex.Message);
+        }
+    }
+
+    public bool IsOpen()
+    {
+        return _serialPort.IsOpen;
+    }
+
+    /// <summary>
+    /// Send a command string and read response until '\r'.
+    /// Ported from rs232_connector.py send_data():
+    ///   s.write(msg)
+    ///   data = s.read_until(expected=b'\r')
+    ///   if data == '': return False  # connection problem
+    /// </summary>
+    public async Task<string> SendCommandAsync(string command)
+    {
+        if (!_serialPort.IsOpen)
+        {
+            return "";
+        }
+
+        try
+        {
+            byte[] commandBytes = Encoding.ASCII.GetBytes(command);
+            _serialPort.Write(commandBytes, 0, commandBytes.Length);
+            await Task.Delay(5);
+
+            // Read until \r
+            string response = "";
+            try
+            {
+                response = _serialPort.ReadTo("\r");
+            }
+            catch (TimeoutException)
+            {
+                // No response within timeout — connection problem
+                return "";
+            }
+
+            OnDataReceived(response);
+            return response;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Send error: " + ex.Message);
+            return "";
+        }
+    }
+
+    private void OnDataReceived(string data)
+    {
+        DataReceived?.Invoke(this, new DataReceivedEventArgs(data));
+    }
+}
+
+public class DataReceivedEventArgs : EventArgs
+{
+    public string Data { get; private set; }
+    public DataReceivedEventArgs(string data) { Data = data; }
+}
+</file>
+
+<file path="Managers/TcpManager.cs">
+using System.Net.Sockets;
+using System.Text;
+
+namespace InkjetOperator.Managers;
+
+/// <summary>
+/// TCP socket manager — follows Linx TcpClientManager pattern.
+/// Used for MK Compact inkjets over TCP (same protocol as RS232, different transport).
+/// Ported from socket_client.py.
+/// </summary>
+public class TcpManager
+{
+    private TcpClient? _client;
+    private NetworkStream? _stream;
+
+    private readonly Queue<byte[]> _sendQueue = new();
+    private bool _isSending = false;
+    private readonly object _sendLock = new();
+
+    public event EventHandler<TcpDataReceivedEventArgs>? DataReceived;
+
+    public TcpManager() { }
+
+    /// <summary>
+    /// Connect to TCP endpoint.
+    /// From socket_client.py lines 33-49:
+    ///   socket.socket(AF_INET, SOCK_STREAM), settimeout(0.1), connect(address)
+    /// </summary>
+    public async Task ConnectAsync(string ipAddress, int port)
+    {
+        try
+        {
+            _client = new TcpClient();
+            _client.ReceiveTimeout = 100; // 0.1s timeout matching Python
+            _client.SendTimeout = 100;
+            await _client.ConnectAsync(ipAddress, port);
+            _stream = _client.GetStream();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("TCP connection error: " + ex.Message);
+            throw;
+        }
+    }
+
+    public void Disconnect()
+    {
+        try
+        {
+            _stream?.Close();
+            _client?.Close();
+            _stream = null;
+            _client = null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("TCP disconnect error: " + ex.Message);
+        }
+    }
+
+    public bool IsConnected()
+    {
+        return _client?.Connected ?? false;
+    }
+
+    /// <summary>
+    /// Send command and receive response.
+    /// From socket_client.py: sock.sendall(msg), data = sock.recv(16)
+    /// Uses queue pattern from Linx TcpClientManager to prevent send collisions.
+    /// </summary>
+    public async Task<string> SendCommandAsync(string command)
+    {
+        if (_stream == null || !IsConnected())
+        {
+            return "";
+        }
+
+        byte[] commandBytes = Encoding.ASCII.GetBytes(command);
+
+        lock (_sendLock)
+        {
+            _sendQueue.Enqueue(commandBytes);
+        }
+
+        return await ProcessSendQueueAsync();
+    }
+
+    private async Task<string> ProcessSendQueueAsync()
+    {
+        if (_isSending) return "";
+        _isSending = true;
+
+        string lastResponse = "";
+
+        try
+        {
+            while (true)
+            {
+                byte[] cmd;
+                lock (_sendLock)
+                {
+                    if (_sendQueue.Count == 0) break;
+                    cmd = _sendQueue.Dequeue();
+                }
+
+                await _stream!.WriteAsync(cmd, 0, cmd.Length);
+                await _stream.FlushAsync();
+
+                // Read response (recv(16) in Python)
+                byte[] buffer = new byte[16];
+                try
+                {
+                    int bytesRead = await _stream.ReadAsync(buffer, 0, buffer.Length);
+                    if (bytesRead > 0)
+                    {
+                        lastResponse = Encoding.ASCII.GetString(buffer, 0, bytesRead).TrimEnd('\r', '\n');
+                        OnDataReceived(lastResponse);
+                    }
+                }
+                catch (IOException)
+                {
+                    // Read timeout — no response
+                    lastResponse = "";
+                }
+
+                await Task.Delay(50); // Prevent rapid succession (Linx pattern)
+            }
+        }
+        finally
+        {
+            _isSending = false;
+        }
+
+        return lastResponse;
+    }
+
+    private void OnDataReceived(string data)
+    {
+        DataReceived?.Invoke(this, new TcpDataReceivedEventArgs(data));
+    }
+}
+
+public class TcpDataReceivedEventArgs : EventArgs
+{
+    public string Data { get; private set; }
+    public TcpDataReceivedEventArgs(string data) { Data = data; }
+}
+</file>
+
+<file path="Models/ApiModels.cs">
+using System.Text.Json.Serialization;
+
+namespace InkjetOperator.Models;
+
+/// <summary>
+/// Standard backend response wrapper — matches ResponseManager { statusCode, data }.
+/// </summary>
+public class ApiResponse<T>
+{
+    [JsonPropertyName("statusCode")]
+    public int StatusCode { get; set; }
+
+    [JsonPropertyName("data")]
+    public T? Data { get; set; }
+}
+
+public class PaginatedResult<T>
+{
+    [JsonPropertyName("data")]
+    public List<T> Data { get; set; } = new();
+
+    [JsonPropertyName("total")]
+    public int Total { get; set; }
+}
+
+// --- Job models ---
+
+public class PrintJob
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("barcode_raw")]
+    public string BarcodeRaw { get; set; } = "";
+
+    [JsonPropertyName("pattern_id")]
+    public int? PatternId { get; set; }
+
+    [JsonPropertyName("lot_number")]
+    public string? LotNumber { get; set; }
+
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = "pending";
+
+    [JsonPropertyName("error_message")]
+    public string? ErrorMessage { get; set; }
+
+    [JsonPropertyName("created_by")]
+    public string? CreatedBy { get; set; }
+
+    [JsonPropertyName("attempt")]
+    public int Attempt { get; set; }
+
+    [JsonPropertyName("warning")]
+    public string? Warning { get; set; }
+}
+
+// --- Pattern models (from GET /job/getResolved) ---
+
+public class ResolvedJobResponse
+{
+    [JsonPropertyName("job")]
+    public PrintJob Job { get; set; } = new();
+
+    [JsonPropertyName("pattern")]
+    public PatternDetail Pattern { get; set; } = new();
+}
+
+public class PatternDetail
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("barcode")]
+    public string Barcode { get; set; } = "";
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("inkjet_configs")]
+    public List<InkjetConfigDto> InkjetConfigs { get; set; } = new();
+
+    [JsonPropertyName("conveyor_speeds")]
+    public ConveyorSpeedDto? ConveyorSpeeds { get; set; }
+
+    [JsonPropertyName("servo_configs")]
+    public List<ServoConfigDto> ServoConfigs { get; set; } = new();
+}
+
+public class InkjetConfigDto
+{
+    [JsonPropertyName("ordinal")]
+    public int Ordinal { get; set; }
+
+    [JsonPropertyName("program_number")]
+    public int? ProgramNumber { get; set; }
+
+    [JsonPropertyName("program_name")]
+    public string? ProgramName { get; set; }
+
+    [JsonPropertyName("width")]
+    public int? Width { get; set; }
+
+    [JsonPropertyName("height")]
+    public int? Height { get; set; }
+
+    [JsonPropertyName("trigger_delay")]
+    public int? TriggerDelay { get; set; }
+
+    [JsonPropertyName("direction")]
+    public int? Direction { get; set; }
+
+    [JsonPropertyName("steel_type")]
+    public string? SteelType { get; set; }
+
+    [JsonPropertyName("suspended")]
+    public bool Suspended { get; set; }
+
+    [JsonPropertyName("text_blocks")]
+    public List<TextBlockDto> TextBlocks { get; set; } = new();
+}
+
+public class TextBlockDto
+{
+    [JsonPropertyName("block_number")]
+    public int BlockNumber { get; set; }
+
+    [JsonPropertyName("text")]
+    public string? Text { get; set; }
+
+    [JsonPropertyName("x")]
+    public int? X { get; set; }
+
+    [JsonPropertyName("y")]
+    public int? Y { get; set; }
+
+    [JsonPropertyName("size")]
+    public int? Size { get; set; }
+
+    [JsonPropertyName("scale")]
+    public int? Scale { get; set; }
+}
+
+public class ConveyorSpeedDto
+{
+    [JsonPropertyName("speed1")]
+    public int? Speed1 { get; set; }
+
+    [JsonPropertyName("speed2")]
+    public int? Speed2 { get; set; }
+
+    [JsonPropertyName("speed3")]
+    public int? Speed3 { get; set; }
+}
+
+public class ServoConfigDto
+{
+    [JsonPropertyName("ordinal")]
+    public int Ordinal { get; set; }
+
+    [JsonPropertyName("position")]
+    public int? Position { get; set; }
+
+    [JsonPropertyName("post_act")]
+    public int? PostAct { get; set; }
+
+    [JsonPropertyName("delay")]
+    public int? Delay { get; set; }
+
+    [JsonPropertyName("trigger")]
+    public int? Trigger { get; set; }
+}
+
+// --- Command result (POST /job/postResults) ---
+
+public class JobResultsPayload
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("error_message")]
+    public string? ErrorMessage { get; set; }
+
+    [JsonPropertyName("commands")]
+    public List<CommandResult> Commands { get; set; } = new();
+}
+
+public class CommandResult
+{
+    [JsonPropertyName("ordinal")]
+    public int? Ordinal { get; set; }
+
+    [JsonPropertyName("command")]
+    public string Command { get; set; } = "";
+
+    [JsonPropertyName("payload")]
+    public Dictionary<string, object>? Payload { get; set; }
+
+    [JsonPropertyName("response")]
+    public string? Response { get; set; }
+
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("sent_at")]
+    public string? SentAt { get; set; }
+}
+
+// เพิ่ม DTO สำหรับสร้าง job
+public class CreateJobRequest
+{
+    [JsonPropertyName("barcode_raw")]
+    public string BarcodeRaw { get; set; }
+
+    [JsonPropertyName("created_by")]
+    public string CreatedBy { get; set; }
+
+    [JsonPropertyName("order_no")]
+    public string OrderNo { get; set; }
+
+    [JsonPropertyName("customer_name")]
+    public string CustomerName { get; set; }
+
+    [JsonPropertyName("type")]
+    public string Type { get; set; }
+
+    [JsonPropertyName("qty")]
+    public int Qty { get; set; }
+}
+</file>
+
+<file path="Models/Pattern.cs">
+using System.Collections.Generic;
+
+namespace InkjetOperator.Models
+{
+    public class Pattern
+    {
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public List<Rule> Rules { get; set; }
+        public string TestBarcode { get; set; }
+        public string TestBlockText { get; set; }
+        public string TestPreview { get; set; }
+
+        public Pattern()
+        {
+            Rules = new List<Rule>();
+            TestBarcode = string.Empty;
+            TestBlockText = string.Empty;
+            TestPreview = string.Empty;
+        }
+
+        public string Apply(string input)
+        {
+            input = input ?? string.Empty;
+            var parts = new List<string>();
+            foreach (var r in Rules)
+            {
+                try { parts.Add(r.Apply(input)); }
+                catch { parts.Add(string.Empty); }
+            }
+            return string.Concat(parts);
+        }
+    }
+}
+</file>
+
+<file path="Models/Rule.cs">
+using System;
+
+namespace InkjetOperator.Models
+{
+    public class Rule
+    {
+        public int SourceStart { get; set; }
+        public int SourceEnd { get; set; }
+        public TransformRuleType TransformRule { get; set; }
+        public string Parameter { get; set; }
+        public bool IsActive { get; set; }
+
+        public Rule() { Parameter = string.Empty; IsActive = true; }
+
+        public string Apply(string input)
+        {
+            if (!IsActive) return string.Empty;
+            input = input ?? string.Empty;
+            string ext = Extract(input);
+            switch (TransformRule)
+            {
+                case TransformRuleType.DELETE: return string.Empty;
+                case TransformRuleType.FIX_TEXT: return Parameter ?? string.Empty;
+                case TransformRuleType.COPY: return ext;
+                case TransformRuleType.PAD_LEFT: return (Parameter ?? "") + ext;
+                case TransformRuleType.PAD_RIGHT: return ext + (Parameter ?? "");
+                case TransformRuleType.AZ_LOWER: return SwapAZ(ext, true);
+                case TransformRuleType.AZ_UPPER: return SwapAZ(ext, false);
+                case TransformRuleType.TAKE_RIGHT: return TakeRight(ext);
+                case TransformRuleType.TAKE_LEFT: return TakeLeft(ext);
+                default: return ext;
+            }
+        }
+
+        private string Extract(string input)
+        {
+            int s = Math.Max(1, SourceStart);
+            int e = Math.Max(0, SourceEnd);
+            if (s > e || s > input.Length) return string.Empty;
+            int idx = s - 1;
+            int len = Math.Min(e, input.Length) - idx;
+            return (len > 0) ? input.Substring(idx, len) : string.Empty;
+        }
+
+        private string SwapAZ(string ext, bool lower)
+        {
+            int num;
+            if (!int.TryParse(ext, out num)) return string.Empty;
+            int baseVal = 0;
+            if (!string.IsNullOrEmpty(Parameter)) int.TryParse(Parameter, out baseVal);
+            int offset = num - baseVal;
+            if (offset < 0) return string.Empty;
+            string az = OffsetToAZ(offset);
+            return lower ? az.ToLower() : az.ToUpper();
+        }
+
+        private string TakeRight(string s)
+        {
+            int n;
+            if (!int.TryParse(Parameter, out n) || n <= 0) return s;
+            return n >= s.Length ? s : s.Substring(s.Length - n);
+        }
+
+        private string TakeLeft(string s)
+        {
+            int n;
+            if (!int.TryParse(Parameter, out n) || n <= 0) return s;
+            return n >= s.Length ? s : s.Substring(0, n);
+        }
+
+        private static string OffsetToAZ(int offset)
+        {
+            int n = offset + 1; string s = string.Empty;
+            while (n > 0) { n--; s = (char)('A' + (n % 26)) + s; n /= 26; }
+            return s;
+        }
+    }
+}
+</file>
+
+<file path="Models/TransformRuleType.cs">
+using System.ComponentModel;
+
+namespace InkjetOperator.Models
+{
+    public enum TransformRuleType
+    {
+        [Description("Delete")] // เพิ่มบรรทัดนี้
+        DELETE,
+        FIX_TEXT,
+        COPY,
+        [Description("Keep + Pad Left")] // เพิ่มบรรทัดนี้
+        PAD_LEFT,
+        [Description("Keep + Pad Right")] // เพิ่มบรรทัดนี้
+        PAD_RIGHT,
+        [Description("Swap a-z")] // เพิ่มบรรทัดนี้
+        AZ_LOWER,
+        [Description("Swap A-Z")] // เพิ่มบรรทัดนี้
+        AZ_UPPER,
+        TAKE_RIGHT,
+        TAKE_LEFT
+    }
+}
+</file>
+
+<file path="PlcAdapter/PlcManager.cs">
+using System.Net.Sockets;
+using System.Text;
+
+namespace InkjetOperator.PlcAdapter;
+
+/// <summary>
+/// Stub PLC manager — TCP connection to PLC for servo + conveyor speed.
+/// Command format TBD from subcontractor.
+/// Replaces plc_interface.py Modbus write_multiple_registers.
+/// </summary>
+public class PlcManager
+{
+    private TcpClient? _client;
+    private NetworkStream? _stream;
+
+    public async Task ConnectAsync(string host, int port)
+    {
+        try
+        {
+            _client = new TcpClient();
+            await _client.ConnectAsync(host, port);
+            _stream = _client.GetStream();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("PLC connection error: " + ex.Message);
+            throw;
+        }
+    }
+
+    public void Disconnect()
+    {
+        try
+        {
+            _stream?.Close();
+            _client?.Close();
+            _stream = null;
+            _client = null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("PLC disconnect error: " + ex.Message);
+        }
+    }
+
+    public bool IsConnected()
+    {
+        return _client?.Connected ?? false;
+    }
+
+    /// <summary>
+    /// Write servo parameters to PLC.
+    /// From plc_interface.py write_servo(): writes 4 registers (position, post_act, delay, trigger).
+    /// Command format TBD — currently stubbed.
+    /// </summary>
+    public Task<bool> WriteServoAsync(int ordinal, int position, int postAct, int delay, int trigger)
+    {
+        // TODO: Implement when PLC TCP command format is provided by subcontractor
+        Console.WriteLine($"PLC WriteServo stub: ordinal={ordinal} pos={position} postAct={postAct} delay={delay} trigger={trigger}");
+        return Task.FromResult(false);
+    }
+
+    /// <summary>
+    /// Write conveyor speed to PLC.
+    /// From plc_interface.py write_speed(): writes 3 registers (speed1, speed2, speed3).
+    /// Command format TBD — currently stubbed.
+    /// </summary>
+    public Task<bool> WriteSpeedAsync(int speed1, int speed2, int speed3)
+    {
+        // TODO: Implement when PLC TCP command format is provided by subcontractor
+        Console.WriteLine($"PLC WriteSpeed stub: s1={speed1} s2={speed2} s3={speed3}");
+        return Task.FromResult(false);
+    }
+}
+</file>
+
+<file path="Program.cs">
+using System.Runtime.InteropServices;
+using InkjetOperator.Services;
+
+namespace InkjetOperator;
+
+static class Program
+{
+    [DllImport("user32.dll")]
+    private static extern bool SetProcessDPIAware();
+    [STAThread]
+    static void Main()
+    {
+        SetProcessDPIAware();
+        Application.EnableVisualStyles();
+        Application.SetCompatibleTextRenderingDefault(false);
+        // โหลด patterns (สร้าง default ถ้ายังไม่มี)
+        string xmlPath = Path.Combine(Application.StartupPath, "patterns.xml");
+        PatternStore.SeedDefaults(xmlPath); // สร้างไฟล์ + default patterns ถ้ายังไม่มี
+        PatternStore.Load(xmlPath);         // โหลด patterns จาก XML เข้า memory
+
+        // ถ้า Load ล้มเหลว (XML เสีย → ถูกลบ) สร้าง + โหลดใหม่
+        if (PatternStore.Patterns.Count == 0)
+        {
+            PatternStore.SeedDefaults(xmlPath);
+            PatternStore.Load(xmlPath);
+        }
+
+        Application.Run(new frmMain());
+    }
+}
+</file>
+
+<file path="Services/ApiClient.cs">
+using System.Net.Http.Json;
+using System.Text.Json;
+using InkjetOperator.Models;
+
+namespace InkjetOperator.Services;
+
+/// <summary>
+/// HTTP client for the InkjetBackend REST API.
+/// Polls for pending jobs, fetches resolved patterns, posts results.
+/// </summary>
+public class ApiClient
+{
+    private readonly HttpClient _http;
+    private readonly string _baseUrl;
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+        PropertyNameCaseInsensitive = true,
+    };
+
+    public ApiClient(string baseUrl)
+    {
+        _baseUrl = baseUrl.TrimEnd('/');
+        _http = new HttpClient
+        {
+            BaseAddress = new Uri(_baseUrl),
+            Timeout = TimeSpan.FromSeconds(10),
+        };
+    }
+
+    /// <summary>GET /job/getAll?status=pending — polled every 5s by frmMain timer.</summary>
+    public async Task<List<PrintJob>> GetPendingJobsAsync()
+    {
+        try
+        {
+            var response = await _http.GetAsync("/job/getAll?status=pending");
+            response.EnsureSuccessStatusCode();
+
+            var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedResult<PrintJob>>>(JsonOptions);
+            return wrapper?.Data?.Data ?? new List<PrintJob>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("GetPendingJobs error: " + ex.Message);
+            return new List<PrintJob>();
+        }
+    }
+
+    /// <summary>GET /job/getById/:id</summary>
+    public async Task<PrintJob?> GetJobByIdAsync(int jobId)
+    {
+        try
+        {
+            var response = await _http.GetAsync($"/job/getById/{jobId}");
+            response.EnsureSuccessStatusCode();
+
+            var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<PrintJob>>(JsonOptions);
+            return wrapper?.Data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("GetJobById error: " + ex.Message);
+            return null;
+        }
+    }
+
+    /// <summary>GET /job/getResolved/:id — returns job + pattern with resolved templates.</summary>
+    public async Task<ResolvedJobResponse?> GetResolvedJobAsync(int jobId)
+    {
+        try
+        {
+            var response = await _http.GetAsync($"/job/getResolved/{jobId}");
+            response.EnsureSuccessStatusCode();
+
+            var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<ResolvedJobResponse>>(JsonOptions);
+            return wrapper?.Data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("GetResolvedJob error: " + ex.Message);
+            return null;
+        }
+    }
+
+    /// <summary>POST /job/execute/:id — marks job as executing.</summary>
+    public async Task<bool> ExecuteJobAsync(int jobId)
+    {
+        try
+        {
+            var response = await _http.PostAsync($"/job/execute/{jobId}", null);
+            response.EnsureSuccessStatusCode();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ExecuteJob error: " + ex.Message);
+            return false;
+        }
+    }
+
+    /// <summary>POST /job/postResults/:id — posts command results back to backend.</summary>
+    public async Task<bool> PostResultsAsync(int jobId, JobResultsPayload results)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync($"/job/postResults/{jobId}", results, JsonOptions);
+            response.EnsureSuccessStatusCode();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("PostResults error: " + ex.Message);
+            return false;
+        }
+    }
+
+    /// <summary>POST /job/retry/:id — resets failed job to pending.</summary>
+    public async Task<bool> RetryJobAsync(int jobId)
+    {
+        try
+        {
+            var response = await _http.PostAsync($"/job/retry/{jobId}", null);
+            response.EnsureSuccessStatusCode();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("RetryJob error: " + ex.Message);
+            return false;
+        }
+    }
+
+    /// <summary>POST /job/create — create new job (with improved error logging).</summary>
+    public async Task<PrintJob?> CreateJobAsync(CreateJobRequest newJob)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync("/job/create", newJob, JsonOptions);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string body = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"CreateJob failed: {(int)response.StatusCode} {response.ReasonPhrase} - Body: {body}");
+                return null;
+            }
+
+            var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<PrintJob>>(JsonOptions);
+            return wrapper?.Data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("CreateJob error: " + ex.Message);
+            return null;
+        }
+    }
+}
+</file>
+
+<file path="Services/BotClickHelper.cs">
+using System;
+using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Windows.Forms;
+
+/// <summary>
+/// BotClick — คลิกอัตโนมัติ + verify ด้วยการเทียบภาพ
+/// ใช้สำหรับควบคุมโปรแกรม uvinkjet ผ่าน UI automation
+/// Ported จาก BotClickApp.Form1 (โค้ดเก่า)
+///
+/// ระบบ Screen Capture:
+///   • CaptureScreen() — แคปทั้งจอ primary monitor
+///   • CaptureArea()   — แคปเฉพาะ area ที่สนใจ
+///   • CaptureTargetWindow() — แคปเฉพาะหน้าต่างเป้าหมาย
+///   • เปรียบเทียบภาพ before/after เพื่อ retry หาก UI ไม่เปลี่ยน
+///   • บันทึก log เป็นรูปภาพลง capture_log/
+/// </summary>
+public static class BotClickHelper
+{
+    // ─── Win32 API ───
+
+    [DllImport("user32.dll")] static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+    [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr hWnd);
+    [DllImport("user32.dll")] static extern bool BringWindowToTop(IntPtr hWnd);
+    [DllImport("user32.dll")] static extern void mouse_event(int f, int x, int y, int d, int e);
+    [DllImport("user32.dll")] static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+    [DllImport("user32.dll")] static extern bool GetCursorInfo(ref CURSORINFO pci);
+    [DllImport("user32.dll")] static extern bool DrawIconEx(IntPtr hdc, int xLeft, int yTop,
+        IntPtr hIcon, int cxWidth, int cyHeight, int istepIfAniCur, IntPtr hbrFlickerFreeDraw, int diFlags);
+
+    const int SW_MAXIMIZE = 3;
+    const int MOUSE_DOWN = 0x02, MOUSE_UP = 0x04;
+    const int CURSOR_SHOWING = 0x00000001;
+    const int DI_NORMAL = 0x0003;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct CURSORINFO
+    {
+        public int cbSize;
+        public int flags;
+        public IntPtr hCursor;
+        public Point ptScreenPos;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT
+    {
+        public int Left, Top, Right, Bottom;
+        public Rectangle ToRectangle() => Rectangle.FromLTRB(Left, Top, Right, Bottom);
+    }
+
+    private static IntPtr _targetHWnd = IntPtr.Zero;
+
+    /// <summary>
+    /// ภาพล่าสุดที่แคปได้ — ให้ form ดึงไปแสดงใน PictureBox ได้
+    /// (เหมือน pictureBox1.Image = img ในโค้ดเก่า)
+    /// </summary>
+    public static Bitmap LastCapture { get; private set; }
+
+    // ─── Public API ───
+
+    /// <summary>
+    /// รันทั้ง bot flow: sleep 3s → activate → click steps ตามลำดับ
+    /// เรียกจาก background thread เท่านั้น
+    /// (ตรงตามโค้ดเก่า RunBot())
+    /// </summary>
+    public static BotResult Run(string processName, BotStep[] steps)
+    {
+        Thread.Sleep(3000); // รอ UI พร้อม (เหมือนโค้ดเก่า)
+
+        if (!ActivateWindow(processName, out string error))
+            return BotResult.Fail(error);
+
+        Thread.Sleep(2000); // รอ UI พร้อม
+
+        foreach (var step in steps)
+        {
+            if (!ClickAndVerify(step))
+                return BotResult.Fail($"{step.Name} failed after {step.MaxRetry} retries");
+            Thread.Sleep(step.DelayAfter);
+        }
+
+        return BotResult.Ok();
+    }
+
+    /// <summary>
+    /// รัน bot flow แบบ async — ไม่บล็อก UI thread
+    /// </summary>
+    public static void RunAsync(string processName, BotStep[] steps, Action<BotResult> onComplete = null)
+    {
+        var t = new Thread(() =>
+        {
+            var result = Run(processName, steps);
+            onComplete?.Invoke(result);
+        })
+        { IsBackground = true };
+        t.Start();
+    }
+
+    // ─── Screen Capture ───
+
+    /// <summary>
+    /// แคปทั้งจอ primary monitor พร้อมวาด cursor ลงภาพ
+    /// </summary>
+    public static Bitmap CaptureScreen()
+    {
+        Rectangle bounds = Screen.PrimaryScreen.Bounds;
+        var bmp = new Bitmap(bounds.Width, bounds.Height);
+        using (var g = Graphics.FromImage(bmp))
+        {
+            g.CopyFromScreen(Point.Empty, Point.Empty, bounds.Size);
+            DrawCursor(g, bounds.Location);
+        }
+        return bmp;
+    }
+
+    /// <summary>
+    /// แคปเฉพาะ area ที่กำหนด (screen coordinates) พร้อมวาด cursor ถ้าอยู่ใน area
+    /// </summary>
+    public static Bitmap CaptureArea(Rectangle area)
+    {
+        var bmp = new Bitmap(area.Width, area.Height);
+        using (var g = Graphics.FromImage(bmp))
+        {
+            g.CopyFromScreen(area.Location, Point.Empty, area.Size);
+            DrawCursor(g, area.Location);
+        }
+        return bmp;
+    }
+
+    /// <summary>
+    /// แคปเฉพาะหน้าต่างโปรแกรมเป้าหมาย (ไม่รวม desktop/taskbar) พร้อมวาด cursor
+    /// </summary>
+    public static Bitmap CaptureTargetWindow()
+    {
+        if (_targetHWnd == IntPtr.Zero)
+            return null;
+
+        if (!GetWindowRect(_targetHWnd, out RECT rect))
+            return null;
+
+        var windowRect = rect.ToRectangle();
+        if (windowRect.Width <= 0 || windowRect.Height <= 0)
+            return null;
+
+        var bmp = new Bitmap(windowRect.Width, windowRect.Height);
+        using (var g = Graphics.FromImage(bmp))
+        {
+            g.CopyFromScreen(windowRect.Location, Point.Empty, windowRect.Size);
+            DrawCursor(g, windowRect.Location);
+        }
+        return bmp;
+    }
+
+    // ─── Core ───
+
+    private static bool ActivateWindow(string processName, out string error)
+    {
+        error = null;
+        var procs = Process.GetProcessesByName(processName);
+        if (procs.Length == 0) { error = $"Process '{processName}' not found"; return false; }
+
+        IntPtr hWnd = procs[0].MainWindowHandle;
+        if (hWnd == IntPtr.Zero) { error = "Window handle not found"; return false; }
+
+        _targetHWnd = hWnd;
+
+        ShowWindow(hWnd, SW_MAXIMIZE);
+        BringWindowToTop(hWnd);
+        SetForegroundWindow(hWnd);
+        return true;
+    }
+
+    /// <summary>
+    /// Click → compare before/after area → SaveCapture ทั้งจอ → retry ถ้าภาพไม่เปลี่ยน
+    /// (ตรงตามโค้ดเก่า ClickAndVerify())
+    /// </summary>
+    private static bool ClickAndVerify(BotStep step)
+    {
+        for (int i = 1; i <= step.MaxRetry; i++)
+        {
+            Console.WriteLine($"[{step.Name}] Try {i}");
+
+            // แคป area ก่อน click
+            Bitmap before = CaptureArea(step.VerifyArea);
+
+            LeftClick(step.X, step.Y);
+
+            Thread.Sleep(step.VerifyDelay);
+
+            // แคป area หลัง click
+            Bitmap after = CaptureArea(step.VerifyArea);
+
+            // เปรียบเทียบแบบ exact (pixel ต่างเมื่อไหร่ = เปลี่ยน)
+            bool same = CompareBitmapsFast(before, after);
+
+            // save ทั้งจอลง capture_log (เหมือนโค้ดเก่า)
+            SaveCapture($"{step.Name}_Try{i}");
+
+            before.Dispose();
+            after.Dispose();
+
+            if (!same)
+            {
+                Console.WriteLine($"[{step.Name}] ✅ Success");
+                return true;
+            }
+
+            Console.WriteLine($"[{step.Name}] ❌ Retry...");
+            Thread.Sleep(1000);
+        }
+
+        Console.WriteLine($"[{step.Name}] ❌ Failed");
+        return false;
+    }
+
+    /// <summary>
+    /// เปรียบเทียบ pixel แบบ fast — เหมือนโค้ดเก่า CompareBitmapsFast()
+    /// สุ่มทุก 5 pixel, pixel ต่างตัวเดียว = return false (ภาพเปลี่ยน)
+    /// </summary>
+    public static bool CompareBitmapsFast(Bitmap bmp1, Bitmap bmp2)
+    {
+        if (bmp1.Size != bmp2.Size)
+            return false;
+
+        for (int x = 0; x < bmp1.Width; x += 5)
+            for (int y = 0; y < bmp1.Height; y += 5)
+                if (bmp1.GetPixel(x, y) != bmp2.GetPixel(x, y))
+                    return false;
+
+        return true;
+    }
+
+    /// <summary>
+    /// แคปทั้งจอ → บันทึกลง capture_log/ → เก็บ LastCapture
+    /// (เหมือนโค้ดเก่า SaveCapture() ที่เรียก CaptureScreen + pictureBox1.Image = img)
+    /// </summary>
+    private static void SaveCapture(string stepName)
+    {
+        Bitmap img = CaptureScreen();
+
+        var folder = System.IO.Path.Combine(Application.StartupPath, "capture_log");
+        System.IO.Directory.CreateDirectory(folder);
+
+        var path = System.IO.Path.Combine(
+            folder, $"{stepName}_{DateTime.Now:HHmmss}.png");
+        img.Save(path, ImageFormat.Png);
+
+        // เก็บภาพล่าสุดให้ form ดึงไปแสดง
+        LastCapture?.Dispose();
+        LastCapture = img;
+    }
+
+    private static void LeftClick(int x, int y)
+    {
+        Cursor.Position = new Point(x, y);
+        Thread.Sleep(200);
+        mouse_event(MOUSE_DOWN, x, y, 0, 0);
+        Thread.Sleep(100);
+        mouse_event(MOUSE_UP, x, y, 0, 0);
+    }
+
+    /// <summary>
+    /// วาด cursor ปัจจุบันลงบน Graphics (ตำแหน่ง offset จาก captureOrigin)
+    /// </summary>
+    private static void DrawCursor(Graphics g, Point captureOrigin)
+    {
+        var ci = new CURSORINFO();
+        ci.cbSize = Marshal.SizeOf(ci);
+
+        if (!GetCursorInfo(ref ci))
+            return;
+
+        if ((ci.flags & CURSOR_SHOWING) == 0)
+            return;
+
+        IntPtr hdc = g.GetHdc();
+        try
+        {
+            int x = ci.ptScreenPos.X - captureOrigin.X;
+            int y = ci.ptScreenPos.Y - captureOrigin.Y;
+            DrawIconEx(hdc, x, y, ci.hCursor, 0, 0, 0, IntPtr.Zero, DI_NORMAL);
+        }
+        finally
+        {
+            g.ReleaseHdc(hdc);
+        }
+    }
+}
+
+// ─── Models ───
+
+public class BotStep
+{
+    public string Name { get; set; }
+    public int X { get; set; }
+    public int Y { get; set; }
+    public Rectangle VerifyArea { get; set; }
+    public int MaxRetry { get; set; } = 3;
+    public int VerifyDelay { get; set; } = 1500;
+    public int DelayAfter { get; set; } = 1000;
+}
+
+public class BotResult
+{
+    public bool Success { get; set; }
+    public string Error { get; set; }
+
+    public static BotResult Ok() => new BotResult { Success = true };
+    public static BotResult Fail(string err) => new BotResult { Success = false, Error = err };
+}
+</file>
+
+<file path="Services/PatternEngine.cs">
+using InkjetOperator.Models;
+
+namespace InkjetOperator.Services
+{
+    public static class PatternEngine
+    {
+        public static string Process(string barcode, string blockText)
+        {
+            if (string.IsNullOrEmpty(barcode)) return blockText ?? string.Empty;
+            if (string.IsNullOrEmpty(blockText)) return string.Empty;
+            foreach (var p in PatternStore.Patterns)
+            {
+                if (!string.IsNullOrEmpty(p.Name) && blockText.Contains(p.Name))
+                    return blockText.Replace(p.Name, p.Apply(barcode));
+            }
+            return blockText;
+        }
+
+        public static string[] ProcessBlocks(string barcode, string[] blockTexts)
+        {
+            if (blockTexts == null) return new string[0];
+            var results = new string[blockTexts.Length];
+            for (int i = 0; i < blockTexts.Length; i++)
+                results[i] = Process(barcode, blockTexts[i]);
+            return results;
+        }
+    }
+}
+</file>
+
+<file path="Services/PatternStore.cs">
+using System.Collections.Generic;
+using System.IO;
+using System.Xml.Serialization;
+using InkjetOperator.Models;
+
+namespace InkjetOperator.Services
+{
+    public static class PatternStore
+    {
+        public static List<Pattern> Patterns { get; } = new List<Pattern>();
+
+        public static void Save(string path)
+        {
+            var ser = new XmlSerializer(typeof(List<Pattern>));
+            using (var fs = new FileStream(path, FileMode.Create))
+                ser.Serialize(fs, Patterns);
+        }
+
+        public static void Load(string path)
+        {
+            if (!File.Exists(path)) return;
+            try
+            {
+                var ser = new XmlSerializer(typeof(List<Pattern>));
+                using (var fs = new FileStream(path, FileMode.Open))
+                {
+                    var list = (List<Pattern>)ser.Deserialize(fs);
+                    Patterns.Clear();
+                    Patterns.AddRange(list);
+                }
+            }
+            catch
+            {
+                // XML เสีย — ลบแล้วให้ SeedDefaults สร้างใหม่
+                try { File.Delete(path); } catch { }
+            }
+        }
+
+        /// <summary>สร้าง default CCCC + DDDD ถ้ายังไม่มีไฟล์ (ตรงกับ XML จริง)</summary>
+        public static void SeedDefaults(string path)
+        {
+            if (File.Exists(path)) return;
+
+            // CCCC: copy barcode ทั้งตัว
+            var cccc = new Pattern
+            {
+                Name = "CCCC",
+                TestBarcode = "C240801-027",
+                TestBlockText = "CCCC-01 CPI291",
+                TestPreview = "C240801-027-01 CPI291",
+            };
+            cccc.Rules.Add(new Rule { SourceStart = 1, SourceEnd = 999, TransformRule = TransformRuleType.COPY });
+            Patterns.Add(cccc);
+
+            // DDDD: C200521-001 → FE21-01
+            var dddd = new Pattern
+            {
+                Name = "DDDD",
+                TestBarcode = "C200521-001",
+                TestBlockText = "DDDD-01",
+                TestPreview = "FE21-01-01",
+            };
+            dddd.Rules.AddRange(new[]
+            {
+                new Rule { SourceStart = 1,  SourceEnd = 1,  TransformRule = TransformRuleType.DELETE },
+                new Rule { SourceStart = 2,  SourceEnd = 3,  TransformRule = TransformRuleType.AZ_UPPER, Parameter = "15" },
+                new Rule { SourceStart = 4,  SourceEnd = 5,  TransformRule = TransformRuleType.AZ_UPPER, Parameter = "1" },
+                new Rule { SourceStart = 6,  SourceEnd = 7,  TransformRule = TransformRuleType.COPY },
+                new Rule { SourceStart = 8,  SourceEnd = 8,  TransformRule = TransformRuleType.COPY },
+                new Rule { SourceStart = 9,  SourceEnd = 11, TransformRule = TransformRuleType.TAKE_RIGHT, Parameter = "2" },
+            });
+            Patterns.Add(dddd);
+
+            Save(path);
+        }
+    }
+}
+</file>
+
+</files>

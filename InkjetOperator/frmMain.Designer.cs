@@ -481,7 +481,7 @@ partial class frmMain
         groupBox1.Size = new Size(720, 173);
         groupBox1.TabIndex = 13;
         groupBox1.TabStop = false;
-        groupBox1.Text = "Uv Block";
+        groupBox1.Text = "UV";
         // 
         // dgvUVBlocks
         // 
@@ -497,6 +497,7 @@ partial class frmMain
         dgvUVBlocks.RowHeadersWidth = 51;
         dgvUVBlocks.Size = new Size(714, 145);
         dgvUVBlocks.TabIndex = 0;
+        dgvUVBlocks.CellValueChanged += dgvUVBlocks_CellValueChanged;
         // 
         // lblDetailTitle
         // 
