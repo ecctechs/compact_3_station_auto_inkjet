@@ -52,6 +52,8 @@ partial class frmMain
         btnRefresh = new Button();
         lblJobsTitle = new Label();
         pnlDetail = new Panel();
+        groupBox1 = new GroupBox();
+        dgvUVBlocks = new DataGridView();
         lblDetailTitle = new Label();
         lblBarcode = new Label();
         txtBarcode = new TextBox();
@@ -77,6 +79,8 @@ partial class frmMain
         pnlJobs.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dgvJobs).BeginInit();
         pnlDetail.SuspendLayout();
+        groupBox1.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)dgvUVBlocks).BeginInit();
         grpInkjetConfigs.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dgvConfigs).BeginInit();
         grpTextBlocks.SuspendLayout();
@@ -401,7 +405,7 @@ partial class frmMain
         pnlJobs.Margin = new Padding(3, 4, 3, 4);
         pnlJobs.Name = "pnlJobs";
         pnlJobs.Padding = new Padding(6, 7, 6, 7);
-        pnlJobs.Size = new Size(400, 527);
+        pnlJobs.Size = new Size(400, 774);
         pnlJobs.TabIndex = 1;
         // 
         // dgvJobs
@@ -418,14 +422,14 @@ partial class frmMain
         dgvJobs.ReadOnly = true;
         dgvJobs.RowHeadersWidth = 51;
         dgvJobs.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        dgvJobs.Size = new Size(388, 440);
+        dgvJobs.Size = new Size(388, 687);
         dgvJobs.TabIndex = 0;
         dgvJobs.SelectionChanged += dgvJobs_SelectionChanged;
         // 
         // btnRefresh
         // 
         btnRefresh.Dock = DockStyle.Bottom;
-        btnRefresh.Location = new Point(6, 480);
+        btnRefresh.Location = new Point(6, 727);
         btnRefresh.Margin = new Padding(3, 4, 3, 4);
         btnRefresh.Name = "btnRefresh";
         btnRefresh.Size = new Size(388, 40);
@@ -445,6 +449,7 @@ partial class frmMain
         // 
         // pnlDetail
         // 
+        pnlDetail.Controls.Add(groupBox1);
         pnlDetail.Controls.Add(lblDetailTitle);
         pnlDetail.Controls.Add(lblBarcode);
         pnlDetail.Controls.Add(txtBarcode);
@@ -463,8 +468,35 @@ partial class frmMain
         pnlDetail.Margin = new Padding(3, 4, 3, 4);
         pnlDetail.Name = "pnlDetail";
         pnlDetail.Padding = new Padding(6, 7, 6, 7);
-        pnlDetail.Size = new Size(743, 527);
+        pnlDetail.Size = new Size(743, 774);
         pnlDetail.TabIndex = 0;
+        // 
+        // groupBox1
+        // 
+        groupBox1.Controls.Add(dgvUVBlocks);
+        groupBox1.Location = new Point(9, 484);
+        groupBox1.Margin = new Padding(3, 4, 3, 4);
+        groupBox1.Name = "groupBox1";
+        groupBox1.Padding = new Padding(3, 4, 3, 4);
+        groupBox1.Size = new Size(720, 173);
+        groupBox1.TabIndex = 13;
+        groupBox1.TabStop = false;
+        groupBox1.Text = "Uv Block";
+        // 
+        // dgvUVBlocks
+        // 
+        dgvUVBlocks.AllowUserToAddRows = false;
+        dgvUVBlocks.AllowUserToDeleteRows = false;
+        dgvUVBlocks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        dgvUVBlocks.ColumnHeadersHeight = 29;
+        dgvUVBlocks.Dock = DockStyle.Fill;
+        dgvUVBlocks.Location = new Point(3, 24);
+        dgvUVBlocks.Margin = new Padding(3, 4, 3, 4);
+        dgvUVBlocks.Name = "dgvUVBlocks";
+        dgvUVBlocks.ReadOnly = true;
+        dgvUVBlocks.RowHeadersWidth = 51;
+        dgvUVBlocks.Size = new Size(714, 145);
+        dgvUVBlocks.TabIndex = 0;
         // 
         // lblDetailTitle
         // 
@@ -609,7 +641,7 @@ partial class frmMain
         btnSend.FlatStyle = FlatStyle.Flat;
         btnSend.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
         btnSend.ForeColor = Color.White;
-        btnSend.Location = new Point(6, 473);
+        btnSend.Location = new Point(9, 713);
         btnSend.Margin = new Padding(3, 4, 3, 4);
         btnSend.Name = "btnSend";
         btnSend.Size = new Size(229, 53);
@@ -620,7 +652,7 @@ partial class frmMain
         // 
         // btnRetry
         // 
-        btnRetry.Location = new Point(246, 473);
+        btnRetry.Location = new Point(244, 714);
         btnRetry.Margin = new Padding(3, 4, 3, 4);
         btnRetry.Name = "btnRetry";
         btnRetry.Size = new Size(137, 53);
@@ -633,7 +665,7 @@ partial class frmMain
         pnlLog.Controls.Add(txtLog);
         pnlLog.Controls.Add(lblLogTitle);
         pnlLog.Dock = DockStyle.Bottom;
-        pnlLog.Location = new Point(0, 680);
+        pnlLog.Location = new Point(0, 927);
         pnlLog.Margin = new Padding(3, 4, 3, 4);
         pnlLog.Name = "pnlLog";
         pnlLog.Padding = new Padding(6, 7, 6, 7);
@@ -667,7 +699,7 @@ partial class frmMain
         // 
         AutoScaleDimensions = new SizeF(8F, 20F);
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(1143, 867);
+        ClientSize = new Size(1143, 1114);
         Controls.Add(pnlDetail);
         Controls.Add(pnlJobs);
         Controls.Add(pnlLog);
@@ -689,6 +721,8 @@ partial class frmMain
         ((System.ComponentModel.ISupportInitialize)dgvJobs).EndInit();
         pnlDetail.ResumeLayout(false);
         pnlDetail.PerformLayout();
+        groupBox1.ResumeLayout(false);
+        ((System.ComponentModel.ISupportInitialize)dgvUVBlocks).EndInit();
         grpInkjetConfigs.ResumeLayout(false);
         ((System.ComponentModel.ISupportInitialize)dgvConfigs).EndInit();
         grpTextBlocks.ResumeLayout(false);
@@ -763,4 +797,6 @@ partial class frmMain
     private Button button2;
     private Button button3;
     private Button button4;
+    private GroupBox groupBox1;
+    private DataGridView dgvUVBlocks;
 }

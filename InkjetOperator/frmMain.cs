@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.IO.Ports;
 using InkjetOperator.Adapters;
 using InkjetOperator.Managers;
