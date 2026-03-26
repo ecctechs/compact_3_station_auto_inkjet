@@ -1,0 +1,1706 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+controllers/JobController.js
+controllers/PatternController.js
+controllers/SystemController.js
+database.js
+.env.example
+.gitignore
+index.js
+middleware/ResponseManager.js
+middleware/validate.js
+model/jobModel.js
+model/patternModel.js
+package.json
+routes/Job.js
+routes/Pattern.js
+routes/System.js
+utils/templateResolver.js
+validation/jobSchema.js
+validation/patternSchema.js
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="controllers/JobController.js">
+const ResponseManager = require("../middleware/ResponseManager");
+const { PrintJob, PrintJobCommand } = require("../model/jobModel");
+const {
+  Pattern,
+  InkjetConfig,
+  TextBlock,
+  ConveyorSpeed,
+  ServoConfig,
+} = require("../model/patternModel");
+const { parseBarcode, resolveTemplates } = require("../utils/templateResolver");
+
+const PATTERN_INCLUDE = [
+  {
+    model: InkjetConfig,
+    as: "inkjet_configs",
+    include: [{ model: TextBlock, as: "text_blocks" }],
+  },
+  { model: ConveyorSpeed, as: "conveyor_speeds" },
+  { model: ServoConfig, as: "servo_configs" },
+];
+
+class JobController {
+  /**
+   * POST /job/create
+   * Main entry point — scanner sends barcode, backend parses and creates job.
+   * Ported from client.py press_enter() lines 211-221.
+   */
+  static async create(req, res) {
+    try {
+      const { barcode_raw, created_by, order_no, customer_name, type, qty } = req.body;
+      const { lotNumber, patternCode } = parseBarcode(barcode_raw);
+
+      const pattern = await Pattern.findOne({
+        where: { barcode: patternCode, is_active: true },
+      });
+
+      const job = await PrintJob.create({
+        barcode_raw,
+        pattern_id: pattern ? pattern.id : null,
+        lot_number: lotNumber,
+        created_by,
+        order_no,
+        customer_name,
+        type,
+        qty,
+      });
+
+      const data = job.toJSON();
+      if (!pattern) {
+        data.warning = `No pattern found for barcode "${patternCode}"`;
+      }
+
+      return ResponseManager.SuccessResponse(req, res, 201, data);
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  static async getAll(req, res) {
+    try {
+      const { status, page, limit } = req.query;
+      const where = {};
+
+      if (status) {
+        where.status = status;
+      }
+
+      const offset = (page - 1) * limit;
+      const { count, rows } = await PrintJob.findAndCountAll({
+        where,
+        order: [["created_at", "DESC"]],
+        offset,
+        limit,
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 200, {
+        data: rows,
+        total: count,
+      });
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  static async getById(req, res) {
+    try {
+      const job = await PrintJob.findByPk(req.params.id, {
+        include: [{ model: PrintJobCommand, as: "commands" }],
+      });
+
+      if (!job) {
+        return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
+      }
+
+      return ResponseManager.SuccessResponse(req, res, 200, job);
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  /**
+   * POST /job/execute/:id
+   * Marks job as executing (C# is about to send commands to hardware).
+   */
+  static async execute(req, res) {
+    try {
+      const job = await PrintJob.findByPk(req.params.id);
+      if (!job) {
+        return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
+      }
+      if (job.status !== "pending") {
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          400,
+          `Job status is "${job.status}", expected "pending"`
+        );
+      }
+
+      await job.update({ status: "executing" });
+
+      return ResponseManager.SuccessResponse(
+        req,
+        res,
+        200,
+        "Job marked as executing"
+      );
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  /**
+   * GET /job/getResolved/:id
+   * Returns job data with all template placeholders resolved.
+   * C# calls this right before sending to hardware.
+   *
+   * Templates resolved:
+   *   {yyyy}, {mm}, {dd} — current date
+   *   {s-N}              — sequential counter (N + attempt)
+   *   CCCC               — lot number
+   *   DDDD               — encoded date from lot number
+   */
+  static async getResolved(req, res) {
+    try {
+      const job = await PrintJob.findByPk(req.params.id);
+      if (!job) {
+        return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
+      }
+      if (!job.pattern_id) {
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          400,
+          "Job has no associated pattern"
+        );
+      }
+
+      const pattern = await Pattern.findByPk(job.pattern_id, {
+        include: PATTERN_INCLUDE,
+      });
+      if (!pattern) {
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          404,
+          "Associated pattern not found"
+        );
+      }
+
+      const ctx = {
+        lotNumber: job.lot_number || "",
+        attempt: job.attempt,
+      };
+
+      // Deep-clone pattern and resolve templates in all text block strings
+      const resolved = JSON.parse(JSON.stringify(pattern));
+      for (const config of resolved.inkjet_configs || []) {
+        for (const block of config.text_blocks || []) {
+          if (block.text) {
+            block.text = resolveTemplates(block.text, ctx);
+          }
+        }
+      }
+
+      return ResponseManager.SuccessResponse(req, res, 200, {
+        job,
+        pattern: resolved,
+      });
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  /**
+   * POST /job/postResults/:id
+   * C# posts execution results + command log after sending to hardware.
+   */
+  static async postResults(req, res) {
+    try {
+      const job = await PrintJob.findByPk(req.params.id);
+      if (!job) {
+        return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
+      }
+
+      const { success, error_message, commands } = req.body;
+
+      for (const cmd of commands) {
+        await PrintJobCommand.create({
+          job_id: job.id,
+          ordinal: cmd.ordinal || null,
+          command: cmd.command,
+          payload: cmd.payload || null,
+          response: cmd.response || null,
+          success: cmd.success,
+          sent_at: cmd.sent_at || null,
+        });
+      }
+
+      const newStatus = success ? "completed" : "failed";
+      await job.update({
+        status: newStatus,
+        error_message: error_message || null,
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 200, {
+        message: success ? "Job completed" : "Job failed",
+        status: newStatus,
+      });
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  /**
+   * POST /job/retry/:id
+   * Reset a failed job back to pending and increment attempt counter.
+   */
+  static async retry(req, res) {
+    try {
+      const job = await PrintJob.findByPk(req.params.id);
+      if (!job) {
+        return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
+      }
+      if (job.status !== "failed") {
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          400,
+          `Job status is "${job.status}", expected "failed"`
+        );
+      }
+
+      await job.update({
+        status: "pending",
+        attempt: job.attempt + 1,
+        error_message: null,
+      });
+
+      return ResponseManager.SuccessResponse(
+        req,
+        res,
+        200,
+        "Job reset to pending"
+      );
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+}
+
+module.exports = JobController;
+</file>
+
+<file path="controllers/PatternController.js">
+const ResponseManager = require("../middleware/ResponseManager");
+const {
+  Pattern,
+  InkjetConfig,
+  TextBlock,
+  ConveyorSpeed,
+  ServoConfig,
+  PatternRule,
+} = require("../model/patternModel");
+const sequelize = require("../database");
+const { Op } = require("sequelize");
+
+const PATTERN_INCLUDE = [
+  {
+    model: InkjetConfig,
+    as: "inkjet_configs",
+    include: [{ model: TextBlock, as: "text_blocks" }],
+  },
+  { model: ConveyorSpeed, as: "conveyor_speeds" },
+  { model: ServoConfig, as: "servo_configs" },
+  { model: PatternRule, as: "rules" },
+];
+
+class PatternController {
+  static async getAll(req, res) {
+    try {
+      const { barcode, is_active, page, limit } = req.query;
+      const where = {};
+
+      if (barcode) {
+        where.barcode = { [Op.iLike]: `%${barcode}%` };
+      }
+      if (is_active !== undefined) {
+        where.is_active = is_active;
+      }
+
+      const offset = (page - 1) * limit;
+      const { count, rows } = await Pattern.findAndCountAll({
+        where,
+        order: [["id", "DESC"]],
+        offset,
+        limit,
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 200, {
+        data: rows,
+        total: count,
+      });
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  static async getById(req, res) {
+    try {
+      const pattern = await Pattern.findByPk(req.params.id, {
+        include: PATTERN_INCLUDE,
+      });
+
+      if (!pattern) {
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          404,
+          "Pattern not found"
+        );
+      }
+
+      return ResponseManager.SuccessResponse(req, res, 200, pattern);
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  static async lookup(req, res) {
+    try {
+      const pattern = await Pattern.findOne({
+        where: { barcode: req.params.barcode, is_active: true },
+        include: PATTERN_INCLUDE,
+      });
+
+      if (!pattern) {
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          404,
+          "Pattern not found for barcode"
+        );
+      }
+
+      return ResponseManager.SuccessResponse(req, res, 200, pattern);
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  static async create(req, res) {
+    const t = await sequelize.transaction();
+    try {
+      const { name, barcode, description, inkjet_configs, conveyor_speeds, servo_configs, rules } = req.body;
+
+      const existing = await Pattern.findOne({ where: { barcode } });
+      if (existing) {
+        await t.rollback();
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          400,
+          "Barcode already exists"
+        );
+      }
+
+      const pattern = await Pattern.create({ name, barcode, description }, { transaction: t });
+
+      if (inkjet_configs) {
+        for (const cfg of inkjet_configs) {
+          const { text_blocks, ...cfgData } = cfg;
+          const config = await InkjetConfig.create(
+            { ...cfgData, pattern_id: pattern.id },
+            { transaction: t }
+          );
+
+          if (text_blocks) {
+            for (const block of text_blocks) {
+              await TextBlock.create(
+                { ...block, inkjet_config_id: config.id },
+                { transaction: t }
+              );
+            }
+          }
+        }
+      }
+
+      if (conveyor_speeds) {
+        await ConveyorSpeed.create(
+          { ...conveyor_speeds, pattern_id: pattern.id },
+          { transaction: t }
+        );
+      }
+
+      if (servo_configs) {
+        for (const servo of servo_configs) {
+          await ServoConfig.create(
+            { ...servo, pattern_id: pattern.id },
+            { transaction: t }
+          );
+        }
+      }
+
+      if (rules) {
+        let ruleOrdinal = 1;
+        for (const rule of rules) {
+          // Generate name if not provided
+          const ruleName = rule.name || `RULE_${pattern.id}_${ruleOrdinal}`;
+          await PatternRule.create(
+            { ...rule, name: ruleName, pattern_id: pattern.id },
+            { transaction: t }
+          );
+          ruleOrdinal++;
+        }
+      }
+
+      await t.commit();
+
+      const result = await Pattern.findByPk(pattern.id, {
+        include: PATTERN_INCLUDE,
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 201, result);
+    } catch (err) {
+      await t.rollback();
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  static async update(req, res) {
+    const t = await sequelize.transaction();
+    try {
+      const pattern = await Pattern.findByPk(req.params.id);
+      if (!pattern) {
+        await t.rollback();
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          404,
+          "Pattern not found"
+        );
+      }
+
+      const { name, inkjet_configs, conveyor_speeds, servo_configs, rules, ...patternData } = req.body;
+
+      await pattern.update({ name, ...patternData }, { transaction: t });
+
+      if (inkjet_configs) {
+        // Delete old configs and their text blocks, then re-insert
+        const oldConfigs = await InkjetConfig.findAll({
+          where: { pattern_id: pattern.id },
+        });
+        const oldConfigIds = oldConfigs.map((c) => c.id);
+        if (oldConfigIds.length > 0) {
+          await TextBlock.destroy({
+            where: { inkjet_config_id: oldConfigIds },
+            transaction: t,
+          });
+        }
+        await InkjetConfig.destroy({
+          where: { pattern_id: pattern.id },
+          transaction: t,
+        });
+
+        for (const cfg of inkjet_configs) {
+          const { text_blocks, ...cfgData } = cfg;
+          const config = await InkjetConfig.create(
+            { ...cfgData, pattern_id: pattern.id },
+            { transaction: t }
+          );
+
+          if (text_blocks) {
+            for (const block of text_blocks) {
+              await TextBlock.create(
+                { ...block, inkjet_config_id: config.id },
+                { transaction: t }
+              );
+            }
+          }
+        }
+      }
+
+      if (conveyor_speeds) {
+        await ConveyorSpeed.destroy({
+          where: { pattern_id: pattern.id },
+          transaction: t,
+        });
+        await ConveyorSpeed.create(
+          { ...conveyor_speeds, pattern_id: pattern.id },
+          { transaction: t }
+        );
+      }
+
+      if (servo_configs) {
+        await ServoConfig.destroy({
+          where: { pattern_id: pattern.id },
+          transaction: t,
+        });
+        for (const servo of servo_configs) {
+          await ServoConfig.create(
+            { ...servo, pattern_id: pattern.id },
+            { transaction: t }
+          );
+        }
+      }
+
+      if (rules) {
+        await PatternRule.destroy({
+          where: { pattern_id: pattern.id },
+          transaction: t,
+        });
+        let ruleOrdinal = 1;
+        for (const rule of rules) {
+          const ruleName = rule.name || `RULE_${pattern.id}_${ruleOrdinal}`;
+          await PatternRule.create(
+            { ...rule, name: ruleName, pattern_id: pattern.id },
+            { transaction: t }
+          );
+          ruleOrdinal++;
+        }
+      }
+
+      await t.commit();
+
+      const result = await Pattern.findByPk(pattern.id, {
+        include: PATTERN_INCLUDE,
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 200, result);
+    } catch (err) {
+      await t.rollback();
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  static async delete(req, res) {
+    try {
+      const pattern = await Pattern.findByPk(req.params.id);
+      if (!pattern) {
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          404,
+          "Pattern not found"
+        );
+      }
+
+      await pattern.update({ is_active: false });
+
+      return ResponseManager.SuccessResponse(
+        req,
+        res,
+        200,
+        "Pattern deactivated"
+      );
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  // ========== PatternRule Standalone CRUD ==========
+  static async getAllRules(req, res) {
+    try {
+      const { pattern_id, is_active } = req.query;
+      const where = {};
+
+      if (pattern_id) {
+        where.pattern_id = pattern_id;
+      }
+      if (is_active !== undefined) {
+        where.is_active = is_active === "true";
+      }
+
+      const rules = await PatternRule.findAll({
+        where,
+        order: [["pattern_id", "ASC"], ["ordinal", "ASC"]],
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 200, {
+        data: rules,
+        total: rules.length,
+      });
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  static async getRuleById(req, res) {
+    try {
+      const rule = await PatternRule.findByPk(req.params.id);
+
+      if (!rule) {
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          404,
+          "Pattern rule not found"
+        );
+      }
+
+      return ResponseManager.SuccessResponse(req, res, 200, rule);
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  static async createRule(req, res) {
+    try {
+      const { name, pattern_id, ordinal, source_start, source_end, transform_rule, parameter, is_active } = req.body;
+
+      // Check unique name
+      const existingByName = await PatternRule.findOne({ where: { name } });
+      if (existingByName) {
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          400,
+          "Pattern rule name already exists"
+        );
+      }
+
+      // Check pattern exists
+      const pattern = await Pattern.findByPk(pattern_id);
+      if (!pattern) {
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          400,
+          "Pattern not found"
+        );
+      }
+
+      const rule = await PatternRule.create({
+        name,
+        pattern_id,
+        ordinal,
+        source_start,
+        source_end,
+        transform_rule,
+        parameter,
+        is_active,
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 201, rule);
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  static async updateRule(req, res) {
+    try {
+      const rule = await PatternRule.findByPk(req.params.id);
+      if (!rule) {
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          404,
+          "Pattern rule not found"
+        );
+      }
+
+      const { name, pattern_id, ordinal, source_start, source_end, transform_rule, parameter, is_active } = req.body;
+
+      // Check unique name (exclude current record)
+      if (name && name !== rule.name) {
+        const existingByName = await PatternRule.findOne({ where: { name } });
+        if (existingByName) {
+          return ResponseManager.ErrorResponse(
+            req,
+            res,
+            400,
+            "Pattern rule name already exists"
+          );
+        }
+      }
+
+      // Check pattern exists if pattern_id is being changed
+      if (pattern_id && pattern_id !== rule.pattern_id) {
+        const pattern = await Pattern.findByPk(pattern_id);
+        if (!pattern) {
+          return ResponseManager.ErrorResponse(
+            req,
+            res,
+            400,
+            "Pattern not found"
+          );
+        }
+      }
+
+      await rule.update({
+        name,
+        pattern_id,
+        ordinal,
+        source_start,
+        source_end,
+        transform_rule,
+        parameter,
+        is_active,
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 200, rule);
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  static async deleteRule(req, res) {
+    try {
+      const rule = await PatternRule.findByPk(req.params.id);
+      if (!rule) {
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          404,
+          "Pattern rule not found"
+        );
+      }
+
+      await rule.update({ is_active: false });
+
+      return ResponseManager.SuccessResponse(
+        req,
+        res,
+        200,
+        "Pattern rule deactivated"
+      );
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+}
+
+module.exports = PatternController;
+</file>
+
+<file path="controllers/SystemController.js">
+const ResponseManager = require("../middleware/ResponseManager");
+
+/**
+ * Size conversion dict — ported from rs232_connector.py lines 8-22.
+ * Maps logical size (0-22 range) to device-specific encoding.
+ * Served to C# app so it doesn't need to hardcode this.
+ */
+const SIZE_CONVERSION = {
+  "1": "0",
+  "2": "1",
+  "3": "17",
+  "4": "3",
+  "5": "18",
+  "6": "20",
+  "7": "5",
+  "8": "6",
+  "9": "7",
+  "10": "8",
+  "11": "9",
+  "12": "10",
+  "13": "11",
+};
+
+/**
+ * Bilingual translations — ported from miscellaneous.py LangDict (lines 24-58).
+ */
+const TRANSLATIONS = {
+  ENG: "\u0E44\u0E17\u0E22",
+  Auto: "\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34",
+  Manual: "\u0E04\u0E27\u0E1A\u0E04\u0E38\u0E21\u0E40\u0E2D\u0E07",
+  "Pattern No: ":
+    "\u0E25\u0E33\u0E14\u0E31\u0E1A\u0E42\u0E1B\u0E23\u0E41\u0E01\u0E23\u0E21:",
+  Enter: "\u0E14\u0E36\u0E07\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+  SEND: "\u0E2A\u0E48\u0E07",
+  Browse: "\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E44\u0E1F\u0E25\u0E4C",
+  TEXT: "\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21",
+  TYPE: "\u0E1B\u0E23\u0E30\u0E40\u0E20\u0E17\u0E40\u0E2B\u0E25\u0E47\u0E01",
+  SERVO:
+    "\u0E41\u0E01\u0E19\u0E2B\u0E31\u0E27\u0E2D\u0E34\u0E07\u0E04\u0E4C\u0E40\u0E08\u0E17",
+  "Position:": "\u0E15\u0E33\u0E41\u0E2B\u0E19\u0E48\u0E07",
+  "Post Act.:":
+    "\u0E15\u0E33\u0E41\u0E2B\u0E19\u0E48\u0E07\u0E41\u0E01\u0E19",
+  "Servo: Post Act.:":
+    "\u0E15\u0E33\u0E41\u0E2B\u0E19\u0E48\u0E07\u0E2B\u0E31\u0E27\u0E1E\u0E34\u0E21\u0E1E\u0E4C:",
+  "Delay:": "\u0E2B\u0E19\u0E48\u0E27\u0E07\u0E40\u0E27\u0E25\u0E32",
+  "Trigger Delay:":
+    "\u0E2B\u0E19\u0E48\u0E27\u0E07\u0E23\u0E30\u0E22\u0E30\u0E17\u0E32\u0E07",
+  Conveyor: "\u0E2A\u0E32\u0E22\u0E1E\u0E32\u0E19",
+  SPEED: "\u0E04\u0E27\u0E32\u0E21\u0E40\u0E23\u0E47\u0E27",
+  "Conveyor 1:": "\u0E2A\u0E32\u0E22\u0E1E\u0E32\u0E19 1:",
+  "Conveyor 2:": "\u0E2A\u0E32\u0E22\u0E1E\u0E32\u0E19 2:",
+  "Conveyor 3:": "\u0E2A\u0E32\u0E22\u0E1E\u0E32\u0E19 3:",
+  Size: "\u0E02\u0E19\u0E32\u0E14",
+  Scale: "\u0E2A\u0E40\u0E01\u0E25",
+  "Block 1:": "\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E35\u0E48 1:",
+  "Block 2:": "\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E35\u0E48 2:",
+  "Block 3:": "\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E35\u0E48 3:",
+  "Block 4:": "\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E35\u0E48 4:",
+  "Block 5:": "\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E35\u0E48 5:",
+  Width: "\u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07",
+  Height: "\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07",
+  "No File Selected.":
+    "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E44\u0E1F\u0E25\u0E4C",
+  PROGRAM: "\u0E42\u0E1B\u0E23\u0E41\u0E01\u0E23\u0E21",
+  SWAP: "\u0E2A\u0E25\u0E31\u0E1A",
+};
+
+class SystemController {
+  static async getSizeMap(req, res) {
+    return ResponseManager.SuccessResponse(req, res, 200, SIZE_CONVERSION);
+  }
+
+  static async getTranslations(req, res) {
+    return ResponseManager.SuccessResponse(req, res, 200, TRANSLATIONS);
+  }
+}
+
+module.exports = SystemController;
+</file>
+
+<file path="database.js">
+require("dotenv").config();
+const { Sequelize } = require("sequelize");
+
+const sequelize = new Sequelize(process.env.POSTGRESQL_HOST, {
+  dialect: "postgres",
+  omitNull: true,
+  logging: false,
+});
+
+module.exports = sequelize;
+</file>
+
+<file path=".env.example">
+PORT=3000
+POSTGRESQL_HOST=postgres://user:password@localhost:5432/inkjet
+</file>
+
+<file path=".gitignore">
+node_modules
+.env
+.DS_Store
+</file>
+
+<file path="index.js">
+const express = require("express");
+const sequelize = require("./database");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+
+sequelize.sync({ alter: true });
+
+const patternRoute = require("./routes/Pattern");
+const jobRoute = require("./routes/Job");
+const systemRoute = require("./routes/System");
+
+const app = express();
+app.use(bodyParser.json());
+app.use(express.json());
+app.use(cors());
+
+app.use(patternRoute);
+app.use(jobRoute);
+app.use(systemRoute);
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`server is running on port ${PORT}`));
+</file>
+
+<file path="middleware/ResponseManager.js">
+class ResponseManager {
+  static SuccessResponse(req, res, statusCode, data) {
+    res.status(statusCode).json({
+      statusCode: statusCode,
+      data: data,
+    });
+  }
+
+  static ErrorResponse(req, res, statusCode, data) {
+    res.status(statusCode).json({
+      statusCode: statusCode,
+      data: data,
+    });
+  }
+
+  static CatchResponse(req, res, errorMessage) {
+    res.status(500).json({
+      statusCode: 500,
+      data: errorMessage,
+    });
+  }
+}
+
+module.exports = ResponseManager;
+</file>
+
+<file path="middleware/validate.js">
+const ResponseManager = require("./ResponseManager");
+
+const validate = (schema, source = "body") => {
+  return (req, res, next) => {
+    const result = schema.safeParse(req[source]);
+    if (!result.success) {
+      return ResponseManager.ErrorResponse(req, res, 400, result.error.errors);
+    }
+    req[source] = result.data;
+    next();
+  };
+};
+
+module.exports = validate;
+</file>
+
+<file path="model/jobModel.js">
+const { DataTypes } = require("sequelize");
+const sequelize = require("../database");
+const { Pattern } = require("./patternModel");
+
+const PrintJob = sequelize.define(
+  "print_jobs",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    barcode_raw: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    pattern_id: {
+      type: DataTypes.INTEGER,
+    },
+    lot_number: {
+      type: DataTypes.STRING,
+    },
+    status: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "pending",
+    },
+    error_message: {
+      type: DataTypes.TEXT,
+    },
+    created_by: {
+      type: DataTypes.STRING,
+    },
+    attempt: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    order_no: {
+      type: DataTypes.STRING,
+    },
+    customer_name: {
+      type: DataTypes.STRING,
+    },
+    type: {
+      type: DataTypes.STRING,
+    },
+    qty: {
+      type: DataTypes.INTEGER,
+    },
+  },
+  { timestamps: true, createdAt: "created_at", updatedAt: "updated_at" }
+);
+
+const PrintJobCommand = sequelize.define(
+  "print_job_commands",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    job_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    ordinal: {
+      type: DataTypes.INTEGER,
+    },
+    command: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    payload: {
+      type: DataTypes.JSONB,
+    },
+    response: {
+      type: DataTypes.TEXT,
+    },
+    success: {
+      type: DataTypes.BOOLEAN,
+    },
+    sent_at: {
+      type: DataTypes.DATE,
+    },
+  },
+  { timestamps: false }
+);
+
+// Associations
+PrintJob.hasMany(PrintJobCommand, { foreignKey: "job_id", as: "commands" });
+PrintJobCommand.belongsTo(PrintJob, { foreignKey: "job_id" });
+
+PrintJob.belongsTo(Pattern, { foreignKey: "pattern_id", as: "pattern" });
+
+module.exports = { PrintJob, PrintJobCommand };
+</file>
+
+<file path="model/patternModel.js">
+const { DataTypes } = require("sequelize");
+const sequelize = require("../database");
+
+const Pattern = sequelize.define(
+  "patterns",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+    },
+    barcode: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    description: {
+      type: DataTypes.STRING,
+    },
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+  },
+  { timestamps: false }
+);
+
+const InkjetConfig = sequelize.define(
+  "inkjet_configs",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    pattern_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    ordinal: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    program_number: {
+      type: DataTypes.INTEGER,
+    },
+    program_name: {
+      type: DataTypes.STRING,
+    },
+    width: {
+      type: DataTypes.INTEGER,
+    },
+    height: {
+      type: DataTypes.INTEGER,
+    },
+    trigger_delay: {
+      type: DataTypes.INTEGER,
+    },
+    direction: {
+      type: DataTypes.INTEGER,
+    },
+    steel_type: {
+      type: DataTypes.STRING,
+    },
+    suspended: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+  },
+  { timestamps: false }
+);
+
+const TextBlock = sequelize.define(
+  "text_blocks",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    inkjet_config_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    block_number: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    text: {
+      type: DataTypes.STRING,
+    },
+    x: {
+      type: DataTypes.INTEGER,
+    },
+    y: {
+      type: DataTypes.INTEGER,
+    },
+    size: {
+      type: DataTypes.INTEGER,
+    },
+    scale: {
+      type: DataTypes.INTEGER,
+    },
+  },
+  { timestamps: false }
+);
+
+const ConveyorSpeed = sequelize.define(
+  "conveyor_speeds",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    pattern_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    speed1: {
+      type: DataTypes.INTEGER,
+    },
+    speed2: {
+      type: DataTypes.INTEGER,
+    },
+    speed3: {
+      type: DataTypes.INTEGER,
+    },
+  },
+  { timestamps: false }
+);
+
+const ServoConfig = sequelize.define(
+  "servo_configs",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    pattern_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    ordinal: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    position: {
+      type: DataTypes.INTEGER,
+    },
+    post_act: {
+      type: DataTypes.INTEGER,
+    },
+    delay: {
+      type: DataTypes.INTEGER,
+    },
+    trigger: {
+      type: DataTypes.INTEGER,
+    },
+  },
+  { timestamps: false }
+);
+
+const PatternRule = sequelize.define(
+  "pattern_rules",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+    },
+    pattern_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    ordinal: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    source_start: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    source_end: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    transform_rule: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    parameter: {
+      type: DataTypes.STRING,
+    },
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+  },
+  { timestamps: false }
+);
+
+// Associations
+Pattern.hasMany(InkjetConfig, { foreignKey: "pattern_id", as: "inkjet_configs" });
+InkjetConfig.belongsTo(Pattern, { foreignKey: "pattern_id" });
+
+InkjetConfig.hasMany(TextBlock, { foreignKey: "inkjet_config_id", as: "text_blocks" });
+TextBlock.belongsTo(InkjetConfig, { foreignKey: "inkjet_config_id" });
+
+Pattern.hasOne(ConveyorSpeed, { foreignKey: "pattern_id", as: "conveyor_speeds" });
+ConveyorSpeed.belongsTo(Pattern, { foreignKey: "pattern_id" });
+
+Pattern.hasMany(ServoConfig, { foreignKey: "pattern_id", as: "servo_configs" });
+ServoConfig.belongsTo(Pattern, { foreignKey: "pattern_id" });
+
+Pattern.hasMany(PatternRule, { foreignKey: "pattern_id", as: "rules" });
+PatternRule.belongsTo(Pattern, { foreignKey: "pattern_id" });
+
+module.exports = { Pattern, InkjetConfig, TextBlock, ConveyorSpeed, ServoConfig, PatternRule };
+</file>
+
+<file path="package.json">
+{
+  "name": "inkjet-backend",
+  "version": "1.0.0",
+  "description": "Industrial Inkjet Control System - Backend API",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index",
+    "dev": "nodemon index"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "pg": "^8.13.0",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
+</file>
+
+<file path="routes/Job.js">
+const express = require("express");
+const Route = express.Router();
+const RouteName = "/job";
+const JobController = require("../controllers/JobController");
+const validate = require("../middleware/validate");
+const {
+  createJobSchema,
+  jobFilterSchema,
+  jobResultsSchema,
+} = require("../validation/jobSchema");
+
+Route.post(
+  RouteName + "/create",
+  validate(createJobSchema),
+  JobController.create
+);
+
+Route.get(
+  RouteName + "/getAll",
+  validate(jobFilterSchema, "query"),
+  JobController.getAll
+);
+
+Route.get(RouteName + "/getById/:id", JobController.getById);
+
+Route.post(RouteName + "/execute/:id", JobController.execute);
+
+Route.get(RouteName + "/getResolved/:id", JobController.getResolved);
+
+Route.post(
+  RouteName + "/postResults/:id",
+  validate(jobResultsSchema),
+  JobController.postResults
+);
+
+Route.post(RouteName + "/retry/:id", JobController.retry);
+
+module.exports = Route;
+</file>
+
+<file path="routes/Pattern.js">
+const express = require("express");
+const Route = express.Router();
+const RouteName = "/pattern";
+const PatternController = require("../controllers/PatternController");
+const validate = require("../middleware/validate");
+const {
+  createPatternSchema,
+  updatePatternSchema,
+  patternFilterSchema,
+  createPatternRuleSchema,
+  updatePatternRuleSchema,
+} = require("../validation/patternSchema");
+
+Route.get(
+  RouteName + "/getAll",
+  validate(patternFilterSchema, "query"),
+  PatternController.getAll
+);
+
+Route.get(RouteName + "/getById/:id", PatternController.getById);
+
+Route.get(RouteName + "/lookup/:barcode", PatternController.lookup);
+
+Route.post(
+  RouteName + "/create",
+  validate(createPatternSchema),
+  PatternController.create
+);
+
+Route.put(
+  RouteName + "/update/:id",
+  validate(updatePatternSchema),
+  PatternController.update
+);
+
+Route.delete(RouteName + "/delete/:id", PatternController.delete);
+
+// ========== PatternRule Standalone Routes ==========
+Route.get(RouteName + "/rule/getAll", PatternController.getAllRules);
+
+Route.get(RouteName + "/rule/getById/:id", PatternController.getRuleById);
+
+Route.post(
+  RouteName + "/rule/create",
+  validate(createPatternRuleSchema),
+  PatternController.createRule
+);
+
+Route.put(
+  RouteName + "/rule/update/:id",
+  validate(updatePatternRuleSchema),
+  PatternController.updateRule
+);
+
+Route.delete(RouteName + "/rule/delete/:id", PatternController.deleteRule);
+
+module.exports = Route;
+</file>
+
+<file path="routes/System.js">
+const express = require("express");
+const Route = express.Router();
+const RouteName = "/system";
+const SystemController = require("../controllers/SystemController");
+
+Route.get(RouteName + "/getSizeMap", SystemController.getSizeMap);
+
+Route.get(RouteName + "/getTranslations", SystemController.getTranslations);
+
+module.exports = Route;
+</file>
+
+<file path="utils/templateResolver.js">
+/**
+ * Template resolver — ported from csv_extractor.py format() (lines 425-437)
+ * and client.py process() DDDD/CCCC encoding (lines 155-166).
+ *
+ * Templates in text block strings:
+ *   {yyyy}  -> current 4-digit year
+ *   {mm}    -> current month (no leading zero, matches Python str(month))
+ *   {dd}    -> current day (no leading zero)
+ *   {s-N}   -> sequential counter: N + attempt
+ *   CCCC    -> lot number (full)
+ *   DDDD    -> encoded date from lot: chr(65 + year-2015) + chr(65 + month) + dd + rest
+ */
+
+/**
+ * Encode DDDD from lot number.
+ * Lot format example: "X2503120001" where digits [1:3]=year, [3:5]=month, [5:7]=day, [7:]=rest
+ * From client.py lines 155-158:
+ *   yy = chr(ord('A') + (int(lot_value[1:3]) - 15))
+ *   mm = chr(ord('A') + int(lot_value[3:5]))
+ *   dd = lot_value[5:7]
+ *   DDDD = '{}{}{}'.format(yy, mm, dd) + lot_value[7:]
+ */
+function encodeDDDD(lotNumber) {
+  if (lotNumber.length < 7) return lotNumber;
+
+  const yearPart = parseInt(lotNumber.substring(1, 3), 10);
+  const monthPart = parseInt(lotNumber.substring(3, 5), 10);
+  const dayPart = lotNumber.substring(5, 7);
+  const rest = lotNumber.substring(7);
+
+  const yy = String.fromCharCode(65 + yearPart - 15); // 'A' + (year - 15)
+  const mm = String.fromCharCode(65 + monthPart); // 'A' + month
+
+  return `${yy}${mm}${dayPart}${rest}`;
+}
+
+/**
+ * Resolve all template placeholders in a text string.
+ * Ported from csv_extractor.py format() + client.py CCCC/DDDD replacement.
+ */
+function resolveTemplates(text, ctx) {
+  const now = new Date();
+
+  let output = text
+    .replace(/\{yyyy\}/g, String(now.getFullYear()))
+    .replace(/\{mm\}/g, String(now.getMonth() + 1))
+    .replace(/\{dd\}/g, String(now.getDate()));
+
+  // {s-N} -> sequential counter: N + attempt
+  // From csv_extractor.py line 434: str(int(format_match[0].split('-')[1]) + attempt)
+  output = output.replace(/\{s-(\d+)\}/g, (_match, n) => {
+    return String(parseInt(n, 10) + ctx.attempt);
+  });
+
+  // CCCC -> lot number
+  output = output.replace(/CCCC/g, ctx.lotNumber);
+
+  // DDDD -> encoded date from lot
+  output = output.replace(/DDDD/g, encodeDDDD(ctx.lotNumber));
+
+  return output;
+}
+
+/**
+ * Parse a raw barcode into lot number + pattern code.
+ * From client.py lines 216-218:
+ *   pattern = barcode_value.split('-')[-1]
+ *   index_dash = barcode_value.rfind('-')
+ *   lot = barcode_value[:index_dash]
+ */
+function parseBarcode(barcodeRaw) {
+  const lastDash = barcodeRaw.lastIndexOf("-");
+  if (lastDash === -1) {
+    return { lotNumber: "", patternCode: barcodeRaw };
+  }
+  return {
+    lotNumber: barcodeRaw.substring(0, lastDash),
+    patternCode: barcodeRaw.substring(lastDash + 1),
+  };
+}
+
+module.exports = { encodeDDDD, resolveTemplates, parseBarcode };
+</file>
+
+<file path="validation/jobSchema.js">
+const { z } = require("zod");
+
+const createJobSchema = z.object({
+  barcode_raw: z.string().min(1),
+  created_by: z.enum(["scanner", "operator"]).default("scanner"),
+  order_no: z.string().optional(),
+  customer_name: z.string().optional(),
+  type: z.string().optional(),
+  qty: z.number().int().optional(),
+});
+
+const jobFilterSchema = z.object({
+  status: z.enum(["pending", "executing", "completed", "failed"]).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+const commandResultSchema = z.object({
+  ordinal: z.number().int().optional(),
+  command: z.string().min(1),
+  payload: z.record(z.unknown()).optional(),
+  response: z.string().optional(),
+  success: z.boolean(),
+  sent_at: z.string().optional(),
+});
+
+const jobResultsSchema = z.object({
+  success: z.boolean(),
+  error_message: z.string().optional(),
+  commands: z.array(commandResultSchema),
+});
+
+module.exports = {
+  createJobSchema,
+  jobFilterSchema,
+  jobResultsSchema,
+};
+</file>
+
+<file path="validation/patternSchema.js">
+const { z } = require("zod");
+
+// Matches validation from csv_extractor.py lines 200-253, 297-346
+const textBlockSchema = z.object({
+  block_number: z.number().int().min(1).max(5),
+  text: z.string().optional(),
+  x: z.number().int().min(0).max(4095).optional(),
+  y: z.number().int().min(0).max(31).optional(),
+  size: z.number().int().min(0).max(22).optional(),
+  scale: z.number().int().min(1).max(10).optional(),
+});
+
+const inkjetConfigSchema = z.object({
+  ordinal: z.number().int().min(1),
+  program_number: z.number().int().min(1).max(500).nullable().optional(),
+  program_name: z.string().optional(),
+  width: z.number().int().min(10).max(500).optional(),
+  height: z.number().int().min(50).max(200).optional(),
+  trigger_delay: z.number().int().min(10).max(99999).optional(), // stored as x10 int
+  direction: z
+    .number()
+    .int()
+    .refine((d) => d === 0 || d === 3, { message: "Direction must be 0 or 3" })
+    .optional(),
+  steel_type: z.string().optional(),
+  suspended: z.boolean().default(false),
+  text_blocks: z.array(textBlockSchema).max(5).optional(),
+});
+
+const conveyorSpeedSchema = z.object({
+  speed1: z.number().int().optional(),
+  speed2: z.number().int().optional(),
+  speed3: z.number().int().optional(),
+});
+
+const servoConfigSchema = z.object({
+  ordinal: z.number().int().min(1),
+  position: z.number().int().optional(),
+  post_act: z.number().int().optional(),
+  delay: z.number().int().optional(),
+  trigger: z.number().int().optional(),
+});
+
+const patternRuleSchema = z.object({
+  name: z.string().min(1).optional(),
+  pattern_id: z.number().int().min(1),
+  ordinal: z.number().int().min(1),
+  source_start: z.number().int().min(1).max(999),
+  source_end: z.number().int().min(1).max(999),
+  transform_rule: z.enum(["COPY", "DELETE", "AZ_UPPER", "AZ_LOWER", "TAKE_RIGHT", "PAD_LEFT"]),
+  parameter: z.string().optional(),
+  is_active: z.boolean().default(true),
+});
+
+// Schema for rules within Pattern (name is optional, pattern_id is auto-set)
+const patternRuleInPatternSchema = z.object({
+  name: z.string().min(1).optional(),
+  ordinal: z.number().int().min(1),
+  source_start: z.number().int().min(1).max(999),
+  source_end: z.number().int().min(1).max(999),
+  transform_rule: z.enum(["COPY", "DELETE", "AZ_UPPER", "AZ_LOWER", "TAKE_RIGHT", "PAD_LEFT"]),
+  parameter: z.string().optional(),
+  is_active: z.boolean().default(true),
+});
+
+const createPatternRuleSchema = patternRuleSchema;
+const updatePatternRuleSchema = patternRuleSchema.partial().extend({
+  name: z.string().min(1).optional(),
+});
+
+const createPatternSchema = z.object({
+  name: z.string().optional(),
+  barcode: z.string().min(1),
+  description: z.string().optional(),
+  inkjet_configs: z.array(inkjetConfigSchema).optional(),
+  conveyor_speeds: conveyorSpeedSchema.optional(),
+  servo_configs: z.array(servoConfigSchema).optional(),
+  rules: z.array(patternRuleInPatternSchema).optional(),
+});
+
+const updatePatternSchema = z.object({
+  name: z.string().optional(),
+  barcode: z.string().min(1).optional(),
+  description: z.string().optional(),
+  is_active: z.boolean().optional(),
+  inkjet_configs: z.array(inkjetConfigSchema).optional(),
+  conveyor_speeds: conveyorSpeedSchema.optional(),
+  servo_configs: z.array(servoConfigSchema).optional(),
+  rules: z.array(patternRuleInPatternSchema).optional(),
+});
+
+const patternFilterSchema = z.object({
+  barcode: z.string().optional(),
+  is_active: z
+    .string()
+    .transform((v) => v === "true")
+    .optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+module.exports = {
+  createPatternSchema,
+  updatePatternSchema,
+  patternFilterSchema,
+  createPatternRuleSchema,
+  updatePatternRuleSchema,
+};
+</file>
+
+</files>

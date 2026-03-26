@@ -61,21 +61,43 @@ function resolveTemplates(text, ctx) {
   return output;
 }
 
+// /**
+//  * Parse a raw barcode into lot number + pattern code.
+//  * From client.py lines 216-218:
+//  *   pattern = barcode_value.split('-')[-1]
+//  *   index_dash = barcode_value.rfind('-')
+//  *   lot = barcode_value[:index_dash]
+//  */
+// function parseBarcode(barcodeRaw) {
+//   const lastDash = barcodeRaw.lastIndexOf("-");
+//   if (lastDash === -1) {
+//     return { lotNumber: "", patternCode: barcodeRaw };
+//   }
+//   return {
+//     lotNumber: barcodeRaw.substring(0, lastDash),
+//     patternCode: barcodeRaw.substring(lastDash + 1),
+//   };
+// }
+
 /**
- * Parse a raw barcode into lot number + pattern code.
- * From client.py lines 216-218:
- *   pattern = barcode_value.split('-')[-1]
- *   index_dash = barcode_value.rfind('-')
- *   lot = barcode_value[:index_dash]
+ * Parse a raw barcode into pattern code (prefix) + lot number (suffix).
+ * Format: {pattern}-{lot}
+ * Example: 3432432-C200521-001 -> pattern: 3432432, lot: C200521-001
  */
 function parseBarcode(barcodeRaw) {
-  const lastDash = barcodeRaw.lastIndexOf("-");
-  if (lastDash === -1) {
+  // ใช้ indexOf เพื่อหาตำแหน่งขีดตัวแรกสุด
+  const firstDash = barcodeRaw.indexOf("-");
+  
+  if (firstDash === -1) {
+    // ถ้าไม่มีขีดเลย ให้ถือว่า barcode ทั้งหมดคือ pattern code และไม่มี lot
     return { lotNumber: "", patternCode: barcodeRaw };
   }
+
   return {
-    lotNumber: barcodeRaw.substring(0, lastDash),
-    patternCode: barcodeRaw.substring(lastDash + 1),
+    // patternCode คือส่วนก่อนขีดแรก
+    patternCode: barcodeRaw.substring(0, firstDash),
+    // lotNumber คือส่วนหลังขีดแรกทั้งหมด
+    lotNumber: barcodeRaw.substring(firstDash + 1),
   };
 }
 

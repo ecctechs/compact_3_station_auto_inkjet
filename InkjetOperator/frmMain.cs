@@ -46,6 +46,8 @@ public partial class frmMain : Form
     private BindingList<TextBlockDto> _textBlockBindingList = new();
     private BindingList<UvRow> _uvBindingList = new();
 
+    private bool _isRefreshingJobs = false;
+
     public frmMain()
     {
         InitializeComponent();
@@ -238,6 +240,8 @@ public partial class frmMain : Form
     // ════════════════════════════════════════
     private async void dgvJobs_SelectionChanged(object sender, EventArgs e)
     {
+        if (_isRefreshingJobs) return; // 🔥 กันตอน poll
+       
         if (dgvJobs.SelectedRows.Count == 0) return;
 
         var row = dgvJobs.SelectedRows[0];
@@ -402,7 +406,7 @@ public partial class frmMain : Form
 
             if (!found)
             {
-                var resolved = await _api.GetResolvedJobAsync(jobId);
+                var resolved = await _api.GetResolvedJobAsync(jobId);                        
                 _currentResolved = resolved;
                 UpdateDetailPanel();
             }
@@ -628,14 +632,14 @@ public partial class frmMain : Form
     {
         if (InvokeRequired) { Invoke(UpdateJobGrid); return; }
 
-        // 🔥 จำ row ที่เลือกอยู่
+        _isRefreshingJobs = true; // 🔥 กัน event
+
         int selectedId = -1;
         if (dgvJobs.CurrentRow != null)
         {
             selectedId = (int)dgvJobs.CurrentRow.Cells["Id"].Value;
         }
 
-        // 🔥 clear แล้ว add ใหม่ (ไม่ reset grid)
         _jobBindingList.RaiseListChangedEvents = false;
         _jobBindingList.Clear();
 
@@ -667,6 +671,8 @@ public partial class frmMain : Form
                 }
             }
         }
+
+        _isRefreshingJobs = false; // 🔥 เปิด event กลับ
     }
 
     private void UpdateDetailPanel()
@@ -681,7 +687,7 @@ public partial class frmMain : Form
         txtBarcode.Text = job?.BarcodeRaw ?? "";
         txtLot.Text = job?.LotNumber ?? "";
         txtStatus.Text = job?.Status ?? "";
-        txtPattern.Text = pattern?.Barcode ?? "";
+        txtPattern.Text = pattern?.Name ?? "";
 
         _configBindingList.RaiseListChangedEvents = false;
 

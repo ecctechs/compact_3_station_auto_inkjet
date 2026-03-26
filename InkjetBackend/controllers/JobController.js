@@ -1,4 +1,5 @@
-const ResponseManager = require("../middleware/ResponseManager");
+const ResponseManager = require("../middleware/ResponseManager"); // ตรวจสอบ path ว่าถูกไหม ปกติอยู่ใน utils
+// ดึง Models ให้ตรงกับ path จริง (model ไม่มี s)
 const { PrintJob, PrintJobCommand } = require("../model/jobModel");
 const {
   Pattern,
@@ -7,8 +8,10 @@ const {
   ConveyorSpeed,
   ServoConfig,
 } = require("../model/patternModel");
+
 const { parseBarcode, resolveTemplates } = require("../utils/templateResolver");
 
+// ตั้งค่า Include สำหรับการดึงข้อมูลแบบ Deep Relation (ใช้ใน getResolved)
 const PATTERN_INCLUDE = [
   {
     model: InkjetConfig,
@@ -25,36 +28,38 @@ class JobController {
    * Main entry point — scanner sends barcode, backend parses and creates job.
    * Ported from client.py press_enter() lines 211-221.
    */
-  static async create(req, res) {
-    try {
-      const { barcode_raw, created_by, order_no, customer_name, type, qty } = req.body;
-      const { lotNumber, patternCode } = parseBarcode(barcode_raw);
+static async create(req, res) {
+  try {
+    const { barcode_raw, created_by, order_no, customer_name, type, qty } = req.body;
+    const { lotNumber, patternCode } = parseBarcode(barcode_raw);
 
-      const pattern = await Pattern.findOne({
-        where: { barcode: patternCode, is_active: true },
-      });
-
-      const job = await PrintJob.create({
-        barcode_raw,
-        pattern_id: pattern ? pattern.id : null,
-        lot_number: lotNumber,
-        created_by,
-        order_no,
-        customer_name,
-        type,
-        qty,
-      });
-
-      const data = job.toJSON();
-      if (!pattern) {
-        data.warning = `No pattern found for barcode "${patternCode}"`;
+    // 1. หาหรือสร้าง Pattern โดยไม่ใช้ Transaction
+    const [pattern, created] = await Pattern.findOrCreate({
+      where: { barcode: patternCode },
+      defaults: {
+        name: patternCode,
+        barcode: barcode_raw,
+        is_active: true
       }
+    });
 
-      return ResponseManager.SuccessResponse(req, res, 201, data);
-    } catch (err) {
-      return ResponseManager.CatchResponse(req, res, err.message);
-    }
+    // 2. สร้าง Job
+    const job = await PrintJob.create({
+      barcode_raw,
+      pattern_id: pattern.id,
+      lot_number: lotNumber,
+      created_by,
+      order_no,
+      customer_name,
+      type,
+      qty,
+    });
+
+    return ResponseManager.SuccessResponse(req, res, 201, job);
+  } catch (err) {
+    return ResponseManager.CatchResponse(req, res, err.message);
   }
+}
 
   static async getAll(req, res) {
     try {

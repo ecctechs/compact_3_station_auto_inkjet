@@ -4,6 +4,7 @@
     {
         private System.ComponentModel.IContainer components = null;
 
+        // คอนโทรลเดิม
         private TextBox txtOrderNo;
         private TextBox txtCustomerName;
         private ComboBox cmbType;
@@ -14,6 +15,10 @@
         private Label lblCustomer;
         private Label lblType;
         private Label lblQty;
+
+        // ฟิลด์ใหม่ที่เพิ่มเข้ามา
+        private Label lblBarcodeRaw;
+        private TextBox txtBarcodeRaw;
 
         protected override void Dispose(bool disposing)
         {
@@ -34,6 +39,8 @@
             lblCustomer = new Label();
             lblType = new Label();
             lblQty = new Label();
+            lblBarcodeRaw = new Label();
+            txtBarcodeRaw = new TextBox();
             ((System.ComponentModel.ISupportInitialize)numQty).BeginInit();
             SuspendLayout();
             // 
@@ -49,16 +56,16 @@
             txtCustomerName.Location = new Point(150, 65);
             txtCustomerName.Name = "txtCustomerName";
             txtCustomerName.Size = new Size(300, 27);
-            txtCustomerName.TabIndex = 3;
+            txtCustomerName.TabIndex = 2;
             // 
             // cmbType
             // 
             cmbType.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbType.Items.AddRange(new object[] { "กล่อง", "ชิ้น" });
+            cmbType.Items.AddRange(new object[] { "ชิ้น", "กล่อง" });
             cmbType.Location = new Point(150, 105);
             cmbType.Name = "cmbType";
             cmbType.Size = new Size(200, 28);
-            cmbType.TabIndex = 5;
+            cmbType.TabIndex = 3;
             // 
             // numQty
             // 
@@ -67,24 +74,24 @@
             numQty.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             numQty.Name = "numQty";
             numQty.Size = new Size(120, 27);
-            numQty.TabIndex = 7;
+            numQty.TabIndex = 4;
             numQty.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
             // btnCreate
             // 
-            btnCreate.Location = new Point(150, 200);
+            btnCreate.Location = new Point(150, 240);
             btnCreate.Name = "btnCreate";
-            btnCreate.Size = new Size(75, 30);
-            btnCreate.TabIndex = 8;
+            btnCreate.Size = new Size(100, 35);
+            btnCreate.TabIndex = 6;
             btnCreate.Text = "Create Job";
             btnCreate.Click += btnCreate_Click;
             // 
             // btnReset
             // 
-            btnReset.Location = new Point(280, 200);
+            btnReset.Location = new Point(280, 240);
             btnReset.Name = "btnReset";
-            btnReset.Size = new Size(75, 30);
-            btnReset.TabIndex = 9;
+            btnReset.Size = new Size(100, 35);
+            btnReset.TabIndex = 7;
             btnReset.Text = "Reset";
             btnReset.Click += btnReset_Click;
             // 
@@ -109,7 +116,7 @@
             lblType.Location = new Point(30, 110);
             lblType.Name = "lblType";
             lblType.Size = new Size(100, 23);
-            lblType.TabIndex = 4;
+            lblType.TabIndex = 3;
             lblType.Text = "Type";
             // 
             // lblQty
@@ -117,12 +124,27 @@
             lblQty.Location = new Point(30, 150);
             lblQty.Name = "lblQty";
             lblQty.Size = new Size(100, 23);
-            lblQty.TabIndex = 6;
+            lblQty.TabIndex = 4;
             lblQty.Text = "Quantity";
+            // 
+            // lblBarcodeRaw
+            // 
+            lblBarcodeRaw.Location = new Point(30, 190);
+            lblBarcodeRaw.Name = "lblBarcodeRaw";
+            lblBarcodeRaw.Size = new Size(100, 23);
+            lblBarcodeRaw.TabIndex = 5;
+            lblBarcodeRaw.Text = "Raw Barcode";
+            // 
+            // txtBarcodeRaw
+            // 
+            txtBarcodeRaw.Location = new Point(150, 185);
+            txtBarcodeRaw.Name = "txtBarcodeRaw";
+            txtBarcodeRaw.Size = new Size(300, 27);
+            txtBarcodeRaw.TabIndex = 5;
             // 
             // frmCreateJob
             // 
-            ClientSize = new Size(500, 270);
+            ClientSize = new Size(500, 320);
             Controls.Add(lblOrderNo);
             Controls.Add(txtOrderNo);
             Controls.Add(lblCustomer);
@@ -131,10 +153,12 @@
             Controls.Add(cmbType);
             Controls.Add(lblQty);
             Controls.Add(numQty);
+            Controls.Add(lblBarcodeRaw);
+            Controls.Add(txtBarcodeRaw);
             Controls.Add(btnCreate);
             Controls.Add(btnReset);
             Name = "frmCreateJob";
-            Text = "Create Job";
+            Text = "Create New Job";
             ((System.ComponentModel.ISupportInitialize)numQty).EndInit();
             ResumeLayout(false);
             PerformLayout();

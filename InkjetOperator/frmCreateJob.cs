@@ -32,8 +32,9 @@ namespace InkjetOperator
             {
                 var req = new CreateJobRequest
                 {
-                    BarcodeRaw = "BARCODE123", // หรือ generate
-                    CreatedBy = "operator",     // อาจเอาจาก login
+                    // แก้ไขจาก "BARCODE123" เป็นค่าจาก TextBox
+                    BarcodeRaw = txtBarcodeRaw.Text.Trim(),
+                    CreatedBy = "operator",
 
                     OrderNo = txtOrderNo.Text.Trim(),
                     CustomerName = txtCustomerName.Text.Trim(),
@@ -41,7 +42,13 @@ namespace InkjetOperator
                     Qty = (int)numQty.Value
                 };
 
-                // validation
+                // เพิ่ม Validation สำหรับ BarcodeRaw
+                if (string.IsNullOrWhiteSpace(req.BarcodeRaw))
+                {
+                    MessageBox.Show("กรุณาใส่ Raw Barcode");
+                    return;
+                }
+
                 if (string.IsNullOrWhiteSpace(req.OrderNo))
                 {
                     MessageBox.Show("กรุณาใส่ Order No");
@@ -54,10 +61,6 @@ namespace InkjetOperator
                 {
                     MessageBox.Show($"สร้าง Job สำเร็จ ID: {created.Id}");
                     ClearForm();
-                }
-                else
-                {
-                    MessageBox.Show("Create job failed");
                 }
             }
             catch (Exception ex)
@@ -75,6 +78,7 @@ namespace InkjetOperator
         {
             txtOrderNo.Text = "";
             txtCustomerName.Text = "";
+            txtBarcodeRaw.Text = ""; // ล้างค่า Barcode
             cmbType.SelectedIndex = 0;
             numQty.Value = 1;
         }
