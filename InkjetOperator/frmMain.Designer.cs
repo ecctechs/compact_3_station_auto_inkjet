@@ -1,4 +1,4 @@
-namespace InkjetOperator;
+﻿namespace InkjetOperator;
 
 partial class frmMain
 {
@@ -52,6 +52,10 @@ partial class frmMain
         btnRefresh = new Button();
         lblJobsTitle = new Label();
         pnlDetail = new Panel();
+        button8 = new Button();
+        button7 = new Button();
+        button6 = new Button();
+        button5 = new Button();
         groupBox1 = new GroupBox();
         dgvUVBlocks = new DataGridView();
         lblDetailTitle = new Label();
@@ -449,6 +453,10 @@ partial class frmMain
         // 
         // pnlDetail
         // 
+        pnlDetail.Controls.Add(button8);
+        pnlDetail.Controls.Add(button7);
+        pnlDetail.Controls.Add(button6);
+        pnlDetail.Controls.Add(button5);
         pnlDetail.Controls.Add(groupBox1);
         pnlDetail.Controls.Add(lblDetailTitle);
         pnlDetail.Controls.Add(lblBarcode);
@@ -470,6 +478,46 @@ partial class frmMain
         pnlDetail.Padding = new Padding(6, 7, 6, 7);
         pnlDetail.Size = new Size(743, 774);
         pnlDetail.TabIndex = 0;
+        // 
+        // button8
+        // 
+        button8.Location = new Point(606, 720);
+        button8.Name = "button8";
+        button8.Size = new Size(94, 50);
+        button8.TabIndex = 16;
+        button8.Text = "กดแล้วส่งหา uv 2";
+        button8.UseVisualStyleBackColor = true;
+        button8.Click += button8_Click;
+        // 
+        // button7
+        // 
+        button7.Location = new Point(606, 664);
+        button7.Name = "button7";
+        button7.Size = new Size(94, 50);
+        button7.TabIndex = 15;
+        button7.Text = "กดแล้วส่งหา MK3";
+        button7.UseVisualStyleBackColor = true;
+        button7.Click += button7_Click;
+        // 
+        // button6
+        // 
+        button6.Location = new Point(494, 720);
+        button6.Name = "button6";
+        button6.Size = new Size(94, 50);
+        button6.TabIndex = 14;
+        button6.Text = "กดแล้วส่งหา uv1";
+        button6.UseVisualStyleBackColor = true;
+        button6.Click += button6_Click;
+        // 
+        // button5
+        // 
+        button5.Location = new Point(494, 664);
+        button5.Name = "button5";
+        button5.Size = new Size(94, 50);
+        button5.TabIndex = 1;
+        button5.Text = "กดแล้วส่งหา MK1 MK2";
+        button5.UseVisualStyleBackColor = true;
+        button5.Click += button5_Click;
         // 
         // groupBox1
         // 
@@ -800,4 +848,8 @@ partial class frmMain
     private Button button4;
     private GroupBox groupBox1;
     private DataGridView dgvUVBlocks;
+    private Button button8;
+    private Button button7;
+    private Button button6;
+    private Button button5;
 }

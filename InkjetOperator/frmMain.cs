@@ -1,11 +1,13 @@
 using System.ComponentModel;
 using System.IO.Ports;
+using System.Xml.Linq;
 using InkjetOperator.Adapters;
 using InkjetOperator.Managers;
 using InkjetOperator.Models;
 using InkjetOperator.PlcAdapter;
 using InkjetOperator.Services;
 using Microsoft.Data.Sqlite;
+using Microsoft.VisualBasic.Logging;
 
 namespace InkjetOperator;
 
@@ -38,6 +40,12 @@ public partial class frmMain : Form
     private ResolvedJobResponse? _currentResolved;
     private int _selectedJobId = -1;
 
+    private bool _isUpdatingUv = false;
+    private BindingList<JobRow> _jobBindingList = new();
+    private BindingList<InkjetConfigDto> _configBindingList = new();
+    private BindingList<TextBlockDto> _textBlockBindingList = new();
+    private BindingList<UvRow> _uvBindingList = new();
+
     public frmMain()
     {
         InitializeComponent();
@@ -68,8 +76,49 @@ public partial class frmMain : Form
         if (cmbCom2.Items.Count > 1) cmbCom2.SelectedIndex = 1;
         else if (cmbCom2.Items.Count > 0) cmbCom2.SelectedIndex = 0;
 
-        // เพิ่มการเช็คคอลัมน์
-        await SetupAdditionalColumnsAsync();
+        //await SetupUvTableAsync();
+        await LoadUvDataToGrid();
+
+        dgvUVBlocks.CellValueChanged += dgvUVBlocks_CellValueChanged;
+
+        dgvUVBlocks.CurrentCellDirtyStateChanged += (s, e) =>
+        {
+            if (dgvUVBlocks.IsCurrentCellDirty)
+            {
+                dgvUVBlocks.CommitEdit(DataGridViewDataErrorContexts.Commit);
+            }
+        };
+
+        dgvJobs.AutoGenerateColumns = true;
+        dgvJobs.DataSource = _jobBindingList;
+        dgvConfigs.DataSource = _configBindingList;
+        dgvTextBlocks.DataSource = _textBlockBindingList;
+        dgvUVBlocks.AutoGenerateColumns = false;
+        dgvUVBlocks.DataSource = _uvBindingList;
+
+        dgvUVBlocks.Columns.Clear();
+
+        dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            HeaderText = "Inkjet",
+            DataPropertyName = "Inkjet",
+            ReadOnly = true,
+            Width = 120
+        });
+
+        dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            HeaderText = "Lot",
+            DataPropertyName = "Lot",
+            Width = 150
+        });
+
+        dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            HeaderText = "Name",
+            DataPropertyName = "Name",
+            AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
+        });
 
         tmrPoll.Start();
         Log("Application started. Polling every 5s.");
@@ -324,6 +373,22 @@ public partial class frmMain : Form
                         Pattern = pattern
                     };
 
+                    string lot = row.Cells["LotNumber"].Value?.ToString() ?? "";
+                    string name = pattern.Description ?? ""; // หรือ field ที่คุณต้องการ
+
+                    // 🔥 background + กันค้าง
+                    //_ = Task.Run(async () =>
+                    //{
+                    //    try
+                    //    {
+                    //        await UpdateUvData(lot, name);
+                    //    }
+                    //    catch (Exception ex)
+                    //    {
+                    //        Log("UV DB error: " + ex.Message);
+                    //    }
+                    //});
+
                     found = true;
                     UpdateDetailPanel();
                 }
@@ -360,46 +425,20 @@ public partial class frmMain : Form
         var config = configs[idx];
 
         // dgvTextBlocks แสดงตามแถวที่เลือก (ปกติคือ MK1, MK2)
-        dgvTextBlocks.DataSource = null;
-        dgvTextBlocks.DataSource = config.TextBlocks;
+        //dgvTextBlocks.DataSource = null;
+        _textBlockBindingList.RaiseListChangedEvents = false;
+        _textBlockBindingList.Clear();
+
+        foreach (var b in config.TextBlocks ?? new List<TextBlockDto>())
+        {
+            _textBlockBindingList.Add(b);
+        }
+
+        _textBlockBindingList.RaiseListChangedEvents = true;
+        _textBlockBindingList.ResetBindings();
 
         // --- นำ UpdateUvGridOnly(config.TextBlocks) ออก ---
         // เพื่อให้ dgvUVBlocks ไม่เปลี่ยนค่าตามการเลือกใน Grid นี้
-    }
-
-    private void UpdateUvGridOnly(List<TextBlockDto> blocks)
-    {
-        dgvUVBlocks.DataSource = null;
-        dgvUVBlocks.AutoGenerateColumns = false;
-        dgvUVBlocks.Columns.Clear();
-
-        // คอลัมน์ลำดับ
-        dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn
-        {
-            DataPropertyName = "BlockNumber",
-            HeaderText = "No.",
-            Width = 40,
-            ReadOnly = true // ห้ามแก้เลข Block
-        });
-
-        // คอลัมน์ข้อความ
-        var textCol = new DataGridViewTextBoxColumn
-        {
-            DataPropertyName = "Text",
-            HeaderText = "Text To Print (Edit here)",
-            Name = "ColText", // ตั้งชื่อไว้เช็คใน CellValueChanged
-            AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-            ReadOnly = false
-        };
-        dgvUVBlocks.Columns.Add(textCol);
-
-        // ใช้การ Clone List หรือตรวจสอบว่าเป็น List ที่แก้ไขได้
-        dgvUVBlocks.DataSource = blocks;
-
-        // -- ตั้งค่าเพื่อให้แก้ไขง่าย --
-        dgvUVBlocks.ReadOnly = false;
-        dgvUVBlocks.EditMode = DataGridViewEditMode.EditOnEnter; // คลิกปุ๊บ Cursor ขึ้นปั๊บ
-        dgvUVBlocks.SelectionMode = DataGridViewSelectionMode.CellSelect;
     }
 
     // ════════════════════════════════════════
@@ -589,15 +628,45 @@ public partial class frmMain : Form
     {
         if (InvokeRequired) { Invoke(UpdateJobGrid); return; }
 
-        dgvJobs.DataSource = null;
-        dgvJobs.DataSource = _pendingJobs.Select(j => new
+        // 🔥 จำ row ที่เลือกอยู่
+        int selectedId = -1;
+        if (dgvJobs.CurrentRow != null)
         {
-            j.Id,
-            j.BarcodeRaw,
-            j.LotNumber,
-            j.Status,
-            j.Attempt,
-        }).ToList();
+            selectedId = (int)dgvJobs.CurrentRow.Cells["Id"].Value;
+        }
+
+        // 🔥 clear แล้ว add ใหม่ (ไม่ reset grid)
+        _jobBindingList.RaiseListChangedEvents = false;
+        _jobBindingList.Clear();
+
+        foreach (var j in _pendingJobs)
+        {
+            _jobBindingList.Add(new JobRow
+            {
+                Id = j.Id,
+                BarcodeRaw = j.BarcodeRaw,
+                LotNumber = j.LotNumber,
+                Status = j.Status,
+                Attempt = j.Attempt
+            });
+        }
+
+        _jobBindingList.RaiseListChangedEvents = true;
+        _jobBindingList.ResetBindings();
+
+        // 🔥 restore selection
+        if (selectedId != -1)
+        {
+            foreach (DataGridViewRow row in dgvJobs.Rows)
+            {
+                if ((int)row.Cells["Id"].Value == selectedId)
+                {
+                    row.Selected = true;
+                    dgvJobs.CurrentCell = row.Cells[0];
+                    break;
+                }
+            }
+        }
     }
 
     private void UpdateDetailPanel()
@@ -614,20 +683,31 @@ public partial class frmMain : Form
         txtStatus.Text = job?.Status ?? "";
         txtPattern.Text = pattern?.Barcode ?? "";
 
-        dgvConfigs.DataSource = pattern?.InkjetConfigs?.Select(c => new
-        {
-            c.Ordinal,
-            c.ProgramNumber,
-            c.ProgramName,
-            c.Width,
-            c.Height,
-            c.TriggerDelay,
-            Dir = c.Direction,
-            c.Suspended,
-            Blocks = c.TextBlocks?.Count ?? 0,
-        }).ToList();
+        _configBindingList.RaiseListChangedEvents = false;
 
-        dgvTextBlocks.DataSource = null;
+        var newList = pattern?.InkjetConfigs ?? new List<InkjetConfigDto>();
+
+        // 🔥 sync count
+        while (_configBindingList.Count > newList.Count)
+        {
+            _configBindingList.RemoveAt(_configBindingList.Count - 1);
+        }
+
+        for (int i = 0; i < newList.Count; i++)
+        {
+            if (i < _configBindingList.Count)
+            {
+                // 🔥 update object reference (สำคัญ)
+                _configBindingList[i] = newList[i];
+            }
+            else
+            {
+                _configBindingList.Add(newList[i]);
+            }
+        }
+
+        _configBindingList.RaiseListChangedEvents = true;
+        _configBindingList.ResetBindings();
 
         // --- เพิ่มส่วนนี้: Fix ให้ dgvUVBlocks แสดงเฉพาะ UV1 (Ordinal 3) และ UV2 (Ordinal 4) ---
         if (pattern?.InkjetConfigs != null)
@@ -657,17 +737,6 @@ public partial class frmMain : Form
                     _originalConfig = cfg
                 });
             }
-
-            dgvUVBlocks.DataSource = null;
-            dgvUVBlocks.Columns.Clear();
-            dgvUVBlocks.AutoGenerateColumns = false;
-
-            // เพิ่ม Column แบบกำหนดเอง
-            dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "เครื่องพิมพ์", DataPropertyName = "Printer", Width = 120, ReadOnly = true });
-            dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Lot (Block 1)", DataPropertyName = "LotText", Width = 150 });
-            dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Name (Block 2)", DataPropertyName = "NameText", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
-
-            dgvUVBlocks.DataSource = uvDisplayList;
         }
     }
 
@@ -775,96 +844,234 @@ public partial class frmMain : Form
         Log($"Resume resp: {resume}");
     }
 
-    private void dgvUVBlocks_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+    private async void dgvUVBlocks_CellValueChanged(object sender, DataGridViewCellEventArgs e)
     {
-        if (e.RowIndex < 0 || _currentResolved?.Pattern?.InkjetConfigs == null) return;
+        if (e.RowIndex < 0) return;
 
-        // ดึงค่าที่แก้ใหม่
-        var newValue = dgvUVBlocks.Rows[e.RowIndex].Cells[e.ColumnIndex].Value?.ToString() ?? "";
-        var colName = dgvUVBlocks.Columns[e.ColumnIndex].HeaderText;
+        var row = dgvUVBlocks.Rows[e.RowIndex];
 
-        // หา Ordinal (แถว 0 = UV1/Ord 3, แถว 1 = UV2/Ord 4)
-        int targetOrdinal = (e.RowIndex == 0) ? 3 : 4;
-        var targetConfig = _currentResolved.Pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == targetOrdinal);
-
-        if (targetConfig != null)
-        {
-            if (colName.Contains("Lot"))
-            {
-                var b = targetConfig.TextBlocks.FirstOrDefault(x => x.BlockNumber == 1);
-                if (b != null) b.Text = newValue;
-            }
-            else if (colName.Contains("Name"))
-            {
-                var b = targetConfig.TextBlocks.FirstOrDefault(x => x.BlockNumber == 2);
-                if (b != null) b.Text = newValue;
-            }
-
-            Log($"[Edit UV] {targetOrdinal} {colName} set to: {newValue}");
-        }
-    }
-
-    private async Task SetupAdditionalColumnsAsync()
-    {
-        string dbPath = @"D:\DB\uv_data.db3";
-        string connStr = $"Data Source={dbPath}";
-
-        // รายชื่อคอลัมน์ที่ต้องการเพิ่ม
-        string[] newColumns = { "uv1_lot", "uv1_name", "uv2_lot", "uv2_name" };
+        if (row.DataBoundItem is not UvRow data) return;
 
         try
         {
-            using (var conn = new SqliteConnection(connStr))
-            {
-                await conn.OpenAsync();
-
-                foreach (var colName in newColumns)
-                {
-                    // ตรวจสอบก่อนว่าคอลัมน์นี้มีอยู่หรือยัง
-                    if (!await ColumnExists(conn, "config_data", colName))
-                    {
-                        using (var cmd = conn.CreateCommand())
-                        {
-                            // เพิ่มคอลัมน์เป็นประเภท TEXT (หรือ INTEGER ตามความเหมาะสม)
-                            cmd.CommandText = $"ALTER TABLE config_data ADD COLUMN {colName} TEXT;";
-                            await cmd.ExecuteNonQueryAsync();
-                            Log($"Added column: {colName}");
-                        }
-                    }
-                    else
-                    {
-                        // Log บอกว่ามีอยู่แล้ว (Optional)
-                        // Log($"Column {colName} already exists.");
-                    }
-                }
-            }
-            Log("Database schema check completed.");
+            await UpdateUvRow(data.Id, data.Lot, data.Name);
+            Log($"[UV Updated] ID={data.Id}, Lot={data.Lot}, Name={data.Name}");
         }
         catch (Exception ex)
         {
-            Log("Error updating database: " + ex.Message);
+            Log("Update UV error: " + ex.Message);
         }
     }
 
-    // Helper Method สำหรับเช็คว่าคอลัมน์มีอยู่จริงไหม
-    private async Task<bool> ColumnExists(SqliteConnection conn, string tableName, string columnName)
+    private async Task UpdateUvRow(int id, string lot, string name)
     {
-        using (var cmd = conn.CreateCommand())
+        using var conn = new SqliteConnection("Data Source=D:\\DB\\uv_data.db3;Default Timeout=5;");
+        await conn.OpenAsync();
+
+        var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+        UPDATE uv_print_data
+        SET lot = @lot,
+            name = @name,
+            update_at = CURRENT_TIMESTAMP
+        WHERE id = @id
+    ";
+
+        cmd.Parameters.AddWithValue("@id", id);
+        cmd.Parameters.AddWithValue("@lot", lot);
+        cmd.Parameters.AddWithValue("@name", name);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    private async Task LoadUvDataToGrid()
+    {
+        try
         {
-            cmd.CommandText = $"PRAGMA table_info({tableName});";
-            using (var reader = await cmd.ExecuteReaderAsync())
+            using var conn = new SqliteConnection("Data Source=D:\\DB\\uv_data.db3");
+            await conn.OpenAsync();
+
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+        SELECT id, inkjet_name, lot, name, update_at
+        FROM uv_print_data
+        ORDER BY id
+        ";
+
+            var reader = await cmd.ExecuteReaderAsync();
+
+            var list = new List<UvRow>();
+
+            while (await reader.ReadAsync())
             {
-                while (await reader.ReadAsync())
+                list.Add(new UvRow
                 {
-                    // คอลัมน์ที่ 1 ของ table_info คือชื่อคอลัมน์ (name)
-                    string existingCol = reader.GetString(1);
-                    if (existingCol.Equals(columnName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return true;
-                    }
+                    Id = reader.GetInt32(0), // 🔥 ยังต้องมี
+                    Inkjet = reader.GetString(1),
+                    Lot = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                    Name = reader.IsDBNull(3) ? "" : reader.GetString(3),
+                    UpdateAt = reader.IsDBNull(4) ? "" : reader.GetString(4)
+                });
+            }
+
+            dgvUVBlocks.Invoke(() =>
+            {
+
+                dgvUVBlocks.AutoGenerateColumns = false;
+
+                dgvUVBlocks.ReadOnly = false;
+                dgvUVBlocks.AllowUserToAddRows = false;
+                dgvUVBlocks.EditMode = DataGridViewEditMode.EditOnEnter;
+                dgvUVBlocks.SelectionMode = DataGridViewSelectionMode.CellSelect;
+
+
+                _uvBindingList.RaiseListChangedEvents = false;
+                _uvBindingList.Clear();
+
+                foreach (var item in list)
+                {
+                    _uvBindingList.Add(item);
                 }
+
+                _uvBindingList.RaiseListChangedEvents = true;
+                _uvBindingList.ResetBindings();
+
+            });
+        }
+        catch (Exception ex)
+        {
+            Log("Load UV error: " + ex.Message);
+        }
+    }
+
+    private void button6_Click(object sender, EventArgs e)
+    {
+        var row = _uvBindingList.FirstOrDefault(x => x.Id == 1);
+
+        if (row == null)
+        {
+            MessageBox.Show("ไม่พบ row id = 1");
+            return;
+        }
+
+        string lot = row.Lot;
+        string name = row.Name;
+
+        Log($"Lot={lot}, Name={name}");
+
+        string dbPath = @"C:\Users\theer\Downloads\uvinkjet-250702-new\uvinkjet-250702-new\database\sys\CPI.db3";
+
+        using (SqliteConnection conn = new SqliteConnection($"Data Source={dbPath}"))
+        {
+            conn.Open();
+
+            string sql = "UPDATE MK063 SET lot = @lot, name = @name WHERE id = 1";
+
+            using (SqliteCommand cmd = new SqliteCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@lot", lot);
+                cmd.Parameters.AddWithValue("@name", name);
+
+                int rows = cmd.ExecuteNonQuery();
+
+                MessageBox.Show("Update สำเร็จ: " + rows + " row");
             }
         }
-        return false;
+    }
+
+    private void button8_Click(object sender, EventArgs e)
+    {
+        var row = _uvBindingList.FirstOrDefault(x => x.Id == 2);
+
+        if (row == null)
+        {
+            MessageBox.Show("ไม่พบ row id = 1");
+            return;
+        }
+
+        string lot = row.Lot;
+        string name = row.Name;
+
+        Log($"Lot={lot}, Name={name}");
+
+        string dbPath = @"C:\Users\theer\Downloads\uvinkjet-250702-new\uvinkjet-250702-new\database\sys\CPI.db3";
+
+        using (SqliteConnection conn = new SqliteConnection($"Data Source={dbPath}"))
+        {
+            conn.Open();
+
+            string sql = "UPDATE MK063 SET lot = @lot, name = @name WHERE id = 1";
+
+            using (SqliteCommand cmd = new SqliteCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@lot", lot);
+                cmd.Parameters.AddWithValue("@name", name);
+
+                int rows = cmd.ExecuteNonQuery();
+
+                MessageBox.Show("Update สำเร็จ: " + rows + " row");
+            }
+        }
+    }
+
+
+    private async void button5_Click(object sender, EventArgs e)
+    {
+        if (dgvConfigs.Rows.Count > 0)
+        {
+            dgvConfigs.ClearSelection();
+
+            dgvConfigs.Rows[0].Selected = true;
+            dgvConfigs.CurrentCell = dgvConfigs.Rows[0].Cells[0];
+
+            var config = dgvConfigs.Rows[0].DataBoundItem as InkjetConfigDto;
+
+            if (config != null)
+            {
+                MessageBox.Show($"ProgramNo: {config.ProgramNumber}");
+            }
+        }
+
+        await TestSendToIj3TcpAsync();
+
+        if (dgvConfigs.Rows.Count > 1)
+        {
+            dgvConfigs.ClearSelection();
+
+            dgvConfigs.Rows[1].Selected = true;
+            dgvConfigs.CurrentCell = dgvConfigs.Rows[1].Cells[0];
+
+            var config = dgvConfigs.Rows[1].DataBoundItem as InkjetConfigDto;
+
+            if (config != null)
+            {
+                MessageBox.Show($"ProgramNo: {config.ProgramNumber}");
+            }
+        }
+
+        await TestSendToIj3TcpAsync();
+
+
+
+    }
+
+    private async void button7_Click(object sender, EventArgs e)
+    {
+        if (dgvConfigs.Rows.Count > 2)
+        {
+            dgvConfigs.ClearSelection();
+
+            dgvConfigs.Rows[2].Selected = true;
+            dgvConfigs.CurrentCell = dgvConfigs.Rows[2].Cells[0];
+
+            var config = dgvConfigs.Rows[2].DataBoundItem as InkjetConfigDto;
+
+            if (config != null)
+            {
+                MessageBox.Show($"ProgramNo: {config.ProgramNumber}");
+            }
+
+            await TestSendToIj3TcpAsync();
+        }
     }
 }

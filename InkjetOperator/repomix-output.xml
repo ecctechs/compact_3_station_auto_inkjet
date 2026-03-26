@@ -980,6 +980,10 @@ public partial class frmMain : Form
         _adapterIj3 = new SqliteInkjetAdapter(_tcpIj3, ""); // db path TBD
         _adapterIj4 = new SqliteInkjetAdapter(_tcpIj4, ""); // db path TBD
 
+        // เพิ่มบรรทัดนี้เพื่อให้ dgvUVBlocks สร้างคอลัมน์ตาม properties ของ TextBlockDto
+        dgvUVBlocks.AutoGenerateColumns = true;
+        dgvTextBlocks.AutoGenerateColumns = true;
+
         _api = new ApiClient("http://localhost:3000");
     }
 
@@ -987,7 +991,7 @@ public partial class frmMain : Form
     //  Form events
     // ════════════════════════════════════════
 
-    private void frmMain_Load(object sender, EventArgs e)
+    private async void frmMain_Load(object sender, EventArgs e)
     {
         // Populate COM port dropdowns
         string[] ports = SerialPort.GetPortNames();
@@ -996,6 +1000,9 @@ public partial class frmMain : Form
         if (cmbCom1.Items.Count > 0) cmbCom1.SelectedIndex = 0;
         if (cmbCom2.Items.Count > 1) cmbCom2.SelectedIndex = 1;
         else if (cmbCom2.Items.Count > 0) cmbCom2.SelectedIndex = 0;
+
+        // เพิ่มการเช็คคอลัมน์
+        await SetupAdditionalColumnsAsync();
 
         tmrPoll.Start();
         Log("Application started. Polling every 5s.");
@@ -1113,32 +1120,6 @@ public partial class frmMain : Form
     // ════════════════════════════════════════
     //  Job selection
     // ════════════════════════════════════════
-
-    //private async void dgvJobs_SelectionChanged(object sender, EventArgs e)
-    //{
-    //    if (dgvJobs.SelectedRows.Count == 0) return;
-
-    //    var row = dgvJobs.SelectedRows[0];
-    //    if (row.Cells["Id"].Value == null) return;
-
-    //    int jobId = (int)row.Cells["Id"].Value;
-    //    string rawbarcode = row.Cells["BarcodeRaw"].Value?.ToString() ?? "";
-    //    if (jobId == _selectedJobId) return;
-    //    _selectedJobId = jobId;
-
-    //    try
-    //    {
-    //        MessageBox.Show($"Selected job ID: {rawbarcode}");
-    //        var resolved = await _api.GetResolvedJobAsync(jobId);
-    //        _currentResolved = resolved;
-    //        UpdateDetailPanel();
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        Log("Load job detail error: " + ex.Message);
-    //    }
-    //}
-
     private async void dgvJobs_SelectionChanged(object sender, EventArgs e)
     {
         if (dgvJobs.SelectedRows.Count == 0) return;
@@ -1306,10 +1287,52 @@ public partial class frmMain : Form
 
         int idx = dgvConfigs.SelectedRows[0].Index;
         var configs = _currentResolved.Pattern.InkjetConfigs;
+
         if (configs == null || idx >= configs.Count) return;
 
         var config = configs[idx];
+
+        // dgvTextBlocks แสดงตามแถวที่เลือก (ปกติคือ MK1, MK2)
+        dgvTextBlocks.DataSource = null;
         dgvTextBlocks.DataSource = config.TextBlocks;
+
+        // --- นำ UpdateUvGridOnly(config.TextBlocks) ออก ---
+        // เพื่อให้ dgvUVBlocks ไม่เปลี่ยนค่าตามการเลือกใน Grid นี้
+    }
+
+    private void UpdateUvGridOnly(List<TextBlockDto> blocks)
+    {
+        dgvUVBlocks.DataSource = null;
+        dgvUVBlocks.AutoGenerateColumns = false;
+        dgvUVBlocks.Columns.Clear();
+
+        // คอลัมน์ลำดับ
+        dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = "BlockNumber",
+            HeaderText = "No.",
+            Width = 40,
+            ReadOnly = true // ห้ามแก้เลข Block
+        });
+
+        // คอลัมน์ข้อความ
+        var textCol = new DataGridViewTextBoxColumn
+        {
+            DataPropertyName = "Text",
+            HeaderText = "Text To Print (Edit here)",
+            Name = "ColText", // ตั้งชื่อไว้เช็คใน CellValueChanged
+            AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
+            ReadOnly = false
+        };
+        dgvUVBlocks.Columns.Add(textCol);
+
+        // ใช้การ Clone List หรือตรวจสอบว่าเป็น List ที่แก้ไขได้
+        dgvUVBlocks.DataSource = blocks;
+
+        // -- ตั้งค่าเพื่อให้แก้ไขง่าย --
+        dgvUVBlocks.ReadOnly = false;
+        dgvUVBlocks.EditMode = DataGridViewEditMode.EditOnEnter; // คลิกปุ๊บ Cursor ขึ้นปั๊บ
+        dgvUVBlocks.SelectionMode = DataGridViewSelectionMode.CellSelect;
     }
 
     // ════════════════════════════════════════
@@ -1538,6 +1561,47 @@ public partial class frmMain : Form
         }).ToList();
 
         dgvTextBlocks.DataSource = null;
+
+        // --- เพิ่มส่วนนี้: Fix ให้ dgvUVBlocks แสดงเฉพาะ UV1 (Ordinal 3) และ UV2 (Ordinal 4) ---
+        if (pattern?.InkjetConfigs != null)
+        {
+            // ดึงเฉพาะ Config ของ UV (Ordinal 3 และ 4)
+            var uvConfigs = pattern.InkjetConfigs
+                .Where(c => c.Ordinal == 3 || c.Ordinal == 4)
+                .OrderBy(c => c.Ordinal)
+                .ToList();
+
+            // สร้างรายการสำหรับ Display ใน Grid
+            var uvDisplayList = new List<object>();
+            foreach (var cfg in uvConfigs)
+            {
+                string printerName = cfg.Ordinal == 3 ? "เครื่องพิมพ์ UV1" : "เครื่องพิมพ์ UV2";
+
+                // ดึงค่า Block 1 และ 2 (Lot และ Name)
+                string lotVal = cfg.TextBlocks.FirstOrDefault(b => b.BlockNumber == 1)?.Text ?? "";
+                string nameVal = cfg.TextBlocks.FirstOrDefault(b => b.BlockNumber == 2)?.Text ?? "";
+
+                uvDisplayList.Add(new
+                {
+                    Printer = printerName,
+                    LotText = lotVal,
+                    NameText = nameVal,
+                    // เก็บ Reference ไว้เผื่อต้องการดึงไปใช้งานต่อ
+                    _originalConfig = cfg
+                });
+            }
+
+            dgvUVBlocks.DataSource = null;
+            dgvUVBlocks.Columns.Clear();
+            dgvUVBlocks.AutoGenerateColumns = false;
+
+            // เพิ่ม Column แบบกำหนดเอง
+            dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "เครื่องพิมพ์", DataPropertyName = "Printer", Width = 120, ReadOnly = true });
+            dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Lot (Block 1)", DataPropertyName = "LotText", Width = 150 });
+            dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Name (Block 2)", DataPropertyName = "NameText", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
+
+            dgvUVBlocks.DataSource = uvDisplayList;
+        }
     }
 
     private void Log(string message)
@@ -1642,6 +1706,99 @@ public partial class frmMain : Form
 
         var resume = await InkjetOperator.Services.InkjetProtocol.SendResumeAsync(client);
         Log($"Resume resp: {resume}");
+    }
+
+    private void dgvUVBlocks_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+    {
+        if (e.RowIndex < 0 || _currentResolved?.Pattern?.InkjetConfigs == null) return;
+
+        // ดึงค่าที่แก้ใหม่
+        var newValue = dgvUVBlocks.Rows[e.RowIndex].Cells[e.ColumnIndex].Value?.ToString() ?? "";
+        var colName = dgvUVBlocks.Columns[e.ColumnIndex].HeaderText;
+
+        // หา Ordinal (แถว 0 = UV1/Ord 3, แถว 1 = UV2/Ord 4)
+        int targetOrdinal = (e.RowIndex == 0) ? 3 : 4;
+        var targetConfig = _currentResolved.Pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == targetOrdinal);
+
+        if (targetConfig != null)
+        {
+            if (colName.Contains("Lot"))
+            {
+                var b = targetConfig.TextBlocks.FirstOrDefault(x => x.BlockNumber == 1);
+                if (b != null) b.Text = newValue;
+            }
+            else if (colName.Contains("Name"))
+            {
+                var b = targetConfig.TextBlocks.FirstOrDefault(x => x.BlockNumber == 2);
+                if (b != null) b.Text = newValue;
+            }
+
+            Log($"[Edit UV] {targetOrdinal} {colName} set to: {newValue}");
+        }
+    }
+
+    private async Task SetupAdditionalColumnsAsync()
+    {
+        string dbPath = @"D:\DB\uv_data.db3";
+        string connStr = $"Data Source={dbPath}";
+
+        // รายชื่อคอลัมน์ที่ต้องการเพิ่ม
+        string[] newColumns = { "uv1_lot", "uv1_name", "uv2_lot", "uv2_name" };
+
+        try
+        {
+            using (var conn = new SqliteConnection(connStr))
+            {
+                await conn.OpenAsync();
+
+                foreach (var colName in newColumns)
+                {
+                    // ตรวจสอบก่อนว่าคอลัมน์นี้มีอยู่หรือยัง
+                    if (!await ColumnExists(conn, "config_data", colName))
+                    {
+                        using (var cmd = conn.CreateCommand())
+                        {
+                            // เพิ่มคอลัมน์เป็นประเภท TEXT (หรือ INTEGER ตามความเหมาะสม)
+                            cmd.CommandText = $"ALTER TABLE config_data ADD COLUMN {colName} TEXT;";
+                            await cmd.ExecuteNonQueryAsync();
+                            Log($"Added column: {colName}");
+                        }
+                    }
+                    else
+                    {
+                        // Log บอกว่ามีอยู่แล้ว (Optional)
+                        // Log($"Column {colName} already exists.");
+                    }
+                }
+            }
+            Log("Database schema check completed.");
+        }
+        catch (Exception ex)
+        {
+            Log("Error updating database: " + ex.Message);
+        }
+    }
+
+    // Helper Method สำหรับเช็คว่าคอลัมน์มีอยู่จริงไหม
+    private async Task<bool> ColumnExists(SqliteConnection conn, string tableName, string columnName)
+    {
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = $"PRAGMA table_info({tableName});";
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    // คอลัมน์ที่ 1 ของ table_info คือชื่อคอลัมน์ (name)
+                    string existingCol = reader.GetString(1);
+                    if (existingCol.Equals(columnName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }
 </file>
@@ -2130,7 +2287,7 @@ partial class frmMain
         groupBox1.Size = new Size(720, 173);
         groupBox1.TabIndex = 13;
         groupBox1.TabStop = false;
-        groupBox1.Text = "Uv Block";
+        groupBox1.Text = "UV";
         // 
         // dgvUVBlocks
         // 
@@ -2146,6 +2303,7 @@ partial class frmMain
         dgvUVBlocks.RowHeadersWidth = 51;
         dgvUVBlocks.Size = new Size(714, 145);
         dgvUVBlocks.TabIndex = 0;
+        dgvUVBlocks.CellValueChanged += dgvUVBlocks_CellValueChanged;
         // 
         // lblDetailTitle
         // 
