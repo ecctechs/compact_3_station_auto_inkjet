@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO.Ports;
 using System.Xml.Linq;
 using InkjetOperator.Adapters;
@@ -48,6 +49,8 @@ public partial class frmMain : Form
 
     private bool _isRefreshingJobs = false;
 
+    private int currentStep = 1;
+
     public frmMain()
     {
         InitializeComponent();
@@ -70,6 +73,9 @@ public partial class frmMain : Form
 
     private async void frmMain_Load(object sender, EventArgs e)
     {
+        InitializeDatabase();
+        currentStep = 1;
+        UpdateStepButtons();
         // Populate COM port dropdowns
         string[] ports = SerialPort.GetPortNames();
         cmbCom1.Items.AddRange(ports);
@@ -241,7 +247,7 @@ public partial class frmMain : Form
     private async void dgvJobs_SelectionChanged(object sender, EventArgs e)
     {
         if (_isRefreshingJobs) return; // 🔥 กันตอน poll
-       
+
         if (dgvJobs.SelectedRows.Count == 0) return;
 
         var row = dgvJobs.SelectedRows[0];
@@ -406,7 +412,7 @@ public partial class frmMain : Form
 
             if (!found)
             {
-                var resolved = await _api.GetResolvedJobAsync(jobId);                        
+                var resolved = await _api.GetResolvedJobAsync(jobId);
                 _currentResolved = resolved;
                 UpdateDetailPanel();
             }
@@ -890,6 +896,44 @@ public partial class frmMain : Form
         await cmd.ExecuteNonQueryAsync();
     }
 
+    public void InitializeDatabase()
+    {
+        string folderPath = @"D:\DB";
+        if (!System.IO.Directory.Exists(folderPath))
+        {
+            System.IO.Directory.CreateDirectory(folderPath);
+        }
+
+        using var conn = new SqliteConnection("Data Source=D:\\DB\\uv_data.db3;Default Timeout=5;");
+        conn.Open();
+
+        string createTableSql = @"
+    CREATE TABLE IF NOT EXISTS uv_print_data (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        inkjet_name TEXT,
+        lot TEXT,
+        name TEXT,
+        update_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );";
+
+        using (var command = new SqliteCommand(createTableSql, conn))
+        {
+            command.ExecuteNonQuery();
+        }
+
+        // เช็คว่ามีข้อมูลหรือยัง ถ้าไม่มีให้ Insert แถวสำหรับ UV1 และ UV2 รอไว้เลย
+        var checkCmd = new SqliteCommand("SELECT COUNT(*) FROM uv_print_data", conn);
+        long count = (long)checkCmd.ExecuteScalar();
+        if (count == 0)
+        {
+            var insertCmd = new SqliteCommand(@"
+            INSERT INTO uv_print_data (id, inkjet_name, lot, name) VALUES 
+            (1, 'เครื่องพิมพ์ UV1', '', ''),
+            (2, 'เครื่องพิมพ์ UV2', '', '')", conn);
+            insertCmd.ExecuteNonQuery();
+        }
+    }
+
     private async Task LoadUvDataToGrid()
     {
         try
@@ -983,6 +1027,9 @@ public partial class frmMain : Form
                 MessageBox.Show("Update สำเร็จ: " + rows + " row");
             }
         }
+
+        currentStep = 3; // ไปขั้นที่ 2
+        UpdateStepButtons();
     }
 
     private void button8_Click(object sender, EventArgs e)
@@ -1018,27 +1065,29 @@ public partial class frmMain : Form
                 MessageBox.Show("Update สำเร็จ: " + rows + " row");
             }
         }
+        currentStep = 1;
+        UpdateStepButtons();
     }
 
 
     private async void button5_Click(object sender, EventArgs e)
     {
-        if (dgvConfigs.Rows.Count > 0)
-        {
-            dgvConfigs.ClearSelection();
+        //if (dgvConfigs.Rows.Count > 0)
+        //{
+        //    dgvConfigs.ClearSelection();
 
-            dgvConfigs.Rows[0].Selected = true;
-            dgvConfigs.CurrentCell = dgvConfigs.Rows[0].Cells[0];
+        //    dgvConfigs.Rows[0].Selected = true;
+        //    dgvConfigs.CurrentCell = dgvConfigs.Rows[0].Cells[0];
 
-            var config = dgvConfigs.Rows[0].DataBoundItem as InkjetConfigDto;
+        //    var config = dgvConfigs.Rows[0].DataBoundItem as InkjetConfigDto;
 
-            if (config != null)
-            {
-                MessageBox.Show($"ProgramNo: {config.ProgramNumber}");
-            }
-        }
+        //    if (config != null)
+        //    {
+        //        MessageBox.Show($"ProgramNo: {config.ProgramNumber}");
+        //    }
+        //}
 
-        await TestSendToIj3TcpAsync();
+        //await TestSendToIj3TcpAsync();
 
         if (dgvConfigs.Rows.Count > 1)
         {
@@ -1057,27 +1106,118 @@ public partial class frmMain : Form
 
         await TestSendToIj3TcpAsync();
 
-
+        currentStep = 2; // ไปขั้นที่ 2
+        UpdateStepButtons();
 
     }
 
     private async void button7_Click(object sender, EventArgs e)
     {
-        if (dgvConfigs.Rows.Count > 2)
+        await SendToIj3FromDbAsync("CCRC0291-DEX0663MS");
+        //if (dgvConfigs.Rows.Count > 2)
+        //{
+        //    dgvConfigs.ClearSelection();
+
+        //    dgvConfigs.Rows[2].Selected = true;
+        //    dgvConfigs.CurrentCell = dgvConfigs.Rows[2].Cells[0];
+
+        //    var config = dgvConfigs.Rows[2].DataBoundItem as InkjetConfigDto;
+
+        //    if (config != null)
+        //    {
+        //        MessageBox.Show($"ProgramNo: {config.ProgramNumber}");
+        //    }
+
+        //    await TestSendToIj3TcpAsync();
+
+        currentStep = 4; // ไปขั้นที่ 2
+        UpdateStepButtons();
+        //}
+    }
+
+    private void UpdateStepButtons()
+    {
+        // ปุ่ม 1 (MK1+2)
+        button5.Enabled = (currentStep == 1);
+
+        // ปุ่ม 2 (UV1)
+        button6.Enabled = (currentStep == 2);
+
+        // ปุ่ม 3 (MK2/3)
+        button7.Enabled = (currentStep == 3);
+
+        // ปุ่ม 4 (UV2)
+        button8.Enabled = (currentStep == 4);
+
+        // ถ้าอยากให้เห็นชัดเจนว่าอันไหนเสร็จแล้ว อาจจะเปลี่ยนสีปุ่มด้วยก็ได้
+        //button5.BackColor = (currentStep > 1) ? Color.LightGreen : SystemColors.Control;
+        // ... ทำแบบเดียวกันกับปุ่มอื่นๆ
+    }
+
+    private async Task SendToIj3FromDbAsync(string barcode)
+    {
+        // ตัวแปรสำหรับ Block 1
+        string text1 = ""; int x1 = 0, y1 = 0, size1 = 1, scale1 = 1;
+        // ตัวแปรสำหรับ Block 2
+        string text2 = ""; int x2 = 0, y2 = 0, size2 = 1, scale2 = 1;
+
+        string dbPath = @"D:\DB\uv_data.db3";
+        using (var conn = new SqliteConnection($"Data Source={dbPath}"))
         {
-            dgvConfigs.ClearSelection();
+            await conn.OpenAsync();
+            string sql = "SELECT * FROM config_data_mk3 WHERE pattern_no_erp = @barcode LIMIT 1";
+            using var cmd = new SqliteCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@barcode", barcode);
+            using var reader = await cmd.ExecuteReaderAsync();
 
-            dgvConfigs.Rows[2].Selected = true;
-            dgvConfigs.CurrentCell = dgvConfigs.Rows[2].Cells[0];
-
-            var config = dgvConfigs.Rows[2].DataBoundItem as InkjetConfigDto;
-
-            if (config != null)
+            if (reader.Read())
             {
-                MessageBox.Show($"ProgramNo: {config.ProgramNumber}");
+                // ดึงข้อมูล Block 1
+                text1 = reader.GetString(reader.GetOrdinal("block1_text"));
+                x1 = reader.GetInt32(reader.GetOrdinal("block1_x"));
+                y1 = reader.GetInt32(reader.GetOrdinal("block1_y"));
+                size1 = reader.GetInt32(reader.GetOrdinal("block1_size"));
+                scale1 = reader.GetInt32(reader.GetOrdinal("block1_scale_side"));
+
+                // ดึงข้อมูล Block 2
+                text2 = reader.IsDBNull(reader.GetOrdinal("block2_text")) ? "" : reader.GetString(reader.GetOrdinal("block2_text"));
+                x2 = reader.GetInt32(reader.GetOrdinal("block2_x"));
+                y2 = reader.GetInt32(reader.GetOrdinal("block2_y"));
+                size2 = reader.GetInt32(reader.GetOrdinal("block2_size"));
+                scale2 = reader.GetInt32(reader.GetOrdinal("block2_scale_side"));
+            }
+        }
+
+        // --- ส่วนการส่ง TCP ---
+        using var client = new InkjetOperator.Adapters.Simple.SocketDeviceClient();
+        try
+        {
+            await client.ConnectAsync(txtTcpHost.Text.Trim(), int.Parse(txtTcpPort.Text.Trim()));
+            int fixedProgNo = 13;
+
+            // 1. เปลี่ยนโปรแกรมเป็น 13
+            await InkjetOperator.Services.InkjetProtocol.SendChangeProgramAsync(client, fixedProgNo);
+
+            // 2. ส่ง Block 1
+            var block1 = new InkjetOperator.Services.SimpleTextBlock(1, text1, x1, y1, size1, scale1);
+            await InkjetOperator.Services.InkjetProtocol.SendTextBlockAsync(client, fixedProgNo, block1);
+            await Task.Delay(50); // พักช่วงสั้นๆ ระหว่างการส่งแต่ละ Block
+
+            // 3. ส่ง Block 2
+            if (!string.IsNullOrEmpty(text2))
+            {
+                var block2 = new InkjetOperator.Services.SimpleTextBlock(2, text2, x2, y2, size2, scale2);
+                await InkjetOperator.Services.InkjetProtocol.SendTextBlockAsync(client, fixedProgNo, block2);
+                await Task.Delay(50);
             }
 
-            await TestSendToIj3TcpAsync();
+            // 4. สั่ง Resume
+            await InkjetOperator.Services.InkjetProtocol.SendResumeAsync(client);
+            Log("Step 3: MK3 (2 Blocks) Sent Successfully.");
+        }
+        catch (Exception ex)
+        {
+            Log("Error: " + ex.Message);
         }
     }
 }
