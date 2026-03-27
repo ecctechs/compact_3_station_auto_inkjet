@@ -142,6 +142,9 @@ public class TextBlockDto
 
     [JsonPropertyName("scale")]
     public int? Scale { get; set; }
+
+    // เพิ่มบรรทัดนี้ (บรรทัดที่ 50 โดยประมาณ)
+    public string RuleResult { get; set; }
 }
 
 public class ConveyorSpeedDto

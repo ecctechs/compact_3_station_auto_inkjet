@@ -76,6 +76,7 @@ partial class frmMain
         pnlLog = new Panel();
         txtLog = new TextBox();
         lblLogTitle = new Label();
+        button9 = new Button();
         pnlConnection.SuspendLayout();
         grpInkjet12.SuspendLayout();
         grpInkjet34.SuspendLayout();
@@ -99,6 +100,7 @@ partial class frmMain
         // 
         // pnlConnection
         // 
+        pnlConnection.Controls.Add(button9);
         pnlConnection.Controls.Add(button4);
         pnlConnection.Controls.Add(button3);
         pnlConnection.Controls.Add(button2);
@@ -744,6 +746,16 @@ partial class frmMain
         lblLogTitle.TabIndex = 1;
         lblLogTitle.Text = "Log";
         // 
+        // button9
+        // 
+        button9.Location = new Point(1007, 31);
+        button9.Name = "button9";
+        button9.Size = new Size(94, 29);
+        button9.TabIndex = 7;
+        button9.Text = "button9";
+        button9.UseVisualStyleBackColor = true;
+        button9.Click += button9_Click;
+        // 
         // frmMain
         // 
         AutoScaleDimensions = new SizeF(8F, 20F);
@@ -852,4 +864,5 @@ partial class frmMain
     private Button button7;
     private Button button6;
     private Button button5;
+    private Button button9;
 }

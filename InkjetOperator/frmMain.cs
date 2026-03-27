@@ -444,6 +444,29 @@ public partial class frmMain : Form
             _textBlockBindingList.Add(b);
         }
 
+        foreach (var block in config.TextBlocks)
+        {
+            // --- ส่วนที่แก้ไข/เพิ่มใหม่ ---
+            // ใช้ LINQ ค้นหา Pattern ที่ชื่อตรงกับ block.Text (เช่น "DDDD")
+            //var pattern = PatternEngine.Patterns.FirstOrDefault(p => p.Name == block.Text);
+            string previewText = PatternEngine.Process(txtLot.Text, block.Text);
+            //Debug.WriteLine(block.Text);
+
+            if (previewText != null)
+            {
+                // ถ้าเจอ ให้เอาค่าจาก txtLot (หรือ res.Job.LotNumber) มาแปลงด้วย Rule
+                block.RuleResult = previewText;
+            }
+            else
+            {
+                // ถ้าไม่เจอ ให้แสดงค่าเดิมของมัน
+                block.RuleResult = block.Text;
+            }
+            // --------------------------
+
+            _textBlockBindingList.Add(block);
+        }
+
         _textBlockBindingList.RaiseListChangedEvents = true;
         _textBlockBindingList.ResetBindings();
 
@@ -1219,5 +1242,14 @@ public partial class frmMain : Form
         {
             Log("Error: " + ex.Message);
         }
+    }
+
+    private void button9_Click(object sender, EventArgs e)
+    {
+        string lot = "C200521-001" ?? string.Empty;
+        string blockText = "DDDD-01";
+        string previewText = PatternEngine.Process(lot, blockText);
+        //lblPreview.Text = "Preview: " + previewText;
+        Log("Preview: " + previewText);
     }
 }
