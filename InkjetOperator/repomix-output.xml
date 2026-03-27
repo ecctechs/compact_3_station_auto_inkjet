@@ -67,6 +67,7 @@ Models/TransformRuleType.cs
 Models/UvRow.cs
 PlcAdapter/PlcManager.cs
 Program.cs
+repomix.config.json.txt
 Services/ApiClient.cs
 Services/BotClickHelper.cs
 Services/PatternEngine.cs
@@ -1402,9 +1403,32 @@ public partial class frmMain : Form
         _textBlockBindingList.RaiseListChangedEvents = false;
         _textBlockBindingList.Clear();
 
-        foreach (var b in config.TextBlocks ?? new List<TextBlockDto>())
+        //foreach (var b in config.TextBlocks ?? new List<TextBlockDto>())
+        //{
+        //    _textBlockBindingList.Add(b);
+        //}
+
+        foreach (var block in config.TextBlocks)
         {
-            _textBlockBindingList.Add(b);
+            // --- ส่วนที่แก้ไข/เพิ่มใหม่ ---
+            // ใช้ LINQ ค้นหา Pattern ที่ชื่อตรงกับ block.Text (เช่น "DDDD")
+            //var pattern = PatternEngine.Patterns.FirstOrDefault(p => p.Name == block.Text);
+            string previewText = PatternEngine.Process(txtLot.Text, block.Text);
+            //Debug.WriteLine(block.Text);
+
+            if (previewText != null)
+            {
+                // ถ้าเจอ ให้เอาค่าจาก txtLot (หรือ res.Job.LotNumber) มาแปลงด้วย Rule
+                block.RuleResult = previewText;
+            }
+            else
+            {
+                // ถ้าไม่เจอ ให้แสดงค่าเดิมของมัน
+                block.RuleResult = block.Text;
+            }
+            // --------------------------
+
+            _textBlockBindingList.Add(block);
         }
 
         _textBlockBindingList.RaiseListChangedEvents = true;
@@ -2183,6 +2207,15 @@ public partial class frmMain : Form
             Log("Error: " + ex.Message);
         }
     }
+
+    private void button9_Click(object sender, EventArgs e)
+    {
+        string lot = "C200521-001" ?? string.Empty;
+        string blockText = "DDDD-01";
+        string previewText = PatternEngine.Process(lot, blockText);
+        //lblPreview.Text = "Preview: " + previewText;
+        Log("Preview: " + previewText);
+    }
 }
 </file>
 
@@ -2265,6 +2298,7 @@ partial class frmMain
         pnlLog = new Panel();
         txtLog = new TextBox();
         lblLogTitle = new Label();
+        button9 = new Button();
         pnlConnection.SuspendLayout();
         grpInkjet12.SuspendLayout();
         grpInkjet34.SuspendLayout();
@@ -2288,6 +2322,7 @@ partial class frmMain
         // 
         // pnlConnection
         // 
+        pnlConnection.Controls.Add(button9);
         pnlConnection.Controls.Add(button4);
         pnlConnection.Controls.Add(button3);
         pnlConnection.Controls.Add(button2);
@@ -2933,6 +2968,16 @@ partial class frmMain
         lblLogTitle.TabIndex = 1;
         lblLogTitle.Text = "Log";
         // 
+        // button9
+        // 
+        button9.Location = new Point(1007, 31);
+        button9.Name = "button9";
+        button9.Size = new Size(94, 29);
+        button9.TabIndex = 7;
+        button9.Text = "button9";
+        button9.UseVisualStyleBackColor = true;
+        button9.Click += button9_Click;
+        // 
         // frmMain
         // 
         AutoScaleDimensions = new SizeF(8F, 20F);
@@ -3041,6 +3086,7 @@ partial class frmMain
     private Button button7;
     private Button button6;
     private Button button5;
+    private Button button9;
 }
 </file>
 
@@ -4188,6 +4234,9 @@ public class TextBlockDto
 
     [JsonPropertyName("scale")]
     public int? Scale { get; set; }
+
+    // เพิ่มบรรทัดนี้ (บรรทัดที่ 50 โดยประมาณ)
+    public string RuleResult { get; set; }
 }
 
 public class ConveyorSpeedDto
@@ -4568,6 +4617,36 @@ static class Program
 
         Application.Run(new frmMain());
     }
+}
+</file>
+
+<file path="repomix.config.json.txt">
+{
+  "output": {
+    "filePath": "repomix-output.md",
+    "style": "markdown",
+    "removeComments": false,
+    "showLineNumbers": true,
+    "topFilesLength": 10
+  },
+  "include": [
+    "**/*.cs",
+    "**/*.csproj",
+    "**/*.sln"
+  ],
+  "ignore": {
+    "customPatterns": [
+      "bin/**",
+      "obj/**",
+      "Properties/**",
+      "*.resx",
+      "*.Designer.cs",
+      "*.user",
+      "*.db3",
+      "repomix-output.md",
+      "repomix-output.xml"
+    ]
+  }
 }
 </file>
 

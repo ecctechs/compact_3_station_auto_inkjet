@@ -1,0 +1,27 @@
+{
+  "output": {
+    "filePath": "repomix-output.md",
+    "style": "markdown",
+    "removeComments": false,
+    "showLineNumbers": true,
+    "topFilesLength": 10
+  },
+  "include": [
+    "**/*.cs",
+    "**/*.csproj",
+    "**/*.sln"
+  ],
+  "ignore": {
+    "customPatterns": [
+      "bin/**",
+      "obj/**",
+      "Properties/**",
+      "*.resx",
+      "*.Designer.cs",
+      "*.user",
+      "*.db3",
+      "repomix-output.md",
+      "repomix-output.xml"
+    ]
+  }
+}

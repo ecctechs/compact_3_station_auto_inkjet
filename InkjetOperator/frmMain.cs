@@ -439,10 +439,10 @@ public partial class frmMain : Form
         _textBlockBindingList.RaiseListChangedEvents = false;
         _textBlockBindingList.Clear();
 
-        foreach (var b in config.TextBlocks ?? new List<TextBlockDto>())
-        {
-            _textBlockBindingList.Add(b);
-        }
+        //foreach (var b in config.TextBlocks ?? new List<TextBlockDto>())
+        //{
+        //    _textBlockBindingList.Add(b);
+        //}
 
         foreach (var block in config.TextBlocks)
         {
