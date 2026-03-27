@@ -20,6 +20,7 @@ partial class frmMain
         components = new System.ComponentModel.Container();
         tmrPoll = new System.Windows.Forms.Timer(components);
         pnlConnection = new Panel();
+        button9 = new Button();
         button4 = new Button();
         button3 = new Button();
         button2 = new Button();
@@ -76,7 +77,6 @@ partial class frmMain
         pnlLog = new Panel();
         txtLog = new TextBox();
         lblLogTitle = new Label();
-        button9 = new Button();
         pnlConnection.SuspendLayout();
         grpInkjet12.SuspendLayout();
         grpInkjet34.SuspendLayout();
@@ -114,6 +114,16 @@ partial class frmMain
         pnlConnection.Name = "pnlConnection";
         pnlConnection.Size = new Size(1143, 153);
         pnlConnection.TabIndex = 3;
+        // 
+        // button9
+        // 
+        button9.Location = new Point(1007, 31);
+        button9.Name = "button9";
+        button9.Size = new Size(94, 29);
+        button9.TabIndex = 7;
+        button9.Text = "button9";
+        button9.UseVisualStyleBackColor = true;
+        button9.Click += button9_Click;
         // 
         // button4
         // 
@@ -430,6 +440,7 @@ partial class frmMain
         dgvJobs.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         dgvJobs.Size = new Size(388, 687);
         dgvJobs.TabIndex = 0;
+        dgvJobs.CellClick += dgvJobs_CellClick;
         dgvJobs.SelectionChanged += dgvJobs_SelectionChanged;
         // 
         // btnRefresh
@@ -745,16 +756,6 @@ partial class frmMain
         lblLogTitle.Size = new Size(1131, 27);
         lblLogTitle.TabIndex = 1;
         lblLogTitle.Text = "Log";
-        // 
-        // button9
-        // 
-        button9.Location = new Point(1007, 31);
-        button9.Name = "button9";
-        button9.Size = new Size(94, 29);
-        button9.TabIndex = 7;
-        button9.Text = "button9";
-        button9.UseVisualStyleBackColor = true;
-        button9.Click += button9_Click;
         // 
         // frmMain
         // 
