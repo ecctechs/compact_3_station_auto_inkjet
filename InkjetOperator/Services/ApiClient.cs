@@ -1,5 +1,9 @@
+using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Net.Http.Headers; // เพิ่มบรรทัดนี้ด้านบนสุด
 using InkjetOperator.Models;
 
 namespace InkjetOperator.Services;
@@ -27,6 +31,61 @@ public class ApiClient
             BaseAddress = new Uri(_baseUrl),
             Timeout = TimeSpan.FromSeconds(10),
         };
+    }
+
+    public async Task<bool> CreateLastSentJobAsync(object jobData)
+    {
+        try
+        {
+            // ใช้ PostAsJsonAsync และส่ง JsonOptions (SnakeCase) เข้าไปด้วย
+            var response = await _http.PostAsJsonAsync("/job/lastSent/create", jobData, JsonOptions);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorBody = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"CreateLastSentJob failed: {response.StatusCode} - {errorBody}");
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("CreateLastSentJob error: " + ex.Message);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// GET /job/lastSent/getAll?st_status=sent&page=1&limit=10
+    /// ดึงรายการประวัติการส่งงานล่าสุดพร้อมระบบแบ่งหน้า
+    /// </summary>
+    public async Task<List<PrintJob>> GetLastSentJobsAsync(string stStatus = "sent", int page = 1, int limit = 10)
+    {
+        try
+        {
+            // สร้าง Query String สำหรับ Filter และ Pagination
+            var url = $"/job/lastSent/getAll?st_status={stStatus}&page={page}&limit={limit}";
+
+            var response = await _http.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorBody = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"GetLastSentJobs failed: {response.StatusCode} - {errorBody}");
+                return new List<PrintJob>();
+            }
+
+            // ใช้ ReadFromJsonAsync พร้อม JsonOptions (SnakeCase) เหมือน GetPendingJobsAsync
+            var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedResult<PrintJob>>>(JsonOptions);
+
+            return wrapper?.Data?.Data ?? new List<PrintJob>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("GetLastSentJobs error: " + ex.Message);
+            return new List<PrintJob>();
+        }
     }
 
     /// <summary>GET /job/getAll?status=pending — polled every 5s by frmMain timer.</summary>

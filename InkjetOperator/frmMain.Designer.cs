@@ -49,6 +49,14 @@ partial class frmMain
         btnApplyApi = new Button();
         lblApiStatus = new Label();
         pnlJobs = new Panel();
+        label1 = new Label();
+        dataGridView1 = new DataGridView();
+        idDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+        barcodeRawDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+        lotNumberDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+        statusDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+        attemptDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+        printJobBindingSource = new BindingSource(components);
         dgvJobs = new DataGridView();
         btnRefresh = new Button();
         lblJobsTitle = new Label();
@@ -82,6 +90,8 @@ partial class frmMain
         grpInkjet34.SuspendLayout();
         grpBackend.SuspendLayout();
         pnlJobs.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)printJobBindingSource).BeginInit();
         ((System.ComponentModel.ISupportInitialize)dgvJobs).BeginInit();
         pnlDetail.SuspendLayout();
         groupBox1.SuspendLayout();
@@ -413,6 +423,8 @@ partial class frmMain
         // 
         // pnlJobs
         // 
+        pnlJobs.Controls.Add(label1);
+        pnlJobs.Controls.Add(dataGridView1);
         pnlJobs.Controls.Add(dgvJobs);
         pnlJobs.Controls.Add(btnRefresh);
         pnlJobs.Controls.Add(lblJobsTitle);
@@ -421,8 +433,83 @@ partial class frmMain
         pnlJobs.Margin = new Padding(3, 4, 3, 4);
         pnlJobs.Name = "pnlJobs";
         pnlJobs.Padding = new Padding(6, 7, 6, 7);
-        pnlJobs.Size = new Size(400, 774);
+        pnlJobs.Size = new Size(400, 982);
         pnlJobs.TabIndex = 1;
+        // 
+        // label1
+        // 
+        label1.AutoSize = true;
+        label1.Font = new Font("Segoe UI", 10.2F, FontStyle.Bold, GraphicsUnit.Point, 0);
+        label1.Location = new Point(6, 506);
+        label1.Name = "label1";
+        label1.Size = new Size(148, 23);
+        label1.TabIndex = 5;
+        label1.Text = "Pending Jobs St3";
+        // 
+        // dataGridView1
+        // 
+        dataGridView1.AllowUserToAddRows = false;
+        dataGridView1.AllowUserToDeleteRows = false;
+        dataGridView1.AutoGenerateColumns = false;
+        dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        dataGridView1.ColumnHeadersHeight = 29;
+        dataGridView1.Columns.AddRange(new DataGridViewColumn[] { idDataGridViewTextBoxColumn, barcodeRawDataGridViewTextBoxColumn, lotNumberDataGridViewTextBoxColumn, statusDataGridViewTextBoxColumn, attemptDataGridViewTextBoxColumn });
+        dataGridView1.DataSource = printJobBindingSource;
+        dataGridView1.Location = new Point(6, 533);
+        dataGridView1.Margin = new Padding(3, 4, 3, 4);
+        dataGridView1.MultiSelect = false;
+        dataGridView1.Name = "dataGridView1";
+        dataGridView1.ReadOnly = true;
+        dataGridView1.RowHeadersWidth = 51;
+        dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+        dataGridView1.Size = new Size(388, 394);
+        dataGridView1.TabIndex = 4;
+        dataGridView1.CellClick += dataGridView1_CellClick;
+        dataGridView1.SelectionChanged += dataGridView1_SelectionChanged;
+        // 
+        // idDataGridViewTextBoxColumn
+        // 
+        idDataGridViewTextBoxColumn.DataPropertyName = "Id";
+        idDataGridViewTextBoxColumn.HeaderText = "Id";
+        idDataGridViewTextBoxColumn.MinimumWidth = 6;
+        idDataGridViewTextBoxColumn.Name = "idDataGridViewTextBoxColumn";
+        idDataGridViewTextBoxColumn.ReadOnly = true;
+        // 
+        // barcodeRawDataGridViewTextBoxColumn
+        // 
+        barcodeRawDataGridViewTextBoxColumn.DataPropertyName = "BarcodeRaw";
+        barcodeRawDataGridViewTextBoxColumn.HeaderText = "BarcodeRaw";
+        barcodeRawDataGridViewTextBoxColumn.MinimumWidth = 6;
+        barcodeRawDataGridViewTextBoxColumn.Name = "barcodeRawDataGridViewTextBoxColumn";
+        barcodeRawDataGridViewTextBoxColumn.ReadOnly = true;
+        // 
+        // lotNumberDataGridViewTextBoxColumn
+        // 
+        lotNumberDataGridViewTextBoxColumn.DataPropertyName = "LotNumber";
+        lotNumberDataGridViewTextBoxColumn.HeaderText = "LotNumber";
+        lotNumberDataGridViewTextBoxColumn.MinimumWidth = 6;
+        lotNumberDataGridViewTextBoxColumn.Name = "lotNumberDataGridViewTextBoxColumn";
+        lotNumberDataGridViewTextBoxColumn.ReadOnly = true;
+        // 
+        // statusDataGridViewTextBoxColumn
+        // 
+        statusDataGridViewTextBoxColumn.DataPropertyName = "Status";
+        statusDataGridViewTextBoxColumn.HeaderText = "Status";
+        statusDataGridViewTextBoxColumn.MinimumWidth = 6;
+        statusDataGridViewTextBoxColumn.Name = "statusDataGridViewTextBoxColumn";
+        statusDataGridViewTextBoxColumn.ReadOnly = true;
+        // 
+        // attemptDataGridViewTextBoxColumn
+        // 
+        attemptDataGridViewTextBoxColumn.DataPropertyName = "Attempt";
+        attemptDataGridViewTextBoxColumn.HeaderText = "Attempt";
+        attemptDataGridViewTextBoxColumn.MinimumWidth = 6;
+        attemptDataGridViewTextBoxColumn.Name = "attemptDataGridViewTextBoxColumn";
+        attemptDataGridViewTextBoxColumn.ReadOnly = true;
+        // 
+        // printJobBindingSource
+        // 
+        printJobBindingSource.DataSource = typeof(Models.PrintJob);
         // 
         // dgvJobs
         // 
@@ -430,15 +517,14 @@ partial class frmMain
         dgvJobs.AllowUserToDeleteRows = false;
         dgvJobs.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         dgvJobs.ColumnHeadersHeight = 29;
-        dgvJobs.Dock = DockStyle.Fill;
-        dgvJobs.Location = new Point(6, 40);
+        dgvJobs.Location = new Point(6, 36);
         dgvJobs.Margin = new Padding(3, 4, 3, 4);
         dgvJobs.MultiSelect = false;
         dgvJobs.Name = "dgvJobs";
         dgvJobs.ReadOnly = true;
         dgvJobs.RowHeadersWidth = 51;
         dgvJobs.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        dgvJobs.Size = new Size(388, 687);
+        dgvJobs.Size = new Size(388, 452);
         dgvJobs.TabIndex = 0;
         dgvJobs.CellClick += dgvJobs_CellClick;
         dgvJobs.SelectionChanged += dgvJobs_SelectionChanged;
@@ -446,7 +532,7 @@ partial class frmMain
         // btnRefresh
         // 
         btnRefresh.Dock = DockStyle.Bottom;
-        btnRefresh.Location = new Point(6, 727);
+        btnRefresh.Location = new Point(6, 935);
         btnRefresh.Margin = new Padding(3, 4, 3, 4);
         btnRefresh.Name = "btnRefresh";
         btnRefresh.Size = new Size(388, 40);
@@ -489,7 +575,7 @@ partial class frmMain
         pnlDetail.Margin = new Padding(3, 4, 3, 4);
         pnlDetail.Name = "pnlDetail";
         pnlDetail.Padding = new Padding(6, 7, 6, 7);
-        pnlDetail.Size = new Size(743, 774);
+        pnlDetail.Size = new Size(743, 982);
         pnlDetail.TabIndex = 0;
         // 
         // button8
@@ -727,7 +813,7 @@ partial class frmMain
         pnlLog.Controls.Add(txtLog);
         pnlLog.Controls.Add(lblLogTitle);
         pnlLog.Dock = DockStyle.Bottom;
-        pnlLog.Location = new Point(0, 927);
+        pnlLog.Location = new Point(0, 1135);
         pnlLog.Margin = new Padding(3, 4, 3, 4);
         pnlLog.Name = "pnlLog";
         pnlLog.Padding = new Padding(6, 7, 6, 7);
@@ -761,7 +847,7 @@ partial class frmMain
         // 
         AutoScaleDimensions = new SizeF(8F, 20F);
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(1143, 1114);
+        ClientSize = new Size(1143, 1322);
         Controls.Add(pnlDetail);
         Controls.Add(pnlJobs);
         Controls.Add(pnlLog);
@@ -780,6 +866,9 @@ partial class frmMain
         grpBackend.ResumeLayout(false);
         grpBackend.PerformLayout();
         pnlJobs.ResumeLayout(false);
+        pnlJobs.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
+        ((System.ComponentModel.ISupportInitialize)printJobBindingSource).EndInit();
         ((System.ComponentModel.ISupportInitialize)dgvJobs).EndInit();
         pnlDetail.ResumeLayout(false);
         pnlDetail.PerformLayout();
@@ -866,4 +955,12 @@ partial class frmMain
     private Button button6;
     private Button button5;
     private Button button9;
+    private Label label1;
+    private DataGridView dataGridView1;
+    private BindingSource printJobBindingSource;
+    private DataGridViewTextBoxColumn idDataGridViewTextBoxColumn;
+    private DataGridViewTextBoxColumn barcodeRawDataGridViewTextBoxColumn;
+    private DataGridViewTextBoxColumn lotNumberDataGridViewTextBoxColumn;
+    private DataGridViewTextBoxColumn statusDataGridViewTextBoxColumn;
+    private DataGridViewTextBoxColumn attemptDataGridViewTextBoxColumn;
 }

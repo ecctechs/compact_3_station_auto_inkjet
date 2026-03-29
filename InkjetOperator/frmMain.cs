@@ -222,6 +222,7 @@ public partial class frmMain : Form
             var jobs = await _api.GetPendingJobsAsync();
             _pendingJobs = jobs;
             UpdateJobGrid();
+            LoadLastSentData();
             UpdateDeviceStatus();
             lblApiStatus.Text = "OK";
         }
@@ -1418,6 +1419,411 @@ public partial class frmMain : Form
         catch (Exception ex)
         {
             Log("Load job detail error: " + ex.Message);
+        }
+    }
+
+    private async Task LoadLastSentData()
+    {
+        try
+        {
+            // เรียกใช้ API (ระบุ status เป็น sent, หน้า 1, จำนวน 10 รายการ)
+            var lastSentJobs = await _api.GetLastSentJobsAsync("sent", 1, 10);
+
+            // นำข้อมูลไปผูกกับ BindingSource หรือ DataGridView
+            var jobRows = lastSentJobs.Select(j => new InkjetOperator.Models.JobRow
+            {
+                Id = j.Id,
+                BarcodeRaw = j.BarcodeRaw,
+                LotNumber = j.LotNumber ?? string.Empty,
+                Status = j.Status,
+                Attempt = j.Attempt
+                // เพิ่ม field อื่นๆ ที่ต้องการแสดงในตาราง history
+            }).ToList();
+
+            printJobBindingSource.DataSource = new System.ComponentModel.BindingList<InkjetOperator.Models.JobRow>(jobRows);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"โหลดข้อมูลประวัติไม่สำเร็จ: {ex.Message}", "Error");
+        }
+    }
+
+    private async void dataGridView1_SelectionChanged(object sender, EventArgs e)
+    {
+        ////// Guard: header click / invalid index
+        ////if (e.RowIndex < 0) return;
+        ////if (_isRefreshingJobs) return; // 🔥 กันตอน poll
+
+        ////var row = dataGridView1.Rows[e.RowIndex];
+        //int jobId;
+        //string rawbarcode;
+        //if (printJobBindingSource.Current is InkjetOperator.Models.JobRow selectedJob)
+        //{
+        //    jobId = selectedJob.Id;
+        //    rawbarcode = selectedJob.BarcodeRaw;
+
+
+        //    //Debug.WriteLine($"Clicked row {e.RowIndex}, Id={row.Cells["Id"].Value}, Barcode={row.Cells["BarcodeRaw"].Value}");
+
+        //    //// Ensure the grid contains expected columns
+        //    //if (!dataGridView1.Columns.Contains("Id") || row.Cells["Id"].Value == null) return;
+        //    //if (!dataGridView1.Columns.Contains("BarcodeRaw")) return;
+
+
+
+        //    //try
+        //    //{
+
+        //    //}
+        //    //catch
+        //    //{
+        //    //    // invalid id cell
+        //    //    return;
+        //    //}
+
+        //    //string rawbarcode = "CCRC0291-DEX0663MS";
+        //    //if (jobId == _selectedJobId) return;
+        //    //_selectedJobId = jobId;
+
+        //    // Helpers
+        //    static bool ReaderHasColumn(Microsoft.Data.Sqlite.SqliteDataReader r, string name)
+        //    {
+        //        for (int i = 0; i < r.FieldCount; i++)
+        //        {
+        //            if (string.Equals(r.GetName(i), name, StringComparison.OrdinalIgnoreCase))
+        //                return true;
+        //        }
+        //        return false;
+        //    }
+
+        //    static string? GetStringSafe(Microsoft.Data.Sqlite.SqliteDataReader r, string name)
+        //    {
+        //        if (!ReaderHasColumn(r, name)) return null;
+        //        int idx = r.GetOrdinal(name);
+        //        return r.IsDBNull(idx) ? null : r.GetString(idx);
+        //    }
+
+        //    static int? GetIntSafe(Microsoft.Data.Sqlite.SqliteDataReader r, string name)
+        //    {
+        //        var s = GetStringSafe(r, name);
+        //        if (string.IsNullOrWhiteSpace(s)) return null;
+        //        return int.TryParse(s, out var v) ? v : null;
+        //    }
+
+        //    try
+        //    {
+        //        string dbPath = @"D:\DB\uv_data.db3";
+        //        string connStr = $"Data Source={dbPath}";
+        //        bool found = false;
+
+        //        // optional debug: MessageBox.Show($"Clicked Job ID: {jobId}, Barcode: {rawbarcode}");
+
+        //        try
+        //        {
+        //            await using var conn = new Microsoft.Data.Sqlite.SqliteConnection(connStr);
+        //            await conn.OpenAsync();
+
+        //            await using var cmd = conn.CreateCommand();
+        //            cmd.CommandText = "SELECT * FROM config_data WHERE pattern_no_erp = @rawbarcode LIMIT 1";
+        //            cmd.Parameters.AddWithValue("@rawbarcode", rawbarcode);
+
+
+        //            await using var reader = await cmd.ExecuteReaderAsync();
+        //            if (await reader.ReadAsync())
+        //            {
+        //                // Build PatternDetail from known schema columns.
+        //                var pattern = new PatternDetail
+        //                {
+        //                    Barcode = GetStringSafe(reader, "pattern_no_erp") ?? GetStringSafe(reader, "pattern_no_erp2") ?? rawbarcode,
+        //                    Description = GetStringSafe(reader, "model_plan_code") ?? GetStringSafe(reader, "program_name") ?? ""
+        //                };
+
+        //                // Helper to build MK config (mk1 / mk2)
+        //                InkjetConfigDto BuildMkConfig(string prefix, int ordinal, string programNameColumn)
+        //                {
+        //                    var cfg = new InkjetConfigDto
+        //                    {
+        //                        Ordinal = ordinal,
+        //                        ProgramNumber = GetIntSafe(reader, $"{prefix}program_no") ?? GetIntSafe(reader, $"{prefix}program_no") ?? null,
+        //                        ProgramName = GetStringSafe(reader, programNameColumn),
+        //                        Width = GetIntSafe(reader, $"{prefix}width"),
+        //                        Height = GetIntSafe(reader, $"{prefix}height"),
+        //                        TriggerDelay = GetIntSafe(reader, $"{prefix}trigger_delay"),
+        //                        Direction = GetIntSafe(reader, $"{prefix}text_direction"),
+        //                        SteelType = null,
+        //                        Suspended = false
+        //                    };
+
+        //                    // text blocks 1..5
+        //                    for (int b = 1; b <= 5; b++)
+        //                    {
+        //                        string textCol = $"{prefix}block{b}_text";
+        //                        if (ReaderHasColumn(reader, textCol))
+        //                        {
+        //                            var text = GetStringSafe(reader, textCol);
+        //                            if (!string.IsNullOrEmpty(text))
+        //                            {
+        //                                var tb = new TextBlockDto
+        //                                {
+        //                                    BlockNumber = b,
+        //                                    Text = text,
+        //                                    X = GetIntSafe(reader, $"{prefix}block{b}_x"),
+        //                                    Y = GetIntSafe(reader, $"{prefix}block{b}_y"),
+        //                                    Size = GetIntSafe(reader, $"{prefix}block{b}_size"),
+        //                                    Scale = GetIntSafe(reader, $"{prefix}block{b}_scale_side")
+        //                                };
+        //                                cfg.TextBlocks.Add(tb);
+        //                            }
+        //                        }
+        //                    }
+
+        //                    return cfg;
+        //                }
+
+        //                var mk1 = BuildMkConfig("mk1_", 1, "program_name");
+        //                var mk2 = BuildMkConfig("mk2_", 2, "program_name3");
+
+        //                pattern.InkjetConfigs = new List<InkjetConfigDto> { mk1, mk2 };
+
+        //                var spd1 = GetIntSafe(reader, "belt1_inkjet");
+        //                var spd2 = GetIntSafe(reader, "belt2_feed_inkjet");
+        //                if (spd1.HasValue || spd2.HasValue)
+        //                {
+        //                    pattern.ConveyorSpeeds = new ConveyorSpeedDto
+        //                    {
+        //                        Speed1 = spd1,
+        //                        Speed2 = spd2,
+        //                        Speed3 = GetIntSafe(reader, "belt3")
+        //                    };
+        //                }
+
+        //                // Minimal job + resolved response
+        //                _currentResolved = new ResolvedJobResponse
+        //                {
+        //                    Job = new PrintJob
+        //                    {
+        //                        Id = jobId,
+        //                        BarcodeRaw = rawbarcode,
+        //                        LotNumber = dataGridView1.Columns.Contains("LotNumber") ? selectedJob.LotNumber?.ToString() : null,
+        //                        Status = dataGridView1.Columns.Contains("Status") ? selectedJob.Status?.ToString() : null
+        //                    },
+        //                    Pattern = pattern
+        //                };
+
+        //                found = true;
+        //                UpdateDetailPanel();
+        //            }
+
+        //            await conn.CloseAsync();
+        //        }
+        //        catch (Exception dbEx)
+        //        {
+        //            Log("SQLite query error: " + dbEx.Message);
+        //        }
+
+
+        //        if (!found)
+        //        {
+        //            var resolved = await _api.GetResolvedJobAsync(jobId);
+        //            _currentResolved = resolved;
+        //            UpdateDetailPanel();
+        //        }
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Log("Load job detail error: " + ex.Message);
+        //    }
+        //}
+    }
+
+    private async void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
+    {
+        //// Guard: header click / invalid index
+        //if (e.RowIndex < 0) return;
+        //if (_isRefreshingJobs) return; // 🔥 กันตอน poll
+
+        var row = dataGridView1.Rows[e.RowIndex];
+        int jobId;
+        string rawbarcode;
+        if (printJobBindingSource.Current is InkjetOperator.Models.JobRow selectedJob)
+        {
+            jobId = selectedJob.Id;
+            rawbarcode = selectedJob.BarcodeRaw;
+
+
+            //Debug.WriteLine($"Clicked row {e.RowIndex}, Id={row.Cells["Id"].Value}, Barcode={row.Cells["BarcodeRaw"].Value}");
+
+            //// Ensure the grid contains expected columns
+            //if (!dataGridView1.Columns.Contains("Id") || row.Cells["Id"].Value == null) return;
+            //if (!dataGridView1.Columns.Contains("BarcodeRaw")) return;
+
+
+
+            //try
+            //{
+
+            //}
+            //catch
+            //{
+            //    // invalid id cell
+            //    return;
+            //}
+
+            //string rawbarcode = "CCRC0291-DEX0663MS";
+            //if (jobId == _selectedJobId) return;
+            //_selectedJobId = jobId;
+
+            // Helpers
+            static bool ReaderHasColumn(Microsoft.Data.Sqlite.SqliteDataReader r, string name)
+            {
+                for (int i = 0; i < r.FieldCount; i++)
+                {
+                    if (string.Equals(r.GetName(i), name, StringComparison.OrdinalIgnoreCase))
+                        return true;
+                }
+                return false;
+            }
+
+            static string? GetStringSafe(Microsoft.Data.Sqlite.SqliteDataReader r, string name)
+            {
+                if (!ReaderHasColumn(r, name)) return null;
+                int idx = r.GetOrdinal(name);
+                return r.IsDBNull(idx) ? null : r.GetString(idx);
+            }
+
+            static int? GetIntSafe(Microsoft.Data.Sqlite.SqliteDataReader r, string name)
+            {
+                var s = GetStringSafe(r, name);
+                if (string.IsNullOrWhiteSpace(s)) return null;
+                return int.TryParse(s, out var v) ? v : null;
+            }
+
+            try
+            {
+                string dbPath = @"D:\DB\uv_data.db3";
+                string connStr = $"Data Source={dbPath}";
+                bool found = false;
+
+                try
+                {
+                    await using var conn = new Microsoft.Data.Sqlite.SqliteConnection(connStr);
+                    await conn.OpenAsync();
+
+                    await using var cmd = conn.CreateCommand();
+                    cmd.CommandText = "SELECT * FROM config_data WHERE pattern_no_erp = @rawbarcode LIMIT 1";
+                    cmd.Parameters.AddWithValue("@rawbarcode", rawbarcode);
+
+                
+
+                    await using var reader = await cmd.ExecuteReaderAsync();
+
+               
+                    if (await reader.ReadAsync())
+                    {
+                        // Build PatternDetail from known schema columns.
+                        var pattern = new PatternDetail
+                        {
+                            Barcode = GetStringSafe(reader, "pattern_no_erp") ?? GetStringSafe(reader, "pattern_no_erp2") ?? rawbarcode,
+                            Description = GetStringSafe(reader, "model_plan_code") ?? GetStringSafe(reader, "program_name") ?? ""
+                        };
+
+                        // Helper to build MK config (mk1 / mk2)
+                        InkjetConfigDto BuildMkConfig(string prefix, int ordinal, string programNameColumn)
+                        {
+                            var cfg = new InkjetConfigDto
+                            {
+                                Ordinal = ordinal,
+                                ProgramNumber = GetIntSafe(reader, $"{prefix}program_no") ?? GetIntSafe(reader, $"{prefix}program_no") ?? null,
+                                ProgramName = GetStringSafe(reader, programNameColumn),
+                                Width = GetIntSafe(reader, $"{prefix}width"),
+                                Height = GetIntSafe(reader, $"{prefix}height"),
+                                TriggerDelay = GetIntSafe(reader, $"{prefix}trigger_delay"),
+                                Direction = GetIntSafe(reader, $"{prefix}text_direction"),
+                                SteelType = null,
+                                Suspended = false
+                            };
+
+                            // text blocks 1..5
+                            for (int b = 1; b <= 5; b++)
+                            {
+                                string textCol = $"{prefix}block{b}_text";
+                                if (ReaderHasColumn(reader, textCol))
+                                {
+                                    var text = GetStringSafe(reader, textCol);
+                                    if (!string.IsNullOrEmpty(text))
+                                    {
+                                        var tb = new TextBlockDto
+                                        {
+                                            BlockNumber = b,
+                                            Text = text,
+                                            X = GetIntSafe(reader, $"{prefix}block{b}_x"),
+                                            Y = GetIntSafe(reader, $"{prefix}block{b}_y"),
+                                            Size = GetIntSafe(reader, $"{prefix}block{b}_size"),
+                                            Scale = GetIntSafe(reader, $"{prefix}block{b}_scale_side")
+                                        };
+                                        cfg.TextBlocks.Add(tb);
+                                    }
+                                }
+                            }
+
+                            return cfg;
+                        }
+
+                        var mk1 = BuildMkConfig("mk1_", 1, "program_name");
+                        var mk2 = BuildMkConfig("mk2_", 2, "program_name3");
+
+                        pattern.InkjetConfigs = new List<InkjetConfigDto> { mk1, mk2 };
+
+                        var spd1 = GetIntSafe(reader, "belt1_inkjet");
+                        var spd2 = GetIntSafe(reader, "belt2_feed_inkjet");
+                        if (spd1.HasValue || spd2.HasValue)
+                        {
+                            pattern.ConveyorSpeeds = new ConveyorSpeedDto
+                            {
+                                Speed1 = spd1,
+                                Speed2 = spd2,
+                                Speed3 = GetIntSafe(reader, "belt3")
+                            };
+                        }
+
+                        // Minimal job + resolved response
+                        _currentResolved = new ResolvedJobResponse
+                        {
+                            Job = new PrintJob
+                            {
+                                Id = jobId,
+                                BarcodeRaw = rawbarcode,
+                                LotNumber = dataGridView1.Columns.Contains("LotNumber") ? row.Cells["LotNumber"].Value?.ToString() : null,
+                                Status = dataGridView1.Columns.Contains("Status") ? row.Cells["Status"].Value?.ToString() : null
+                            },
+                            Pattern = pattern
+                        };
+
+                        found = true;
+                        UpdateDetailPanel();
+                    }
+
+                    await conn.CloseAsync();
+                }
+                catch (Exception dbEx)
+                {
+                    Log("SQLite query error: " + dbEx.Message);
+                }
+
+
+                if (!found)
+                {
+                    var resolved = await _api.GetResolvedJobAsync(jobId);
+                    _currentResolved = resolved;
+                    UpdateDetailPanel();
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Log("Load job detail error: " + ex.Message);
+            }
         }
     }
 }
