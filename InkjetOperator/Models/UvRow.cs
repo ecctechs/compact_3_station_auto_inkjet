@@ -13,5 +13,7 @@ namespace InkjetOperator.Models
         public string Lot { get; set; } = "";
         public string Name { get; set; } = "";
         public string UpdateAt { get; set; } = "";
+
+        public string Program { get; set; } = "";
     }
 }

@@ -54,6 +54,7 @@ public partial class frmMain : Form
     public frmMain()
     {
         InitializeComponent();
+        //StartWatcher();
 
         _adapterIj1 = new MkCompactAdapter(_rs232Ij1);
         _adapterIj2 = new MkCompactAdapter(_rs232Ij2);
@@ -70,6 +71,38 @@ public partial class frmMain : Form
     // ════════════════════════════════════════
     //  Form events
     // ════════════════════════════════════════
+
+    private void StartWatcher()
+    {
+        string watchPath = @"\\DESKTOP-KGODCT5\Users\theer\Desktop\BotShare\input";
+
+        FileSystemWatcher watcher = new FileSystemWatcher(watchPath);
+        watcher.Filter = "*.uvdx";
+        watcher.Created += OnFileCreated;
+        watcher.EnableRaisingEvents = true;
+    }
+
+    private void OnFileCreated(object sender, FileSystemEventArgs e)
+    {
+        string fileName = Path.GetFileName(e.FullPath);
+
+        Thread.Sleep(1000); // กันไฟล์ยัง copy ไม่เสร็จ
+
+        BotClickHelper.CopyFile(fileName);
+
+        var steps = new[]
+        {
+        new BotStep { Name = "Document", X = 2325, Y = 59 },
+        new BotStep { Name = "Open", X = 2207, Y = 133 },
+        new BotStep { Name = "SelectFile", X = 1506, Y = 654 },
+        new BotStep { Name = "OpenBtn", X = 1652, Y = 946 },
+    };
+
+        BotClickHelper.RunAsync("uvinkjet", steps, result =>
+        {
+            BotClickHelper.ClearDocumentFolder();
+        });
+    }
 
     private async void frmMain_Load(object sender, EventArgs e)
     {
@@ -125,6 +158,13 @@ public partial class frmMain : Form
         {
             HeaderText = "Name",
             DataPropertyName = "Name",
+            AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
+        });
+
+        dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            HeaderText = "Program",
+            DataPropertyName = "Program",
             AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
         });
 
@@ -787,16 +827,25 @@ public partial class frmMain : Form
 
     private void button1_Click(object sender, EventArgs e)
     {
+        string fileName = "SPK-LOT.uvdx"; // 🔹 เปลี่ยนเป็นค่าที่คุณต้องการ (อาจมาจาก textbox)
+
         var steps = new[]
         {
         new BotStep { Name = "Document",   X = 2325, Y = 59,  VerifyArea = new Rectangle(2100, 0, 400, 300) },
         new BotStep { Name = "Open",       X = 2207, Y = 133, VerifyArea = new Rectangle(2100, 100, 400, 400) },
-        new BotStep { Name = "SelectFile", X = 1506, Y = 654, VerifyArea = new Rectangle(800, 400, 800, 600) },
+        new BotStep { Name = "SelectFile", X = 890, Y = 525, VerifyArea = new Rectangle(800, 400, 800, 600) },
         new BotStep { Name = "OpenBtn",    X = 1652, Y = 946, VerifyArea = new Rectangle(1500, 800, 500, 300) },
     };
 
+        // ✅ 1. copy file ก่อนเริ่ม
+        BotClickHelper.CopyFile(fileName);
+
+        // ✅ 2. run bot
         BotClickHelper.RunAsync("uvinkjet", steps, result =>
         {
+            // ✅ 3. ลบไฟล์ทุกครั้ง (สำเร็จ/ไม่สำเร็จ)
+            BotClickHelper.ClearDocumentFolder();
+
             if (this.IsHandleCreated)
                 this.Invoke((MethodInvoker)(() =>
                     MessageBox.Show(result.Success ? "สำเร็จ!" : result.Error)));
@@ -891,7 +940,7 @@ public partial class frmMain : Form
 
         try
         {
-            await UpdateUvRow(data.Id, data.Lot, data.Name);
+            await UpdateUvRow(data.Id, data.Lot, data.Name , data.Program);
             Log($"[UV Updated] ID={data.Id}, Lot={data.Lot}, Name={data.Name}");
         }
         catch (Exception ex)
@@ -900,7 +949,7 @@ public partial class frmMain : Form
         }
     }
 
-    private async Task UpdateUvRow(int id, string lot, string name)
+    private async Task UpdateUvRow(int id, string lot, string name , string program)
     {
         using var conn = new SqliteConnection("Data Source=D:\\DB\\uv_data.db3;Default Timeout=5;");
         await conn.OpenAsync();
@@ -910,6 +959,7 @@ public partial class frmMain : Form
         UPDATE uv_print_data
         SET lot = @lot,
             name = @name,
+            program_name = @program_name,
             update_at = CURRENT_TIMESTAMP
         WHERE id = @id
     ";
@@ -917,6 +967,7 @@ public partial class frmMain : Form
         cmd.Parameters.AddWithValue("@id", id);
         cmd.Parameters.AddWithValue("@lot", lot);
         cmd.Parameters.AddWithValue("@name", name);
+        cmd.Parameters.AddWithValue("@program_name", program);
 
         await cmd.ExecuteNonQueryAsync();
     }
@@ -924,14 +975,15 @@ public partial class frmMain : Form
     public void InitializeDatabase()
     {
         string folderPath = @"D:\DB";
-        if (!System.IO.Directory.Exists(folderPath))
+        if (!Directory.Exists(folderPath))
         {
-            System.IO.Directory.CreateDirectory(folderPath);
+            Directory.CreateDirectory(folderPath);
         }
 
         using var conn = new SqliteConnection("Data Source=D:\\DB\\uv_data.db3;Default Timeout=5;");
         conn.Open();
 
+        // 🔹 1. สร้าง table
         string createTableSql = @"
     CREATE TABLE IF NOT EXISTS uv_print_data (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -941,20 +993,52 @@ public partial class frmMain : Form
         update_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );";
 
-        using (var command = new SqliteCommand(createTableSql, conn))
+        using (var cmd = new SqliteCommand(createTableSql, conn))
         {
-            command.ExecuteNonQuery();
+            cmd.ExecuteNonQuery();
         }
 
-        // เช็คว่ามีข้อมูลหรือยัง ถ้าไม่มีให้ Insert แถวสำหรับ UV1 และ UV2 รอไว้เลย
-        var checkCmd = new SqliteCommand("SELECT COUNT(*) FROM uv_print_data", conn);
-        long count = (long)checkCmd.ExecuteScalar();
+        // 🔹 2. เช็ค column program_name
+        bool hasProgramName = false;
+
+        using (var checkColumnCmd = new SqliteCommand("PRAGMA table_info(uv_print_data);", conn))
+        using (var reader = checkColumnCmd.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                if (reader["name"].ToString() == "program_name")
+                {
+                    hasProgramName = true;
+                    break;
+                }
+            }
+        }
+
+        // 🔹 3. เพิ่ม column ถ้ายังไม่มี
+        if (!hasProgramName)
+        {
+            using var alterCmd = new SqliteCommand(
+                "ALTER TABLE uv_print_data ADD COLUMN program_name TEXT;",
+                conn);
+
+            alterCmd.ExecuteNonQuery();
+        }
+
+        // 🔹 4. เช็คข้อมูล
+        long count;
+        using (var checkCmd = new SqliteCommand("SELECT COUNT(*) FROM uv_print_data", conn))
+        {
+            count = (long)checkCmd.ExecuteScalar();
+        }
+
+        // 🔹 5. Insert default row
         if (count == 0)
         {
-            var insertCmd = new SqliteCommand(@"
-            INSERT INTO uv_print_data (id, inkjet_name, lot, name) VALUES 
-            (1, 'เครื่องพิมพ์ UV1', '', ''),
-            (2, 'เครื่องพิมพ์ UV2', '', '')", conn);
+            using var insertCmd = new SqliteCommand(@"
+        INSERT INTO uv_print_data (id, inkjet_name, lot, name, program_name) VALUES 
+        (1, 'เครื่องพิมพ์ UV1', '', '', ''),
+        (2, 'เครื่องพิมพ์ UV2', '', '', '')", conn);
+
             insertCmd.ExecuteNonQuery();
         }
     }
@@ -968,7 +1052,7 @@ public partial class frmMain : Form
 
             var cmd = conn.CreateCommand();
             cmd.CommandText = @"
-        SELECT id, inkjet_name, lot, name, update_at
+        SELECT id, inkjet_name, lot, name, update_at , program_name
         FROM uv_print_data
         ORDER BY id
         ";
@@ -985,7 +1069,8 @@ public partial class frmMain : Form
                     Inkjet = reader.GetString(1),
                     Lot = reader.IsDBNull(2) ? "" : reader.GetString(2),
                     Name = reader.IsDBNull(3) ? "" : reader.GetString(3),
-                    UpdateAt = reader.IsDBNull(4) ? "" : reader.GetString(4)
+                    UpdateAt = reader.IsDBNull(4) ? "" : reader.GetString(4),
+                    Program = reader.IsDBNull(5) ? "" : reader.GetString(5)
                 });
             }
 
@@ -1011,6 +1096,8 @@ public partial class frmMain : Form
                 _uvBindingList.RaiseListChangedEvents = true;
                 _uvBindingList.ResetBindings();
 
+                dgvUVBlocks.DataSource = _uvBindingList;
+
             });
         }
         catch (Exception ex)
@@ -1021,40 +1108,92 @@ public partial class frmMain : Form
 
     private void button6_Click(object sender, EventArgs e)
     {
-        var row = _uvBindingList.FirstOrDefault(x => x.Id == 1);
+        var firstRow = _uvBindingList.FirstOrDefault();
 
-        if (row == null)
+        if (firstRow == null || string.IsNullOrWhiteSpace(firstRow.Program))
         {
-            MessageBox.Show("ไม่พบ row id = 1");
+            MessageBox.Show("ไม่มีค่า program_name ใน row แรก");
             return;
         }
 
-        string lot = row.Lot;
-        string name = row.Name;
+        string fileName = firstRow.Program;
 
-        Log($"Lot={lot}, Name={name}");
-
-        string dbPath = @"C:\Users\theer\Downloads\uvinkjet-250702-new\uvinkjet-250702-new\database\sys\CPI.db3";
-
-        using (SqliteConnection conn = new SqliteConnection($"Data Source={dbPath}"))
+        var steps = new[]
         {
-            conn.Open();
+        new BotStep { Name = "Document",   X = 2325, Y = 59,  VerifyArea = new Rectangle(2100, 0, 400, 300) },
+        new BotStep { Name = "Open",       X = 2207, Y = 133, VerifyArea = new Rectangle(2100, 100, 400, 400) },
+        new BotStep { Name = "SelectFile", X = 890,  Y = 525, VerifyArea = new Rectangle(800, 400, 800, 600) },
+        new BotStep { Name = "OpenBtn",    X = 1652, Y = 946, VerifyArea = new Rectangle(1500, 800, 500, 300) },
+    };
 
-            string sql = "UPDATE MK063 SET lot = @lot, name = @name WHERE id = 1";
+        try
+        {
+            // ✅ 1. ลบไฟล์ก่อน
+            BotClickHelper.ClearDocumentFolder();
 
-            using (SqliteCommand cmd = new SqliteCommand(sql, conn))
-            {
-                cmd.Parameters.AddWithValue("@lot", lot);
-                cmd.Parameters.AddWithValue("@name", name);
-
-                int rows = cmd.ExecuteNonQuery();
-
-                MessageBox.Show("Update สำเร็จ: " + rows + " row");
-            }
+            // ✅ 2. Copy file
+            BotClickHelper.CopyFile(fileName);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("เตรียมไฟล์ไม่สำเร็จ: " + ex.Message);
+            return;
         }
 
-        currentStep = 3; // ไปขั้นที่ 2
-        UpdateStepButtons();
+        // ✅ 3. Run Bot
+        BotClickHelper.RunAsync("uvinkjet", steps, result =>
+        {
+            if (result.Success)
+            {
+                try
+                {
+                    // 🔹 4. Update DB
+                    var row = _uvBindingList.FirstOrDefault(x => x.Id == 1);
+
+                    if (row != null)
+                    {
+                        string dbPath = @"C:\Users\theer\Downloads\uvinkjet-250702-new\uvinkjet-250702-new\database\sys\CPI.db3";
+
+                        using (SqliteConnection conn = new SqliteConnection($"Data Source={dbPath}"))
+                        {
+                            conn.Open();
+
+                            string sql = "UPDATE MK063 SET lot = @lot, name = @name WHERE id = 1";
+
+                            using (SqliteCommand cmd = new SqliteCommand(sql, conn))
+                            {
+                                cmd.Parameters.AddWithValue("@lot", row.Lot ?? "");
+                                cmd.Parameters.AddWithValue("@name", row.Name ?? "");
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+                    }
+
+                    // 🔹 5. ลบไฟล์หลังสำเร็จ
+                    BotClickHelper.ClearDocumentFolder();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Post-process error: " + ex.Message);
+                }
+            }
+            else
+            {
+                // ❌ Fail → ไม่ลบไฟล์
+                Console.WriteLine("Bot failed: " + result.Error);
+            }
+
+            // 🔹 UI
+            if (this.IsHandleCreated)
+            {
+                this.Invoke((MethodInvoker)(() =>
+                {
+                    MessageBox.Show(result.Success ? "สำเร็จ!" : result.Error);
+                    currentStep = 3;
+                    UpdateStepButtons();
+                }));
+            }
+        });
     }
 
     private void button8_Click(object sender, EventArgs e)
@@ -1166,7 +1305,7 @@ public partial class frmMain : Form
         button5.Enabled = (currentStep == 1);
 
         // ปุ่ม 2 (UV1)
-        button6.Enabled = (currentStep == 2);
+        //button6.Enabled = (currentStep == 2);
 
         // ปุ่ม 3 (MK2/3)
         button7.Enabled = (currentStep == 3);

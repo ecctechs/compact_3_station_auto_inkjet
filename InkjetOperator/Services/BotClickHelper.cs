@@ -28,8 +28,14 @@ public static class BotClickHelper
     [DllImport("user32.dll")] static extern void mouse_event(int f, int x, int y, int d, int e);
     [DllImport("user32.dll")] static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
     [DllImport("user32.dll")] static extern bool GetCursorInfo(ref CURSORINFO pci);
-    [DllImport("user32.dll")] static extern bool DrawIconEx(IntPtr hdc, int xLeft, int yTop,
+    [DllImport("user32.dll")]
+    static extern bool DrawIconEx(IntPtr hdc, int xLeft, int yTop,
         IntPtr hIcon, int cxWidth, int cyHeight, int istepIfAniCur, IntPtr hbrFlickerFreeDraw, int diFlags);
+
+    private static int stepCount = 0;
+
+    private static string sourcePath = @"C:\Users\theer\Downloads\uvinkjet-250702-new\uvinkjet-250702-new\document_backup";
+    private static string targetPath = @"\\DESKTOP-KGODCT5\Users\theer\Downloads\uvinkjet-250702-new\uvinkjet-250702-new\document";
 
     const int SW_MAXIMIZE = 3;
     const int MOUSE_DOWN = 0x02, MOUSE_UP = 0x04;
@@ -122,12 +128,20 @@ public static class BotClickHelper
     /// </summary>
     public static Bitmap CaptureArea(Rectangle area)
     {
-        var bmp = new Bitmap(area.Width, area.Height);
+        Rectangle screenBounds = Screen.PrimaryScreen.Bounds;
+        Rectangle validArea = Rectangle.Intersect(area, screenBounds);
+
+        if (validArea.Width <= 0 || validArea.Height <= 0)
+            throw new ArgumentException("Invalid capture area");
+
+        var bmp = new Bitmap(validArea.Width, validArea.Height);
+
         using (var g = Graphics.FromImage(bmp))
         {
-            g.CopyFromScreen(area.Location, Point.Empty, area.Size);
-            DrawCursor(g, area.Location);
+            g.CopyFromScreen(validArea.Location, Point.Empty, validArea.Size);
+            DrawCursor(g, validArea.Location);
         }
+
         return bmp;
     }
 
@@ -287,6 +301,81 @@ public static class BotClickHelper
         finally
         {
             g.ReleaseHdc(hdc);
+        }
+    }
+
+    public static void CopyFile(string fileName)
+    {
+        try
+        {
+            string sourceFile = Path.Combine(sourcePath, fileName);
+            string targetFile = Path.Combine(targetPath, fileName);
+
+            if (File.Exists(sourceFile))
+            {
+                File.Copy(sourceFile, targetFile, true);
+                Console.WriteLine($"✅ Copy สำเร็จ: {fileName}");
+            }
+            else
+            {
+                Console.WriteLine($"❌ ไม่พบไฟล์: {fileName}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error: {ex.Message}");
+        }
+
+        // เพิ่ม step ทุกครั้งที่เรียก
+        stepCount++;
+
+        // ถ้าครบ 4 step → ลบไฟล์
+        if (stepCount >= 4)
+        {
+            ClearDocumentFolder();
+            stepCount = 0; // reset ใหม่
+        }
+    }
+
+    public static void ClearDocumentFolder()
+    {
+        try
+        {
+            var files = Directory.GetFiles(targetPath);
+
+            foreach (var file in files)
+            {
+                File.Delete(file);
+            }
+
+            Console.WriteLine("🧹 ลบไฟล์ใน document เรียบร้อยแล้ว");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ ลบไฟล์ไม่สำเร็จ: {ex.Message}");
+        }
+    }
+
+    public static void WaitForFileReady(string filePath, int timeoutMs = 5000)
+    {
+        var start = DateTime.Now;
+
+        while (true)
+        {
+            try
+            {
+                using (FileStream stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.None))
+                {
+                    break;
+                }
+            }
+            catch
+            {
+                if ((DateTime.Now - start).TotalMilliseconds > timeoutMs)
+                    throw new Exception("File not ready (timeout): " + filePath);
+
+                Thread.Sleep(200);
+            }
         }
     }
 }
