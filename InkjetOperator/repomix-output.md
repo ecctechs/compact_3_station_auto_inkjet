@@ -725,1779 +725,1918 @@ Services/PatternStore.cs
   54:     public frmMain()
   55:     {
   56:         InitializeComponent();
-  57: 
-  58:         _adapterIj1 = new MkCompactAdapter(_rs232Ij1);
-  59:         _adapterIj2 = new MkCompactAdapter(_rs232Ij2);
-  60:         _adapterIj3 = new SqliteInkjetAdapter(_tcpIj3, ""); // db path TBD
-  61:         _adapterIj4 = new SqliteInkjetAdapter(_tcpIj4, ""); // db path TBD
-  62: 
-  63:         // เพิ่มบรรทัดนี้เพื่อให้ dgvUVBlocks สร้างคอลัมน์ตาม properties ของ TextBlockDto
-  64:         dgvUVBlocks.AutoGenerateColumns = true;
-  65:         dgvTextBlocks.AutoGenerateColumns = true;
-  66: 
-  67:         _api = new ApiClient("http://localhost:3000");
-  68:     }
-  69: 
-  70:     // ════════════════════════════════════════
-  71:     //  Form events
-  72:     // ════════════════════════════════════════
-  73: 
-  74:     private async void frmMain_Load(object sender, EventArgs e)
-  75:     {
-  76:         InitializeDatabase();
-  77:         currentStep = 1;
-  78:         UpdateStepButtons();
-  79:         // Populate COM port dropdowns
-  80:         string[] ports = SerialPort.GetPortNames();
-  81:         cmbCom1.Items.AddRange(ports);
-  82:         cmbCom2.Items.AddRange(ports);
-  83:         if (cmbCom1.Items.Count > 0) cmbCom1.SelectedIndex = 0;
-  84:         if (cmbCom2.Items.Count > 1) cmbCom2.SelectedIndex = 1;
-  85:         else if (cmbCom2.Items.Count > 0) cmbCom2.SelectedIndex = 0;
-  86: 
-  87:         //await SetupUvTableAsync();
-  88:         await LoadUvDataToGrid();
-  89: 
-  90:         dgvUVBlocks.CellValueChanged += dgvUVBlocks_CellValueChanged;
-  91: 
-  92:         dgvUVBlocks.CurrentCellDirtyStateChanged += (s, e) =>
-  93:         {
-  94:             if (dgvUVBlocks.IsCurrentCellDirty)
-  95:             {
-  96:                 dgvUVBlocks.CommitEdit(DataGridViewDataErrorContexts.Commit);
-  97:             }
-  98:         };
-  99: 
- 100:         dgvJobs.AutoGenerateColumns = true;
- 101:         dgvJobs.DataSource = _jobBindingList;
- 102:         dgvConfigs.DataSource = _configBindingList;
- 103:         dgvTextBlocks.DataSource = _textBlockBindingList;
- 104:         dgvUVBlocks.AutoGenerateColumns = false;
- 105:         dgvUVBlocks.DataSource = _uvBindingList;
+  57:         StartWatcher();
+  58: 
+  59:         _adapterIj1 = new MkCompactAdapter(_rs232Ij1);
+  60:         _adapterIj2 = new MkCompactAdapter(_rs232Ij2);
+  61:         _adapterIj3 = new SqliteInkjetAdapter(_tcpIj3, ""); // db path TBD
+  62:         _adapterIj4 = new SqliteInkjetAdapter(_tcpIj4, ""); // db path TBD
+  63: 
+  64:         // เพิ่มบรรทัดนี้เพื่อให้ dgvUVBlocks สร้างคอลัมน์ตาม properties ของ TextBlockDto
+  65:         dgvUVBlocks.AutoGenerateColumns = true;
+  66:         dgvTextBlocks.AutoGenerateColumns = true;
+  67: 
+  68:         _api = new ApiClient("http://localhost:3000");
+  69:     }
+  70: 
+  71:     // ════════════════════════════════════════
+  72:     //  Form events
+  73:     // ════════════════════════════════════════
+  74: 
+  75:     private void StartWatcher()
+  76:     {
+  77:         string watchPath = @"C:\Users\theer\Downloads\uvinkjet-250702-new\uvinkjet-250702-new\document";
+  78: 
+  79:         FileSystemWatcher watcher = new FileSystemWatcher(watchPath);
+  80:         watcher.Filter = "*.uvdx";
+  81:         watcher.Created += OnFileCreated;
+  82:         watcher.EnableRaisingEvents = true;
+  83:     }
+  84: 
+  85:     private void OnFileCreated(object sender, FileSystemEventArgs e)
+  86:     {
+  87:         string fileName = Path.GetFileName(e.FullPath);
+  88: 
+  89:         Thread.Sleep(1000); // กันไฟล์ยัง copy ไม่เสร็จ
+  90: 
+  91:         BotClickHelper.CopyFile(fileName);
+  92: 
+  93:         var steps = new[]
+  94:         {
+  95:         new BotStep { Name = "Document", X = 2325, Y = 59 },
+  96:         new BotStep { Name = "Open", X = 2207, Y = 133 },
+  97:         new BotStep { Name = "SelectFile", X = 890, Y = 525 },
+  98:         new BotStep { Name = "OpenBtn", X = 1652, Y = 946 },
+  99:     };
+ 100: 
+ 101:         BotClickHelper.RunAsync("uvinkjet", steps, result =>
+ 102:         {
+ 103:             BotClickHelper.ClearDocumentFolder();
+ 104:         });
+ 105:     }
  106: 
- 107:         dgvUVBlocks.Columns.Clear();
- 108: 
- 109:         dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn
- 110:         {
- 111:             HeaderText = "Inkjet",
- 112:             DataPropertyName = "Inkjet",
- 113:             ReadOnly = true,
- 114:             Width = 120
- 115:         });
- 116: 
- 117:         dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn
- 118:         {
- 119:             HeaderText = "Lot",
- 120:             DataPropertyName = "Lot",
- 121:             Width = 150
- 122:         });
- 123: 
- 124:         dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn
- 125:         {
- 126:             HeaderText = "Name",
- 127:             DataPropertyName = "Name",
- 128:             AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
- 129:         });
- 130: 
- 131:         tmrPoll.Start();
- 132:         Log("Application started. Polling every 5s.");
- 133:     }
- 134: 
- 135:     private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
- 136:     {
- 137:         tmrPoll.Stop();
- 138:         _rs232Ij1.CloseSerialPort();
- 139:         _rs232Ij2.CloseSerialPort();
- 140:         _tcpIj3.Disconnect();
- 141:         _tcpIj4.Disconnect();
- 142:         _plc.Disconnect();
- 143:     }
- 144: 
- 145:     // ════════════════════════════════════════
- 146:     //  Connection handlers
- 147:     // ════════════════════════════════════════
- 148: 
- 149:     private void btnConnectRs232_Click(object sender, EventArgs e)
- 150:     {
- 151:         try
- 152:         {
- 153:             if (cmbCom1.SelectedItem != null)
- 154:             {
- 155:                 _rs232Ij1.ConfigureSerialPort(cmbCom1.SelectedItem.ToString()!);
- 156:                 _rs232Ij1.OpenSerialPort();
- 157:             }
- 158:             if (cmbCom2.SelectedItem != null)
- 159:             {
- 160:                 _rs232Ij2.ConfigureSerialPort(cmbCom2.SelectedItem.ToString()!);
- 161:                 _rs232Ij2.OpenSerialPort();
- 162:             }
- 163:             UpdateDeviceStatus();
- 164:             Log("RS232 connected.");
- 165:         }
- 166:         catch (Exception ex)
- 167:         {
- 168:             Log("RS232 connect error: " + ex.Message);
- 169:         }
- 170:     }
- 171: 
- 172:     private void btnDisconnectRs232_Click(object sender, EventArgs e)
- 173:     {
- 174:         _rs232Ij1.CloseSerialPort();
- 175:         _rs232Ij2.CloseSerialPort();
- 176:         UpdateDeviceStatus();
- 177:         Log("RS232 disconnected.");
- 178:     }
- 179: 
- 180:     private async void btnConnectTcp_Click(object sender, EventArgs e)
- 181:     {
- 182:         try
- 183:         {
- 184:             string host = txtTcpHost.Text.Trim();
- 185:             int port = int.Parse(txtTcpPort.Text.Trim());
- 186:             await _tcpIj3.ConnectAsync(host, port);
- 187:             await _tcpIj4.ConnectAsync(host, port + 1); // IJ4 on next port
- 188:             UpdateDeviceStatus();
- 189:             Log("TCP connected.");
- 190:         }
- 191:         catch (Exception ex)
+ 107:     private async void frmMain_Load(object sender, EventArgs e)
+ 108:     {
+ 109:         InitializeDatabase();
+ 110:         currentStep = 1;
+ 111:         UpdateStepButtons();
+ 112:         // Populate COM port dropdowns
+ 113:         string[] ports = SerialPort.GetPortNames();
+ 114:         cmbCom1.Items.AddRange(ports);
+ 115:         cmbCom2.Items.AddRange(ports);
+ 116:         if (cmbCom1.Items.Count > 0) cmbCom1.SelectedIndex = 0;
+ 117:         if (cmbCom2.Items.Count > 1) cmbCom2.SelectedIndex = 1;
+ 118:         else if (cmbCom2.Items.Count > 0) cmbCom2.SelectedIndex = 0;
+ 119: 
+ 120:         //await SetupUvTableAsync();
+ 121:         await LoadUvDataToGrid();
+ 122: 
+ 123:         dgvUVBlocks.CellValueChanged += dgvUVBlocks_CellValueChanged;
+ 124: 
+ 125:         dgvUVBlocks.CurrentCellDirtyStateChanged += (s, e) =>
+ 126:         {
+ 127:             if (dgvUVBlocks.IsCurrentCellDirty)
+ 128:             {
+ 129:                 dgvUVBlocks.CommitEdit(DataGridViewDataErrorContexts.Commit);
+ 130:             }
+ 131:         };
+ 132: 
+ 133:         dgvJobs.AutoGenerateColumns = true;
+ 134:         dgvJobs.DataSource = _jobBindingList;
+ 135:         dgvConfigs.DataSource = _configBindingList;
+ 136:         dgvTextBlocks.DataSource = _textBlockBindingList;
+ 137:         dgvUVBlocks.AutoGenerateColumns = false;
+ 138:         dgvUVBlocks.DataSource = _uvBindingList;
+ 139: 
+ 140:         dgvUVBlocks.Columns.Clear();
+ 141: 
+ 142:         dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn
+ 143:         {
+ 144:             HeaderText = "Inkjet",
+ 145:             DataPropertyName = "Inkjet",
+ 146:             ReadOnly = true,
+ 147:             Width = 120
+ 148:         });
+ 149: 
+ 150:         dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn
+ 151:         {
+ 152:             HeaderText = "Lot",
+ 153:             DataPropertyName = "Lot",
+ 154:             Width = 150
+ 155:         });
+ 156: 
+ 157:         dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn
+ 158:         {
+ 159:             HeaderText = "Name",
+ 160:             DataPropertyName = "Name",
+ 161:             AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
+ 162:         });
+ 163: 
+ 164:         dgvUVBlocks.Columns.Add(new DataGridViewTextBoxColumn
+ 165:         {
+ 166:             HeaderText = "Program",
+ 167:             DataPropertyName = "Program",
+ 168:             AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
+ 169:         });
+ 170: 
+ 171:         tmrPoll.Start();
+ 172:         Log("Application started. Polling every 5s.");
+ 173:     }
+ 174: 
+ 175:     private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
+ 176:     {
+ 177:         tmrPoll.Stop();
+ 178:         _rs232Ij1.CloseSerialPort();
+ 179:         _rs232Ij2.CloseSerialPort();
+ 180:         _tcpIj3.Disconnect();
+ 181:         _tcpIj4.Disconnect();
+ 182:         _plc.Disconnect();
+ 183:     }
+ 184: 
+ 185:     // ════════════════════════════════════════
+ 186:     //  Connection handlers
+ 187:     // ════════════════════════════════════════
+ 188: 
+ 189:     private void btnConnectRs232_Click(object sender, EventArgs e)
+ 190:     {
+ 191:         try
  192:         {
- 193:             Log("TCP connect error: " + ex.Message);
- 194:         }
- 195:     }
- 196: 
- 197:     private void btnDisconnectTcp_Click(object sender, EventArgs e)
- 198:     {
- 199:         _tcpIj3.Disconnect();
- 200:         _tcpIj4.Disconnect();
- 201:         UpdateDeviceStatus();
- 202:         Log("TCP disconnected.");
- 203:     }
- 204: 
- 205:     private void btnApplyApi_Click(object sender, EventArgs e)
- 206:     {
- 207:         string url = txtApiUrl.Text.Trim();
- 208:         _api = new ApiClient(url);
- 209:         lblApiStatus.Text = "Applied";
- 210:         Log($"API URL set to: {url}");
- 211:     }
- 212: 
- 213:     // ════════════════════════════════════════
- 214:     //  Polling
- 215:     // ════════════════════════════════════════
- 216: 
- 217:     private async void tmrPoll_Tick(object sender, EventArgs e)
- 218:     {
- 219:         tmrPoll.Stop(); // Prevent re-entry
- 220:         try
- 221:         {
- 222:             var jobs = await _api.GetPendingJobsAsync();
- 223:             _pendingJobs = jobs;
- 224:             UpdateJobGrid();
- 225:             LoadLastSentData();
- 226:             UpdateDeviceStatus();
- 227:             lblApiStatus.Text = "OK";
- 228:         }
- 229:         catch (Exception ex)
- 230:         {
- 231:             lblApiStatus.Text = "Error";
- 232:             Log("Poll error: " + ex.Message);
- 233:         }
- 234:         finally
- 235:         {
- 236:             tmrPoll.Start();
- 237:         }
- 238:     }
- 239: 
- 240:     private void btnRefresh_Click(object sender, EventArgs e)
- 241:     {
- 242:         tmrPoll_Tick(sender, e);
+ 193:             if (cmbCom1.SelectedItem != null)
+ 194:             {
+ 195:                 _rs232Ij1.ConfigureSerialPort(cmbCom1.SelectedItem.ToString()!);
+ 196:                 _rs232Ij1.OpenSerialPort();
+ 197:             }
+ 198:             if (cmbCom2.SelectedItem != null)
+ 199:             {
+ 200:                 _rs232Ij2.ConfigureSerialPort(cmbCom2.SelectedItem.ToString()!);
+ 201:                 _rs232Ij2.OpenSerialPort();
+ 202:             }
+ 203:             UpdateDeviceStatus();
+ 204:             Log("RS232 connected.");
+ 205:         }
+ 206:         catch (Exception ex)
+ 207:         {
+ 208:             Log("RS232 connect error: " + ex.Message);
+ 209:         }
+ 210:     }
+ 211: 
+ 212:     private void btnDisconnectRs232_Click(object sender, EventArgs e)
+ 213:     {
+ 214:         _rs232Ij1.CloseSerialPort();
+ 215:         _rs232Ij2.CloseSerialPort();
+ 216:         UpdateDeviceStatus();
+ 217:         Log("RS232 disconnected.");
+ 218:     }
+ 219: 
+ 220:     private async void btnConnectTcp_Click(object sender, EventArgs e)
+ 221:     {
+ 222:         try
+ 223:         {
+ 224:             string host = txtTcpHost.Text.Trim();
+ 225:             int port = int.Parse(txtTcpPort.Text.Trim());
+ 226:             await _tcpIj3.ConnectAsync(host, port);
+ 227:             await _tcpIj4.ConnectAsync(host, port + 1); // IJ4 on next port
+ 228:             UpdateDeviceStatus();
+ 229:             Log("TCP connected.");
+ 230:         }
+ 231:         catch (Exception ex)
+ 232:         {
+ 233:             Log("TCP connect error: " + ex.Message);
+ 234:         }
+ 235:     }
+ 236: 
+ 237:     private void btnDisconnectTcp_Click(object sender, EventArgs e)
+ 238:     {
+ 239:         _tcpIj3.Disconnect();
+ 240:         _tcpIj4.Disconnect();
+ 241:         UpdateDeviceStatus();
+ 242:         Log("TCP disconnected.");
  243:     }
  244: 
- 245:     // ════════════════════════════════════════
- 246:     //  Job selection
- 247:     // ════════════════════════════════════════
- 248:     private async void dgvJobs_SelectionChanged(object sender, EventArgs e)
- 249:     {
- 250:         if (_isRefreshingJobs) return; // 🔥 กันตอน poll
- 251: 
- 252:         if (dgvJobs.SelectedRows.Count == 0) return;
- 253: 
- 254:         var row = dgvJobs.SelectedRows[0];
- 255:         if (row.Cells["Id"].Value == null) return;
+ 245:     private void btnApplyApi_Click(object sender, EventArgs e)
+ 246:     {
+ 247:         string url = txtApiUrl.Text.Trim();
+ 248:         _api = new ApiClient(url);
+ 249:         lblApiStatus.Text = "Applied";
+ 250:         Log($"API URL set to: {url}");
+ 251:     }
+ 252: 
+ 253:     // ════════════════════════════════════════
+ 254:     //  Polling
+ 255:     // ════════════════════════════════════════
  256: 
- 257:         int jobId = (int)row.Cells["Id"].Value;
- 258:         string rawbarcode = row.Cells["BarcodeRaw"].Value?.ToString() ?? "";
- 259: 
- 260:         if (jobId == _selectedJobId) return;
- 261:         _selectedJobId = jobId;
- 262: 
- 263:         // Helpers
- 264:         static bool ReaderHasColumn(SqliteDataReader r, string name)
- 265:         {
- 266:             for (int i = 0; i < r.FieldCount; i++)
- 267:             {
- 268:                 if (string.Equals(r.GetName(i), name, StringComparison.OrdinalIgnoreCase))
- 269:                     return true;
- 270:             }
- 271:             return false;
- 272:         }
- 273: 
- 274:         static string? GetStringSafe(SqliteDataReader r, string name)
+ 257:     private async void tmrPoll_Tick(object sender, EventArgs e)
+ 258:     {
+ 259:         tmrPoll.Stop(); // Prevent re-entry
+ 260:         try
+ 261:         {
+ 262:             var jobs = await _api.GetPendingJobsAsync();
+ 263:             _pendingJobs = jobs;
+ 264:             UpdateJobGrid();
+ 265:             LoadLastSentData();
+ 266:             UpdateDeviceStatus();
+ 267:             lblApiStatus.Text = "OK";
+ 268:         }
+ 269:         catch (Exception ex)
+ 270:         {
+ 271:             lblApiStatus.Text = "Error";
+ 272:             Log("Poll error: " + ex.Message);
+ 273:         }
+ 274:         finally
  275:         {
- 276:             if (!ReaderHasColumn(r, name)) return null;
- 277:             int idx = r.GetOrdinal(name);
- 278:             return r.IsDBNull(idx) ? null : r.GetString(idx);
- 279:         }
- 280: 
- 281:         static int? GetIntSafe(SqliteDataReader r, string name)
- 282:         {
- 283:             var s = GetStringSafe(r, name);
- 284:             if (string.IsNullOrWhiteSpace(s)) return null;
- 285:             return int.TryParse(s, out var v) ? v : null;
- 286:         }
- 287: 
- 288:         try
- 289:         {
- 290:             string dbPath = @"D:\DB\uv_data.db3";
- 291:             string connStr = $"Data Source={dbPath}";
- 292:             bool found = false;
+ 276:             tmrPoll.Start();
+ 277:         }
+ 278:     }
+ 279: 
+ 280:     private void btnRefresh_Click(object sender, EventArgs e)
+ 281:     {
+ 282:         tmrPoll_Tick(sender, e);
+ 283:     }
+ 284: 
+ 285:     // ════════════════════════════════════════
+ 286:     //  Job selection
+ 287:     // ════════════════════════════════════════
+ 288:     private async void dgvJobs_SelectionChanged(object sender, EventArgs e)
+ 289:     {
+ 290:         if (_isRefreshingJobs) return; // 🔥 กันตอน poll
+ 291: 
+ 292:         if (dgvJobs.SelectedRows.Count == 0) return;
  293: 
- 294:             try
- 295:             {
- 296:                 await using var conn = new SqliteConnection(connStr);
- 297:                 await conn.OpenAsync();
- 298: 
- 299:                 await using var cmd = conn.CreateCommand();
- 300:                 cmd.CommandText = "SELECT * FROM config_data WHERE pattern_no_erp = @rawbarcode LIMIT 1";
- 301:                 cmd.Parameters.AddWithValue("@rawbarcode", rawbarcode);
+ 294:         var row = dgvJobs.SelectedRows[0];
+ 295:         if (row.Cells["Id"].Value == null) return;
+ 296: 
+ 297:         int jobId = (int)row.Cells["Id"].Value;
+ 298:         string rawbarcode = row.Cells["BarcodeRaw"].Value?.ToString() ?? "";
+ 299: 
+ 300:         if (jobId == _selectedJobId) return;
+ 301:         _selectedJobId = jobId;
  302: 
- 303:                 await using var reader = await cmd.ExecuteReaderAsync();
- 304:                 if (await reader.ReadAsync())
- 305:                 {
- 306:                     // Build PatternDetail from known schema columns.
- 307:                     var pattern = new PatternDetail
- 308:                     {
- 309:                         Barcode = GetStringSafe(reader, "pattern_no_erp") ?? GetStringSafe(reader, "pattern_no_erp2") ?? rawbarcode,
- 310:                         Description = GetStringSafe(reader, "model_plan_code") ?? GetStringSafe(reader, "program_name") ?? ""
- 311:                     };
- 312: 
- 313:                     // Helper to build MK config (mk1 / mk2)
- 314:                     InkjetConfigDto BuildMkConfig(string prefix, int ordinal, string programNameColumn)
- 315:                     {
- 316:                         var cfg = new InkjetConfigDto
- 317:                         {
- 318:                             Ordinal = ordinal,
- 319:                             ProgramNumber = GetIntSafe(reader, $"{prefix}program_no") ?? GetIntSafe(reader, $"{prefix}program_no") ?? null,
- 320:                             ProgramName = GetStringSafe(reader, programNameColumn),
- 321:                             Width = GetIntSafe(reader, $"{prefix}width"),
- 322:                             Height = GetIntSafe(reader, $"{prefix}height"),
- 323:                             TriggerDelay = GetIntSafe(reader, $"{prefix}trigger_delay"),
- 324:                             Direction = GetIntSafe(reader, $"{prefix}text_direction"),
- 325:                             SteelType = null,
- 326:                             Suspended = false
- 327:                         };
- 328: 
- 329:                         // text blocks 1..5
- 330:                         for (int b = 1; b <= 5; b++)
- 331:                         {
- 332:                             string textCol = $"{prefix}block{b}_text";
- 333:                             if (ReaderHasColumn(reader, textCol))
- 334:                             {
- 335:                                 var text = GetStringSafe(reader, textCol);
- 336:                                 if (!string.IsNullOrEmpty(text))
- 337:                                 {
- 338:                                     var tb = new TextBlockDto
- 339:                                     {
- 340:                                         BlockNumber = b,
- 341:                                         Text = text,
- 342:                                         X = GetIntSafe(reader, $"{prefix}block{b}_x"),
- 343:                                         Y = GetIntSafe(reader, $"{prefix}block{b}_y"),
- 344:                                         Size = GetIntSafe(reader, $"{prefix}block{b}_size"),
- 345:                                         Scale = GetIntSafe(reader, $"{prefix}block{b}_scale_side")
- 346:                                     };
- 347:                                     cfg.TextBlocks.Add(tb);
- 348:                                 }
- 349:                             }
- 350:                         }
- 351: 
- 352:                         return cfg;
- 353:                     }
- 354: 
- 355:                     // mk1 fields use prefix "mk1_"; program name fallback to "program_name"
- 356:                     var mk1 = BuildMkConfig("mk1_", 1, "program_name");
- 357:                     // mk2 fields use prefix "mk2_"; program name fallback to "program_name3"
- 358:                     var mk2 = BuildMkConfig("mk2_", 2, "program_name3");
- 359: 
- 360:                     pattern.InkjetConfigs = new List<InkjetConfigDto> { mk1, mk2 };
- 361: 
- 362:                     // Conveyor speeds / servo configs - attempt to map if available (optional)
- 363:                     var spd1 = GetIntSafe(reader, "belt1_inkjet");
- 364:                     var spd2 = GetIntSafe(reader, "belt2_feed_inkjet");
- 365:                     if (spd1.HasValue || spd2.HasValue)
- 366:                     {
- 367:                         pattern.ConveyorSpeeds = new ConveyorSpeedDto
- 368:                         {
- 369:                             Speed1 = spd1,
- 370:                             Speed2 = spd2,
- 371:                             Speed3 = GetIntSafe(reader, "belt3")
- 372:                         };
- 373:                     }
- 374: 
- 375:                     // Minimal job + resolved response
- 376:                     _currentResolved = new ResolvedJobResponse
- 377:                     {
- 378:                         Job = new PrintJob
- 379:                         {
- 380:                             Id = jobId,
- 381:                             BarcodeRaw = rawbarcode,
- 382:                             LotNumber = row.Cells["LotNumber"].Value?.ToString(),
- 383:                             Status = row.Cells["Status"].Value?.ToString()
- 384:                         },
- 385:                         Pattern = pattern
- 386:                     };
- 387: 
- 388:                     string lot = row.Cells["LotNumber"].Value?.ToString() ?? "";
- 389:                     string name = pattern.Description ?? ""; // หรือ field ที่คุณต้องการ
- 390: 
- 391:                     // 🔥 background + กันค้าง
- 392:                     //_ = Task.Run(async () =>
- 393:                     //{
- 394:                     //    try
- 395:                     //    {
- 396:                     //        await UpdateUvData(lot, name);
- 397:                     //    }
- 398:                     //    catch (Exception ex)
- 399:                     //    {
- 400:                     //        Log("UV DB error: " + ex.Message);
- 401:                     //    }
- 402:                     //});
- 403: 
- 404:                     found = true;
- 405:                     UpdateDetailPanel();
- 406:                 }
- 407: 
- 408:                 await conn.CloseAsync();
- 409:             }
- 410:             catch (Exception dbEx)
- 411:             {
- 412:                 Log("SQLite query error: " + dbEx.Message);
- 413:             }
+ 303:         // Helpers
+ 304:         static bool ReaderHasColumn(SqliteDataReader r, string name)
+ 305:         {
+ 306:             for (int i = 0; i < r.FieldCount; i++)
+ 307:             {
+ 308:                 if (string.Equals(r.GetName(i), name, StringComparison.OrdinalIgnoreCase))
+ 309:                     return true;
+ 310:             }
+ 311:             return false;
+ 312:         }
+ 313: 
+ 314:         static string? GetStringSafe(SqliteDataReader r, string name)
+ 315:         {
+ 316:             if (!ReaderHasColumn(r, name)) return null;
+ 317:             int idx = r.GetOrdinal(name);
+ 318:             return r.IsDBNull(idx) ? null : r.GetString(idx);
+ 319:         }
+ 320: 
+ 321:         static int? GetIntSafe(SqliteDataReader r, string name)
+ 322:         {
+ 323:             var s = GetStringSafe(r, name);
+ 324:             if (string.IsNullOrWhiteSpace(s)) return null;
+ 325:             return int.TryParse(s, out var v) ? v : null;
+ 326:         }
+ 327: 
+ 328:         try
+ 329:         {
+ 330:             string dbPath = @"D:\DB\uv_data.db3";
+ 331:             string connStr = $"Data Source={dbPath}";
+ 332:             bool found = false;
+ 333: 
+ 334:             try
+ 335:             {
+ 336:                 await using var conn = new SqliteConnection(connStr);
+ 337:                 await conn.OpenAsync();
+ 338: 
+ 339:                 await using var cmd = conn.CreateCommand();
+ 340:                 cmd.CommandText = "SELECT * FROM config_data WHERE pattern_no_erp = @rawbarcode LIMIT 1";
+ 341:                 cmd.Parameters.AddWithValue("@rawbarcode", rawbarcode);
+ 342: 
+ 343:                 await using var reader = await cmd.ExecuteReaderAsync();
+ 344:                 if (await reader.ReadAsync())
+ 345:                 {
+ 346:                     // Build PatternDetail from known schema columns.
+ 347:                     var pattern = new PatternDetail
+ 348:                     {
+ 349:                         Barcode = GetStringSafe(reader, "pattern_no_erp") ?? GetStringSafe(reader, "pattern_no_erp2") ?? rawbarcode,
+ 350:                         Description = GetStringSafe(reader, "model_plan_code") ?? GetStringSafe(reader, "program_name") ?? ""
+ 351:                     };
+ 352: 
+ 353:                     // Helper to build MK config (mk1 / mk2)
+ 354:                     InkjetConfigDto BuildMkConfig(string prefix, int ordinal, string programNameColumn)
+ 355:                     {
+ 356:                         var cfg = new InkjetConfigDto
+ 357:                         {
+ 358:                             Ordinal = ordinal,
+ 359:                             ProgramNumber = GetIntSafe(reader, $"{prefix}program_no") ?? GetIntSafe(reader, $"{prefix}program_no") ?? null,
+ 360:                             ProgramName = GetStringSafe(reader, programNameColumn),
+ 361:                             Width = GetIntSafe(reader, $"{prefix}width"),
+ 362:                             Height = GetIntSafe(reader, $"{prefix}height"),
+ 363:                             TriggerDelay = GetIntSafe(reader, $"{prefix}trigger_delay"),
+ 364:                             Direction = GetIntSafe(reader, $"{prefix}text_direction"),
+ 365:                             SteelType = null,
+ 366:                             Suspended = false
+ 367:                         };
+ 368: 
+ 369:                         // text blocks 1..5
+ 370:                         for (int b = 1; b <= 5; b++)
+ 371:                         {
+ 372:                             string textCol = $"{prefix}block{b}_text";
+ 373:                             if (ReaderHasColumn(reader, textCol))
+ 374:                             {
+ 375:                                 var text = GetStringSafe(reader, textCol);
+ 376:                                 if (!string.IsNullOrEmpty(text))
+ 377:                                 {
+ 378:                                     var tb = new TextBlockDto
+ 379:                                     {
+ 380:                                         BlockNumber = b,
+ 381:                                         Text = text,
+ 382:                                         X = GetIntSafe(reader, $"{prefix}block{b}_x"),
+ 383:                                         Y = GetIntSafe(reader, $"{prefix}block{b}_y"),
+ 384:                                         Size = GetIntSafe(reader, $"{prefix}block{b}_size"),
+ 385:                                         Scale = GetIntSafe(reader, $"{prefix}block{b}_scale_side")
+ 386:                                     };
+ 387:                                     cfg.TextBlocks.Add(tb);
+ 388:                                 }
+ 389:                             }
+ 390:                         }
+ 391: 
+ 392:                         return cfg;
+ 393:                     }
+ 394: 
+ 395:                     // mk1 fields use prefix "mk1_"; program name fallback to "program_name"
+ 396:                     var mk1 = BuildMkConfig("mk1_", 1, "program_name");
+ 397:                     // mk2 fields use prefix "mk2_"; program name fallback to "program_name3"
+ 398:                     var mk2 = BuildMkConfig("mk2_", 2, "program_name3");
+ 399: 
+ 400:                     pattern.InkjetConfigs = new List<InkjetConfigDto> { mk1, mk2 };
+ 401: 
+ 402:                     // Conveyor speeds / servo configs - attempt to map if available (optional)
+ 403:                     var spd1 = GetIntSafe(reader, "belt1_inkjet");
+ 404:                     var spd2 = GetIntSafe(reader, "belt2_feed_inkjet");
+ 405:                     if (spd1.HasValue || spd2.HasValue)
+ 406:                     {
+ 407:                         pattern.ConveyorSpeeds = new ConveyorSpeedDto
+ 408:                         {
+ 409:                             Speed1 = spd1,
+ 410:                             Speed2 = spd2,
+ 411:                             Speed3 = GetIntSafe(reader, "belt3")
+ 412:                         };
+ 413:                     }
  414: 
- 415:             if (!found)
- 416:             {
- 417:                 var resolved = await _api.GetResolvedJobAsync(jobId);
- 418:                 _currentResolved = resolved;
- 419:                 UpdateDetailPanel();
- 420:             }
- 421:         }
- 422:         catch (Exception ex)
- 423:         {
- 424:             Log("Load job detail error: " + ex.Message);
- 425:         }
- 426:     }
+ 415:                     // Minimal job + resolved response
+ 416:                     _currentResolved = new ResolvedJobResponse
+ 417:                     {
+ 418:                         Job = new PrintJob
+ 419:                         {
+ 420:                             Id = jobId,
+ 421:                             BarcodeRaw = rawbarcode,
+ 422:                             LotNumber = row.Cells["LotNumber"].Value?.ToString(),
+ 423:                             Status = row.Cells["Status"].Value?.ToString()
+ 424:                         },
+ 425:                         Pattern = pattern
+ 426:                     };
  427: 
- 428:     private void dgvConfigs_SelectionChanged(object sender, EventArgs e)
- 429:     {
- 430:         if (dgvConfigs.SelectedRows.Count == 0 || _currentResolved?.Pattern == null) return;
- 431: 
- 432:         int idx = dgvConfigs.SelectedRows[0].Index;
- 433:         var configs = _currentResolved.Pattern.InkjetConfigs;
- 434: 
- 435:         if (configs == null || idx >= configs.Count) return;
- 436: 
- 437:         var config = configs[idx];
- 438: 
- 439:         // dgvTextBlocks แสดงตามแถวที่เลือก (ปกติคือ MK1, MK2)
- 440:         //dgvTextBlocks.DataSource = null;
- 441:         _textBlockBindingList.RaiseListChangedEvents = false;
- 442:         _textBlockBindingList.Clear();
+ 428:                     string lot = row.Cells["LotNumber"].Value?.ToString() ?? "";
+ 429:                     string name = pattern.Description ?? ""; // หรือ field ที่คุณต้องการ
+ 430: 
+ 431:                     // 🔥 background + กันค้าง
+ 432:                     //_ = Task.Run(async () =>
+ 433:                     //{
+ 434:                     //    try
+ 435:                     //    {
+ 436:                     //        await UpdateUvData(lot, name);
+ 437:                     //    }
+ 438:                     //    catch (Exception ex)
+ 439:                     //    {
+ 440:                     //        Log("UV DB error: " + ex.Message);
+ 441:                     //    }
+ 442:                     //});
  443: 
- 444:         //foreach (var b in config.TextBlocks ?? new List<TextBlockDto>())
- 445:         //{
- 446:         //    _textBlockBindingList.Add(b);
- 447:         //}
- 448: 
- 449:         foreach (var block in config.TextBlocks)
- 450:         {
- 451:             // --- ส่วนที่แก้ไข/เพิ่มใหม่ ---
- 452:             // ใช้ LINQ ค้นหา Pattern ที่ชื่อตรงกับ block.Text (เช่น "DDDD")
- 453:             //var pattern = PatternEngine.Patterns.FirstOrDefault(p => p.Name == block.Text);
- 454:             string previewText = PatternEngine.Process(txtLot.Text, block.Text);
- 455:             //Debug.WriteLine(block.Text);
- 456: 
- 457:             if (previewText != null)
- 458:             {
- 459:                 // ถ้าเจอ ให้เอาค่าจาก txtLot (หรือ res.Job.LotNumber) มาแปลงด้วย Rule
- 460:                 block.RuleResult = previewText;
- 461:             }
- 462:             else
- 463:             {
- 464:                 // ถ้าไม่เจอ ให้แสดงค่าเดิมของมัน
- 465:                 block.RuleResult = block.Text;
- 466:             }
- 467:             // --------------------------
- 468: 
- 469:             _textBlockBindingList.Add(block);
- 470:         }
+ 444:                     found = true;
+ 445:                     UpdateDetailPanel();
+ 446:                 }
+ 447: 
+ 448:                 await conn.CloseAsync();
+ 449:             }
+ 450:             catch (Exception dbEx)
+ 451:             {
+ 452:                 Log("SQLite query error: " + dbEx.Message);
+ 453:             }
+ 454: 
+ 455:             if (!found)
+ 456:             {
+ 457:                 var resolved = await _api.GetResolvedJobAsync(jobId);
+ 458:                 _currentResolved = resolved;
+ 459:                 UpdateDetailPanel();
+ 460:             }
+ 461:         }
+ 462:         catch (Exception ex)
+ 463:         {
+ 464:             Log("Load job detail error: " + ex.Message);
+ 465:         }
+ 466:     }
+ 467: 
+ 468:     private void dgvConfigs_SelectionChanged(object sender, EventArgs e)
+ 469:     {
+ 470:         if (dgvConfigs.SelectedRows.Count == 0 || _currentResolved?.Pattern == null) return;
  471: 
- 472:         _textBlockBindingList.RaiseListChangedEvents = true;
- 473:         _textBlockBindingList.ResetBindings();
+ 472:         int idx = dgvConfigs.SelectedRows[0].Index;
+ 473:         var configs = _currentResolved.Pattern.InkjetConfigs;
  474: 
- 475:         // --- นำ UpdateUvGridOnly(config.TextBlocks) ออก ---
- 476:         // เพื่อให้ dgvUVBlocks ไม่เปลี่ยนค่าตามการเลือกใน Grid นี้
- 477:     }
+ 475:         if (configs == null || idx >= configs.Count) return;
+ 476: 
+ 477:         var config = configs[idx];
  478: 
- 479:     // ════════════════════════════════════════
- 480:     //  Send to devices
- 481:     // ════════════════════════════════════════
- 482: 
- 483:     private async void btnSend_Click(object sender, EventArgs e)
- 484:     {
- 485:         if (_currentResolved == null || _selectedJobId < 0)
- 486:         {
- 487:             MessageBox.Show("No job selected.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
- 488:             return;
- 489:         }
- 490: 
- 491:         btnSend.Enabled = false;
- 492:         var commandResults = new List<CommandResult>();
- 493: 
- 494:         try
- 495:         {
- 496:             // Mark job as executing
- 497:             bool ok = await _api.ExecuteJobAsync(_selectedJobId);
- 498:             if (!ok)
- 499:             {
- 500:                 Log("Failed to mark job as executing.");
- 501:                 btnSend.Enabled = true;
- 502:                 return;
- 503:             }
- 504: 
- 505:             // Re-fetch resolved data (templates may depend on attempt number)
- 506:             var resolved = await _api.GetResolvedJobAsync(_selectedJobId);
- 507:             if (resolved?.Pattern == null)
- 508:             {
- 509:                 Log("Failed to get resolved job.");
- 510:                 btnSend.Enabled = true;
- 511:                 return;
- 512:             }
- 513: 
- 514:             _currentResolved = resolved;
- 515:             UpdateDetailPanel();
- 516: 
- 517:             // Send to each inkjet by ordinal
- 518:             var configs = resolved.Pattern.InkjetConfigs ?? new List<InkjetConfigDto>();
- 519:             bool hasError = false;
- 520: 
- 521:             foreach (var config in configs.OrderBy(c => c.Ordinal))
- 522:             {
- 523:                 if (config.Suspended)
- 524:                 {
- 525:                     Log($"IJ{config.Ordinal} suspended — skipping.");
- 526:                     continue;
- 527:                 }
- 528: 
- 529:                 IInkjetAdapter adapter = GetAdapterByOrdinal(config.Ordinal);
+ 479:         // dgvTextBlocks แสดงตามแถวที่เลือก (ปกติคือ MK1, MK2)
+ 480:         //dgvTextBlocks.DataSource = null;
+ 481:         _textBlockBindingList.RaiseListChangedEvents = false;
+ 482:         _textBlockBindingList.Clear();
+ 483: 
+ 484:         //foreach (var b in config.TextBlocks ?? new List<TextBlockDto>())
+ 485:         //{
+ 486:         //    _textBlockBindingList.Add(b);
+ 487:         //}
+ 488: 
+ 489:         foreach (var block in config.TextBlocks)
+ 490:         {
+ 491:             // --- ส่วนที่แก้ไข/เพิ่มใหม่ ---
+ 492:             // ใช้ LINQ ค้นหา Pattern ที่ชื่อตรงกับ block.Text (เช่น "DDDD")
+ 493:             //var pattern = PatternEngine.Patterns.FirstOrDefault(p => p.Name == block.Text);
+ 494:             string previewText = PatternEngine.Process(txtLot.Text, block.Text);
+ 495:             //Debug.WriteLine(block.Text);
+ 496: 
+ 497:             if (previewText != null)
+ 498:             {
+ 499:                 // ถ้าเจอ ให้เอาค่าจาก txtLot (หรือ res.Job.LotNumber) มาแปลงด้วย Rule
+ 500:                 block.RuleResult = previewText;
+ 501:             }
+ 502:             else
+ 503:             {
+ 504:                 // ถ้าไม่เจอ ให้แสดงค่าเดิมของมัน
+ 505:                 block.RuleResult = block.Text;
+ 506:             }
+ 507:             // --------------------------
+ 508: 
+ 509:             _textBlockBindingList.Add(block);
+ 510:         }
+ 511: 
+ 512:         _textBlockBindingList.RaiseListChangedEvents = true;
+ 513:         _textBlockBindingList.ResetBindings();
+ 514: 
+ 515:         // --- นำ UpdateUvGridOnly(config.TextBlocks) ออก ---
+ 516:         // เพื่อให้ dgvUVBlocks ไม่เปลี่ยนค่าตามการเลือกใน Grid นี้
+ 517:     }
+ 518: 
+ 519:     // ════════════════════════════════════════
+ 520:     //  Send to devices
+ 521:     // ════════════════════════════════════════
+ 522: 
+ 523:     private async void btnSend_Click(object sender, EventArgs e)
+ 524:     {
+ 525:         if (_currentResolved == null || _selectedJobId < 0)
+ 526:         {
+ 527:             MessageBox.Show("No job selected.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+ 528:             return;
+ 529:         }
  530: 
- 531:                 if (!adapter.IsConnected())
- 532:                 {
- 533:                     Log($"IJ{config.Ordinal} not connected — skipping.");
- 534:                     commandResults.Add(new CommandResult
- 535:                     {
- 536:                         Ordinal = config.Ordinal,
- 537:                         Command = "connect_check",
- 538:                         Success = false,
- 539:                         Response = "Not connected",
- 540:                         SentAt = DateTime.UtcNow.ToString("o"),
- 541:                     });
- 542:                     hasError = true;
- 543:                     break; // Sequential error — stop (csv_extractor.py line 281)
- 544:                 }
- 545: 
- 546:                 // 1. Change program
- 547:                 if (config.ProgramNumber.HasValue)
- 548:                 {
- 549:                     var r = await adapter.ChangeProgramAsync(config.ProgramNumber.Value);
- 550:                     r.Ordinal = config.Ordinal;
- 551:                     commandResults.Add(r);
- 552:                     Log($"IJ{config.Ordinal} ChangeProgram({config.ProgramNumber}): {(r.Success ? "OK" : "FAIL")}");
+ 531:         btnSend.Enabled = false;
+ 532:         var commandResults = new List<CommandResult>();
+ 533: 
+ 534:         try
+ 535:         {
+ 536:             // Mark job as executing
+ 537:             bool ok = await _api.ExecuteJobAsync(_selectedJobId);
+ 538:             if (!ok)
+ 539:             {
+ 540:                 Log("Failed to mark job as executing.");
+ 541:                 btnSend.Enabled = true;
+ 542:                 return;
+ 543:             }
+ 544: 
+ 545:             // Re-fetch resolved data (templates may depend on attempt number)
+ 546:             var resolved = await _api.GetResolvedJobAsync(_selectedJobId);
+ 547:             if (resolved?.Pattern == null)
+ 548:             {
+ 549:                 Log("Failed to get resolved job.");
+ 550:                 btnSend.Enabled = true;
+ 551:                 return;
+ 552:             }
  553: 
- 554:                     if (!r.Success) { hasError = true; break; }
- 555:                 }
+ 554:             _currentResolved = resolved;
+ 555:             UpdateDetailPanel();
  556: 
- 557:                 // 2. Send config
- 558:                 var cfgResult = await adapter.SendConfigAsync(config);
- 559:                 cfgResult.Ordinal = config.Ordinal;
- 560:                 commandResults.Add(cfgResult);
- 561:                 Log($"IJ{config.Ordinal} SendConfig: {(cfgResult.Success ? "OK" : "FAIL")}");
- 562: 
- 563:                 if (!cfgResult.Success) { hasError = true; break; }
- 564: 
- 565:                 // 3. Send text blocks (device blocks 6-10)
- 566:                 var blocks = config.TextBlocks ?? new List<TextBlockDto>();
- 567:                 foreach (var block in blocks.OrderBy(b => b.BlockNumber))
- 568:                 {
- 569:                     int deviceBlock = block.BlockNumber + 5; // blocks 6-10
- 570:                     var tbResult = await adapter.SendTextBlockAsync(block, deviceBlock);
- 571:                     tbResult.Ordinal = config.Ordinal;
- 572:                     commandResults.Add(tbResult);
- 573:                     Log($"IJ{config.Ordinal} TextBlock({block.BlockNumber}): {(tbResult.Success ? "OK" : "FAIL")}");
- 574: 
- 575:                     if (!tbResult.Success) { hasError = true; break; }
- 576:                     await Task.Delay(30); // 30ms delay between blocks (csv_extractor.py line 274)
- 577:                 }
- 578: 
- 579:                 if (hasError) break;
- 580: 
- 581:                 // 4. Resume printing
- 582:                 var resumeResult = await adapter.ResumeAsync();
- 583:                 resumeResult.Ordinal = config.Ordinal;
- 584:                 commandResults.Add(resumeResult);
- 585:                 Log($"IJ{config.Ordinal} Resume: {(resumeResult.Success ? "OK" : "FAIL")}");
- 586: 
- 587:                 if (!resumeResult.Success) { hasError = true; break; }
- 588:             }
- 589: 
- 590:             // Send conveyor speed + servo to PLC
- 591:             if (!hasError && resolved.Pattern.ConveyorSpeeds != null)
- 592:             {
- 593:                 var spd = resolved.Pattern.ConveyorSpeeds;
- 594:                 await _plc.WriteSpeedAsync(spd.Speed1 ?? 0, spd.Speed2 ?? 0, spd.Speed3 ?? 0);
- 595:                 Log($"PLC speed: {spd.Speed1}/{spd.Speed2}/{spd.Speed3}");
- 596:             }
- 597: 
- 598:             if (!hasError && resolved.Pattern.ServoConfigs != null)
- 599:             {
- 600:                 foreach (var servo in resolved.Pattern.ServoConfigs)
- 601:                 {
- 602:                     await _plc.WriteServoAsync(servo.Ordinal, servo.Position ?? 0, servo.PostAct ?? 0, servo.Delay ?? 0, servo.Trigger ?? 0);
- 603:                     Log($"PLC servo ordinal={servo.Ordinal}: pos={servo.Position}");
- 604:                 }
- 605:             }
- 606: 
- 607:             // Post results back to backend
- 608:             var payload = new JobResultsPayload
- 609:             {
- 610:                 Success = !hasError,
- 611:                 ErrorMessage = hasError ? "One or more commands failed" : null,
- 612:                 Commands = commandResults,
- 613:             };
+ 557:             // Send to each inkjet by ordinal
+ 558:             var configs = resolved.Pattern.InkjetConfigs ?? new List<InkjetConfigDto>();
+ 559:             bool hasError = false;
+ 560: 
+ 561:             foreach (var config in configs.OrderBy(c => c.Ordinal))
+ 562:             {
+ 563:                 if (config.Suspended)
+ 564:                 {
+ 565:                     Log($"IJ{config.Ordinal} suspended — skipping.");
+ 566:                     continue;
+ 567:                 }
+ 568: 
+ 569:                 IInkjetAdapter adapter = GetAdapterByOrdinal(config.Ordinal);
+ 570: 
+ 571:                 if (!adapter.IsConnected())
+ 572:                 {
+ 573:                     Log($"IJ{config.Ordinal} not connected — skipping.");
+ 574:                     commandResults.Add(new CommandResult
+ 575:                     {
+ 576:                         Ordinal = config.Ordinal,
+ 577:                         Command = "connect_check",
+ 578:                         Success = false,
+ 579:                         Response = "Not connected",
+ 580:                         SentAt = DateTime.UtcNow.ToString("o"),
+ 581:                     });
+ 582:                     hasError = true;
+ 583:                     break; // Sequential error — stop (csv_extractor.py line 281)
+ 584:                 }
+ 585: 
+ 586:                 // 1. Change program
+ 587:                 if (config.ProgramNumber.HasValue)
+ 588:                 {
+ 589:                     var r = await adapter.ChangeProgramAsync(config.ProgramNumber.Value);
+ 590:                     r.Ordinal = config.Ordinal;
+ 591:                     commandResults.Add(r);
+ 592:                     Log($"IJ{config.Ordinal} ChangeProgram({config.ProgramNumber}): {(r.Success ? "OK" : "FAIL")}");
+ 593: 
+ 594:                     if (!r.Success) { hasError = true; break; }
+ 595:                 }
+ 596: 
+ 597:                 // 2. Send config
+ 598:                 var cfgResult = await adapter.SendConfigAsync(config);
+ 599:                 cfgResult.Ordinal = config.Ordinal;
+ 600:                 commandResults.Add(cfgResult);
+ 601:                 Log($"IJ{config.Ordinal} SendConfig: {(cfgResult.Success ? "OK" : "FAIL")}");
+ 602: 
+ 603:                 if (!cfgResult.Success) { hasError = true; break; }
+ 604: 
+ 605:                 // 3. Send text blocks (device blocks 6-10)
+ 606:                 var blocks = config.TextBlocks ?? new List<TextBlockDto>();
+ 607:                 foreach (var block in blocks.OrderBy(b => b.BlockNumber))
+ 608:                 {
+ 609:                     int deviceBlock = block.BlockNumber + 5; // blocks 6-10
+ 610:                     var tbResult = await adapter.SendTextBlockAsync(block, deviceBlock);
+ 611:                     tbResult.Ordinal = config.Ordinal;
+ 612:                     commandResults.Add(tbResult);
+ 613:                     Log($"IJ{config.Ordinal} TextBlock({block.BlockNumber}): {(tbResult.Success ? "OK" : "FAIL")}");
  614: 
- 615:             await _api.PostResultsAsync(_selectedJobId, payload);
- 616:             Log(hasError ? "Job completed with errors." : "Job completed successfully.");
- 617:         }
- 618:         catch (Exception ex)
- 619:         {
- 620:             Log("Send error: " + ex.Message);
- 621:         }
- 622:         finally
- 623:         {
- 624:             btnSend.Enabled = true;
- 625:         }
- 626:     }
- 627: 
- 628:     private async void btnRetry_Click(object sender, EventArgs e)
- 629:     {
- 630:         if (_selectedJobId < 0) return;
- 631: 
- 632:         bool ok = await _api.RetryJobAsync(_selectedJobId);
- 633:         Log(ok ? $"Job {_selectedJobId} retried." : $"Retry failed for job {_selectedJobId}.");
- 634:     }
- 635: 
- 636:     // ════════════════════════════════════════
- 637:     //  Helpers
- 638:     // ════════════════════════════════════════
- 639: 
- 640:     private IInkjetAdapter GetAdapterByOrdinal(int ordinal)
- 641:     {
- 642:         return ordinal switch
- 643:         {
- 644:             1 => _adapterIj1,
- 645:             2 => _adapterIj2,
- 646:             3 => _adapterIj3,
- 647:             4 => _adapterIj4,
- 648:             _ => _adapterIj1,
- 649:         };
- 650:     }
- 651: 
- 652:     private void UpdateDeviceStatus()
- 653:     {
- 654:         if (InvokeRequired) { Invoke(UpdateDeviceStatus); return; }
- 655: 
- 656:         lblStatusIj1.BackColor = _adapterIj1.IsConnected() ? Color.Green : Color.Gray;
- 657:         lblStatusIj2.BackColor = _adapterIj2.IsConnected() ? Color.Green : Color.Gray;
- 658:         lblStatusIj3.BackColor = _adapterIj3.IsConnected() ? Color.Green : Color.Gray;
- 659:         lblStatusIj4.BackColor = _adapterIj4.IsConnected() ? Color.Green : Color.Gray;
- 660:     }
- 661: 
- 662:     private void UpdateJobGrid()
- 663:     {
- 664:         if (InvokeRequired) { Invoke(UpdateJobGrid); return; }
- 665: 
- 666:         _isRefreshingJobs = true; // 🔥 กัน event
- 667:         _selectedJobId = -1;
- 668:         int selectedId = -1;
- 669:         if (dgvJobs.CurrentRow != null)
- 670:         {
- 671:             selectedId = (int)dgvJobs.CurrentRow.Cells["Id"].Value;
- 672:         }
- 673: 
- 674:         _jobBindingList.RaiseListChangedEvents = false;
- 675:         _jobBindingList.Clear();
- 676: 
- 677:         foreach (var j in _pendingJobs)
- 678:         {
- 679:             _jobBindingList.Add(new JobRow
- 680:             {
- 681:                 Id = j.Id,
- 682:                 BarcodeRaw = j.BarcodeRaw,
- 683:                 LotNumber = j.LotNumber,
- 684:                 Status = j.Status,
- 685:                 Attempt = j.Attempt
- 686:             });
- 687:         }
- 688: 
- 689:         _jobBindingList.RaiseListChangedEvents = true;
- 690:         _jobBindingList.ResetBindings();
+ 615:                     if (!tbResult.Success) { hasError = true; break; }
+ 616:                     await Task.Delay(30); // 30ms delay between blocks (csv_extractor.py line 274)
+ 617:                 }
+ 618: 
+ 619:                 if (hasError) break;
+ 620: 
+ 621:                 // 4. Resume printing
+ 622:                 var resumeResult = await adapter.ResumeAsync();
+ 623:                 resumeResult.Ordinal = config.Ordinal;
+ 624:                 commandResults.Add(resumeResult);
+ 625:                 Log($"IJ{config.Ordinal} Resume: {(resumeResult.Success ? "OK" : "FAIL")}");
+ 626: 
+ 627:                 if (!resumeResult.Success) { hasError = true; break; }
+ 628:             }
+ 629: 
+ 630:             // Send conveyor speed + servo to PLC
+ 631:             if (!hasError && resolved.Pattern.ConveyorSpeeds != null)
+ 632:             {
+ 633:                 var spd = resolved.Pattern.ConveyorSpeeds;
+ 634:                 await _plc.WriteSpeedAsync(spd.Speed1 ?? 0, spd.Speed2 ?? 0, spd.Speed3 ?? 0);
+ 635:                 Log($"PLC speed: {spd.Speed1}/{spd.Speed2}/{spd.Speed3}");
+ 636:             }
+ 637: 
+ 638:             if (!hasError && resolved.Pattern.ServoConfigs != null)
+ 639:             {
+ 640:                 foreach (var servo in resolved.Pattern.ServoConfigs)
+ 641:                 {
+ 642:                     await _plc.WriteServoAsync(servo.Ordinal, servo.Position ?? 0, servo.PostAct ?? 0, servo.Delay ?? 0, servo.Trigger ?? 0);
+ 643:                     Log($"PLC servo ordinal={servo.Ordinal}: pos={servo.Position}");
+ 644:                 }
+ 645:             }
+ 646: 
+ 647:             // Post results back to backend
+ 648:             var payload = new JobResultsPayload
+ 649:             {
+ 650:                 Success = !hasError,
+ 651:                 ErrorMessage = hasError ? "One or more commands failed" : null,
+ 652:                 Commands = commandResults,
+ 653:             };
+ 654: 
+ 655:             await _api.PostResultsAsync(_selectedJobId, payload);
+ 656:             Log(hasError ? "Job completed with errors." : "Job completed successfully.");
+ 657:         }
+ 658:         catch (Exception ex)
+ 659:         {
+ 660:             Log("Send error: " + ex.Message);
+ 661:         }
+ 662:         finally
+ 663:         {
+ 664:             btnSend.Enabled = true;
+ 665:         }
+ 666:     }
+ 667: 
+ 668:     private async void btnRetry_Click(object sender, EventArgs e)
+ 669:     {
+ 670:         if (_selectedJobId < 0) return;
+ 671: 
+ 672:         bool ok = await _api.RetryJobAsync(_selectedJobId);
+ 673:         Log(ok ? $"Job {_selectedJobId} retried." : $"Retry failed for job {_selectedJobId}.");
+ 674:     }
+ 675: 
+ 676:     // ════════════════════════════════════════
+ 677:     //  Helpers
+ 678:     // ════════════════════════════════════════
+ 679: 
+ 680:     private IInkjetAdapter GetAdapterByOrdinal(int ordinal)
+ 681:     {
+ 682:         return ordinal switch
+ 683:         {
+ 684:             1 => _adapterIj1,
+ 685:             2 => _adapterIj2,
+ 686:             3 => _adapterIj3,
+ 687:             4 => _adapterIj4,
+ 688:             _ => _adapterIj1,
+ 689:         };
+ 690:     }
  691: 
- 692:         // 🔥 restore selection
- 693:         if (selectedId != -1)
- 694:         {
- 695:             foreach (DataGridViewRow row in dgvJobs.Rows)
- 696:             {
- 697:                 if ((int)row.Cells["Id"].Value == selectedId)
- 698:                 {
- 699:                     row.Selected = true;
- 700:                     dgvJobs.CurrentCell = row.Cells[0];
- 701:                     break;
- 702:                 }
- 703:             }
- 704:         }
+ 692:     private void UpdateDeviceStatus()
+ 693:     {
+ 694:         if (InvokeRequired) { Invoke(UpdateDeviceStatus); return; }
+ 695: 
+ 696:         lblStatusIj1.BackColor = _adapterIj1.IsConnected() ? Color.Green : Color.Gray;
+ 697:         lblStatusIj2.BackColor = _adapterIj2.IsConnected() ? Color.Green : Color.Gray;
+ 698:         lblStatusIj3.BackColor = _adapterIj3.IsConnected() ? Color.Green : Color.Gray;
+ 699:         lblStatusIj4.BackColor = _adapterIj4.IsConnected() ? Color.Green : Color.Gray;
+ 700:     }
+ 701: 
+ 702:     private void UpdateJobGrid()
+ 703:     {
+ 704:         if (InvokeRequired) { Invoke(UpdateJobGrid); return; }
  705: 
- 706:         _isRefreshingJobs = false; // 🔥 เปิด event กลับ
- 707:     }
- 708: 
- 709:     private void UpdateDetailPanel()
- 710:     {
- 711:         if (InvokeRequired) { Invoke(UpdateDetailPanel); return; }
- 712: 
- 713:         if (_currentResolved == null) return;
- 714: 
- 715:         var job = _currentResolved.Job;
- 716:         var pattern = _currentResolved.Pattern;
- 717: 
- 718:         txtBarcode.Text = job?.BarcodeRaw ?? "";
- 719:         txtLot.Text = job?.LotNumber ?? "";
- 720:         txtStatus.Text = job?.Status ?? "";
- 721:         txtPattern.Text = pattern?.Name ?? "";
- 722: 
- 723:         _configBindingList.RaiseListChangedEvents = false;
- 724: 
- 725:         var newList = pattern?.InkjetConfigs ?? new List<InkjetConfigDto>();
- 726: 
- 727:         // 🔥 sync count
- 728:         while (_configBindingList.Count > newList.Count)
- 729:         {
- 730:             _configBindingList.RemoveAt(_configBindingList.Count - 1);
- 731:         }
- 732: 
- 733:         for (int i = 0; i < newList.Count; i++)
+ 706:         _isRefreshingJobs = true; // 🔥 กัน event
+ 707:         _selectedJobId = -1;
+ 708:         int selectedId = -1;
+ 709:         if (dgvJobs.CurrentRow != null)
+ 710:         {
+ 711:             selectedId = (int)dgvJobs.CurrentRow.Cells["Id"].Value;
+ 712:         }
+ 713: 
+ 714:         _jobBindingList.RaiseListChangedEvents = false;
+ 715:         _jobBindingList.Clear();
+ 716: 
+ 717:         foreach (var j in _pendingJobs)
+ 718:         {
+ 719:             _jobBindingList.Add(new JobRow
+ 720:             {
+ 721:                 Id = j.Id,
+ 722:                 BarcodeRaw = j.BarcodeRaw,
+ 723:                 LotNumber = j.LotNumber,
+ 724:                 Status = j.Status,
+ 725:                 Attempt = j.Attempt
+ 726:             });
+ 727:         }
+ 728: 
+ 729:         _jobBindingList.RaiseListChangedEvents = true;
+ 730:         _jobBindingList.ResetBindings();
+ 731: 
+ 732:         // 🔥 restore selection
+ 733:         if (selectedId != -1)
  734:         {
- 735:             if (i < _configBindingList.Count)
+ 735:             foreach (DataGridViewRow row in dgvJobs.Rows)
  736:             {
- 737:                 // 🔥 update object reference (สำคัญ)
- 738:                 _configBindingList[i] = newList[i];
- 739:             }
- 740:             else
- 741:             {
- 742:                 _configBindingList.Add(newList[i]);
+ 737:                 if ((int)row.Cells["Id"].Value == selectedId)
+ 738:                 {
+ 739:                     row.Selected = true;
+ 740:                     dgvJobs.CurrentCell = row.Cells[0];
+ 741:                     break;
+ 742:                 }
  743:             }
  744:         }
  745: 
- 746:         _configBindingList.RaiseListChangedEvents = true;
- 747:         _configBindingList.ResetBindings();
+ 746:         _isRefreshingJobs = false; // 🔥 เปิด event กลับ
+ 747:     }
  748: 
- 749:         // --- เพิ่มส่วนนี้: Fix ให้ dgvUVBlocks แสดงเฉพาะ UV1 (Ordinal 3) และ UV2 (Ordinal 4) ---
- 750:         if (pattern?.InkjetConfigs != null)
- 751:         {
- 752:             // ดึงเฉพาะ Config ของ UV (Ordinal 3 และ 4)
- 753:             var uvConfigs = pattern.InkjetConfigs
- 754:                 .Where(c => c.Ordinal == 3 || c.Ordinal == 4)
- 755:                 .OrderBy(c => c.Ordinal)
- 756:                 .ToList();
+ 749:     private void UpdateDetailPanel()
+ 750:     {
+ 751:         if (InvokeRequired) { Invoke(UpdateDetailPanel); return; }
+ 752: 
+ 753:         if (_currentResolved == null) return;
+ 754: 
+ 755:         var job = _currentResolved.Job;
+ 756:         var pattern = _currentResolved.Pattern;
  757: 
- 758:             // สร้างรายการสำหรับ Display ใน Grid
- 759:             var uvDisplayList = new List<object>();
- 760:             foreach (var cfg in uvConfigs)
- 761:             {
- 762:                 string printerName = cfg.Ordinal == 3 ? "เครื่องพิมพ์ UV1" : "เครื่องพิมพ์ UV2";
- 763: 
- 764:                 // ดึงค่า Block 1 และ 2 (Lot และ Name)
- 765:                 string lotVal = cfg.TextBlocks.FirstOrDefault(b => b.BlockNumber == 1)?.Text ?? "";
- 766:                 string nameVal = cfg.TextBlocks.FirstOrDefault(b => b.BlockNumber == 2)?.Text ?? "";
- 767: 
- 768:                 uvDisplayList.Add(new
- 769:                 {
- 770:                     Printer = printerName,
- 771:                     LotText = lotVal,
- 772:                     NameText = nameVal,
- 773:                     // เก็บ Reference ไว้เผื่อต้องการดึงไปใช้งานต่อ
- 774:                     _originalConfig = cfg
- 775:                 });
- 776:             }
- 777:         }
- 778:     }
- 779: 
- 780:     private void Log(string message)
- 781:     {
- 782:         if (InvokeRequired) { Invoke(() => Log(message)); return; }
- 783: 
- 784:         string line = $"[{DateTime.Now:HH:mm:ss}] {message}";
- 785:         txtLog.AppendText(line + Environment.NewLine);
- 786:     }
- 787: 
- 788:     private void button1_Click(object sender, EventArgs e)
- 789:     {
- 790:         var steps = new[]
+ 758:         txtBarcode.Text = job?.BarcodeRaw ?? "";
+ 759:         txtLot.Text = job?.LotNumber ?? "";
+ 760:         txtStatus.Text = job?.Status ?? "";
+ 761:         txtPattern.Text = pattern?.Name ?? "";
+ 762: 
+ 763:         _configBindingList.RaiseListChangedEvents = false;
+ 764: 
+ 765:         var newList = pattern?.InkjetConfigs ?? new List<InkjetConfigDto>();
+ 766: 
+ 767:         // 🔥 sync count
+ 768:         while (_configBindingList.Count > newList.Count)
+ 769:         {
+ 770:             _configBindingList.RemoveAt(_configBindingList.Count - 1);
+ 771:         }
+ 772: 
+ 773:         for (int i = 0; i < newList.Count; i++)
+ 774:         {
+ 775:             if (i < _configBindingList.Count)
+ 776:             {
+ 777:                 // 🔥 update object reference (สำคัญ)
+ 778:                 _configBindingList[i] = newList[i];
+ 779:             }
+ 780:             else
+ 781:             {
+ 782:                 _configBindingList.Add(newList[i]);
+ 783:             }
+ 784:         }
+ 785: 
+ 786:         _configBindingList.RaiseListChangedEvents = true;
+ 787:         _configBindingList.ResetBindings();
+ 788: 
+ 789:         // --- เพิ่มส่วนนี้: Fix ให้ dgvUVBlocks แสดงเฉพาะ UV1 (Ordinal 3) และ UV2 (Ordinal 4) ---
+ 790:         if (pattern?.InkjetConfigs != null)
  791:         {
- 792:         new BotStep { Name = "Document",   X = 2325, Y = 59,  VerifyArea = new Rectangle(2100, 0, 400, 300) },
- 793:         new BotStep { Name = "Open",       X = 2207, Y = 133, VerifyArea = new Rectangle(2100, 100, 400, 400) },
- 794:         new BotStep { Name = "SelectFile", X = 889, Y = 521, VerifyArea = new Rectangle(800, 400, 800, 600) },
- 795:         new BotStep { Name = "OpenBtn",    X = 1652, Y = 946, VerifyArea = new Rectangle(1500, 800, 500, 300) },
- 796:     };
+ 792:             // ดึงเฉพาะ Config ของ UV (Ordinal 3 และ 4)
+ 793:             var uvConfigs = pattern.InkjetConfigs
+ 794:                 .Where(c => c.Ordinal == 3 || c.Ordinal == 4)
+ 795:                 .OrderBy(c => c.Ordinal)
+ 796:                 .ToList();
  797: 
- 798:         BotClickHelper.RunAsync("uvinkjet", steps, result =>
- 799:         {
- 800:             if (this.IsHandleCreated)
- 801:                 this.Invoke((MethodInvoker)(() =>
- 802:                     MessageBox.Show(result.Success ? "สำเร็จ!" : result.Error)));
- 803:         });
- 804:     }
- 805: 
- 806:     private void button2_Click(object sender, EventArgs e)
- 807:     {
- 808:         // ใช้ Invoke เพื่อความปลอดภัยว่าทำงานบน UI Thread (STA)
- 809:         this.Invoke(new Action(() =>
- 810:         {
- 811:             using (frmPatternEditor editor = new frmPatternEditor())
- 812:             {
- 813:                 editor.StartPosition = FormStartPosition.CenterParent;
- 814:                 editor.ShowDialog();
- 815:             }
- 816:         }));
- 817:     }
- 818: 
- 819:     private async void button3_Click(object sender, EventArgs e)
- 820:     {
- 821:         //await SendTextBlocksToIjAsync(3);
- 822:         var form = new frmCreateJob(_api);
- 823:         form.ShowDialog();
- 824:     }
- 825: 
- 826:     private async void button4_Click(object sender, EventArgs e)
- 827:     {
- 828:         await TestSendToIj3TcpAsync();
- 829:     }
- 830: 
- 831:     // Example usage: send blocks from dgvTextBlocks to IJ3 via TCP (simple demo)
- 832:     private async Task TestSendToIj3TcpAsync()
- 833:     {
- 834:         // read TCP host/port from UI controls
- 835:         string host = txtTcpHost.Text.Trim();
- 836:         if (!int.TryParse(txtTcpPort.Text.Trim(), out int port))
- 837:         {
- 838:             Log("Invalid TCP port");
- 839:             return;
- 840:         }
- 841: 
- 842:         using var client = new InkjetOperator.Adapters.Simple.SocketDeviceClient();
- 843:         try
- 844:         {
- 845:             await client.ConnectAsync(host, port);
- 846:         }
- 847:         catch (Exception ex)
- 848:         {
- 849:             Log("TCP connect failed: " + ex.Message);
- 850:             return;
- 851:         }
- 852: 
- 853:         // Example: change program to 13
- 854:         var progResp = await InkjetOperator.Services.InkjetProtocol.SendChangeProgramAsync(client, 13);
- 855:         Log($"ChangeProgram resp: {progResp}");
- 856: 
- 857:         // Send each row in dgvTextBlocks
- 858:         foreach (DataGridViewRow row in dgvTextBlocks.Rows)
+ 798:             // สร้างรายการสำหรับ Display ใน Grid
+ 799:             var uvDisplayList = new List<object>();
+ 800:             foreach (var cfg in uvConfigs)
+ 801:             {
+ 802:                 string printerName = cfg.Ordinal == 3 ? "เครื่องพิมพ์ UV1" : "เครื่องพิมพ์ UV2";
+ 803: 
+ 804:                 // ดึงค่า Block 1 และ 2 (Lot และ Name)
+ 805:                 string lotVal = cfg.TextBlocks.FirstOrDefault(b => b.BlockNumber == 1)?.Text ?? "";
+ 806:                 string nameVal = cfg.TextBlocks.FirstOrDefault(b => b.BlockNumber == 2)?.Text ?? "";
+ 807: 
+ 808:                 uvDisplayList.Add(new
+ 809:                 {
+ 810:                     Printer = printerName,
+ 811:                     LotText = lotVal,
+ 812:                     NameText = nameVal,
+ 813:                     // เก็บ Reference ไว้เผื่อต้องการดึงไปใช้งานต่อ
+ 814:                     _originalConfig = cfg
+ 815:                 });
+ 816:             }
+ 817:         }
+ 818:     }
+ 819: 
+ 820:     private void Log(string message)
+ 821:     {
+ 822:         if (InvokeRequired) { Invoke(() => Log(message)); return; }
+ 823: 
+ 824:         string line = $"[{DateTime.Now:HH:mm:ss}] {message}";
+ 825:         txtLog.AppendText(line + Environment.NewLine);
+ 826:     }
+ 827: 
+ 828:     private void button1_Click(object sender, EventArgs e)
+ 829:     {
+ 830:         string fileName = "SPK-LOT.uvdx"; // 🔹 เปลี่ยนเป็นค่าที่คุณต้องการ (อาจมาจาก textbox)
+ 831: 
+ 832:         var steps = new[]
+ 833:         {
+ 834:         new BotStep { Name = "Document",   X = 2325, Y = 59,  VerifyArea = new Rectangle(2100, 0, 400, 300) },
+ 835:         new BotStep { Name = "Open",       X = 2207, Y = 133, VerifyArea = new Rectangle(2100, 100, 400, 400) },
+ 836:         new BotStep { Name = "SelectFile", X = 890, Y = 525, VerifyArea = new Rectangle(800, 400, 800, 600) },
+ 837:         new BotStep { Name = "OpenBtn",    X = 1652, Y = 946, VerifyArea = new Rectangle(1500, 800, 500, 300) },
+ 838:     };
+ 839: 
+ 840:         // ✅ 1. copy file ก่อนเริ่ม
+ 841:         BotClickHelper.CopyFile(fileName);
+ 842: 
+ 843:         // ✅ 2. run bot
+ 844:         BotClickHelper.RunAsync("uvinkjet", steps, result =>
+ 845:         {
+ 846:             // ✅ 3. ลบไฟล์ทุกครั้ง (สำเร็จ/ไม่สำเร็จ)
+ 847:             BotClickHelper.ClearDocumentFolder();
+ 848: 
+ 849:             if (this.IsHandleCreated)
+ 850:                 this.Invoke((MethodInvoker)(() =>
+ 851:                     MessageBox.Show(result.Success ? "สำเร็จ!" : result.Error)));
+ 852:         });
+ 853:     }
+ 854: 
+ 855:     private void button2_Click(object sender, EventArgs e)
+ 856:     {
+ 857:         // ใช้ Invoke เพื่อความปลอดภัยว่าทำงานบน UI Thread (STA)
+ 858:         this.Invoke(new Action(() =>
  859:         {
- 860:             if (row.IsNewRow) continue;
- 861: 
- 862:             int blockNumber = 1;
- 863:             if (dgvTextBlocks.Columns.Contains("BlockNumber") && int.TryParse(row.Cells["BlockNumber"].Value?.ToString(), out var bn))
- 864:                 blockNumber = bn;
- 865: 
- 866:             string text = row.Cells["Text"].Value?.ToString() ?? row.Cells["text"].Value?.ToString() ?? "";
- 867:             int x = int.TryParse(row.Cells["X"].Value?.ToString(), out var tx) ? tx : 0;
- 868:             int y = int.TryParse(row.Cells["Y"].Value?.ToString(), out var ty) ? ty : 0;
- 869:             int size = int.TryParse(row.Cells["Size"].Value?.ToString(), out var ts) ? ts : 1;
- 870:             int scale = int.TryParse(row.Cells["Scale"].Value?.ToString(), out var tsc) ? tsc : 1;
- 871: 
- 872:             var block = new InkjetOperator.Services.SimpleTextBlock(blockNumber, text, x, y, size, scale);
- 873:             var (fsResp, f1Resp) = await InkjetOperator.Services.InkjetProtocol.SendTextBlockAsync(client, 13, block);
- 874:             Log($"IJ3 TextBlock({blockNumber}) FS='{fsResp}' F1='{f1Resp}'");
- 875: 
- 876:             // If adapter or device returns empty error, you can decide to continue or break.
- 877:             await Task.Delay(30);
- 878:         }
+ 860:             using (frmPatternEditor editor = new frmPatternEditor())
+ 861:             {
+ 862:                 editor.StartPosition = FormStartPosition.CenterParent;
+ 863:                 editor.ShowDialog();
+ 864:             }
+ 865:         }));
+ 866:     }
+ 867: 
+ 868:     private async void button3_Click(object sender, EventArgs e)
+ 869:     {
+ 870:         //await SendTextBlocksToIjAsync(3);
+ 871:         var form = new frmCreateJob(_api);
+ 872:         form.ShowDialog();
+ 873:     }
+ 874: 
+ 875:     private async void button4_Click(object sender, EventArgs e)
+ 876:     {
+ 877:         await TestSendToIj3TcpAsync();
+ 878:     }
  879: 
- 880:         var resume = await InkjetOperator.Services.InkjetProtocol.SendResumeAsync(client);
- 881:         Log($"Resume resp: {resume}");
- 882:     }
- 883: 
- 884:     private async void dgvUVBlocks_CellValueChanged(object sender, DataGridViewCellEventArgs e)
- 885:     {
- 886:         if (e.RowIndex < 0) return;
- 887: 
- 888:         var row = dgvUVBlocks.Rows[e.RowIndex];
- 889: 
- 890:         if (row.DataBoundItem is not UvRow data) return;
- 891: 
+ 880:     // Example usage: send blocks from dgvTextBlocks to IJ3 via TCP (simple demo)
+ 881:     private async Task TestSendToIj3TcpAsync()
+ 882:     {
+ 883:         // read TCP host/port from UI controls
+ 884:         string host = txtTcpHost.Text.Trim();
+ 885:         if (!int.TryParse(txtTcpPort.Text.Trim(), out int port))
+ 886:         {
+ 887:             Log("Invalid TCP port");
+ 888:             return;
+ 889:         }
+ 890: 
+ 891:         using var client = new InkjetOperator.Adapters.Simple.SocketDeviceClient();
  892:         try
  893:         {
- 894:             await UpdateUvRow(data.Id, data.Lot, data.Name);
- 895:             Log($"[UV Updated] ID={data.Id}, Lot={data.Lot}, Name={data.Name}");
- 896:         }
- 897:         catch (Exception ex)
- 898:         {
- 899:             Log("Update UV error: " + ex.Message);
+ 894:             await client.ConnectAsync(host, port);
+ 895:         }
+ 896:         catch (Exception ex)
+ 897:         {
+ 898:             Log("TCP connect failed: " + ex.Message);
+ 899:             return;
  900:         }
- 901:     }
- 902: 
- 903:     private async Task UpdateUvRow(int id, string lot, string name)
- 904:     {
- 905:         using var conn = new SqliteConnection("Data Source=D:\\DB\\uv_data.db3;Default Timeout=5;");
- 906:         await conn.OpenAsync();
- 907: 
- 908:         var cmd = conn.CreateCommand();
- 909:         cmd.CommandText = @"
- 910:         UPDATE uv_print_data
- 911:         SET lot = @lot,
- 912:             name = @name,
- 913:             update_at = CURRENT_TIMESTAMP
- 914:         WHERE id = @id
- 915:     ";
- 916: 
- 917:         cmd.Parameters.AddWithValue("@id", id);
- 918:         cmd.Parameters.AddWithValue("@lot", lot);
- 919:         cmd.Parameters.AddWithValue("@name", name);
+ 901: 
+ 902:         // Example: change program to 13
+ 903:         var progResp = await InkjetOperator.Services.InkjetProtocol.SendChangeProgramAsync(client, 13);
+ 904:         Log($"ChangeProgram resp: {progResp}");
+ 905: 
+ 906:         // Send each row in dgvTextBlocks
+ 907:         foreach (DataGridViewRow row in dgvTextBlocks.Rows)
+ 908:         {
+ 909:             if (row.IsNewRow) continue;
+ 910: 
+ 911:             int blockNumber = 1;
+ 912:             if (dgvTextBlocks.Columns.Contains("BlockNumber") && int.TryParse(row.Cells["BlockNumber"].Value?.ToString(), out var bn))
+ 913:                 blockNumber = bn;
+ 914: 
+ 915:             string text = row.Cells["Text"].Value?.ToString() ?? row.Cells["text"].Value?.ToString() ?? "";
+ 916:             int x = int.TryParse(row.Cells["X"].Value?.ToString(), out var tx) ? tx : 0;
+ 917:             int y = int.TryParse(row.Cells["Y"].Value?.ToString(), out var ty) ? ty : 0;
+ 918:             int size = int.TryParse(row.Cells["Size"].Value?.ToString(), out var ts) ? ts : 1;
+ 919:             int scale = int.TryParse(row.Cells["Scale"].Value?.ToString(), out var tsc) ? tsc : 1;
  920: 
- 921:         await cmd.ExecuteNonQueryAsync();
- 922:     }
- 923: 
- 924:     public void InitializeDatabase()
- 925:     {
- 926:         string folderPath = @"D:\DB";
- 927:         if (!System.IO.Directory.Exists(folderPath))
- 928:         {
- 929:             System.IO.Directory.CreateDirectory(folderPath);
- 930:         }
- 931: 
- 932:         using var conn = new SqliteConnection("Data Source=D:\\DB\\uv_data.db3;Default Timeout=5;");
- 933:         conn.Open();
- 934: 
- 935:         string createTableSql = @"
- 936:     CREATE TABLE IF NOT EXISTS uv_print_data (
- 937:         id INTEGER PRIMARY KEY AUTOINCREMENT,
- 938:         inkjet_name TEXT,
- 939:         lot TEXT,
- 940:         name TEXT,
- 941:         update_at DATETIME DEFAULT CURRENT_TIMESTAMP
- 942:     );";
- 943: 
- 944:         using (var command = new SqliteCommand(createTableSql, conn))
- 945:         {
- 946:             command.ExecuteNonQuery();
- 947:         }
- 948: 
- 949:         // เช็คว่ามีข้อมูลหรือยัง ถ้าไม่มีให้ Insert แถวสำหรับ UV1 และ UV2 รอไว้เลย
- 950:         var checkCmd = new SqliteCommand("SELECT COUNT(*) FROM uv_print_data", conn);
- 951:         long count = (long)checkCmd.ExecuteScalar();
- 952:         if (count == 0)
- 953:         {
- 954:             var insertCmd = new SqliteCommand(@"
- 955:             INSERT INTO uv_print_data (id, inkjet_name, lot, name) VALUES 
- 956:             (1, 'เครื่องพิมพ์ UV1', '', ''),
- 957:             (2, 'เครื่องพิมพ์ UV2', '', '')", conn);
- 958:             insertCmd.ExecuteNonQuery();
- 959:         }
- 960:     }
- 961: 
- 962:     private async Task LoadUvDataToGrid()
- 963:     {
- 964:         try
- 965:         {
- 966:             using var conn = new SqliteConnection("Data Source=D:\\DB\\uv_data.db3");
- 967:             await conn.OpenAsync();
- 968: 
- 969:             var cmd = conn.CreateCommand();
- 970:             cmd.CommandText = @"
- 971:         SELECT id, inkjet_name, lot, name, update_at
- 972:         FROM uv_print_data
- 973:         ORDER BY id
- 974:         ";
- 975: 
- 976:             var reader = await cmd.ExecuteReaderAsync();
- 977: 
- 978:             var list = new List<UvRow>();
- 979: 
- 980:             while (await reader.ReadAsync())
- 981:             {
- 982:                 list.Add(new UvRow
- 983:                 {
- 984:                     Id = reader.GetInt32(0), // 🔥 ยังต้องมี
- 985:                     Inkjet = reader.GetString(1),
- 986:                     Lot = reader.IsDBNull(2) ? "" : reader.GetString(2),
- 987:                     Name = reader.IsDBNull(3) ? "" : reader.GetString(3),
- 988:                     UpdateAt = reader.IsDBNull(4) ? "" : reader.GetString(4)
- 989:                 });
- 990:             }
- 991: 
- 992:             dgvUVBlocks.Invoke(() =>
- 993:             {
- 994: 
- 995:                 dgvUVBlocks.AutoGenerateColumns = false;
- 996: 
- 997:                 dgvUVBlocks.ReadOnly = false;
- 998:                 dgvUVBlocks.AllowUserToAddRows = false;
- 999:                 dgvUVBlocks.EditMode = DataGridViewEditMode.EditOnEnter;
-1000:                 dgvUVBlocks.SelectionMode = DataGridViewSelectionMode.CellSelect;
-1001: 
-1002: 
-1003:                 _uvBindingList.RaiseListChangedEvents = false;
-1004:                 _uvBindingList.Clear();
-1005: 
-1006:                 foreach (var item in list)
-1007:                 {
-1008:                     _uvBindingList.Add(item);
-1009:                 }
-1010: 
-1011:                 _uvBindingList.RaiseListChangedEvents = true;
-1012:                 _uvBindingList.ResetBindings();
-1013: 
-1014:             });
+ 921:             var block = new InkjetOperator.Services.SimpleTextBlock(blockNumber, text, x, y, size, scale);
+ 922:             var (fsResp, f1Resp) = await InkjetOperator.Services.InkjetProtocol.SendTextBlockAsync(client, 13, block);
+ 923:             Log($"IJ3 TextBlock({blockNumber}) FS='{fsResp}' F1='{f1Resp}'");
+ 924: 
+ 925:             // If adapter or device returns empty error, you can decide to continue or break.
+ 926:             await Task.Delay(30);
+ 927:         }
+ 928: 
+ 929:         var resume = await InkjetOperator.Services.InkjetProtocol.SendResumeAsync(client);
+ 930:         Log($"Resume resp: {resume}");
+ 931:     }
+ 932: 
+ 933:     private async void dgvUVBlocks_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+ 934:     {
+ 935:         if (e.RowIndex < 0) return;
+ 936: 
+ 937:         var row = dgvUVBlocks.Rows[e.RowIndex];
+ 938: 
+ 939:         if (row.DataBoundItem is not UvRow data) return;
+ 940: 
+ 941:         try
+ 942:         {
+ 943:             await UpdateUvRow(data.Id, data.Lot, data.Name , data.Program);
+ 944:             Log($"[UV Updated] ID={data.Id}, Lot={data.Lot}, Name={data.Name}");
+ 945:         }
+ 946:         catch (Exception ex)
+ 947:         {
+ 948:             Log("Update UV error: " + ex.Message);
+ 949:         }
+ 950:     }
+ 951: 
+ 952:     private async Task UpdateUvRow(int id, string lot, string name , string program)
+ 953:     {
+ 954:         using var conn = new SqliteConnection("Data Source=D:\\DB\\uv_data.db3;Default Timeout=5;");
+ 955:         await conn.OpenAsync();
+ 956: 
+ 957:         var cmd = conn.CreateCommand();
+ 958:         cmd.CommandText = @"
+ 959:         UPDATE uv_print_data
+ 960:         SET lot = @lot,
+ 961:             name = @name,
+ 962:             program_name = @program_name,
+ 963:             update_at = CURRENT_TIMESTAMP
+ 964:         WHERE id = @id
+ 965:     ";
+ 966: 
+ 967:         cmd.Parameters.AddWithValue("@id", id);
+ 968:         cmd.Parameters.AddWithValue("@lot", lot);
+ 969:         cmd.Parameters.AddWithValue("@name", name);
+ 970:         cmd.Parameters.AddWithValue("@program_name", program);
+ 971: 
+ 972:         await cmd.ExecuteNonQueryAsync();
+ 973:     }
+ 974: 
+ 975:     public void InitializeDatabase()
+ 976:     {
+ 977:         string folderPath = @"D:\DB";
+ 978:         if (!Directory.Exists(folderPath))
+ 979:         {
+ 980:             Directory.CreateDirectory(folderPath);
+ 981:         }
+ 982: 
+ 983:         using var conn = new SqliteConnection("Data Source=D:\\DB\\uv_data.db3;Default Timeout=5;");
+ 984:         conn.Open();
+ 985: 
+ 986:         // 🔹 1. สร้าง table
+ 987:         string createTableSql = @"
+ 988:     CREATE TABLE IF NOT EXISTS uv_print_data (
+ 989:         id INTEGER PRIMARY KEY AUTOINCREMENT,
+ 990:         inkjet_name TEXT,
+ 991:         lot TEXT,
+ 992:         name TEXT,
+ 993:         update_at DATETIME DEFAULT CURRENT_TIMESTAMP
+ 994:     );";
+ 995: 
+ 996:         using (var cmd = new SqliteCommand(createTableSql, conn))
+ 997:         {
+ 998:             cmd.ExecuteNonQuery();
+ 999:         }
+1000: 
+1001:         // 🔹 2. เช็ค column program_name
+1002:         bool hasProgramName = false;
+1003: 
+1004:         using (var checkColumnCmd = new SqliteCommand("PRAGMA table_info(uv_print_data);", conn))
+1005:         using (var reader = checkColumnCmd.ExecuteReader())
+1006:         {
+1007:             while (reader.Read())
+1008:             {
+1009:                 if (reader["name"].ToString() == "program_name")
+1010:                 {
+1011:                     hasProgramName = true;
+1012:                     break;
+1013:                 }
+1014:             }
 1015:         }
-1016:         catch (Exception ex)
-1017:         {
-1018:             Log("Load UV error: " + ex.Message);
-1019:         }
-1020:     }
-1021: 
-1022:     private void button6_Click(object sender, EventArgs e)
-1023:     {
-1024:         var row = _uvBindingList.FirstOrDefault(x => x.Id == 1);
-1025: 
-1026:         if (row == null)
-1027:         {
-1028:             MessageBox.Show("ไม่พบ row id = 1");
-1029:             return;
-1030:         }
-1031: 
-1032:         string lot = row.Lot;
-1033:         string name = row.Name;
-1034: 
-1035:         Log($"Lot={lot}, Name={name}");
-1036: 
-1037:         string dbPath = @"C:\Users\theer\Downloads\uvinkjet-250702-new\uvinkjet-250702-new\database\sys\CPI.db3";
-1038: 
-1039:         using (SqliteConnection conn = new SqliteConnection($"Data Source={dbPath}"))
-1040:         {
-1041:             conn.Open();
-1042: 
-1043:             string sql = "UPDATE MK063 SET lot = @lot, name = @name WHERE id = 1";
-1044: 
-1045:             using (SqliteCommand cmd = new SqliteCommand(sql, conn))
-1046:             {
-1047:                 cmd.Parameters.AddWithValue("@lot", lot);
-1048:                 cmd.Parameters.AddWithValue("@name", name);
-1049: 
-1050:                 int rows = cmd.ExecuteNonQuery();
-1051: 
-1052:                 MessageBox.Show("Update สำเร็จ: " + rows + " row");
-1053:             }
-1054:         }
-1055: 
-1056:         currentStep = 3; // ไปขั้นที่ 2
-1057:         UpdateStepButtons();
-1058:     }
+1016: 
+1017:         // 🔹 3. เพิ่ม column ถ้ายังไม่มี
+1018:         if (!hasProgramName)
+1019:         {
+1020:             using var alterCmd = new SqliteCommand(
+1021:                 "ALTER TABLE uv_print_data ADD COLUMN program_name TEXT;",
+1022:                 conn);
+1023: 
+1024:             alterCmd.ExecuteNonQuery();
+1025:         }
+1026: 
+1027:         // 🔹 4. เช็คข้อมูล
+1028:         long count;
+1029:         using (var checkCmd = new SqliteCommand("SELECT COUNT(*) FROM uv_print_data", conn))
+1030:         {
+1031:             count = (long)checkCmd.ExecuteScalar();
+1032:         }
+1033: 
+1034:         // 🔹 5. Insert default row
+1035:         if (count == 0)
+1036:         {
+1037:             using var insertCmd = new SqliteCommand(@"
+1038:         INSERT INTO uv_print_data (id, inkjet_name, lot, name, program_name) VALUES 
+1039:         (1, 'เครื่องพิมพ์ UV1', '', '', ''),
+1040:         (2, 'เครื่องพิมพ์ UV2', '', '', '')", conn);
+1041: 
+1042:             insertCmd.ExecuteNonQuery();
+1043:         }
+1044:     }
+1045: 
+1046:     private async Task LoadUvDataToGrid()
+1047:     {
+1048:         try
+1049:         {
+1050:             using var conn = new SqliteConnection("Data Source=D:\\DB\\uv_data.db3");
+1051:             await conn.OpenAsync();
+1052: 
+1053:             var cmd = conn.CreateCommand();
+1054:             cmd.CommandText = @"
+1055:         SELECT id, inkjet_name, lot, name, update_at , program_name
+1056:         FROM uv_print_data
+1057:         ORDER BY id
+1058:         ";
 1059: 
-1060:     private void button8_Click(object sender, EventArgs e)
-1061:     {
-1062:         var row = _uvBindingList.FirstOrDefault(x => x.Id == 2);
+1060:             var reader = await cmd.ExecuteReaderAsync();
+1061: 
+1062:             var list = new List<UvRow>();
 1063: 
-1064:         if (row == null)
-1065:         {
-1066:             MessageBox.Show("ไม่พบ row id = 1");
-1067:             return;
-1068:         }
-1069: 
-1070:         string lot = row.Lot;
-1071:         string name = row.Name;
-1072: 
-1073:         Log($"Lot={lot}, Name={name}");
-1074: 
-1075:         string dbPath = @"C:\Users\theer\Downloads\uvinkjet-250702-new\uvinkjet-250702-new\database\sys\CPI.db3";
+1064:             while (await reader.ReadAsync())
+1065:             {
+1066:                 list.Add(new UvRow
+1067:                 {
+1068:                     Id = reader.GetInt32(0), // 🔥 ยังต้องมี
+1069:                     Inkjet = reader.GetString(1),
+1070:                     Lot = reader.IsDBNull(2) ? "" : reader.GetString(2),
+1071:                     Name = reader.IsDBNull(3) ? "" : reader.GetString(3),
+1072:                     UpdateAt = reader.IsDBNull(4) ? "" : reader.GetString(4),
+1073:                     Program = reader.IsDBNull(5) ? "" : reader.GetString(5)
+1074:                 });
+1075:             }
 1076: 
-1077:         using (SqliteConnection conn = new SqliteConnection($"Data Source={dbPath}"))
-1078:         {
-1079:             conn.Open();
-1080: 
-1081:             string sql = "UPDATE MK063 SET lot = @lot, name = @name WHERE id = 1";
-1082: 
-1083:             using (SqliteCommand cmd = new SqliteCommand(sql, conn))
-1084:             {
-1085:                 cmd.Parameters.AddWithValue("@lot", lot);
-1086:                 cmd.Parameters.AddWithValue("@name", name);
+1077:             dgvUVBlocks.Invoke(() =>
+1078:             {
+1079: 
+1080:                 dgvUVBlocks.AutoGenerateColumns = false;
+1081: 
+1082:                 dgvUVBlocks.ReadOnly = false;
+1083:                 dgvUVBlocks.AllowUserToAddRows = false;
+1084:                 dgvUVBlocks.EditMode = DataGridViewEditMode.EditOnEnter;
+1085:                 dgvUVBlocks.SelectionMode = DataGridViewSelectionMode.CellSelect;
+1086: 
 1087: 
-1088:                 int rows = cmd.ExecuteNonQuery();
-1089: 
-1090:                 MessageBox.Show("Update สำเร็จ: " + rows + " row");
-1091:             }
-1092:         }
-1093:         currentStep = 1;
-1094:         UpdateStepButtons();
-1095:     }
-1096: 
-1097: 
-1098:     private async void button5_Click(object sender, EventArgs e)
-1099:     {
-1100:         //if (dgvConfigs.Rows.Count > 0)
-1101:         //{
-1102:         //    dgvConfigs.ClearSelection();
-1103: 
-1104:         //    dgvConfigs.Rows[0].Selected = true;
-1105:         //    dgvConfigs.CurrentCell = dgvConfigs.Rows[0].Cells[0];
-1106: 
-1107:         //    var config = dgvConfigs.Rows[0].DataBoundItem as InkjetConfigDto;
+1088:                 _uvBindingList.RaiseListChangedEvents = false;
+1089:                 _uvBindingList.Clear();
+1090: 
+1091:                 foreach (var item in list)
+1092:                 {
+1093:                     _uvBindingList.Add(item);
+1094:                 }
+1095: 
+1096:                 _uvBindingList.RaiseListChangedEvents = true;
+1097:                 _uvBindingList.ResetBindings();
+1098: 
+1099:                 dgvUVBlocks.DataSource = _uvBindingList;
+1100: 
+1101:             });
+1102:         }
+1103:         catch (Exception ex)
+1104:         {
+1105:             Log("Load UV error: " + ex.Message);
+1106:         }
+1107:     }
 1108: 
-1109:         //    if (config != null)
-1110:         //    {
-1111:         //        MessageBox.Show($"ProgramNo: {config.ProgramNumber}");
-1112:         //    }
-1113:         //}
-1114: 
-1115:         //await TestSendToIj3TcpAsync();
-1116: 
-1117:         if (dgvConfigs.Rows.Count > 1)
-1118:         {
-1119:             dgvConfigs.ClearSelection();
+1109:     private void button6_Click(object sender, EventArgs e)
+1110:     {
+1111:         var firstRow = _uvBindingList.FirstOrDefault();
+1112: 
+1113:         if (firstRow == null || string.IsNullOrWhiteSpace(firstRow.Program))
+1114:         {
+1115:             MessageBox.Show("ไม่มีค่า program_name ใน row แรก");
+1116:             return;
+1117:         }
+1118: 
+1119:         string fileName = firstRow.Program;
 1120: 
-1121:             dgvConfigs.Rows[1].Selected = true;
-1122:             dgvConfigs.CurrentCell = dgvConfigs.Rows[1].Cells[0];
-1123: 
-1124:             var config = dgvConfigs.Rows[1].DataBoundItem as InkjetConfigDto;
-1125: 
-1126:             if (config != null)
-1127:             {
-1128:                 MessageBox.Show($"ProgramNo: {config.ProgramNumber}");
-1129:             }
-1130:         }
-1131: 
-1132:         await TestSendToIj3TcpAsync();
+1121:         var steps = new[]
+1122:         {
+1123:         new BotStep { Name = "Document",   X = 2325, Y = 59,  VerifyArea = new Rectangle(2100, 0, 400, 300) },
+1124:         new BotStep { Name = "Open",       X = 2207, Y = 133, VerifyArea = new Rectangle(2100, 100, 400, 400) },
+1125:         new BotStep { Name = "SelectFile", X = 890,  Y = 525, VerifyArea = new Rectangle(800, 400, 800, 600) },
+1126:         new BotStep { Name = "OpenBtn",    X = 1652, Y = 946, VerifyArea = new Rectangle(1500, 800, 500, 300) },
+1127:     };
+1128: 
+1129:         try
+1130:         {
+1131:             // ✅ 1. ลบไฟล์ก่อน
+1132:             BotClickHelper.ClearDocumentFolder();
 1133: 
-1134:         currentStep = 2; // ไปขั้นที่ 2
-1135:         UpdateStepButtons();
-1136: 
-1137:     }
-1138: 
-1139:     private async void button7_Click(object sender, EventArgs e)
-1140:     {
-1141:         await SendToIj3FromDbAsync("CCRC0291-DEX0663MS");
-1142:         //if (dgvConfigs.Rows.Count > 2)
-1143:         //{
-1144:         //    dgvConfigs.ClearSelection();
-1145: 
-1146:         //    dgvConfigs.Rows[2].Selected = true;
-1147:         //    dgvConfigs.CurrentCell = dgvConfigs.Rows[2].Cells[0];
-1148: 
-1149:         //    var config = dgvConfigs.Rows[2].DataBoundItem as InkjetConfigDto;
-1150: 
-1151:         //    if (config != null)
-1152:         //    {
-1153:         //        MessageBox.Show($"ProgramNo: {config.ProgramNumber}");
-1154:         //    }
-1155: 
-1156:         //    await TestSendToIj3TcpAsync();
-1157: 
-1158:         currentStep = 4; // ไปขั้นที่ 2
-1159:         UpdateStepButtons();
-1160:         //}
-1161:     }
+1134:             // ✅ 2. Copy file
+1135:             BotClickHelper.CopyFile(fileName);
+1136:         }
+1137:         catch (Exception ex)
+1138:         {
+1139:             MessageBox.Show("เตรียมไฟล์ไม่สำเร็จ: " + ex.Message);
+1140:             return;
+1141:         }
+1142: 
+1143:         // ✅ 3. Run Bot
+1144:         BotClickHelper.RunAsync("uvinkjet", steps, result =>
+1145:         {
+1146:             if (result.Success)
+1147:             {
+1148:                 try
+1149:                 {
+1150:                     // 🔹 4. Update DB
+1151:                     var row = _uvBindingList.FirstOrDefault(x => x.Id == 1);
+1152: 
+1153:                     if (row != null)
+1154:                     {
+1155:                         string dbPath = @"C:\Users\theer\Downloads\uvinkjet-250702-new\uvinkjet-250702-new\database\sys\CPI.db3";
+1156: 
+1157:                         using (SqliteConnection conn = new SqliteConnection($"Data Source={dbPath}"))
+1158:                         {
+1159:                             conn.Open();
+1160: 
+1161:                             string sql = "UPDATE MK063 SET lot = @lot, name = @name WHERE id = 1";
 1162: 
-1163:     private void UpdateStepButtons()
-1164:     {
-1165:         // ปุ่ม 1 (MK1+2)
-1166:         button5.Enabled = (currentStep == 1);
-1167: 
-1168:         // ปุ่ม 2 (UV1)
-1169:         //button6.Enabled = (currentStep == 2);
-1170: 
-1171:         // ปุ่ม 3 (MK2/3)
-1172:         button7.Enabled = (currentStep == 3);
-1173: 
-1174:         // ปุ่ม 4 (UV2)
-1175:         button8.Enabled = (currentStep == 4);
-1176: 
-1177:         // ถ้าอยากให้เห็นชัดเจนว่าอันไหนเสร็จแล้ว อาจจะเปลี่ยนสีปุ่มด้วยก็ได้
-1178:         //button5.BackColor = (currentStep > 1) ? Color.LightGreen : SystemColors.Control;
-1179:         // ... ทำแบบเดียวกันกับปุ่มอื่นๆ
-1180:     }
-1181: 
-1182:     private async Task SendToIj3FromDbAsync(string barcode)
-1183:     {
-1184:         // ตัวแปรสำหรับ Block 1
-1185:         string text1 = ""; int x1 = 0, y1 = 0, size1 = 1, scale1 = 1;
-1186:         // ตัวแปรสำหรับ Block 2
-1187:         string text2 = ""; int x2 = 0, y2 = 0, size2 = 1, scale2 = 1;
-1188: 
-1189:         string dbPath = @"D:\DB\uv_data.db3";
-1190:         using (var conn = new SqliteConnection($"Data Source={dbPath}"))
-1191:         {
-1192:             await conn.OpenAsync();
-1193:             string sql = "SELECT * FROM config_data_mk3 WHERE pattern_no_erp = @barcode LIMIT 1";
-1194:             using var cmd = new SqliteCommand(sql, conn);
-1195:             cmd.Parameters.AddWithValue("@barcode", barcode);
-1196:             using var reader = await cmd.ExecuteReaderAsync();
-1197: 
-1198:             if (reader.Read())
-1199:             {
-1200:                 // ดึงข้อมูล Block 1
-1201:                 text1 = reader.GetString(reader.GetOrdinal("block1_text"));
-1202:                 x1 = reader.GetInt32(reader.GetOrdinal("block1_x"));
-1203:                 y1 = reader.GetInt32(reader.GetOrdinal("block1_y"));
-1204:                 size1 = reader.GetInt32(reader.GetOrdinal("block1_size"));
-1205:                 scale1 = reader.GetInt32(reader.GetOrdinal("block1_scale_side"));
-1206: 
-1207:                 // ดึงข้อมูล Block 2
-1208:                 text2 = reader.IsDBNull(reader.GetOrdinal("block2_text")) ? "" : reader.GetString(reader.GetOrdinal("block2_text"));
-1209:                 x2 = reader.GetInt32(reader.GetOrdinal("block2_x"));
-1210:                 y2 = reader.GetInt32(reader.GetOrdinal("block2_y"));
-1211:                 size2 = reader.GetInt32(reader.GetOrdinal("block2_size"));
-1212:                 scale2 = reader.GetInt32(reader.GetOrdinal("block2_scale_side"));
-1213:             }
-1214:         }
+1163:                             using (SqliteCommand cmd = new SqliteCommand(sql, conn))
+1164:                             {
+1165:                                 cmd.Parameters.AddWithValue("@lot", row.Lot ?? "");
+1166:                                 cmd.Parameters.AddWithValue("@name", row.Name ?? "");
+1167:                                 cmd.ExecuteNonQuery();
+1168:                             }
+1169:                         }
+1170:                     }
+1171: 
+1172:                     // 🔹 5. ลบไฟล์หลังสำเร็จ
+1173:                     BotClickHelper.ClearDocumentFolder();
+1174:                 }
+1175:                 catch (Exception ex)
+1176:                 {
+1177:                     Console.WriteLine("Post-process error: " + ex.Message);
+1178:                 }
+1179:             }
+1180:             else
+1181:             {
+1182:                 // ❌ Fail → ไม่ลบไฟล์
+1183:                 Console.WriteLine("Bot failed: " + result.Error);
+1184:             }
+1185: 
+1186:             // 🔹 UI
+1187:             if (this.IsHandleCreated)
+1188:             {
+1189:                 this.Invoke((MethodInvoker)(() =>
+1190:                 {
+1191:                     MessageBox.Show(result.Success ? "สำเร็จ!" : result.Error);
+1192:                     currentStep = 3;
+1193:                     UpdateStepButtons();
+1194:                 }));
+1195:             }
+1196:         });
+1197:     }
+1198: 
+1199:     private void button8_Click(object sender, EventArgs e)
+1200:     {
+1201:         var row = _uvBindingList.FirstOrDefault(x => x.Id == 2);
+1202: 
+1203:         if (row == null)
+1204:         {
+1205:             MessageBox.Show("ไม่พบ row id = 1");
+1206:             return;
+1207:         }
+1208: 
+1209:         string lot = row.Lot;
+1210:         string name = row.Name;
+1211: 
+1212:         Log($"Lot={lot}, Name={name}");
+1213: 
+1214:         string dbPath = @"C:\Users\theer\Downloads\uvinkjet-250702-new\uvinkjet-250702-new\database\sys\CPI.db3";
 1215: 
-1216:         // --- ส่วนการส่ง TCP ---
-1217:         using var client = new InkjetOperator.Adapters.Simple.SocketDeviceClient();
-1218:         try
-1219:         {
-1220:             await client.ConnectAsync(txtTcpHost.Text.Trim(), int.Parse(txtTcpPort.Text.Trim()));
-1221:             int fixedProgNo = 13;
-1222: 
-1223:             // 1. เปลี่ยนโปรแกรมเป็น 13
-1224:             await InkjetOperator.Services.InkjetProtocol.SendChangeProgramAsync(client, fixedProgNo);
-1225: 
-1226:             // 2. ส่ง Block 1
-1227:             var block1 = new InkjetOperator.Services.SimpleTextBlock(1, text1, x1, y1, size1, scale1);
-1228:             await InkjetOperator.Services.InkjetProtocol.SendTextBlockAsync(client, fixedProgNo, block1);
-1229:             await Task.Delay(50); // พักช่วงสั้นๆ ระหว่างการส่งแต่ละ Block
-1230: 
-1231:             // 3. ส่ง Block 2
-1232:             if (!string.IsNullOrEmpty(text2))
-1233:             {
-1234:                 var block2 = new InkjetOperator.Services.SimpleTextBlock(2, text2, x2, y2, size2, scale2);
-1235:                 await InkjetOperator.Services.InkjetProtocol.SendTextBlockAsync(client, fixedProgNo, block2);
-1236:                 await Task.Delay(50);
-1237:             }
-1238: 
-1239:             // 4. สั่ง Resume
-1240:             await InkjetOperator.Services.InkjetProtocol.SendResumeAsync(client);
-1241:             Log("Step 3: MK3 (2 Blocks) Sent Successfully.");
-1242:         }
-1243:         catch (Exception ex)
-1244:         {
-1245:             Log("Error: " + ex.Message);
-1246:         }
-1247:     }
-1248: 
-1249:     private void button9_Click(object sender, EventArgs e)
-1250:     {
-1251:         string lot = "C200521-001" ?? string.Empty;
-1252:         string blockText = "DDDD-01";
-1253:         string previewText = PatternEngine.Process(lot, blockText);
-1254:         //lblPreview.Text = "Preview: " + previewText;
-1255:         Log("Preview: " + previewText);
-1256:     }
-1257: 
-1258:     private async void dgvJobs_CellClick(object sender, DataGridViewCellEventArgs e)
-1259:     {
-1260:         if (_isRefreshingJobs) return; // 🔥 กันตอน poll
-1261: 
-1262:         if (dgvJobs.SelectedRows.Count == 0) return;
-1263: 
-1264:         var row = dgvJobs.SelectedRows[0];
-1265:         if (row.Cells["Id"].Value == null) return;
-1266: 
-1267:         int jobId = (int)row.Cells["Id"].Value;
-1268:         string rawbarcode = row.Cells["BarcodeRaw"].Value?.ToString() ?? "";
-1269: 
-1270:         if (jobId == _selectedJobId) return;
-1271:         _selectedJobId = jobId;
+1216:         using (SqliteConnection conn = new SqliteConnection($"Data Source={dbPath}"))
+1217:         {
+1218:             conn.Open();
+1219: 
+1220:             string sql = "UPDATE MK063 SET lot = @lot, name = @name WHERE id = 1";
+1221: 
+1222:             using (SqliteCommand cmd = new SqliteCommand(sql, conn))
+1223:             {
+1224:                 cmd.Parameters.AddWithValue("@lot", lot);
+1225:                 cmd.Parameters.AddWithValue("@name", name);
+1226: 
+1227:                 int rows = cmd.ExecuteNonQuery();
+1228: 
+1229:                 MessageBox.Show("Update สำเร็จ: " + rows + " row");
+1230:             }
+1231:         }
+1232:         currentStep = 1;
+1233:         UpdateStepButtons();
+1234:     }
+1235: 
+1236: 
+1237:     private async void button5_Click(object sender, EventArgs e)
+1238:     {
+1239:         //if (dgvConfigs.Rows.Count > 0)
+1240:         //{
+1241:         //    dgvConfigs.ClearSelection();
+1242: 
+1243:         //    dgvConfigs.Rows[0].Selected = true;
+1244:         //    dgvConfigs.CurrentCell = dgvConfigs.Rows[0].Cells[0];
+1245: 
+1246:         //    var config = dgvConfigs.Rows[0].DataBoundItem as InkjetConfigDto;
+1247: 
+1248:         //    if (config != null)
+1249:         //    {
+1250:         //        MessageBox.Show($"ProgramNo: {config.ProgramNumber}");
+1251:         //    }
+1252:         //}
+1253: 
+1254:         //await TestSendToIj3TcpAsync();
+1255: 
+1256:         if (dgvConfigs.Rows.Count > 1)
+1257:         {
+1258:             dgvConfigs.ClearSelection();
+1259: 
+1260:             dgvConfigs.Rows[1].Selected = true;
+1261:             dgvConfigs.CurrentCell = dgvConfigs.Rows[1].Cells[0];
+1262: 
+1263:             var config = dgvConfigs.Rows[1].DataBoundItem as InkjetConfigDto;
+1264: 
+1265:             if (config != null)
+1266:             {
+1267:                 MessageBox.Show($"ProgramNo: {config.ProgramNumber}");
+1268:             }
+1269:         }
+1270: 
+1271:         await TestSendToIj3TcpAsync();
 1272: 
-1273:         // Helpers
-1274:         static bool ReaderHasColumn(SqliteDataReader r, string name)
-1275:         {
-1276:             for (int i = 0; i < r.FieldCount; i++)
-1277:             {
-1278:                 if (string.Equals(r.GetName(i), name, StringComparison.OrdinalIgnoreCase))
-1279:                     return true;
-1280:             }
-1281:             return false;
-1282:         }
-1283: 
-1284:         static string? GetStringSafe(SqliteDataReader r, string name)
-1285:         {
-1286:             if (!ReaderHasColumn(r, name)) return null;
-1287:             int idx = r.GetOrdinal(name);
-1288:             return r.IsDBNull(idx) ? null : r.GetString(idx);
-1289:         }
-1290: 
-1291:         static int? GetIntSafe(SqliteDataReader r, string name)
-1292:         {
-1293:             var s = GetStringSafe(r, name);
-1294:             if (string.IsNullOrWhiteSpace(s)) return null;
-1295:             return int.TryParse(s, out var v) ? v : null;
-1296:         }
-1297: 
-1298:         try
-1299:         {
-1300:             string dbPath = @"D:\DB\uv_data.db3";
-1301:             string connStr = $"Data Source={dbPath}";
-1302:             bool found = false;
-1303: 
-1304:             try
-1305:             {
-1306:                 await using var conn = new SqliteConnection(connStr);
-1307:                 await conn.OpenAsync();
-1308: 
-1309:                 await using var cmd = conn.CreateCommand();
-1310:                 cmd.CommandText = "SELECT * FROM config_data WHERE pattern_no_erp = @rawbarcode LIMIT 1";
-1311:                 cmd.Parameters.AddWithValue("@rawbarcode", rawbarcode);
+1273:         currentStep = 2; // ไปขั้นที่ 2
+1274:         UpdateStepButtons();
+1275: 
+1276:     }
+1277: 
+1278:     private async void button7_Click(object sender, EventArgs e)
+1279:     {
+1280:         await SendToIj3FromDbAsync("CCRC0291-DEX0663MS");
+1281:         //if (dgvConfigs.Rows.Count > 2)
+1282:         //{
+1283:         //    dgvConfigs.ClearSelection();
+1284: 
+1285:         //    dgvConfigs.Rows[2].Selected = true;
+1286:         //    dgvConfigs.CurrentCell = dgvConfigs.Rows[2].Cells[0];
+1287: 
+1288:         //    var config = dgvConfigs.Rows[2].DataBoundItem as InkjetConfigDto;
+1289: 
+1290:         //    if (config != null)
+1291:         //    {
+1292:         //        MessageBox.Show($"ProgramNo: {config.ProgramNumber}");
+1293:         //    }
+1294: 
+1295:         //    await TestSendToIj3TcpAsync();
+1296: 
+1297:         currentStep = 4; // ไปขั้นที่ 2
+1298:         UpdateStepButtons();
+1299:         //}
+1300:     }
+1301: 
+1302:     private void UpdateStepButtons()
+1303:     {
+1304:         // ปุ่ม 1 (MK1+2)
+1305:         button5.Enabled = (currentStep == 1);
+1306: 
+1307:         // ปุ่ม 2 (UV1)
+1308:         //button6.Enabled = (currentStep == 2);
+1309: 
+1310:         // ปุ่ม 3 (MK2/3)
+1311:         button7.Enabled = (currentStep == 3);
 1312: 
-1313:                 await using var reader = await cmd.ExecuteReaderAsync();
-1314:                 if (await reader.ReadAsync())
-1315:                 {
-1316:                     // Build PatternDetail from known schema columns.
-1317:                     var pattern = new PatternDetail
-1318:                     {
-1319:                         Barcode = GetStringSafe(reader, "pattern_no_erp") ?? GetStringSafe(reader, "pattern_no_erp2") ?? rawbarcode,
-1320:                         Description = GetStringSafe(reader, "model_plan_code") ?? GetStringSafe(reader, "program_name") ?? ""
-1321:                     };
-1322: 
-1323:                     // Helper to build MK config (mk1 / mk2)
-1324:                     InkjetConfigDto BuildMkConfig(string prefix, int ordinal, string programNameColumn)
-1325:                     {
-1326:                         var cfg = new InkjetConfigDto
-1327:                         {
-1328:                             Ordinal = ordinal,
-1329:                             ProgramNumber = GetIntSafe(reader, $"{prefix}program_no") ?? GetIntSafe(reader, $"{prefix}program_no") ?? null,
-1330:                             ProgramName = GetStringSafe(reader, programNameColumn),
-1331:                             Width = GetIntSafe(reader, $"{prefix}width"),
-1332:                             Height = GetIntSafe(reader, $"{prefix}height"),
-1333:                             TriggerDelay = GetIntSafe(reader, $"{prefix}trigger_delay"),
-1334:                             Direction = GetIntSafe(reader, $"{prefix}text_direction"),
-1335:                             SteelType = null,
-1336:                             Suspended = false
-1337:                         };
-1338: 
-1339:                         // text blocks 1..5
-1340:                         for (int b = 1; b <= 5; b++)
-1341:                         {
-1342:                             string textCol = $"{prefix}block{b}_text";
-1343:                             if (ReaderHasColumn(reader, textCol))
-1344:                             {
-1345:                                 var text = GetStringSafe(reader, textCol);
-1346:                                 if (!string.IsNullOrEmpty(text))
-1347:                                 {
-1348:                                     var tb = new TextBlockDto
-1349:                                     {
-1350:                                         BlockNumber = b,
-1351:                                         Text = text,
-1352:                                         X = GetIntSafe(reader, $"{prefix}block{b}_x"),
-1353:                                         Y = GetIntSafe(reader, $"{prefix}block{b}_y"),
-1354:                                         Size = GetIntSafe(reader, $"{prefix}block{b}_size"),
-1355:                                         Scale = GetIntSafe(reader, $"{prefix}block{b}_scale_side")
-1356:                                     };
-1357:                                     cfg.TextBlocks.Add(tb);
-1358:                                 }
-1359:                             }
-1360:                         }
+1313:         // ปุ่ม 4 (UV2)
+1314:         button8.Enabled = (currentStep == 4);
+1315: 
+1316:         // ถ้าอยากให้เห็นชัดเจนว่าอันไหนเสร็จแล้ว อาจจะเปลี่ยนสีปุ่มด้วยก็ได้
+1317:         //button5.BackColor = (currentStep > 1) ? Color.LightGreen : SystemColors.Control;
+1318:         // ... ทำแบบเดียวกันกับปุ่มอื่นๆ
+1319:     }
+1320: 
+1321:     private async Task SendToIj3FromDbAsync(string barcode)
+1322:     {
+1323:         // ตัวแปรสำหรับ Block 1
+1324:         string text1 = ""; int x1 = 0, y1 = 0, size1 = 1, scale1 = 1;
+1325:         // ตัวแปรสำหรับ Block 2
+1326:         string text2 = ""; int x2 = 0, y2 = 0, size2 = 1, scale2 = 1;
+1327: 
+1328:         string dbPath = @"D:\DB\uv_data.db3";
+1329:         using (var conn = new SqliteConnection($"Data Source={dbPath}"))
+1330:         {
+1331:             await conn.OpenAsync();
+1332:             string sql = "SELECT * FROM config_data_mk3 WHERE pattern_no_erp = @barcode LIMIT 1";
+1333:             using var cmd = new SqliteCommand(sql, conn);
+1334:             cmd.Parameters.AddWithValue("@barcode", barcode);
+1335:             using var reader = await cmd.ExecuteReaderAsync();
+1336: 
+1337:             if (reader.Read())
+1338:             {
+1339:                 // ดึงข้อมูล Block 1
+1340:                 text1 = reader.GetString(reader.GetOrdinal("block1_text"));
+1341:                 x1 = reader.GetInt32(reader.GetOrdinal("block1_x"));
+1342:                 y1 = reader.GetInt32(reader.GetOrdinal("block1_y"));
+1343:                 size1 = reader.GetInt32(reader.GetOrdinal("block1_size"));
+1344:                 scale1 = reader.GetInt32(reader.GetOrdinal("block1_scale_side"));
+1345: 
+1346:                 // ดึงข้อมูล Block 2
+1347:                 text2 = reader.IsDBNull(reader.GetOrdinal("block2_text")) ? "" : reader.GetString(reader.GetOrdinal("block2_text"));
+1348:                 x2 = reader.GetInt32(reader.GetOrdinal("block2_x"));
+1349:                 y2 = reader.GetInt32(reader.GetOrdinal("block2_y"));
+1350:                 size2 = reader.GetInt32(reader.GetOrdinal("block2_size"));
+1351:                 scale2 = reader.GetInt32(reader.GetOrdinal("block2_scale_side"));
+1352:             }
+1353:         }
+1354: 
+1355:         // --- ส่วนการส่ง TCP ---
+1356:         using var client = new InkjetOperator.Adapters.Simple.SocketDeviceClient();
+1357:         try
+1358:         {
+1359:             await client.ConnectAsync(txtTcpHost.Text.Trim(), int.Parse(txtTcpPort.Text.Trim()));
+1360:             int fixedProgNo = 13;
 1361: 
-1362:                         return cfg;
-1363:                     }
+1362:             // 1. เปลี่ยนโปรแกรมเป็น 13
+1363:             await InkjetOperator.Services.InkjetProtocol.SendChangeProgramAsync(client, fixedProgNo);
 1364: 
-1365:                     // mk1 fields use prefix "mk1_"; program name fallback to "program_name"
-1366:                     var mk1 = BuildMkConfig("mk1_", 1, "program_name");
-1367:                     // mk2 fields use prefix "mk2_"; program name fallback to "program_name3"
-1368:                     var mk2 = BuildMkConfig("mk2_", 2, "program_name3");
+1365:             // 2. ส่ง Block 1
+1366:             var block1 = new InkjetOperator.Services.SimpleTextBlock(1, text1, x1, y1, size1, scale1);
+1367:             await InkjetOperator.Services.InkjetProtocol.SendTextBlockAsync(client, fixedProgNo, block1);
+1368:             await Task.Delay(50); // พักช่วงสั้นๆ ระหว่างการส่งแต่ละ Block
 1369: 
-1370:                     pattern.InkjetConfigs = new List<InkjetConfigDto> { mk1, mk2 };
-1371: 
-1372:                     // Conveyor speeds / servo configs - attempt to map if available (optional)
-1373:                     var spd1 = GetIntSafe(reader, "belt1_inkjet");
-1374:                     var spd2 = GetIntSafe(reader, "belt2_feed_inkjet");
-1375:                     if (spd1.HasValue || spd2.HasValue)
-1376:                     {
-1377:                         pattern.ConveyorSpeeds = new ConveyorSpeedDto
-1378:                         {
-1379:                             Speed1 = spd1,
-1380:                             Speed2 = spd2,
-1381:                             Speed3 = GetIntSafe(reader, "belt3")
-1382:                         };
-1383:                     }
-1384: 
-1385:                     // Minimal job + resolved response
-1386:                     _currentResolved = new ResolvedJobResponse
-1387:                     {
-1388:                         Job = new PrintJob
-1389:                         {
-1390:                             Id = jobId,
-1391:                             BarcodeRaw = rawbarcode,
-1392:                             LotNumber = row.Cells["LotNumber"].Value?.ToString(),
-1393:                             Status = row.Cells["Status"].Value?.ToString()
-1394:                         },
-1395:                         Pattern = pattern
-1396:                     };
-1397: 
-1398:                     string lot = row.Cells["LotNumber"].Value?.ToString() ?? "";
-1399:                     string name = pattern.Description ?? ""; // หรือ field ที่คุณต้องการ
+1370:             // 3. ส่ง Block 2
+1371:             if (!string.IsNullOrEmpty(text2))
+1372:             {
+1373:                 var block2 = new InkjetOperator.Services.SimpleTextBlock(2, text2, x2, y2, size2, scale2);
+1374:                 await InkjetOperator.Services.InkjetProtocol.SendTextBlockAsync(client, fixedProgNo, block2);
+1375:                 await Task.Delay(50);
+1376:             }
+1377: 
+1378:             // 4. สั่ง Resume
+1379:             await InkjetOperator.Services.InkjetProtocol.SendResumeAsync(client);
+1380:             Log("Step 3: MK3 (2 Blocks) Sent Successfully.");
+1381:         }
+1382:         catch (Exception ex)
+1383:         {
+1384:             Log("Error: " + ex.Message);
+1385:         }
+1386:     }
+1387: 
+1388:     private void button9_Click(object sender, EventArgs e)
+1389:     {
+1390:         string lot = "C200521-001" ?? string.Empty;
+1391:         string blockText = "DDDD-01";
+1392:         string previewText = PatternEngine.Process(lot, blockText);
+1393:         //lblPreview.Text = "Preview: " + previewText;
+1394:         Log("Preview: " + previewText);
+1395:     }
+1396: 
+1397:     private async void dgvJobs_CellClick(object sender, DataGridViewCellEventArgs e)
+1398:     {
+1399:         if (_isRefreshingJobs) return; // 🔥 กันตอน poll
 1400: 
-1401:                     found = true;
-1402:                     UpdateDetailPanel();
-1403:                 }
-1404: 
-1405:                 await conn.CloseAsync();
-1406:             }
-1407:             catch (Exception dbEx)
-1408:             {
-1409:                 Log("SQLite query error: " + dbEx.Message);
-1410:             }
+1401:         if (dgvJobs.SelectedRows.Count == 0) return;
+1402: 
+1403:         var row = dgvJobs.SelectedRows[0];
+1404:         if (row.Cells["Id"].Value == null) return;
+1405: 
+1406:         int jobId = (int)row.Cells["Id"].Value;
+1407:         string rawbarcode = row.Cells["BarcodeRaw"].Value?.ToString() ?? "";
+1408: 
+1409:         if (jobId == _selectedJobId) return;
+1410:         _selectedJobId = jobId;
 1411: 
-1412:             if (!found)
-1413:             {
-1414:                 var resolved = await _api.GetResolvedJobAsync(jobId);
-1415:                 _currentResolved = resolved;
-1416:                 UpdateDetailPanel();
-1417:             }
-1418:         }
-1419:         catch (Exception ex)
-1420:         {
-1421:             Log("Load job detail error: " + ex.Message);
-1422:         }
-1423:     }
-1424: 
-1425:     private async Task LoadLastSentData()
-1426:     {
-1427:         try
-1428:         {
-1429:             // เรียกใช้ API (ระบุ status เป็น sent, หน้า 1, จำนวน 10 รายการ)
-1430:             var lastSentJobs = await _api.GetLastSentJobsAsync("sent", 1, 10);
-1431: 
-1432:             // นำข้อมูลไปผูกกับ BindingSource หรือ DataGridView
-1433:             var jobRows = lastSentJobs.Select(j => new InkjetOperator.Models.JobRow
-1434:             {
-1435:                 Id = j.Id,
-1436:                 BarcodeRaw = j.BarcodeRaw,
-1437:                 LotNumber = j.LotNumber ?? string.Empty,
-1438:                 Status = j.Status,
-1439:                 Attempt = j.Attempt
-1440:                 // เพิ่ม field อื่นๆ ที่ต้องการแสดงในตาราง history
-1441:             }).ToList();
+1412:         // Helpers
+1413:         static bool ReaderHasColumn(SqliteDataReader r, string name)
+1414:         {
+1415:             for (int i = 0; i < r.FieldCount; i++)
+1416:             {
+1417:                 if (string.Equals(r.GetName(i), name, StringComparison.OrdinalIgnoreCase))
+1418:                     return true;
+1419:             }
+1420:             return false;
+1421:         }
+1422: 
+1423:         static string? GetStringSafe(SqliteDataReader r, string name)
+1424:         {
+1425:             if (!ReaderHasColumn(r, name)) return null;
+1426:             int idx = r.GetOrdinal(name);
+1427:             return r.IsDBNull(idx) ? null : r.GetString(idx);
+1428:         }
+1429: 
+1430:         static int? GetIntSafe(SqliteDataReader r, string name)
+1431:         {
+1432:             var s = GetStringSafe(r, name);
+1433:             if (string.IsNullOrWhiteSpace(s)) return null;
+1434:             return int.TryParse(s, out var v) ? v : null;
+1435:         }
+1436: 
+1437:         try
+1438:         {
+1439:             string dbPath = @"D:\DB\uv_data.db3";
+1440:             string connStr = $"Data Source={dbPath}";
+1441:             bool found = false;
 1442: 
-1443:             printJobBindingSource.DataSource = new System.ComponentModel.BindingList<InkjetOperator.Models.JobRow>(jobRows);
-1444:         }
-1445:         catch (Exception ex)
-1446:         {
-1447:             MessageBox.Show($"โหลดข้อมูลประวัติไม่สำเร็จ: {ex.Message}", "Error");
-1448:         }
-1449:     }
-1450: 
-1451:     private async void dataGridView1_SelectionChanged(object sender, EventArgs e)
-1452:     {
-1453:         ////// Guard: header click / invalid index
-1454:         ////if (e.RowIndex < 0) return;
-1455:         ////if (_isRefreshingJobs) return; // 🔥 กันตอน poll
-1456: 
-1457:         ////var row = dataGridView1.Rows[e.RowIndex];
-1458:         //int jobId;
-1459:         //string rawbarcode;
-1460:         //if (printJobBindingSource.Current is InkjetOperator.Models.JobRow selectedJob)
-1461:         //{
-1462:         //    jobId = selectedJob.Id;
-1463:         //    rawbarcode = selectedJob.BarcodeRaw;
-1464: 
-1465: 
-1466:         //    //Debug.WriteLine($"Clicked row {e.RowIndex}, Id={row.Cells["Id"].Value}, Barcode={row.Cells["BarcodeRaw"].Value}");
-1467: 
-1468:         //    //// Ensure the grid contains expected columns
-1469:         //    //if (!dataGridView1.Columns.Contains("Id") || row.Cells["Id"].Value == null) return;
-1470:         //    //if (!dataGridView1.Columns.Contains("BarcodeRaw")) return;
-1471: 
-1472: 
-1473: 
-1474:         //    //try
-1475:         //    //{
-1476: 
-1477:         //    //}
-1478:         //    //catch
-1479:         //    //{
-1480:         //    //    // invalid id cell
-1481:         //    //    return;
-1482:         //    //}
-1483: 
-1484:         //    //string rawbarcode = "CCRC0291-DEX0663MS";
-1485:         //    //if (jobId == _selectedJobId) return;
-1486:         //    //_selectedJobId = jobId;
-1487: 
-1488:         //    // Helpers
-1489:         //    static bool ReaderHasColumn(Microsoft.Data.Sqlite.SqliteDataReader r, string name)
-1490:         //    {
-1491:         //        for (int i = 0; i < r.FieldCount; i++)
-1492:         //        {
-1493:         //            if (string.Equals(r.GetName(i), name, StringComparison.OrdinalIgnoreCase))
-1494:         //                return true;
-1495:         //        }
-1496:         //        return false;
-1497:         //    }
-1498: 
-1499:         //    static string? GetStringSafe(Microsoft.Data.Sqlite.SqliteDataReader r, string name)
-1500:         //    {
-1501:         //        if (!ReaderHasColumn(r, name)) return null;
-1502:         //        int idx = r.GetOrdinal(name);
-1503:         //        return r.IsDBNull(idx) ? null : r.GetString(idx);
-1504:         //    }
-1505: 
-1506:         //    static int? GetIntSafe(Microsoft.Data.Sqlite.SqliteDataReader r, string name)
-1507:         //    {
-1508:         //        var s = GetStringSafe(r, name);
-1509:         //        if (string.IsNullOrWhiteSpace(s)) return null;
-1510:         //        return int.TryParse(s, out var v) ? v : null;
-1511:         //    }
-1512: 
-1513:         //    try
-1514:         //    {
-1515:         //        string dbPath = @"D:\DB\uv_data.db3";
-1516:         //        string connStr = $"Data Source={dbPath}";
-1517:         //        bool found = false;
-1518: 
-1519:         //        // optional debug: MessageBox.Show($"Clicked Job ID: {jobId}, Barcode: {rawbarcode}");
-1520: 
-1521:         //        try
-1522:         //        {
-1523:         //            await using var conn = new Microsoft.Data.Sqlite.SqliteConnection(connStr);
-1524:         //            await conn.OpenAsync();
-1525: 
-1526:         //            await using var cmd = conn.CreateCommand();
-1527:         //            cmd.CommandText = "SELECT * FROM config_data WHERE pattern_no_erp = @rawbarcode LIMIT 1";
-1528:         //            cmd.Parameters.AddWithValue("@rawbarcode", rawbarcode);
-1529: 
-1530: 
-1531:         //            await using var reader = await cmd.ExecuteReaderAsync();
-1532:         //            if (await reader.ReadAsync())
-1533:         //            {
-1534:         //                // Build PatternDetail from known schema columns.
-1535:         //                var pattern = new PatternDetail
-1536:         //                {
-1537:         //                    Barcode = GetStringSafe(reader, "pattern_no_erp") ?? GetStringSafe(reader, "pattern_no_erp2") ?? rawbarcode,
-1538:         //                    Description = GetStringSafe(reader, "model_plan_code") ?? GetStringSafe(reader, "program_name") ?? ""
-1539:         //                };
-1540: 
-1541:         //                // Helper to build MK config (mk1 / mk2)
-1542:         //                InkjetConfigDto BuildMkConfig(string prefix, int ordinal, string programNameColumn)
-1543:         //                {
-1544:         //                    var cfg = new InkjetConfigDto
-1545:         //                    {
-1546:         //                        Ordinal = ordinal,
-1547:         //                        ProgramNumber = GetIntSafe(reader, $"{prefix}program_no") ?? GetIntSafe(reader, $"{prefix}program_no") ?? null,
-1548:         //                        ProgramName = GetStringSafe(reader, programNameColumn),
-1549:         //                        Width = GetIntSafe(reader, $"{prefix}width"),
-1550:         //                        Height = GetIntSafe(reader, $"{prefix}height"),
-1551:         //                        TriggerDelay = GetIntSafe(reader, $"{prefix}trigger_delay"),
-1552:         //                        Direction = GetIntSafe(reader, $"{prefix}text_direction"),
-1553:         //                        SteelType = null,
-1554:         //                        Suspended = false
-1555:         //                    };
-1556: 
-1557:         //                    // text blocks 1..5
-1558:         //                    for (int b = 1; b <= 5; b++)
-1559:         //                    {
-1560:         //                        string textCol = $"{prefix}block{b}_text";
-1561:         //                        if (ReaderHasColumn(reader, textCol))
-1562:         //                        {
-1563:         //                            var text = GetStringSafe(reader, textCol);
-1564:         //                            if (!string.IsNullOrEmpty(text))
-1565:         //                            {
-1566:         //                                var tb = new TextBlockDto
-1567:         //                                {
-1568:         //                                    BlockNumber = b,
-1569:         //                                    Text = text,
-1570:         //                                    X = GetIntSafe(reader, $"{prefix}block{b}_x"),
-1571:         //                                    Y = GetIntSafe(reader, $"{prefix}block{b}_y"),
-1572:         //                                    Size = GetIntSafe(reader, $"{prefix}block{b}_size"),
-1573:         //                                    Scale = GetIntSafe(reader, $"{prefix}block{b}_scale_side")
-1574:         //                                };
-1575:         //                                cfg.TextBlocks.Add(tb);
-1576:         //                            }
-1577:         //                        }
-1578:         //                    }
-1579: 
-1580:         //                    return cfg;
-1581:         //                }
-1582: 
-1583:         //                var mk1 = BuildMkConfig("mk1_", 1, "program_name");
-1584:         //                var mk2 = BuildMkConfig("mk2_", 2, "program_name3");
-1585: 
-1586:         //                pattern.InkjetConfigs = new List<InkjetConfigDto> { mk1, mk2 };
-1587: 
-1588:         //                var spd1 = GetIntSafe(reader, "belt1_inkjet");
-1589:         //                var spd2 = GetIntSafe(reader, "belt2_feed_inkjet");
-1590:         //                if (spd1.HasValue || spd2.HasValue)
-1591:         //                {
-1592:         //                    pattern.ConveyorSpeeds = new ConveyorSpeedDto
-1593:         //                    {
-1594:         //                        Speed1 = spd1,
-1595:         //                        Speed2 = spd2,
-1596:         //                        Speed3 = GetIntSafe(reader, "belt3")
-1597:         //                    };
-1598:         //                }
-1599: 
-1600:         //                // Minimal job + resolved response
-1601:         //                _currentResolved = new ResolvedJobResponse
-1602:         //                {
-1603:         //                    Job = new PrintJob
-1604:         //                    {
-1605:         //                        Id = jobId,
-1606:         //                        BarcodeRaw = rawbarcode,
-1607:         //                        LotNumber = dataGridView1.Columns.Contains("LotNumber") ? selectedJob.LotNumber?.ToString() : null,
-1608:         //                        Status = dataGridView1.Columns.Contains("Status") ? selectedJob.Status?.ToString() : null
-1609:         //                    },
-1610:         //                    Pattern = pattern
-1611:         //                };
+1443:             try
+1444:             {
+1445:                 await using var conn = new SqliteConnection(connStr);
+1446:                 await conn.OpenAsync();
+1447: 
+1448:                 await using var cmd = conn.CreateCommand();
+1449:                 cmd.CommandText = "SELECT * FROM config_data WHERE pattern_no_erp = @rawbarcode LIMIT 1";
+1450:                 cmd.Parameters.AddWithValue("@rawbarcode", rawbarcode);
+1451: 
+1452:                 await using var reader = await cmd.ExecuteReaderAsync();
+1453:                 if (await reader.ReadAsync())
+1454:                 {
+1455:                     // Build PatternDetail from known schema columns.
+1456:                     var pattern = new PatternDetail
+1457:                     {
+1458:                         Barcode = GetStringSafe(reader, "pattern_no_erp") ?? GetStringSafe(reader, "pattern_no_erp2") ?? rawbarcode,
+1459:                         Description = GetStringSafe(reader, "model_plan_code") ?? GetStringSafe(reader, "program_name") ?? ""
+1460:                     };
+1461: 
+1462:                     // Helper to build MK config (mk1 / mk2)
+1463:                     InkjetConfigDto BuildMkConfig(string prefix, int ordinal, string programNameColumn)
+1464:                     {
+1465:                         var cfg = new InkjetConfigDto
+1466:                         {
+1467:                             Ordinal = ordinal,
+1468:                             ProgramNumber = GetIntSafe(reader, $"{prefix}program_no") ?? GetIntSafe(reader, $"{prefix}program_no") ?? null,
+1469:                             ProgramName = GetStringSafe(reader, programNameColumn),
+1470:                             Width = GetIntSafe(reader, $"{prefix}width"),
+1471:                             Height = GetIntSafe(reader, $"{prefix}height"),
+1472:                             TriggerDelay = GetIntSafe(reader, $"{prefix}trigger_delay"),
+1473:                             Direction = GetIntSafe(reader, $"{prefix}text_direction"),
+1474:                             SteelType = null,
+1475:                             Suspended = false
+1476:                         };
+1477: 
+1478:                         // text blocks 1..5
+1479:                         for (int b = 1; b <= 5; b++)
+1480:                         {
+1481:                             string textCol = $"{prefix}block{b}_text";
+1482:                             if (ReaderHasColumn(reader, textCol))
+1483:                             {
+1484:                                 var text = GetStringSafe(reader, textCol);
+1485:                                 if (!string.IsNullOrEmpty(text))
+1486:                                 {
+1487:                                     var tb = new TextBlockDto
+1488:                                     {
+1489:                                         BlockNumber = b,
+1490:                                         Text = text,
+1491:                                         X = GetIntSafe(reader, $"{prefix}block{b}_x"),
+1492:                                         Y = GetIntSafe(reader, $"{prefix}block{b}_y"),
+1493:                                         Size = GetIntSafe(reader, $"{prefix}block{b}_size"),
+1494:                                         Scale = GetIntSafe(reader, $"{prefix}block{b}_scale_side")
+1495:                                     };
+1496:                                     cfg.TextBlocks.Add(tb);
+1497:                                 }
+1498:                             }
+1499:                         }
+1500: 
+1501:                         return cfg;
+1502:                     }
+1503: 
+1504:                     // mk1 fields use prefix "mk1_"; program name fallback to "program_name"
+1505:                     var mk1 = BuildMkConfig("mk1_", 1, "program_name");
+1506:                     // mk2 fields use prefix "mk2_"; program name fallback to "program_name3"
+1507:                     var mk2 = BuildMkConfig("mk2_", 2, "program_name3");
+1508: 
+1509:                     pattern.InkjetConfigs = new List<InkjetConfigDto> { mk1, mk2 };
+1510: 
+1511:                     // Conveyor speeds / servo configs - attempt to map if available (optional)
+1512:                     var spd1 = GetIntSafe(reader, "belt1_inkjet");
+1513:                     var spd2 = GetIntSafe(reader, "belt2_feed_inkjet");
+1514:                     if (spd1.HasValue || spd2.HasValue)
+1515:                     {
+1516:                         pattern.ConveyorSpeeds = new ConveyorSpeedDto
+1517:                         {
+1518:                             Speed1 = spd1,
+1519:                             Speed2 = spd2,
+1520:                             Speed3 = GetIntSafe(reader, "belt3")
+1521:                         };
+1522:                     }
+1523: 
+1524:                     // Minimal job + resolved response
+1525:                     _currentResolved = new ResolvedJobResponse
+1526:                     {
+1527:                         Job = new PrintJob
+1528:                         {
+1529:                             Id = jobId,
+1530:                             BarcodeRaw = rawbarcode,
+1531:                             LotNumber = row.Cells["LotNumber"].Value?.ToString(),
+1532:                             Status = row.Cells["Status"].Value?.ToString()
+1533:                         },
+1534:                         Pattern = pattern
+1535:                     };
+1536: 
+1537:                     string lot = row.Cells["LotNumber"].Value?.ToString() ?? "";
+1538:                     string name = pattern.Description ?? ""; // หรือ field ที่คุณต้องการ
+1539: 
+1540:                     found = true;
+1541:                     UpdateDetailPanel();
+1542:                 }
+1543: 
+1544:                 await conn.CloseAsync();
+1545:             }
+1546:             catch (Exception dbEx)
+1547:             {
+1548:                 Log("SQLite query error: " + dbEx.Message);
+1549:             }
+1550: 
+1551:             if (!found)
+1552:             {
+1553:                 var resolved = await _api.GetResolvedJobAsync(jobId);
+1554:                 _currentResolved = resolved;
+1555:                 UpdateDetailPanel();
+1556:             }
+1557:         }
+1558:         catch (Exception ex)
+1559:         {
+1560:             Log("Load job detail error: " + ex.Message);
+1561:         }
+1562:     }
+1563: 
+1564:     private async Task LoadLastSentData()
+1565:     {
+1566:         try
+1567:         {
+1568:             // เรียกใช้ API (ระบุ status เป็น sent, หน้า 1, จำนวน 10 รายการ)
+1569:             var lastSentJobs = await _api.GetLastSentJobsAsync("sent", 1, 10);
+1570: 
+1571:             // นำข้อมูลไปผูกกับ BindingSource หรือ DataGridView
+1572:             var jobRows = lastSentJobs.Select(j => new InkjetOperator.Models.JobRow
+1573:             {
+1574:                 Id = j.Id,
+1575:                 BarcodeRaw = j.BarcodeRaw,
+1576:                 LotNumber = j.LotNumber ?? string.Empty,
+1577:                 Status = j.Status,
+1578:                 Attempt = j.Attempt
+1579:                 // เพิ่ม field อื่นๆ ที่ต้องการแสดงในตาราง history
+1580:             }).ToList();
+1581: 
+1582:             printJobBindingSource.DataSource = new System.ComponentModel.BindingList<InkjetOperator.Models.JobRow>(jobRows);
+1583:         }
+1584:         catch (Exception ex)
+1585:         {
+1586:             MessageBox.Show($"โหลดข้อมูลประวัติไม่สำเร็จ: {ex.Message}", "Error");
+1587:         }
+1588:     }
+1589: 
+1590:     private async void dataGridView1_SelectionChanged(object sender, EventArgs e)
+1591:     {
+1592:         ////// Guard: header click / invalid index
+1593:         ////if (e.RowIndex < 0) return;
+1594:         ////if (_isRefreshingJobs) return; // 🔥 กันตอน poll
+1595: 
+1596:         ////var row = dataGridView1.Rows[e.RowIndex];
+1597:         //int jobId;
+1598:         //string rawbarcode;
+1599:         //if (printJobBindingSource.Current is InkjetOperator.Models.JobRow selectedJob)
+1600:         //{
+1601:         //    jobId = selectedJob.Id;
+1602:         //    rawbarcode = selectedJob.BarcodeRaw;
+1603: 
+1604: 
+1605:         //    //Debug.WriteLine($"Clicked row {e.RowIndex}, Id={row.Cells["Id"].Value}, Barcode={row.Cells["BarcodeRaw"].Value}");
+1606: 
+1607:         //    //// Ensure the grid contains expected columns
+1608:         //    //if (!dataGridView1.Columns.Contains("Id") || row.Cells["Id"].Value == null) return;
+1609:         //    //if (!dataGridView1.Columns.Contains("BarcodeRaw")) return;
+1610: 
+1611: 
 1612: 
-1613:         //                found = true;
-1614:         //                UpdateDetailPanel();
-1615:         //            }
-1616: 
-1617:         //            await conn.CloseAsync();
-1618:         //        }
-1619:         //        catch (Exception dbEx)
-1620:         //        {
-1621:         //            Log("SQLite query error: " + dbEx.Message);
-1622:         //        }
-1623: 
-1624: 
-1625:         //        if (!found)
-1626:         //        {
-1627:         //            var resolved = await _api.GetResolvedJobAsync(jobId);
-1628:         //            _currentResolved = resolved;
-1629:         //            UpdateDetailPanel();
-1630:         //        }
-1631: 
-1632:         //    }
-1633:         //    catch (Exception ex)
-1634:         //    {
-1635:         //        Log("Load job detail error: " + ex.Message);
+1613:         //    //try
+1614:         //    //{
+1615: 
+1616:         //    //}
+1617:         //    //catch
+1618:         //    //{
+1619:         //    //    // invalid id cell
+1620:         //    //    return;
+1621:         //    //}
+1622: 
+1623:         //    //string rawbarcode = "CCRC0291-DEX0663MS";
+1624:         //    //if (jobId == _selectedJobId) return;
+1625:         //    //_selectedJobId = jobId;
+1626: 
+1627:         //    // Helpers
+1628:         //    static bool ReaderHasColumn(Microsoft.Data.Sqlite.SqliteDataReader r, string name)
+1629:         //    {
+1630:         //        for (int i = 0; i < r.FieldCount; i++)
+1631:         //        {
+1632:         //            if (string.Equals(r.GetName(i), name, StringComparison.OrdinalIgnoreCase))
+1633:         //                return true;
+1634:         //        }
+1635:         //        return false;
 1636:         //    }
-1637:         //}
-1638:     }
-1639: 
-1640:     private async void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
-1641:     {
-1642:         //// Guard: header click / invalid index
-1643:         //if (e.RowIndex < 0) return;
-1644:         //if (_isRefreshingJobs) return; // 🔥 กันตอน poll
-1645: 
-1646:         var row = dataGridView1.Rows[e.RowIndex];
-1647:         int jobId;
-1648:         string rawbarcode;
-1649:         if (printJobBindingSource.Current is InkjetOperator.Models.JobRow selectedJob)
-1650:         {
-1651:             jobId = selectedJob.Id;
-1652:             rawbarcode = selectedJob.BarcodeRaw;
-1653: 
-1654: 
-1655:             //Debug.WriteLine($"Clicked row {e.RowIndex}, Id={row.Cells["Id"].Value}, Barcode={row.Cells["BarcodeRaw"].Value}");
-1656: 
-1657:             //// Ensure the grid contains expected columns
-1658:             //if (!dataGridView1.Columns.Contains("Id") || row.Cells["Id"].Value == null) return;
-1659:             //if (!dataGridView1.Columns.Contains("BarcodeRaw")) return;
-1660: 
-1661: 
-1662: 
-1663:             //try
-1664:             //{
-1665: 
-1666:             //}
-1667:             //catch
-1668:             //{
-1669:             //    // invalid id cell
-1670:             //    return;
-1671:             //}
-1672: 
-1673:             //string rawbarcode = "CCRC0291-DEX0663MS";
-1674:             //if (jobId == _selectedJobId) return;
-1675:             //_selectedJobId = jobId;
-1676: 
-1677:             // Helpers
-1678:             static bool ReaderHasColumn(Microsoft.Data.Sqlite.SqliteDataReader r, string name)
-1679:             {
-1680:                 for (int i = 0; i < r.FieldCount; i++)
-1681:                 {
-1682:                     if (string.Equals(r.GetName(i), name, StringComparison.OrdinalIgnoreCase))
-1683:                         return true;
-1684:                 }
-1685:                 return false;
-1686:             }
-1687: 
-1688:             static string? GetStringSafe(Microsoft.Data.Sqlite.SqliteDataReader r, string name)
-1689:             {
-1690:                 if (!ReaderHasColumn(r, name)) return null;
-1691:                 int idx = r.GetOrdinal(name);
-1692:                 return r.IsDBNull(idx) ? null : r.GetString(idx);
-1693:             }
-1694: 
-1695:             static int? GetIntSafe(Microsoft.Data.Sqlite.SqliteDataReader r, string name)
-1696:             {
-1697:                 var s = GetStringSafe(r, name);
-1698:                 if (string.IsNullOrWhiteSpace(s)) return null;
-1699:                 return int.TryParse(s, out var v) ? v : null;
-1700:             }
-1701: 
-1702:             try
-1703:             {
-1704:                 string dbPath = @"D:\DB\uv_data.db3";
-1705:                 string connStr = $"Data Source={dbPath}";
-1706:                 bool found = false;
-1707: 
-1708:                 try
-1709:                 {
-1710:                     await using var conn = new Microsoft.Data.Sqlite.SqliteConnection(connStr);
-1711:                     await conn.OpenAsync();
-1712: 
-1713:                     await using var cmd = conn.CreateCommand();
-1714:                     cmd.CommandText = "SELECT * FROM config_data WHERE pattern_no_erp = @rawbarcode LIMIT 1";
-1715:                     cmd.Parameters.AddWithValue("@rawbarcode", rawbarcode);
-1716: 
-1717:                 
+1637: 
+1638:         //    static string? GetStringSafe(Microsoft.Data.Sqlite.SqliteDataReader r, string name)
+1639:         //    {
+1640:         //        if (!ReaderHasColumn(r, name)) return null;
+1641:         //        int idx = r.GetOrdinal(name);
+1642:         //        return r.IsDBNull(idx) ? null : r.GetString(idx);
+1643:         //    }
+1644: 
+1645:         //    static int? GetIntSafe(Microsoft.Data.Sqlite.SqliteDataReader r, string name)
+1646:         //    {
+1647:         //        var s = GetStringSafe(r, name);
+1648:         //        if (string.IsNullOrWhiteSpace(s)) return null;
+1649:         //        return int.TryParse(s, out var v) ? v : null;
+1650:         //    }
+1651: 
+1652:         //    try
+1653:         //    {
+1654:         //        string dbPath = @"D:\DB\uv_data.db3";
+1655:         //        string connStr = $"Data Source={dbPath}";
+1656:         //        bool found = false;
+1657: 
+1658:         //        // optional debug: MessageBox.Show($"Clicked Job ID: {jobId}, Barcode: {rawbarcode}");
+1659: 
+1660:         //        try
+1661:         //        {
+1662:         //            await using var conn = new Microsoft.Data.Sqlite.SqliteConnection(connStr);
+1663:         //            await conn.OpenAsync();
+1664: 
+1665:         //            await using var cmd = conn.CreateCommand();
+1666:         //            cmd.CommandText = "SELECT * FROM config_data WHERE pattern_no_erp = @rawbarcode LIMIT 1";
+1667:         //            cmd.Parameters.AddWithValue("@rawbarcode", rawbarcode);
+1668: 
+1669: 
+1670:         //            await using var reader = await cmd.ExecuteReaderAsync();
+1671:         //            if (await reader.ReadAsync())
+1672:         //            {
+1673:         //                // Build PatternDetail from known schema columns.
+1674:         //                var pattern = new PatternDetail
+1675:         //                {
+1676:         //                    Barcode = GetStringSafe(reader, "pattern_no_erp") ?? GetStringSafe(reader, "pattern_no_erp2") ?? rawbarcode,
+1677:         //                    Description = GetStringSafe(reader, "model_plan_code") ?? GetStringSafe(reader, "program_name") ?? ""
+1678:         //                };
+1679: 
+1680:         //                // Helper to build MK config (mk1 / mk2)
+1681:         //                InkjetConfigDto BuildMkConfig(string prefix, int ordinal, string programNameColumn)
+1682:         //                {
+1683:         //                    var cfg = new InkjetConfigDto
+1684:         //                    {
+1685:         //                        Ordinal = ordinal,
+1686:         //                        ProgramNumber = GetIntSafe(reader, $"{prefix}program_no") ?? GetIntSafe(reader, $"{prefix}program_no") ?? null,
+1687:         //                        ProgramName = GetStringSafe(reader, programNameColumn),
+1688:         //                        Width = GetIntSafe(reader, $"{prefix}width"),
+1689:         //                        Height = GetIntSafe(reader, $"{prefix}height"),
+1690:         //                        TriggerDelay = GetIntSafe(reader, $"{prefix}trigger_delay"),
+1691:         //                        Direction = GetIntSafe(reader, $"{prefix}text_direction"),
+1692:         //                        SteelType = null,
+1693:         //                        Suspended = false
+1694:         //                    };
+1695: 
+1696:         //                    // text blocks 1..5
+1697:         //                    for (int b = 1; b <= 5; b++)
+1698:         //                    {
+1699:         //                        string textCol = $"{prefix}block{b}_text";
+1700:         //                        if (ReaderHasColumn(reader, textCol))
+1701:         //                        {
+1702:         //                            var text = GetStringSafe(reader, textCol);
+1703:         //                            if (!string.IsNullOrEmpty(text))
+1704:         //                            {
+1705:         //                                var tb = new TextBlockDto
+1706:         //                                {
+1707:         //                                    BlockNumber = b,
+1708:         //                                    Text = text,
+1709:         //                                    X = GetIntSafe(reader, $"{prefix}block{b}_x"),
+1710:         //                                    Y = GetIntSafe(reader, $"{prefix}block{b}_y"),
+1711:         //                                    Size = GetIntSafe(reader, $"{prefix}block{b}_size"),
+1712:         //                                    Scale = GetIntSafe(reader, $"{prefix}block{b}_scale_side")
+1713:         //                                };
+1714:         //                                cfg.TextBlocks.Add(tb);
+1715:         //                            }
+1716:         //                        }
+1717:         //                    }
 1718: 
-1719:                     await using var reader = await cmd.ExecuteReaderAsync();
-1720: 
-1721:                
-1722:                     if (await reader.ReadAsync())
-1723:                     {
-1724:                         // Build PatternDetail from known schema columns.
-1725:                         var pattern = new PatternDetail
-1726:                         {
-1727:                             Barcode = GetStringSafe(reader, "pattern_no_erp") ?? GetStringSafe(reader, "pattern_no_erp2") ?? rawbarcode,
-1728:                             Description = GetStringSafe(reader, "model_plan_code") ?? GetStringSafe(reader, "program_name") ?? ""
-1729:                         };
-1730: 
-1731:                         // Helper to build MK config (mk1 / mk2)
-1732:                         InkjetConfigDto BuildMkConfig(string prefix, int ordinal, string programNameColumn)
-1733:                         {
-1734:                             var cfg = new InkjetConfigDto
-1735:                             {
-1736:                                 Ordinal = ordinal,
-1737:                                 ProgramNumber = GetIntSafe(reader, $"{prefix}program_no") ?? GetIntSafe(reader, $"{prefix}program_no") ?? null,
-1738:                                 ProgramName = GetStringSafe(reader, programNameColumn),
-1739:                                 Width = GetIntSafe(reader, $"{prefix}width"),
-1740:                                 Height = GetIntSafe(reader, $"{prefix}height"),
-1741:                                 TriggerDelay = GetIntSafe(reader, $"{prefix}trigger_delay"),
-1742:                                 Direction = GetIntSafe(reader, $"{prefix}text_direction"),
-1743:                                 SteelType = null,
-1744:                                 Suspended = false
-1745:                             };
-1746: 
-1747:                             // text blocks 1..5
-1748:                             for (int b = 1; b <= 5; b++)
-1749:                             {
-1750:                                 string textCol = $"{prefix}block{b}_text";
-1751:                                 if (ReaderHasColumn(reader, textCol))
-1752:                                 {
-1753:                                     var text = GetStringSafe(reader, textCol);
-1754:                                     if (!string.IsNullOrEmpty(text))
-1755:                                     {
-1756:                                         var tb = new TextBlockDto
-1757:                                         {
-1758:                                             BlockNumber = b,
-1759:                                             Text = text,
-1760:                                             X = GetIntSafe(reader, $"{prefix}block{b}_x"),
-1761:                                             Y = GetIntSafe(reader, $"{prefix}block{b}_y"),
-1762:                                             Size = GetIntSafe(reader, $"{prefix}block{b}_size"),
-1763:                                             Scale = GetIntSafe(reader, $"{prefix}block{b}_scale_side")
-1764:                                         };
-1765:                                         cfg.TextBlocks.Add(tb);
-1766:                                     }
-1767:                                 }
-1768:                             }
-1769: 
-1770:                             return cfg;
-1771:                         }
-1772: 
-1773:                         var mk1 = BuildMkConfig("mk1_", 1, "program_name");
-1774:                         var mk2 = BuildMkConfig("mk2_", 2, "program_name3");
-1775: 
-1776:                         pattern.InkjetConfigs = new List<InkjetConfigDto> { mk1, mk2 };
-1777: 
-1778:                         var spd1 = GetIntSafe(reader, "belt1_inkjet");
-1779:                         var spd2 = GetIntSafe(reader, "belt2_feed_inkjet");
-1780:                         if (spd1.HasValue || spd2.HasValue)
-1781:                         {
-1782:                             pattern.ConveyorSpeeds = new ConveyorSpeedDto
-1783:                             {
-1784:                                 Speed1 = spd1,
-1785:                                 Speed2 = spd2,
-1786:                                 Speed3 = GetIntSafe(reader, "belt3")
-1787:                             };
-1788:                         }
-1789: 
-1790:                         // Minimal job + resolved response
-1791:                         _currentResolved = new ResolvedJobResponse
-1792:                         {
-1793:                             Job = new PrintJob
-1794:                             {
-1795:                                 Id = jobId,
-1796:                                 BarcodeRaw = rawbarcode,
-1797:                                 LotNumber = dataGridView1.Columns.Contains("LotNumber") ? row.Cells["LotNumber"].Value?.ToString() : null,
-1798:                                 Status = dataGridView1.Columns.Contains("Status") ? row.Cells["Status"].Value?.ToString() : null
-1799:                             },
-1800:                             Pattern = pattern
-1801:                         };
-1802: 
-1803:                         found = true;
-1804:                         UpdateDetailPanel();
-1805:                     }
-1806: 
-1807:                     await conn.CloseAsync();
-1808:                 }
-1809:                 catch (Exception dbEx)
-1810:                 {
-1811:                     Log("SQLite query error: " + dbEx.Message);
-1812:                 }
-1813: 
-1814: 
-1815:                 if (!found)
-1816:                 {
-1817:                     var resolved = await _api.GetResolvedJobAsync(jobId);
-1818:                     _currentResolved = resolved;
-1819:                     UpdateDetailPanel();
-1820:                 }
-1821: 
-1822:             }
-1823:             catch (Exception ex)
-1824:             {
-1825:                 Log("Load job detail error: " + ex.Message);
-1826:             }
-1827:         }
-1828:     }
-1829: }
+1719:         //                    return cfg;
+1720:         //                }
+1721: 
+1722:         //                var mk1 = BuildMkConfig("mk1_", 1, "program_name");
+1723:         //                var mk2 = BuildMkConfig("mk2_", 2, "program_name3");
+1724: 
+1725:         //                pattern.InkjetConfigs = new List<InkjetConfigDto> { mk1, mk2 };
+1726: 
+1727:         //                var spd1 = GetIntSafe(reader, "belt1_inkjet");
+1728:         //                var spd2 = GetIntSafe(reader, "belt2_feed_inkjet");
+1729:         //                if (spd1.HasValue || spd2.HasValue)
+1730:         //                {
+1731:         //                    pattern.ConveyorSpeeds = new ConveyorSpeedDto
+1732:         //                    {
+1733:         //                        Speed1 = spd1,
+1734:         //                        Speed2 = spd2,
+1735:         //                        Speed3 = GetIntSafe(reader, "belt3")
+1736:         //                    };
+1737:         //                }
+1738: 
+1739:         //                // Minimal job + resolved response
+1740:         //                _currentResolved = new ResolvedJobResponse
+1741:         //                {
+1742:         //                    Job = new PrintJob
+1743:         //                    {
+1744:         //                        Id = jobId,
+1745:         //                        BarcodeRaw = rawbarcode,
+1746:         //                        LotNumber = dataGridView1.Columns.Contains("LotNumber") ? selectedJob.LotNumber?.ToString() : null,
+1747:         //                        Status = dataGridView1.Columns.Contains("Status") ? selectedJob.Status?.ToString() : null
+1748:         //                    },
+1749:         //                    Pattern = pattern
+1750:         //                };
+1751: 
+1752:         //                found = true;
+1753:         //                UpdateDetailPanel();
+1754:         //            }
+1755: 
+1756:         //            await conn.CloseAsync();
+1757:         //        }
+1758:         //        catch (Exception dbEx)
+1759:         //        {
+1760:         //            Log("SQLite query error: " + dbEx.Message);
+1761:         //        }
+1762: 
+1763: 
+1764:         //        if (!found)
+1765:         //        {
+1766:         //            var resolved = await _api.GetResolvedJobAsync(jobId);
+1767:         //            _currentResolved = resolved;
+1768:         //            UpdateDetailPanel();
+1769:         //        }
+1770: 
+1771:         //    }
+1772:         //    catch (Exception ex)
+1773:         //    {
+1774:         //        Log("Load job detail error: " + ex.Message);
+1775:         //    }
+1776:         //}
+1777:     }
+1778: 
+1779:     private async void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
+1780:     {
+1781:         //// Guard: header click / invalid index
+1782:         //if (e.RowIndex < 0) return;
+1783:         //if (_isRefreshingJobs) return; // 🔥 กันตอน poll
+1784: 
+1785:         var row = dataGridView1.Rows[e.RowIndex];
+1786:         int jobId;
+1787:         string rawbarcode;
+1788:         if (printJobBindingSource.Current is InkjetOperator.Models.JobRow selectedJob)
+1789:         {
+1790:             jobId = selectedJob.Id;
+1791:             rawbarcode = selectedJob.BarcodeRaw;
+1792: 
+1793: 
+1794:             //Debug.WriteLine($"Clicked row {e.RowIndex}, Id={row.Cells["Id"].Value}, Barcode={row.Cells["BarcodeRaw"].Value}");
+1795: 
+1796:             //// Ensure the grid contains expected columns
+1797:             //if (!dataGridView1.Columns.Contains("Id") || row.Cells["Id"].Value == null) return;
+1798:             //if (!dataGridView1.Columns.Contains("BarcodeRaw")) return;
+1799: 
+1800: 
+1801: 
+1802:             //try
+1803:             //{
+1804: 
+1805:             //}
+1806:             //catch
+1807:             //{
+1808:             //    // invalid id cell
+1809:             //    return;
+1810:             //}
+1811: 
+1812:             //string rawbarcode = "CCRC0291-DEX0663MS";
+1813:             //if (jobId == _selectedJobId) return;
+1814:             //_selectedJobId = jobId;
+1815: 
+1816:             // Helpers
+1817:             static bool ReaderHasColumn(Microsoft.Data.Sqlite.SqliteDataReader r, string name)
+1818:             {
+1819:                 for (int i = 0; i < r.FieldCount; i++)
+1820:                 {
+1821:                     if (string.Equals(r.GetName(i), name, StringComparison.OrdinalIgnoreCase))
+1822:                         return true;
+1823:                 }
+1824:                 return false;
+1825:             }
+1826: 
+1827:             static string? GetStringSafe(Microsoft.Data.Sqlite.SqliteDataReader r, string name)
+1828:             {
+1829:                 if (!ReaderHasColumn(r, name)) return null;
+1830:                 int idx = r.GetOrdinal(name);
+1831:                 return r.IsDBNull(idx) ? null : r.GetString(idx);
+1832:             }
+1833: 
+1834:             static int? GetIntSafe(Microsoft.Data.Sqlite.SqliteDataReader r, string name)
+1835:             {
+1836:                 var s = GetStringSafe(r, name);
+1837:                 if (string.IsNullOrWhiteSpace(s)) return null;
+1838:                 return int.TryParse(s, out var v) ? v : null;
+1839:             }
+1840: 
+1841:             try
+1842:             {
+1843:                 string dbPath = @"D:\DB\uv_data.db3";
+1844:                 string connStr = $"Data Source={dbPath}";
+1845:                 bool found = false;
+1846: 
+1847:                 try
+1848:                 {
+1849:                     await using var conn = new Microsoft.Data.Sqlite.SqliteConnection(connStr);
+1850:                     await conn.OpenAsync();
+1851: 
+1852:                     await using var cmd = conn.CreateCommand();
+1853:                     cmd.CommandText = "SELECT * FROM config_data WHERE pattern_no_erp = @rawbarcode LIMIT 1";
+1854:                     cmd.Parameters.AddWithValue("@rawbarcode", rawbarcode);
+1855: 
+1856:                 
+1857: 
+1858:                     await using var reader = await cmd.ExecuteReaderAsync();
+1859: 
+1860:                
+1861:                     if (await reader.ReadAsync())
+1862:                     {
+1863:                         // Build PatternDetail from known schema columns.
+1864:                         var pattern = new PatternDetail
+1865:                         {
+1866:                             Barcode = GetStringSafe(reader, "pattern_no_erp") ?? GetStringSafe(reader, "pattern_no_erp2") ?? rawbarcode,
+1867:                             Description = GetStringSafe(reader, "model_plan_code") ?? GetStringSafe(reader, "program_name") ?? ""
+1868:                         };
+1869: 
+1870:                         // Helper to build MK config (mk1 / mk2)
+1871:                         InkjetConfigDto BuildMkConfig(string prefix, int ordinal, string programNameColumn)
+1872:                         {
+1873:                             var cfg = new InkjetConfigDto
+1874:                             {
+1875:                                 Ordinal = ordinal,
+1876:                                 ProgramNumber = GetIntSafe(reader, $"{prefix}program_no") ?? GetIntSafe(reader, $"{prefix}program_no") ?? null,
+1877:                                 ProgramName = GetStringSafe(reader, programNameColumn),
+1878:                                 Width = GetIntSafe(reader, $"{prefix}width"),
+1879:                                 Height = GetIntSafe(reader, $"{prefix}height"),
+1880:                                 TriggerDelay = GetIntSafe(reader, $"{prefix}trigger_delay"),
+1881:                                 Direction = GetIntSafe(reader, $"{prefix}text_direction"),
+1882:                                 SteelType = null,
+1883:                                 Suspended = false
+1884:                             };
+1885: 
+1886:                             // text blocks 1..5
+1887:                             for (int b = 1; b <= 5; b++)
+1888:                             {
+1889:                                 string textCol = $"{prefix}block{b}_text";
+1890:                                 if (ReaderHasColumn(reader, textCol))
+1891:                                 {
+1892:                                     var text = GetStringSafe(reader, textCol);
+1893:                                     if (!string.IsNullOrEmpty(text))
+1894:                                     {
+1895:                                         var tb = new TextBlockDto
+1896:                                         {
+1897:                                             BlockNumber = b,
+1898:                                             Text = text,
+1899:                                             X = GetIntSafe(reader, $"{prefix}block{b}_x"),
+1900:                                             Y = GetIntSafe(reader, $"{prefix}block{b}_y"),
+1901:                                             Size = GetIntSafe(reader, $"{prefix}block{b}_size"),
+1902:                                             Scale = GetIntSafe(reader, $"{prefix}block{b}_scale_side")
+1903:                                         };
+1904:                                         cfg.TextBlocks.Add(tb);
+1905:                                     }
+1906:                                 }
+1907:                             }
+1908: 
+1909:                             return cfg;
+1910:                         }
+1911: 
+1912:                         var mk1 = BuildMkConfig("mk1_", 1, "program_name");
+1913:                         var mk2 = BuildMkConfig("mk2_", 2, "program_name3");
+1914: 
+1915:                         pattern.InkjetConfigs = new List<InkjetConfigDto> { mk1, mk2 };
+1916: 
+1917:                         var spd1 = GetIntSafe(reader, "belt1_inkjet");
+1918:                         var spd2 = GetIntSafe(reader, "belt2_feed_inkjet");
+1919:                         if (spd1.HasValue || spd2.HasValue)
+1920:                         {
+1921:                             pattern.ConveyorSpeeds = new ConveyorSpeedDto
+1922:                             {
+1923:                                 Speed1 = spd1,
+1924:                                 Speed2 = spd2,
+1925:                                 Speed3 = GetIntSafe(reader, "belt3")
+1926:                             };
+1927:                         }
+1928: 
+1929:                         // Minimal job + resolved response
+1930:                         _currentResolved = new ResolvedJobResponse
+1931:                         {
+1932:                             Job = new PrintJob
+1933:                             {
+1934:                                 Id = jobId,
+1935:                                 BarcodeRaw = rawbarcode,
+1936:                                 LotNumber = dataGridView1.Columns.Contains("LotNumber") ? row.Cells["LotNumber"].Value?.ToString() : null,
+1937:                                 Status = dataGridView1.Columns.Contains("Status") ? row.Cells["Status"].Value?.ToString() : null
+1938:                             },
+1939:                             Pattern = pattern
+1940:                         };
+1941: 
+1942:                         found = true;
+1943:                         UpdateDetailPanel();
+1944:                     }
+1945: 
+1946:                     await conn.CloseAsync();
+1947:                 }
+1948:                 catch (Exception dbEx)
+1949:                 {
+1950:                     Log("SQLite query error: " + dbEx.Message);
+1951:                 }
+1952: 
+1953: 
+1954:                 if (!found)
+1955:                 {
+1956:                     var resolved = await _api.GetResolvedJobAsync(jobId);
+1957:                     _currentResolved = resolved;
+1958:                     UpdateDetailPanel();
+1959:                 }
+1960: 
+1961:             }
+1962:             catch (Exception ex)
+1963:             {
+1964:                 Log("Load job detail error: " + ex.Message);
+1965:             }
+1966:         }
+1967:     }
+1968: }
 ```
 
 ## File: frmPatternEditor.cs
@@ -3484,8 +3623,10 @@ Services/PatternStore.cs
 13:         public string Lot { get; set; } = "";
 14:         public string Name { get; set; } = "";
 15:         public string UpdateAt { get; set; } = "";
-16:     }
-17: }
+16: 
+17:         public string Program { get; set; } = "";
+18:     }
+19: }
 ```
 
 ## File: PlcAdapter/PlcManager.cs
@@ -3852,290 +3993,405 @@ Services/PatternStore.cs
  28:     [DllImport("user32.dll")] static extern void mouse_event(int f, int x, int y, int d, int e);
  29:     [DllImport("user32.dll")] static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
  30:     [DllImport("user32.dll")] static extern bool GetCursorInfo(ref CURSORINFO pci);
- 31:     [DllImport("user32.dll")] static extern bool DrawIconEx(IntPtr hdc, int xLeft, int yTop,
- 32:         IntPtr hIcon, int cxWidth, int cyHeight, int istepIfAniCur, IntPtr hbrFlickerFreeDraw, int diFlags);
- 33: 
- 34:     const int SW_MAXIMIZE = 3;
- 35:     const int MOUSE_DOWN = 0x02, MOUSE_UP = 0x04;
- 36:     const int CURSOR_SHOWING = 0x00000001;
- 37:     const int DI_NORMAL = 0x0003;
- 38: 
- 39:     [StructLayout(LayoutKind.Sequential)]
- 40:     private struct CURSORINFO
- 41:     {
- 42:         public int cbSize;
- 43:         public int flags;
- 44:         public IntPtr hCursor;
- 45:         public Point ptScreenPos;
- 46:     }
- 47: 
- 48:     [StructLayout(LayoutKind.Sequential)]
- 49:     private struct RECT
- 50:     {
- 51:         public int Left, Top, Right, Bottom;
- 52:         public Rectangle ToRectangle() => Rectangle.FromLTRB(Left, Top, Right, Bottom);
- 53:     }
- 54: 
- 55:     private static IntPtr _targetHWnd = IntPtr.Zero;
- 56: 
- 57:     /// <summary>
- 58:     /// ภาพล่าสุดที่แคปได้ — ให้ form ดึงไปแสดงใน PictureBox ได้
- 59:     /// (เหมือน pictureBox1.Image = img ในโค้ดเก่า)
- 60:     /// </summary>
- 61:     public static Bitmap LastCapture { get; private set; }
+ 31:     [DllImport("user32.dll")]
+ 32:     static extern bool DrawIconEx(IntPtr hdc, int xLeft, int yTop,
+ 33:         IntPtr hIcon, int cxWidth, int cyHeight, int istepIfAniCur, IntPtr hbrFlickerFreeDraw, int diFlags);
+ 34: 
+ 35:     private static int stepCount = 0;
+ 36: 
+ 37:     private static string sourcePath = @"C:\Users\theer\Downloads\uvinkjet-250702-new\uvinkjet-250702-new\document_backup";
+ 38:     private static string targetPath = @"\\DESKTOP-KGODCT5\Users\theer\Downloads\uvinkjet-250702-new\uvinkjet-250702-new\document";
+ 39: 
+ 40:     const int SW_MAXIMIZE = 3;
+ 41:     const int MOUSE_DOWN = 0x02, MOUSE_UP = 0x04;
+ 42:     const int CURSOR_SHOWING = 0x00000001;
+ 43:     const int DI_NORMAL = 0x0003;
+ 44: 
+ 45:     [StructLayout(LayoutKind.Sequential)]
+ 46:     private struct CURSORINFO
+ 47:     {
+ 48:         public int cbSize;
+ 49:         public int flags;
+ 50:         public IntPtr hCursor;
+ 51:         public Point ptScreenPos;
+ 52:     }
+ 53: 
+ 54:     [StructLayout(LayoutKind.Sequential)]
+ 55:     private struct RECT
+ 56:     {
+ 57:         public int Left, Top, Right, Bottom;
+ 58:         public Rectangle ToRectangle() => Rectangle.FromLTRB(Left, Top, Right, Bottom);
+ 59:     }
+ 60: 
+ 61:     private static IntPtr _targetHWnd = IntPtr.Zero;
  62: 
- 63:     // ─── Public API ───
- 64: 
- 65:     /// <summary>
- 66:     /// รันทั้ง bot flow: sleep 3s → activate → click steps ตามลำดับ
- 67:     /// เรียกจาก background thread เท่านั้น
- 68:     /// (ตรงตามโค้ดเก่า RunBot())
- 69:     /// </summary>
- 70:     public static BotResult Run(string processName, BotStep[] steps)
- 71:     {
- 72:         Thread.Sleep(3000); // รอ UI พร้อม (เหมือนโค้ดเก่า)
- 73: 
- 74:         if (!ActivateWindow(processName, out string error))
- 75:             return BotResult.Fail(error);
- 76: 
- 77:         Thread.Sleep(2000); // รอ UI พร้อม
- 78: 
- 79:         foreach (var step in steps)
- 80:         {
- 81:             if (!ClickAndVerify(step))
- 82:                 return BotResult.Fail($"{step.Name} failed after {step.MaxRetry} retries");
- 83:             Thread.Sleep(step.DelayAfter);
- 84:         }
- 85: 
- 86:         return BotResult.Ok();
- 87:     }
- 88: 
- 89:     /// <summary>
- 90:     /// รัน bot flow แบบ async — ไม่บล็อก UI thread
- 91:     /// </summary>
- 92:     public static void RunAsync(string processName, BotStep[] steps, Action<BotResult> onComplete = null)
- 93:     {
- 94:         var t = new Thread(() =>
- 95:         {
- 96:             var result = Run(processName, steps);
- 97:             onComplete?.Invoke(result);
- 98:         })
- 99:         { IsBackground = true };
-100:         t.Start();
-101:     }
-102: 
-103:     // ─── Screen Capture ───
-104: 
-105:     /// <summary>
-106:     /// แคปทั้งจอ primary monitor พร้อมวาด cursor ลงภาพ
-107:     /// </summary>
-108:     public static Bitmap CaptureScreen()
-109:     {
-110:         Rectangle bounds = Screen.PrimaryScreen.Bounds;
-111:         var bmp = new Bitmap(bounds.Width, bounds.Height);
-112:         using (var g = Graphics.FromImage(bmp))
-113:         {
-114:             g.CopyFromScreen(Point.Empty, Point.Empty, bounds.Size);
-115:             DrawCursor(g, bounds.Location);
-116:         }
-117:         return bmp;
-118:     }
-119: 
-120:     /// <summary>
-121:     /// แคปเฉพาะ area ที่กำหนด (screen coordinates) พร้อมวาด cursor ถ้าอยู่ใน area
-122:     /// </summary>
-123:     public static Bitmap CaptureArea(Rectangle area)
-124:     {
-125:         var bmp = new Bitmap(area.Width, area.Height);
-126:         using (var g = Graphics.FromImage(bmp))
-127:         {
-128:             g.CopyFromScreen(area.Location, Point.Empty, area.Size);
-129:             DrawCursor(g, area.Location);
-130:         }
-131:         return bmp;
-132:     }
-133: 
-134:     /// <summary>
-135:     /// แคปเฉพาะหน้าต่างโปรแกรมเป้าหมาย (ไม่รวม desktop/taskbar) พร้อมวาด cursor
-136:     /// </summary>
-137:     public static Bitmap CaptureTargetWindow()
-138:     {
-139:         if (_targetHWnd == IntPtr.Zero)
-140:             return null;
-141: 
-142:         if (!GetWindowRect(_targetHWnd, out RECT rect))
-143:             return null;
-144: 
-145:         var windowRect = rect.ToRectangle();
-146:         if (windowRect.Width <= 0 || windowRect.Height <= 0)
-147:             return null;
-148: 
-149:         var bmp = new Bitmap(windowRect.Width, windowRect.Height);
-150:         using (var g = Graphics.FromImage(bmp))
-151:         {
-152:             g.CopyFromScreen(windowRect.Location, Point.Empty, windowRect.Size);
-153:             DrawCursor(g, windowRect.Location);
-154:         }
-155:         return bmp;
-156:     }
-157: 
-158:     // ─── Core ───
-159: 
-160:     private static bool ActivateWindow(string processName, out string error)
-161:     {
-162:         error = null;
-163:         var procs = Process.GetProcessesByName(processName);
-164:         if (procs.Length == 0) { error = $"Process '{processName}' not found"; return false; }
-165: 
-166:         IntPtr hWnd = procs[0].MainWindowHandle;
-167:         if (hWnd == IntPtr.Zero) { error = "Window handle not found"; return false; }
-168: 
-169:         _targetHWnd = hWnd;
-170: 
-171:         ShowWindow(hWnd, SW_MAXIMIZE);
-172:         BringWindowToTop(hWnd);
-173:         SetForegroundWindow(hWnd);
-174:         return true;
-175:     }
-176: 
-177:     /// <summary>
-178:     /// Click → compare before/after area → SaveCapture ทั้งจอ → retry ถ้าภาพไม่เปลี่ยน
-179:     /// (ตรงตามโค้ดเก่า ClickAndVerify())
-180:     /// </summary>
-181:     private static bool ClickAndVerify(BotStep step)
-182:     {
-183:         for (int i = 1; i <= step.MaxRetry; i++)
-184:         {
-185:             Console.WriteLine($"[{step.Name}] Try {i}");
-186: 
-187:             // แคป area ก่อน click
-188:             Bitmap before = CaptureArea(step.VerifyArea);
-189: 
-190:             LeftClick(step.X, step.Y);
-191: 
-192:             Thread.Sleep(step.VerifyDelay);
-193: 
-194:             // แคป area หลัง click
-195:             Bitmap after = CaptureArea(step.VerifyArea);
-196: 
-197:             // เปรียบเทียบแบบ exact (pixel ต่างเมื่อไหร่ = เปลี่ยน)
-198:             bool same = CompareBitmapsFast(before, after);
+ 63:     /// <summary>
+ 64:     /// ภาพล่าสุดที่แคปได้ — ให้ form ดึงไปแสดงใน PictureBox ได้
+ 65:     /// (เหมือน pictureBox1.Image = img ในโค้ดเก่า)
+ 66:     /// </summary>
+ 67:     public static Bitmap LastCapture { get; private set; }
+ 68: 
+ 69:     // ─── Public API ───
+ 70: 
+ 71:     /// <summary>
+ 72:     /// รันทั้ง bot flow: sleep 3s → activate → click steps ตามลำดับ
+ 73:     /// เรียกจาก background thread เท่านั้น
+ 74:     /// (ตรงตามโค้ดเก่า RunBot())
+ 75:     /// </summary>
+ 76:     public static BotResult Run(string processName, BotStep[] steps)
+ 77:     {
+ 78:         Thread.Sleep(3000); // รอ UI พร้อม (เหมือนโค้ดเก่า)
+ 79: 
+ 80:         if (!ActivateWindow(processName, out string error))
+ 81:             return BotResult.Fail(error);
+ 82: 
+ 83:         Thread.Sleep(2000); // รอ UI พร้อม
+ 84: 
+ 85:         foreach (var step in steps)
+ 86:         {
+ 87:             if (!ClickAndVerify(step))
+ 88:                 return BotResult.Fail($"{step.Name} failed after {step.MaxRetry} retries");
+ 89:             Thread.Sleep(step.DelayAfter);
+ 90:         }
+ 91: 
+ 92:         return BotResult.Ok();
+ 93:     }
+ 94: 
+ 95:     /// <summary>
+ 96:     /// รัน bot flow แบบ async — ไม่บล็อก UI thread
+ 97:     /// </summary>
+ 98:     public static void RunAsync(string processName, BotStep[] steps, Action<BotResult> onComplete = null)
+ 99:     {
+100:         var t = new Thread(() =>
+101:         {
+102:             var result = Run(processName, steps);
+103:             onComplete?.Invoke(result);
+104:         })
+105:         { IsBackground = true };
+106:         t.Start();
+107:     }
+108: 
+109:     // ─── Screen Capture ───
+110: 
+111:     /// <summary>
+112:     /// แคปทั้งจอ primary monitor พร้อมวาด cursor ลงภาพ
+113:     /// </summary>
+114:     public static Bitmap CaptureScreen()
+115:     {
+116:         Rectangle bounds = Screen.PrimaryScreen.Bounds;
+117:         var bmp = new Bitmap(bounds.Width, bounds.Height);
+118:         using (var g = Graphics.FromImage(bmp))
+119:         {
+120:             g.CopyFromScreen(Point.Empty, Point.Empty, bounds.Size);
+121:             DrawCursor(g, bounds.Location);
+122:         }
+123:         return bmp;
+124:     }
+125: 
+126:     /// <summary>
+127:     /// แคปเฉพาะ area ที่กำหนด (screen coordinates) พร้อมวาด cursor ถ้าอยู่ใน area
+128:     /// </summary>
+129:     public static Bitmap CaptureArea(Rectangle area)
+130:     {
+131:         try
+132:         {
+133:             // ❌ ถ้า area ไม่ถูกต้อง → fallback ไปแคปทั้งจอแทน
+134:             if (area.Width <= 0 || area.Height <= 0)
+135:             {
+136:                 Console.WriteLine("⚠️ Invalid area → fallback to full screen");
+137:                 return CaptureScreen();
+138:             }
+139: 
+140:             Rectangle allScreens = Rectangle.Empty;
+141:             foreach (var screen in Screen.AllScreens)
+142:             {
+143:                 allScreens = Rectangle.Union(allScreens, screen.Bounds);
+144:             }
+145: 
+146:             Rectangle validArea = Rectangle.Intersect(area, allScreens);
+147: 
+148:             // ❌ ถ้า intersect แล้วพัง → fallback
+149:             if (validArea.Width <= 0 || validArea.Height <= 0)
+150:             {
+151:                 Console.WriteLine("⚠️ Area out of screen → fallback to full screen");
+152:                 return CaptureScreen();
+153:             }
+154: 
+155:             var bmp = new Bitmap(validArea.Width, validArea.Height);
+156: 
+157:             using (var g = Graphics.FromImage(bmp))
+158:             {
+159:                 g.CopyFromScreen(validArea.Location, Point.Empty, validArea.Size);
+160:                 DrawCursor(g, validArea.Location);
+161:             }
+162: 
+163:             return bmp;
+164:         }
+165:         catch (Exception ex)
+166:         {
+167:             // ❌ กัน crash ทุกกรณี
+168:             Console.WriteLine("❌ CaptureArea error: " + ex.Message);
+169: 
+170:             return CaptureScreen(); // fallback
+171:         }
+172:     }
+173: 
+174:     /// <summary>
+175:     /// แคปเฉพาะหน้าต่างโปรแกรมเป้าหมาย (ไม่รวม desktop/taskbar) พร้อมวาด cursor
+176:     /// </summary>
+177:     public static Bitmap CaptureTargetWindow()
+178:     {
+179:         if (_targetHWnd == IntPtr.Zero)
+180:             return null;
+181: 
+182:         if (!GetWindowRect(_targetHWnd, out RECT rect))
+183:             return null;
+184: 
+185:         var windowRect = rect.ToRectangle();
+186:         if (windowRect.Width <= 0 || windowRect.Height <= 0)
+187:             return null;
+188: 
+189:         var bmp = new Bitmap(windowRect.Width, windowRect.Height);
+190:         using (var g = Graphics.FromImage(bmp))
+191:         {
+192:             g.CopyFromScreen(windowRect.Location, Point.Empty, windowRect.Size);
+193:             DrawCursor(g, windowRect.Location);
+194:         }
+195:         return bmp;
+196:     }
+197: 
+198:     // ─── Core ───
 199: 
-200:             // save ทั้งจอลง capture_log (เหมือนโค้ดเก่า)
-201:             SaveCapture($"{step.Name}_Try{i}");
-202: 
-203:             before.Dispose();
-204:             after.Dispose();
+200:     private static bool ActivateWindow(string processName, out string error)
+201:     {
+202:         error = null;
+203:         var procs = Process.GetProcessesByName(processName);
+204:         if (procs.Length == 0) { error = $"Process '{processName}' not found"; return false; }
 205: 
-206:             if (!same)
-207:             {
-208:                 Console.WriteLine($"[{step.Name}] ✅ Success");
-209:                 return true;
-210:             }
-211: 
-212:             Console.WriteLine($"[{step.Name}] ❌ Retry...");
-213:             Thread.Sleep(1000);
-214:         }
-215: 
-216:         Console.WriteLine($"[{step.Name}] ❌ Failed");
-217:         return false;
-218:     }
-219: 
-220:     /// <summary>
-221:     /// เปรียบเทียบ pixel แบบ fast — เหมือนโค้ดเก่า CompareBitmapsFast()
-222:     /// สุ่มทุก 5 pixel, pixel ต่างตัวเดียว = return false (ภาพเปลี่ยน)
-223:     /// </summary>
-224:     public static bool CompareBitmapsFast(Bitmap bmp1, Bitmap bmp2)
-225:     {
-226:         if (bmp1.Size != bmp2.Size)
-227:             return false;
-228: 
-229:         for (int x = 0; x < bmp1.Width; x += 5)
-230:             for (int y = 0; y < bmp1.Height; y += 5)
-231:                 if (bmp1.GetPixel(x, y) != bmp2.GetPixel(x, y))
-232:                     return false;
+206:         IntPtr hWnd = procs[0].MainWindowHandle;
+207:         if (hWnd == IntPtr.Zero) { error = "Window handle not found"; return false; }
+208: 
+209:         _targetHWnd = hWnd;
+210: 
+211:         ShowWindow(hWnd, SW_MAXIMIZE);
+212:         BringWindowToTop(hWnd);
+213:         SetForegroundWindow(hWnd);
+214:         return true;
+215:     }
+216: 
+217:     /// <summary>
+218:     /// Click → compare before/after area → SaveCapture ทั้งจอ → retry ถ้าภาพไม่เปลี่ยน
+219:     /// (ตรงตามโค้ดเก่า ClickAndVerify())
+220:     /// </summary>
+221:     private static bool ClickAndVerify(BotStep step)
+222:     {
+223:         for (int i = 1; i <= step.MaxRetry; i++)
+224:         {
+225:             Console.WriteLine($"[{step.Name}] Try {i}");
+226: 
+227:             // แคป area ก่อน click
+228:             Bitmap before = CaptureArea(step.VerifyArea);
+229: 
+230:             LeftClick(step.X, step.Y);
+231: 
+232:             Thread.Sleep(step.VerifyDelay);
 233: 
-234:         return true;
-235:     }
+234:             // แคป area หลัง click
+235:             Bitmap after = CaptureArea(step.VerifyArea);
 236: 
-237:     /// <summary>
-238:     /// แคปทั้งจอ → บันทึกลง capture_log/ → เก็บ LastCapture
-239:     /// (เหมือนโค้ดเก่า SaveCapture() ที่เรียก CaptureScreen + pictureBox1.Image = img)
-240:     /// </summary>
-241:     private static void SaveCapture(string stepName)
-242:     {
-243:         Bitmap img = CaptureScreen();
-244: 
-245:         var folder = System.IO.Path.Combine(Application.StartupPath, "capture_log");
-246:         System.IO.Directory.CreateDirectory(folder);
-247: 
-248:         var path = System.IO.Path.Combine(
-249:             folder, $"{stepName}_{DateTime.Now:HHmmss}.png");
-250:         img.Save(path, ImageFormat.Png);
+237:             // เปรียบเทียบแบบ exact (pixel ต่างเมื่อไหร่ = เปลี่ยน)
+238:             bool same = CompareBitmapsFast(before, after);
+239: 
+240:             // save ทั้งจอลง capture_log (เหมือนโค้ดเก่า)
+241:             SaveCapture($"{step.Name}_Try{i}");
+242: 
+243:             before.Dispose();
+244:             after.Dispose();
+245: 
+246:             if (!same)
+247:             {
+248:                 Console.WriteLine($"[{step.Name}] ✅ Success");
+249:                 return true;
+250:             }
 251: 
-252:         // เก็บภาพล่าสุดให้ form ดึงไปแสดง
-253:         LastCapture?.Dispose();
-254:         LastCapture = img;
-255:     }
-256: 
-257:     private static void LeftClick(int x, int y)
-258:     {
-259:         Cursor.Position = new Point(x, y);
-260:         Thread.Sleep(200);
-261:         mouse_event(MOUSE_DOWN, x, y, 0, 0);
-262:         Thread.Sleep(100);
-263:         mouse_event(MOUSE_UP, x, y, 0, 0);
-264:     }
-265: 
-266:     /// <summary>
-267:     /// วาด cursor ปัจจุบันลงบน Graphics (ตำแหน่ง offset จาก captureOrigin)
-268:     /// </summary>
-269:     private static void DrawCursor(Graphics g, Point captureOrigin)
-270:     {
-271:         var ci = new CURSORINFO();
-272:         ci.cbSize = Marshal.SizeOf(ci);
+252:             Console.WriteLine($"[{step.Name}] ❌ Retry...");
+253:             Thread.Sleep(1000);
+254:         }
+255: 
+256:         Console.WriteLine($"[{step.Name}] ❌ Failed");
+257:         return false;
+258:     }
+259: 
+260:     /// <summary>
+261:     /// เปรียบเทียบ pixel แบบ fast — เหมือนโค้ดเก่า CompareBitmapsFast()
+262:     /// สุ่มทุก 5 pixel, pixel ต่างตัวเดียว = return false (ภาพเปลี่ยน)
+263:     /// </summary>
+264:     public static bool CompareBitmapsFast(Bitmap bmp1, Bitmap bmp2)
+265:     {
+266:         if (bmp1.Size != bmp2.Size)
+267:             return false;
+268: 
+269:         for (int x = 0; x < bmp1.Width; x += 5)
+270:             for (int y = 0; y < bmp1.Height; y += 5)
+271:                 if (bmp1.GetPixel(x, y) != bmp2.GetPixel(x, y))
+272:                     return false;
 273: 
-274:         if (!GetCursorInfo(ref ci))
-275:             return;
+274:         return true;
+275:     }
 276: 
-277:         if ((ci.flags & CURSOR_SHOWING) == 0)
-278:             return;
-279: 
-280:         IntPtr hdc = g.GetHdc();
-281:         try
-282:         {
-283:             int x = ci.ptScreenPos.X - captureOrigin.X;
-284:             int y = ci.ptScreenPos.Y - captureOrigin.Y;
-285:             DrawIconEx(hdc, x, y, ci.hCursor, 0, 0, 0, IntPtr.Zero, DI_NORMAL);
-286:         }
-287:         finally
-288:         {
-289:             g.ReleaseHdc(hdc);
-290:         }
-291:     }
-292: }
-293: 
-294: // ─── Models ───
-295: 
-296: public class BotStep
-297: {
-298:     public string Name { get; set; }
-299:     public int X { get; set; }
-300:     public int Y { get; set; }
-301:     public Rectangle VerifyArea { get; set; }
-302:     public int MaxRetry { get; set; } = 3;
-303:     public int VerifyDelay { get; set; } = 1500;
-304:     public int DelayAfter { get; set; } = 1000;
-305: }
-306: 
-307: public class BotResult
-308: {
-309:     public bool Success { get; set; }
-310:     public string Error { get; set; }
-311: 
-312:     public static BotResult Ok() => new BotResult { Success = true };
-313:     public static BotResult Fail(string err) => new BotResult { Success = false, Error = err };
-314: }
+277:     /// <summary>
+278:     /// แคปทั้งจอ → บันทึกลง capture_log/ → เก็บ LastCapture
+279:     /// (เหมือนโค้ดเก่า SaveCapture() ที่เรียก CaptureScreen + pictureBox1.Image = img)
+280:     /// </summary>
+281:     private static void SaveCapture(string stepName)
+282:     {
+283:         Bitmap img = CaptureScreen();
+284: 
+285:         var folder = System.IO.Path.Combine(Application.StartupPath, "capture_log");
+286:         System.IO.Directory.CreateDirectory(folder);
+287: 
+288:         var path = System.IO.Path.Combine(
+289:             folder, $"{stepName}_{DateTime.Now:HHmmss}.png");
+290:         img.Save(path, ImageFormat.Png);
+291: 
+292:         // เก็บภาพล่าสุดให้ form ดึงไปแสดง
+293:         LastCapture?.Dispose();
+294:         LastCapture = img;
+295:     }
+296: 
+297:     private static void LeftClick(int x, int y)
+298:     {
+299:         Cursor.Position = new Point(x, y);
+300:         Thread.Sleep(200);
+301:         mouse_event(MOUSE_DOWN, x, y, 0, 0);
+302:         Thread.Sleep(100);
+303:         mouse_event(MOUSE_UP, x, y, 0, 0);
+304:     }
+305: 
+306:     /// <summary>
+307:     /// วาด cursor ปัจจุบันลงบน Graphics (ตำแหน่ง offset จาก captureOrigin)
+308:     /// </summary>
+309:     private static void DrawCursor(Graphics g, Point captureOrigin)
+310:     {
+311:         var ci = new CURSORINFO();
+312:         ci.cbSize = Marshal.SizeOf(ci);
+313: 
+314:         if (!GetCursorInfo(ref ci))
+315:             return;
+316: 
+317:         if ((ci.flags & CURSOR_SHOWING) == 0)
+318:             return;
+319: 
+320:         IntPtr hdc = g.GetHdc();
+321:         try
+322:         {
+323:             int x = ci.ptScreenPos.X - captureOrigin.X;
+324:             int y = ci.ptScreenPos.Y - captureOrigin.Y;
+325:             DrawIconEx(hdc, x, y, ci.hCursor, 0, 0, 0, IntPtr.Zero, DI_NORMAL);
+326:         }
+327:         finally
+328:         {
+329:             g.ReleaseHdc(hdc);
+330:         }
+331:     }
+332: 
+333:     public static void CopyFile(string fileName)
+334:     {
+335:         try
+336:         {
+337:             string sourceFile = Path.Combine(sourcePath, fileName);
+338:             string targetFile = Path.Combine(targetPath, fileName);
+339: 
+340:             if (File.Exists(sourceFile))
+341:             {
+342:                 File.Copy(sourceFile, targetFile, true);
+343:                 Console.WriteLine($"✅ Copy สำเร็จ: {fileName}");
+344:             }
+345:             else
+346:             {
+347:                 Console.WriteLine($"❌ ไม่พบไฟล์: {fileName}");
+348:             }
+349:         }
+350:         catch (Exception ex)
+351:         {
+352:             Console.WriteLine($"❌ Error: {ex.Message}");
+353:         }
+354: 
+355:         // เพิ่ม step ทุกครั้งที่เรียก
+356:         stepCount++;
+357: 
+358:         // ถ้าครบ 4 step → ลบไฟล์
+359:         if (stepCount >= 4)
+360:         {
+361:             ClearDocumentFolder();
+362:             stepCount = 0; // reset ใหม่
+363:         }
+364:     }
+365: 
+366:     public static void ClearDocumentFolder()
+367:     {
+368:         try
+369:         {
+370:             var files = Directory.GetFiles(targetPath);
+371: 
+372:             foreach (var file in files)
+373:             {
+374:                 File.Delete(file);
+375:             }
+376: 
+377:             Console.WriteLine("🧹 ลบไฟล์ใน document เรียบร้อยแล้ว");
+378:         }
+379:         catch (Exception ex)
+380:         {
+381:             Console.WriteLine($"❌ ลบไฟล์ไม่สำเร็จ: {ex.Message}");
+382:         }
+383:     }
+384: 
+385:     public static void WaitForFileReady(string filePath, int timeoutMs = 5000)
+386:     {
+387:         var start = DateTime.Now;
+388: 
+389:         while (true)
+390:         {
+391:             try
+392:             {
+393:                 using (FileStream stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.None))
+394:                 {
+395:                     break;
+396:                 }
+397:             }
+398:             catch
+399:             {
+400:                 if ((DateTime.Now - start).TotalMilliseconds > timeoutMs)
+401:                     throw new Exception("File not ready (timeout): " + filePath);
+402: 
+403:                 Thread.Sleep(200);
+404:             }
+405:         }
+406:     }
+407: }
+408: 
+409: // ─── Models ───
+410: 
+411: public class BotStep
+412: {
+413:     public string Name { get; set; }
+414:     public int X { get; set; }
+415:     public int Y { get; set; }
+416:     public Rectangle VerifyArea { get; set; }
+417:     public int MaxRetry { get; set; } = 3;
+418:     public int VerifyDelay { get; set; } = 1500;
+419:     public int DelayAfter { get; set; } = 1000;
+420: }
+421: 
+422: public class BotResult
+423: {
+424:     public bool Success { get; set; }
+425:     public string Error { get; set; }
+426: 
+427:     public static BotResult Ok() => new BotResult { Success = true };
+428:     public static BotResult Fail(string err) => new BotResult { Success = false, Error = err };
+429: }
 ```
 
 ## File: Services/PatternEngine.cs
