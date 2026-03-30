@@ -326,19 +326,19 @@ public partial class frmMain : Form
             }
 
             // Send conveyor speed + servo to PLC
-            if (!hasError && resolved.Pattern.ConveyorSpeed != null)
+            if (!hasError && resolved.Pattern.ConveyorSpeeds != null)
             {
-                var spd = resolved.Pattern.ConveyorSpeed;
-                await _plc.WriteSpeedAsync(spd.Speed1, spd.Speed2, spd.Speed3);
-                Log($"PLC speed: {spd.Speed1}/{spd.Speed2}/{spd.Speed3}");
+                var spd = resolved.Pattern.ConveyorSpeeds;
+                await _plc.WriteSpeedAsync(spd.Speed1 ?? 0, spd.Speed2 ?? 0, spd.Speed3 ?? 0);
+                Log($"PLC speed: {spd.Speed1 ?? 0}/{spd.Speed2 ?? 0}/{spd.Speed3 ?? 0}");
             }
 
             if (!hasError && resolved.Pattern.ServoConfigs != null)
             {
                 foreach (var servo in resolved.Pattern.ServoConfigs)
                 {
-                    await _plc.WriteServoAsync(servo.Ordinal, servo.Position, servo.PostAct, servo.Delay, servo.Trigger);
-                    Log($"PLC servo ordinal={servo.Ordinal}: pos={servo.Position}");
+                    await _plc.WriteServoAsync(servo.Ordinal, servo.Position ?? 0, servo.PostAct ?? 0, servo.Delay ?? 0, servo.Trigger ?? 0);
+                    Log($"PLC servo ordinal={servo.Ordinal}: pos={servo.Position ?? 0}");
                 }
             }
 

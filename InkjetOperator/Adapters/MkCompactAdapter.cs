@@ -1,6 +1,7 @@
 using System.Globalization;
 using InkjetOperator.Managers;
 using InkjetOperator.Models;
+using System.Text;
 
 namespace InkjetOperator.Adapters;
 
