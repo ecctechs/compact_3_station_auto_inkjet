@@ -128,21 +128,47 @@ public static class BotClickHelper
     /// </summary>
     public static Bitmap CaptureArea(Rectangle area)
     {
-        Rectangle screenBounds = Screen.PrimaryScreen.Bounds;
-        Rectangle validArea = Rectangle.Intersect(area, screenBounds);
-
-        if (validArea.Width <= 0 || validArea.Height <= 0)
-            throw new ArgumentException("Invalid capture area");
-
-        var bmp = new Bitmap(validArea.Width, validArea.Height);
-
-        using (var g = Graphics.FromImage(bmp))
+        try
         {
-            g.CopyFromScreen(validArea.Location, Point.Empty, validArea.Size);
-            DrawCursor(g, validArea.Location);
-        }
+            // ❌ ถ้า area ไม่ถูกต้อง → fallback ไปแคปทั้งจอแทน
+            if (area.Width <= 0 || area.Height <= 0)
+            {
+                Console.WriteLine("⚠️ Invalid area → fallback to full screen");
+                return CaptureScreen();
+            }
 
-        return bmp;
+            Rectangle allScreens = Rectangle.Empty;
+            foreach (var screen in Screen.AllScreens)
+            {
+                allScreens = Rectangle.Union(allScreens, screen.Bounds);
+            }
+
+            Rectangle validArea = Rectangle.Intersect(area, allScreens);
+
+            // ❌ ถ้า intersect แล้วพัง → fallback
+            if (validArea.Width <= 0 || validArea.Height <= 0)
+            {
+                Console.WriteLine("⚠️ Area out of screen → fallback to full screen");
+                return CaptureScreen();
+            }
+
+            var bmp = new Bitmap(validArea.Width, validArea.Height);
+
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.CopyFromScreen(validArea.Location, Point.Empty, validArea.Size);
+                DrawCursor(g, validArea.Location);
+            }
+
+            return bmp;
+        }
+        catch (Exception ex)
+        {
+            // ❌ กัน crash ทุกกรณี
+            Console.WriteLine("❌ CaptureArea error: " + ex.Message);
+
+            return CaptureScreen(); // fallback
+        }
     }
 
     /// <summary>

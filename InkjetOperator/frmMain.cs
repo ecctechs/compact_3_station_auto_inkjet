@@ -54,7 +54,7 @@ public partial class frmMain : Form
     public frmMain()
     {
         InitializeComponent();
-        //StartWatcher();
+        StartWatcher();
 
         _adapterIj1 = new MkCompactAdapter(_rs232Ij1);
         _adapterIj2 = new MkCompactAdapter(_rs232Ij2);
@@ -74,7 +74,7 @@ public partial class frmMain : Form
 
     private void StartWatcher()
     {
-        string watchPath = @"\\DESKTOP-KGODCT5\Users\theer\Desktop\BotShare\input";
+        string watchPath = @"C:\Users\theer\Downloads\uvinkjet-250702-new\uvinkjet-250702-new\document";
 
         FileSystemWatcher watcher = new FileSystemWatcher(watchPath);
         watcher.Filter = "*.uvdx";
@@ -94,7 +94,7 @@ public partial class frmMain : Form
         {
         new BotStep { Name = "Document", X = 2325, Y = 59 },
         new BotStep { Name = "Open", X = 2207, Y = 133 },
-        new BotStep { Name = "SelectFile", X = 1506, Y = 654 },
+        new BotStep { Name = "SelectFile", X = 890, Y = 525 },
         new BotStep { Name = "OpenBtn", X = 1652, Y = 946 },
     };
 
