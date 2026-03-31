@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Drawing;
-using System.IO.Ports;
 using System.Windows.Forms;
 
 namespace InkjetOperator
@@ -50,7 +49,6 @@ namespace InkjetOperator
             txtUvIpAddresses[1] = txtUv002Ip;
 
             txtPlcIpAddress = txtPlc001Ip;
-
             txtPcIpAddress = txtPcip;
         }
 
@@ -87,8 +85,52 @@ namespace InkjetOperator
                 txt.TextChanged += (s, e) => txt.BackColor = Color.LightYellow;
 
             txtPlcIpAddress.TextChanged += (s, e) => txtPlcIpAddress.BackColor = Color.LightYellow;
-
             txtPcIpAddress.TextChanged += (s, e) => txtPcIpAddress.BackColor = Color.LightYellow;
+
+            // ✅ Edit name events (พร้อม key + label)
+            btnEditMk058.Click += (s, e) => EditDeviceName("MK058_NAME", lblMk058);
+            btnEditMk059.Click += (s, e) => EditDeviceName("MK059_NAME", lblMk059);
+            btnEditMk060.Click += (s, e) => EditDeviceName("MK060_NAME", lblMk060);
+            btnEditMk061.Click += (s, e) => EditDeviceName("MK061_NAME", lblMk061);
+
+            btnEditUv001.Click += (s, e) => EditDeviceName("UV001_NAME", lblUv001);
+            btnEditUv002.Click += (s, e) => EditDeviceName("UV002_NAME", lblUv002);
+
+            btnEditPlc001.Click += (s, e) => EditDeviceName("PLC001_NAME", lblPlc001);
+        }
+
+        // ================= EDIT DEVICE NAME =================
+        private void EditDeviceName(string key, Label targetLabel)
+        {
+            using (var dlg = new Form())
+            {
+                dlg.Text = "Edit Device Name";
+                dlg.Size = new Size(300, 150);
+                dlg.StartPosition = FormStartPosition.CenterParent;
+
+                var txt = new TextBox();
+                txt.Text = targetLabel.Text;
+                txt.Location = new Point(20, 20);
+                txt.Size = new Size(240, 25);
+                dlg.Controls.Add(txt);
+
+                var btn = new Button();
+                btn.Text = "OK";
+                btn.DialogResult = DialogResult.OK;
+                btn.Location = new Point(100, 70);
+                dlg.Controls.Add(btn);
+
+                if (dlg.ShowDialog() == DialogResult.OK)
+                {
+                    string newName = txt.Text;
+
+                    // update UI
+                    targetLabel.Text = newName;
+
+                    // ✅ SAVE ลง config
+                    CustomSettingsManager.SetValue(key, newName);
+                }
+            }
         }
 
         // ================= SAVE =================
@@ -105,7 +147,6 @@ namespace InkjetOperator
             CustomSettingsManager.SetValue("UV001_IP", txtUvIpAddresses[0].Text);
             CustomSettingsManager.SetValue("UV002_IP", txtUvIpAddresses[1].Text);
             CustomSettingsManager.SetValue("PLC_IP", txtPlcIpAddress.Text);
-
             CustomSettingsManager.SetValue("PC_IP", txtPcIpAddress.Text);
 
             ResetColors();
@@ -129,8 +170,18 @@ namespace InkjetOperator
             txtUvIpAddresses[0].Text = CustomSettingsManager.GetValue("UV001_IP") ?? "";
             txtUvIpAddresses[1].Text = CustomSettingsManager.GetValue("UV002_IP") ?? "";
             txtPlcIpAddress.Text = CustomSettingsManager.GetValue("PLC_IP") ?? "";
-
             txtPcIpAddress.Text = CustomSettingsManager.GetValue("PC_IP") ?? "";
+
+            // ✅ LOAD DEVICE NAME
+            lblMk058.Text = CustomSettingsManager.GetValue("MK058_NAME") ?? "MK-058";
+            lblMk059.Text = CustomSettingsManager.GetValue("MK059_NAME") ?? "MK-059";
+            lblMk060.Text = CustomSettingsManager.GetValue("MK060_NAME") ?? "MK-060";
+            lblMk061.Text = CustomSettingsManager.GetValue("MK061_NAME") ?? "MK-061";
+
+            lblUv001.Text = CustomSettingsManager.GetValue("UV001_NAME") ?? "UV-001";
+            lblUv002.Text = CustomSettingsManager.GetValue("UV002_NAME") ?? "UV-002";
+
+            lblPlc001.Text = CustomSettingsManager.GetValue("PLC001_NAME") ?? "PLC-001";
 
             UpdateStatus();
         }
@@ -186,7 +237,9 @@ namespace InkjetOperator
             foreach (var t in txtMkComPorts) t.BackColor = Color.White;
             foreach (var t in txtMkBaudRates) t.BackColor = Color.White;
             foreach (var t in txtUvIpAddresses) t.BackColor = Color.White;
+
             txtPlcIpAddress.BackColor = Color.White;
+            txtPcIpAddress.BackColor = Color.White;
         }
     }
 }

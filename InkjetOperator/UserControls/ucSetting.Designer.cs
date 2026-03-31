@@ -95,7 +95,7 @@
             panelPcStation1.Controls.Add(label3);
             panelPcStation1.Controls.Add(txtPcip);
             panelPcStation1.Controls.Add(label4);
-            panelPcStation1.Location = new Point(249, 47);
+            panelPcStation1.Location = new Point(132, 114);
             panelPcStation1.Margin = new Padding(3, 4, 3, 4);
             panelPcStation1.Name = "panelPcStation1";
             panelPcStation1.Size = new Size(446, 214);
@@ -165,7 +165,6 @@
             // pnlMainContent
             // 
             pnlMainContent.BackColor = Color.White;
-            pnlMainContent.Controls.Add(panelPcStation1);
             pnlMainContent.Controls.Add(pnlButtons);
             pnlMainContent.Controls.Add(pnlPlc);
             pnlMainContent.Controls.Add(pnlUvPrinters);
@@ -183,7 +182,7 @@
             pnlButtons.BackColor = Color.Transparent;
             pnlButtons.Controls.Add(btnCancel);
             pnlButtons.Controls.Add(btnSave);
-            pnlButtons.Location = new Point(637, 687);
+            pnlButtons.Location = new Point(433, 702);
             pnlButtons.Margin = new Padding(3, 4, 3, 4);
             pnlButtons.Name = "pnlButtons";
             pnlButtons.Size = new Size(366, 67);
@@ -229,10 +228,10 @@
             pnlPlc.Controls.Add(lblPlcTitle);
             pnlPlc.Controls.Add(txtPlc001Ip);
             pnlPlc.Controls.Add(lblPlcIp);
-            pnlPlc.Location = new Point(637, 433);
+            pnlPlc.Location = new Point(415, 439);
             pnlPlc.Margin = new Padding(3, 4, 3, 4);
             pnlPlc.Name = "pnlPlc";
-            pnlPlc.Size = new Size(365, 239);
+            pnlPlc.Size = new Size(347, 239);
             pnlPlc.TabIndex = 1;
             // 
             // lblPlc001Status
@@ -311,7 +310,7 @@
             pnlUvPrinters.Controls.Add(lblUv001Ip);
             pnlUvPrinters.Controls.Add(lblUv001);
             pnlUvPrinters.Controls.Add(lblUvTitle);
-            pnlUvPrinters.Location = new Point(249, 433);
+            pnlUvPrinters.Location = new Point(26, 439);
             pnlUvPrinters.Margin = new Padding(3, 4, 3, 4);
             pnlUvPrinters.Name = "pnlUvPrinters";
             pnlUvPrinters.Size = new Size(365, 239);
@@ -340,7 +339,7 @@
             btnEditUv002.FlatAppearance.BorderSize = 0;
             btnEditUv002.FlatStyle = FlatStyle.Flat;
             btnEditUv002.Font = new Font("Segoe UI", 8F);
-            btnEditUv002.Location = new Point(126, 153);
+            btnEditUv002.Location = new Point(150, 153);
             btnEditUv002.Margin = new Padding(3, 4, 3, 4);
             btnEditUv002.Name = "btnEditUv002";
             btnEditUv002.Size = new Size(29, 33);
@@ -352,7 +351,7 @@
             btnEditUv001.FlatAppearance.BorderSize = 0;
             btnEditUv001.FlatStyle = FlatStyle.Flat;
             btnEditUv001.Font = new Font("Segoe UI", 8F);
-            btnEditUv001.Location = new Point(126, 60);
+            btnEditUv001.Location = new Point(150, 61);
             btnEditUv001.Margin = new Padding(3, 4, 3, 4);
             btnEditUv001.Name = "btnEditUv001";
             btnEditUv001.Size = new Size(29, 33);
@@ -384,7 +383,7 @@
             lblUv002.Location = new Point(40, 153);
             lblUv002.Name = "lblUv002";
             lblUv002.Padding = new Padding(6, 3, 6, 3);
-            lblUv002.Size = new Size(80, 33);
+            lblUv002.Size = new Size(104, 33);
             lblUv002.TabIndex = 6;
             lblUv002.Text = "UV-002";
             lblUv002.TextAlign = ContentAlignment.MiddleCenter;
@@ -414,7 +413,7 @@
             lblUv001.Location = new Point(40, 60);
             lblUv001.Name = "lblUv001";
             lblUv001.Padding = new Padding(6, 3, 6, 3);
-            lblUv001.Size = new Size(80, 33);
+            lblUv001.Size = new Size(104, 33);
             lblUv001.TabIndex = 9;
             lblUv001.Text = "UV-001";
             lblUv001.TextAlign = ContentAlignment.MiddleCenter;
@@ -433,6 +432,7 @@
             // 
             pnlMkPrinters.BackColor = Color.White;
             pnlMkPrinters.BorderStyle = BorderStyle.FixedSingle;
+            pnlMkPrinters.Controls.Add(panelPcStation1);
             pnlMkPrinters.Controls.Add(lblMk061Status);
             pnlMkPrinters.Controls.Add(lblMk060Status);
             pnlMkPrinters.Controls.Add(lblMk059Status);
@@ -462,10 +462,10 @@
             pnlMkPrinters.Controls.Add(lblMk058Com);
             pnlMkPrinters.Controls.Add(lblMk058);
             pnlMkPrinters.Controls.Add(lblMkTitle);
-            pnlMkPrinters.Location = new Point(249, 47);
+            pnlMkPrinters.Location = new Point(26, 31);
             pnlMkPrinters.Margin = new Padding(3, 4, 3, 4);
             pnlMkPrinters.Name = "pnlMkPrinters";
-            pnlMkPrinters.Size = new Size(754, 373);
+            pnlMkPrinters.Size = new Size(736, 373);
             pnlMkPrinters.TabIndex = 3;
             // 
             // lblMk061Status
@@ -509,7 +509,7 @@
             btnEditMk061.FlatAppearance.BorderSize = 0;
             btnEditMk061.FlatStyle = FlatStyle.Flat;
             btnEditMk061.Font = new Font("Segoe UI", 8F);
-            btnEditMk061.Location = new Point(126, 200);
+            btnEditMk061.Location = new Point(157, 200);
             btnEditMk061.Margin = new Padding(3, 4, 3, 4);
             btnEditMk061.Name = "btnEditMk061";
             btnEditMk061.Size = new Size(29, 33);
@@ -521,7 +521,7 @@
             btnEditMk060.FlatAppearance.BorderSize = 0;
             btnEditMk060.FlatStyle = FlatStyle.Flat;
             btnEditMk060.Font = new Font("Segoe UI", 8F);
-            btnEditMk060.Location = new Point(126, 153);
+            btnEditMk060.Location = new Point(157, 153);
             btnEditMk060.Margin = new Padding(3, 4, 3, 4);
             btnEditMk060.Name = "btnEditMk060";
             btnEditMk060.Size = new Size(29, 33);
@@ -533,7 +533,7 @@
             btnEditMk059.FlatAppearance.BorderSize = 0;
             btnEditMk059.FlatStyle = FlatStyle.Flat;
             btnEditMk059.Font = new Font("Segoe UI", 8F);
-            btnEditMk059.Location = new Point(126, 107);
+            btnEditMk059.Location = new Point(157, 107);
             btnEditMk059.Margin = new Padding(3, 4, 3, 4);
             btnEditMk059.Name = "btnEditMk059";
             btnEditMk059.Size = new Size(29, 33);
@@ -545,7 +545,7 @@
             btnEditMk058.FlatAppearance.BorderSize = 0;
             btnEditMk058.FlatStyle = FlatStyle.Flat;
             btnEditMk058.Font = new Font("Segoe UI", 8F);
-            btnEditMk058.Location = new Point(126, 60);
+            btnEditMk058.Location = new Point(157, 60);
             btnEditMk058.Margin = new Padding(3, 4, 3, 4);
             btnEditMk058.Name = "btnEditMk058";
             btnEditMk058.Size = new Size(29, 33);
@@ -554,7 +554,7 @@
             // 
             // txtMk061Baud
             // 
-            txtMk061Baud.Location = new Point(491, 203);
+            txtMk061Baud.Location = new Point(512, 204);
             txtMk061Baud.Margin = new Padding(3, 4, 3, 4);
             txtMk061Baud.Name = "txtMk061Baud";
             txtMk061Baud.Size = new Size(114, 27);
@@ -563,7 +563,7 @@
             // lblMk061Baud
             // 
             lblMk061Baud.AutoSize = true;
-            lblMk061Baud.Location = new Point(411, 207);
+            lblMk061Baud.Location = new Point(432, 208);
             lblMk061Baud.Name = "lblMk061Baud";
             lblMk061Baud.Size = new Size(84, 20);
             lblMk061Baud.TabIndex = 9;
@@ -571,7 +571,7 @@
             // 
             // txtMk061Com
             // 
-            txtMk061Com.Location = new Point(251, 203);
+            txtMk061Com.Location = new Point(272, 204);
             txtMk061Com.Margin = new Padding(3, 4, 3, 4);
             txtMk061Com.Name = "txtMk061Com";
             txtMk061Com.Size = new Size(137, 27);
@@ -580,7 +580,7 @@
             // lblMk061Com
             // 
             lblMk061Com.AutoSize = true;
-            lblMk061Com.Location = new Point(171, 207);
+            lblMk061Com.Location = new Point(192, 208);
             lblMk061Com.Name = "lblMk061Com";
             lblMk061Com.Size = new Size(79, 20);
             lblMk061Com.TabIndex = 11;
@@ -594,14 +594,14 @@
             lblMk061.Location = new Point(40, 200);
             lblMk061.Name = "lblMk061";
             lblMk061.Padding = new Padding(6, 3, 6, 3);
-            lblMk061.Size = new Size(80, 33);
+            lblMk061.Size = new Size(115, 33);
             lblMk061.TabIndex = 12;
             lblMk061.Text = "MK-061";
             lblMk061.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // txtMk060Baud
             // 
-            txtMk060Baud.Location = new Point(491, 156);
+            txtMk060Baud.Location = new Point(512, 157);
             txtMk060Baud.Margin = new Padding(3, 4, 3, 4);
             txtMk060Baud.Name = "txtMk060Baud";
             txtMk060Baud.Size = new Size(114, 27);
@@ -610,7 +610,7 @@
             // lblMk060Baud
             // 
             lblMk060Baud.AutoSize = true;
-            lblMk060Baud.Location = new Point(411, 160);
+            lblMk060Baud.Location = new Point(432, 161);
             lblMk060Baud.Name = "lblMk060Baud";
             lblMk060Baud.Size = new Size(84, 20);
             lblMk060Baud.TabIndex = 14;
@@ -618,7 +618,7 @@
             // 
             // txtMk060Com
             // 
-            txtMk060Com.Location = new Point(251, 156);
+            txtMk060Com.Location = new Point(272, 157);
             txtMk060Com.Margin = new Padding(3, 4, 3, 4);
             txtMk060Com.Name = "txtMk060Com";
             txtMk060Com.Size = new Size(137, 27);
@@ -627,7 +627,7 @@
             // lblMk060Com
             // 
             lblMk060Com.AutoSize = true;
-            lblMk060Com.Location = new Point(171, 160);
+            lblMk060Com.Location = new Point(192, 161);
             lblMk060Com.Name = "lblMk060Com";
             lblMk060Com.Size = new Size(79, 20);
             lblMk060Com.TabIndex = 16;
@@ -641,14 +641,14 @@
             lblMk060.Location = new Point(40, 153);
             lblMk060.Name = "lblMk060";
             lblMk060.Padding = new Padding(6, 3, 6, 3);
-            lblMk060.Size = new Size(80, 33);
+            lblMk060.Size = new Size(115, 33);
             lblMk060.TabIndex = 17;
             lblMk060.Text = "MK-060";
             lblMk060.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // txtMk059Baud
             // 
-            txtMk059Baud.Location = new Point(491, 109);
+            txtMk059Baud.Location = new Point(512, 110);
             txtMk059Baud.Margin = new Padding(3, 4, 3, 4);
             txtMk059Baud.Name = "txtMk059Baud";
             txtMk059Baud.Size = new Size(114, 27);
@@ -657,7 +657,7 @@
             // lblMk059Baud
             // 
             lblMk059Baud.AutoSize = true;
-            lblMk059Baud.Location = new Point(411, 113);
+            lblMk059Baud.Location = new Point(432, 114);
             lblMk059Baud.Name = "lblMk059Baud";
             lblMk059Baud.Size = new Size(84, 20);
             lblMk059Baud.TabIndex = 19;
@@ -665,7 +665,7 @@
             // 
             // txtMk059Com
             // 
-            txtMk059Com.Location = new Point(251, 109);
+            txtMk059Com.Location = new Point(272, 110);
             txtMk059Com.Margin = new Padding(3, 4, 3, 4);
             txtMk059Com.Name = "txtMk059Com";
             txtMk059Com.Size = new Size(137, 27);
@@ -674,7 +674,7 @@
             // lblMk059Com
             // 
             lblMk059Com.AutoSize = true;
-            lblMk059Com.Location = new Point(171, 113);
+            lblMk059Com.Location = new Point(192, 114);
             lblMk059Com.Name = "lblMk059Com";
             lblMk059Com.Size = new Size(79, 20);
             lblMk059Com.TabIndex = 21;
@@ -688,14 +688,14 @@
             lblMk059.Location = new Point(40, 107);
             lblMk059.Name = "lblMk059";
             lblMk059.Padding = new Padding(6, 3, 6, 3);
-            lblMk059.Size = new Size(80, 33);
+            lblMk059.Size = new Size(115, 33);
             lblMk059.TabIndex = 22;
             lblMk059.Text = "MK-059";
             lblMk059.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // txtMk058Baud
             // 
-            txtMk058Baud.Location = new Point(491, 63);
+            txtMk058Baud.Location = new Point(512, 64);
             txtMk058Baud.Margin = new Padding(3, 4, 3, 4);
             txtMk058Baud.Name = "txtMk058Baud";
             txtMk058Baud.Size = new Size(114, 27);
@@ -704,7 +704,7 @@
             // lblMk058Baud
             // 
             lblMk058Baud.AutoSize = true;
-            lblMk058Baud.Location = new Point(411, 67);
+            lblMk058Baud.Location = new Point(432, 68);
             lblMk058Baud.Name = "lblMk058Baud";
             lblMk058Baud.Size = new Size(84, 20);
             lblMk058Baud.TabIndex = 24;
@@ -712,7 +712,7 @@
             // 
             // txtMk058Com
             // 
-            txtMk058Com.Location = new Point(251, 63);
+            txtMk058Com.Location = new Point(272, 64);
             txtMk058Com.Margin = new Padding(3, 4, 3, 4);
             txtMk058Com.Name = "txtMk058Com";
             txtMk058Com.Size = new Size(137, 27);
@@ -721,7 +721,7 @@
             // lblMk058Com
             // 
             lblMk058Com.AutoSize = true;
-            lblMk058Com.Location = new Point(171, 67);
+            lblMk058Com.Location = new Point(192, 68);
             lblMk058Com.Name = "lblMk058Com";
             lblMk058Com.Size = new Size(79, 20);
             lblMk058Com.TabIndex = 26;
@@ -735,7 +735,7 @@
             lblMk058.Location = new Point(40, 60);
             lblMk058.Name = "lblMk058";
             lblMk058.Padding = new Padding(6, 3, 6, 3);
-            lblMk058.Size = new Size(80, 33);
+            lblMk058.Size = new Size(115, 33);
             lblMk058.TabIndex = 27;
             lblMk058.Text = "MK-058";
             lblMk058.TextAlign = ContentAlignment.MiddleCenter;
