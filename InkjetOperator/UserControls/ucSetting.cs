@@ -7,64 +7,30 @@ namespace InkjetOperator
 {
     public partial class ucSetting : UserControl
     {
-        // MK Inkjet Printers (4 เครื่อง)
         private TextBox[] txtMkComPorts = new TextBox[4];
         private TextBox[] txtMkBaudRates = new TextBox[4];
         private Label[] lblMkStatus = new Label[4];
 
-        // UV Printers (2 เครื่อง)
         private TextBox[] txtUvIpAddresses = new TextBox[2];
-
-        // PLC (1 เครื่อง)
         private TextBox txtPlcIpAddress = new TextBox();
+        private TextBox txtPcIpAddress = new TextBox();
 
         private AppConfig _config;
-
-        // Settings data
-        public class PrinterSettings
-        {
-            public string[] MkComPorts { get; set; } = new string[4];
-            public int[] MkBaudRates { get; set; } = new int[4];
-            public string[] UvIpAddresses { get; set; } = new string[2];
-            public string PlcIpAddress { get; set; } = "";
-        }
 
         public ucSetting()
         {
             InitializeComponent();
             InitializeControls();
-            LoadSettings();
-            SetupEvents();
 
             _config = AppConfig.Load();
             ApplyConfigToUI();
-        }
 
-        private void ApplyConfigToUI()
-        {
-            // ตัวอย่าง: ซ่อน/แสดงปุ่มหรือ control ตาม config
-            if (_config.MenuMode == 1)
-            {
-                pnlLeftMenu.Visible = false;
-                pnlMkPrinters.Visible = false;
-                pnlUvPrinters.Visible = false;
-                pnlPlc.Visible = false;
-                panelPcStation1.Visible = true;
-            }
-            else
-            {
-                panelPcStation1.Visible = false;
-                pnlLeftMenu.Visible = true;
-                pnlMkPrinters.Visible = true;
-                pnlUvPrinters.Visible = true;
-                pnlPlc.Visible = true;
-            }
-            // เพิ่ม logic ตามต้องการ
+            LoadSettings();
+            SetupEvents();
         }
 
         private void InitializeControls()
         {
-            // เก็บ reference จาก Designer
             txtMkComPorts[0] = txtMk058Com;
             txtMkComPorts[1] = txtMk059Com;
             txtMkComPorts[2] = txtMk060Com;
@@ -85,21 +51,27 @@ namespace InkjetOperator
 
             txtPlcIpAddress = txtPlc001Ip;
 
-            // ตั้งค่า default
-            SetDefaultValues();
+            txtPcIpAddress = txtPcip;
         }
 
-        private void SetDefaultValues()
+        private void ApplyConfigToUI()
         {
-            // MK Baud Rate default = 9600
-            foreach (var txt in txtMkBaudRates)
+            if (_config.MenuMode == 1)
             {
-                if (string.IsNullOrEmpty(txt.Text))
-                    txt.Text = "9600";
+                pnlLeftMenu.Visible = false;
+                pnlMkPrinters.Visible = false;
+                pnlUvPrinters.Visible = false;
+                pnlPlc.Visible = false;
+                panelPcStation1.Visible = true;
             }
-
-            // อัปเดตสถานะเริ่มต้น
-            UpdateStatusIndicators();
+            else
+            {
+                panelPcStation1.Visible = false;
+                pnlLeftMenu.Visible = true;
+                pnlMkPrinters.Visible = true;
+                pnlUvPrinters.Visible = true;
+                pnlPlc.Visible = true;
+            }
         }
 
         private void SetupEvents()
@@ -107,127 +79,73 @@ namespace InkjetOperator
             btnSave.Click += BtnSave_Click;
             btnCancel.Click += BtnCancel_Click;
 
-            // เปลี่ยนสีเมื่อแก้ไขค่า
             foreach (var txt in txtMkComPorts)
-            {
-                txt.TextChanged += (s, e) => MarkAsModified(txt);
-            }
+                txt.TextChanged += (s, e) => txt.BackColor = Color.LightYellow;
+
             foreach (var txt in txtMkBaudRates)
-            {
-                txt.TextChanged += (s, e) => MarkAsModified(txt);
-            }
+                txt.TextChanged += (s, e) => txt.BackColor = Color.LightYellow;
+
             foreach (var txt in txtUvIpAddresses)
-            {
-                txt.TextChanged += (s, e) => MarkAsModified(txt);
-            }
-            txtPlcIpAddress.TextChanged += (s, e) => MarkAsModified(txtPlcIpAddress);
+                txt.TextChanged += (s, e) => txt.BackColor = Color.LightYellow;
 
-            // คลิกปุ่มแก้ไขชื่อ
-            btnEditMk058.Click += (s, e) => EditDeviceName("MK-058");
-            btnEditMk059.Click += (s, e) => EditDeviceName("MK-059");
-            btnEditMk060.Click += (s, e) => EditDeviceName("MK-060");
-            btnEditMk061.Click += (s, e) => EditDeviceName("MK-061");
-            btnEditUv001.Click += (s, e) => EditDeviceName("UV-001");
-            btnEditUv002.Click += (s, e) => EditDeviceName("UV-002");
-            btnEditPlc001.Click += (s, e) => EditDeviceName("PLC-001");
+            txtPlcIpAddress.TextChanged += (s, e) => txtPlcIpAddress.BackColor = Color.LightYellow;
+
+            txtPcIpAddress.TextChanged += (s, e) => txtPcIpAddress.BackColor = Color.LightYellow;
         }
 
-        private void MarkAsModified(Control control)
-        {
-            control.BackColor = Color.FromArgb(255, 255, 200); // เหลืองอ่อน
-        }
-
-        private void EditDeviceName(string currentName)
-        {
-            using (var dlg = new Form())
-            {
-                dlg.Text = "Edit Device Name";
-                dlg.Size = new Size(300, 150);
-                dlg.StartPosition = FormStartPosition.CenterParent;
-
-                var txt = new TextBox();
-                txt.Text = currentName;
-                txt.Location = new Point(20, 20);
-                txt.Size = new Size(240, 25);
-                dlg.Controls.Add(txt);
-
-                var btn = new Button();
-                btn.Text = "OK";
-                btn.DialogResult = DialogResult.OK;
-                btn.Location = new Point(100, 70);
-                dlg.Controls.Add(btn);
-
-                if (dlg.ShowDialog() == DialogResult.OK)
-                {
-                    // อัปเดตชื่อใน UI
-                    UpdateDeviceName(currentName, txt.Text);
-                }
-            }
-        }
-
-        private void UpdateDeviceName(string oldName, string newName)
-        {
-            // หา Label ที่มีชื่อเดิมแล้มเปลี่ยน
-            foreach (Control c in pnlMkPrinters.Controls)
-            {
-                if (c is Label lbl && lbl.Text == oldName)
-                {
-                    lbl.Text = newName;
-                    return;
-                }
-            }
-            foreach (Control c in pnlUvPrinters.Controls)
-            {
-                if (c is Label lbl && lbl.Text == oldName)
-                {
-                    lbl.Text = newName;
-                    return;
-                }
-            }
-            foreach (Control c in pnlPlc.Controls)
-            {
-                if (c is Label lbl && lbl.Text == oldName)
-                {
-                    lbl.Text = newName;
-                    return;
-                }
-            }
-        }
-
+        // ================= SAVE =================
         private void BtnSave_Click(object? sender, EventArgs e)
         {
             if (!ValidateSettings()) return;
 
-            var settings = new PrinterSettings();
             for (int i = 0; i < 4; i++)
             {
-                settings.MkComPorts[i] = txtMkComPorts[i].Text;
-                settings.MkBaudRates[i] = int.TryParse(txtMkBaudRates[i].Text, out int baud) ? baud : 9600;
+                CustomSettingsManager.SetValue($"MK{(58 + i):000}_COM", txtMkComPorts[i].Text);
+                CustomSettingsManager.SetValue($"MK{(58 + i):000}_BAUD", txtMkBaudRates[i].Text);
             }
-            settings.UvIpAddresses[0] = txtUvIpAddresses[0].Text;
-            settings.UvIpAddresses[1] = txtUvIpAddresses[1].Text;
-            settings.PlcIpAddress = txtPlcIpAddress.Text;
 
-            // TODO: บันทึกลงไฟล์ หรือ Database
-            SaveToFile(settings);
+            CustomSettingsManager.SetValue("UV001_IP", txtUvIpAddresses[0].Text);
+            CustomSettingsManager.SetValue("UV002_IP", txtUvIpAddresses[1].Text);
+            CustomSettingsManager.SetValue("PLC_IP", txtPlcIpAddress.Text);
 
-            // รีเซ็ตสี
-            ResetModifiedColors();
-            UpdateStatusIndicators();
+            CustomSettingsManager.SetValue("PC_IP", txtPcIpAddress.Text);
 
-            MessageBox.Show("Settings saved successfully!", "Save", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            ResetColors();
+            UpdateStatus();
+
+            MessageBox.Show("บันทึกเรียบร้อย", "Save", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        // ================= LOAD =================
+        private void LoadSettings()
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                txtMkComPorts[i].Text =
+                    CustomSettingsManager.GetValue($"MK{(58 + i):000}_COM") ?? $"COM{i + 1}";
+
+                txtMkBaudRates[i].Text =
+                    CustomSettingsManager.GetValue($"MK{(58 + i):000}_BAUD") ?? "9600";
+            }
+
+            txtUvIpAddresses[0].Text = CustomSettingsManager.GetValue("UV001_IP") ?? "";
+            txtUvIpAddresses[1].Text = CustomSettingsManager.GetValue("UV002_IP") ?? "";
+            txtPlcIpAddress.Text = CustomSettingsManager.GetValue("PLC_IP") ?? "";
+
+            txtPcIpAddress.Text = CustomSettingsManager.GetValue("PC_IP") ?? "";
+
+            UpdateStatus();
         }
 
         private void BtnCancel_Click(object? sender, EventArgs e)
         {
-            // โหลดค่าเดิมกลับมา
             LoadSettings();
-            ResetModifiedColors();
+            ResetColors();
         }
 
+        // ================= VALIDATE =================
         private bool ValidateSettings()
         {
-            // ตรวจสอบ COM Port ซ้ำ
             for (int i = 0; i < 4; i++)
             {
                 for (int j = i + 1; j < 4; j++)
@@ -235,19 +153,17 @@ namespace InkjetOperator
                     if (!string.IsNullOrEmpty(txtMkComPorts[i].Text) &&
                         txtMkComPorts[i].Text == txtMkComPorts[j].Text)
                     {
-                        MessageBox.Show($"COM Port ซ้ำกัน: {txtMkComPorts[i].Text}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show("COM Port ซ้ำกัน", "Error");
                         return false;
                     }
                 }
             }
 
-            // ตรวจสอบ Baud Rate เป็นตัวเลข
             foreach (var txt in txtMkBaudRates)
             {
-                if (!string.IsNullOrEmpty(txt.Text) && !int.TryParse(txt.Text, out _))
+                if (!int.TryParse(txt.Text, out _))
                 {
-                    MessageBox.Show($"Baud Rate ต้องเป็นตัวเลข: {txt.Text}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    txt.Focus();
+                    MessageBox.Show("Baud ต้องเป็นตัวเลข");
                     return false;
                 }
             }
@@ -255,65 +171,24 @@ namespace InkjetOperator
             return true;
         }
 
-        private void SaveToFile(PrinterSettings settings)
+        // ================= UI =================
+        private void UpdateStatus()
         {
-            // TODO: บันทึกเป็น JSON หรือ XML
-            // File.WriteAllText("settings.json", JsonSerializer.Serialize(settings));
-        }
-
-        private void LoadSettings()
-        {
-            // TODO: โหลดจากไฟล์ หรือใช้ค่า default
-            // ตัวอย่างค่าเริ่มต้น
-            if (string.IsNullOrEmpty(txtMk058Com.Text)) txtMk058Com.Text = "COM1";
-            if (string.IsNullOrEmpty(txtMk059Com.Text)) txtMk059Com.Text = "COM2";
-            if (string.IsNullOrEmpty(txtMk060Com.Text)) txtMk060Com.Text = "COM3";
-            if (string.IsNullOrEmpty(txtMk061Com.Text)) txtMk061Com.Text = "COM4";
-
-            // ดึง COM Ports ที่มีจริง
-            RefreshAvailablePorts();
-        }
-
-        private void RefreshAvailablePorts()
-        {
-            var ports = SerialPort.GetPortNames();
-            // TODO: แสดงใน ComboBox หรือ Auto-complete
-        }
-
-        private void UpdateStatusIndicators()
-        {
-            // อัปเดตสีจุดสถานะ (เขียว = มีค่า, แดง = ว่าง)
             for (int i = 0; i < 4; i++)
             {
-                bool hasValue = !string.IsNullOrEmpty(txtMkComPorts[i].Text) &&
-                               !string.IsNullOrEmpty(txtMkBaudRates[i].Text);
-                lblMkStatus[i].BackColor = hasValue ? Color.FromArgb(100, 200, 100) : Color.FromArgb(220, 80, 50);
+                bool ok = !string.IsNullOrEmpty(txtMkComPorts[i].Text) &&
+                          !string.IsNullOrEmpty(txtMkBaudRates[i].Text);
+
+                lblMkStatus[i].BackColor = ok ? Color.Green : Color.Red;
             }
         }
 
-        private void ResetModifiedColors()
+        private void ResetColors()
         {
-            foreach (var txt in txtMkComPorts) txt.BackColor = Color.White;
-            foreach (var txt in txtMkBaudRates) txt.BackColor = Color.White;
-            foreach (var txt in txtUvIpAddresses) txt.BackColor = Color.White;
+            foreach (var t in txtMkComPorts) t.BackColor = Color.White;
+            foreach (var t in txtMkBaudRates) t.BackColor = Color.White;
+            foreach (var t in txtUvIpAddresses) t.BackColor = Color.White;
             txtPlcIpAddress.BackColor = Color.White;
-        }
-
-        // Public method สำหรับดึงค่าไปใช้ที่อื่น
-        public PrinterSettings GetSettings()
-        {
-            return new PrinterSettings
-            {
-                MkComPorts = new[] { txtMk058Com.Text, txtMk059Com.Text, txtMk060Com.Text, txtMk061Com.Text },
-                MkBaudRates = new[] {
-                    int.TryParse(txtMk058Baud.Text, out int b1) ? b1 : 9600,
-                    int.TryParse(txtMk059Baud.Text, out int b2) ? b2 : 9600,
-                    int.TryParse(txtMk060Baud.Text, out int b3) ? b3 : 9600,
-                    int.TryParse(txtMk061Baud.Text, out int b4) ? b4 : 9600
-                },
-                UvIpAddresses = new[] { txtUv001Ip.Text, txtUv002Ip.Text },
-                PlcIpAddress = txtPlc001Ip.Text
-            };
         }
     }
 }

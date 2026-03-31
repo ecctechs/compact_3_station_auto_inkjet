@@ -18,15 +18,15 @@
         private void InitializeComponent()
         {
             pnlLeftMenu = new Panel();
+            btnIpAddressSetting = new Button();
+            btnDatabaseSetting = new Button();
             panelPcStation1 = new Panel();
             label1 = new Label();
             button1 = new Button();
             label2 = new Label();
             label3 = new Label();
-            textBox1 = new TextBox();
+            txtPcip = new TextBox();
             label4 = new Label();
-            btnIpAddressSetting = new Button();
-            btnDatabaseSetting = new Button();
             pnlMainContent = new Panel();
             pnlButtons = new Panel();
             btnCancel = new Button();
@@ -101,6 +101,36 @@
             pnlLeftMenu.Size = new Size(229, 800);
             pnlLeftMenu.TabIndex = 0;
             // 
+            // btnIpAddressSetting
+            // 
+            btnIpAddressSetting.BackColor = Color.FromArgb(50, 100, 180);
+            btnIpAddressSetting.Dock = DockStyle.Top;
+            btnIpAddressSetting.FlatAppearance.BorderSize = 0;
+            btnIpAddressSetting.FlatStyle = FlatStyle.Flat;
+            btnIpAddressSetting.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnIpAddressSetting.ForeColor = Color.White;
+            btnIpAddressSetting.Location = new Point(0, 67);
+            btnIpAddressSetting.Margin = new Padding(3, 4, 3, 4);
+            btnIpAddressSetting.Name = "btnIpAddressSetting";
+            btnIpAddressSetting.Size = new Size(229, 67);
+            btnIpAddressSetting.TabIndex = 0;
+            btnIpAddressSetting.Text = "IP Address Setting";
+            btnIpAddressSetting.UseVisualStyleBackColor = false;
+            // 
+            // btnDatabaseSetting
+            // 
+            btnDatabaseSetting.Dock = DockStyle.Top;
+            btnDatabaseSetting.FlatAppearance.BorderSize = 0;
+            btnDatabaseSetting.FlatStyle = FlatStyle.Flat;
+            btnDatabaseSetting.Font = new Font("Segoe UI", 12F);
+            btnDatabaseSetting.Location = new Point(0, 0);
+            btnDatabaseSetting.Margin = new Padding(3, 4, 3, 4);
+            btnDatabaseSetting.Name = "btnDatabaseSetting";
+            btnDatabaseSetting.Size = new Size(229, 67);
+            btnDatabaseSetting.TabIndex = 1;
+            btnDatabaseSetting.Text = "Database Setting";
+            btnDatabaseSetting.UseVisualStyleBackColor = true;
+            // 
             // panelPcStation1
             // 
             panelPcStation1.BackColor = Color.White;
@@ -109,9 +139,9 @@
             panelPcStation1.Controls.Add(button1);
             panelPcStation1.Controls.Add(label2);
             panelPcStation1.Controls.Add(label3);
-            panelPcStation1.Controls.Add(textBox1);
+            panelPcStation1.Controls.Add(txtPcip);
             panelPcStation1.Controls.Add(label4);
-            panelPcStation1.Location = new Point(249, 20);
+            panelPcStation1.Location = new Point(249, 47);
             panelPcStation1.Margin = new Padding(3, 4, 3, 4);
             panelPcStation1.Name = "panelPcStation1";
             panelPcStation1.Size = new Size(446, 214);
@@ -161,13 +191,13 @@
             label3.TabIndex = 3;
             label3.Text = "PC 2";
             // 
-            // textBox1
+            // txtPcip
             // 
-            textBox1.Location = new Point(103, 109);
-            textBox1.Margin = new Padding(3, 4, 3, 4);
-            textBox1.Name = "textBox1";
-            textBox1.Size = new Size(228, 27);
-            textBox1.TabIndex = 4;
+            txtPcip.Location = new Point(103, 109);
+            txtPcip.Margin = new Padding(3, 4, 3, 4);
+            txtPcip.Name = "txtPcip";
+            txtPcip.Size = new Size(228, 27);
+            txtPcip.TabIndex = 4;
             // 
             // label4
             // 
@@ -177,36 +207,6 @@
             label4.Size = new Size(85, 20);
             label4.TabIndex = 5;
             label4.Text = "IP Address :";
-            // 
-            // btnIpAddressSetting
-            // 
-            btnIpAddressSetting.BackColor = Color.FromArgb(50, 100, 180);
-            btnIpAddressSetting.Dock = DockStyle.Top;
-            btnIpAddressSetting.FlatAppearance.BorderSize = 0;
-            btnIpAddressSetting.FlatStyle = FlatStyle.Flat;
-            btnIpAddressSetting.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
-            btnIpAddressSetting.ForeColor = Color.White;
-            btnIpAddressSetting.Location = new Point(0, 67);
-            btnIpAddressSetting.Margin = new Padding(3, 4, 3, 4);
-            btnIpAddressSetting.Name = "btnIpAddressSetting";
-            btnIpAddressSetting.Size = new Size(229, 67);
-            btnIpAddressSetting.TabIndex = 0;
-            btnIpAddressSetting.Text = "IP Address Setting";
-            btnIpAddressSetting.UseVisualStyleBackColor = false;
-            // 
-            // btnDatabaseSetting
-            // 
-            btnDatabaseSetting.Dock = DockStyle.Top;
-            btnDatabaseSetting.FlatAppearance.BorderSize = 0;
-            btnDatabaseSetting.FlatStyle = FlatStyle.Flat;
-            btnDatabaseSetting.Font = new Font("Segoe UI", 12F);
-            btnDatabaseSetting.Location = new Point(0, 0);
-            btnDatabaseSetting.Margin = new Padding(3, 4, 3, 4);
-            btnDatabaseSetting.Name = "btnDatabaseSetting";
-            btnDatabaseSetting.Size = new Size(229, 67);
-            btnDatabaseSetting.TabIndex = 1;
-            btnDatabaseSetting.Text = "Database Setting";
-            btnDatabaseSetting.UseVisualStyleBackColor = true;
             // 
             // pnlMainContent
             // 
@@ -894,7 +894,7 @@
         private Button button1;
         private Label label2;
         private Label label3;
-        private TextBox textBox1;
+        private TextBox txtPcip;
         private Label label4;
     }
 }
