@@ -12,6 +12,8 @@ namespace InkjetOperator
         private ucInputOrder? _ucInput;
         //private ucSetting? _ucSetting;
         private ucSettingMenu? _ucSettingMenu;
+        private ucEditPattern? _ucEditPattern;
+        private ucOrder? _ucOrder;
 
         // เก็บ reference ของปุ่มเมนู
         private Button? _btnInput;
@@ -149,28 +151,24 @@ namespace InkjetOperator
         private void ShowOrderList()
         {
             pnlContent.Controls.Clear();
-            var lbl = new Label
-            {
-                Text = "Order List - Coming Soon",
-                Font = new Font("Segoe UI", 24, FontStyle.Bold),
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleCenter
-            };
-            pnlContent.Controls.Add(lbl);
+
+            // เปลี่ยนจาก ucOrder เป็น ucOrder
+            _ucOrder ??= new ucOrder();
+            _ucOrder.Dock = DockStyle.Fill;
+            pnlContent.Controls.Add(_ucOrder);
+
             SetActiveButton(_btnOrder);
         }
 
         private void ShowEditPattern()
         {
             pnlContent.Controls.Clear();
-            var lbl = new Label
-            {
-                Text = "Edit Pattern - Coming Soon",
-                Font = new Font("Segoe UI", 24, FontStyle.Bold),
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleCenter
-            };
-            pnlContent.Controls.Add(lbl);
+
+            // เปลี่ยนจาก ucSetting เป็น ucSettingMenu
+            _ucEditPattern ??= new ucEditPattern();
+            _ucEditPattern.Dock = DockStyle.Fill;
+            pnlContent.Controls.Add(_ucEditPattern);
+
             SetActiveButton(_btnEdit);
         }
 
