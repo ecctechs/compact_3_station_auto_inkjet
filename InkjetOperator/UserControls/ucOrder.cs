@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 using InkjetOperator.Models;
@@ -14,7 +15,7 @@ namespace InkjetOperator
         public ucOrder()
         {
             InitializeComponent();
-            _api = new ApiClient("http://localhost:3000");
+            _api = ApiProvider.Instance; // 🔥 ใช้จาก global
 
             get_job();
 

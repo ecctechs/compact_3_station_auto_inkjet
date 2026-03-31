@@ -26,6 +26,9 @@ static class Program
             PatternStore.Load(xmlPath);
         }
 
+        // 🔥 init API ครั้งเดียว
+        ApiProvider.Init();
+
         Application.Run(new Form1());
     }
 }

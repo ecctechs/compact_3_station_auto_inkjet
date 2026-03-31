@@ -31,7 +31,7 @@ namespace InkjetOperator
             SetupEvents();
             this.Dock = DockStyle.Fill;
 
-            _api = new ApiClient("http://localhost:3000");
+            _api = ApiProvider.Instance; // 🔥 ใช้จาก global
         }
 
         private void SetupEvents()

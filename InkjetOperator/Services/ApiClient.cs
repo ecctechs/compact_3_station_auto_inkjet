@@ -1,149 +1,170 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Threading.Tasks;
 using InkjetOperator.Models;
 
-namespace InkjetOperator.Services;
-
-/// <summary>
-/// HTTP client for the InkjetBackend REST API.
-/// Polls for pending jobs, fetches resolved patterns, posts results.
-/// </summary>
-public class ApiClient
+namespace InkjetOperator.Services
 {
-    private readonly HttpClient _http;
-    private readonly string _baseUrl;
-
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    /// <summary>
+    /// HTTP client for the InkjetBackend REST API
+    /// </summary>
+    public class ApiClient
     {
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-        PropertyNameCaseInsensitive = true,
-    };
+        private static readonly HttpClient _http = new HttpClient();
 
-    public ApiClient(string baseUrl)
-    {
-        _baseUrl = baseUrl.TrimEnd('/');
-        _http = new HttpClient
+        private readonly string _baseUrl;
+
+        private static readonly JsonSerializerOptions JsonOptions = new()
         {
-            BaseAddress = new Uri(_baseUrl),
-            Timeout = TimeSpan.FromSeconds(10),
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+            PropertyNameCaseInsensitive = true,
         };
-    }
 
-    /// <summary>POST /job/create — create new job</summary>
-    public async Task<bool> CreateJobAsync(CreateJobRequest request)
-    {
-        try
+        public ApiClient(string baseUrl)
         {
-            var response = await _http.PostAsJsonAsync("/job/create", request, JsonOptions);
-            response.EnsureSuccessStatusCode();
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("CreateJob error: " + ex.Message);
-            return false;
-        }
-    }
+            _baseUrl = baseUrl.TrimEnd('/');
 
-    /// <summary>GET /job/getAll?status=pending — polled every 5s by frmMain timer.</summary>
-    public async Task<List<PrintJob>> GetPendingJobsAsync()
-    {
-        try
-        {
-            var response = await _http.GetAsync("/job/getAll?status=pending");
-            response.EnsureSuccessStatusCode();
+            _http.BaseAddress = new Uri(_baseUrl);
+            _http.Timeout = TimeSpan.FromSeconds(10);
+        }
 
-            var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedResult<PrintJob>>>(JsonOptions);
-            return wrapper?.Data?.Data ?? new List<PrintJob>();
-        }
-        catch (Exception ex)
+        // =========================
+        // CREATE JOB
+        // =========================
+        public async Task<bool> CreateJobAsync(CreateJobRequest request)
         {
-            Console.WriteLine("GetPendingJobs error: " + ex.Message);
-            return new List<PrintJob>();
+            try
+            {
+                var response = await _http.PostAsJsonAsync("/job/create", request, JsonOptions);
+                response.EnsureSuccessStatusCode();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("CreateJob error: " + ex);
+                return false;
+            }
         }
-    }
 
-    /// <summary>GET /job/getById/:id</summary>
-    public async Task<PrintJob?> GetJobByIdAsync(int jobId)
-    {
-        try
+        // =========================
+        // GET PENDING JOBS
+        // =========================
+        public async Task<List<PrintJob>> GetPendingJobsAsync()
         {
-            var response = await _http.GetAsync($"/job/getById/{jobId}");
-            response.EnsureSuccessStatusCode();
+            try
+            {
+                var response = await _http.GetAsync("/job/getAll?status=pending");
+                response.EnsureSuccessStatusCode();
 
-            var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<PrintJob>>(JsonOptions);
-            return wrapper?.Data;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("GetJobById error: " + ex.Message);
-            return null;
-        }
-    }
+                var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedResult<PrintJob>>>(JsonOptions);
 
-    /// <summary>GET /job/getResolved/:id — returns job + pattern with resolved templates.</summary>
-    public async Task<ResolvedJobResponse?> GetResolvedJobAsync(int jobId)
-    {
-        try
-        {
-            var response = await _http.GetAsync($"/job/getResolved/{jobId}");
-            response.EnsureSuccessStatusCode();
+                return wrapper?.Data?.Data ?? new List<PrintJob>();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("GetPendingJobs error: " + ex);
+                return new List<PrintJob>();
+            }
+        }
 
-            var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<ResolvedJobResponse>>(JsonOptions);
-            return wrapper?.Data;
-        }
-        catch (Exception ex)
+        // =========================
+        // GET JOB BY ID
+        // =========================
+        public async Task<PrintJob?> GetJobByIdAsync(int jobId)
         {
-            Console.WriteLine("GetResolvedJob error: " + ex.Message);
-            return null;
-        }
-    }
+            try
+            {
+                var response = await _http.GetAsync($"/job/getById/{jobId}");
+                response.EnsureSuccessStatusCode();
 
-    /// <summary>POST /job/execute/:id — marks job as executing.</summary>
-    public async Task<bool> ExecuteJobAsync(int jobId)
-    {
-        try
-        {
-            var response = await _http.PostAsync($"/job/execute/{jobId}", null);
-            response.EnsureSuccessStatusCode();
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("ExecuteJob error: " + ex.Message);
-            return false;
-        }
-    }
+                var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<PrintJob>>(JsonOptions);
 
-    /// <summary>POST /job/postResults/:id — posts command results back to backend.</summary>
-    public async Task<bool> PostResultsAsync(int jobId, JobResultsPayload results)
-    {
-        try
-        {
-            var response = await _http.PostAsJsonAsync($"/job/postResults/{jobId}", results, JsonOptions);
-            response.EnsureSuccessStatusCode();
-            return true;
+                return wrapper?.Data;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("GetJobById error: " + ex);
+                return null;
+            }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine("PostResults error: " + ex.Message);
-            return false;
-        }
-    }
 
-    /// <summary>POST /job/retry/:id — resets failed job to pending.</summary>
-    public async Task<bool> RetryJobAsync(int jobId)
-    {
-        try
+        // =========================
+        // GET RESOLVED JOB
+        // =========================
+        public async Task<ResolvedJobResponse?> GetResolvedJobAsync(int jobId)
         {
-            var response = await _http.PostAsync($"/job/retry/{jobId}", null);
-            response.EnsureSuccessStatusCode();
-            return true;
+            try
+            {
+                var response = await _http.GetAsync($"/job/getResolved/{jobId}");
+                response.EnsureSuccessStatusCode();
+
+                var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<ResolvedJobResponse>>(JsonOptions);
+
+                return wrapper?.Data;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("GetResolvedJob error: " + ex);
+                return null;
+            }
         }
-        catch (Exception ex)
+
+        // =========================
+        // EXECUTE JOB
+        // =========================
+        public async Task<bool> ExecuteJobAsync(int jobId)
         {
-            Console.WriteLine("RetryJob error: " + ex.Message);
-            return false;
+            try
+            {
+                var response = await _http.PostAsync($"/job/execute/{jobId}", null);
+                response.EnsureSuccessStatusCode();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("ExecuteJob error: " + ex);
+                return false;
+            }
+        }
+
+        // =========================
+        // POST RESULTS
+        // =========================
+        public async Task<bool> PostResultsAsync(int jobId, JobResultsPayload results)
+        {
+            try
+            {
+                var response = await _http.PostAsJsonAsync($"/job/postResults/{jobId}", results, JsonOptions);
+                response.EnsureSuccessStatusCode();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("PostResults error: " + ex);
+                return false;
+            }
+        }
+
+        // =========================
+        // RETRY JOB
+        // =========================
+        public async Task<bool> RetryJobAsync(int jobId)
+        {
+            try
+            {
+                var response = await _http.PostAsync($"/job/retry/{jobId}", null);
+                response.EnsureSuccessStatusCode();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("RetryJob error: " + ex);
+                return false;
+            }
         }
     }
 }

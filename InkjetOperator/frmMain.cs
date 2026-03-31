@@ -45,7 +45,7 @@ public partial class frmMain : Form
         _adapterIj3 = new SqliteInkjetAdapter(_tcpIj3, ""); // db path TBD
         _adapterIj4 = new SqliteInkjetAdapter(_tcpIj4, ""); // db path TBD
 
-        _api = new ApiClient("http://localhost:3000");
+        _api = ApiProvider.Instance; // 🔥 ใช้จาก global
     }
 
     // ════════════════════════════════════════

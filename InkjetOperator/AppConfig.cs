@@ -12,6 +12,22 @@ namespace InkjetOperator
         public string AppName { get; set; } = "Inkjet Operator";
         public string Company { get; set; } = "ECC Solutions";
 
+        public static string PcIp =>
+            CustomSettingsManager.GetValue("PC_IP") ?? "localhost";
+
+        public static string ApiUrl
+        {
+            get
+            {
+                var ip = PcIp;
+                Debug.WriteLine("PC IP: " + ip);    
+                if (ip.StartsWith("http"))
+                    return ip;
+
+                return $"http://{ip}:3000";
+            }
+        }
+
         // โหลด config จาก App.config
         public static AppConfig Load()
         {
