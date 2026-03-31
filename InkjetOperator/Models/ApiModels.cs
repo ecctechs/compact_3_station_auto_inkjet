@@ -33,11 +33,26 @@ public class PrintJob
     [JsonPropertyName("barcode_raw")]
     public string BarcodeRaw { get; set; } = "";
 
+    [JsonPropertyName("order_no")]
+    public string? OrderNo { get; set; }
+
+    [JsonPropertyName("customer_name")]
+    public string? CustomerName { get; set; }
+
+    [JsonPropertyName("type")]
+    public string? Type { get; set; }
+
+    [JsonPropertyName("qty")]
+    public int Qty { get; set; }
+
     [JsonPropertyName("pattern_id")]
     public int? PatternId { get; set; }
 
     [JsonPropertyName("lot_number")]
     public string? LotNumber { get; set; }
+
+    [JsonPropertyName("pattern_no_erp")]
+    public string? PatternNoErp { get; set; }
 
     [JsonPropertyName("status")]
     public string Status { get; set; } = "pending";
@@ -45,14 +60,20 @@ public class PrintJob
     [JsonPropertyName("error_message")]
     public string? ErrorMessage { get; set; }
 
-    [JsonPropertyName("created_by")]
-    public string? CreatedBy { get; set; }
+    [JsonPropertyName("warning")]
+    public string? Warning { get; set; }
 
     [JsonPropertyName("attempt")]
     public int Attempt { get; set; }
 
-    [JsonPropertyName("warning")]
-    public string? Warning { get; set; }
+    [JsonPropertyName("created_by")]
+    public string? CreatedBy { get; set; }
+
+    [JsonPropertyName("created_at")]
+    public DateTime CreatedAt { get; set; }
+
+    [JsonPropertyName("updated_at")]
+    public DateTime UpdatedAt { get; set; }
 }
 
 // --- Pattern models (from GET /job/getResolved) ---

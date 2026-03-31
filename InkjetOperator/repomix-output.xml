@@ -58,14 +58,26 @@ InkjetOperator.csproj.Backup.tmp
 Managers/Rs232Manager.cs
 Managers/TcpManager.cs
 Models/ApiModels.cs
+Models/Pattern.cs
+Models/PrintJob.cs
+Models/Rule.cs
+Models/TransformRuleType.cs
 PlcAdapter/PlcManager.cs
 Program.cs
 Properties/Resources.Designer.cs
 Properties/Resources.resx
 Services/ApiClient.cs
+Services/PatternEngine.cs
+Services/PatternStore.cs
+UserControls/ucEditPattern.cs
+UserControls/ucEditPattern.Designer.cs
+UserControls/ucEditPattern.resx
 UserControls/ucInputOrder.cs
 UserControls/ucInputOrder.Designer.cs
 UserControls/ucInputOrder.resx
+UserControls/ucOrder.cs
+UserControls/ucOrder.Designer.cs
+UserControls/ucOrder.resx
 UserControls/ucSetting.cs
 UserControls/ucSettingDB3.cs
 UserControls/ucSettingDB3.Designer.cs
@@ -379,7 +391,7 @@ public class SqliteInkjetAdapter : IInkjetAdapter
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
 	<appSettings>
-		<add key="MenuMode" value="1"/>
+		<add key="MenuMode" value="2"/>
 		<add key="AppName" value="Inkjet Operator"/>
 	</appSettings>
 </configuration>
@@ -505,6 +517,8 @@ namespace InkjetOperator
         private ucInputOrder? _ucInput;
         //private ucSetting? _ucSetting;
         private ucSettingMenu? _ucSettingMenu;
+        private ucEditPattern? _ucEditPattern;
+        private ucOrder? _ucOrder;
 
         // เก็บ reference ของปุ่มเมนู
         private Button? _btnInput;
@@ -642,28 +656,24 @@ namespace InkjetOperator
         private void ShowOrderList()
         {
             pnlContent.Controls.Clear();
-            var lbl = new Label
-            {
-                Text = "Order List - Coming Soon",
-                Font = new Font("Segoe UI", 24, FontStyle.Bold),
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleCenter
-            };
-            pnlContent.Controls.Add(lbl);
+
+            // เปลี่ยนจาก ucOrder เป็น ucOrder
+            _ucOrder ??= new ucOrder();
+            _ucOrder.Dock = DockStyle.Fill;
+            pnlContent.Controls.Add(_ucOrder);
+
             SetActiveButton(_btnOrder);
         }
 
         private void ShowEditPattern()
         {
             pnlContent.Controls.Clear();
-            var lbl = new Label
-            {
-                Text = "Edit Pattern - Coming Soon",
-                Font = new Font("Segoe UI", 24, FontStyle.Bold),
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleCenter
-            };
-            pnlContent.Controls.Add(lbl);
+
+            // เปลี่ยนจาก ucSetting เป็น ucSettingMenu
+            _ucEditPattern ??= new ucEditPattern();
+            _ucEditPattern.Dock = DockStyle.Fill;
+            pnlContent.Controls.Add(_ucEditPattern);
+
             SetActiveButton(_btnEdit);
         }
 
@@ -2519,11 +2529,26 @@ public class PrintJob
     [JsonPropertyName("barcode_raw")]
     public string BarcodeRaw { get; set; } = "";
 
+    [JsonPropertyName("order_no")]
+    public string? OrderNo { get; set; }
+
+    [JsonPropertyName("customer_name")]
+    public string? CustomerName { get; set; }
+
+    [JsonPropertyName("type")]
+    public string? Type { get; set; }
+
+    [JsonPropertyName("qty")]
+    public int Qty { get; set; }
+
     [JsonPropertyName("pattern_id")]
     public int? PatternId { get; set; }
 
     [JsonPropertyName("lot_number")]
     public string? LotNumber { get; set; }
+
+    [JsonPropertyName("pattern_no_erp")]
+    public string? PatternNoErp { get; set; }
 
     [JsonPropertyName("status")]
     public string Status { get; set; } = "pending";
@@ -2531,14 +2556,20 @@ public class PrintJob
     [JsonPropertyName("error_message")]
     public string? ErrorMessage { get; set; }
 
-    [JsonPropertyName("created_by")]
-    public string? CreatedBy { get; set; }
+    [JsonPropertyName("warning")]
+    public string? Warning { get; set; }
 
     [JsonPropertyName("attempt")]
     public int Attempt { get; set; }
 
-    [JsonPropertyName("warning")]
-    public string? Warning { get; set; }
+    [JsonPropertyName("created_by")]
+    public string? CreatedBy { get; set; }
+
+    [JsonPropertyName("created_at")]
+    public DateTime CreatedAt { get; set; }
+
+    [JsonPropertyName("updated_at")]
+    public DateTime UpdatedAt { get; set; }
 }
 
 // --- Pattern models (from GET /job/getResolved) ---
@@ -2693,6 +2724,171 @@ public class CommandResult
 }
 </file>
 
+<file path="Models/Pattern.cs">
+using System.Collections.Generic;
+
+namespace InkjetOperator.Models
+{
+    public class Pattern
+    {
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public List<Rule> Rules { get; set; }
+        public string TestBarcode { get; set; }
+        public string TestBlockText { get; set; }
+        public string TestPreview { get; set; }
+
+        public Pattern()
+        {
+            Rules = new List<Rule>();
+            TestBarcode = string.Empty;
+            TestBlockText = string.Empty;
+            TestPreview = string.Empty;
+        }
+
+        public string Apply(string input)
+        {
+            input = input ?? string.Empty;
+            var parts = new List<string>();
+            foreach (var r in Rules)
+            {
+                try { parts.Add(r.Apply(input)); }
+                catch { parts.Add(string.Empty); }
+            }
+            return string.Concat(parts);
+        }
+    }
+}
+</file>
+
+<file path="Models/PrintJob.cs">
+//public class PrintJob
+//{
+//    public int Id { get; set; }
+//    public string BarcodeRaw { get; set; }
+//    public string OrderNo { get; set; }
+//    public string CustomerName { get; set; }
+//    public string Type { get; set; }
+//    public int Qty { get; set; }
+//    public int? PatternId { get; set; }
+//    public string LotNumber { get; set; }
+//    public string PatternNoErp { get; set; }
+//    public string Status { get; set; }
+//    public string ErrorMessage { get; set; }
+//    public string Warning { get; set; }
+//    public int Attempt { get; set; }
+//    public string CreatedBy { get; set; }
+//    public DateTime CreatedAt { get; set; }
+//    public DateTime UpdatedAt { get; set; }
+//}
+</file>
+
+<file path="Models/Rule.cs">
+using System;
+
+namespace InkjetOperator.Models
+{
+    public class Rule
+    {
+        public int SourceStart { get; set; }
+        public int SourceEnd { get; set; }
+        public TransformRuleType TransformRule { get; set; }
+        public string Parameter { get; set; }
+        public bool IsActive { get; set; }
+
+        public Rule() { Parameter = string.Empty; IsActive = true; }
+
+        public string Apply(string input)
+        {
+            if (!IsActive) return string.Empty;
+            input = input ?? string.Empty;
+            string ext = Extract(input);
+            switch (TransformRule)
+            {
+                case TransformRuleType.DELETE: return string.Empty;
+                case TransformRuleType.FIX_TEXT: return Parameter ?? string.Empty;
+                case TransformRuleType.COPY: return ext;
+                case TransformRuleType.PAD_LEFT: return (Parameter ?? "") + ext;
+                case TransformRuleType.PAD_RIGHT: return ext + (Parameter ?? "");
+                case TransformRuleType.AZ_LOWER: return SwapAZ(ext, true);
+                case TransformRuleType.AZ_UPPER: return SwapAZ(ext, false);
+                case TransformRuleType.TAKE_RIGHT: return TakeRight(ext);
+                case TransformRuleType.TAKE_LEFT: return TakeLeft(ext);
+                default: return ext;
+            }
+        }
+
+        private string Extract(string input)
+        {
+            int s = Math.Max(1, SourceStart);
+            int e = Math.Max(0, SourceEnd);
+            if (s > e || s > input.Length) return string.Empty;
+            int idx = s - 1;
+            int len = Math.Min(e, input.Length) - idx;
+            return (len > 0) ? input.Substring(idx, len) : string.Empty;
+        }
+
+        private string SwapAZ(string ext, bool lower)
+        {
+            int num;
+            if (!int.TryParse(ext, out num)) return string.Empty;
+            int baseVal = 0;
+            if (!string.IsNullOrEmpty(Parameter)) int.TryParse(Parameter, out baseVal);
+            int offset = num - baseVal;
+            if (offset < 0) return string.Empty;
+            string az = OffsetToAZ(offset);
+            return lower ? az.ToLower() : az.ToUpper();
+        }
+
+        private string TakeRight(string s)
+        {
+            int n;
+            if (!int.TryParse(Parameter, out n) || n <= 0) return s;
+            return n >= s.Length ? s : s.Substring(s.Length - n);
+        }
+
+        private string TakeLeft(string s)
+        {
+            int n;
+            if (!int.TryParse(Parameter, out n) || n <= 0) return s;
+            return n >= s.Length ? s : s.Substring(0, n);
+        }
+
+        private static string OffsetToAZ(int offset)
+        {
+            int n = offset + 1; string s = string.Empty;
+            while (n > 0) { n--; s = (char)('A' + (n % 26)) + s; n /= 26; }
+            return s;
+        }
+    }
+}
+</file>
+
+<file path="Models/TransformRuleType.cs">
+using System.ComponentModel;
+
+namespace InkjetOperator.Models
+{
+    public enum TransformRuleType
+    {
+        [Description("Delete")] // เพิ่มบรรทัดนี้
+        DELETE,
+        FIX_TEXT,
+        COPY,
+        [Description("Keep + Pad Left")] // เพิ่มบรรทัดนี้
+        PAD_LEFT,
+        [Description("Keep + Pad Right")] // เพิ่มบรรทัดนี้
+        PAD_RIGHT,
+        [Description("Swap a-z")] // เพิ่มบรรทัดนี้
+        AZ_LOWER,
+        [Description("Swap A-Z")] // เพิ่มบรรทัดนี้
+        AZ_UPPER,
+        TAKE_RIGHT,
+        TAKE_LEFT
+    }
+}
+</file>
+
 <file path="PlcAdapter/PlcManager.cs">
 using System.Net.Sockets;
 using System.Text;
@@ -2772,16 +2968,33 @@ public class PlcManager
 
 <file path="Program.cs">
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using InkjetOperator.Services;
 
 namespace InkjetOperator;
 
 static class Program
 {
+    [DllImport("user32.dll")]
+    private static extern bool SetProcessDPIAware();
     [STAThread]
     static void Main()
     {
+        SetProcessDPIAware();
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
+        // โหลด patterns (สร้าง default ถ้ายังไม่มี)
+        string xmlPath = Path.Combine(Application.StartupPath, "patterns.xml");
+        PatternStore.SeedDefaults(xmlPath); // สร้างไฟล์ + default patterns ถ้ายังไม่มี
+        PatternStore.Load(xmlPath);         // โหลด patterns จาก XML เข้า memory
+
+        // ถ้า Load ล้มเหลว (XML เสีย → ถูกลบ) สร้าง + โหลดใหม่
+        if (PatternStore.Patterns.Count == 0)
+        {
+            PatternStore.SeedDefaults(xmlPath);
+            PatternStore.Load(xmlPath);
+        }
+
         Application.Run(new Form1());
     }
 }
@@ -3110,6 +3323,689 @@ public class ApiClient
         }
     }
 }
+</file>
+
+<file path="Services/PatternEngine.cs">
+using InkjetOperator.Models;
+
+namespace InkjetOperator.Services
+{
+    public static class PatternEngine
+    {
+        public static string Process(string barcode, string blockText)
+        {
+            if (string.IsNullOrEmpty(barcode)) return blockText ?? string.Empty;
+            if (string.IsNullOrEmpty(blockText)) return string.Empty;
+            foreach (var p in PatternStore.Patterns)
+            {
+                if (!string.IsNullOrEmpty(p.Name) && blockText.Contains(p.Name))
+                    return blockText.Replace(p.Name, p.Apply(barcode));
+            }
+            return blockText;
+        }
+
+        public static string[] ProcessBlocks(string barcode, string[] blockTexts)
+        {
+            if (blockTexts == null) return new string[0];
+            var results = new string[blockTexts.Length];
+            for (int i = 0; i < blockTexts.Length; i++)
+                results[i] = Process(barcode, blockTexts[i]);
+            return results;
+        }
+    }
+}
+</file>
+
+<file path="Services/PatternStore.cs">
+using System.Collections.Generic;
+using System.IO;
+using System.Xml.Serialization;
+using InkjetOperator.Models;
+
+namespace InkjetOperator.Services
+{
+    public static class PatternStore
+    {
+        public static List<Pattern> Patterns { get; } = new List<Pattern>();
+
+        public static void Save(string path)
+        {
+            var ser = new XmlSerializer(typeof(List<Pattern>));
+            using (var fs = new FileStream(path, FileMode.Create))
+                ser.Serialize(fs, Patterns);
+        }
+
+        public static void Load(string path)
+        {
+            if (!File.Exists(path)) return;
+            try
+            {
+                var ser = new XmlSerializer(typeof(List<Pattern>));
+                using (var fs = new FileStream(path, FileMode.Open))
+                {
+                    var list = (List<Pattern>)ser.Deserialize(fs);
+                    Patterns.Clear();
+                    Patterns.AddRange(list);
+                }
+            }
+            catch
+            {
+                // XML เสีย — ลบแล้วให้ SeedDefaults สร้างใหม่
+                try { File.Delete(path); } catch { }
+            }
+        }
+
+        /// <summary>สร้าง default CCCC + DDDD ถ้ายังไม่มีไฟล์ (ตรงกับ XML จริง)</summary>
+        public static void SeedDefaults(string path)
+        {
+            if (File.Exists(path)) return;
+
+            // CCCC: copy barcode ทั้งตัว
+            var cccc = new Pattern
+            {
+                Name = "CCCC",
+                TestBarcode = "C240801-027",
+                TestBlockText = "CCCC-01 CPI291",
+                TestPreview = "C240801-027-01 CPI291",
+            };
+            cccc.Rules.Add(new Rule { SourceStart = 1, SourceEnd = 999, TransformRule = TransformRuleType.COPY });
+            Patterns.Add(cccc);
+
+            // DDDD: C200521-001 → FE21-01
+            var dddd = new Pattern
+            {
+                Name = "DDDD",
+                TestBarcode = "C200521-001",
+                TestBlockText = "DDDD-01",
+                TestPreview = "FE21-01-01",
+            };
+            dddd.Rules.AddRange(new[]
+            {
+                new Rule { SourceStart = 1,  SourceEnd = 1,  TransformRule = TransformRuleType.DELETE },
+                new Rule { SourceStart = 2,  SourceEnd = 3,  TransformRule = TransformRuleType.AZ_UPPER, Parameter = "15" },
+                new Rule { SourceStart = 4,  SourceEnd = 5,  TransformRule = TransformRuleType.AZ_UPPER, Parameter = "1" },
+                new Rule { SourceStart = 6,  SourceEnd = 7,  TransformRule = TransformRuleType.COPY },
+                new Rule { SourceStart = 8,  SourceEnd = 8,  TransformRule = TransformRuleType.COPY },
+                new Rule { SourceStart = 9,  SourceEnd = 11, TransformRule = TransformRuleType.TAKE_RIGHT, Parameter = "2" },
+            });
+            Patterns.Add(dddd);
+
+            Save(path);
+        }
+    }
+}
+</file>
+
+<file path="UserControls/ucEditPattern.cs">
+using System;
+using System.ComponentModel;
+using System.Drawing;
+using System.IO;
+using System.Windows.Forms;
+using System.Xml.Xsl;
+using InkjetOperator.Models;
+using InkjetOperator.Services;
+
+namespace InkjetOperator
+{
+    public partial class ucEditPattern : UserControl
+    {
+        private BindingList<Pattern>? _patterns;
+        private BindingList<Rule>? _currentRules;
+        private Pattern? _selectedPattern;
+
+        public ucEditPattern()
+        {
+            InitializeComponent();
+            SetupDataGridView();
+            LoadData();
+        }
+
+        private void SetupDataGridView()
+        {
+            dgvRules.AutoGenerateColumns = false;
+            colFrom.DataPropertyName = "SourceStart";
+            colTo.DataPropertyName = "SourceEnd";
+            colTransform.DataPropertyName = "TransformRule";
+            colParameter.DataPropertyName = "Parameter";
+
+            // ตั้งค่า Enum ให้กับ ComboBox ในตาราง
+            // แก้ไขส่วนนี้: เพื่อให้ ComboBox แสดงชื่อตาม Description
+            colTransform.DataSource = Enum.GetValues(typeof(TransformRuleType))
+                .Cast<TransformRuleType>()
+                .Select(e => new
+                {
+                    Value = e,
+                    Name = GetEnumDescription(e)
+                }).ToList();
+            colTransform.ValueMember = "Value";
+            colTransform.DisplayMember = "Name";
+        }
+
+        // เพิ่มฟังก์ชันช่วยอ่านค่า Description ไว้ข้างล่าง SetupDataGridView
+        private string GetEnumDescription(Enum value)
+        {
+            var field = value.GetType().GetField(value.ToString());
+            var attribute = field?.GetCustomAttributes(typeof(DescriptionAttribute), false)
+                                  .FirstOrDefault() as DescriptionAttribute;
+            return attribute != null ? attribute.Description : value.ToString();
+        }
+
+        private void LoadData()
+        {
+            _patterns = new BindingList<Pattern>(PatternStore.Patterns);
+            lstPatterns.DataSource = _patterns;
+            lstPatterns.DisplayMember = "Name";
+        }
+
+        private void lstPatterns_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            _selectedPattern = lstPatterns.SelectedItem as Pattern;
+            if (_selectedPattern == null) return;
+
+            // ดึงค่าจาก Object มาแสดง (รวมถึงค่าที่โหลดจาก XML)
+            txtPatternName.Text = _selectedPattern.Name;
+            txtDescription.Text = _selectedPattern.Description;
+            txtBarcodeTest.Text = _selectedPattern.TestBarcode;
+            txtBlockText.Text = _selectedPattern.TestBlockText;
+
+            _currentRules = new BindingList<Rule>(_selectedPattern.Rules);
+            dgvRules.DataSource = _currentRules;
+
+            UpdatePreview();
+        }
+
+        private void UpdatePreview()
+        {
+            if (_selectedPattern == null) return;
+
+            // จำลองการใช้กฎกับ Barcode ที่กรอกในช่อง Lot test
+            string result = _selectedPattern.Apply(txtBarcodeTest.Text);
+
+            // ถ้าใน Block text มีชื่อ Pattern อยู่ ให้แทนที่ด้วยผลลัพธ์
+            if (!string.IsNullOrEmpty(txtPatternName.Text) && txtBlockText.Text.Contains(txtPatternName.Text))
+                lblPreview.Text = txtBlockText.Text.Replace(txtPatternName.Text, result);
+            else
+                lblPreview.Text = result;
+        }
+
+        private void dgvRules_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // ตรวจสอบว่าคลิกที่ปุ่มในคอลัมน์ colDelete หรือไม่
+            if (e.RowIndex >= 0 && dgvRules.Columns[e.ColumnIndex].Name == "colDelete")
+            {
+                _currentRules?.RemoveAt(e.RowIndex);
+                UpdatePreview();
+            }
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            if (_selectedPattern != null)
+            {
+                _selectedPattern.Name = txtPatternName.Text;
+                _selectedPattern.Description = txtDescription.Text;
+                _selectedPattern.TestBarcode = txtBarcodeTest.Text; // บันทึกค่าทดสอบลง XML
+                _selectedPattern.TestBlockText = txtBlockText.Text;   // บันทึกค่าทดสอบลง XML
+            }
+
+            string xmlPath = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory, "patterns.xml");
+            PatternStore.Save(xmlPath);
+            MessageBox.Show("บันทึกข้อมูลรูปแบบและค่าทดสอบลงไฟล์เรียบร้อยแล้ว", "บันทึกสำเร็จ");
+        }
+
+        private void btnAddRule_Click(object sender, EventArgs e)
+        {
+            _currentRules?.Add(new Rule());
+        }
+
+        private void btnAddPattern_Click(object sender, EventArgs e)
+        {
+            var newP = new Pattern { Name = "NEW_PATTERN" };
+            _patterns?.Add(newP);
+            lstPatterns.SelectedItem = newP;
+        }
+
+        private void btnDeletePattern_Click(object sender, EventArgs e)
+        {
+            if (_selectedPattern != null && MessageBox.Show("ยืนยันการลบ Pattern นี้?", "ยืนยัน", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                _patterns?.Remove(_selectedPattern);
+        }
+
+        private void InputChanged(object sender, EventArgs e) => UpdatePreview();
+        private void dgvRules_CellValueChanged(object sender, DataGridViewCellEventArgs e) => UpdatePreview();
+    }
+}
+</file>
+
+<file path="UserControls/ucEditPattern.Designer.cs">
+namespace InkjetOperator
+{
+    partial class ucEditPattern
+    {
+        private System.ComponentModel.IContainer components = null;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows Form Designer generated code
+
+        private void InitializeComponent()
+        {
+            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.lstPatterns = new System.Windows.Forms.ListBox();
+            this.pnlLeftBottom = new System.Windows.Forms.Panel();
+            this.btnDelPattern = new System.Windows.Forms.Button();
+            this.btnNewPattern = new System.Windows.Forms.Button();
+            this.lblPreview = new System.Windows.Forms.Label();
+            this.label5 = new System.Windows.Forms.Label();
+            this.dgvRules = new System.Windows.Forms.DataGridView();
+            this.colFrom = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colTo = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colTransform = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.colParameter = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colDelete = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.btnSave = new System.Windows.Forms.Button();
+            this.btnAddRule = new System.Windows.Forms.Button();
+            this.txtBlockText = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.txtBarcodeTest = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.txtDescription = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.txtPatternName = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
+            this.splitContainer1.Panel1.SuspendLayout();
+            this.splitContainer1.Panel2.SuspendLayout();
+            this.splitContainer1.SuspendLayout();
+            this.pnlLeftBottom.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvRules)).BeginInit();
+            this.SuspendLayout();
+            // 
+            // splitContainer1
+            // 
+            this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer1.Location = new System.Drawing.Point(0, 0);
+            this.splitContainer1.Name = "splitContainer1";
+            this.splitContainer1.Panel1.Controls.Add(this.lstPatterns);
+            this.splitContainer1.Panel1.Controls.Add(this.pnlLeftBottom);
+            this.splitContainer1.Panel1.Padding = new System.Windows.Forms.Padding(10);
+            this.splitContainer1.Panel2.Controls.Add(this.lblPreview);
+            this.splitContainer1.Panel2.Controls.Add(this.label5);
+            this.splitContainer1.Panel2.Controls.Add(this.dgvRules);
+            this.splitContainer1.Panel2.Controls.Add(this.btnSave);
+            this.splitContainer1.Panel2.Controls.Add(this.btnAddRule);
+            this.splitContainer1.Panel2.Controls.Add(this.txtBlockText);
+            this.splitContainer1.Panel2.Controls.Add(this.label4);
+            this.splitContainer1.Panel2.Controls.Add(this.txtBarcodeTest);
+            this.splitContainer1.Panel2.Controls.Add(this.label3);
+            this.splitContainer1.Panel2.Controls.Add(this.txtDescription);
+            this.splitContainer1.Panel2.Controls.Add(this.label2);
+            this.splitContainer1.Panel2.Controls.Add(this.txtPatternName);
+            this.splitContainer1.Panel2.Controls.Add(this.label1);
+            this.splitContainer1.Panel2.Padding = new System.Windows.Forms.Padding(10);
+            this.splitContainer1.Size = new System.Drawing.Size(900, 545);
+            this.splitContainer1.SplitterDistance = 220;
+            this.splitContainer1.TabIndex = 0;
+            // 
+            // lstPatterns
+            // 
+            this.lstPatterns.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lstPatterns.FormattingEnabled = true;
+            this.lstPatterns.ItemHeight = 15;
+            this.lstPatterns.Location = new System.Drawing.Point(10, 10);
+            this.lstPatterns.Name = "lstPatterns";
+            this.lstPatterns.Size = new System.Drawing.Size(200, 485);
+            this.lstPatterns.TabIndex = 0;
+            this.lstPatterns.SelectedIndexChanged += new System.EventHandler(this.lstPatterns_SelectedIndexChanged);
+            // 
+            // pnlLeftBottom
+            // 
+            this.pnlLeftBottom.Controls.Add(this.btnDelPattern);
+            this.pnlLeftBottom.Controls.Add(this.btnNewPattern);
+            this.pnlLeftBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.pnlLeftBottom.Location = new System.Drawing.Point(10, 495);
+            this.pnlLeftBottom.Name = "pnlLeftBottom";
+            this.pnlLeftBottom.Size = new System.Drawing.Size(200, 40);
+            // 
+            // btnDelPattern
+            // 
+            this.btnDelPattern.Location = new System.Drawing.Point(54, 10);
+            this.btnDelPattern.Name = "btnDelPattern";
+            this.btnDelPattern.Size = new System.Drawing.Size(45, 25);
+            this.btnDelPattern.Text = "Del";
+            this.btnDelPattern.Click += new System.EventHandler(this.btnDeletePattern_Click);
+            // 
+            // btnNewPattern
+            // 
+            this.btnNewPattern.Location = new System.Drawing.Point(3, 10);
+            this.btnNewPattern.Name = "btnNewPattern";
+            this.btnNewPattern.Size = new System.Drawing.Size(45, 25);
+            this.btnNewPattern.Text = "New";
+            this.btnNewPattern.Click += new System.EventHandler(this.btnAddPattern_Click);
+            // 
+            // lblPreview
+            // 
+            this.lblPreview.AutoSize = true;
+            this.lblPreview.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+            this.lblPreview.ForeColor = System.Drawing.Color.Blue;
+            this.lblPreview.Location = new System.Drawing.Point(115, 145);
+            this.lblPreview.Name = "lblPreview";
+            this.lblPreview.Size = new System.Drawing.Size(24, 21);
+            this.lblPreview.Text = "---";
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(15, 150);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(51, 15);
+            this.label5.Text = "Preview:";
+            // 
+            // dgvRules
+            // 
+            this.dgvRules.AllowUserToAddRows = false;
+            this.dgvRules.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvRules.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.colFrom,
+            this.colTo,
+            this.colTransform,
+            this.colParameter,
+            this.colDelete});
+            this.dgvRules.Location = new System.Drawing.Point(15, 180);
+            this.dgvRules.Name = "dgvRules";
+            this.dgvRules.Size = new System.Drawing.Size(645, 300);
+            this.dgvRules.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvRules_CellContentClick);
+            this.dgvRules.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvRules_CellValueChanged);
+            // 
+            // colFrom
+            // 
+            this.colFrom.HeaderText = "From";
+            this.colFrom.Name = "colFrom";
+            this.colFrom.Width = 60;
+            // 
+            // colTo
+            // 
+            this.colTo.HeaderText = "To";
+            this.colTo.Name = "colTo";
+            this.colTo.Width = 60;
+            // 
+            // colTransform
+            // 
+            this.colTransform.HeaderText = "Transform Rule";
+            this.colTransform.Name = "colTransform";
+            this.colTransform.Width = 150;
+            // 
+            // colParameter
+            // 
+            this.colParameter.HeaderText = "Value";
+            this.colParameter.Name = "colParameter";
+            this.colParameter.Width = 120;
+            // 
+            // colDelete
+            // 
+            this.colDelete.HeaderText = "Del";
+            this.colDelete.Name = "colDelete";
+            this.colDelete.Text = "Remove";
+            this.colDelete.UseColumnTextForButtonValue = true;
+            this.colDelete.Width = 80;
+            // 
+            // btnSave
+            // 
+            this.btnSave.BackColor = System.Drawing.Color.PaleGreen;
+            this.btnSave.Location = new System.Drawing.Point(560, 495);
+            this.btnSave.Name = "btnSave";
+            this.btnSave.Size = new System.Drawing.Size(100, 35);
+            this.btnSave.Text = "Save Rule";
+            this.btnSave.UseVisualStyleBackColor = false;
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+            // 
+            // btnAddRule
+            // 
+            this.btnAddRule.Location = new System.Drawing.Point(15, 495);
+            this.btnAddRule.Name = "btnAddRule";
+            this.btnAddRule.Size = new System.Drawing.Size(100, 35);
+            this.btnAddRule.Text = "Add Rule";
+            this.btnAddRule.Click += new System.EventHandler(this.btnAddRule_Click);
+            // 
+            // txtBlockText
+            // 
+            this.txtBlockText.Location = new System.Drawing.Point(115, 110);
+            this.txtBlockText.Name = "txtBlockText";
+            this.txtBlockText.Size = new System.Drawing.Size(300, 23);
+            this.txtBlockText.TextChanged += new System.EventHandler(this.InputChanged);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(15, 113);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(63, 15);
+            this.label4.Text = "Block text:";
+            // 
+            // txtBarcodeTest
+            // 
+            this.txtBarcodeTest.Location = new System.Drawing.Point(115, 80);
+            this.txtBarcodeTest.Name = "txtBarcodeTest";
+            this.txtBarcodeTest.Size = new System.Drawing.Size(300, 23);
+            this.txtBarcodeTest.TextChanged += new System.EventHandler(this.InputChanged);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(15, 83);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(53, 15);
+            this.label3.Text = "Lot test:";
+            // 
+            // txtDescription
+            // 
+            this.txtDescription.Location = new System.Drawing.Point(115, 50);
+            this.txtDescription.Name = "txtDescription";
+            this.txtDescription.Size = new System.Drawing.Size(300, 23);
+            this.txtDescription.TextChanged += new System.EventHandler(this.InputChanged);
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(15, 53);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(70, 15);
+            this.label2.Text = "Description:";
+            // 
+            // txtPatternName
+            // 
+            this.txtPatternName.Location = new System.Drawing.Point(115, 20);
+            this.txtPatternName.Name = "txtPatternName";
+            this.txtPatternName.Size = new System.Drawing.Size(300, 23);
+            this.txtPatternName.TextChanged += new System.EventHandler(this.InputChanged);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(15, 23);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(68, 15);
+            this.label1.Text = "Rule name:";
+            // 
+            // ucEditPattern
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(900, 545);
+            this.Controls.Add(this.splitContainer1);
+            this.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.Name = "ucEditPattern";
+            this.Text = "Pattern Editor";
+            this.splitContainer1.Panel1.ResumeLayout(false);
+            this.splitContainer1.Panel2.ResumeLayout(false);
+            this.splitContainer1.Panel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
+            this.splitContainer1.ResumeLayout(false);
+            this.pnlLeftBottom.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dgvRules)).EndInit();
+            this.ResumeLayout(false);
+
+        }
+
+        #endregion
+
+        private System.Windows.Forms.SplitContainer splitContainer1;
+        private System.Windows.Forms.ListBox lstPatterns;
+        private System.Windows.Forms.Panel pnlLeftBottom;
+        private System.Windows.Forms.Button btnDelPattern;
+        private System.Windows.Forms.Button btnNewPattern;
+        private System.Windows.Forms.TextBox txtPatternName;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.TextBox txtDescription;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.TextBox txtBarcodeTest;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.TextBox txtBlockText;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.DataGridView dgvRules;
+        private System.Windows.Forms.Button btnSave;
+        private System.Windows.Forms.Button btnAddRule;
+        private System.Windows.Forms.Label lblPreview;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colFrom;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colTo;
+        private System.Windows.Forms.DataGridViewComboBoxColumn colTransform;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colParameter;
+        private System.Windows.Forms.DataGridViewButtonColumn colDelete;
+    }
+}
+</file>
+
+<file path="UserControls/ucEditPattern.resx">
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+</root>
 </file>
 
 <file path="UserControls/ucInputOrder.cs">
@@ -3865,6 +4761,296 @@ namespace InkjetOperator
 </root>
 </file>
 
+<file path="UserControls/ucOrder.cs">
+using System;
+using System.Data;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace InkjetOperator
+{
+    public partial class ucOrder : UserControl
+    {
+        public ucOrder()
+        {
+            InitializeComponent();
+            SetupGrid(dgvList);
+            SetupGrid(dgvHistory);
+
+            LoadMockData();
+        }
+
+        private void SetupGrid(DataGridView dgv)
+        {
+            dgv.BorderStyle = BorderStyle.None;
+            dgv.EnableHeadersVisualStyles = false;
+            dgv.ColumnHeadersDefaultCellStyle.BackColor = Color.Black;
+            dgv.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+            dgv.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+
+            dgv.DefaultCellStyle.Font = new Font("Segoe UI", 10);
+            dgv.RowTemplate.Height = 35;
+
+            dgv.AllowUserToAddRows = false;
+            dgv.AllowUserToResizeRows = false;
+            dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgv.ReadOnly = true;
+
+            dgv.Columns.Clear();
+            dgv.Columns.Add("OrderNo", "Order No.");
+            dgv.Columns.Add("Customer", "Customer");
+            dgv.Columns.Add("Type", "Type");
+            dgv.Columns.Add("Qty", "Qty");
+            dgv.Columns.Add("Status", "Status");
+
+            dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        }
+
+        private void LoadMockData()
+        {
+            // LIST TAB
+            dgvList.Rows.Add("XX88888", "ECC Solutions", "I", "500", "Processing");
+            dgvList.Rows.Add("YY77777", "Compact Brake", "O", "1000", "Waiting");
+            dgvList.Rows.Add("YY99999", "Compact Brake2", "O", "1500", "Waiting");
+
+            // HISTORY TAB
+            dgvHistory.Rows.Add("AA11111", "Old Customer", "I", "200", "Done");
+            dgvHistory.Rows.Add("BB22222", "Old Customer2", "O", "300", "Done");
+            dgvHistory.Rows.Add("CC33333", "Old Customer3", "I", "150", "Done");
+
+            StyleRows(dgvList);
+            StyleRows(dgvHistory);
+        }
+
+        private void StyleRows(DataGridView dgv)
+        {
+            foreach (DataGridViewRow row in dgv.Rows)
+            {
+                string status = row.Cells["Status"].Value?.ToString() ?? "";
+
+                if (status == "Processing")
+                {
+                    row.DefaultCellStyle.BackColor = Color.FromArgb(180, 200, 160);
+                }
+                else if (status == "Waiting")
+                {
+                    row.Cells["Status"].Style.ForeColor = Color.Red;
+                }
+            }
+        }
+
+        private void btnStart_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Start clicked");
+        }
+    }
+}
+</file>
+
+<file path="UserControls/ucOrder.Designer.cs">
+namespace InkjetOperator
+{
+    partial class ucOrder
+    {
+        private System.ComponentModel.IContainer components = null;
+
+        private TabControl tabControl;
+        private TabPage tabList;
+        private TabPage tabHistory;
+        private DataGridView dgvList;
+        private DataGridView dgvHistory;
+        private Button btnStart;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+                components.Dispose();
+            base.Dispose(disposing);
+        }
+
+        private void InitializeComponent()
+        {
+            tabControl = new TabControl();
+            tabList = new TabPage();
+            tabHistory = new TabPage();
+            dgvList = new DataGridView();
+            dgvHistory = new DataGridView();
+            btnStart = new Button();
+
+            tabControl.SuspendLayout();
+            tabList.SuspendLayout();
+            tabHistory.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(dgvList)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(dgvHistory)).BeginInit();
+            SuspendLayout();
+
+            // tabControl
+            tabControl.Controls.Add(tabList);
+            tabControl.Controls.Add(tabHistory);
+            tabControl.Location = new Point(20, 20);
+            tabControl.Size = new Size(800, 400);
+
+            // tabList
+            tabList.Text = "List";
+            tabList.Controls.Add(dgvList);
+
+            // tabHistory
+            tabHistory.Text = "History";
+            tabHistory.Controls.Add(dgvHistory);
+
+            // dgvList
+            dgvList.Dock = DockStyle.Fill;
+
+            // dgvHistory
+            dgvHistory.Dock = DockStyle.Fill;
+
+            // btnStart
+            btnStart.Text = "Start";
+            btnStart.Size = new Size(120, 50);
+            btnStart.Location = new Point(350, 440);
+            btnStart.BackColor = Color.FromArgb(160, 200, 140);
+            btnStart.FlatStyle = FlatStyle.Flat;
+            btnStart.Click += btnStart_Click;
+
+            // ucOrder
+            Controls.Add(tabControl);
+            Controls.Add(btnStart);
+            Size = new Size(850, 520);
+
+            tabControl.ResumeLayout(false);
+            tabList.ResumeLayout(false);
+            tabHistory.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(dgvList)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(dgvHistory)).EndInit();
+            ResumeLayout(false);
+        }
+    }
+}
+</file>
+
+<file path="UserControls/ucOrder.resx">
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+</root>
+</file>
+
 <file path="UserControls/ucSetting.cs">
 using System;
 using System.Drawing;
@@ -4110,6 +5296,11 @@ namespace InkjetOperator
         {
             LoadData();
         }
+
+        private void btnBrowse_Click_1(object sender, EventArgs e)
+        {
+
+        }
     }
 }
 </file>
@@ -4126,7 +5317,6 @@ namespace InkjetOperator
         private Label lblTitle;
         private Label lblPath;
         private TextBox txtDbPath;
-        private Button btnBrowse;
         private Button btnSave;
         private Button btnCancel;
 
@@ -4145,62 +5335,85 @@ namespace InkjetOperator
             btnBrowse = new Button();
             btnSave = new Button();
             btnCancel = new Button();
-
             SuspendLayout();
-
-            // Title
-            lblTitle.Text = "Browse Database File";
+            // 
+            // lblTitle
+            // 
+            lblTitle.AutoSize = true;
             lblTitle.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
             lblTitle.Location = new Point(30, 20);
-            lblTitle.AutoSize = true;
-
-            // Label
-            lblPath.Text = "Browse Database :";
-            lblPath.Location = new Point(40, 100);
+            lblTitle.Name = "lblTitle";
+            lblTitle.Size = new Size(316, 41);
+            lblTitle.TabIndex = 0;
+            lblTitle.Text = "Browse Database File";
+            // 
+            // lblPath
+            // 
             lblPath.AutoSize = true;
-
-            // TextBox
+            lblPath.Location = new Point(40, 100);
+            lblPath.Name = "lblPath";
+            lblPath.Size = new Size(131, 20);
+            lblPath.TabIndex = 1;
+            lblPath.Text = "Browse Database :";
+            // 
+            // txtDbPath
+            // 
             txtDbPath.Location = new Point(200, 95);
-            txtDbPath.Size = new Size(500, 27);
-
-            // Browse Button
-            btnBrowse.Text = "📁";
-            btnBrowse.Location = new Point(710, 93);
+            txtDbPath.Name = "txtDbPath";
+            txtDbPath.Size = new Size(342, 27);
+            txtDbPath.TabIndex = 2;
+            // 
+            // btnBrowse
+            // 
+            btnBrowse.Location = new Point(548, 95);
+            btnBrowse.Name = "btnBrowse";
             btnBrowse.Size = new Size(40, 30);
+            btnBrowse.TabIndex = 3;
+            btnBrowse.Text = "📁";
             btnBrowse.Click += btnBrowse_Click;
-
-            // Save Button
-            btnSave.Text = "Save";
+            // 
+            // btnSave
+            // 
             btnSave.BackColor = Color.FromArgb(150, 190, 120);
             btnSave.FlatStyle = FlatStyle.Flat;
             btnSave.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             btnSave.ForeColor = Color.White;
+            btnSave.Location = new Point(274, 300);
+            btnSave.Name = "btnSave";
             btnSave.Size = new Size(120, 50);
-            btnSave.Location = new Point(450, 300);
+            btnSave.TabIndex = 4;
+            btnSave.Text = "Save";
+            btnSave.UseVisualStyleBackColor = false;
             btnSave.Click += btnSave_Click;
-
-            // Cancel Button
-            btnCancel.Text = "Cancel";
+            // 
+            // btnCancel
+            // 
             btnCancel.BackColor = Color.Red;
             btnCancel.FlatStyle = FlatStyle.Flat;
             btnCancel.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             btnCancel.ForeColor = Color.White;
+            btnCancel.Location = new Point(411, 300);
+            btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(120, 50);
-            btnCancel.Location = new Point(600, 300);
+            btnCancel.TabIndex = 5;
+            btnCancel.Text = "Cancel";
+            btnCancel.UseVisualStyleBackColor = false;
             btnCancel.Click += btnCancel_Click;
-
-            // Control
+            // 
+            // ucSettingDB3
+            // 
             Controls.Add(lblTitle);
             Controls.Add(lblPath);
             Controls.Add(txtDbPath);
             Controls.Add(btnBrowse);
             Controls.Add(btnSave);
             Controls.Add(btnCancel);
-
-            Size = new Size(800, 400);
+            Name = "ucSettingDB3";
+            Size = new Size(648, 400);
             ResumeLayout(false);
             PerformLayout();
         }
+        private Button btnBrowse;
     }
 }
 </file>
@@ -5215,6 +6428,49 @@ namespace InkjetOperator.UserControls
 
             // เพิ่มเข้า panelSetting
             panelSettingShow.Controls.Add(uc);
+            SetActiveMenuButton(btnIpAddressSetting);
+        }
+
+        private void btnDatabaseSetting_Click(object sender, EventArgs e)
+        {
+            // ลบ control เดิมใน panelSetting (ถ้ามี)
+            panelSettingShow.Controls.Clear();
+
+            // สร้าง instance ของ ucSettingIP
+            var uc = new ucSettingDB3();
+            uc.Dock = DockStyle.Fill;
+
+            // เพิ่มเข้า panelSetting
+            panelSettingShow.Controls.Add(uc);
+            SetActiveMenuButton(btnDatabaseSetting); 
+        }
+
+        private void SetActiveMenuButton(Button activeBtn)
+        {
+            foreach (Control c in pnlLeftMenu.Controls)
+            {
+                if (c is Button btn)
+                {
+                    if (btn == activeBtn)
+                    {
+                        // Active style
+                        btn.BackColor = Color.FromArgb(50, 100, 180);
+                        btn.ForeColor = Color.White;
+                        btn.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+                        btn.UseVisualStyleBackColor = false;
+                    }
+                    else
+                    {
+                        // Inactive style
+                        btn.BackColor = Color.White;
+                        btn.ForeColor = Color.FromArgb(60, 60, 60);
+                        btn.Font = new Font("Segoe UI", 12F, FontStyle.Regular);
+                        btn.UseVisualStyleBackColor = true;
+                    }
+                    btn.FlatStyle = FlatStyle.Flat;
+                    btn.FlatAppearance.BorderSize = 0;
+                }
+            }
         }
     }
 }
@@ -5300,6 +6556,7 @@ namespace InkjetOperator.UserControls
             btnDatabaseSetting.TabIndex = 1;
             btnDatabaseSetting.Text = "Database Setting";
             btnDatabaseSetting.UseVisualStyleBackColor = true;
+            btnDatabaseSetting.Click += btnDatabaseSetting_Click;
             // 
             // panelSettingShow
             // 
