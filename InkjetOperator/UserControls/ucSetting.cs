@@ -18,6 +18,8 @@ namespace InkjetOperator
         // PLC (1 เครื่อง)
         private TextBox txtPlcIpAddress = new TextBox();
 
+        private AppConfig _config;
+
         // Settings data
         public class PrinterSettings
         {
@@ -33,6 +35,31 @@ namespace InkjetOperator
             InitializeControls();
             LoadSettings();
             SetupEvents();
+
+            _config = AppConfig.Load();
+            ApplyConfigToUI();
+        }
+
+        private void ApplyConfigToUI()
+        {
+            // ตัวอย่าง: ซ่อน/แสดงปุ่มหรือ control ตาม config
+            if (_config.MenuMode == 1)
+            {
+                pnlLeftMenu.Visible = false;
+                pnlMkPrinters.Visible = false;
+                pnlUvPrinters.Visible = false;
+                pnlPlc.Visible = false;
+                panelPcStation1.Visible = true;
+            }
+            else
+            {
+                panelPcStation1.Visible = false;
+                pnlLeftMenu.Visible = true;
+                pnlMkPrinters.Visible = true;
+                pnlUvPrinters.Visible = true;
+                pnlPlc.Visible = true;
+            }
+            // เพิ่ม logic ตามต้องการ
         }
 
         private void InitializeControls()

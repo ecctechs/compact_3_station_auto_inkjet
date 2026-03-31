@@ -256,7 +256,7 @@
             lblScanStatus.BackColor = Color.Transparent;
             lblScanStatus.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             lblScanStatus.ForeColor = Color.White;
-            lblScanStatus.Location = new Point(400, 313);
+            lblScanStatus.Location = new Point(426, 313);
             lblScanStatus.Name = "lblScanStatus";
             lblScanStatus.Size = new Size(167, 28);
             lblScanStatus.TabIndex = 2;
@@ -266,10 +266,10 @@
             // picBarcode
             // 
             picBarcode.BackColor = Color.FromArgb(230, 240, 250);
-            picBarcode.Location = new Point(400, 133);
+            picBarcode.Location = new Point(366, 136);
             picBarcode.Margin = new Padding(3, 4, 3, 4);
             picBarcode.Name = "picBarcode";
-            picBarcode.Size = new Size(229, 173);
+            picBarcode.Size = new Size(309, 173);
             picBarcode.TabIndex = 3;
             picBarcode.TabStop = false;
             picBarcode.Paint += picBarcode_Paint;

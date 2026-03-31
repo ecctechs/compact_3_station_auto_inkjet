@@ -18,6 +18,13 @@
         private void InitializeComponent()
         {
             pnlLeftMenu = new Panel();
+            panelPcStation1 = new Panel();
+            label1 = new Label();
+            button1 = new Button();
+            label2 = new Label();
+            label3 = new Label();
+            textBox1 = new TextBox();
+            label4 = new Label();
             btnIpAddressSetting = new Button();
             btnDatabaseSetting = new Button();
             pnlMainContent = new Panel();
@@ -74,6 +81,7 @@
             lblMk058 = new Label();
             lblMkTitle = new Label();
             pnlLeftMenu.SuspendLayout();
+            panelPcStation1.SuspendLayout();
             pnlMainContent.SuspendLayout();
             pnlButtons.SuspendLayout();
             pnlPlc.SuspendLayout();
@@ -92,6 +100,83 @@
             pnlLeftMenu.Name = "pnlLeftMenu";
             pnlLeftMenu.Size = new Size(229, 800);
             pnlLeftMenu.TabIndex = 0;
+            // 
+            // panelPcStation1
+            // 
+            panelPcStation1.BackColor = Color.White;
+            panelPcStation1.BorderStyle = BorderStyle.FixedSingle;
+            panelPcStation1.Controls.Add(label1);
+            panelPcStation1.Controls.Add(button1);
+            panelPcStation1.Controls.Add(label2);
+            panelPcStation1.Controls.Add(label3);
+            panelPcStation1.Controls.Add(textBox1);
+            panelPcStation1.Controls.Add(label4);
+            panelPcStation1.Location = new Point(249, 20);
+            panelPcStation1.Margin = new Padding(3, 4, 3, 4);
+            panelPcStation1.Name = "panelPcStation1";
+            panelPcStation1.Size = new Size(446, 214);
+            panelPcStation1.TabIndex = 4;
+            // 
+            // label1
+            // 
+            label1.BackColor = Color.FromArgb(100, 200, 100);
+            label1.BorderStyle = BorderStyle.FixedSingle;
+            label1.Location = new Point(17, 67);
+            label1.Name = "label1";
+            label1.Size = new Size(17, 19);
+            label1.TabIndex = 0;
+            // 
+            // button1
+            // 
+            button1.FlatAppearance.BorderSize = 0;
+            button1.FlatStyle = FlatStyle.Flat;
+            button1.Font = new Font("Segoe UI", 8F);
+            button1.Location = new Point(188, 61);
+            button1.Margin = new Padding(3, 4, 3, 4);
+            button1.Name = "button1";
+            button1.Size = new Size(29, 33);
+            button1.TabIndex = 1;
+            button1.Text = "✎";
+            // 
+            // label2
+            // 
+            label2.BackColor = Color.Black;
+            label2.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            label2.ForeColor = Color.White;
+            label2.Location = new Point(40, 60);
+            label2.Name = "label2";
+            label2.Padding = new Padding(6, 3, 6, 3);
+            label2.Size = new Size(142, 33);
+            label2.TabIndex = 2;
+            label2.Text = "IP Station 1";
+            label2.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            label3.Location = new Point(11, 13);
+            label3.Name = "label3";
+            label3.Size = new Size(65, 32);
+            label3.TabIndex = 3;
+            label3.Text = "PC 2";
+            // 
+            // textBox1
+            // 
+            textBox1.Location = new Point(103, 109);
+            textBox1.Margin = new Padding(3, 4, 3, 4);
+            textBox1.Name = "textBox1";
+            textBox1.Size = new Size(228, 27);
+            textBox1.TabIndex = 4;
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Location = new Point(17, 113);
+            label4.Name = "label4";
+            label4.Size = new Size(85, 20);
+            label4.TabIndex = 5;
+            label4.Text = "IP Address :";
             // 
             // btnIpAddressSetting
             // 
@@ -126,6 +211,7 @@
             // pnlMainContent
             // 
             pnlMainContent.BackColor = Color.White;
+            pnlMainContent.Controls.Add(panelPcStation1);
             pnlMainContent.Controls.Add(pnlButtons);
             pnlMainContent.Controls.Add(pnlPlc);
             pnlMainContent.Controls.Add(pnlUvPrinters);
@@ -720,6 +806,8 @@
             Name = "ucSetting";
             Size = new Size(1029, 800);
             pnlLeftMenu.ResumeLayout(false);
+            panelPcStation1.ResumeLayout(false);
+            panelPcStation1.PerformLayout();
             pnlMainContent.ResumeLayout(false);
             pnlButtons.ResumeLayout(false);
             pnlPlc.ResumeLayout(false);
@@ -801,5 +889,12 @@
         // Buttons
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Button btnCancel;
+        private Panel panelPcStation1;
+        private Label label1;
+        private Button button1;
+        private Label label2;
+        private Label label3;
+        private TextBox textBox1;
+        private Label label4;
     }
 }

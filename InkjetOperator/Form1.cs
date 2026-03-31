@@ -36,8 +36,12 @@ namespace InkjetOperator
 
         private void CreateMenuByConfig()
         {
-            // ล้างปุ่มเก่า (ถ้ามี)
-            pnlMenu.Controls.Clear();
+            // ลบเฉพาะปุ่มเมนูเดิม (Button) ออกจาก pnlMenu
+            for (int i = pnlMenu.Controls.Count - 1; i >= 0; i--)
+            {
+                if (pnlMenu.Controls[i] is Button)
+                    pnlMenu.Controls.RemoveAt(i);
+            }
 
             int x = 10;
             int index = 0;
