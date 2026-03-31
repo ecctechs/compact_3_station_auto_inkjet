@@ -17,9 +17,6 @@
 
         private void InitializeComponent()
         {
-            pnlLeftMenu = new Panel();
-            btnIpAddressSetting = new Button();
-            btnDatabaseSetting = new Button();
             panelPcStation1 = new Panel();
             label1 = new Label();
             button1 = new Button();
@@ -80,7 +77,6 @@
             lblMk058Com = new Label();
             lblMk058 = new Label();
             lblMkTitle = new Label();
-            pnlLeftMenu.SuspendLayout();
             panelPcStation1.SuspendLayout();
             pnlMainContent.SuspendLayout();
             pnlButtons.SuspendLayout();
@@ -88,48 +84,6 @@
             pnlUvPrinters.SuspendLayout();
             pnlMkPrinters.SuspendLayout();
             SuspendLayout();
-            // 
-            // pnlLeftMenu
-            // 
-            pnlLeftMenu.BackColor = Color.FromArgb(230, 240, 250);
-            pnlLeftMenu.Controls.Add(btnIpAddressSetting);
-            pnlLeftMenu.Controls.Add(btnDatabaseSetting);
-            pnlLeftMenu.Dock = DockStyle.Left;
-            pnlLeftMenu.Location = new Point(0, 0);
-            pnlLeftMenu.Margin = new Padding(3, 4, 3, 4);
-            pnlLeftMenu.Name = "pnlLeftMenu";
-            pnlLeftMenu.Size = new Size(229, 800);
-            pnlLeftMenu.TabIndex = 0;
-            // 
-            // btnIpAddressSetting
-            // 
-            btnIpAddressSetting.BackColor = Color.FromArgb(50, 100, 180);
-            btnIpAddressSetting.Dock = DockStyle.Top;
-            btnIpAddressSetting.FlatAppearance.BorderSize = 0;
-            btnIpAddressSetting.FlatStyle = FlatStyle.Flat;
-            btnIpAddressSetting.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
-            btnIpAddressSetting.ForeColor = Color.White;
-            btnIpAddressSetting.Location = new Point(0, 67);
-            btnIpAddressSetting.Margin = new Padding(3, 4, 3, 4);
-            btnIpAddressSetting.Name = "btnIpAddressSetting";
-            btnIpAddressSetting.Size = new Size(229, 67);
-            btnIpAddressSetting.TabIndex = 0;
-            btnIpAddressSetting.Text = "IP Address Setting";
-            btnIpAddressSetting.UseVisualStyleBackColor = false;
-            // 
-            // btnDatabaseSetting
-            // 
-            btnDatabaseSetting.Dock = DockStyle.Top;
-            btnDatabaseSetting.FlatAppearance.BorderSize = 0;
-            btnDatabaseSetting.FlatStyle = FlatStyle.Flat;
-            btnDatabaseSetting.Font = new Font("Segoe UI", 12F);
-            btnDatabaseSetting.Location = new Point(0, 0);
-            btnDatabaseSetting.Margin = new Padding(3, 4, 3, 4);
-            btnDatabaseSetting.Name = "btnDatabaseSetting";
-            btnDatabaseSetting.Size = new Size(229, 67);
-            btnDatabaseSetting.TabIndex = 1;
-            btnDatabaseSetting.Text = "Database Setting";
-            btnDatabaseSetting.UseVisualStyleBackColor = true;
             // 
             // panelPcStation1
             // 
@@ -800,12 +754,10 @@
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            Controls.Add(pnlLeftMenu);
             Controls.Add(pnlMainContent);
             Margin = new Padding(3, 4, 3, 4);
             Name = "ucSetting";
             Size = new Size(1029, 800);
-            pnlLeftMenu.ResumeLayout(false);
             panelPcStation1.ResumeLayout(false);
             panelPcStation1.PerformLayout();
             pnlMainContent.ResumeLayout(false);
@@ -821,11 +773,6 @@
         }
 
         #endregion
-
-        // Left Menu
-        private System.Windows.Forms.Panel pnlLeftMenu;
-        private System.Windows.Forms.Button btnDatabaseSetting;
-        private System.Windows.Forms.Button btnIpAddressSetting;
 
         // Main Content
         private System.Windows.Forms.Panel pnlMainContent;

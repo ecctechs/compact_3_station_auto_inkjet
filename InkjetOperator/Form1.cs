@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
+using InkjetOperator.UserControls;
 
 namespace InkjetOperator
 {
@@ -9,7 +10,8 @@ namespace InkjetOperator
     {
         private AppConfig _config;
         private ucInputOrder? _ucInput;
-        private ucSetting? _ucSetting;
+        //private ucSetting? _ucSetting;
+        private ucSettingMenu? _ucSettingMenu;
 
         // เก็บ reference ของปุ่มเมนู
         private Button? _btnInput;
@@ -176,9 +178,10 @@ namespace InkjetOperator
         {
             pnlContent.Controls.Clear();
 
-            _ucSetting ??= new ucSetting();
-            _ucSetting.Dock = DockStyle.Fill;
-            pnlContent.Controls.Add(_ucSetting);
+            // เปลี่ยนจาก ucSetting เป็น ucSettingMenu
+            _ucSettingMenu ??= new ucSettingMenu();
+            _ucSettingMenu.Dock = DockStyle.Fill;
+            pnlContent.Controls.Add(_ucSettingMenu);
 
             SetActiveButton(_btnSetting);
         }

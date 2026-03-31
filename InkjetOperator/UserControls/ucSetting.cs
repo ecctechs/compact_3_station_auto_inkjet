@@ -58,7 +58,6 @@ namespace InkjetOperator
         {
             if (_config.MenuMode == 1)
             {
-                pnlLeftMenu.Visible = false;
                 pnlMkPrinters.Visible = false;
                 pnlUvPrinters.Visible = false;
                 pnlPlc.Visible = false;
@@ -67,7 +66,6 @@ namespace InkjetOperator
             else
             {
                 panelPcStation1.Visible = false;
-                pnlLeftMenu.Visible = true;
                 pnlMkPrinters.Visible = true;
                 pnlUvPrinters.Visible = true;
                 pnlPlc.Visible = true;
