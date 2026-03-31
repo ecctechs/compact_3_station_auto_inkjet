@@ -1,3 +1,5 @@
+﻿using System.Diagnostics;
+
 namespace InkjetOperator;
 
 static class Program
@@ -7,6 +9,6 @@ static class Program
     {
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
-        Application.Run(new frmMain());
+        Application.Run(new Form1());
     }
 }
