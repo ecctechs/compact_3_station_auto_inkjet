@@ -19,6 +19,7 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             pnlMenu = new Panel();
+            btnBot = new Button();
             lblLanguage = new Label();
             picLogo = new PictureBox();
             btnSetting = new Button();
@@ -33,6 +34,7 @@
             // pnlMenu
             // 
             pnlMenu.BackColor = Color.FromArgb(180, 180, 180);
+            pnlMenu.Controls.Add(btnBot);
             pnlMenu.Controls.Add(lblLanguage);
             pnlMenu.Controls.Add(picLogo);
             pnlMenu.Controls.Add(btnSetting);
@@ -45,6 +47,21 @@
             pnlMenu.Name = "pnlMenu";
             pnlMenu.Size = new Size(1143, 80);
             pnlMenu.TabIndex = 1;
+            // 
+            // btnBot
+            // 
+            btnBot.BackColor = Color.FromArgb(160, 160, 160);
+            btnBot.FlatAppearance.BorderSize = 0;
+            btnBot.FlatStyle = FlatStyle.Flat;
+            btnBot.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnBot.ForeColor = Color.White;
+            btnBot.Location = new Point(661, 13);
+            btnBot.Margin = new Padding(3, 4, 3, 4);
+            btnBot.Name = "btnBot";
+            btnBot.Size = new Size(149, 53);
+            btnBot.TabIndex = 4;
+            btnBot.Text = "Bot UV";
+            btnBot.UseVisualStyleBackColor = false;
             // 
             // lblLanguage
             // 
@@ -169,5 +186,6 @@
         private System.Windows.Forms.PictureBox picLogo;
         private System.Windows.Forms.Label lblLanguage;
         private System.Windows.Forms.Panel pnlContent;
+        private Button btnBot;
     }
 }
