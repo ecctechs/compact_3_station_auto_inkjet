@@ -4,7 +4,7 @@ const createJobSchema = z.object({
   barcode_raw: z.string().min(1),
   order_no: z.string().optional(),
   customer_name: z.string().optional(),
-  type: z.enum(["I", "O"]).optional(),
+  type: z.string().optional(),
   qty: z.coerce.number().int().min(0).optional(),
   pattern_id: z.coerce.number().int().min(1).optional(),
   pattern_no_erp: z.string().optional(),

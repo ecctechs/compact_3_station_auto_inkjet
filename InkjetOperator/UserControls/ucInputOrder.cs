@@ -146,20 +146,57 @@ namespace InkjetOperator
                 btnOK.Focus();
         }
 
-        private void BtnOK_Click(object? sender, EventArgs e)
+        private async void BtnOK_Click(object? sender, EventArgs e)
         {
-            if (ValidateInput())
-            {
-                BarcodeScanned?.Invoke(this, new BarcodeScanEventArgs
-                {
-                    Barcode = BarcodeRaw,
-                    OrderNo = OrderNo,
-                    CustomerName = CustomerName,
-                    Type = Type,
-                    Qty = Qty
-                });
+            if (!ValidateInput())
+                return;
 
-                ClearForm();
+            if (!int.TryParse(txtQty.Text, out var qty))
+            {
+                ShowError("Qty ต้องเป็นตัวเลข");
+                return;
+            }
+
+            btnOK.Enabled = false;
+
+            try
+            {
+                var req = new CreateJobRequest
+                {
+                    BarcodeRaw = txtBarcode.Text,
+                    OrderNo = txtOrderNo.Text,
+                    CustomerName = txtCustomerName.Text,
+                    Type = txtType.Text,
+                    Qty = qty, // ✅ FIX
+                    CreatedBy = "operator"
+                };
+
+                var success = await _api.CreateJobAsync(req);
+
+                if (success)
+                {
+                    MessageBox.Show("Create job success");
+
+                    // 🔥 notify parent
+                    BarcodeScanned?.Invoke(this, new BarcodeScanEventArgs
+                    {
+                        Barcode = BarcodeRaw,
+                        OrderNo = OrderNo,
+                        CustomerName = CustomerName,
+                        Type = Type,
+                        Qty = txtQty.Text
+                    });
+
+                    ClearForm();
+                }
+                else
+                {
+                    ShowError("Create job failed");
+                }
+            }
+            finally
+            {
+                btnOK.Enabled = true;
             }
         }
 
@@ -288,32 +325,6 @@ namespace InkjetOperator
             path.CloseFigure();
             return path;
         }
-
-        private async void btnOK_Click_1(object sender, EventArgs e)
-        {
-            await CreateJob();
-        }
-
-        private async Task CreateJob()
-        {
-            var req = new CreateJobRequest
-            {
-                BarcodeRaw = "CMSS0297-DPX0839MCS-LOT12345",
-                OrderNo = "PO0022",
-                CustomerName = "ABC Corp",
-                Type = "I",
-                Qty = 100,
-                CreatedBy = "operator"
-            };
-
-            var success = await _api.CreateJobAsync(req);
-
-            if (success)
-            {
-                MessageBox.Show("Create job success");
-            }
-        }
-
 
     }
 

@@ -98,7 +98,6 @@
             btnOK.TabIndex = 0;
             btnOK.Text = "OK";
             btnOK.UseVisualStyleBackColor = false;
-            btnOK.Click += btnOK_Click_1;
             // 
             // pnlFormContainer
             // 
@@ -159,7 +158,6 @@
             txtBarcode.Location = new Point(174, 7);
             txtBarcode.Margin = new Padding(3, 7, 3, 7);
             txtBarcode.Name = "txtBarcode";
-            txtBarcode.ReadOnly = true;
             txtBarcode.Size = new Size(348, 31);
             txtBarcode.TabIndex = 0;
             // 
