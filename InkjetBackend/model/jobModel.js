@@ -11,13 +11,28 @@ const PrintJob = sequelize.define(
       primaryKey: true,
     },
     barcode_raw: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
+    },
+    order_no: {
+      type: DataTypes.STRING,
+    },
+    customer_name: {
+      type: DataTypes.STRING,
+    },
+    type: {
+      type: DataTypes.STRING,
+    },
+    qty: {
+      type: DataTypes.INTEGER,
     },
     pattern_id: {
       type: DataTypes.INTEGER,
     },
     lot_number: {
+      type: DataTypes.STRING,
+    },
+    pattern_no_erp: {
       type: DataTypes.STRING,
     },
     status: {
@@ -28,13 +43,16 @@ const PrintJob = sequelize.define(
     error_message: {
       type: DataTypes.TEXT,
     },
-    created_by: {
-      type: DataTypes.STRING,
+    warning: {
+      type: DataTypes.TEXT,
     },
     attempt: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
+    },
+    created_by: {
+      type: DataTypes.STRING,
     },
   },
   { timestamps: true, createdAt: "created_at", updatedAt: "updated_at" }

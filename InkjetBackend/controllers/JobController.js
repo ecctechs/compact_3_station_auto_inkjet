@@ -27,26 +27,62 @@ class JobController {
    */
   static async create(req, res) {
     try {
-      const { barcode_raw, created_by } = req.body;
-      const { lotNumber, patternCode } = parseBarcode(barcode_raw);
+      const {
+        barcode_raw,
+        order_no,
+        customer_name,
+        type,
+        qty,
+        pattern_id,
+        lot_number,
+        created_by,
+      } = req.body;
 
-      const pattern = await Pattern.findOne({
-        where: { barcode: patternCode, is_active: true },
-      });
+      let resolvedPatternId = pattern_id;
+      let warning = null;
+      let parsedLotNumber = lot_number;
+      let parsedPatternNoErp = null;
+
+      // Parse barcode to extract lot_number and pattern_no_erp
+      // Barcode format: CMSS0297-DPX0839MCS-xxxxxxxx
+      // Last segment = lot_number, rest = pattern_no_erp
+      if (barcode_raw) {
+        const parts = barcode_raw.split("-");
+        if (parts.length >= 2) {
+          parsedLotNumber = parts[parts.length - 1]; // xxxxxxxx
+          parsedPatternNoErp = parts.slice(0, -1).join("-"); // CMSS0297-DPX0839MCS
+        } else {
+          parsedLotNumber = barcode_raw;
+        }
+      }
+
+      // Auto-parse barcode for pattern matching if pattern_id not provided
+      if (!pattern_id && barcode_raw && parsedPatternNoErp) {
+        const pattern = await Pattern.findOne({
+          where: { barcode: parsedPatternNoErp, is_active: true },
+        });
+
+        if (pattern) {
+          resolvedPatternId = pattern.id;
+        } else {
+          warning = `No pattern found for barcode "${parsedPatternNoErp}"`;
+        }
+      }
 
       const job = await PrintJob.create({
         barcode_raw,
-        pattern_id: pattern ? pattern.id : null,
-        lot_number: lotNumber,
+        order_no,
+        customer_name,
+        type,
+        qty,
+        pattern_id: resolvedPatternId,
+        pattern_no_erp: parsedPatternNoErp,
+        lot_number: parsedLotNumber || null,
         created_by,
+        warning,
       });
 
-      const data = job.toJSON();
-      if (!pattern) {
-        data.warning = `No pattern found for barcode "${patternCode}"`;
-      }
-
-      return ResponseManager.SuccessResponse(req, res, 201, data);
+      return ResponseManager.SuccessResponse(req, res, 201, job);
     } catch (err) {
       return ResponseManager.CatchResponse(req, res, err.message);
     }
