@@ -3,6 +3,8 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Text;
 using System.Windows.Forms;
+using InkjetOperator.Models;
+using InkjetOperator.Services;
 
 namespace InkjetOperator
 {
@@ -10,6 +12,8 @@ namespace InkjetOperator
     {
         public event EventHandler<BarcodeScanEventArgs>? BarcodeScanned;
         public event EventHandler? Cancelled;
+
+        private ApiClient _api;
 
         public string BarcodeRaw => txtBarcode.Text.Trim();
         public string OrderNo => txtOrderNo.Text.Trim();
@@ -26,6 +30,8 @@ namespace InkjetOperator
             InitializeComponent();
             SetupEvents();
             this.Dock = DockStyle.Fill;
+
+            _api = new ApiClient("http://localhost:3000");
         }
 
         private void SetupEvents()
@@ -282,6 +288,33 @@ namespace InkjetOperator
             path.CloseFigure();
             return path;
         }
+
+        private async void btnOK_Click_1(object sender, EventArgs e)
+        {
+            await CreateJob();
+        }
+
+        private async Task CreateJob()
+        {
+            var req = new CreateJobRequest
+            {
+                BarcodeRaw = "CMSS0297-DPX0839MCS-LOT12345",
+                OrderNo = "PO0022",
+                CustomerName = "ABC Corp",
+                Type = "I",
+                Qty = 100,
+                CreatedBy = "operator"
+            };
+
+            var success = await _api.CreateJobAsync(req);
+
+            if (success)
+            {
+                MessageBox.Show("Create job success");
+            }
+        }
+
+
     }
 
     public class BarcodeScanEventArgs : EventArgs

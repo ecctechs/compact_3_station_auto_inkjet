@@ -98,6 +98,7 @@
             btnOK.TabIndex = 0;
             btnOK.Text = "OK";
             btnOK.UseVisualStyleBackColor = false;
+            btnOK.Click += btnOK_Click_1;
             // 
             // pnlFormContainer
             // 

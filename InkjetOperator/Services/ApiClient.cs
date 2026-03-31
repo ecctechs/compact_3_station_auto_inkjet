@@ -29,6 +29,22 @@ public class ApiClient
         };
     }
 
+    /// <summary>POST /job/create — create new job</summary>
+    public async Task<bool> CreateJobAsync(CreateJobRequest request)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync("/job/create", request, JsonOptions);
+            response.EnsureSuccessStatusCode();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("CreateJob error: " + ex.Message);
+            return false;
+        }
+    }
+
     /// <summary>GET /job/getAll?status=pending — polled every 5s by frmMain timer.</summary>
     public async Task<List<PrintJob>> GetPendingJobsAsync()
     {
