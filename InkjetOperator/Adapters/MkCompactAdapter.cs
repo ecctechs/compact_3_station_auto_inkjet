@@ -171,7 +171,7 @@ public class MkCompactAdapter : IInkjetAdapter
         string width = (config.Width ?? 200).ToString();
 
         string fmCmd = $"FM,{_programNumber},0,{normalizedName},0,{direction},0,0,01,20,500,{delay},300,1000,{height},{width},15,0,0,6\r";
-        MessageBox.Show(fmCmd);
+        //MessageBox.Show(fmCmd);
         string response = await SendAsync(fmCmd);
 
         return MakeResult("config", response);
