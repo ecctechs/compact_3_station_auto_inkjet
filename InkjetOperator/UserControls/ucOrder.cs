@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows.Forms;
+using InkjetOperator.Adapters;
+using InkjetOperator.Managers;
 using InkjetOperator.Models;
 using InkjetOperator.Services;
 
@@ -13,10 +15,19 @@ namespace InkjetOperator
         private readonly SqliteDataService _sqliteService = new SqliteDataService();
         private ResolvedJobResponse _currentResolved;
 
+        private MkCompactAdapter _inkjetAdapter;
+        private TcpManager _tcpManager;
+
         public ucOrder()
         {
             InitializeComponent();
             get_uv();
+
+            // 1. สร้าง Manager
+            _tcpManager = new TcpManager();
+
+            // 2. ส่ง Manager เข้าไปใน Adapter
+            _inkjetAdapter = new MkCompactAdapter(_tcpManager);
         }
 
         public async void get_job()
@@ -89,7 +100,7 @@ namespace InkjetOperator
 
             try
             {
-                  get_job();
+                get_job();
             }
             catch (Exception ex)
             {
@@ -99,6 +110,42 @@ namespace InkjetOperator
             {
                 // รันเสร็จแล้วค่อยเริ่มนับ 5 วิใหม่
                 timerPoll.Start();
+            }
+        }
+
+        private async void btnSendMk1Mk2_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // ใช้ IP/Port ที่คุณระบุไว้
+                await _tcpManager.ConnectAsync("192.168.3.77", 9004);
+
+                if (_inkjetAdapter.IsConnected())
+                {                   
+                    if (bindSourceInkjetConfigDto.Current is InkjetConfigDto config)
+                    {
+                        await _inkjetAdapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
+
+                        // 1. ส่งการตั้งค่าหลัก (FM Command)
+                        await _inkjetAdapter.SendConfigAsync(config);
+
+                        // 2. ส่งข้อความพิมพ์ (FS + F1 Commands)
+                        if (config.TextBlocks != null)
+                        {
+                            foreach (var block in config.TextBlocks)
+                            {
+                                // deviceBlock คือลำดับบล็อกในเครื่องพิมพ์ (เช่น 1, 2, 3...)
+                                await _inkjetAdapter.SendTextBlockAsync(block, block.BlockNumber);
+                            }
+                        }
+
+                        MessageBox.Show("ส่งข้อมูลชุดคำสั่งไปยังเครื่องพิมพ์เรียบร้อยแล้ว");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("เชื่อมต่อไม่สำเร็จ: " + ex.Message);
             }
         }
     }

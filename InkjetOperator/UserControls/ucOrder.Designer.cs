@@ -36,6 +36,10 @@
             btnRefresh = new Button();
             lblJobsTitle = new Label();
             pnlDetail = new Panel();
+            btnSendUV2 = new Button();
+            btnSendMk3 = new Button();
+            btnSendUV1 = new Button();
+            btnSendMk1Mk2 = new Button();
             groupBox1 = new GroupBox();
             dataGridView1 = new DataGridView();
             idDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
@@ -74,10 +78,6 @@
             bindingSourceTextBlockDto = new BindingSource(components);
             btnSend = new Button();
             btnRetry = new Button();
-            btnSendMk1Mk2 = new Button();
-            btnSendUV1 = new Button();
-            btnSendMk3 = new Button();
-            btnSendUV2 = new Button();
             tabControl.SuspendLayout();
             tabList.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvList).BeginInit();
@@ -262,6 +262,43 @@
             pnlDetail.Padding = new Padding(6, 7, 6, 7);
             pnlDetail.Size = new Size(843, 772);
             pnlDetail.TabIndex = 3;
+            // 
+            // btnSendUV2
+            // 
+            btnSendUV2.Location = new Point(606, 725);
+            btnSendUV2.Name = "btnSendUV2";
+            btnSendUV2.Size = new Size(136, 29);
+            btnSendUV2.TabIndex = 17;
+            btnSendUV2.Text = "ส่งหา UV2";
+            btnSendUV2.UseVisualStyleBackColor = true;
+            // 
+            // btnSendMk3
+            // 
+            btnSendMk3.Location = new Point(606, 675);
+            btnSendMk3.Name = "btnSendMk3";
+            btnSendMk3.Size = new Size(136, 29);
+            btnSendMk3.TabIndex = 16;
+            btnSendMk3.Text = "ส่งหา MK3";
+            btnSendMk3.UseVisualStyleBackColor = true;
+            // 
+            // btnSendUV1
+            // 
+            btnSendUV1.Location = new Point(454, 725);
+            btnSendUV1.Name = "btnSendUV1";
+            btnSendUV1.Size = new Size(136, 29);
+            btnSendUV1.TabIndex = 15;
+            btnSendUV1.Text = "ส่งหา UV1";
+            btnSendUV1.UseVisualStyleBackColor = true;
+            // 
+            // btnSendMk1Mk2
+            // 
+            btnSendMk1Mk2.Location = new Point(454, 675);
+            btnSendMk1Mk2.Name = "btnSendMk1Mk2";
+            btnSendMk1Mk2.Size = new Size(136, 29);
+            btnSendMk1Mk2.TabIndex = 14;
+            btnSendMk1Mk2.Text = "ส่งหา MK1,MK2";
+            btnSendMk1Mk2.UseVisualStyleBackColor = true;
+            btnSendMk1Mk2.Click += btnSendMk1Mk2_Click;
             // 
             // groupBox1
             // 
@@ -614,42 +651,6 @@
             btnRetry.Size = new Size(137, 53);
             btnRetry.TabIndex = 12;
             btnRetry.Text = "Retry Failed";
-            // 
-            // btnSendMk1Mk2
-            // 
-            btnSendMk1Mk2.Location = new Point(454, 675);
-            btnSendMk1Mk2.Name = "btnSendMk1Mk2";
-            btnSendMk1Mk2.Size = new Size(136, 29);
-            btnSendMk1Mk2.TabIndex = 14;
-            btnSendMk1Mk2.Text = "ส่งหา MK1,MK2";
-            btnSendMk1Mk2.UseVisualStyleBackColor = true;
-            // 
-            // btnSendUV1
-            // 
-            btnSendUV1.Location = new Point(454, 725);
-            btnSendUV1.Name = "btnSendUV1";
-            btnSendUV1.Size = new Size(136, 29);
-            btnSendUV1.TabIndex = 15;
-            btnSendUV1.Text = "ส่งหา UV1";
-            btnSendUV1.UseVisualStyleBackColor = true;
-            // 
-            // btnSendMk3
-            // 
-            btnSendMk3.Location = new Point(606, 675);
-            btnSendMk3.Name = "btnSendMk3";
-            btnSendMk3.Size = new Size(136, 29);
-            btnSendMk3.TabIndex = 16;
-            btnSendMk3.Text = "ส่งหา MK3";
-            btnSendMk3.UseVisualStyleBackColor = true;
-            // 
-            // btnSendUV2
-            // 
-            btnSendUV2.Location = new Point(606, 725);
-            btnSendUV2.Name = "btnSendUV2";
-            btnSendUV2.Size = new Size(136, 29);
-            btnSendUV2.TabIndex = 17;
-            btnSendUV2.Text = "ส่งหา UV2";
-            btnSendUV2.UseVisualStyleBackColor = true;
             // 
             // ucOrder
             // 
