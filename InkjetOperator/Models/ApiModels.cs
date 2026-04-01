@@ -87,26 +87,26 @@ public class ResolvedJobResponse
     public PatternDetail Pattern { get; set; } = new();
 }
 
-public class PatternDetail
-{
-    [JsonPropertyName("id")]
-    public int Id { get; set; }
+//public class PatternDetail
+//{
+//    [JsonPropertyName("id")]
+//    public int Id { get; set; }
 
-    [JsonPropertyName("barcode")]
-    public string Barcode { get; set; } = "";
+//    [JsonPropertyName("barcode")]
+//    public string Barcode { get; set; } = "";
 
-    [JsonPropertyName("description")]
-    public string? Description { get; set; }
+//    [JsonPropertyName("description")]
+//    public string? Description { get; set; }
 
-    [JsonPropertyName("inkjet_configs")]
-    public List<InkjetConfigDto> InkjetConfigs { get; set; } = new();
+//    [JsonPropertyName("inkjet_configs")]
+//    public List<InkjetConfigDto> InkjetConfigs { get; set; } = new();
 
-    [JsonPropertyName("conveyor_speeds")]
-    public ConveyorSpeedDto? ConveyorSpeeds { get; set; }
+//    [JsonPropertyName("conveyor_speeds")]
+//    public ConveyorSpeedDto? ConveyorSpeeds { get; set; }
 
-    [JsonPropertyName("servo_configs")]
-    public List<ServoConfigDto> ServoConfigs { get; set; } = new();
-}
+//    [JsonPropertyName("servo_configs")]
+//    public List<ServoConfigDto> ServoConfigs { get; set; } = new();
+//}
 
 //public class InkjetConfigDto
 //{

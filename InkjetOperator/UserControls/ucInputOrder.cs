@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Text;
@@ -12,6 +13,7 @@ namespace InkjetOperator
     {
         public event EventHandler<BarcodeScanEventArgs>? BarcodeScanned;
         public event EventHandler? Cancelled;
+        private readonly SqliteDataService _sqliteService = new SqliteDataService();
 
         private ApiClient _api;
 
@@ -148,55 +150,112 @@ namespace InkjetOperator
 
         private async void BtnOK_Click(object? sender, EventArgs e)
         {
-            if (!ValidateInput())
-                return;
+            string barcodeRaw = txtBarcode.Text.Trim();
+            string patternNo = GetPatternNo(barcodeRaw);
 
-            if (!int.TryParse(txtQty.Text, out var qty))
+            // 3. Validation ข้อมูลหน้าจอ
+            if (!ValidateInput() || !int.TryParse(txtQty.Text, out var qty))
             {
-                ShowError("Qty ต้องเป็นตัวเลข");
+                if (!int.TryParse(txtQty.Text, out _)) MessageBox.Show("Qty ต้องเป็นตัวเลข");
                 return;
             }
 
-            btnOK.Enabled = false;
+            // 1. ตรวจสอบข้อมูลใน SQLite
+            var pattern = await _sqliteService.GetPatternDetailAsync(patternNo);
+            if (pattern == null)
+            {
+                MessageBox.Show($"Pattern '{patternNo}' not registered", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
+            // 2. Sync Pattern ไปยัง Backend ก่อน (ถ้าล้มเหลวให้หยุดตามเงื่อนไขที่คุณต้องการ)
+            bool patternReady = await SyncPatternAsync(pattern);
+            if (!patternReady)
+            {
+                MessageBox.Show("ไม่สามารถจัดเตรียมข้อมูล Pattern ในระบบหลักได้ กรุณาตรวจสอบการเชื่อมต่อหรือข้อมูล", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // 4. เริ่มขั้นตอนสร้าง Job
+            btnOK.Enabled = false;
             try
             {
-                var req = new CreateJobRequest
-                {
-                    BarcodeRaw = txtBarcode.Text,
-                    OrderNo = txtOrderNo.Text,
-                    CustomerName = txtCustomerName.Text,
-                    Type = txtType.Text,
-                    Qty = qty, // ✅ FIX
-                    CreatedBy = "operator"
-                };
-
-                var success = await _api.CreateJobAsync(req);
-
-                if (success)
-                {
-                    MessageBox.Show("Create job success");
-
-                    // 🔥 notify parent
-                    BarcodeScanned?.Invoke(this, new BarcodeScanEventArgs
-                    {
-                        Barcode = BarcodeRaw,
-                        OrderNo = OrderNo,
-                        CustomerName = CustomerName,
-                        Type = Type,
-                        Qty = txtQty.Text
-                    });
-
-                    ClearForm();
-                }
-                else
-                {
-                    ShowError("Create job failed");
-                }
+                await ProcessCreateJobAsync(barcodeRaw, qty);
             }
             finally
             {
                 btnOK.Enabled = true;
+            }
+        }
+
+        /// <summary>
+        /// จัดการตัดสตริงเอาเฉพาะ Pattern Number
+        /// </summary>
+        private string GetPatternNo(string barcode)
+        {
+            int lastDashIndex = barcode.LastIndexOf('-');
+            return lastDashIndex != -1 ? barcode.Substring(0, lastDashIndex) : barcode;
+        }
+
+        /// <summary>
+        /// ทำความสะอาดข้อมูลและส่ง Pattern ไปยัง Backend
+        /// </summary>
+        private async Task<bool> SyncPatternAsync(PatternDetail pattern)
+        {
+            if (pattern.InkjetConfigs == null) return false;
+
+            // กรองและปรับจูนข้อมูลให้ตรงตาม Validation ของ Backend
+            pattern.InkjetConfigs = pattern.InkjetConfigs
+                .Where(cfg => cfg.ProgramNumber.HasValue && cfg.ProgramNumber > 0)
+                .Select(cfg => {
+                    if (cfg.TriggerDelay < 10) cfg.TriggerDelay = 10; // ขั้นต่ำ 10 ตาม Error
+                    if (cfg.Direction != 0 && cfg.Direction != 3) cfg.Direction = 0; // บังคับ 0 หรือ 3
+                    if (cfg.SteelType == null) cfg.SteelType = "";
+                    return cfg;
+                }).ToList();
+
+            // ถ้าไม่มี Config เหลืออยู่เลยหลังจากกรอง อาจจะถือว่า Pattern ไม่สมบูรณ์
+            if (pattern.InkjetConfigs.Count == 0) return false;
+
+            // ส่งไปที่ API
+            return await _api.CreatePatternAsync(pattern);
+        }
+
+        /// <summary>
+        /// จัดการสร้าง Job และเรียก Event แจ้งเตือน
+        /// </summary>
+        private async Task ProcessCreateJobAsync(string barcode, int qty)
+        {
+            var req = new CreateJobRequest
+            {
+                BarcodeRaw = barcode,
+                OrderNo = txtOrderNo.Text,
+                CustomerName = txtCustomerName.Text,
+                Type = txtType.Text,
+                Qty = qty,
+                CreatedBy = "operator"
+            };
+
+            var success = await _api.CreateJobAsync(req);
+
+            if (success)
+            {
+                MessageBox.Show("Create job success", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                BarcodeScanned?.Invoke(this, new BarcodeScanEventArgs
+                {
+                    Barcode = req.BarcodeRaw,
+                    OrderNo = req.OrderNo,
+                    CustomerName = req.CustomerName,
+                    Type = req.Type,
+                    Qty = req.Qty.ToString()
+                });
+
+                ClearForm();
+            }
+            else
+            {
+                MessageBox.Show("Create job failed: ไม่สามารถสร้างงานในระบบหลักได้", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

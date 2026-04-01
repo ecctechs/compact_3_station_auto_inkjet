@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
@@ -163,6 +163,26 @@ namespace InkjetOperator.Services
             catch (Exception ex)
             {
                 Debug.WriteLine("RetryJob error: " + ex);
+                return false;
+            }
+        }
+
+        public async Task<bool> CreatePatternAsync(PatternDetail request)
+        {
+            try
+            {
+                // ส่งไปยัง Endpoint /pattern/create ตามที่ตั้งไว้ใน Backend
+                var response = await _http.PostAsJsonAsync("/pattern/create", request, JsonOptions);
+
+                // ตรวจสอบสถานะ (ถ้าไม่ใช่ 2xx จะโยน Exception ไปที่ catch)
+                response.EnsureSuccessStatusCode();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Debug ดู Error ที่ตอบกลับมาจาก Backend (เช่น Barcode already exists)
+                Debug.WriteLine("CreatePattern error: " + ex.Message);
                 return false;
             }
         }
