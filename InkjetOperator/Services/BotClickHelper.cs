@@ -227,23 +227,25 @@ public static class BotClickHelper
         {
             Console.WriteLine($"[{step.Name}] Try {i}");
 
-            // ✅ 1. Capture BEFORE (ครั้งเดียวต่อ step)
-            Bitmap before = CaptureArea(step.VerifyArea);
+            // ✅ 1. แคปทั้งจอก่อนคลิก
+            Bitmap before = CaptureScreen();
 
-            // ✅ save เฉพาะครั้งแรก (กัน retry แล้วได้หลายรูป)
+            // ✅ save แค่ครั้งแรกของ step
             if (i == 1)
             {
                 SaveStepCapture(before, stepIndex, step.Name);
             }
 
-            // 2. click
+            // ✅ 2. click
             LeftClick(step.X, step.Y);
             Thread.Sleep(step.VerifyDelay);
 
-            // 3. capture after
+            // ✅ 3. ยังใช้ verify area (เร็วกว่า)
             Bitmap after = CaptureArea(step.VerifyArea);
 
             bool same = CompareBitmapsFast(before, after);
+
+
 
             before.Dispose();
             after.Dispose();
@@ -251,6 +253,16 @@ public static class BotClickHelper
             if (!same)
             {
                 Console.WriteLine($"[{step.Name}] ✅ Success");
+
+                // ✅ ถ้าเป็น step 4 → แคปภาพเพิ่ม (step5)
+                if (stepIndex == 4)
+                {
+                    Thread.Sleep(500); // กัน UI ยังไม่ทันอัปเดต
+                    var finalCapture = CaptureScreen();
+                    SaveStepCapture(finalCapture, 5, "final");
+                    finalCapture.Dispose();
+                }
+
                 return true;
             }
 

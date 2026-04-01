@@ -29,6 +29,7 @@ namespace InkjetOperator.UserControls
         {
             txtMain.Text = UvSettingsManager.GetValue("MAIN_PATH") ?? "";
             txtBackup.Text = UvSettingsManager.GetValue("BACKUP_PATH") ?? "";
+            txtDBUV1.Text = UvSettingsManager.GetValue("UV1DB3_PATH") ?? "";
 
             dgvXY.Rows[0].Cells[1].Value = UvSettingsManager.GetValue("DOC_X") ?? "0";
             dgvXY.Rows[0].Cells[2].Value = UvSettingsManager.GetValue("DOC_Y") ?? "0";
@@ -204,6 +205,27 @@ namespace InkjetOperator.UserControls
                     this.Invoke((MethodInvoker)(() =>
                         MessageBox.Show(result.Success ? "สำเร็จ!" : result.Error)));
             });
+        }
+
+        private void btnDBUV1_Click(object sender, EventArgs e)
+        {
+            using (var dialog = new FolderBrowserDialog())
+            {
+                dialog.Description = "เลือกโฟลเดอร์ Database UV DB3";
+
+                if (!string.IsNullOrEmpty(txtDBUV1.Text) && Directory.Exists(txtDBUV1.Text))
+                {
+                    dialog.SelectedPath = txtDBUV1.Text;
+                }
+
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    txtDBUV1.Text = dialog.SelectedPath;
+
+                    // ✅ Save ลง config
+                    UvSettingsManager.SetValue("UV1DB3_PATH", txtDBUV1.Text);
+                }
+            }
         }
     }
 }

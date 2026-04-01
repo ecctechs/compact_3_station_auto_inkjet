@@ -39,6 +39,9 @@
             dataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
             dataGridViewTextBoxColumn2 = new DataGridViewTextBoxColumn();
             dataGridViewTextBoxColumn3 = new DataGridViewTextBoxColumn();
+            txtDBUV1 = new TextBox();
+            btnDBUV1 = new Button();
+            label1 = new Label();
             pnlTop.SuspendLayout();
             pnlButtons.SuspendLayout();
             grpProgram.SuspendLayout();
@@ -110,6 +113,9 @@
             // 
             // grpProgram
             // 
+            grpProgram.Controls.Add(label1);
+            grpProgram.Controls.Add(btnDBUV1);
+            grpProgram.Controls.Add(txtDBUV1);
             grpProgram.Controls.Add(lblMain);
             grpProgram.Controls.Add(txtMain);
             grpProgram.Controls.Add(btnBrowseMain);
@@ -120,7 +126,7 @@
             grpProgram.Location = new Point(0, 150);
             grpProgram.Name = "grpProgram";
             grpProgram.Padding = new Padding(15);
-            grpProgram.Size = new Size(900, 130);
+            grpProgram.Size = new Size(900, 164);
             grpProgram.TabIndex = 2;
             grpProgram.TabStop = false;
             grpProgram.Text = "Program Paths";
@@ -179,7 +185,7 @@
             // 
             grpXY.Controls.Add(dgvXY);
             grpXY.Dock = DockStyle.Top;
-            grpXY.Location = new Point(0, 280);
+            grpXY.Location = new Point(0, 314);
             grpXY.Name = "grpXY";
             grpXY.Padding = new Padding(10);
             grpXY.Size = new Size(900, 220);
@@ -232,10 +238,10 @@
             // 
             grpLog.Controls.Add(dgvLog);
             grpLog.Dock = DockStyle.Fill;
-            grpLog.Location = new Point(0, 500);
+            grpLog.Location = new Point(0, 534);
             grpLog.Name = "grpLog";
             grpLog.Padding = new Padding(10);
-            grpLog.Size = new Size(900, 150);
+            grpLog.Size = new Size(900, 225);
             grpLog.TabIndex = 0;
             grpLog.TabStop = false;
             grpLog.Text = "Success Log";
@@ -260,7 +266,7 @@
             dgvLog.Name = "dgvLog";
             dgvLog.ReadOnly = true;
             dgvLog.RowHeadersWidth = 51;
-            dgvLog.Size = new Size(880, 110);
+            dgvLog.Size = new Size(880, 185);
             dgvLog.TabIndex = 0;
             // 
             // dataGridViewTextBoxColumn1
@@ -284,6 +290,31 @@
             dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
             dataGridViewTextBoxColumn3.ReadOnly = true;
             // 
+            // txtDBUV1
+            // 
+            txtDBUV1.Location = new Point(180, 114);
+            txtDBUV1.Name = "txtDBUV1";
+            txtDBUV1.Size = new Size(400, 27);
+            txtDBUV1.TabIndex = 6;
+            // 
+            // btnDBUV1
+            // 
+            btnDBUV1.Location = new Point(590, 116);
+            btnDBUV1.Name = "btnDBUV1";
+            btnDBUV1.Size = new Size(100, 25);
+            btnDBUV1.TabIndex = 7;
+            btnDBUV1.Text = "Browse...";
+            btnDBUV1.Click += btnDBUV1_Click;
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new Point(20, 114);
+            label1.Name = "label1";
+            label1.Size = new Size(103, 20);
+            label1.TabIndex = 8;
+            label1.Text = "Path UV1 DB3:";
+            // 
             // ucBot
             // 
             Controls.Add(grpLog);
@@ -292,7 +323,7 @@
             Controls.Add(pnlButtons);
             Controls.Add(pnlTop);
             Name = "ucBot";
-            Size = new Size(900, 650);
+            Size = new Size(900, 759);
             pnlTop.ResumeLayout(false);
             pnlTop.PerformLayout();
             pnlButtons.ResumeLayout(false);
@@ -334,5 +365,8 @@
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
+        private Label label1;
+        private Button btnDBUV1;
+        private TextBox txtDBUV1;
     }
 }
