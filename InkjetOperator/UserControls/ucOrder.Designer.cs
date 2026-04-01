@@ -9,7 +9,6 @@
         private TabPage tabHistory;
         private DataGridView dgvList;
         private DataGridView dgvHistory;
-        private Button btnStart;
 
         protected override void Dispose(bool disposing)
         {
@@ -32,24 +31,65 @@
             bindingSource1 = new BindingSource(components);
             tabHistory = new TabPage();
             dgvHistory = new DataGridView();
-            btnStart = new Button();
             timerPoll = new System.Windows.Forms.Timer(components);
+            pnlJobs = new Panel();
+            btnRefresh = new Button();
+            lblJobsTitle = new Label();
+            pnlDetail = new Panel();
+            lblDetailTitle = new Label();
+            lblBarcode = new Label();
+            txtBarcode = new TextBox();
+            lblLot = new Label();
+            txtLot = new TextBox();
+            lblStatus = new Label();
+            txtStatus = new TextBox();
+            lblPattern = new Label();
+            txtPattern = new TextBox();
+            grpInkjetConfigs = new GroupBox();
+            dgvConfigs = new DataGridView();
+            ordinalDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            programNumberDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            programNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            widthDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            heightDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            triggerDelayDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            directionDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            bindSourceInkjetConfigDto = new BindingSource(components);
+            grpTextBlocks = new GroupBox();
+            dgvTextBlocks = new DataGridView();
+            blockNumberDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            textDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            xDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            yDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            sizeDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            scaleDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            bindingSourceTextBlockDto = new BindingSource(components);
+            btnSend = new Button();
+            btnRetry = new Button();
             tabControl.SuspendLayout();
             tabList.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvList).BeginInit();
             ((System.ComponentModel.ISupportInitialize)bindingSource1).BeginInit();
             tabHistory.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvHistory).BeginInit();
+            pnlJobs.SuspendLayout();
+            pnlDetail.SuspendLayout();
+            grpInkjetConfigs.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvConfigs).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)bindSourceInkjetConfigDto).BeginInit();
+            grpTextBlocks.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvTextBlocks).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)bindingSourceTextBlockDto).BeginInit();
             SuspendLayout();
             // 
             // tabControl
             // 
             tabControl.Controls.Add(tabList);
             tabControl.Controls.Add(tabHistory);
-            tabControl.Location = new Point(20, 20);
+            tabControl.Location = new Point(9, 33);
             tabControl.Name = "tabControl";
             tabControl.SelectedIndex = 0;
-            tabControl.Size = new Size(800, 400);
+            tabControl.Size = new Size(385, 626);
             tabControl.TabIndex = 0;
             // 
             // tabList
@@ -57,7 +97,7 @@
             tabList.Controls.Add(dgvList);
             tabList.Location = new Point(4, 29);
             tabList.Name = "tabList";
-            tabList.Size = new Size(792, 367);
+            tabList.Size = new Size(377, 593);
             tabList.TabIndex = 0;
             tabList.Text = "List";
             // 
@@ -72,8 +112,9 @@
             dgvList.Location = new Point(0, 0);
             dgvList.Name = "dgvList";
             dgvList.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
-            dgvList.Size = new Size(792, 367);
+            dgvList.Size = new Size(377, 593);
             dgvList.TabIndex = 0;
+            dgvList.CellClick += dgvList_CellClick;
             // 
             // orderNoDataGridViewTextBoxColumn
             // 
@@ -119,7 +160,7 @@
             tabHistory.Controls.Add(dgvHistory);
             tabHistory.Location = new Point(4, 29);
             tabHistory.Name = "tabHistory";
-            tabHistory.Size = new Size(792, 367);
+            tabHistory.Size = new Size(377, 593);
             tabHistory.TabIndex = 1;
             tabHistory.Text = "History";
             // 
@@ -130,20 +171,8 @@
             dgvHistory.Location = new Point(0, 0);
             dgvHistory.Name = "dgvHistory";
             dgvHistory.RowHeadersWidth = 51;
-            dgvHistory.Size = new Size(792, 367);
+            dgvHistory.Size = new Size(377, 593);
             dgvHistory.TabIndex = 0;
-            // 
-            // btnStart
-            // 
-            btnStart.BackColor = Color.FromArgb(160, 200, 140);
-            btnStart.FlatStyle = FlatStyle.Flat;
-            btnStart.Location = new Point(350, 440);
-            btnStart.Name = "btnStart";
-            btnStart.Size = new Size(120, 50);
-            btnStart.TabIndex = 1;
-            btnStart.Text = "Start";
-            btnStart.UseVisualStyleBackColor = false;
-            btnStart.Click += btnStart_Click;
             // 
             // timerPoll
             // 
@@ -151,18 +180,361 @@
             timerPoll.Interval = 5000;
             timerPoll.Tick += timerPoll_Tick;
             // 
+            // pnlJobs
+            // 
+            pnlJobs.Controls.Add(btnRefresh);
+            pnlJobs.Controls.Add(tabControl);
+            pnlJobs.Controls.Add(lblJobsTitle);
+            pnlJobs.Dock = DockStyle.Left;
+            pnlJobs.Location = new Point(0, 0);
+            pnlJobs.Margin = new Padding(3, 4, 3, 4);
+            pnlJobs.Name = "pnlJobs";
+            pnlJobs.Padding = new Padding(6, 7, 6, 7);
+            pnlJobs.Size = new Size(400, 713);
+            pnlJobs.TabIndex = 2;
+            // 
+            // btnRefresh
+            // 
+            btnRefresh.Dock = DockStyle.Bottom;
+            btnRefresh.Location = new Point(6, 666);
+            btnRefresh.Margin = new Padding(3, 4, 3, 4);
+            btnRefresh.Name = "btnRefresh";
+            btnRefresh.Size = new Size(388, 40);
+            btnRefresh.TabIndex = 1;
+            btnRefresh.Text = "Refresh";
+            // 
+            // lblJobsTitle
+            // 
+            lblJobsTitle.Dock = DockStyle.Top;
+            lblJobsTitle.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            lblJobsTitle.Location = new Point(6, 7);
+            lblJobsTitle.Name = "lblJobsTitle";
+            lblJobsTitle.Size = new Size(388, 33);
+            lblJobsTitle.TabIndex = 2;
+            lblJobsTitle.Text = "Pending Jobs";
+            // 
+            // pnlDetail
+            // 
+            pnlDetail.Controls.Add(lblDetailTitle);
+            pnlDetail.Controls.Add(lblBarcode);
+            pnlDetail.Controls.Add(txtBarcode);
+            pnlDetail.Controls.Add(lblLot);
+            pnlDetail.Controls.Add(txtLot);
+            pnlDetail.Controls.Add(lblStatus);
+            pnlDetail.Controls.Add(txtStatus);
+            pnlDetail.Controls.Add(lblPattern);
+            pnlDetail.Controls.Add(txtPattern);
+            pnlDetail.Controls.Add(grpInkjetConfigs);
+            pnlDetail.Controls.Add(grpTextBlocks);
+            pnlDetail.Controls.Add(btnSend);
+            pnlDetail.Controls.Add(btnRetry);
+            pnlDetail.Dock = DockStyle.Fill;
+            pnlDetail.Location = new Point(400, 0);
+            pnlDetail.Margin = new Padding(3, 4, 3, 4);
+            pnlDetail.Name = "pnlDetail";
+            pnlDetail.Padding = new Padding(6, 7, 6, 7);
+            pnlDetail.Size = new Size(843, 713);
+            pnlDetail.TabIndex = 3;
+            // 
+            // lblDetailTitle
+            // 
+            lblDetailTitle.AutoSize = true;
+            lblDetailTitle.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            lblDetailTitle.Location = new Point(12, 14);
+            lblDetailTitle.Name = "lblDetailTitle";
+            lblDetailTitle.Size = new Size(92, 23);
+            lblDetailTitle.TabIndex = 0;
+            lblDetailTitle.Text = "Job Detail";
+            // 
+            // lblBarcode
+            // 
+            lblBarcode.AutoSize = true;
+            lblBarcode.Location = new Point(12, 47);
+            lblBarcode.Name = "lblBarcode";
+            lblBarcode.Size = new Size(67, 20);
+            lblBarcode.TabIndex = 1;
+            lblBarcode.Text = "Barcode:";
+            // 
+            // txtBarcode
+            // 
+            txtBarcode.Location = new Point(91, 36);
+            txtBarcode.Margin = new Padding(3, 4, 3, 4);
+            txtBarcode.Name = "txtBarcode";
+            txtBarcode.ReadOnly = true;
+            txtBarcode.Size = new Size(228, 27);
+            txtBarcode.TabIndex = 2;
+            // 
+            // lblLot
+            // 
+            lblLot.AutoSize = true;
+            lblLot.Location = new Point(337, 47);
+            lblLot.Name = "lblLot";
+            lblLot.Size = new Size(33, 20);
+            lblLot.TabIndex = 3;
+            lblLot.Text = "Lot:";
+            // 
+            // txtLot
+            // 
+            txtLot.Location = new Point(366, 36);
+            txtLot.Margin = new Padding(3, 4, 3, 4);
+            txtLot.Name = "txtLot";
+            txtLot.ReadOnly = true;
+            txtLot.Size = new Size(171, 27);
+            txtLot.TabIndex = 4;
+            // 
+            // lblStatus
+            // 
+            lblStatus.AutoSize = true;
+            lblStatus.Location = new Point(555, 47);
+            lblStatus.Name = "lblStatus";
+            lblStatus.Size = new Size(52, 20);
+            lblStatus.TabIndex = 5;
+            lblStatus.Text = "Status:";
+            // 
+            // txtStatus
+            // 
+            txtStatus.Location = new Point(606, 36);
+            txtStatus.Margin = new Padding(3, 4, 3, 4);
+            txtStatus.Name = "txtStatus";
+            txtStatus.ReadOnly = true;
+            txtStatus.Size = new Size(114, 27);
+            txtStatus.TabIndex = 6;
+            // 
+            // lblPattern
+            // 
+            lblPattern.AutoSize = true;
+            lblPattern.Location = new Point(12, 80);
+            lblPattern.Name = "lblPattern";
+            lblPattern.Size = new Size(58, 20);
+            lblPattern.TabIndex = 7;
+            lblPattern.Text = "Pattern:";
+            // 
+            // txtPattern
+            // 
+            txtPattern.Location = new Point(91, 69);
+            txtPattern.Margin = new Padding(3, 4, 3, 4);
+            txtPattern.Name = "txtPattern";
+            txtPattern.ReadOnly = true;
+            txtPattern.Size = new Size(228, 27);
+            txtPattern.TabIndex = 8;
+            // 
+            // grpInkjetConfigs
+            // 
+            grpInkjetConfigs.Controls.Add(dgvConfigs);
+            grpInkjetConfigs.Location = new Point(6, 107);
+            grpInkjetConfigs.Margin = new Padding(3, 4, 3, 4);
+            grpInkjetConfigs.Name = "grpInkjetConfigs";
+            grpInkjetConfigs.Padding = new Padding(3, 4, 3, 4);
+            grpInkjetConfigs.Size = new Size(720, 173);
+            grpInkjetConfigs.TabIndex = 9;
+            grpInkjetConfigs.TabStop = false;
+            grpInkjetConfigs.Text = "Inkjet Configs";
+            // 
+            // dgvConfigs
+            // 
+            dgvConfigs.AllowUserToAddRows = false;
+            dgvConfigs.AllowUserToDeleteRows = false;
+            dgvConfigs.AutoGenerateColumns = false;
+            dgvConfigs.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvConfigs.ColumnHeadersHeight = 29;
+            dgvConfigs.Columns.AddRange(new DataGridViewColumn[] { ordinalDataGridViewTextBoxColumn, programNumberDataGridViewTextBoxColumn, programNameDataGridViewTextBoxColumn, widthDataGridViewTextBoxColumn, heightDataGridViewTextBoxColumn, triggerDelayDataGridViewTextBoxColumn, directionDataGridViewTextBoxColumn });
+            dgvConfigs.DataSource = bindSourceInkjetConfigDto;
+            dgvConfigs.Dock = DockStyle.Fill;
+            dgvConfigs.Location = new Point(3, 24);
+            dgvConfigs.Margin = new Padding(3, 4, 3, 4);
+            dgvConfigs.Name = "dgvConfigs";
+            dgvConfigs.ReadOnly = true;
+            dgvConfigs.RowHeadersWidth = 51;
+            dgvConfigs.Size = new Size(714, 145);
+            dgvConfigs.TabIndex = 0;
+            // 
+            // ordinalDataGridViewTextBoxColumn
+            // 
+            ordinalDataGridViewTextBoxColumn.DataPropertyName = "Ordinal";
+            ordinalDataGridViewTextBoxColumn.HeaderText = "Ordinal";
+            ordinalDataGridViewTextBoxColumn.MinimumWidth = 6;
+            ordinalDataGridViewTextBoxColumn.Name = "ordinalDataGridViewTextBoxColumn";
+            ordinalDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // programNumberDataGridViewTextBoxColumn
+            // 
+            programNumberDataGridViewTextBoxColumn.DataPropertyName = "ProgramNumber";
+            programNumberDataGridViewTextBoxColumn.HeaderText = "ProgramNumber";
+            programNumberDataGridViewTextBoxColumn.MinimumWidth = 6;
+            programNumberDataGridViewTextBoxColumn.Name = "programNumberDataGridViewTextBoxColumn";
+            programNumberDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // programNameDataGridViewTextBoxColumn
+            // 
+            programNameDataGridViewTextBoxColumn.DataPropertyName = "ProgramName";
+            programNameDataGridViewTextBoxColumn.HeaderText = "ProgramName";
+            programNameDataGridViewTextBoxColumn.MinimumWidth = 6;
+            programNameDataGridViewTextBoxColumn.Name = "programNameDataGridViewTextBoxColumn";
+            programNameDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // widthDataGridViewTextBoxColumn
+            // 
+            widthDataGridViewTextBoxColumn.DataPropertyName = "Width";
+            widthDataGridViewTextBoxColumn.HeaderText = "Width";
+            widthDataGridViewTextBoxColumn.MinimumWidth = 6;
+            widthDataGridViewTextBoxColumn.Name = "widthDataGridViewTextBoxColumn";
+            widthDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // heightDataGridViewTextBoxColumn
+            // 
+            heightDataGridViewTextBoxColumn.DataPropertyName = "Height";
+            heightDataGridViewTextBoxColumn.HeaderText = "Height";
+            heightDataGridViewTextBoxColumn.MinimumWidth = 6;
+            heightDataGridViewTextBoxColumn.Name = "heightDataGridViewTextBoxColumn";
+            heightDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // triggerDelayDataGridViewTextBoxColumn
+            // 
+            triggerDelayDataGridViewTextBoxColumn.DataPropertyName = "TriggerDelay";
+            triggerDelayDataGridViewTextBoxColumn.HeaderText = "TriggerDelay";
+            triggerDelayDataGridViewTextBoxColumn.MinimumWidth = 6;
+            triggerDelayDataGridViewTextBoxColumn.Name = "triggerDelayDataGridViewTextBoxColumn";
+            triggerDelayDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // directionDataGridViewTextBoxColumn
+            // 
+            directionDataGridViewTextBoxColumn.DataPropertyName = "Direction";
+            directionDataGridViewTextBoxColumn.HeaderText = "Direction";
+            directionDataGridViewTextBoxColumn.MinimumWidth = 6;
+            directionDataGridViewTextBoxColumn.Name = "directionDataGridViewTextBoxColumn";
+            directionDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // bindSourceInkjetConfigDto
+            // 
+            bindSourceInkjetConfigDto.DataSource = typeof(Models.InkjetConfigDto);
+            // 
+            // grpTextBlocks
+            // 
+            grpTextBlocks.Controls.Add(dgvTextBlocks);
+            grpTextBlocks.Location = new Point(6, 287);
+            grpTextBlocks.Margin = new Padding(3, 4, 3, 4);
+            grpTextBlocks.Name = "grpTextBlocks";
+            grpTextBlocks.Padding = new Padding(3, 4, 3, 4);
+            grpTextBlocks.Size = new Size(720, 173);
+            grpTextBlocks.TabIndex = 10;
+            grpTextBlocks.TabStop = false;
+            grpTextBlocks.Text = "Text Blocks";
+            // 
+            // dgvTextBlocks
+            // 
+            dgvTextBlocks.AllowUserToAddRows = false;
+            dgvTextBlocks.AllowUserToDeleteRows = false;
+            dgvTextBlocks.AutoGenerateColumns = false;
+            dgvTextBlocks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvTextBlocks.ColumnHeadersHeight = 29;
+            dgvTextBlocks.Columns.AddRange(new DataGridViewColumn[] { blockNumberDataGridViewTextBoxColumn, textDataGridViewTextBoxColumn, xDataGridViewTextBoxColumn, yDataGridViewTextBoxColumn, sizeDataGridViewTextBoxColumn, scaleDataGridViewTextBoxColumn });
+            dgvTextBlocks.DataSource = bindingSourceTextBlockDto;
+            dgvTextBlocks.Dock = DockStyle.Fill;
+            dgvTextBlocks.Location = new Point(3, 24);
+            dgvTextBlocks.Margin = new Padding(3, 4, 3, 4);
+            dgvTextBlocks.Name = "dgvTextBlocks";
+            dgvTextBlocks.ReadOnly = true;
+            dgvTextBlocks.RowHeadersWidth = 51;
+            dgvTextBlocks.Size = new Size(714, 145);
+            dgvTextBlocks.TabIndex = 0;
+            // 
+            // blockNumberDataGridViewTextBoxColumn
+            // 
+            blockNumberDataGridViewTextBoxColumn.DataPropertyName = "BlockNumber";
+            blockNumberDataGridViewTextBoxColumn.HeaderText = "BlockNumber";
+            blockNumberDataGridViewTextBoxColumn.MinimumWidth = 6;
+            blockNumberDataGridViewTextBoxColumn.Name = "blockNumberDataGridViewTextBoxColumn";
+            blockNumberDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // textDataGridViewTextBoxColumn
+            // 
+            textDataGridViewTextBoxColumn.DataPropertyName = "Text";
+            textDataGridViewTextBoxColumn.HeaderText = "Text";
+            textDataGridViewTextBoxColumn.MinimumWidth = 6;
+            textDataGridViewTextBoxColumn.Name = "textDataGridViewTextBoxColumn";
+            textDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // xDataGridViewTextBoxColumn
+            // 
+            xDataGridViewTextBoxColumn.DataPropertyName = "X";
+            xDataGridViewTextBoxColumn.HeaderText = "X";
+            xDataGridViewTextBoxColumn.MinimumWidth = 6;
+            xDataGridViewTextBoxColumn.Name = "xDataGridViewTextBoxColumn";
+            xDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // yDataGridViewTextBoxColumn
+            // 
+            yDataGridViewTextBoxColumn.DataPropertyName = "Y";
+            yDataGridViewTextBoxColumn.HeaderText = "Y";
+            yDataGridViewTextBoxColumn.MinimumWidth = 6;
+            yDataGridViewTextBoxColumn.Name = "yDataGridViewTextBoxColumn";
+            yDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // sizeDataGridViewTextBoxColumn
+            // 
+            sizeDataGridViewTextBoxColumn.DataPropertyName = "Size";
+            sizeDataGridViewTextBoxColumn.HeaderText = "Size";
+            sizeDataGridViewTextBoxColumn.MinimumWidth = 6;
+            sizeDataGridViewTextBoxColumn.Name = "sizeDataGridViewTextBoxColumn";
+            sizeDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // scaleDataGridViewTextBoxColumn
+            // 
+            scaleDataGridViewTextBoxColumn.DataPropertyName = "Scale";
+            scaleDataGridViewTextBoxColumn.HeaderText = "Scale";
+            scaleDataGridViewTextBoxColumn.MinimumWidth = 6;
+            scaleDataGridViewTextBoxColumn.Name = "scaleDataGridViewTextBoxColumn";
+            scaleDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // bindingSourceTextBlockDto
+            // 
+            bindingSourceTextBlockDto.DataSource = typeof(Models.TextBlockDto);
+            // 
+            // btnSend
+            // 
+            btnSend.BackColor = Color.FromArgb(0, 120, 215);
+            btnSend.FlatStyle = FlatStyle.Flat;
+            btnSend.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+            btnSend.ForeColor = Color.White;
+            btnSend.Location = new Point(6, 473);
+            btnSend.Margin = new Padding(3, 4, 3, 4);
+            btnSend.Name = "btnSend";
+            btnSend.Size = new Size(229, 53);
+            btnSend.TabIndex = 11;
+            btnSend.Text = "SEND TO DEVICES";
+            btnSend.UseVisualStyleBackColor = false;
+            btnSend.Click += btnSend_Click;
+            // 
+            // btnRetry
+            // 
+            btnRetry.Location = new Point(246, 473);
+            btnRetry.Margin = new Padding(3, 4, 3, 4);
+            btnRetry.Name = "btnRetry";
+            btnRetry.Size = new Size(137, 53);
+            btnRetry.TabIndex = 12;
+            btnRetry.Text = "Retry Failed";
+            // 
             // ucOrder
             // 
-            Controls.Add(tabControl);
-            Controls.Add(btnStart);
+            Controls.Add(pnlDetail);
+            Controls.Add(pnlJobs);
             Name = "ucOrder";
-            Size = new Size(850, 520);
+            Size = new Size(1243, 713);
             tabControl.ResumeLayout(false);
             tabList.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvList).EndInit();
             ((System.ComponentModel.ISupportInitialize)bindingSource1).EndInit();
             tabHistory.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvHistory).EndInit();
+            pnlJobs.ResumeLayout(false);
+            pnlDetail.ResumeLayout(false);
+            pnlDetail.PerformLayout();
+            grpInkjetConfigs.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dgvConfigs).EndInit();
+            ((System.ComponentModel.ISupportInitialize)bindSourceInkjetConfigDto).EndInit();
+            grpTextBlocks.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dgvTextBlocks).EndInit();
+            ((System.ComponentModel.ISupportInitialize)bindingSourceTextBlockDto).EndInit();
             ResumeLayout(false);
         }
         private BindingSource bindingSource1;
@@ -172,5 +544,39 @@
         private DataGridViewTextBoxColumn qtyDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn statusDataGridViewTextBoxColumn;
         private System.Windows.Forms.Timer timerPoll;
+        private Panel pnlJobs;
+        private Button btnRefresh;
+        private Label lblJobsTitle;
+        private Panel pnlDetail;
+        private Label lblDetailTitle;
+        private Label lblBarcode;
+        private TextBox txtBarcode;
+        private Label lblLot;
+        private TextBox txtLot;
+        private Label lblStatus;
+        private TextBox txtStatus;
+        private Label lblPattern;
+        private TextBox txtPattern;
+        private GroupBox grpInkjetConfigs;
+        private DataGridView dgvConfigs;
+        private GroupBox grpTextBlocks;
+        private DataGridView dgvTextBlocks;
+        private Button btnSend;
+        private Button btnRetry;
+        private BindingSource bindSourceInkjetConfigDto;
+        private DataGridViewTextBoxColumn ordinalDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn programNumberDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn programNameDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn widthDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn heightDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn triggerDelayDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn directionDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn blockNumberDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn textDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn xDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn yDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn sizeDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn scaleDataGridViewTextBoxColumn;
+        private BindingSource bindingSourceTextBlockDto;
     }
 }

@@ -108,59 +108,59 @@ public class PatternDetail
     public List<ServoConfigDto> ServoConfigs { get; set; } = new();
 }
 
-public class InkjetConfigDto
-{
-    [JsonPropertyName("ordinal")]
-    public int Ordinal { get; set; }
+//public class InkjetConfigDto
+//{
+//    [JsonPropertyName("ordinal")]
+//    public int Ordinal { get; set; }
 
-    [JsonPropertyName("program_number")]
-    public int? ProgramNumber { get; set; }
+//    [JsonPropertyName("program_number")]
+//    public int? ProgramNumber { get; set; }
 
-    [JsonPropertyName("program_name")]
-    public string? ProgramName { get; set; }
+//    [JsonPropertyName("program_name")]
+//    public string? ProgramName { get; set; }
 
-    [JsonPropertyName("width")]
-    public int? Width { get; set; }
+//    [JsonPropertyName("width")]
+//    public int? Width { get; set; }
 
-    [JsonPropertyName("height")]
-    public int? Height { get; set; }
+//    [JsonPropertyName("height")]
+//    public int? Height { get; set; }
 
-    [JsonPropertyName("trigger_delay")]
-    public int? TriggerDelay { get; set; }
+//    [JsonPropertyName("trigger_delay")]
+//    public int? TriggerDelay { get; set; }
 
-    [JsonPropertyName("direction")]
-    public int? Direction { get; set; }
+//    [JsonPropertyName("direction")]
+//    public int? Direction { get; set; }
 
-    [JsonPropertyName("steel_type")]
-    public string? SteelType { get; set; }
+//    [JsonPropertyName("steel_type")]
+//    public string? SteelType { get; set; }
 
-    [JsonPropertyName("suspended")]
-    public bool Suspended { get; set; }
+//    [JsonPropertyName("suspended")]
+//    public bool Suspended { get; set; }
 
-    [JsonPropertyName("text_blocks")]
-    public List<TextBlockDto> TextBlocks { get; set; } = new();
-}
+//    [JsonPropertyName("text_blocks")]
+//    public List<TextBlockDto> TextBlocks { get; set; } = new();
+//}
 
-public class TextBlockDto
-{
-    [JsonPropertyName("block_number")]
-    public int BlockNumber { get; set; }
+//public class TextBlockDto
+//{
+//    [JsonPropertyName("block_number")]
+//    public int BlockNumber { get; set; }
 
-    [JsonPropertyName("text")]
-    public string? Text { get; set; }
+//    [JsonPropertyName("text")]
+//    public string? Text { get; set; }
 
-    [JsonPropertyName("x")]
-    public int? X { get; set; }
+//    [JsonPropertyName("x")]
+//    public int? X { get; set; }
 
-    [JsonPropertyName("y")]
-    public int? Y { get; set; }
+//    [JsonPropertyName("y")]
+//    public int? Y { get; set; }
 
-    [JsonPropertyName("size")]
-    public int? Size { get; set; }
+//    [JsonPropertyName("size")]
+//    public int? Size { get; set; }
 
-    [JsonPropertyName("scale")]
-    public int? Scale { get; set; }
-}
+//    [JsonPropertyName("scale")]
+//    public int? Scale { get; set; }
+//}
 
 public class ConveyorSpeedDto
 {
