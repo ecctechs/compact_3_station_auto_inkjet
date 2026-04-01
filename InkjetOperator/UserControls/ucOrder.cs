@@ -16,6 +16,7 @@ namespace InkjetOperator
         public ucOrder()
         {
             InitializeComponent();
+            get_uv();
         }
 
         public async void get_job()
@@ -24,6 +25,16 @@ namespace InkjetOperator
             {
                 var jobs = await _api.GetPendingJobsAsync();
                 bindingSource1.DataSource = jobs;
+            }
+            catch (Exception ex) { Debug.WriteLine(ex.Message); }
+        }
+
+        public async void get_uv()
+        {
+            try
+            {
+                var uvLogs = await _sqliteService.GetUvPrintDataAsync();
+                bindingSourceUVinkjet.DataSource = uvLogs;
             }
             catch (Exception ex) { Debug.WriteLine(ex.Message); }
         }
@@ -56,13 +67,11 @@ namespace InkjetOperator
 
             if (pattern != null)
             {
-                _currentResolved = new ResolvedJobResponse
-                {
-                    Job = bindingSource1.Current as InkjetOperator.Models.PrintJob,
-                    Pattern = pattern
-                };
-
+                // Bind ข้อมูลปกติ
                 bindSourceInkjetConfigDto.DataSource = pattern.InkjetConfigs;
+
+                // ถ้าต้องการให้ Grid อัปเดตทันที
+                bindingSourceUVinkjet.ResetBindings(false);
             }
             else
             {

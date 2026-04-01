@@ -68,6 +68,42 @@ namespace InkjetOperator.Services
             };
         }
 
+        // เพิ่มในไฟล์ SqliteDataService.cs
+        public async Task<List<UVinkjet>> GetUvPrintDataAsync()
+        {
+            // ตรวจสอบว่าไฟล์ DB มีอยู่จริงไหม
+            if (!File.Exists(_dbPath)) return new List<UVinkjet>();
+
+            var list = new List<UVinkjet>();
+
+            // สร้าง Connection (แนะนำให้ใช้ using เพื่อคืนทรัพยากร)
+            using var conn = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
+            await conn.OpenAsync();
+
+            // SQL Query: ดึงข้อมูลทั้งหมดจาก uv_print_data
+            // เรียงตาม update_at ล่าสุดขึ้นก่อน (ถ้าต้องการ)
+            string sql = "SELECT * FROM uv_print_data ORDER BY update_at DESC";
+
+            using var cmd = new SQLiteCommand(sql, conn);
+
+            using var reader = (SQLiteDataReader)await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                list.Add(new UVinkjet
+                {
+                    // Map คอลัมน์ให้ตรงกับ Schema ของตาราง uv_print_data
+                    Id = GetInt(reader, "id") ?? 0,
+                    InkjetName = GetStr(reader, "inkjet_name"),
+                    lot = GetStr(reader, "lot"),
+                    name = GetStr(reader, "name"),
+                    program_name = GetStr(reader, "program_name"),
+                    // ถ้าใน Class UVinkjet มีฟิลด์เวลา
+                    // UpdateAt = GetStr(reader, "update_at") 
+                });
+            }
+            return list;
+        }
+
         private string GetStr(SQLiteDataReader r, string n) =>
             r.IsDBNull(r.GetOrdinal(n)) ? null : r.GetValue(r.GetOrdinal(n)).ToString();
 
