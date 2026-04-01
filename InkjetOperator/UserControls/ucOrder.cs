@@ -1,140 +1,96 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.Windows.Forms;
 using InkjetOperator.Models;
 using InkjetOperator.Services;
-using Microsoft.Data.Sqlite;
-using System.Data.SQLite;
-using System.Diagnostics;
 
 namespace InkjetOperator
 {
     public partial class ucOrder : UserControl
     {
-        private ApiClient _api;
+        private readonly ApiClient _api = ApiProvider.Instance;
+        private readonly SqliteDataService _sqliteService = new SqliteDataService();
+        private ResolvedJobResponse _currentResolved;
 
         public ucOrder()
         {
             InitializeComponent();
-            _api = ApiProvider.Instance; // 🔥 ใช้จาก global
-
-            get_job();
-
         }
 
         public async void get_job()
         {
-            var jobs = await _api.GetPendingJobsAsync();
-
-            bindingSource1.DataSource = jobs;
-        }
-
-        private void btnStart_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show("Start clicked");
-        }
-
-        private async void timerPoll_Tick(object sender, EventArgs e)
-        {
-            timerPoll.Stop(); // 🔥 กันยิงซ้ำ
-
             try
             {
                 var jobs = await _api.GetPendingJobsAsync();
-
                 bindingSource1.DataSource = jobs;
-
-                // ถ้ามี history
-                // bindingSource2.DataSource = jobs.Where(x => x.Status == "Done").ToList();
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-            finally
-            {
-                timerPoll.Start(); // 🔁 เริ่มใหม่
-            }
+            catch (Exception ex) { Debug.WriteLine(ex.Message); }
         }
 
-        private void dgvList_CellClick(object sender, DataGridViewCellEventArgs e)
+        private async void dgvList_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            // ตรวจสอบว่ามีข้อมูลถูกเลือกอยู่จริง (ป้องกัน Error กรณีคลิกโดน Header)
             if (bindingSource1.Current is PrintJob selectedJob)
             {
                 txtBarcode.Text = selectedJob.BarcodeRaw;
-                txtLot.Text = selectedJob.LotNumber;    // เปลี่ยนชื่อ Property ให้ตรงกับ Model ของคุณ
+                txtLot.Text = selectedJob.LotNumber;
                 txtStatus.Text = selectedJob.Status;
-                txtPattern.Text = selectedJob.PatternNoErp;  // เปลี่ยนชื่อ Property ให้ตรงกับ Model ของคุณ
+                txtPattern.Text = selectedJob.PatternNoErp;
+                await query_db3_async();
+            }
+
+            if (_currentResolved?.Pattern?.InkjetConfigs != null)
+            {
+                // Bind รายการหัวพิมพ์ (MK1, MK2)
+                bindSourceInkjetConfigDto.DataSource = _currentResolved.Pattern.InkjetConfigs;
             }
         }
 
-        private void query_db3()
+        // --- เริ่มส่วนที่ปรับปรุงใหม่ ---
+        private async Task query_db3_async()
         {
+            string patternNo = txtPattern.Text.Trim();
 
-            string pattern = txtPattern.Text.Trim();
-            // ระบุพาธไฟล์ database ของคุณ
-            string dbPath = CustomSettingsManager.GetValue("DB_PATH") ?? "";
-            if (!System.IO.File.Exists(dbPath))
+            // เรียกใช้ Service แทนการเขียนเอง
+            var pattern = await _sqliteService.GetPatternDetailAsync(patternNo);
+
+            if (pattern != null)
             {
-                Debug.WriteLine("ไม่พบไฟล์ฐานข้อมูลในตำแหน่ง: " + dbPath);
-                return;
+                _currentResolved = new ResolvedJobResponse
+                {
+                    Job = bindingSource1.Current as InkjetOperator.Models.PrintJob,
+                    Pattern = pattern
+                };
+
+                bindSourceInkjetConfigDto.DataSource = pattern.InkjetConfigs;
             }
-            string connectionString = $"Data Source={dbPath};Version=3;";
-
-            using (SQLiteConnection conn = new SQLiteConnection(connectionString))
+            else
             {
-                try
-                {
-                    conn.Open();
-                    // เขียน SQL Query
-                    string sql = "SELECT * FROM config_data WHERE pattern_no_erp = @pattern";
-
-                    using (SQLiteCommand cmd = new SQLiteCommand(sql, conn))
-                    {
-                        // ใช้ Parameter เพื่อป้องกัน SQL Injection
-                        cmd.Parameters.AddWithValue("@pattern", pattern);
-
-                        using (SQLiteDataReader reader = cmd.ExecuteReader())
-                        {
-                            if (reader.HasRows)
-                            {
-                                while (reader.Read())
-                                {
-                                    Debug.WriteLine("--- New Record ---");
-                                    // Loop อ่านข้อมูลทุก Column ใน Record นั้นๆ
-                                    for (int i = 0; i < reader.FieldCount; i++)
-                                    {
-                                        string columnName = reader.GetName(i);
-                                        object columnValue = reader.GetValue(i);
-
-                                        Debug.WriteLine($"{columnName}: {columnValue}");
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                Debug.WriteLine("No data found for pattern: " + pattern);
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine("Error: " + ex.Message);
-                }
-                finally
-                {
-                    conn.Close();
-                }
+                MessageBox.Show("ไม่พบข้อมูลในระบบ SQLite");
             }
         }
 
-        private void btnSend_Click(object sender, EventArgs e)
+        private void dgvConfigs_CellClick(object sender, DataGridViewCellEventArgs e) =>
+                bindingSourceTextBlockDto.DataSource = (bindSourceInkjetConfigDto.Current as InkjetConfigDto)?.TextBlocks;
+
+        private async void timerPoll_Tick(object sender, EventArgs e)
         {
-            query_db3();
+            // หยุด Timer ไว้ก่อนเพื่อกันการทำงานซ้อนกัน (ถ้าเน็ตช้า)
+            timerPoll.Stop();
+
+            try
+            {
+                  get_job();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Polling Error: " + ex.Message);
+            }
+            finally
+            {
+                // รันเสร็จแล้วค่อยเริ่มนับ 5 วิใหม่
+                timerPoll.Start();
+            }
         }
     }
 }

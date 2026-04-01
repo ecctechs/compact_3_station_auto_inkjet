@@ -1,0 +1,77 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data.SQLite;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using InkjetOperator.Models;
+
+namespace InkjetOperator.Services
+{
+    public class SqliteDataService
+    {
+        private readonly string _dbPath;
+
+        public SqliteDataService()
+        {
+            _dbPath = CustomSettingsManager.GetValue("DB_PATH") ?? "";
+        }
+
+        public async Task<PatternDetail> GetPatternDetailAsync(string patternNo)
+        {
+            if (!File.Exists(_dbPath)) return null;
+
+            using var conn = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
+            await conn.OpenAsync();
+
+            using var cmd = new SQLiteCommand("SELECT * FROM config_data WHERE pattern_no_erp = @p LIMIT 1", conn);
+            cmd.Parameters.AddWithValue("@p", patternNo);
+
+            using var reader = (SQLiteDataReader)await cmd.ExecuteReaderAsync();
+            if (!await reader.ReadAsync()) return null;
+
+            return new PatternDetail
+            {
+                Barcode = GetStr(reader, "pattern_no_erp") ?? patternNo,
+                Description = GetStr(reader, "model_plan_code") ?? GetStr(reader, "program_name") ?? "",
+                InkjetConfigs = new List<InkjetConfigDto>
+                {
+                    BuildMk(reader, "mk1_", 1, "program_name"),
+                    BuildMk(reader, "mk2_", 2, "program_name3")
+                }
+            };
+        }
+
+        private InkjetConfigDto BuildMk(SQLiteDataReader r, string pre, int ord, string pNameCol)
+        {
+            return new InkjetConfigDto
+            {
+                Ordinal = ord,
+                ProgramNumber = GetInt(r, $"{pre}program_no"),
+                ProgramName = GetStr(r, pNameCol),
+                Width = GetInt(r, $"{pre}width"),
+                Height = GetInt(r, $"{pre}height"),
+                TriggerDelay = GetInt(r, $"{pre}trigger_delay"),
+                Direction = GetInt(r, $"{pre}text_direction"),
+                TextBlocks = Enumerable.Range(1, 5)
+                    .Select(b => new { b, txt = GetStr(r, $"{pre}block{b}_text") })
+                    .Where(x => !string.IsNullOrEmpty(x.txt))
+                    .Select(x => new TextBlockDto
+                    {
+                        BlockNumber = x.b,
+                        Text = x.txt,
+                        X = GetInt(r, $"{pre}block{x.b}_x"),
+                        Y = GetInt(r, $"{pre}block{x.b}_y"),
+                        Size = GetInt(r, $"{pre}block{x.b}_size"),
+                        Scale = GetInt(r, $"{pre}block{x.b}_scale_side")
+                    }).ToList()
+            };
+        }
+
+        private string GetStr(SQLiteDataReader r, string n) =>
+            r.IsDBNull(r.GetOrdinal(n)) ? null : r.GetValue(r.GetOrdinal(n)).ToString();
+
+        private int? GetInt(SQLiteDataReader r, string n) =>
+            int.TryParse(GetStr(r, n), out int res) ? res : (int?)null;
+    }
+}
