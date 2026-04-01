@@ -58,7 +58,8 @@ namespace InkjetOperator
                 txtLot.Text = selectedJob.LotNumber;
                 txtStatus.Text = selectedJob.Status;
                 txtPattern.Text = selectedJob.PatternNoErp;
-                await query_db3_async();
+                //await query_db3_async();
+                await QueryBackendJobAsync();
             }
 
             if (_currentResolved?.Pattern?.InkjetConfigs != null)
@@ -69,24 +70,64 @@ namespace InkjetOperator
         }
 
         // --- เริ่มส่วนที่ปรับปรุงใหม่ ---
-        private async Task query_db3_async()
+        //private async Task query_db3_async()
+        //{
+        //    string patternNo = txtPattern.Text.Trim();
+
+        //    // เรียกใช้ Service แทนการเขียนเอง
+        //    var pattern = await _sqliteService.GetPatternDetailAsync(patternNo);
+
+        //    if (pattern != null)
+        //    {
+        //        // Bind ข้อมูลปกติ
+        //        bindSourceInkjetConfigDto.DataSource = pattern.InkjetConfigs;
+
+        //        // ถ้าต้องการให้ Grid อัปเดตทันที
+        //        bindingSourceUVinkjet.ResetBindings(false);
+        //    }
+        //    else
+        //    {
+        //        MessageBox.Show("ไม่พบข้อมูลในระบบ SQLite");
+        //    }
+        //}
+
+        private async Task QueryBackendJobAsync()
         {
-            string patternNo = txtPattern.Text.Trim();
-
-            // เรียกใช้ Service แทนการเขียนเอง
-            var pattern = await _sqliteService.GetPatternDetailAsync(patternNo);
-
-            if (pattern != null)
+            // 1. ดึง Job ID จาก BindingSource ที่เลือกอยู่ (Current Row)
+            if (bindingSource1.Current is not PrintJob selectedJob)
             {
-                // Bind ข้อมูลปกติ
-                bindSourceInkjetConfigDto.DataSource = pattern.InkjetConfigs;
-
-                // ถ้าต้องการให้ Grid อัปเดตทันที
-                bindingSourceUVinkjet.ResetBindings(false);
+                MessageBox.Show("กรุณาเลือกรายการ Job ในตารางก่อน");
+                return;
             }
-            else
+
+            try
             {
-                MessageBox.Show("ไม่พบข้อมูลในระบบ SQLite");
+                // เปลี่ยนจาก SQLite เป็นการเรียก Resolved Job จาก API
+                // ข้อมูลที่ได้ (resolvedJob) จะมี Property .InkjetConfigs อยู่ข้างในตามโครงสร้าง DTO
+                var resolvedJob = await _api.GetResolvedJobAsync(selectedJob.Id);
+
+                if (resolvedJob != null)
+                {
+                    // 1. Bind ข้อมูล Configs เข้ากับ BindingSource หลัก
+                    // Backend มักจะส่งมาเป็น List<InkjetConfigDto>
+                    bindSourceInkjetConfigDto.DataSource = resolvedJob.Pattern.InkjetConfigs;
+
+                    // 2. สั่งรีเฟรช Grid เพื่อแสดงค่าใหม่
+                    bindingSourceUVinkjet.ResetBindings(false);
+
+                    // 3. (Option) ถ้าต้องการแสดงข้อมูล Job อื่นๆ เช่น OrderNo, Customer
+                    // txtOrderNo.Text = resolvedJob.OrderNo;
+                }
+                else
+                {
+                    MessageBox.Show("ไม่พบข้อมูล Job หรือ Pattern นี้ในระบบ Backend", "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    bindSourceInkjetConfigDto.DataSource = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error fetching resolved job: {ex.Message}");
+                MessageBox.Show("เกิดข้อผิดพลาดในการเชื่อมต่อกับ Backend");
             }
         }
 

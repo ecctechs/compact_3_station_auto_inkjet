@@ -150,15 +150,34 @@ namespace InkjetOperator
 
         private async void BtnOK_Click(object? sender, EventArgs e)
         {
-            string barcodeRaw = txtBarcode.Text.Trim();
-            string patternNo = GetPatternNo(barcodeRaw);
-
             // 3. Validation ข้อมูลหน้าจอ
             if (!ValidateInput() || !int.TryParse(txtQty.Text, out var qty))
             {
                 if (!int.TryParse(txtQty.Text, out _)) MessageBox.Show("Qty ต้องเป็นตัวเลข");
                 return;
             }
+
+            string barcodeRaw = txtBarcode.Text.Trim();
+
+            // --- เพิ่มการ Validate รูปแบบ Barcode ---
+            if (!IsValidBarcode(barcodeRaw))
+            {
+                MessageBox.Show(
+                    "รูปแบบ Barcode ไม่ถูกต้อง!\n\n" +
+                    "ต้องมีรูปแบบดังนี้:\n" +
+                    "1. [Pattern]-[Sub]-[Lot] (เช่น xxxx-xxx-yyyyyy)\n" +
+                    "2. [Pattern]-[Lot] (เช่น xxxxxx-yyyyy)\n\n" +
+                    "* เครื่องหมาย '-' ตัวสุดท้ายจะถูกใช้เพื่อแยก Lot ออกจาก Pattern",
+                    "Barcode Format Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+                txtBarcode.Focus();
+                return;
+            }
+
+            // ถ้าผ่านการตรวจสอบแล้ว จึงค่อยดึง PatternNo
+            string patternNo = GetPatternNo(barcodeRaw);
 
             // 1. ตรวจสอบข้อมูลใน SQLite
             var pattern = await _sqliteService.GetPatternDetailAsync(patternNo);
@@ -188,13 +207,24 @@ namespace InkjetOperator
             }
         }
 
+
+        private bool IsValidBarcode(string barcode)
+        {
+            // เช็คว่าต้องไม่ว่าง และต้องมีเครื่องหมาย '-' อย่างน้อย 1 ตัว
+            if (string.IsNullOrWhiteSpace(barcode) || !barcode.Contains("-"))
+            {
+                return false;
+            }
+            return true;
+        }
         /// <summary>
         /// จัดการตัดสตริงเอาเฉพาะ Pattern Number
         /// </summary>
         private string GetPatternNo(string barcode)
         {
             int lastDashIndex = barcode.LastIndexOf('-');
-            return lastDashIndex != -1 ? barcode.Substring(0, lastDashIndex) : barcode;
+            // ถ้าผ่าน Validation มาแล้ว lastDashIndex จะไม่มีทางเป็น -1
+            return barcode.Substring(0, lastDashIndex);
         }
 
         /// <summary>
