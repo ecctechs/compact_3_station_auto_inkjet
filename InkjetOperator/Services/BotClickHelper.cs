@@ -32,15 +32,23 @@ public static class BotClickHelper
     static extern bool DrawIconEx(IntPtr hdc, int xLeft, int yTop,
         IntPtr hIcon, int cxWidth, int cyHeight, int istepIfAniCur, IntPtr hbrFlickerFreeDraw, int diFlags);
 
+    private static string CLICK_VALIDATE_X = UvSettingsManager.GetValue("CLICK_VALIDATE_X") ?? "";
+    private static string CLICK_VALIDATE_Y = UvSettingsManager.GetValue("CLICK_VALIDATE_Y") ?? "";
+
+    private static string MAIN_PATH = UvSettingsManager.GetValue("MAIN_PATH") ?? "";
+    private static string BACKUP_PATH = UvSettingsManager.GetValue("BACKUP_PATH") ?? "";
+
     private static int stepCount = 0;
 
-    private static string sourcePath = @"C:\Users\theer\Downloads\uvinkjet-250702-new\uvinkjet-250702-new\document_backup";
-    private static string targetPath = @"\\DESKTOP-KGODCT5\Users\theer\Downloads\uvinkjet-250702-new\uvinkjet-250702-new\document";
+    private static string sourcePath = BACKUP_PATH;
+    private static string targetPath = MAIN_PATH;
 
     const int SW_MAXIMIZE = 3;
     const int MOUSE_DOWN = 0x02, MOUSE_UP = 0x04;
     const int CURSOR_SHOWING = 0x00000001;
     const int DI_NORMAL = 0x0003;
+
+
 
     [StructLayout(LayoutKind.Sequential)]
     private struct CURSORINFO
@@ -227,25 +235,72 @@ public static class BotClickHelper
         {
             Console.WriteLine($"[{step.Name}] Try {i}");
 
-            // ✅ 1. แคปทั้งจอก่อนคลิก
-            Bitmap before = CaptureScreen();
+            // ✅ 1. แคปพื้นที่ VerifyArea ก่อนคลิก
+            Bitmap before = CaptureArea(step.VerifyArea);
 
-            // ✅ save แค่ครั้งแรกของ step
+            // 🔍 [Validation Step 1]
+            if (stepIndex == 1)
+            {
+                string refPath = Path.Combine(Application.StartupPath, "capture_log", "step1_document.png");
+
+                if (File.Exists(refPath))
+                {
+                    using (Bitmap refBmp = new Bitmap(refPath))
+                    {
+                        // ❌ ถ้าภาพไม่ตรงกับต้นแบบ
+                        if (!CompareBitmapsFast(before, refBmp))
+                        {
+                            Console.WriteLine("❌ [Step 1 Validation] ภาพไม่ตรงกับต้นแบบ!");
+
+                            // แสดง Message Box ให้กด OK เพื่อ Retry
+                            DialogResult result = MessageBox.Show(
+                                "ภาพ Step 1 ไม่ตรงกับต้นแบบ ระบบจะหยุดทำงาน\nกรุณาจัดหน้าจอให้เรียบร้อยแล้วกด OK เพื่อ Retry (หลังกด Retry แล้วห้ามขยับเมาส์เด็ดขาด)",
+                                "Validation Failed",
+                                MessageBoxButtons.OKCancel,
+                                MessageBoxIcon.Warning
+                            );
+
+                            if (result == DialogResult.OK)
+                            {
+                                // 🖱️ 1. ไปกดปุ่ม Validate (เพื่อ Reset หรือ Refresh UI ตามที่คุณต้องการ)
+                                if (int.TryParse(CLICK_VALIDATE_X, out int vx) && int.TryParse(CLICK_VALIDATE_Y, out int vy))
+                                {
+                                    LeftClick(vx, vy);
+                                    Console.WriteLine($"🖱️ Clicked Validate at: {vx}, {vy} (Retry sequence)");
+                                    Thread.Sleep(1000); // รอ UI ตอบสนอง
+                                }
+
+                                // 🔄 2. สั่งเริ่ม Step 1 ใหม่ (วน Loop i เดิม)
+                                before.Dispose();
+                                i = 0; // Reset counter เพื่อให้รอบถัดไปกลายเป็น i=1 ใหม่
+                                continue;
+                            }
+                            else
+                            {
+                                // ถ้ากด Cancel ให้จบการทำงาน
+                                before.Dispose();
+                                return false;
+                            }
+                        }
+
+                        Console.WriteLine("✅ [Step 1 Validation] ภาพตรงตามต้นแบบ เริ่มดำเนินการต่อ...");
+                    }
+                }
+            }
+
+            // ✅ Save log เฉพาะครั้งแรกที่ภาพ "ผ่าน" การตรวจสอบแล้ว
             if (i == 1)
             {
                 SaveStepCapture(before, stepIndex, step.Name);
             }
 
-            // ✅ 2. click
+            // ✅ 2. Click ตำแหน่งของ Step หลัก
             LeftClick(step.X, step.Y);
             Thread.Sleep(step.VerifyDelay);
 
-            // ✅ 3. ยังใช้ verify area (เร็วกว่า)
+            // ✅ 3. เช็คการเปลี่ยนแปลง
             Bitmap after = CaptureArea(step.VerifyArea);
-
             bool same = CompareBitmapsFast(before, after);
-
-
 
             before.Dispose();
             after.Dispose();
@@ -253,16 +308,6 @@ public static class BotClickHelper
             if (!same)
             {
                 Console.WriteLine($"[{step.Name}] ✅ Success");
-
-                // ✅ ถ้าเป็น step 4 → แคปภาพเพิ่ม (step5)
-                if (stepIndex == 4)
-                {
-                    Thread.Sleep(500); // กัน UI ยังไม่ทันอัปเดต
-                    var finalCapture = CaptureScreen();
-                    SaveStepCapture(finalCapture, 5, "final");
-                    finalCapture.Dispose();
-                }
-
                 return true;
             }
 
@@ -281,7 +326,7 @@ public static class BotClickHelper
 
         string cleanName = stepName.ToLower(); // document, open, selectfile
 
-        string fileName = $"step{stepIndex}_{cleanName}_{DateTime.Now:yyyyMMdd_HHmmss}.png";
+        string fileName = $"step{stepIndex}_{cleanName}.png";
 
         string path = Path.Combine(folder, fileName);
 

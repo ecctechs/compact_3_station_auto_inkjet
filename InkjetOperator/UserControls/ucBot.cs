@@ -62,7 +62,7 @@ namespace InkjetOperator.UserControls
             UvSettingsManager.SetValue("OPENBTN_X", dgvXY.Rows[3].Cells[1].Value?.ToString() ?? "0");
             UvSettingsManager.SetValue("OPENBTN_Y", dgvXY.Rows[3].Cells[2].Value?.ToString() ?? "0");
 
-            MessageBox.Show("Save เรียบร้อย");
+            //MessageBox.Show("Save เรียบร้อย");
         }
 
 
@@ -183,15 +183,27 @@ namespace InkjetOperator.UserControls
 
             if (!ValidateInput()) return;
 
+            // 🛑 เพิ่มการแจ้งเตือนยืนยันก่อนเริ่มรัน Bot
+            string alertMsg = "⚠️ คำเตือนก่อนเริ่มทำงาน:\n\n" +
+                              "1. กรุณาเปิดโปรแกรม UV และจัดหน้าจอโปรแกรม UV Inkjet ให้อยู่ที่หน้าจอหลัก (Primary Monitor)\n" +
+                              "2. ห้ามขยับเมาส์หรือคีย์บอร์ดในระหว่างที่ระบบกำลังทำงาน\n" +
+                              "3. หากภาพใน Step 1 ไม่ตรง ระบบจะหยุดรอให้คุณกดยืนยัน\n\n" +
+                              "คุณพร้อมที่จะเริ่มทำงานหรือไม่?";
+
+            DialogResult confirm = MessageBox.Show(alertMsg, "ยืนยันการเริ่มระบบ",
+                                    MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+
+            if (confirm != DialogResult.Yes) return;
+
             string fileName = "SPK-LOT.uvdx";
 
             var steps = new[]
             {
-                GetStepFromGrid(0),
-                GetStepFromGrid(1),
-                GetStepFromGrid(2),
-                GetStepFromGrid(3)
-            };
+        GetStepFromGrid(0),
+        GetStepFromGrid(1),
+        GetStepFromGrid(2),
+        GetStepFromGrid(3)
+    };
 
             // copy file
             BotClickHelper.CopyFile(fileName);
