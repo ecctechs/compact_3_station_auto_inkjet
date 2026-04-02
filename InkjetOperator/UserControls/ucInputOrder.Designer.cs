@@ -55,7 +55,7 @@
             pnlMain.Location = new Point(0, 0);
             pnlMain.Margin = new Padding(3, 4, 3, 4);
             pnlMain.Name = "pnlMain";
-            pnlMain.Size = new Size(1029, 800);
+            pnlMain.Size = new Size(1152, 939);
             pnlMain.TabIndex = 0;
             // 
             // pnlButtons
@@ -63,7 +63,7 @@
             pnlButtons.BackColor = Color.Transparent;
             pnlButtons.Controls.Add(btnCancel);
             pnlButtons.Controls.Add(btnOK);
-            pnlButtons.Location = new Point(229, 693);
+            pnlButtons.Location = new Point(311, 690);
             pnlButtons.Margin = new Padding(3, 4, 3, 4);
             pnlButtons.Name = "pnlButtons";
             pnlButtons.Size = new Size(571, 80);
@@ -103,7 +103,7 @@
             // 
             pnlFormContainer.BackColor = Color.White;
             pnlFormContainer.Controls.Add(tableLayoutPanel);
-            pnlFormContainer.Location = new Point(229, 360);
+            pnlFormContainer.Location = new Point(311, 357);
             pnlFormContainer.Margin = new Padding(3, 4, 3, 4);
             pnlFormContainer.Name = "pnlFormContainer";
             pnlFormContainer.Padding = new Padding(23, 27, 23, 27);
@@ -255,7 +255,7 @@
             lblScanStatus.BackColor = Color.Transparent;
             lblScanStatus.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             lblScanStatus.ForeColor = Color.White;
-            lblScanStatus.Location = new Point(426, 313);
+            lblScanStatus.Location = new Point(519, 299);
             lblScanStatus.Name = "lblScanStatus";
             lblScanStatus.Size = new Size(167, 28);
             lblScanStatus.TabIndex = 2;
@@ -265,10 +265,10 @@
             // picBarcode
             // 
             picBarcode.BackColor = Color.FromArgb(230, 240, 250);
-            picBarcode.Location = new Point(366, 136);
+            picBarcode.Location = new Point(448, 133);
             picBarcode.Margin = new Padding(3, 4, 3, 4);
             picBarcode.Name = "picBarcode";
-            picBarcode.Size = new Size(309, 173);
+            picBarcode.Size = new Size(309, 131);
             picBarcode.TabIndex = 3;
             picBarcode.TabStop = false;
             picBarcode.Paint += picBarcode_Paint;
@@ -278,7 +278,7 @@
             lblTitle.AutoSize = true;
             lblTitle.Font = new Font("Segoe UI", 36F, FontStyle.Bold);
             lblTitle.ForeColor = Color.Black;
-            lblTitle.Location = new Point(320, 27);
+            lblTitle.Location = new Point(402, 24);
             lblTitle.Name = "lblTitle";
             lblTitle.Size = new Size(412, 81);
             lblTitle.TabIndex = 4;
@@ -291,7 +291,7 @@
             Controls.Add(pnlMain);
             Margin = new Padding(3, 4, 3, 4);
             Name = "ucInputOrder";
-            Size = new Size(1029, 800);
+            Size = new Size(1152, 939);
             pnlMain.ResumeLayout(false);
             pnlMain.PerformLayout();
             pnlButtons.ResumeLayout(false);
