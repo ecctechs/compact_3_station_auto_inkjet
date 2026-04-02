@@ -15,7 +15,7 @@ const createJobSchema = z.object({
 });
 
 const jobFilterSchema = z.object({
-  status: z.enum(["pending", "executing", "completed", "failed"]).optional(),
+  status: z.enum(["Waiting", "executing", "completed", "failed"]).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });

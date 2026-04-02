@@ -142,12 +142,12 @@ class JobController {
       if (!job) {
         return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
       }
-      if (job.status !== "pending") {
+      if (job.status !== "Waiting") {
         return ResponseManager.ErrorResponse(
           req,
           res,
           400,
-          `Job status is "${job.status}", expected "pending"`
+          `Job status is "${job.status}", expected "Waiting"`
         );
       }
 
@@ -302,7 +302,7 @@ static async getResolved(req, res) {
 
   /**
    * POST /job/retry/:id
-   * Reset a failed job back to pending and increment attempt counter.
+   * Reset a failed job back to Waiting and increment attempt counter.
    */
   static async retry(req, res) {
     try {
@@ -320,7 +320,7 @@ static async getResolved(req, res) {
       }
 
       await job.update({
-        status: "pending",
+        status: "Waiting",
         attempt: job.attempt + 1,
         error_message: null,
       });
@@ -329,7 +329,7 @@ static async getResolved(req, res) {
         req,
         res,
         200,
-        "Job reset to pending"
+        "Job reset to Waiting"
       );
     } catch (err) {
       return ResponseManager.CatchResponse(req, res, err.message);
@@ -363,7 +363,7 @@ static async getResolved(req, res) {
         barcode_raw,
         pattern_id,
         lot_number,
-        status: status || "pending",
+        status: status || "Waiting",
         error_message,
         created_by,
         attempt: attempt || 0,

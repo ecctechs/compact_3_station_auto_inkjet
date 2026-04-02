@@ -535,5 +535,10 @@ namespace InkjetOperator
             string data = PatternEngine.Process("C240801-027", "CCCC-01 CPI291");
             MessageBox.Show(data);
         }
+
+        private void dgvList_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
     }
 }

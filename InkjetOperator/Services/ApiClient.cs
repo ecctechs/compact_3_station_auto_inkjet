@@ -49,7 +49,7 @@ namespace InkjetOperator.Services
                     Timeout = TimeSpan.FromSeconds(5)
                 };
 
-                var response = await client.GetAsync("/job/getAll?status=pending");
+                var response = await client.GetAsync("/job/getAll?status=Waiting");
                 return response.IsSuccessStatusCode;
             }
             catch
@@ -83,7 +83,7 @@ namespace InkjetOperator.Services
         {
             try
             {
-                var response = await _http.GetAsync("/job/getAll?status=pending");
+                var response = await _http.GetAsync("/job/getAll?status=Waiting");
                 response.EnsureSuccessStatusCode();
 
                 var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedResult<PrintJob>>>(JsonOptions);

@@ -358,14 +358,14 @@ namespace InkjetOperator
             {
                 MessageBox.Show("Create job success", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                BarcodeScanned?.Invoke(this, new BarcodeScanEventArgs
-                {
-                    Barcode = req.BarcodeRaw,
-                    OrderNo = req.OrderNo,
-                    CustomerName = req.CustomerName,
-                    Type = req.Type,
-                    Qty = req.Qty.ToString()
-                });
+                //BarcodeScanned?.Invoke(this, new BarcodeScanEventArgs
+                //{
+                //    Barcode = req.BarcodeRaw,
+                //    OrderNo = req.OrderNo,
+                //    CustomerName = req.CustomerName,
+                //    Type = req.Type,
+                //    Qty = req.Qty.ToString()
+                //});
 
                 ClearForm();
             }

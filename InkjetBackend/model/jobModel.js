@@ -38,7 +38,7 @@ const PrintJob = sequelize.define(
     status: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: "pending",
+      defaultValue: "Waiting",
     },
     error_message: {
       type: DataTypes.TEXT,
@@ -124,7 +124,7 @@ const LastSentJob = sequelize.define(
     status: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: "pending",
+      defaultValue: "Waiting",
     },
     error_message: {
       type: DataTypes.TEXT,
