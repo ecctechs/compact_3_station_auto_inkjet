@@ -26,5 +26,8 @@ namespace InkjetOperator.Models
 
         [JsonPropertyName("scale")]
         public int? Scale { get; set; }
+
+        [JsonPropertyName("rule_result")]
+        public string? RuleResult { get; set; }
     }
 }

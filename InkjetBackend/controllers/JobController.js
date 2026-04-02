@@ -175,7 +175,57 @@ class JobController {
    *   CCCC               — lot number
    *   DDDD               — encoded date from lot number
    */
-  static async getResolved(req, res) {
+  // static async getResolved(req, res) {
+  //   try {
+  //     const job = await PrintJob.findByPk(req.params.id);
+  //     if (!job) {
+  //       return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
+  //     }
+  //     if (!job.pattern_id) {
+  //       return ResponseManager.ErrorResponse(
+  //         req,
+  //         res,
+  //         400,
+  //         "Job has no associated pattern"
+  //       );
+  //     }
+
+  //     const pattern = await Pattern.findByPk(job.pattern_id, {
+  //       include: PATTERN_INCLUDE,
+  //     });
+  //     if (!pattern) {
+  //       return ResponseManager.ErrorResponse(
+  //         req,
+  //         res,
+  //         404,
+  //         "Associated pattern not found"
+  //       );
+  //     }
+
+  //     const ctx = {
+  //       lotNumber: job.lot_number || "",
+  //       attempt: job.attempt,
+  //     };
+
+  //     // Deep-clone pattern and resolve templates in all text block strings
+  //     const resolved = JSON.parse(JSON.stringify(pattern));
+  //     for (const config of resolved.inkjet_configs || []) {
+  //       for (const block of config.text_blocks || []) {
+  //         if (block.text) {
+  //           block.text = resolveTemplates(block.text, ctx);
+  //         }
+  //       }
+  //     }
+
+  //     return ResponseManager.SuccessResponse(req, res, 200, {
+  //       job,
+  //       pattern: resolved,
+  //     });
+  //   } catch (err) {
+  //     return ResponseManager.CatchResponse(req, res, err.message);
+  //   }
+  // }
+static async getResolved(req, res) {
     try {
       const job = await PrintJob.findByPk(req.params.id);
       if (!job) {
@@ -202,30 +252,14 @@ class JobController {
         );
       }
 
-      const ctx = {
-        lotNumber: job.lot_number || "",
-        attempt: job.attempt,
-      };
-
-      // Deep-clone pattern and resolve templates in all text block strings
-      const resolved = JSON.parse(JSON.stringify(pattern));
-      for (const config of resolved.inkjet_configs || []) {
-        for (const block of config.text_blocks || []) {
-          if (block.text) {
-            block.text = resolveTemplates(block.text, ctx);
-          }
-        }
-      }
-
       return ResponseManager.SuccessResponse(req, res, 200, {
         job,
-        pattern: resolved,
+        pattern,
       });
     } catch (err) {
       return ResponseManager.CatchResponse(req, res, err.message);
     }
   }
-
   /**
    * POST /job/postResults/:id
    * C# posts execution results + command log after sending to hardware.

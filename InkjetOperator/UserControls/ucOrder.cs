@@ -132,8 +132,29 @@ namespace InkjetOperator
             }
         }
 
-        private void dgvConfigs_CellClick(object sender, DataGridViewCellEventArgs e) =>
-                bindingSourceTextBlockDto.DataSource = (bindSourceInkjetConfigDto.Current as InkjetConfigDto)?.TextBlocks;
+        private void dgvConfigs_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // 1. ดึง InkjetConfigDto ตัวที่เลือกอยู่มา
+            if (bindSourceInkjetConfigDto.Current is InkjetConfigDto currentConfig)
+            {
+                // 2. ส่ง TextBlocks เข้า BindingSource เพื่อโชว์ใน Grid ย่อย
+                bindingSourceTextBlockDto.DataSource = currentConfig.TextBlocks;
+
+                // 3. ทำการประมวลผล Pattern สำหรับทุก Block ในชุดนี้
+                if (currentConfig.TextBlocks != null)
+                {
+                    foreach (var block in currentConfig.TextBlocks)
+                    {
+                        // ส่ง txtPattern.Text และ Text ของแต่ละ Block เข้า Engine
+                        // และเก็บผลลัพธ์ลงใน Property RuleResult (ตรวจสอบว่าใน Model มี Property นี้แล้ว)
+                        block.RuleResult = PatternEngine.Process(txtPattern.Text, block.Text);
+                    }
+
+                    // 4. สั่งให้ BindingSource อัปเดตการแสดงผลบน Grid
+                    bindingSourceTextBlockDto.ResetBindings(false);
+                }
+            }
+        }
 
         private async void timerPoll_Tick(object sender, EventArgs e)
         {
@@ -159,35 +180,67 @@ namespace InkjetOperator
         {
             try
             {
-                // ใช้ IP/Port ที่คุณระบุไว้
+                // เชื่อมต่อกับเครื่องพิมพ์
                 await _tcpManager.ConnectAsync("192.168.3.77", 9004);
 
                 if (_inkjetAdapter.IsConnected())
                 {
                     if (bindSourceInkjetConfigDto.Current is InkjetConfigDto config)
                     {
-                        await _inkjetAdapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
+                        // 0. (สำคัญ) สั่งประมวลผล Rule ทุก Block ก่อนส่ง (ถ้ายังไม่ได้ทำที่อื่น)
+                        // หรือถ้าคุณประมวลผลใน CellClick ไว้แล้ว ขั้นตอนนี้ก็ข้ามได้ครับ
+                        if (config.TextBlocks != null)
+                        {
+                            foreach (var b in config.TextBlocks)
+                            {
+                                // ตรวจสอบว่า txtPattern มีค่าหรือไม่ก่อน Process
+                                b.RuleResult = PatternEngine.Process(txtPattern.Text, b.Text);
+                            }
+                        }
 
-                        // 1. ส่งการตั้งค่าหลัก (FM Command)
+                        // 1. เปลี่ยนหมายเลขโปรแกรม
+                        await _inkjetAdapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
+                        await Task.Delay(200); // หน่วงเวลาเล็กน้อยให้เครื่องเตรียมตัว
+
+                        // 2. ส่งการตั้งค่าหลัก (FM Command)
                         await _inkjetAdapter.SendConfigAsync(config);
 
-                        // 2. ส่งข้อความพิมพ์ (FS + F1 Commands)
+                        // 3. ส่งข้อความพิมพ์ (FS + F1 Commands) โดยใช้ RuleResult
                         if (config.TextBlocks != null)
                         {
                             foreach (var block in config.TextBlocks)
                             {
-                                // deviceBlock คือลำดับบล็อกในเครื่องพิมพ์ (เช่น 1, 2, 3...)
-                                await _inkjetAdapter.SendTextBlockAsync(block, block.BlockNumber);
+                                // --- จุดสำคัญ: ตรวจสอบและเลือกข้อมูลที่จะส่ง ---
+                                // เลือกใช้ RuleResult หากมีค่า ถ้าไม่มีให้ใช้ Text เดิม (หรือจะส่งว่างก็ได้)
+                                string textToSend = !string.IsNullOrEmpty(block.RuleResult)
+                                                    ? block.RuleResult
+                                                    : block.Text;
+
+                                // สร้าง Object ชั่วคราวหรือปรับค่าใน Block ก่อนส่ง
+                                // หาก SendTextBlockAsync ใช้ค่าจาก block.Text ภายใน 
+                                // เราอาจจะแทนที่ชั่วคราวแบบนี้:
+                                var tempBlock = new TextBlockDto
+                                {
+                                    BlockNumber = block.BlockNumber,
+                                    Text = textToSend, // ส่งผลลัพธ์ที่ได้จาก Rule
+                                    X = block.X,
+                                    Y = block.Y,
+                                    Size = block.Size,
+                                    Scale = block.Scale
+                                };
+
+                                await _inkjetAdapter.SendTextBlockAsync(tempBlock, tempBlock.BlockNumber);
+                                await Task.Delay(100); // ป้องกัน Buffer เต็ม
                             }
                         }
 
-                        MessageBox.Show("ส่งข้อมูลชุดคำสั่งไปยังเครื่องพิมพ์เรียบร้อยแล้ว");
+                        MessageBox.Show("ส่งข้อมูลที่ผ่านการประมวลผล (Rule Result) เรียบร้อยแล้ว");
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("เชื่อมต่อไม่สำเร็จ: " + ex.Message);
+                MessageBox.Show("เกิดข้อผิดพลาด: " + ex.Message);
             }
         }
 
@@ -422,6 +475,12 @@ namespace InkjetOperator
             {
                 btnSendUV1.Enabled = true;
             }
+        }
+
+        private void btnRetry_Click(object sender, EventArgs e)
+        {
+            string data = PatternEngine.Process("C240801-027", "CCCC-01 CPI291");
+            MessageBox.Show(data);
         }
     }
 }

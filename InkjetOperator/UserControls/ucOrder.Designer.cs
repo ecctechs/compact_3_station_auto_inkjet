@@ -69,15 +69,16 @@
             bindSourceInkjetConfigDto = new BindingSource(components);
             grpTextBlocks = new GroupBox();
             dgvTextBlocks = new DataGridView();
+            bindingSourceTextBlockDto = new BindingSource(components);
+            btnSend = new Button();
+            btnRetry = new Button();
             blockNumberDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             textDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             xDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             yDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             sizeDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             scaleDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            bindingSourceTextBlockDto = new BindingSource(components);
-            btnSend = new Button();
-            btnRetry = new Button();
+            RuleResult = new DataGridViewTextBoxColumn();
             tabControl.SuspendLayout();
             tabList.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvList).BeginInit();
@@ -563,7 +564,7 @@
             dgvTextBlocks.AutoGenerateColumns = false;
             dgvTextBlocks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvTextBlocks.ColumnHeadersHeight = 29;
-            dgvTextBlocks.Columns.AddRange(new DataGridViewColumn[] { blockNumberDataGridViewTextBoxColumn, textDataGridViewTextBoxColumn, xDataGridViewTextBoxColumn, yDataGridViewTextBoxColumn, sizeDataGridViewTextBoxColumn, scaleDataGridViewTextBoxColumn });
+            dgvTextBlocks.Columns.AddRange(new DataGridViewColumn[] { blockNumberDataGridViewTextBoxColumn, textDataGridViewTextBoxColumn, xDataGridViewTextBoxColumn, yDataGridViewTextBoxColumn, sizeDataGridViewTextBoxColumn, scaleDataGridViewTextBoxColumn, RuleResult });
             dgvTextBlocks.DataSource = bindingSourceTextBlockDto;
             dgvTextBlocks.Dock = DockStyle.Fill;
             dgvTextBlocks.Location = new Point(3, 24);
@@ -573,6 +574,34 @@
             dgvTextBlocks.RowHeadersWidth = 51;
             dgvTextBlocks.Size = new Size(714, 145);
             dgvTextBlocks.TabIndex = 0;
+            // 
+            // bindingSourceTextBlockDto
+            // 
+            bindingSourceTextBlockDto.DataSource = typeof(Models.TextBlockDto);
+            // 
+            // btnSend
+            // 
+            btnSend.BackColor = Color.FromArgb(0, 120, 215);
+            btnSend.FlatStyle = FlatStyle.Flat;
+            btnSend.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+            btnSend.ForeColor = Color.White;
+            btnSend.Location = new Point(12, 675);
+            btnSend.Margin = new Padding(3, 4, 3, 4);
+            btnSend.Name = "btnSend";
+            btnSend.Size = new Size(229, 53);
+            btnSend.TabIndex = 11;
+            btnSend.Text = "SEND TO DEVICES";
+            btnSend.UseVisualStyleBackColor = false;
+            // 
+            // btnRetry
+            // 
+            btnRetry.Location = new Point(247, 675);
+            btnRetry.Margin = new Padding(3, 4, 3, 4);
+            btnRetry.Name = "btnRetry";
+            btnRetry.Size = new Size(137, 53);
+            btnRetry.TabIndex = 12;
+            btnRetry.Text = "Retry Failed";
+            btnRetry.Click += btnRetry_Click;
             // 
             // blockNumberDataGridViewTextBoxColumn
             // 
@@ -622,32 +651,13 @@
             scaleDataGridViewTextBoxColumn.Name = "scaleDataGridViewTextBoxColumn";
             scaleDataGridViewTextBoxColumn.ReadOnly = true;
             // 
-            // bindingSourceTextBlockDto
+            // RuleResult
             // 
-            bindingSourceTextBlockDto.DataSource = typeof(Models.TextBlockDto);
-            // 
-            // btnSend
-            // 
-            btnSend.BackColor = Color.FromArgb(0, 120, 215);
-            btnSend.FlatStyle = FlatStyle.Flat;
-            btnSend.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
-            btnSend.ForeColor = Color.White;
-            btnSend.Location = new Point(12, 675);
-            btnSend.Margin = new Padding(3, 4, 3, 4);
-            btnSend.Name = "btnSend";
-            btnSend.Size = new Size(229, 53);
-            btnSend.TabIndex = 11;
-            btnSend.Text = "SEND TO DEVICES";
-            btnSend.UseVisualStyleBackColor = false;
-            // 
-            // btnRetry
-            // 
-            btnRetry.Location = new Point(247, 675);
-            btnRetry.Margin = new Padding(3, 4, 3, 4);
-            btnRetry.Name = "btnRetry";
-            btnRetry.Size = new Size(137, 53);
-            btnRetry.TabIndex = 12;
-            btnRetry.Text = "Retry Failed";
+            RuleResult.DataPropertyName = "RuleResult";
+            RuleResult.HeaderText = "RuleResult";
+            RuleResult.MinimumWidth = 6;
+            RuleResult.Name = "RuleResult";
+            RuleResult.ReadOnly = true;
             // 
             // ucOrder
             // 
@@ -709,12 +719,6 @@
         private DataGridViewTextBoxColumn heightDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn triggerDelayDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn directionDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn blockNumberDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn textDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn xDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn yDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn sizeDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn scaleDataGridViewTextBoxColumn;
         private BindingSource bindingSourceTextBlockDto;
         private GroupBox groupBox1;
         private DataGridView dataGridView1;
@@ -731,5 +735,12 @@
         private DataGridViewTextBoxColumn Lot;
         private DataGridViewTextBoxColumn Name;
         private DataGridViewTextBoxColumn ProgramName;
+        private DataGridViewTextBoxColumn blockNumberDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn textDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn xDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn yDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn sizeDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn scaleDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn RuleResult;
     }
 }
