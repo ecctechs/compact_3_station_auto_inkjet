@@ -22,7 +22,6 @@ namespace InkjetOperator
         public ucOrder()
         {
             InitializeComponent();
-            get_uv();
 
             // 1. สร้าง Manager
             _tcpManager = new TcpManager();
@@ -164,6 +163,7 @@ namespace InkjetOperator
             try
             {
                 get_job();
+                get_uv();
             }
             catch (Exception ex)
             {
@@ -398,11 +398,6 @@ namespace InkjetOperator
                 // (Optional) หากต้องการตัดการเชื่อมต่อทันทีหลังส่งจบ ให้เรียกใช้บรรทัดล่างนี้
                 // await _tcpManager.DisconnectAsync();
             }
-        }
-
-        private void btnSendUV2_Click(object sender, EventArgs e)
-        {
-
         }
 
         private async void btnSendUV2_Click_1(object sender, EventArgs e)
