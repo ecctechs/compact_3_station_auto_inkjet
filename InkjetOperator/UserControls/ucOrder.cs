@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Windows.Forms;
@@ -19,6 +18,9 @@ namespace InkjetOperator
         private MkCompactAdapter _inkjetAdapter;
         private TcpManager _tcpManager;
 
+        /// <summary>ใช้จำว่า first load เพื่อ auto-select row แรกครั้งเดียว</summary>
+        private bool _isFirstLoad = true;
+
         public ucOrder()
         {
             InitializeComponent();
@@ -30,58 +32,183 @@ namespace InkjetOperator
             _inkjetAdapter = new MkCompactAdapter(_tcpManager);
         }
 
+        // ══════════════════════════════════════════════
+        //  DATA LOADING (poll-safe — รักษา row เดิม)
+        // ══════════════════════════════════════════════
+
+        /// <summary>โหลด Pending Jobs — รักษา row ที่เลือกอยู่, first load เลือกแถวแรก</summary>
         public async void get_job()
         {
             try
             {
+                // จำ Job Id ที่เลือกอยู่ก่อน bind ใหม่
+                int? selectedJobId = (bindingSource1.Current as PrintJob)?.Id;
+
                 var jobs = await _api.GetPendingJobsAsync();
                 bindingSource1.DataSource = jobs;
+
+                // ครั้งแรก → เลือกแถวแรก + โหลด detail
+                if (_isFirstLoad)
+                {
+                    _isFirstLoad = false;
+                    if (bindingSource1.Count > 0)
+                    {
+                        bindingSource1.Position = 0;
+                        SelectGridRow(dgvList, 0);
+                        await LoadJobDetailAsync();
+                    }
+                    return;
+                }
+
+                // Poll ครั้งถัดไป → restore ตำแหน่งเดิมจาก Id
+                if (selectedJobId.HasValue)
+                {
+                    int idx = jobs.FindIndex(j => j.Id == selectedJobId.Value);
+                    if (idx >= 0)
+                    {
+                        bindingSource1.Position = idx;
+                        return; // เจอ row เดิม → ไม่ต้องทำอะไรเพิ่ม
+                    }
+                }
+
+                // row เดิมหายไป → fallback เลือกแถวแรก
+                if (bindingSource1.Count > 0)
+                    bindingSource1.Position = 0;
             }
             catch (Exception ex) { Debug.WriteLine(ex.Message); }
         }
 
+        /// <summary>โหลดข้อมูล UV inkjet — รักษา row ที่เลือกอยู่</summary>
         public async void get_uv()
         {
             try
             {
+                int oldPos = bindingSourceUVinkjet.Position;
+
                 var uvLogs = await _sqliteService.GetUvPrintDataAsync();
                 bindingSourceUVinkjet.DataSource = uvLogs;
+
+                // Restore ตำแหน่งเดิม (ถ้ายังอยู่ในช่วง)
+                if (oldPos >= 0 && oldPos < bindingSourceUVinkjet.Count)
+                    bindingSourceUVinkjet.Position = oldPos;
             }
             catch (Exception ex) { Debug.WriteLine(ex.Message); }
         }
 
-        private async void dgvList_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (bindingSource1.Current is PrintJob selectedJob)
-            {
-                txtBarcode.Text = selectedJob.BarcodeRaw;
-                txtLot.Text = selectedJob.LotNumber;
-                txtStatus.Text = selectedJob.Status;
-                txtPattern.Text = selectedJob.PatternNoErp;
-                //await query_db3_async();
-                await QueryBackendJobAsync();
-            }
+        // ══════════════════════════════════════════════
+        //  SELECTION HELPERS
+        // ══════════════════════════════════════════════
 
+        /// <summary>โหลด detail ของ Job ที่เลือกอยู่ → bind Config → เลือก Config แรก → bind TextBlock</summary>
+        private async Task LoadJobDetailAsync()
+        {
+            if (bindingSource1.Current is not PrintJob selectedJob) return;
+
+            // แสดงข้อมูลหลักของ Job
+            txtBarcode.Text = selectedJob.BarcodeRaw;
+            txtLot.Text = selectedJob.LotNumber;
+            txtStatus.Text = selectedJob.Status;
+            txtPattern.Text = selectedJob.PatternNoErp;
+
+            // เรียก API ดึง Resolved Job
+            await QueryBackendJobAsync();
+
+            // Bind InkjetConfigs
             if (_currentResolved?.Pattern?.InkjetConfigs != null)
             {
-                // Bind รายการหัวพิมพ์ (MK1, MK2)
                 bindSourceInkjetConfigDto.DataSource = _currentResolved.Pattern.InkjetConfigs;
+
+                // เลือก Config แถวแรก + โหลด TextBlocks
+                if (bindSourceInkjetConfigDto.Count > 0)
+                {
+                    bindSourceInkjetConfigDto.Position = 0;
+                    SelectGridRow(dgvConfigs, 0);
+                    LoadTextBlocksForCurrentConfig();
+                }
+            }
+            else
+            {
+                bindSourceInkjetConfigDto.DataSource = null;
+                bindingSourceTextBlockDto.DataSource = null;
             }
         }
+
+        /// <summary>โหลด TextBlocks จาก Config ที่เลือกอยู่ + ประมวลผล Pattern Rule</summary>
+        private void LoadTextBlocksForCurrentConfig()
+        {
+            if (bindSourceInkjetConfigDto.Current is not InkjetConfigDto config)
+            {
+                bindingSourceTextBlockDto.DataSource = null;
+                return;
+            }
+
+            bindingSourceTextBlockDto.DataSource = config.TextBlocks;
+
+            // ประมวลผล Pattern สำหรับทุก Block ในชุดนี้
+            ApplyPatternRules(config.TextBlocks);
+
+            bindingSourceTextBlockDto.ResetBindings(false);
+        }
+
+        /// <summary>ประมวลผล PatternEngine สำหรับทุก TextBlock</summary>
+        private void ApplyPatternRules(List<TextBlockDto>? textBlocks)
+        {
+            if (textBlocks == null) return;
+
+            string barcode = txtBarcode.Text;
+            foreach (var block in textBlocks)
+            {
+                // ส่ง barcode และ Text ของแต่ละ Block เข้า Engine
+                // และเก็บผลลัพธ์ลงใน Property RuleResult
+                block.RuleResult = PatternEngine.Process(barcode, block.Text);
+            }
+        }
+
+        /// <summary>เลือก row ใน DataGridView อย่างปลอดภัย (กัน row count = 0)</summary>
+        private static void SelectGridRow(DataGridView dgv, int index)
+        {
+            if (dgv.Rows.Count == 0 || index < 0 || index >= dgv.Rows.Count) return;
+            dgv.ClearSelection();
+            dgv.Rows[index].Selected = true;
+        }
+
+        // ══════════════════════════════════════════════
+        //  EVENT HANDLERS — Grid Selection
+        // ══════════════════════════════════════════════
+
+        private async void dgvList_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+
+            // เมื่อเลือก Job ใหม่ → refresh detail ทั้งหมด (Config + TextBlock)
+            await LoadJobDetailAsync();
+        }
+
+        private void dgvConfigs_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+
+            // เมื่อเลือก Config ใหม่ → refresh TextBlocks
+            LoadTextBlocksForCurrentConfig();
+        }
+
+        // ══════════════════════════════════════════════
+        //  QUERY BACKEND
+        // ══════════════════════════════════════════════
 
         // --- เริ่มส่วนที่ปรับปรุงใหม่ ---
         //private async Task query_db3_async()
         //{
         //    string patternNo = txtPattern.Text.Trim();
-
+        //
         //    // เรียกใช้ Service แทนการเขียนเอง
         //    var pattern = await _sqliteService.GetPatternDetailAsync(patternNo);
-
+        //
         //    if (pattern != null)
         //    {
         //        // Bind ข้อมูลปกติ
         //        bindSourceInkjetConfigDto.DataSource = pattern.InkjetConfigs;
-
+        //
         //        // ถ้าต้องการให้ Grid อัปเดตทันที
         //        bindingSourceUVinkjet.ResetBindings(false);
         //    }
@@ -104,19 +231,12 @@ namespace InkjetOperator
             {
                 // เปลี่ยนจาก SQLite เป็นการเรียก Resolved Job จาก API
                 // ข้อมูลที่ได้ (resolvedJob) จะมี Property .InkjetConfigs อยู่ข้างในตามโครงสร้าง DTO
-                var resolvedJob = await _api.GetResolvedJobAsync(selectedJob.Id);
+                _currentResolved = await _api.GetResolvedJobAsync(selectedJob.Id);
 
-                if (resolvedJob != null)
+                if (_currentResolved != null)
                 {
-                    // 1. Bind ข้อมูล Configs เข้ากับ BindingSource หลัก
-                    // Backend มักจะส่งมาเป็น List<InkjetConfigDto>
-                    bindSourceInkjetConfigDto.DataSource = resolvedJob.Pattern.InkjetConfigs;
-
-                    // 2. สั่งรีเฟรช Grid เพื่อแสดงค่าใหม่
+                    // สั่งรีเฟรช Grid เพื่อแสดงค่าใหม่
                     bindingSourceUVinkjet.ResetBindings(false);
-
-                    // 3. (Option) ถ้าต้องการแสดงข้อมูล Job อื่นๆ เช่น OrderNo, Customer
-                    // txtOrderNo.Text = resolvedJob.OrderNo;
                 }
                 else
                 {
@@ -128,32 +248,13 @@ namespace InkjetOperator
             {
                 Debug.WriteLine($"Error fetching resolved job: {ex.Message}");
                 MessageBox.Show("เกิดข้อผิดพลาดในการเชื่อมต่อกับ Backend");
+                _currentResolved = null;
             }
         }
 
-        private void dgvConfigs_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            // 1. ดึง InkjetConfigDto ตัวที่เลือกอยู่มา
-            if (bindSourceInkjetConfigDto.Current is InkjetConfigDto currentConfig)
-            {
-                // 2. ส่ง TextBlocks เข้า BindingSource เพื่อโชว์ใน Grid ย่อย
-                bindingSourceTextBlockDto.DataSource = currentConfig.TextBlocks;
-
-                // 3. ทำการประมวลผล Pattern สำหรับทุก Block ในชุดนี้
-                if (currentConfig.TextBlocks != null)
-                {
-                    foreach (var block in currentConfig.TextBlocks)
-                    {
-                        // ส่ง txtPattern.Text และ Text ของแต่ละ Block เข้า Engine
-                        // และเก็บผลลัพธ์ลงใน Property RuleResult (ตรวจสอบว่าใน Model มี Property นี้แล้ว)
-                        block.RuleResult = PatternEngine.Process(txtPattern.Text, block.Text);
-                    }
-
-                    // 4. สั่งให้ BindingSource อัปเดตการแสดงผลบน Grid
-                    bindingSourceTextBlockDto.ResetBindings(false);
-                }
-            }
-        }
+        // ══════════════════════════════════════════════
+        //  TIMER — Polling (รักษา row เดิม)
+        // ══════════════════════════════════════════════
 
         private async void timerPoll_Tick(object sender, EventArgs e)
         {
@@ -176,66 +277,92 @@ namespace InkjetOperator
             }
         }
 
+        // ══════════════════════════════════════════════
+        //  SHARED HELPERS — Connection & TextBlock Send
+        // ══════════════════════════════════════════════
+
+        /// <summary>เชื่อมต่อ TCP กับเครื่องพิมพ์ — คืน true ถ้าสำเร็จ</summary>
+        private async Task<bool> ConnectInkjetAsync(string ip = "192.168.3.77", int port = 9004)
+        {
+            await _tcpManager.ConnectAsync(ip, port);
+
+            if (_inkjetAdapter.IsConnected()) return true;
+
+            MessageBox.Show($"ไม่สามารถเชื่อมต่อเครื่องพิมพ์ ({ip}:{port})",
+                "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return false;
+        }
+
+        /// <summary>ส่ง TextBlocks ทั้งหมด — ใช้ RuleResult ถ้ามี มิฉะนั้นใช้ Text เดิม</summary>
+        private async Task SendTextBlocksWithRuleAsync(List<TextBlockDto>? textBlocks)
+        {
+            if (textBlocks == null) return;
+
+            foreach (var block in textBlocks)
+            {
+                // เลือกใช้ RuleResult หากมีค่า ถ้าไม่มีให้ใช้ Text เดิม
+                string textToSend = !string.IsNullOrEmpty(block.RuleResult)
+                                    ? block.RuleResult
+                                    : block.Text;
+
+                // สร้าง Object ชั่วคราวเพื่อส่งข้อมูลที่ประมวลผลแล้ว
+                var tempBlock = new TextBlockDto
+                {
+                    BlockNumber = block.BlockNumber,
+                    Text = textToSend, // ส่งผลลัพธ์ที่ได้จาก Rule
+                    X = block.X,
+                    Y = block.Y,
+                    Size = block.Size,
+                    Scale = block.Scale
+                };
+
+                await _inkjetAdapter.SendTextBlockAsync(tempBlock, tempBlock.BlockNumber);
+                await Task.Delay(100); // ป้องกัน Buffer เต็ม
+            }
+        }
+
+        /// <summary>ส่ง TextBlocks ทั้งหมดแบบ raw (ไม่ใช้ RuleResult)</summary>
+        private async Task SendTextBlocksRawAsync(List<TextBlockDto>? textBlocks)
+        {
+            if (textBlocks == null || !textBlocks.Any()) return;
+
+            foreach (var block in textBlocks)
+            {
+                // ส่งทีละ Block (ระบุพิกัด X, Y และขนาดตัวอักษร)
+                await _inkjetAdapter.SendTextBlockAsync(block, block.BlockNumber);
+
+                // ป้องกัน Buffer เครื่องพิมพ์เต็ม
+                await Task.Delay(150);
+            }
+        }
+
+        // ══════════════════════════════════════════════
+        //  SEND — MK1 / MK2
+        // ══════════════════════════════════════════════
+
         private async void btnSendMk1Mk2_Click(object sender, EventArgs e)
         {
             try
             {
-                // เชื่อมต่อกับเครื่องพิมพ์
-                await _tcpManager.ConnectAsync("192.168.3.77", 9004);
+                if (!await ConnectInkjetAsync()) return;
 
-                if (_inkjetAdapter.IsConnected())
+                if (bindSourceInkjetConfigDto.Current is InkjetConfigDto config)
                 {
-                    if (bindSourceInkjetConfigDto.Current is InkjetConfigDto config)
-                    {
-                        // 0. (สำคัญ) สั่งประมวลผล Rule ทุก Block ก่อนส่ง (ถ้ายังไม่ได้ทำที่อื่น)
-                        // หรือถ้าคุณประมวลผลใน CellClick ไว้แล้ว ขั้นตอนนี้ก็ข้ามได้ครับ
-                        if (config.TextBlocks != null)
-                        {
-                            foreach (var b in config.TextBlocks)
-                            {
-                                // ตรวจสอบว่า txtPattern มีค่าหรือไม่ก่อน Process
-                                b.RuleResult = PatternEngine.Process(txtPattern.Text, b.Text);
-                            }
-                        }
+                    // 0. (สำคัญ) สั่งประมวลผล Rule ทุก Block ก่อนส่ง (ถ้ายังไม่ได้ทำที่อื่น)
+                    // หรือถ้าคุณประมวลผลใน CellClick ไว้แล้ว ขั้นตอนนี้ก็ข้ามได้ครับ
+                    ApplyPatternRules(config.TextBlocks);
 
-                        // 1. เปลี่ยนหมายเลขโปรแกรม
-                        await _inkjetAdapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
-                        await Task.Delay(200); // หน่วงเวลาเล็กน้อยให้เครื่องเตรียมตัว
+                    // 1. เปลี่ยนหมายเลขโปรแกรม
+                    await _inkjetAdapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
+                    await Task.Delay(200); // หน่วงเวลาเล็กน้อยให้เครื่องเตรียมตัว
 
-                        // 2. ส่งการตั้งค่าหลัก (FM Command)
-                        await _inkjetAdapter.SendConfigAsync(config);
+                    // 2. ส่งการตั้งค่าหลัก (FM Command)
+                    await _inkjetAdapter.SendConfigAsync(config);
 
-                        // 3. ส่งข้อความพิมพ์ (FS + F1 Commands) โดยใช้ RuleResult
-                        if (config.TextBlocks != null)
-                        {
-                            foreach (var block in config.TextBlocks)
-                            {
-                                // --- จุดสำคัญ: ตรวจสอบและเลือกข้อมูลที่จะส่ง ---
-                                // เลือกใช้ RuleResult หากมีค่า ถ้าไม่มีให้ใช้ Text เดิม (หรือจะส่งว่างก็ได้)
-                                string textToSend = !string.IsNullOrEmpty(block.RuleResult)
-                                                    ? block.RuleResult
-                                                    : block.Text;
+                    // 3. ส่งข้อความพิมพ์ (FS + F1 Commands) โดยใช้ RuleResult
+                    await SendTextBlocksWithRuleAsync(config.TextBlocks);
 
-                                // สร้าง Object ชั่วคราวหรือปรับค่าใน Block ก่อนส่ง
-                                // หาก SendTextBlockAsync ใช้ค่าจาก block.Text ภายใน 
-                                // เราอาจจะแทนที่ชั่วคราวแบบนี้:
-                                var tempBlock = new TextBlockDto
-                                {
-                                    BlockNumber = block.BlockNumber,
-                                    Text = textToSend, // ส่งผลลัพธ์ที่ได้จาก Rule
-                                    X = block.X,
-                                    Y = block.Y,
-                                    Size = block.Size,
-                                    Scale = block.Scale
-                                };
-
-                                await _inkjetAdapter.SendTextBlockAsync(tempBlock, tempBlock.BlockNumber);
-                                await Task.Delay(100); // ป้องกัน Buffer เต็ม
-                            }
-                        }
-
-                        MessageBox.Show("ส่งข้อมูลที่ผ่านการประมวลผล (Rule Result) เรียบร้อยแล้ว");
-                    }
+                    MessageBox.Show("ส่งข้อมูลที่ผ่านการประมวลผล (Rule Result) เรียบร้อยแล้ว");
                 }
             }
             catch (Exception ex)
@@ -244,77 +371,9 @@ namespace InkjetOperator
             }
         }
 
-        private async void btnSendUV1_Click(object sender, EventArgs e)
-        {
-            // 1. ดึง Job จาก BindingSource หลัก (รายการ Job)
-            if (bindingSource1.Current is not PrintJob selectedJob)
-            {
-                MessageBox.Show("กรุณาเลือกรายการ Job ในตารางก่อน");
-                return;
-            }
-            MessageBox.Show($"กำลังส่งข้อมูลการพิมพ์ UV สำหรับ Job ID: {selectedJob.Id}"); // Debugging Message
-
-            // 2. ดึงข้อมูลจาก bindingSourceUVinkjet แถวที่ 1 (Index 0)
-            // ตรวจสอบก่อนว่าใน List มีข้อมูลอย่างน้อย 1 แถวหรือไม่
-            if (bindingSourceUVinkjet.Count == 0)
-            {
-                MessageBox.Show("ไม่พบข้อมูล Config ของเครื่องพิมพ์");
-                return;
-            }
-            MessageBox.Show($"กำลังส่งข้อมูลการพิมพ์ UV สำหรับ Job ID: {selectedJob.Id}"); // Debugging Message
-
-            // ดึงข้อมูลแถวที่ 1 มาเก็บไว้ในตัวแปร (สมมติว่า Model คือ InkjetConfigDto)
-            var firstConfig = bindingSourceUVinkjet[0] as UVinkjet;
-
-            if (firstConfig == null) return;
-
-            // เตรียมตัวแปร (อ้างอิงตาม Property ใน InkjetConfigDto และ PrintJob)
-            string currentLot1 = firstConfig.Lot ?? "";
-            string currentName1 = firstConfig.Name ?? "";
-            string programName1 = firstConfig.ProgramName ?? "";
-
-            MessageBox.Show($"ข้อมูลที่จะส่ง: Lot={currentLot1}, Name={currentName1}, Program={programName1}"); // Debugging Message
-
-            // 3. เตรียมข้อมูลส่ง API
-            var uvRequest = new UVinkjet
-            {
-                PrintJobsId = selectedJob.Id,
-                InkjetName = "UV Printer 1",
-                Lot = currentLot1,
-                Name = currentName1,
-                ProgramName = programName1,
-                Status = "printing",
-                Station = "2"
-            };
-
-            // 4. เรียก API บันทึกข้อมูล
-            btnSendUV1.Enabled = false; // ป้องกันการกดซ้ำระหว่างรอ Network
-            try
-            {
-                bool isSaved = await _api.CreateUvInkjetAsync(uvRequest);
-
-                if (isSaved)
-                {
-                    var updatePayload = new { st_status = 2 };
-                    bool isJobUpdated = await _api.UpdateJobAsync(selectedJob.Id, updatePayload);
-
-                    Debug.WriteLine("บันทึกข้อมูลการพิมพ์ UV สำเร็จ");
-                    // อาจจะเพิ่ม MessageBox แสดงความยินดีที่นี่
-                }
-                else
-                {
-                    MessageBox.Show("ไม่สามารถบันทึกสถานะการพิมพ์ได้ (Server Error)");
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"เกิดข้อผิดพลาด: {ex.Message}");
-            }
-            finally
-            {
-                btnSendUV1.Enabled = true;
-            }
-        }
+        // ══════════════════════════════════════════════
+        //  SEND — MK3
+        // ══════════════════════════════════════════════
 
         private async void btnSendMk3_Click(object sender, EventArgs e)
         {
@@ -341,52 +400,31 @@ namespace InkjetOperator
 
                 // 3. เลือก Config ของเครื่องที่ต้องการ (Ordinal 1 คือ MK1 หรือชุดแรกในไฟล์)
                 var config = patternInfo.InkjetConfigs.FirstOrDefault(x => x.Ordinal == 1);
+                if (config == null) return;
 
-                if (config != null)
-                {
+                // --- เริ่มกระบวนการส่งข้อมูลไปยังเครื่องพิมพ์ ---
 
-                    // --- เริ่มกระบวนการส่งข้อมูลไปยังเครื่องพิมพ์ ---
+                // A. เชื่อมต่อ TCP (IP และ Port ของเครื่องพิมพ์ MK3)
+                if (!await ConnectInkjetAsync()) return;
 
-                    // A. เชื่อมต่อ TCP (IP และ Port ของเครื่องพิมพ์ MK3)
-                    await _tcpManager.ConnectAsync("192.168.3.77", 9004);
+                // B. เปลี่ยน Program Number (คำสั่งบังคับเครื่องเปลี่ยน Job)
+                int targetProg = config.ProgramNumber ?? 158;
+                await _inkjetAdapter.ChangeProgramAsync(targetProg);
 
-                    if (_inkjetAdapter.IsConnected())
-                    {
-                        // B. เปลี่ยน Program Number (คำสั่งบังคับเครื่องเปลี่ยน Job)
-                        int targetProg = config.ProgramNumber ?? 158;
-                        await _inkjetAdapter.ChangeProgramAsync(targetProg);
+                // หน่วงเวลาเล็กน้อยให้เครื่องพิมพ์เตรียมตัว (200-500ms)
+                await Task.Delay(300);
 
-                        // หน่วงเวลาเล็กน้อยให้เครื่องพิมพ์เตรียมตัว (200-500ms)
-                        await Task.Delay(300);
+                // C. ส่งการตั้งค่าพื้นฐาน (FM Command) เช่น Width, Height, Delay
+                // ข้อมูลเหล่านี้ดึงมาจากคอลัมน์ mk1_width, mk1_height ฯลฯ
+                await _inkjetAdapter.SendConfigAsync(config);
+                await Task.Delay(100);
 
-                        // C. ส่งการตั้งค่าพื้นฐาน (FM Command) เช่น Width, Height, Delay
-                        // ข้อมูลเหล่านี้ดึงมาจากคอลัมน์ mk1_width, mk1_height ฯลฯ
-                        await _inkjetAdapter.SendConfigAsync(config);
-                        await Task.Delay(100);
+                // D. วนลูปส่งข้อความพิมพ์ (FS + F1 Commands) ตามจำนวน Block ที่มีข้อมูล
+                // จากภาพ DB ของคุณ ข้อมูลจะถูกเก็บใน block1_text, block2_text...
+                await SendTextBlocksRawAsync(config.TextBlocks);
 
-                        // D. วนลูปส่งข้อความพิมพ์ (FS + F1 Commands) ตามจำนวน Block ที่มีข้อมูล
-                        // จากภาพ DB ของคุณ ข้อมูลจะถูกเก็บใน block1_text, block2_text...
-                        if (config.TextBlocks != null && config.TextBlocks.Any())
-                        {
-                            foreach (var block in config.TextBlocks)
-                            {
-                                // ส่งทีละ Block (ระบุพิกัด X, Y และขนาดตัวอักษร)
-                                await _inkjetAdapter.SendTextBlockAsync(block, block.BlockNumber);
-
-                                // ป้องกัน Buffer เครื่องพิมพ์เต็ม แนะนำให้หน่วงเวลาเล็กน้อยระหว่าง Block
-                                await Task.Delay(150);
-                            }
-                        }
-
-                        MessageBox.Show($"[Success] ส่งข้อมูล {barcode}\nไปยัง Program: {targetProg} เรียบร้อยแล้ว",
-                                        "สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    else
-                    {
-                        MessageBox.Show("ไม่สามารถเชื่อมต่อกับเครื่องพิมพ์ได้ (IP: 192.168.3.77)",
-                                        "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
+                MessageBox.Show($"[Success] ส่งข้อมูล {barcode}\nไปยัง Program: {targetProg} เรียบร้อยแล้ว",
+                                "สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -400,7 +438,22 @@ namespace InkjetOperator
             }
         }
 
+        // ══════════════════════════════════════════════
+        //  SEND — UV Printer (UV1 / UV2 ใช้ร่วมกัน)
+        // ══════════════════════════════════════════════
+
+        private async void btnSendUV1_Click(object sender, EventArgs e)
+        {
+            await SendUvPrintAsync("UV Printer 1", "2", btnSendUV1);
+        }
+
         private async void btnSendUV2_Click_1(object sender, EventArgs e)
+        {
+            await SendUvPrintAsync("UV Printer 2", "4", btnSendUV2);
+        }
+
+        /// <summary>ส่งข้อมูล UV Print (ใช้ร่วมกันระหว่าง UV1 และ UV2)</summary>
+        private async Task SendUvPrintAsync(string inkjetName, string station, Button senderButton)
         {
             // 1. ดึง Job จาก BindingSource หลัก (รายการ Job)
             if (bindingSource1.Current is not PrintJob selectedJob)
@@ -435,23 +488,24 @@ namespace InkjetOperator
             var uvRequest = new UVinkjet
             {
                 PrintJobsId = selectedJob.Id,
-                InkjetName = "UV Printer 2",
+                InkjetName = inkjetName,
                 Lot = currentLot1,
                 Name = currentName1,
                 ProgramName = programName1,
                 Status = "printing",
-                Station = "4"
+                Station = station
             };
 
             // 4. เรียก API บันทึกข้อมูล
-            btnSendUV1.Enabled = false; // ป้องกันการกดซ้ำระหว่างรอ Network
+            senderButton.Enabled = false; // ป้องกันการกดซ้ำระหว่างรอ Network
             try
             {
                 bool isSaved = await _api.CreateUvInkjetAsync(uvRequest);
 
                 if (isSaved)
                 {
-                    var updatePayload = new { st_status = 4 };
+                    int stStatus = int.Parse(station);
+                    var updatePayload = new { st_status = stStatus };
                     bool isJobUpdated = await _api.UpdateJobAsync(selectedJob.Id, updatePayload);
 
                     Debug.WriteLine("บันทึกข้อมูลการพิมพ์ UV สำเร็จ");
@@ -468,9 +522,13 @@ namespace InkjetOperator
             }
             finally
             {
-                btnSendUV1.Enabled = true;
+                senderButton.Enabled = true;
             }
         }
+
+        // ══════════════════════════════════════════════
+        //  DEBUG / TEST
+        // ══════════════════════════════════════════════
 
         private void btnRetry_Click(object sender, EventArgs e)
         {
