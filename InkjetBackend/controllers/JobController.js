@@ -1,5 +1,5 @@
 const ResponseManager = require("../middleware/ResponseManager");
-const { PrintJob, PrintJobCommand } = require("../model/jobModel");
+const { PrintJob, PrintJobCommand , LastSentJob } = require("../model/jobModel");
 const {
   Pattern,
   InkjetConfig,
@@ -299,6 +299,179 @@ class JobController {
       return ResponseManager.CatchResponse(req, res, err.message);
     }
   }
+  // ==================== LastSentJob (Station 3) ====================
+
+  /**
+   * POST /job/lastSent/create
+   * Create a new LastSentJob record (Station 3)
+   */
+  static async createLastSent(req, res) {
+    try {
+      const {
+        barcode_raw,
+        pattern_id,
+        lot_number,
+        status,
+        error_message,
+        created_by,
+        attempt,
+        order_no,
+        customer_name,
+        type,
+        qty,
+        sent_time,
+        st_status,
+      } = req.body;
+
+      const lastSentJob = await LastSentJob.create({
+        barcode_raw,
+        pattern_id,
+        lot_number,
+        status: status || "pending",
+        error_message,
+        created_by,
+        attempt: attempt || 0,
+        order_no,
+        customer_name,
+        type,
+        qty,
+        sent_time,
+        st_status,
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 201, lastSentJob);
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  /**
+   * GET /job/lastSent/getAll
+   * Get all LastSentJob records
+   */
+  static async getAllLastSent(req, res) {
+    try {
+      const { st_status, page, limit } = req.query;
+      const where = {};
+
+      if (st_status) {
+        where.st_status = st_status;
+      }
+
+      const offset = (page - 1) * limit;
+      const { count, rows } = await LastSentJob.findAndCountAll({
+        where,
+        include: [{ model: Pattern, as: "pattern" }],
+        order: [["created_at", "DESC"]],
+        offset,
+        limit,
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 200, {
+        data: rows,
+        total: count,
+      });
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  /**
+   * GET /job/lastSent/getById/:id
+   * Get LastSentJob by ID
+   */
+  static async getLastSentById(req, res) {
+    try {
+      const lastSentJob = await LastSentJob.findByPk(req.params.id, {
+        include: [{ model: Pattern, as: "pattern" }],
+      });
+
+      if (!lastSentJob) {
+        return ResponseManager.ErrorResponse(req, res, 404, "LastSentJob not found");
+      }
+
+      return ResponseManager.SuccessResponse(req, res, 200, lastSentJob);
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  /**
+   * POST /job/lastSent/update/:id
+   * Update LastSentJob
+   */
+  static async updateLastSent(req, res) {
+    try {
+      const lastSentJob = await LastSentJob.findByPk(req.params.id);
+
+      if (!lastSentJob) {
+        return ResponseManager.ErrorResponse(req, res, 404, "LastSentJob not found");
+      }
+
+      const {
+        barcode_raw,
+        pattern_id,
+        lot_number,
+        status,
+        error_message,
+        created_by,
+        attempt,
+        order_no,
+        customer_name,
+        type,
+        qty,
+        sent_time,
+        st_status,
+      } = req.body;
+
+      await lastSentJob.update({
+        barcode_raw,
+        pattern_id,
+        lot_number,
+        status,
+        error_message,
+        created_by,
+        attempt,
+        order_no,
+        customer_name,
+        type,
+        qty,
+        sent_time,
+        st_status,
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 200, lastSentJob);
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  /**
+   * DELETE /job/lastSent/remove/:id
+   * Delete LastSentJob
+   */
+  static async removeLastSent(req, res) {
+    try {
+      const lastSentJob = await LastSentJob.findByPk(req.params.id);
+
+      if (!lastSentJob) {
+        return ResponseManager.ErrorResponse(req, res, 404, "LastSentJob not found");
+      }
+
+      await lastSentJob.destroy();
+
+      return ResponseManager.SuccessResponse(
+        req,
+        res,
+        200,
+        "LastSentJob deleted successfully"
+      );
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
 }
+
+
 
 module.exports = JobController;

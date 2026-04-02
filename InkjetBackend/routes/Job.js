@@ -35,4 +35,16 @@ Route.post(
 
 Route.post(RouteName + "/retry/:id", JobController.retry);
 
+// ==================== LastSentJob Routes (Station 3) ====================
+
+Route.post(RouteName + "/lastSent/create", JobController.createLastSent);
+
+Route.get(RouteName + "/lastSent/getAll", JobController.getAllLastSent);
+
+Route.get(RouteName + "/lastSent/getById/:id", JobController.getLastSentById);
+
+Route.post(RouteName + "/lastSent/update/:id", JobController.updateLastSent);
+
+Route.delete(RouteName + "/lastSent/remove/:id", JobController.removeLastSent);
+
 module.exports = Route;
