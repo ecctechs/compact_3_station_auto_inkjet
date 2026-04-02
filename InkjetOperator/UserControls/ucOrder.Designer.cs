@@ -271,6 +271,7 @@
             btnSendUV2.TabIndex = 17;
             btnSendUV2.Text = "ส่งหา UV2";
             btnSendUV2.UseVisualStyleBackColor = true;
+            btnSendUV2.Click += btnSendUV2_Click_1;
             // 
             // btnSendMk3
             // 
@@ -280,6 +281,7 @@
             btnSendMk3.TabIndex = 16;
             btnSendMk3.Text = "ส่งหา MK3";
             btnSendMk3.UseVisualStyleBackColor = true;
+            btnSendMk3.Click += btnSendMk3_Click;
             // 
             // btnSendUV1
             // 

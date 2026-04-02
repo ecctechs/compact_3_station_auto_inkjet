@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text.Json;
 using System.Windows.Forms;
 using InkjetOperator.Adapters;
 using InkjetOperator.Managers;
@@ -242,6 +243,167 @@ namespace InkjetOperator
                 if (isSaved)
                 {
                     var updatePayload = new { st_status = 2 };
+                    bool isJobUpdated = await _api.UpdateJobAsync(selectedJob.Id, updatePayload);
+
+                    Debug.WriteLine("บันทึกข้อมูลการพิมพ์ UV สำเร็จ");
+                    // อาจจะเพิ่ม MessageBox แสดงความยินดีที่นี่
+                }
+                else
+                {
+                    MessageBox.Show("ไม่สามารถบันทึกสถานะการพิมพ์ได้ (Server Error)");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"เกิดข้อผิดพลาด: {ex.Message}");
+            }
+            finally
+            {
+                btnSendUV1.Enabled = true;
+            }
+        }
+
+        private async void btnSendMk3_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // 1. ดึงข้อมูล Barcode จากหน้าจอ (เช่นจาก TextBox หรือ Label)
+                // ในที่นี้สมมติว่าดึงจากตัวแปร หรือคุณจะเปลี่ยนเป็น txtBarcode.Text ก็ได้
+                string barcode = "CCRC0291-DEX0663MS";
+
+                if (string.IsNullOrEmpty(barcode))
+                {
+                    MessageBox.Show("ไม่พบข้อมูล Barcode");
+                    return;
+                }
+
+                // 2. ดึงข้อมูลรายละเอียดจากตาราง config_data_mk3
+                var patternInfo = await _sqliteService.GetPatternDetailMk3Async(barcode);
+
+                if (patternInfo == null)
+                {
+                    MessageBox.Show($"ไม่พบข้อมูล Config สำหรับ: {barcode} ในฐานข้อมูล");
+                    return;
+                }
+
+                // 3. เลือก Config ของเครื่องที่ต้องการ (Ordinal 1 คือ MK1 หรือชุดแรกในไฟล์)
+                var config = patternInfo.InkjetConfigs.FirstOrDefault(x => x.Ordinal == 1);
+
+                if (config != null)
+                {
+
+                    // --- เริ่มกระบวนการส่งข้อมูลไปยังเครื่องพิมพ์ ---
+
+                    // A. เชื่อมต่อ TCP (IP และ Port ของเครื่องพิมพ์ MK3)
+                    await _tcpManager.ConnectAsync("192.168.3.77", 9004);
+
+                    if (_inkjetAdapter.IsConnected())
+                    {
+                        // B. เปลี่ยน Program Number (คำสั่งบังคับเครื่องเปลี่ยน Job)
+                        int targetProg = config.ProgramNumber ?? 158;
+                        await _inkjetAdapter.ChangeProgramAsync(targetProg);
+
+                        // หน่วงเวลาเล็กน้อยให้เครื่องพิมพ์เตรียมตัว (200-500ms)
+                        await Task.Delay(300);
+
+                        // C. ส่งการตั้งค่าพื้นฐาน (FM Command) เช่น Width, Height, Delay
+                        // ข้อมูลเหล่านี้ดึงมาจากคอลัมน์ mk1_width, mk1_height ฯลฯ
+                        await _inkjetAdapter.SendConfigAsync(config);
+                        await Task.Delay(100);
+
+                        // D. วนลูปส่งข้อความพิมพ์ (FS + F1 Commands) ตามจำนวน Block ที่มีข้อมูล
+                        // จากภาพ DB ของคุณ ข้อมูลจะถูกเก็บใน block1_text, block2_text...
+                        if (config.TextBlocks != null && config.TextBlocks.Any())
+                        {
+                            foreach (var block in config.TextBlocks)
+                            {
+                                // ส่งทีละ Block (ระบุพิกัด X, Y และขนาดตัวอักษร)
+                                await _inkjetAdapter.SendTextBlockAsync(block, block.BlockNumber);
+
+                                // ป้องกัน Buffer เครื่องพิมพ์เต็ม แนะนำให้หน่วงเวลาเล็กน้อยระหว่าง Block
+                                await Task.Delay(150);
+                            }
+                        }
+
+                        MessageBox.Show($"[Success] ส่งข้อมูล {barcode}\nไปยัง Program: {targetProg} เรียบร้อยแล้ว",
+                                        "สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show("ไม่สามารถเชื่อมต่อกับเครื่องพิมพ์ได้ (IP: 192.168.3.77)",
+                                        "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("เกิดข้อผิดพลาดในการส่งข้อมูล: " + ex.Message,
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                // (Optional) หากต้องการตัดการเชื่อมต่อทันทีหลังส่งจบ ให้เรียกใช้บรรทัดล่างนี้
+                // await _tcpManager.DisconnectAsync();
+            }
+        }
+
+        private void btnSendUV2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private async void btnSendUV2_Click_1(object sender, EventArgs e)
+        {
+            // 1. ดึง Job จาก BindingSource หลัก (รายการ Job)
+            if (bindingSource1.Current is not PrintJob selectedJob)
+            {
+                MessageBox.Show("กรุณาเลือกรายการ Job ในตารางก่อน");
+                return;
+            }
+            MessageBox.Show($"กำลังส่งข้อมูลการพิมพ์ UV สำหรับ Job ID: {selectedJob.Id}"); // Debugging Message
+
+            // 2. ดึงข้อมูลจาก bindingSourceUVinkjet แถวที่ 1 (Index 0)
+            // ตรวจสอบก่อนว่าใน List มีข้อมูลอย่างน้อย 1 แถวหรือไม่
+            if (bindingSourceUVinkjet.Count == 0)
+            {
+                MessageBox.Show("ไม่พบข้อมูล Config ของเครื่องพิมพ์");
+                return;
+            }
+            MessageBox.Show($"กำลังส่งข้อมูลการพิมพ์ UV สำหรับ Job ID: {selectedJob.Id}"); // Debugging Message
+
+            // ดึงข้อมูลแถวที่ 1 มาเก็บไว้ในตัวแปร (สมมติว่า Model คือ InkjetConfigDto)
+            var firstConfig = bindingSourceUVinkjet[0] as UVinkjet;
+
+            if (firstConfig == null) return;
+
+            // เตรียมตัวแปร (อ้างอิงตาม Property ใน InkjetConfigDto และ PrintJob)
+            string currentLot1 = firstConfig.Lot ?? "";
+            string currentName1 = firstConfig.Name ?? "";
+            string programName1 = firstConfig.ProgramName ?? "";
+
+            MessageBox.Show($"ข้อมูลที่จะส่ง: Lot={currentLot1}, Name={currentName1}, Program={programName1}"); // Debugging Message
+
+            // 3. เตรียมข้อมูลส่ง API
+            var uvRequest = new UVinkjet
+            {
+                PrintJobsId = selectedJob.Id,
+                InkjetName = "UV Printer 2",
+                Lot = currentLot1,
+                Name = currentName1,
+                ProgramName = programName1,
+                Status = "printing",
+                Station = "4"
+            };
+
+            // 4. เรียก API บันทึกข้อมูล
+            btnSendUV1.Enabled = false; // ป้องกันการกดซ้ำระหว่างรอ Network
+            try
+            {
+                bool isSaved = await _api.CreateUvInkjetAsync(uvRequest);
+
+                if (isSaved)
+                {
+                    var updatePayload = new { st_status = 4 };
                     bool isJobUpdated = await _api.UpdateJobAsync(selectedJob.Id, updatePayload);
 
                     Debug.WriteLine("บันทึกข้อมูลการพิมพ์ UV สำเร็จ");

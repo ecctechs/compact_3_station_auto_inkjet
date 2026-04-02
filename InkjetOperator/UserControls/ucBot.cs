@@ -393,25 +393,40 @@ namespace InkjetOperator.UserControls
 
             if (uvList != null && uvList.Count > 0)
             {
-                // สมมติว่ามี bindingSourceUVHistory สำหรับตารางประวัติ
-                // กรองเฉพาะรายการที่ Status เป็น printing
-                var printingItems = uvList.Where(x => x.Status == "printing").ToList();
+                // 1. ประกาศ List ไว้ด้านนอกเพื่อให้ Scope ครอบคลุมทั้งฟังก์ชัน
+                List<UVinkjet> printingItems = new List<UVinkjet>();
+                List<UVinkjet> completedItems = new List<UVinkjet>();
 
-                // นำไปใส่ใน BindingSource
+                // 2. ตรวจสอบเงื่อนไขตาม MenuMode
+                if (_config.MenuMode == 2)
+                {
+                    // กรองเฉพาะ Station "2" และ Status ตามที่ต้องการ
+                    // หมายเหตุ: เช็คใน Model ว่า Station เป็น string ("2") หรือ int (2)
+                    printingItems = uvList.Where(x => x.Status == "printing" && x.Station == "2").ToList();
+                    completedItems = uvList.Where(x => x.Status == "completed" && x.Station == "2").ToList();
+                }
+                else
+                {
+                    // กรณี Mode อื่นๆ อาจจะกรองแบบปกติ หรือไม่กรอง Station
+                    printingItems = uvList.Where(x => x.Status == "printing" && x.Station == "4").ToList();
+                    completedItems = uvList.Where(x => x.Status == "completed" && x.Station == "4").ToList();
+                }
+
+                // 3. อัปเดต UI ผ่าน BindingSource
+                // รายการที่กำลังพิมพ์ (Printing)
                 bindingSource1.DataSource = printingItems;
                 bindingSource1.ResetBindings(false);
 
-                // กรองเฉพาะรายการที่ Status เป็น completed
-                var completedItems = uvList.Where(x => x.Status == "completed").ToList();
-
-                // นำไปใส่ใน BindingSource
+                // รายการที่เสร็จแล้ว (Completed)
                 bindingSource2.DataSource = completedItems;
                 bindingSource2.ResetBindings(false);
-                //bindingSource1.ResetBindings(false);
             }
             else
             {
-                Debug.WriteLine("No UV Inkjet data found or error occurred.");
+                // เคลียร์ข้อมูลเดิมในตารางหากไม่พบข้อมูลจาก API
+                bindingSource1.DataSource = new List<UVinkjet>();
+                bindingSource2.DataSource = new List<UVinkjet>();
+                Debug.WriteLine("No UV Inkjet data found.");
             }
         }
 

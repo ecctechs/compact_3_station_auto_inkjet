@@ -187,6 +187,47 @@ namespace InkjetOperator.Services
             }
         }
 
+        // เพิ่มฟังก์ชันสำหรับ Query ตาราง config_data_mk3
+        public async Task<PatternDetail> GetPatternDetailMk3Async(string patternNo)
+        {
+            try
+            {
+                if (!File.Exists(_dbPath)) return null;
+
+                using var conn = new SQLiteConnection($"Data Source={_dbPath};Version=3;Busy Timeout=5000;");
+                await conn.OpenAsync();
+
+                string sql = "SELECT * FROM config_data_mk3 WHERE pattern_no_erp = @barcode LIMIT 1";
+                using var cmd = new SQLiteCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@barcode", patternNo.Trim());
+
+                using var reader = (SQLiteDataReader)await cmd.ExecuteReaderAsync();
+
+                if (await reader.ReadAsync())
+                {
+                    return new PatternDetail
+                    {
+                        Barcode = GetStr(reader, "pattern_no_erp") ?? patternNo,
+                        // เปลี่ยนเป็นดึงชื่อจาก program_name หรือ model_plan_code ตามที่มีใน DB
+                        Description = GetStr(reader, "program_name") ?? "",
+
+                        InkjetConfigs = new List<InkjetConfigDto>
+                {
+                    // *** จุดสำคัญ: เปลี่ยน "mk1_" เป็น "" (ค่าว่าง) ***
+                    // เพราะในตาราง mk3 ไม่มีคำว่า mk1_ นำหน้าคอลัมน์
+                    BuildMk(reader, "", 1, "program_name")
+                }
+                    };
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error: {ex.Message}");
+                return null;
+            }
+        }
+
         private string GetStr(SQLiteDataReader r, string n) =>
             r.IsDBNull(r.GetOrdinal(n)) ? null : r.GetValue(r.GetOrdinal(n)).ToString();
 
