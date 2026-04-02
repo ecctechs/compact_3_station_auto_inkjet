@@ -66,13 +66,14 @@ namespace InkjetOperator
             // 
             // btnSave
             // 
+            btnSave.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             btnSave.BackColor = Color.FromArgb(150, 190, 120);
             btnSave.FlatStyle = FlatStyle.Flat;
             btnSave.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             btnSave.ForeColor = Color.White;
-            btnSave.Location = new Point(274, 300);
+            btnSave.Location = new Point(667, 818);
             btnSave.Name = "btnSave";
-            btnSave.Size = new Size(120, 50);
+            btnSave.Size = new Size(195, 62);
             btnSave.TabIndex = 4;
             btnSave.Text = "Save";
             btnSave.UseVisualStyleBackColor = false;
@@ -80,13 +81,14 @@ namespace InkjetOperator
             // 
             // btnCancel
             // 
+            btnCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             btnCancel.BackColor = Color.Red;
             btnCancel.FlatStyle = FlatStyle.Flat;
             btnCancel.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             btnCancel.ForeColor = Color.White;
-            btnCancel.Location = new Point(411, 300);
+            btnCancel.Location = new Point(895, 818);
             btnCancel.Name = "btnCancel";
-            btnCancel.Size = new Size(120, 50);
+            btnCancel.Size = new Size(185, 62);
             btnCancel.TabIndex = 5;
             btnCancel.Text = "Cancel";
             btnCancel.UseVisualStyleBackColor = false;
@@ -101,7 +103,7 @@ namespace InkjetOperator
             Controls.Add(btnSave);
             Controls.Add(btnCancel);
             Name = "ucSettingDB3";
-            Size = new Size(648, 400);
+            Size = new Size(1152, 939);
             ResumeLayout(false);
             PerformLayout();
         }

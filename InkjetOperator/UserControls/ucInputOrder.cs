@@ -253,7 +253,8 @@ namespace InkjetOperator
             // กรองและปรับจูนข้อมูล (Data Cleaning) ก่อนส่งไป Create
             pattern.InkjetConfigs = pattern.InkjetConfigs
                 .Where(cfg => cfg.ProgramNumber.HasValue && cfg.ProgramNumber > 0)
-                .Select(cfg => {
+                .Select(cfg =>
+                {
                     if (cfg.TriggerDelay < 10) cfg.TriggerDelay = 10;
                     if (cfg.Direction != 0 && cfg.Direction != 3) cfg.Direction = 0;
                     if (cfg.SteelType == null) cfg.SteelType = "";
@@ -435,6 +436,10 @@ namespace InkjetOperator
             return path;
         }
 
+        private void btnOK_Click_1(object sender, EventArgs e)
+        {
+
+        }
     }
 
     public class BarcodeScanEventArgs : EventArgs

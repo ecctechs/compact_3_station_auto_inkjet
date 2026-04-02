@@ -44,7 +44,7 @@
             pnlLeftMenu.Location = new Point(0, 0);
             pnlLeftMenu.Margin = new Padding(3, 4, 3, 4);
             pnlLeftMenu.Name = "pnlLeftMenu";
-            pnlLeftMenu.Size = new Size(229, 800);
+            pnlLeftMenu.Size = new Size(229, 939);
             pnlLeftMenu.TabIndex = 1;
             // 
             // btnIpAddressSetting
@@ -83,7 +83,7 @@
             // 
             panelSettingShow.Location = new Point(228, 0);
             panelSettingShow.Name = "panelSettingShow";
-            panelSettingShow.Size = new Size(801, 800);
+            panelSettingShow.Size = new Size(924, 800);
             panelSettingShow.TabIndex = 2;
             // 
             // ucSettingMenu
@@ -93,7 +93,7 @@
             Controls.Add(panelSettingShow);
             Controls.Add(pnlLeftMenu);
             Name = "ucSettingMenu";
-            Size = new Size(1029, 800);
+            Size = new Size(1152, 939);
             pnlLeftMenu.ResumeLayout(false);
             ResumeLayout(false);
         }
