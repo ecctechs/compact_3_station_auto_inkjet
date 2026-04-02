@@ -188,7 +188,7 @@ namespace InkjetOperator
             }
 
             // 2. Sync Pattern ไปยัง Backend ก่อน (ถ้าล้มเหลวให้หยุดตามเงื่อนไขที่คุณต้องการ)
-            bool patternReady = await SyncPatternAsync(pattern);
+            bool patternReady = await SyncPatternAsync(pattern, patternNo);
             if (!patternReady)
             {
                 MessageBox.Show("ไม่สามารถจัดเตรียมข้อมูล Pattern ในระบบหลักได้ กรุณาตรวจสอบการเชื่อมต่อหรือข้อมูล", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -230,24 +230,43 @@ namespace InkjetOperator
         /// <summary>
         /// ทำความสะอาดข้อมูลและส่ง Pattern ไปยัง Backend
         /// </summary>
-        private async Task<bool> SyncPatternAsync(PatternDetail pattern)
+        private async Task<bool> SyncPatternAsync(PatternDetail pattern, string pattern_barcode)
         {
-            if (pattern.InkjetConfigs == null) return false;
+            // 1. ลองหาใน Backend ก่อนว่ามี Pattern นี้หรือยัง
+            var existing = await _api.GetPatternByBarcodeAsync(pattern_barcode);
 
-            // กรองและปรับจูนข้อมูลให้ตรงตาม Validation ของ Backend
+            // ถ้ามีอยู่แล้ว ไม่ต้อง Add ซ้ำ ให้ถือว่าการ Sync สำเร็จ (Ready)
+            if (existing != null)
+            {
+                Debug.WriteLine($"[SYNC] Pattern '{pattern_barcode}' already exists in backend. Skipping create.");
+
+                // (Option) ถ้าคุณต้องการเอาข้อมูลจาก Backend มาทับตัวแปร local เพื่อใช้ค่าที่ Resolve แล้ว
+                // pattern.InkjetConfigs = existing.InkjetConfigs; 
+
+                return true;
+            }
+
+            // 2. ถ้าไม่มีใน Backend (existing == null) ให้เตรียมข้อมูลเพื่อ Create
+            if (pattern.InkjetConfigs == null || pattern.InkjetConfigs.Count == 0)
+                return false;
+
+            // กรองและปรับจูนข้อมูล (Data Cleaning) ก่อนส่งไป Create
             pattern.InkjetConfigs = pattern.InkjetConfigs
                 .Where(cfg => cfg.ProgramNumber.HasValue && cfg.ProgramNumber > 0)
                 .Select(cfg => {
-                    if (cfg.TriggerDelay < 10) cfg.TriggerDelay = 10; // ขั้นต่ำ 10 ตาม Error
-                    if (cfg.Direction != 0 && cfg.Direction != 3) cfg.Direction = 0; // บังคับ 0 หรือ 3
+                    if (cfg.TriggerDelay < 10) cfg.TriggerDelay = 10;
+                    if (cfg.Direction != 0 && cfg.Direction != 3) cfg.Direction = 0;
                     if (cfg.SteelType == null) cfg.SteelType = "";
                     return cfg;
                 }).ToList();
 
-            // ถ้าไม่มี Config เหลืออยู่เลยหลังจากกรอง อาจจะถือว่า Pattern ไม่สมบูรณ์
+            // เช็คอีกครั้งหลังกรอง ถ้าว่างเปล่าไม่ควรส่ง
             if (pattern.InkjetConfigs.Count == 0) return false;
 
-            // ส่งไปที่ API
+            // 3. ส่งไปที่ API เพื่อสร้าง Pattern ใหม่
+            Debug.WriteLine($"[SYNC] Pattern '{pattern_barcode}' not found. Creating new pattern...");
+
+            // ตรงนี้เรียก CreatePatternAsync ซึ่งคืนค่า bool (ตามโครงสร้างเดิมของคุณ)
             return await _api.CreatePatternAsync(pattern);
         }
 

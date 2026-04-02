@@ -186,5 +186,29 @@ namespace InkjetOperator.Services
                 return false;
             }
         }
+
+        public async Task<PatternDetail?> GetPatternByBarcodeAsync(string barcode)
+        {
+            try
+            {
+                // encode barcode เพื่อรองรับอักขระพิเศษเช่น / หรือ -
+                string encodedBarcode = Uri.EscapeDataString(barcode);
+                var response = await _http.GetAsync($"/pattern/lookup/{encodedBarcode}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    // แกะเอาเฉพาะกิ่ง data ตาม SuccessResponse ของ Backend
+                    var result = JsonSerializer.Deserialize<ApiResponse<PatternDetail>>(content, JsonOptions);
+                    return result?.Data;
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Lookup Pattern error: {ex.Message}");
+                return null;
+            }
+        }
     }
 }
