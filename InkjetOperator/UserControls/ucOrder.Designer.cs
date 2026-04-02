@@ -289,6 +289,7 @@
             btnSendUV1.TabIndex = 15;
             btnSendUV1.Text = "ส่งหา UV1";
             btnSendUV1.UseVisualStyleBackColor = true;
+            btnSendUV1.Click += btnSendUV1_Click;
             // 
             // btnSendMk1Mk2
             // 

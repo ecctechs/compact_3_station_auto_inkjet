@@ -210,5 +210,28 @@ namespace InkjetOperator.Services
                 return null;
             }
         }
+
+        // =========================
+        // CREATE UV INKJET
+        // =========================
+        public async Task<bool> CreateUvInkjetAsync(UVinkjet request)
+        {
+            try
+            {
+                // ส่งไปยัง Endpoint /uv-inkjet/create ตามโครงสร้างเดิมของโปรเจกต์
+                var response = await _http.PostAsJsonAsync("/uv-inkjet/create", request, JsonOptions);
+
+                // ตรวจสอบ Success StatusCode (2xx)
+                response.EnsureSuccessStatusCode();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // บันทึก Error หากการส่งข้อมูลล้มเหลว
+                Debug.WriteLine("CreateUvInkjet error: " + ex.Message);
+                return false;
+            }
+        }
     }
 }

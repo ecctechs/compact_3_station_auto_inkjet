@@ -162,7 +162,7 @@ namespace InkjetOperator
                 await _tcpManager.ConnectAsync("192.168.3.77", 9004);
 
                 if (_inkjetAdapter.IsConnected())
-                {                   
+                {
                     if (bindSourceInkjetConfigDto.Current is InkjetConfigDto config)
                     {
                         await _inkjetAdapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
@@ -188,6 +188,40 @@ namespace InkjetOperator
             {
                 MessageBox.Show("เชื่อมต่อไม่สำเร็จ: " + ex.Message);
             }
+        }
+
+        private async void btnSendUV1_Click(object sender, EventArgs e)
+        {
+            // 1. ดึง Job ID จาก BindingSource ที่เลือกอยู่ (Current Row)
+            if (bindingSource1.Current is not PrintJob selectedJob)
+            {
+                MessageBox.Show("กรุณาเลือกรายการ Job ในตารางก่อน");
+                return;
+            }
+
+            //currentLot1,currentName1,programName1, bindingSourceUVinkjet ดึงจาก row ที่ 1
+
+            //var uvRequest = new UVinkjet
+            //{
+            //    PrintJobsId = selectedJob.Id,
+            //    InkjetName = "UV Printer 1",
+            //    Lot = currentLot1,
+            //    Name = currentName1,
+            //    ProgramName = programName1,
+            //    Status = "printing",
+            //    Station = "2"
+            //};
+
+            //bool isSaved = await _api.CreateUvInkjetAsync(uvRequest);
+
+            //if (isSaved)
+            //{
+            //    Debug.WriteLine("บันทึกข้อมูลการพิมพ์ UV สำเร็จ");
+            //}
+            //else
+            //{
+            //    MessageBox.Show("ไม่สามารถบันทึกสถานะการพิมพ์ได้");
+            //}
         }
     }
 }
