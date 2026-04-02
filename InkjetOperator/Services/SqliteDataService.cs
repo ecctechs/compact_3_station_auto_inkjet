@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,10 +12,12 @@ namespace InkjetOperator.Services
     public class SqliteDataService
     {
         private readonly string _dbPath;
+        private readonly string _dbPathUV_1;
 
         public SqliteDataService()
         {
             _dbPath = CustomSettingsManager.GetValue("DB_PATH") ?? "";
+            _dbPathUV_1 = UvSettingsManager.GetValue("UV1DB3_PATH") ?? "";
         }
 
         public async Task<PatternDetail> GetPatternDetailAsync(string patternNo)
@@ -133,6 +136,55 @@ namespace InkjetOperator.Services
                 });
             }
             return list;
+        }
+
+        // เพิ่ม Method นี้ลงใน Class SqliteDataService
+        public async Task<bool> UpdateUvLocalDatabaseAsync(string lot, string name)
+        {
+            try
+            {
+                // 1. เช็คว่า Path ว่างไหม หรือไฟล์มีอยู่จริงไหม
+                if (string.IsNullOrEmpty(_dbPathUV_1))
+                {
+                    Debug.WriteLine("Error: DB_PATH is empty.");
+                    return false;
+                }
+
+                if (!File.Exists(_dbPathUV_1))
+                {
+                    Debug.WriteLine($"Error: File not found at {_dbPathUV_1}");
+                    return false;
+                }
+
+                // 2. ใช้ Connection String แบบระบุโหมด (เผื่อไฟล์ถูกอ่านอยู่)
+                // เพิ่ม "Journal Mode=Off" หรือ "Pooling=True" เพื่อลดปัญหาไฟล์ถูกล็อก
+                using var conn = new SQLiteConnection($"Data Source={_dbPathUV_1};Version=3;New=False;");
+                await conn.OpenAsync();
+
+                // 3. ใช้ SQL ที่ระบุชื่อตารางและคอลัมน์ให้ตรงตามไฟล์ CPI.db3 เป๊ะๆ
+                // แนะนำให้ใส่ [ ] ครอบชื่อตารางเพื่อป้องกัน Error เรื่องชื่อซ้ำกับ Keyword
+                string sql = "UPDATE [MK063] SET [lot] = @lot, [name] = @name WHERE [id] = 1";
+
+                using var cmd = new SQLiteCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@lot", lot ?? "");
+                cmd.Parameters.AddWithValue("@name", name ?? "");
+
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+
+                Debug.WriteLine($"Update SQLite Success: {rowsAffected} row(s) updated.");
+                return rowsAffected > 0;
+            }
+            catch (SQLiteException ex)
+            {
+                // ตรงนี้สำคัญมาก! มันจะบอกว่า "Database is locked" หรือ "No such table"
+                MessageBox.Show($"SQLite Error ({ex.ErrorCode}): {ex.Message}\nPath: {_dbPathUV_1}", "DB Error");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"General Error: {ex.Message}");
+                return false;
+            }
         }
 
         private string GetStr(SQLiteDataReader r, string n) =>

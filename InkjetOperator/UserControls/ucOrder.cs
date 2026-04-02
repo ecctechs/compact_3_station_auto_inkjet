@@ -215,8 +215,8 @@ namespace InkjetOperator
             if (firstConfig == null) return;
 
             // เตรียมตัวแปร (อ้างอิงตาม Property ใน InkjetConfigDto และ PrintJob)
-            string currentLot1 = selectedJob.LotNumber ?? "";
-            string currentName1 = selectedJob.CustomerName ?? "";
+            string currentLot1 = firstConfig.Lot ?? "";
+            string currentName1 = firstConfig.Name ?? "";
             string programName1 = firstConfig.ProgramName ?? "";
 
             MessageBox.Show($"ข้อมูลที่จะส่ง: Lot={currentLot1}, Name={currentName1}, Program={programName1}"); // Debugging Message

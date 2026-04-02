@@ -4,12 +4,14 @@ using System.Drawing;
 using System.Windows.Forms;
 using InkjetOperator.Models;
 using InkjetOperator.Services;
+using System.Data.SQLite;
 
 namespace InkjetOperator.UserControls
 {
     public partial class ucBot : UserControl
     {
         private readonly ApiClient _api = ApiProvider.Instance;
+        private readonly SqliteDataService _sqliteService = new SqliteDataService();
         public ucBot()
         {
             InitializeComponent();
@@ -252,7 +254,9 @@ namespace InkjetOperator.UserControls
                     {
                         // 2. อัปเดตสถานะใน Database เป็น completed (เรียกผ่าน API)
                         // ทำงานใน Background ได้เลย ไม่ต้อง Invoke
+                        await UpdateUvDatabaseAsync();
                         await _api.UpdateUvInkjetAsync(programData.Id, new { status = "completed" });
+
 
                         // 3. แจ้งเตือนหน้าจอ (ต้องกลับไป UI Thread)
                         if (this.IsHandleCreated)
@@ -287,21 +291,31 @@ namespace InkjetOperator.UserControls
 
         private void btnDBUV1_Click(object sender, EventArgs e)
         {
-            using (var dialog = new FolderBrowserDialog())
+            using (var dialog = new OpenFileDialog())
             {
-                dialog.Description = "เลือกโฟลเดอร์ Database UV DB3";
+                // ตั้งค่าหัวข้อและฟิลเตอร์ให้เลือกเฉพาะไฟล์ Database (.db3 หรือ .db)
+                dialog.Title = "เลือกไฟล์ Database UV (.db3)";
+                dialog.Filter = "SQLite Database (*.db3)|*.db3|All files (*.*)|*.*";
 
-                if (!string.IsNullOrEmpty(txtDBUV1.Text) && Directory.Exists(txtDBUV1.Text))
+                // ถ้าในช่อง Text มี Path เดิมอยู่แล้ว ให้เปิดไปที่โฟลเดอร์นั้น
+                if (!string.IsNullOrEmpty(txtDBUV1.Text))
                 {
-                    dialog.SelectedPath = txtDBUV1.Text;
+                    string currentDir = Path.GetDirectoryName(txtDBUV1.Text);
+                    if (Directory.Exists(currentDir))
+                    {
+                        dialog.InitialDirectory = currentDir;
+                    }
                 }
 
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    txtDBUV1.Text = dialog.SelectedPath;
+                    // นำ Path ของไฟล์ที่เลือกมาใส่ใน TextBox
+                    txtDBUV1.Text = dialog.FileName;
 
-                    // ✅ Save ลง config
+                    // ✅ Save ลง config (บันทึก Path ไฟล์เต็มๆ)
                     UvSettingsManager.SetValue("UV1DB3_PATH", txtDBUV1.Text);
+
+                    MessageBox.Show("บันทึกเส้นทาง Database เรียบร้อยแล้ว", "สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
         }
@@ -340,20 +354,27 @@ namespace InkjetOperator.UserControls
             get_uv1_data();
         }
 
-        private async void OnBotFinished(int uvRecordId)
+        private async Task UpdateUvDatabaseAsync()
         {
-            // เตรียมข้อมูลที่ต้องการอัปเดต (Anonymous Object)
-            var payload = new
+            // ดึงข้อมูลจาก BindingSource แถวปัจจุบัน
+            if (bindingSource1.Current is UVinkjet selectedJob)
             {
-                status = "completed",
-                updated_at = DateTime.Now
-            };
+                Debug.WriteLine($"Updating local DB for Job: Lot={selectedJob.Lot}, Name={selectedJob.Name}");
+                // เรียกใช้ Service ที่เราเพิ่งเขียนเพิ่ม
+                bool success = await _sqliteService.UpdateUvLocalDatabaseAsync(
+                    selectedJob.Lot,
+                    selectedJob.Name
+                );
 
-            bool success = await _api.UpdateUvInkjetAsync(uvRecordId, payload);
-
-            if (success)
-            {
-                Debug.WriteLine("อัปเดตสถานะ UV Inkjet เรียบร้อย");
+                if (success)
+                {
+                    // (Optional) แจ้งเตือนหรือ Log
+                    Debug.WriteLine("Local SQLite Updated!");
+                }
+                else
+                {
+                    MessageBox.Show("ไม่สามารถอัปเดตฐานข้อมูล Local ได้");
+                }
             }
         }
     }
