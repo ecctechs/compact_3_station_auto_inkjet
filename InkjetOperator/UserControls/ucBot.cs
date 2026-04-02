@@ -10,13 +10,17 @@ namespace InkjetOperator.UserControls
 {
     public partial class ucBot : UserControl
     {
+        private AppConfig _config;
         private readonly ApiClient _api = ApiProvider.Instance;
         private readonly SqliteDataService _sqliteService = new SqliteDataService();
         public ucBot()
         {
             InitializeComponent();
+            _config = AppConfig.Load();
             InitGrid();
             LoadConfig();
+
+           
         }
 
         // ================= INIT GRID =================
@@ -33,43 +37,84 @@ namespace InkjetOperator.UserControls
         // ================= LOAD =================
         private void LoadConfig()
         {
-            txtMain.Text = UvSettingsManager.GetValue("MAIN_PATH") ?? "";
-            txtBackup.Text = UvSettingsManager.GetValue("BACKUP_PATH") ?? "";
-            txtDBUV1.Text = UvSettingsManager.GetValue("UV1DB3_PATH") ?? "";
+            if (_config.MenuMode == 2)
+            {
+                txtMain.Text = UvSettingsManager.GetValue("MAIN_PATH") ?? "";
+                txtBackup.Text = UvSettingsManager.GetValue("BACKUP_PATH") ?? "";
+                txtDBUV1.Text = UvSettingsManager.GetValue("UV1DB3_PATH") ?? "";
 
-            dgvXY.Rows[0].Cells[1].Value = UvSettingsManager.GetValue("DOC_X") ?? "0";
-            dgvXY.Rows[0].Cells[2].Value = UvSettingsManager.GetValue("DOC_Y") ?? "0";
+                dgvXY.Rows[0].Cells[1].Value = UvSettingsManager.GetValue("DOC_X") ?? "0";
+                dgvXY.Rows[0].Cells[2].Value = UvSettingsManager.GetValue("DOC_Y") ?? "0";
 
-            dgvXY.Rows[1].Cells[1].Value = UvSettingsManager.GetValue("OPEN_X") ?? "0";
-            dgvXY.Rows[1].Cells[2].Value = UvSettingsManager.GetValue("OPEN_Y") ?? "0";
+                dgvXY.Rows[1].Cells[1].Value = UvSettingsManager.GetValue("OPEN_X") ?? "0";
+                dgvXY.Rows[1].Cells[2].Value = UvSettingsManager.GetValue("OPEN_Y") ?? "0";
 
-            dgvXY.Rows[2].Cells[1].Value = UvSettingsManager.GetValue("SELECT_X") ?? "0";
-            dgvXY.Rows[2].Cells[2].Value = UvSettingsManager.GetValue("SELECT_Y") ?? "0";
+                dgvXY.Rows[2].Cells[1].Value = UvSettingsManager.GetValue("SELECT_X") ?? "0";
+                dgvXY.Rows[2].Cells[2].Value = UvSettingsManager.GetValue("SELECT_Y") ?? "0";
 
-            dgvXY.Rows[3].Cells[1].Value = UvSettingsManager.GetValue("OPENBTN_X") ?? "0";
-            dgvXY.Rows[3].Cells[2].Value = UvSettingsManager.GetValue("OPENBTN_Y") ?? "0";
+                dgvXY.Rows[3].Cells[1].Value = UvSettingsManager.GetValue("OPENBTN_X") ?? "0";
+                dgvXY.Rows[3].Cells[2].Value = UvSettingsManager.GetValue("OPENBTN_Y") ?? "0";
+            }
+            else
+            {
+                txtMain.Text = UvSettingsManager.GetValue("MAIN_PATH_2") ?? "";
+                txtBackup.Text = UvSettingsManager.GetValue("BACKUP_PATH_2") ?? "";
+                txtDBUV1.Text = UvSettingsManager.GetValue("UV1DB3_PATH_2") ?? "";
+
+                dgvXY.Rows[0].Cells[1].Value = UvSettingsManager.GetValue("DOC_X_2") ?? "0";
+                dgvXY.Rows[0].Cells[2].Value = UvSettingsManager.GetValue("DOC_Y_2") ?? "0";
+
+                dgvXY.Rows[1].Cells[1].Value = UvSettingsManager.GetValue("OPEN_X_2") ?? "0";
+                dgvXY.Rows[1].Cells[2].Value = UvSettingsManager.GetValue("OPEN_Y_2") ?? "0";
+
+                dgvXY.Rows[2].Cells[1].Value = UvSettingsManager.GetValue("SELECT_X_2") ?? "0";
+                dgvXY.Rows[2].Cells[2].Value = UvSettingsManager.GetValue("SELECT_Y_2") ?? "0";
+
+                dgvXY.Rows[3].Cells[1].Value = UvSettingsManager.GetValue("OPENBTN_X_2") ?? "0";
+                dgvXY.Rows[3].Cells[2].Value = UvSettingsManager.GetValue("OPENBTN_Y_2") ?? "0";
+            }
         }
 
         // ================= SAVE =================
         private void SaveConfig()
         {
-            UvSettingsManager.SetValue("MAIN_PATH", txtMain.Text);
-            UvSettingsManager.SetValue("BACKUP_PATH", txtBackup.Text);
+            if (_config.MenuMode == 2)
+            {
+                UvSettingsManager.SetValue("MAIN_PATH", txtMain.Text);
+                UvSettingsManager.SetValue("BACKUP_PATH", txtBackup.Text);
 
-            UvSettingsManager.SetValue("DOC_X", dgvXY.Rows[0].Cells[1].Value?.ToString() ?? "0");
-            UvSettingsManager.SetValue("DOC_Y", dgvXY.Rows[0].Cells[2].Value?.ToString() ?? "0");
+                UvSettingsManager.SetValue("DOC_X", dgvXY.Rows[0].Cells[1].Value?.ToString() ?? "0");
+                UvSettingsManager.SetValue("DOC_Y", dgvXY.Rows[0].Cells[2].Value?.ToString() ?? "0");
 
-            UvSettingsManager.SetValue("OPEN_X", dgvXY.Rows[1].Cells[1].Value?.ToString() ?? "0");
-            UvSettingsManager.SetValue("OPEN_Y", dgvXY.Rows[1].Cells[2].Value?.ToString() ?? "0");
+                UvSettingsManager.SetValue("OPEN_X", dgvXY.Rows[1].Cells[1].Value?.ToString() ?? "0");
+                UvSettingsManager.SetValue("OPEN_Y", dgvXY.Rows[1].Cells[2].Value?.ToString() ?? "0");
 
-            UvSettingsManager.SetValue("SELECT_X", dgvXY.Rows[2].Cells[1].Value?.ToString() ?? "0");
-            UvSettingsManager.SetValue("SELECT_Y", dgvXY.Rows[2].Cells[2].Value?.ToString() ?? "0");
+                UvSettingsManager.SetValue("SELECT_X", dgvXY.Rows[2].Cells[1].Value?.ToString() ?? "0");
+                UvSettingsManager.SetValue("SELECT_Y", dgvXY.Rows[2].Cells[2].Value?.ToString() ?? "0");
 
-            UvSettingsManager.SetValue("OPENBTN_X", dgvXY.Rows[3].Cells[1].Value?.ToString() ?? "0");
-            UvSettingsManager.SetValue("OPENBTN_Y", dgvXY.Rows[3].Cells[2].Value?.ToString() ?? "0");
+                UvSettingsManager.SetValue("OPENBTN_X", dgvXY.Rows[3].Cells[1].Value?.ToString() ?? "0");
+                UvSettingsManager.SetValue("OPENBTN_Y", dgvXY.Rows[3].Cells[2].Value?.ToString() ?? "0");
+            }
+            else
+            {
+                UvSettingsManager.SetValue("MAIN_PATH_2", txtMain.Text);
+                UvSettingsManager.SetValue("BACKUP_PATH_2", txtBackup.Text);
 
-            //MessageBox.Show("Save เรียบร้อย");
-        }
+                UvSettingsManager.SetValue("DOC_X_2", dgvXY.Rows[0].Cells[1].Value?.ToString() ?? "0");
+                UvSettingsManager.SetValue("DOC_Y_2", dgvXY.Rows[0].Cells[2].Value?.ToString() ?? "0");
+
+                UvSettingsManager.SetValue("OPEN_X_2", dgvXY.Rows[1].Cells[1].Value?.ToString() ?? "0");
+                UvSettingsManager.SetValue("OPEN_Y_2", dgvXY.Rows[1].Cells[2].Value?.ToString() ?? "0");
+
+                UvSettingsManager.SetValue("SELECT_X_2", dgvXY.Rows[2].Cells[1].Value?.ToString() ?? "0");
+                UvSettingsManager.SetValue("SELECT_Y_2", dgvXY.Rows[2].Cells[2].Value?.ToString() ?? "0");
+
+                UvSettingsManager.SetValue("OPENBTN_X_2", dgvXY.Rows[3].Cells[1].Value?.ToString() ?? "0");
+                UvSettingsManager.SetValue("OPENBTN_Y_2", dgvXY.Rows[3].Cells[2].Value?.ToString() ?? "0");
+            }
+
+                //MessageBox.Show("Save เรียบร้อย");
+            }
 
 
         // ================= VALIDATE =================
@@ -139,7 +184,14 @@ namespace InkjetOperator.UserControls
                     txtMain.Text = dialog.SelectedPath;
 
                     // ✅ Save ลง config
-                    UvSettingsManager.SetValue("MAIN_PATH", txtMain.Text);
+                    if(_config.MenuMode == 2)
+                    {
+                        UvSettingsManager.SetValue("MAIN_PATH", txtMain.Text);
+                    }
+                    else
+                    {
+                         UvSettingsManager.SetValue("MAIN_PATH_2", txtMain.Text);
+                    }
                 }
             }
         }
@@ -159,8 +211,14 @@ namespace InkjetOperator.UserControls
                 {
                     txtBackup.Text = dialog.SelectedPath;
 
-                    // ✅ Save ลง config
-                    UvSettingsManager.SetValue("BACKUP_PATH", txtBackup.Text);
+                    if(_config.MenuMode == 2)
+                    {
+                        UvSettingsManager.SetValue("BACKUP_PATH", txtBackup.Text);
+                    }
+                    else
+                    {
+                         UvSettingsManager.SetValue("BACKUP_PATH_2", txtBackup.Text);
+                    }
                 }
             }
         }
@@ -187,6 +245,7 @@ namespace InkjetOperator.UserControls
         {
             // 1. Save & Validate ข้อมูลเบื้องต้น
             SaveConfig();
+            LoadConfig();
             if (!ValidateInput()) return;
 
             // 2. เช็คความพร้อมของข้อมูลใน bindingSource1 (Data Pre-check)
@@ -313,9 +372,16 @@ namespace InkjetOperator.UserControls
                     txtDBUV1.Text = dialog.FileName;
 
                     // ✅ Save ลง config (บันทึก Path ไฟล์เต็มๆ)
-                    UvSettingsManager.SetValue("UV1DB3_PATH", txtDBUV1.Text);
+                    if (_config.MenuMode == 2)
+                    {
+                        UvSettingsManager.SetValue("UV1DB3_PATH", txtDBUV1.Text);
+                    }
+                    else
+                    {
+                        UvSettingsManager.SetValue("UV1DB3_PATH_2", txtDBUV1.Text);
+                    }
 
-                    MessageBox.Show("บันทึกเส้นทาง Database เรียบร้อยแล้ว", "สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("บันทึกเส้นทาง Database เรียบร้อยแล้ว", "สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
         }

@@ -58,7 +58,7 @@ namespace InkjetOperator
                 1 => menuName.ToLower() switch { "input" or "setting" => true, _ => false },
                 2 => true,  // ทั้งหมด
                 3 => menuName.ToLower() switch { "input" or "order" => true, _ => false }, // โหมดใหม่
-                _ => false
+                4 => true,  // ทั้งหมด
             };
         }
     }
