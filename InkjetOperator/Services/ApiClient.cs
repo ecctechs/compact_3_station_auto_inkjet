@@ -83,7 +83,7 @@ namespace InkjetOperator.Services
         {
             try
             {
-                var response = await _http.GetAsync("/job/getAll?status=Waiting");
+                var response = await _http.GetAsync("/job/getAll");
                 response.EnsureSuccessStatusCode();
 
                 var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedResult<PrintJob>>>(JsonOptions);
@@ -314,7 +314,7 @@ namespace InkjetOperator.Services
             try
             {
                 // ส่งข้อมูลไปยัง /job/update/:id
-                var response = await _http.PutAsJsonAsync($"/job/update/{jobId}", updateData, JsonOptions);
+                var response = await _http.PostAsJsonAsync($"/job/update/{jobId}", updateData, JsonOptions);
 
                 // ตรวจสอบ Success StatusCode (2xx)
                 response.EnsureSuccessStatusCode();

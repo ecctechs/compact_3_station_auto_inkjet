@@ -342,32 +342,46 @@ namespace InkjetOperator
 
         private async void btnSendMk1Mk2_Click(object sender, EventArgs e)
         {
+            // 1. ดึง Job ที่เลือกอยู่จาก Grid (สมมติใช้ bindingSource1 เก็บรายการจาก API)
+            if (bindingSource1.Current is not PrintJob selectedJob)
+            {
+                MessageBox.Show("กรุณาเลือกรายการ Job ในตารางก่อนส่งข้อมูล");
+                return;
+            }
+
+            // 2. ดึง Config สำหรับ Inkjet (จากอีก BindingSource หนึ่ง)
+            if (bindSourceInkjetConfigDto.Current is not InkjetConfigDto config) return;
+
             try
             {
+                // --- ส่วนการส่งข้อมูล Inkjet ---
                 if (!await ConnectInkjetAsync()) return;
 
-                if (bindSourceInkjetConfigDto.Current is InkjetConfigDto config)
+                ApplyPatternRules(config.TextBlocks);
+                await _inkjetAdapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
+                await _inkjetAdapter.SendConfigAsync(config);
+                await SendTextBlocksWithRuleAsync(config.TextBlocks);
+
+                // --- ส่วนการอัปเดต Status กลับไปยัง API ---
+                // ใช้ selectedJob.Id ที่เราดึงมาจากแถวที่เลือก
+                int jobId = selectedJob.Id;
+             
+                var updateData = new { status = "Processing" };
+                bool isUpdated = await _api.UpdateJobAsync(jobId, updateData);
+
+                if (isUpdated)
                 {
-                    // 0. (สำคัญ) สั่งประมวลผล Rule ทุก Block ก่อนส่ง (ถ้ายังไม่ได้ทำที่อื่น)
-                    // หรือถ้าคุณประมวลผลใน CellClick ไว้แล้ว ขั้นตอนนี้ก็ข้ามได้ครับ
-                    ApplyPatternRules(config.TextBlocks);
+                    // อัปเดต UI ในแอปเราด้วยเพื่อให้ Operator เห็นว่าสถานะเปลี่ยนแล้ว
+                    selectedJob.Status = "Processing";
+                    txtStatus.Text = "Processing";
+                    bindingSource1.ResetCurrentItem(); // สั่งให้ Grid บรรทัดนั้นรีเฟรชตัวอักษร
 
-                    // 1. เปลี่ยนหมายเลขโปรแกรม
-                    await _inkjetAdapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
-                    await Task.Delay(200); // หน่วงเวลาเล็กน้อยให้เครื่องเตรียมตัว
-
-                    // 2. ส่งการตั้งค่าหลัก (FM Command)
-                    await _inkjetAdapter.SendConfigAsync(config);
-
-                    // 3. ส่งข้อความพิมพ์ (FS + F1 Commands) โดยใช้ RuleResult
-                    await SendTextBlocksWithRuleAsync(config.TextBlocks);
-
-                    MessageBox.Show("ส่งข้อมูลที่ผ่านการประมวลผล (Rule Result) เรียบร้อยแล้ว");
+                    MessageBox.Show($"ส่งข้อมูลและเริ่มประมวลผล Job ID: {jobId} เรียบร้อย");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("เกิดข้อผิดพลาด: " + ex.Message);
+                MessageBox.Show("Error: " + ex.Message);
             }
         }
 
