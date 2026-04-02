@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
+using InkjetOperator.Models;
+using InkjetOperator.Services;
 
 namespace InkjetOperator.UserControls
 {
     public partial class ucBot : UserControl
     {
+        private readonly ApiClient _api = ApiProvider.Instance;
         public ucBot()
         {
             InitializeComponent();
@@ -179,44 +183,106 @@ namespace InkjetOperator.UserControls
 
         private void btnRunBot_Click_1(object sender, EventArgs e)
         {
+            // 1. Save & Validate ข้อมูลเบื้องต้น
             SaveConfig();
-
             if (!ValidateInput()) return;
 
-            // 🛑 เพิ่มการแจ้งเตือนยืนยันก่อนเริ่มรัน Bot
+            // 2. เช็คความพร้อมของข้อมูลใน bindingSource1 (Data Pre-check)
+            if (bindingSource1.Count == 0)
+            {
+                MessageBox.Show("ไม่พบข้อมูลในตาราง กรุณาเลือก Job ก่อนเริ่มระบบ", "ข้อมูลไม่ครบ",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // 3. เตรียมตัวแปรสำหรับใช้งาน (ประกาศไว้นอก Scope ของ if เพื่อให้ Lambda เรียกใช้ได้)
+            string fileName = "default.uvdx";
+            UVinkjet programData = null; // ประกาศไว้รองรับ Lambda 
+
+            if (bindingSource1[0] is UVinkjet data) // ใช้ชื่อ 'data' แทน 'ProgramName'
+            {
+                programData = data;
+                fileName = data.ProgramName ?? "default.uvdx";
+                Debug.WriteLine("Ready to use Program: " + fileName);
+            }
+
+            // ป้องกันกรณี Cast ข้อมูลไม่สำเร็จ
+            if (programData == null)
+            {
+                MessageBox.Show("โครงสร้างข้อมูลในตารางไม่ถูกต้อง", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // 4. เมื่อข้อมูลพร้อม แสดงการแจ้งเตือนยืนยัน (User Confirmation)
             string alertMsg = "⚠️ คำเตือนก่อนเริ่มทำงาน:\n\n" +
-                              "1. กรุณาเปิดโปรแกรม UV และจัดหน้าจอโปรแกรม UV Inkjet ให้อยู่ที่หน้าจอหลัก (Primary Monitor)\n" +
+                              "1. กรุณาเปิดโปรแกรม UV และจัดหน้าจอให้อยู่ที่หน้าจอหลัก (Primary Monitor)\n" +
                               "2. ห้ามขยับเมาส์หรือคีย์บอร์ดในระหว่างที่ระบบกำลังทำงาน\n" +
                               "3. หากภาพใน Step 1 ไม่ตรง ระบบจะหยุดรอให้คุณกดยืนยัน\n\n" +
                               "คุณพร้อมที่จะเริ่มทำงานหรือไม่?";
 
             DialogResult confirm = MessageBox.Show(alertMsg, "ยืนยันการเริ่มระบบ",
-                                    MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+                                                 MessageBoxButtons.YesNo, MessageBoxIcon.Information);
 
             if (confirm != DialogResult.Yes) return;
 
-            string fileName = "SPK-LOT.uvdx";
-
-            var steps = new[]
+            // 5. เริ่มกระบวนการทำงานของ Bot (Execution Phase)
+            try
             {
-        GetStepFromGrid(0),
-        GetStepFromGrid(1),
-        GetStepFromGrid(2),
-        GetStepFromGrid(3)
-    };
+                // เตรียม Step จาก Grid
+                var steps = new[]
+                {
+            GetStepFromGrid(0),
+            GetStepFromGrid(1),
+            GetStepFromGrid(2),
+            GetStepFromGrid(3)
+        };
 
-            // copy file
-            BotClickHelper.CopyFile(fileName);
+                // ก๊อปปี้ไฟล์โปรแกรมเตรียมไว้
+                BotClickHelper.CopyFile(fileName);
 
-            // run bot
-            BotClickHelper.RunAsync("uvinkjet", steps, result =>
+                // รัน Bot แบบ Async
+                BotClickHelper.RunAsync("uvinkjet", steps, async result =>
+                {
+                    // --- ทำงานใน Background Thread ---
+
+                    // 1. ล้างไฟล์ในโฟลเดอร์ Document
+                    BotClickHelper.ClearDocumentFolder();
+
+                    if (result.Success)
+                    {
+                        // 2. อัปเดตสถานะใน Database เป็น completed (เรียกผ่าน API)
+                        // ทำงานใน Background ได้เลย ไม่ต้อง Invoke
+                        await _api.UpdateUvInkjetAsync(programData.Id, new { status = "completed" });
+
+                        // 3. แจ้งเตือนหน้าจอ (ต้องกลับไป UI Thread)
+                        if (this.IsHandleCreated)
+                        {
+                            this.Invoke((MethodInvoker)(() =>
+                            {
+                                MessageBox.Show("ทำงานสำเร็จ!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                                // (Option) ถ้าต้องการ Refresh ตารางหลังงานเสร็จ
+                                // await LoadUvInkjetHistory(); 
+                            }));
+                        }
+                    }
+                    else
+                    {
+                        // กรณี Bot ทำงานไม่สำเร็จหรือถูกยกเลิก
+                        if (this.IsHandleCreated)
+                        {
+                            this.Invoke((MethodInvoker)(() =>
+                            {
+                                MessageBox.Show("Bot หยุดทำงาน: " + result.Error, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }));
+                        }
+                    }
+                });
+            }
+            catch (Exception ex)
             {
-                BotClickHelper.ClearDocumentFolder();
-
-                if (this.IsHandleCreated)
-                    this.Invoke((MethodInvoker)(() =>
-                        MessageBox.Show(result.Success ? "สำเร็จ!" : result.Error)));
-            });
+                MessageBox.Show($"เกิดข้อผิดพลาดก่อนเริ่ม Bot: {ex.Message}", "Exception", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void btnDBUV1_Click(object sender, EventArgs e)
@@ -237,6 +303,57 @@ namespace InkjetOperator.UserControls
                     // ✅ Save ลง config
                     UvSettingsManager.SetValue("UV1DB3_PATH", txtDBUV1.Text);
                 }
+            }
+        }
+
+        private async void get_uv1_data()
+        {
+            // เรียก API ดึงข้อมูลทั้งหมด
+            List<UVinkjet> uvList = await _api.GetAllUvInkjetAsync();
+
+            if (uvList != null && uvList.Count > 0)
+            {
+                // สมมติว่ามี bindingSourceUVHistory สำหรับตารางประวัติ
+                // กรองเฉพาะรายการที่ Status เป็น printing
+                var printingItems = uvList.Where(x => x.Status == "printing").ToList();
+
+                // นำไปใส่ใน BindingSource
+                bindingSource1.DataSource = printingItems;
+                bindingSource1.ResetBindings(false);
+
+                // กรองเฉพาะรายการที่ Status เป็น completed
+                var completedItems = uvList.Where(x => x.Status == "completed").ToList();
+
+                // นำไปใส่ใน BindingSource
+                bindingSource2.DataSource = completedItems;
+                bindingSource2.ResetBindings(false);
+                //bindingSource1.ResetBindings(false);
+            }
+            else
+            {
+                Debug.WriteLine("No UV Inkjet data found or error occurred.");
+            }
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            get_uv1_data();
+        }
+
+        private async void OnBotFinished(int uvRecordId)
+        {
+            // เตรียมข้อมูลที่ต้องการอัปเดต (Anonymous Object)
+            var payload = new
+            {
+                status = "completed",
+                updated_at = DateTime.Now
+            };
+
+            bool success = await _api.UpdateUvInkjetAsync(uvRecordId, payload);
+
+            if (success)
+            {
+                Debug.WriteLine("อัปเดตสถานะ UV Inkjet เรียบร้อย");
             }
         }
     }

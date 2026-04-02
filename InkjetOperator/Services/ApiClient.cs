@@ -235,6 +235,52 @@ namespace InkjetOperator.Services
         }
 
         // =========================
+        // GET ALL UV INKJET RECORDS
+        // =========================
+        public async Task<List<UVinkjet>> GetAllUvInkjetAsync()
+        {
+            try
+            {
+                var response = await _http.GetAsync("/uv-inkjet/getAll");
+                response.EnsureSuccessStatusCode();
+
+                // แก้ไข: เปลี่ยนจาก List<UVinkjet> เป็น PaginatedResult<UVinkjet>
+                var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedResult<UVinkjet>>>(JsonOptions);
+
+                // คืนค่า List ที่อยู่ข้างใน PaginatedResult อีกที
+                return wrapper?.Data?.Data ?? new List<UVinkjet>();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("GetAllUvInkjet error: " + ex.Message);
+                return new List<UVinkjet>();
+            }
+        }
+
+        // =========================
+        // UPDATE UV INKJET BY ID
+        // =========================
+        public async Task<bool> UpdateUvInkjetAsync(int id, object updateData)
+        {
+            try
+            {
+                // ส่งข้อมูลไปยัง /uv-inkjet/update/:id ด้วย Method PUT
+                var response = await _http.PutAsJsonAsync($"/uv-inkjet/update/{id}", updateData, JsonOptions);
+
+                // ตรวจสอบสถานะการทำงาน (2xx Success)
+                response.EnsureSuccessStatusCode();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"UpdateUvInkjet error (ID: {id}): " + ex.Message);
+                return false;
+            }
+        }
+
+
+        // =========================
         // UPDATE JOB
         // =========================
         public async Task<bool> UpdateJobAsync(int jobId, object updateData)

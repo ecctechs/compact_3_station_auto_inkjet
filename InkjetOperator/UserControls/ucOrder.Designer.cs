@@ -44,9 +44,9 @@
             dataGridView1 = new DataGridView();
             idDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             inkjetNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            lotDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            nameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            programnameDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
+            Lot = new DataGridViewTextBoxColumn();
+            Name = new DataGridViewTextBoxColumn();
+            ProgramName = new DataGridViewTextBoxColumn();
             bindingSourceUVinkjet = new BindingSource(components);
             lblDetailTitle = new Label();
             lblBarcode = new Label();
@@ -320,13 +320,12 @@
             dataGridView1.AutoGenerateColumns = false;
             dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGridView1.ColumnHeadersHeight = 29;
-            dataGridView1.Columns.AddRange(new DataGridViewColumn[] { idDataGridViewTextBoxColumn, inkjetNameDataGridViewTextBoxColumn, lotDataGridViewTextBoxColumn, nameDataGridViewTextBoxColumn, programnameDataGridViewTextBoxColumn1 });
+            dataGridView1.Columns.AddRange(new DataGridViewColumn[] { idDataGridViewTextBoxColumn, inkjetNameDataGridViewTextBoxColumn, Lot, Name, ProgramName });
             dataGridView1.DataSource = bindingSourceUVinkjet;
             dataGridView1.Dock = DockStyle.Fill;
             dataGridView1.Location = new Point(3, 24);
             dataGridView1.Margin = new Padding(3, 4, 3, 4);
             dataGridView1.Name = "dataGridView1";
-            dataGridView1.ReadOnly = true;
             dataGridView1.RowHeadersWidth = 51;
             dataGridView1.Size = new Size(714, 171);
             dataGridView1.TabIndex = 0;
@@ -337,7 +336,6 @@
             idDataGridViewTextBoxColumn.HeaderText = "Id";
             idDataGridViewTextBoxColumn.MinimumWidth = 6;
             idDataGridViewTextBoxColumn.Name = "idDataGridViewTextBoxColumn";
-            idDataGridViewTextBoxColumn.ReadOnly = true;
             // 
             // inkjetNameDataGridViewTextBoxColumn
             // 
@@ -345,31 +343,27 @@
             inkjetNameDataGridViewTextBoxColumn.HeaderText = "InkjetName";
             inkjetNameDataGridViewTextBoxColumn.MinimumWidth = 6;
             inkjetNameDataGridViewTextBoxColumn.Name = "inkjetNameDataGridViewTextBoxColumn";
-            inkjetNameDataGridViewTextBoxColumn.ReadOnly = true;
             // 
-            // lotDataGridViewTextBoxColumn
+            // Lot
             // 
-            lotDataGridViewTextBoxColumn.DataPropertyName = "lot";
-            lotDataGridViewTextBoxColumn.HeaderText = "lot";
-            lotDataGridViewTextBoxColumn.MinimumWidth = 6;
-            lotDataGridViewTextBoxColumn.Name = "lotDataGridViewTextBoxColumn";
-            lotDataGridViewTextBoxColumn.ReadOnly = true;
+            Lot.DataPropertyName = "Lot";
+            Lot.HeaderText = "Lot";
+            Lot.MinimumWidth = 6;
+            Lot.Name = "Lot";
             // 
-            // nameDataGridViewTextBoxColumn
+            // Name
             // 
-            nameDataGridViewTextBoxColumn.DataPropertyName = "name";
-            nameDataGridViewTextBoxColumn.HeaderText = "name";
-            nameDataGridViewTextBoxColumn.MinimumWidth = 6;
-            nameDataGridViewTextBoxColumn.Name = "nameDataGridViewTextBoxColumn";
-            nameDataGridViewTextBoxColumn.ReadOnly = true;
+            Name.DataPropertyName = "Name";
+            Name.HeaderText = "Name";
+            Name.MinimumWidth = 6;
+            Name.Name = "Name";
             // 
-            // programnameDataGridViewTextBoxColumn1
+            // ProgramName
             // 
-            programnameDataGridViewTextBoxColumn1.DataPropertyName = "program_name";
-            programnameDataGridViewTextBoxColumn1.HeaderText = "program_name";
-            programnameDataGridViewTextBoxColumn1.MinimumWidth = 6;
-            programnameDataGridViewTextBoxColumn1.Name = "programnameDataGridViewTextBoxColumn1";
-            programnameDataGridViewTextBoxColumn1.ReadOnly = true;
+            ProgramName.DataPropertyName = "ProgramName";
+            ProgramName.HeaderText = "ProgramName";
+            ProgramName.MinimumWidth = 6;
+            ProgramName.Name = "ProgramName";
             // 
             // bindingSourceUVinkjet
             // 
@@ -657,7 +651,7 @@
             // 
             Controls.Add(pnlDetail);
             Controls.Add(pnlJobs);
-            Name = "ucOrder";
+            //Name = "ucOrder";
             Size = new Size(1243, 772);
             tabControl.ResumeLayout(false);
             tabList.ResumeLayout(false);
@@ -723,8 +717,6 @@
         private GroupBox groupBox1;
         private DataGridView dataGridView1;
         private BindingSource bindingSourceUVinkjet;
-        private DataGridViewTextBoxColumn idDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn inkjetNameDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn lotDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn nameDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn programnameDataGridViewTextBoxColumn1;
@@ -732,5 +724,10 @@
         private Button btnSendUV2;
         private Button btnSendMk3;
         private Button btnSendUV1;
+        private DataGridViewTextBoxColumn idDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn inkjetNameDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn Lot;
+        private DataGridViewTextBoxColumn Name;
+        private DataGridViewTextBoxColumn ProgramName;
     }
 }

@@ -15,14 +15,19 @@
 
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
             pnlTop = new Panel();
             lblTitle = new Label();
             pnlButtons = new Panel();
             btnRunBot = new Button();
             btnOpenLog = new Button();
             grpProgram = new GroupBox();
+            label1 = new Label();
+            btnDBUV1 = new Button();
+            txtDBUV1 = new TextBox();
             lblMain = new Label();
             txtMain = new TextBox();
             btnBrowseMain = new Button();
@@ -36,12 +41,34 @@
             dataGridViewTextBoxColumn6 = new DataGridViewTextBoxColumn();
             grpLog = new GroupBox();
             dgvLog = new DataGridView();
-            dataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
-            dataGridViewTextBoxColumn2 = new DataGridViewTextBoxColumn();
-            dataGridViewTextBoxColumn3 = new DataGridViewTextBoxColumn();
-            txtDBUV1 = new TextBox();
-            btnDBUV1 = new Button();
-            label1 = new Label();
+            InkjetName = new DataGridViewTextBoxColumn();
+            Lot = new DataGridViewTextBoxColumn();
+            Name = new DataGridViewTextBoxColumn();
+            ProgramName = new DataGridViewTextBoxColumn();
+            Status = new DataGridViewTextBoxColumn();
+            Station = new DataGridViewTextBoxColumn();
+            UpdatedAt = new DataGridViewTextBoxColumn();
+            bindingSource2 = new BindingSource(components);
+            groupBox1 = new GroupBox();
+            dataGridView1 = new DataGridView();
+            inkjetNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            lotDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            nameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            programNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            statusDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            stationDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            updatedAtDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            bindingSource1 = new BindingSource(components);
+            timer1 = new System.Windows.Forms.Timer(components);
+            idDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            printJobsIdDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            inkjetNameDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
+            lotDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
+            nameDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
+            programNameDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
+            statusDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
+            stationDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
+            updatedAtDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
             pnlTop.SuspendLayout();
             pnlButtons.SuspendLayout();
             grpProgram.SuspendLayout();
@@ -49,6 +76,10 @@
             ((System.ComponentModel.ISupportInitialize)dgvXY).BeginInit();
             grpLog.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvLog).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)bindingSource2).BeginInit();
+            groupBox1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)bindingSource1).BeginInit();
             SuspendLayout();
             // 
             // pnlTop
@@ -58,7 +89,7 @@
             pnlTop.Dock = DockStyle.Top;
             pnlTop.Location = new Point(0, 0);
             pnlTop.Name = "pnlTop";
-            pnlTop.Size = new Size(900, 60);
+            pnlTop.Size = new Size(1151, 60);
             pnlTop.TabIndex = 4;
             // 
             // lblTitle
@@ -80,7 +111,7 @@
             pnlButtons.Location = new Point(0, 60);
             pnlButtons.Name = "pnlButtons";
             pnlButtons.Padding = new Padding(20);
-            pnlButtons.Size = new Size(900, 90);
+            pnlButtons.Size = new Size(1151, 90);
             pnlButtons.TabIndex = 3;
             // 
             // btnRunBot
@@ -126,10 +157,35 @@
             grpProgram.Location = new Point(0, 150);
             grpProgram.Name = "grpProgram";
             grpProgram.Padding = new Padding(15);
-            grpProgram.Size = new Size(900, 164);
+            grpProgram.Size = new Size(1151, 164);
             grpProgram.TabIndex = 2;
             grpProgram.TabStop = false;
             grpProgram.Text = "Program Paths";
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new Point(20, 114);
+            label1.Name = "label1";
+            label1.Size = new Size(103, 20);
+            label1.TabIndex = 8;
+            label1.Text = "Path UV1 DB3:";
+            // 
+            // btnDBUV1
+            // 
+            btnDBUV1.Location = new Point(590, 116);
+            btnDBUV1.Name = "btnDBUV1";
+            btnDBUV1.Size = new Size(100, 25);
+            btnDBUV1.TabIndex = 7;
+            btnDBUV1.Text = "Browse...";
+            btnDBUV1.Click += btnDBUV1_Click;
+            // 
+            // txtDBUV1
+            // 
+            txtDBUV1.Location = new Point(180, 114);
+            txtDBUV1.Name = "txtDBUV1";
+            txtDBUV1.Size = new Size(400, 27);
+            txtDBUV1.TabIndex = 6;
             // 
             // lblMain
             // 
@@ -188,7 +244,7 @@
             grpXY.Location = new Point(0, 314);
             grpXY.Name = "grpXY";
             grpXY.Padding = new Padding(10);
-            grpXY.Size = new Size(900, 220);
+            grpXY.Size = new Size(1151, 220);
             grpXY.TabIndex = 1;
             grpXY.TabStop = false;
             grpXY.Text = "Bot Click Coordinates";
@@ -213,7 +269,7 @@
             dgvXY.Name = "dgvXY";
             dgvXY.RowHeadersVisible = false;
             dgvXY.RowHeadersWidth = 51;
-            dgvXY.Size = new Size(880, 180);
+            dgvXY.Size = new Size(1131, 180);
             dgvXY.TabIndex = 0;
             // 
             // dataGridViewTextBoxColumn4
@@ -237,11 +293,10 @@
             // grpLog
             // 
             grpLog.Controls.Add(dgvLog);
-            grpLog.Dock = DockStyle.Fill;
-            grpLog.Location = new Point(0, 534);
+            grpLog.Location = new Point(608, 540);
             grpLog.Name = "grpLog";
             grpLog.Padding = new Padding(10);
-            grpLog.Size = new Size(900, 225);
+            grpLog.Size = new Size(533, 225);
             grpLog.TabIndex = 0;
             grpLog.TabStop = false;
             grpLog.Text = "Success Log";
@@ -249,6 +304,7 @@
             // dgvLog
             // 
             dgvLog.AllowUserToAddRows = false;
+            dgvLog.AutoGenerateColumns = false;
             dgvLog.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle2.BackColor = Color.LightGray;
@@ -259,71 +315,261 @@
             dataGridViewCellStyle2.WrapMode = DataGridViewTriState.True;
             dgvLog.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle2;
             dgvLog.ColumnHeadersHeight = 29;
-            dgvLog.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn1, dataGridViewTextBoxColumn2, dataGridViewTextBoxColumn3 });
+            dgvLog.Columns.AddRange(new DataGridViewColumn[] { InkjetName, Lot, Name, ProgramName, Status, Station, UpdatedAt, idDataGridViewTextBoxColumn, printJobsIdDataGridViewTextBoxColumn, inkjetNameDataGridViewTextBoxColumn1, lotDataGridViewTextBoxColumn1, nameDataGridViewTextBoxColumn1, programNameDataGridViewTextBoxColumn1, statusDataGridViewTextBoxColumn1, stationDataGridViewTextBoxColumn1, updatedAtDataGridViewTextBoxColumn1 });
+            dgvLog.DataSource = bindingSource2;
             dgvLog.Dock = DockStyle.Fill;
             dgvLog.EnableHeadersVisualStyles = false;
             dgvLog.Location = new Point(10, 30);
             dgvLog.Name = "dgvLog";
             dgvLog.ReadOnly = true;
             dgvLog.RowHeadersWidth = 51;
-            dgvLog.Size = new Size(880, 185);
+            dgvLog.Size = new Size(513, 185);
             dgvLog.TabIndex = 0;
             // 
-            // dataGridViewTextBoxColumn1
+            // InkjetName
             // 
-            dataGridViewTextBoxColumn1.HeaderText = "Time";
-            dataGridViewTextBoxColumn1.MinimumWidth = 6;
-            dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
-            dataGridViewTextBoxColumn1.ReadOnly = true;
+            InkjetName.DataPropertyName = "InkjetName";
+            InkjetName.HeaderText = "InkjetName";
+            InkjetName.MinimumWidth = 6;
+            InkjetName.Name = "InkjetName";
+            InkjetName.ReadOnly = true;
             // 
-            // dataGridViewTextBoxColumn2
+            // Lot
             // 
-            dataGridViewTextBoxColumn2.HeaderText = "File";
-            dataGridViewTextBoxColumn2.MinimumWidth = 6;
-            dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
-            dataGridViewTextBoxColumn2.ReadOnly = true;
+            Lot.DataPropertyName = "Lot";
+            Lot.HeaderText = "Lot";
+            Lot.MinimumWidth = 6;
+            Lot.Name = "Lot";
+            Lot.ReadOnly = true;
             // 
-            // dataGridViewTextBoxColumn3
+            // Name
             // 
-            dataGridViewTextBoxColumn3.HeaderText = "Status";
-            dataGridViewTextBoxColumn3.MinimumWidth = 6;
-            dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
-            dataGridViewTextBoxColumn3.ReadOnly = true;
+            Name.DataPropertyName = "Name";
+            Name.HeaderText = "Name";
+            Name.MinimumWidth = 6;
+            Name.Name = "Name";
+            Name.ReadOnly = true;
             // 
-            // txtDBUV1
+            // ProgramName
             // 
-            txtDBUV1.Location = new Point(180, 114);
-            txtDBUV1.Name = "txtDBUV1";
-            txtDBUV1.Size = new Size(400, 27);
-            txtDBUV1.TabIndex = 6;
+            ProgramName.DataPropertyName = "ProgramName";
+            ProgramName.HeaderText = "ProgramName";
+            ProgramName.MinimumWidth = 6;
+            ProgramName.Name = "ProgramName";
+            ProgramName.ReadOnly = true;
             // 
-            // btnDBUV1
+            // Status
             // 
-            btnDBUV1.Location = new Point(590, 116);
-            btnDBUV1.Name = "btnDBUV1";
-            btnDBUV1.Size = new Size(100, 25);
-            btnDBUV1.TabIndex = 7;
-            btnDBUV1.Text = "Browse...";
-            btnDBUV1.Click += btnDBUV1_Click;
+            Status.DataPropertyName = "Status";
+            Status.HeaderText = "Status";
+            Status.MinimumWidth = 6;
+            Status.Name = "Status";
+            Status.ReadOnly = true;
             // 
-            // label1
+            // Station
             // 
-            label1.AutoSize = true;
-            label1.Location = new Point(20, 114);
-            label1.Name = "label1";
-            label1.Size = new Size(103, 20);
-            label1.TabIndex = 8;
-            label1.Text = "Path UV1 DB3:";
+            Station.DataPropertyName = "Station";
+            Station.HeaderText = "Station";
+            Station.MinimumWidth = 6;
+            Station.Name = "Station";
+            Station.ReadOnly = true;
+            // 
+            // UpdatedAt
+            // 
+            UpdatedAt.DataPropertyName = "UpdatedAt";
+            UpdatedAt.HeaderText = "UpdatedAt";
+            UpdatedAt.MinimumWidth = 6;
+            UpdatedAt.Name = "UpdatedAt";
+            UpdatedAt.ReadOnly = true;
+            // 
+            // bindingSource2
+            // 
+            bindingSource2.DataSource = typeof(Models.UVinkjet);
+            // 
+            // groupBox1
+            // 
+            groupBox1.Controls.Add(dataGridView1);
+            groupBox1.Location = new Point(3, 534);
+            groupBox1.Name = "groupBox1";
+            groupBox1.Padding = new Padding(10);
+            groupBox1.Size = new Size(587, 225);
+            groupBox1.TabIndex = 5;
+            groupBox1.TabStop = false;
+            groupBox1.Text = "Current job";
+            // 
+            // dataGridView1
+            // 
+            dataGridView1.AllowUserToAddRows = false;
+            dataGridView1.AutoGenerateColumns = false;
+            dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = Color.LightGray;
+            dataGridViewCellStyle3.Font = new Font("Segoe UI", 9F);
+            dataGridViewCellStyle3.ForeColor = SystemColors.WindowText;
+            dataGridViewCellStyle3.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = DataGridViewTriState.True;
+            dataGridView1.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle3;
+            dataGridView1.ColumnHeadersHeight = 29;
+            dataGridView1.Columns.AddRange(new DataGridViewColumn[] { inkjetNameDataGridViewTextBoxColumn, lotDataGridViewTextBoxColumn, nameDataGridViewTextBoxColumn, programNameDataGridViewTextBoxColumn, statusDataGridViewTextBoxColumn, stationDataGridViewTextBoxColumn, updatedAtDataGridViewTextBoxColumn });
+            dataGridView1.DataSource = bindingSource1;
+            dataGridView1.Dock = DockStyle.Fill;
+            dataGridView1.EnableHeadersVisualStyles = false;
+            dataGridView1.Location = new Point(10, 30);
+            dataGridView1.Name = "dataGridView1";
+            dataGridView1.ReadOnly = true;
+            dataGridView1.RowHeadersWidth = 51;
+            dataGridView1.Size = new Size(567, 185);
+            dataGridView1.TabIndex = 0;
+            // 
+            // inkjetNameDataGridViewTextBoxColumn
+            // 
+            inkjetNameDataGridViewTextBoxColumn.DataPropertyName = "InkjetName";
+            inkjetNameDataGridViewTextBoxColumn.HeaderText = "InkjetName";
+            inkjetNameDataGridViewTextBoxColumn.MinimumWidth = 6;
+            inkjetNameDataGridViewTextBoxColumn.Name = "inkjetNameDataGridViewTextBoxColumn";
+            inkjetNameDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // lotDataGridViewTextBoxColumn
+            // 
+            lotDataGridViewTextBoxColumn.DataPropertyName = "Lot";
+            lotDataGridViewTextBoxColumn.HeaderText = "Lot";
+            lotDataGridViewTextBoxColumn.MinimumWidth = 6;
+            lotDataGridViewTextBoxColumn.Name = "lotDataGridViewTextBoxColumn";
+            lotDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // nameDataGridViewTextBoxColumn
+            // 
+            nameDataGridViewTextBoxColumn.DataPropertyName = "Name";
+            nameDataGridViewTextBoxColumn.HeaderText = "Name";
+            nameDataGridViewTextBoxColumn.MinimumWidth = 6;
+            nameDataGridViewTextBoxColumn.Name = "nameDataGridViewTextBoxColumn";
+            nameDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // programNameDataGridViewTextBoxColumn
+            // 
+            programNameDataGridViewTextBoxColumn.DataPropertyName = "ProgramName";
+            programNameDataGridViewTextBoxColumn.HeaderText = "ProgramName";
+            programNameDataGridViewTextBoxColumn.MinimumWidth = 6;
+            programNameDataGridViewTextBoxColumn.Name = "programNameDataGridViewTextBoxColumn";
+            programNameDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // statusDataGridViewTextBoxColumn
+            // 
+            statusDataGridViewTextBoxColumn.DataPropertyName = "Status";
+            statusDataGridViewTextBoxColumn.HeaderText = "Status";
+            statusDataGridViewTextBoxColumn.MinimumWidth = 6;
+            statusDataGridViewTextBoxColumn.Name = "statusDataGridViewTextBoxColumn";
+            statusDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // stationDataGridViewTextBoxColumn
+            // 
+            stationDataGridViewTextBoxColumn.DataPropertyName = "Station";
+            stationDataGridViewTextBoxColumn.HeaderText = "Station";
+            stationDataGridViewTextBoxColumn.MinimumWidth = 6;
+            stationDataGridViewTextBoxColumn.Name = "stationDataGridViewTextBoxColumn";
+            stationDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // updatedAtDataGridViewTextBoxColumn
+            // 
+            updatedAtDataGridViewTextBoxColumn.DataPropertyName = "UpdatedAt";
+            updatedAtDataGridViewTextBoxColumn.HeaderText = "UpdatedAt";
+            updatedAtDataGridViewTextBoxColumn.MinimumWidth = 6;
+            updatedAtDataGridViewTextBoxColumn.Name = "updatedAtDataGridViewTextBoxColumn";
+            updatedAtDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // bindingSource1
+            // 
+            bindingSource1.DataSource = typeof(Models.UVinkjet);
+            // 
+            // timer1
+            // 
+            timer1.Enabled = true;
+            timer1.Interval = 5000;
+            timer1.Tick += timer1_Tick;
+            // 
+            // idDataGridViewTextBoxColumn
+            // 
+            idDataGridViewTextBoxColumn.DataPropertyName = "Id";
+            idDataGridViewTextBoxColumn.HeaderText = "Id";
+            idDataGridViewTextBoxColumn.MinimumWidth = 6;
+            idDataGridViewTextBoxColumn.Name = "idDataGridViewTextBoxColumn";
+            idDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // printJobsIdDataGridViewTextBoxColumn
+            // 
+            printJobsIdDataGridViewTextBoxColumn.DataPropertyName = "PrintJobsId";
+            printJobsIdDataGridViewTextBoxColumn.HeaderText = "PrintJobsId";
+            printJobsIdDataGridViewTextBoxColumn.MinimumWidth = 6;
+            printJobsIdDataGridViewTextBoxColumn.Name = "printJobsIdDataGridViewTextBoxColumn";
+            printJobsIdDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // inkjetNameDataGridViewTextBoxColumn1
+            // 
+            inkjetNameDataGridViewTextBoxColumn1.DataPropertyName = "InkjetName";
+            inkjetNameDataGridViewTextBoxColumn1.HeaderText = "InkjetName";
+            inkjetNameDataGridViewTextBoxColumn1.MinimumWidth = 6;
+            inkjetNameDataGridViewTextBoxColumn1.Name = "inkjetNameDataGridViewTextBoxColumn1";
+            inkjetNameDataGridViewTextBoxColumn1.ReadOnly = true;
+            // 
+            // lotDataGridViewTextBoxColumn1
+            // 
+            lotDataGridViewTextBoxColumn1.DataPropertyName = "Lot";
+            lotDataGridViewTextBoxColumn1.HeaderText = "Lot";
+            lotDataGridViewTextBoxColumn1.MinimumWidth = 6;
+            lotDataGridViewTextBoxColumn1.Name = "lotDataGridViewTextBoxColumn1";
+            lotDataGridViewTextBoxColumn1.ReadOnly = true;
+            // 
+            // nameDataGridViewTextBoxColumn1
+            // 
+            nameDataGridViewTextBoxColumn1.DataPropertyName = "Name";
+            nameDataGridViewTextBoxColumn1.HeaderText = "Name";
+            nameDataGridViewTextBoxColumn1.MinimumWidth = 6;
+            nameDataGridViewTextBoxColumn1.Name = "nameDataGridViewTextBoxColumn1";
+            nameDataGridViewTextBoxColumn1.ReadOnly = true;
+            // 
+            // programNameDataGridViewTextBoxColumn1
+            // 
+            programNameDataGridViewTextBoxColumn1.DataPropertyName = "ProgramName";
+            programNameDataGridViewTextBoxColumn1.HeaderText = "ProgramName";
+            programNameDataGridViewTextBoxColumn1.MinimumWidth = 6;
+            programNameDataGridViewTextBoxColumn1.Name = "programNameDataGridViewTextBoxColumn1";
+            programNameDataGridViewTextBoxColumn1.ReadOnly = true;
+            // 
+            // statusDataGridViewTextBoxColumn1
+            // 
+            statusDataGridViewTextBoxColumn1.DataPropertyName = "Status";
+            statusDataGridViewTextBoxColumn1.HeaderText = "Status";
+            statusDataGridViewTextBoxColumn1.MinimumWidth = 6;
+            statusDataGridViewTextBoxColumn1.Name = "statusDataGridViewTextBoxColumn1";
+            statusDataGridViewTextBoxColumn1.ReadOnly = true;
+            // 
+            // stationDataGridViewTextBoxColumn1
+            // 
+            stationDataGridViewTextBoxColumn1.DataPropertyName = "Station";
+            stationDataGridViewTextBoxColumn1.HeaderText = "Station";
+            stationDataGridViewTextBoxColumn1.MinimumWidth = 6;
+            stationDataGridViewTextBoxColumn1.Name = "stationDataGridViewTextBoxColumn1";
+            stationDataGridViewTextBoxColumn1.ReadOnly = true;
+            // 
+            // updatedAtDataGridViewTextBoxColumn1
+            // 
+            updatedAtDataGridViewTextBoxColumn1.DataPropertyName = "UpdatedAt";
+            updatedAtDataGridViewTextBoxColumn1.HeaderText = "UpdatedAt";
+            updatedAtDataGridViewTextBoxColumn1.MinimumWidth = 6;
+            updatedAtDataGridViewTextBoxColumn1.Name = "updatedAtDataGridViewTextBoxColumn1";
+            updatedAtDataGridViewTextBoxColumn1.ReadOnly = true;
             // 
             // ucBot
             // 
+            Controls.Add(groupBox1);
             Controls.Add(grpLog);
             Controls.Add(grpXY);
             Controls.Add(grpProgram);
             Controls.Add(pnlButtons);
             Controls.Add(pnlTop);
-            Name = "ucBot";
-            Size = new Size(900, 759);
+            //Name = "ucBot";
+            Size = new Size(1151, 759);
             pnlTop.ResumeLayout(false);
             pnlTop.PerformLayout();
             pnlButtons.ResumeLayout(false);
@@ -333,6 +579,10 @@
             ((System.ComponentModel.ISupportInitialize)dgvXY).EndInit();
             grpLog.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvLog).EndInit();
+            ((System.ComponentModel.ISupportInitialize)bindingSource2).EndInit();
+            groupBox1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)bindingSource1).EndInit();
             ResumeLayout(false);
         }
 
@@ -362,11 +612,36 @@
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;
-        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
-        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
-        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
         private Label label1;
         private Button btnDBUV1;
         private TextBox txtDBUV1;
+        private GroupBox groupBox1;
+        private DataGridView dataGridView1;
+        private BindingSource bindingSource1;
+        private DataGridViewTextBoxColumn inkjetNameDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn lotDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn nameDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn programNameDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn statusDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn stationDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn updatedAtDataGridViewTextBoxColumn;
+        private System.Windows.Forms.Timer timer1;
+        private DataGridViewTextBoxColumn InkjetName;
+        private DataGridViewTextBoxColumn Lot;
+        private DataGridViewTextBoxColumn Name;
+        private DataGridViewTextBoxColumn ProgramName;
+        private DataGridViewTextBoxColumn Status;
+        private DataGridViewTextBoxColumn Station;
+        private DataGridViewTextBoxColumn UpdatedAt;
+        private BindingSource bindingSource2;
+        private DataGridViewTextBoxColumn idDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn printJobsIdDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn inkjetNameDataGridViewTextBoxColumn1;
+        private DataGridViewTextBoxColumn lotDataGridViewTextBoxColumn1;
+        private DataGridViewTextBoxColumn nameDataGridViewTextBoxColumn1;
+        private DataGridViewTextBoxColumn programNameDataGridViewTextBoxColumn1;
+        private DataGridViewTextBoxColumn statusDataGridViewTextBoxColumn1;
+        private DataGridViewTextBoxColumn stationDataGridViewTextBoxColumn1;
+        private DataGridViewTextBoxColumn updatedAtDataGridViewTextBoxColumn1;
     }
 }
