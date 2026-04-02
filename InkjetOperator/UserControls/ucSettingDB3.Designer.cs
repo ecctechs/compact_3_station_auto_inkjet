@@ -71,9 +71,9 @@ namespace InkjetOperator
             btnSave.FlatStyle = FlatStyle.Flat;
             btnSave.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             btnSave.ForeColor = Color.White;
-            btnSave.Location = new Point(667, 818);
+            btnSave.Location = new Point(812, 833);
             btnSave.Name = "btnSave";
-            btnSave.Size = new Size(195, 62);
+            btnSave.Size = new Size(114, 53);
             btnSave.TabIndex = 4;
             btnSave.Text = "Save";
             btnSave.UseVisualStyleBackColor = false;
@@ -86,9 +86,9 @@ namespace InkjetOperator
             btnCancel.FlatStyle = FlatStyle.Flat;
             btnCancel.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             btnCancel.ForeColor = Color.White;
-            btnCancel.Location = new Point(895, 818);
+            btnCancel.Location = new Point(954, 833);
             btnCancel.Name = "btnCancel";
-            btnCancel.Size = new Size(185, 62);
+            btnCancel.Size = new Size(114, 53);
             btnCancel.TabIndex = 5;
             btnCancel.Text = "Cancel";
             btnCancel.UseVisualStyleBackColor = false;

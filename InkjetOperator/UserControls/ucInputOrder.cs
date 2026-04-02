@@ -150,36 +150,26 @@ namespace InkjetOperator
 
         private async void BtnOK_Click(object? sender, EventArgs e)
         {
-            // 3. Validation ข้อมูลหน้าจอ
-            if (!ValidateInput() || !int.TryParse(txtQty.Text, out var qty))
+            // 0. Pre-flight: เช็ค Backend + DB ก่อนทำอะไรทั้งหมด
+            btnOK.Enabled = false;
+            try
             {
-                if (!int.TryParse(txtQty.Text, out _)) MessageBox.Show("Qty ต้องเป็นตัวเลข");
-                return;
+                if (!await CheckConnectionsAsync())
+                    return;
             }
+            finally
+            {
+                btnOK.Enabled = true;
+            }
+
+            // 1. Validate ข้อมูลทั้งหมดในฟังก์ชันเดียว
+            if (!ValidateInput(out int qty))
+                return;
 
             string barcodeRaw = txtBarcode.Text.Trim();
-
-            // --- เพิ่มการ Validate รูปแบบ Barcode ---
-            if (!IsValidBarcode(barcodeRaw))
-            {
-                MessageBox.Show(
-                    "รูปแบบ Barcode ไม่ถูกต้อง!\n\n" +
-                    "ต้องมีรูปแบบดังนี้:\n" +
-                    "1. [Pattern]-[Sub]-[Lot] (เช่น xxxx-xxx-yyyyyy)\n" +
-                    "2. [Pattern]-[Lot] (เช่น xxxxxx-yyyyy)\n\n" +
-                    "* เครื่องหมาย '-' ตัวสุดท้ายจะถูกใช้เพื่อแยก Lot ออกจาก Pattern",
-                    "Barcode Format Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning
-                );
-                txtBarcode.Focus();
-                return;
-            }
-
-            // ถ้าผ่านการตรวจสอบแล้ว จึงค่อยดึง PatternNo
             string patternNo = GetPatternNo(barcodeRaw);
 
-            // 1. ตรวจสอบข้อมูลใน SQLite
+            // 2. ตรวจสอบข้อมูลใน SQLite
             var pattern = await _sqliteService.GetPatternDetailAsync(patternNo);
             if (pattern == null)
             {
@@ -187,7 +177,7 @@ namespace InkjetOperator
                 return;
             }
 
-            // 2. Sync Pattern ไปยัง Backend ก่อน (ถ้าล้มเหลวให้หยุดตามเงื่อนไขที่คุณต้องการ)
+            // 3. Sync Pattern ไปยัง Backend
             bool patternReady = await SyncPatternAsync(pattern, patternNo);
             if (!patternReady)
             {
@@ -195,7 +185,7 @@ namespace InkjetOperator
                 return;
             }
 
-            // 4. เริ่มขั้นตอนสร้าง Job
+            // 4. สร้าง Job
             btnOK.Enabled = false;
             try
             {
@@ -207,16 +197,91 @@ namespace InkjetOperator
             }
         }
 
-
-        private bool IsValidBarcode(string barcode)
+        /// <summary>Validate ข้อมูลหน้าจอทั้งหมด: Barcode, OrderNo, Qty, รูปแบบ Barcode</summary>
+        private bool ValidateInput(out int qty)
         {
-            // เช็คว่าต้องไม่ว่าง และต้องมีเครื่องหมาย '-' อย่างน้อย 1 ตัว
-            if (string.IsNullOrWhiteSpace(barcode) || !barcode.Contains("-"))
+            qty = 0;
+
+            // 1. Barcode ต้องไม่ว่าง
+            if (string.IsNullOrWhiteSpace(txtBarcode.Text))
             {
+                ShowError("กรุณาสแกนบาร์โค้ด");
+                txtBarcode.Focus();
                 return false;
             }
+
+            // 2. Order No ต้องไม่ว่าง
+            if (string.IsNullOrWhiteSpace(txtOrderNo.Text))
+            {
+                ShowError("กรุณาระบุ Order No");
+                txtOrderNo.Focus();
+                return false;
+            }
+
+            // 3. Qty ต้องเป็นตัวเลข
+            if (!int.TryParse(txtQty.Text, out qty) || qty <= 0)
+            {
+                ShowError("Qty ต้องเป็นตัวเลขที่มากกว่า 0");
+                txtQty.Focus();
+                return false;
+            }
+
+            // 4. รูปแบบ Barcode ต้องมี '-' อย่างน้อย 1 ตัว
+            string barcode = txtBarcode.Text.Trim();
+            if (!barcode.Contains('-'))
+            {
+                ShowError(
+                    "รูปแบบ Barcode ไม่ถูกต้อง!\n\n" +
+                    "ต้องมีรูปแบบดังนี้:\n" +
+                    "1. [Pattern]-[Sub]-[Lot] (เช่น xxxx-xxx-yyyyyy)\n" +
+                    "2. [Pattern]-[Lot] (เช่น xxxxxx-yyyyy)\n\n" +
+                    "* เครื่องหมาย '-' ตัวสุดท้ายจะถูกใช้เพื่อแยก Lot ออกจาก Pattern");
+                txtBarcode.Focus();
+                return false;
+            }
+
             return true;
         }
+
+        /// <summary>เช็ค Backend API + SQLite DB ก่อนดำเนินการ</summary>
+        private async Task<bool> CheckConnectionsAsync()
+        {
+            // 1. เช็ค SQLite DB Path (sync — เร็วมาก)
+            if (!_sqliteService.CanConnect())
+            {
+                string dbPath = CustomSettingsManager.GetValue("DB_PATH") ?? "(ไม่ได้ตั้งค่า)";
+                MessageBox.Show(
+                    $"❌ ไม่สามารถเชื่อมต่อฐานข้อมูล SQLite ได้\n\n" +
+                    $"DB Path: {dbPath}\n\n" +
+                    "กรุณาตรวจสอบ:\n" +
+                    "• ไฟล์ .db3 มีอยู่จริงหรือไม่\n" +
+                    "• ตั้งค่า DB_PATH ในหน้า Setting ถูกต้องหรือไม่",
+                    "Database Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            // 2. เช็ค Backend API (async — อาจใช้เวลา 1-2 วินาที)
+            bool backendOk = await _api.PingAsync();
+            if (!backendOk)
+            {
+                string pcIp = AppConfig.PcIp;
+                MessageBox.Show(
+                    $"❌ ไม่สามารถเชื่อมต่อ Backend Server ได้\n\n" +
+                    $"PC IP: {pcIp}\n" +
+                    $"URL: {AppConfig.ApiUrl}\n\n" +
+                    "กรุณาตรวจสอบ:\n" +
+                    "• Backend Server เปิดอยู่หรือไม่\n" +
+                    "• ตั้งค่า PC_IP ในหน้า Setting ถูกต้องหรือไม่\n" +
+                    "• เครือข่ายเชื่อมต่อได้หรือไม่",
+                    "Connection Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            return true;
+        }
+
         /// <summary>
         /// จัดการตัดสตริงเอาเฉพาะ Pattern Number
         /// </summary>
@@ -329,25 +394,6 @@ namespace InkjetOperator
             lblScanStatus.BackColor = Color.Transparent;
             _lastScannedBarcode = "";
             txtBarcode.Focus();
-        }
-
-        private bool ValidateInput()
-        {
-            if (string.IsNullOrWhiteSpace(txtBarcode.Text))
-            {
-                ShowError("กรุณาสแกนบาร์โค้ด");
-                txtBarcode.Focus();
-                return false;
-            }
-
-            if (string.IsNullOrWhiteSpace(txtOrderNo.Text))
-            {
-                ShowError("กรุณาระบุ Order No");
-                txtOrderNo.Focus();
-                return false;
-            }
-
-            return true;
         }
 
         private void ShowError(string message)

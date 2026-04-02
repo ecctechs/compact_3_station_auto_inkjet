@@ -33,6 +33,32 @@ namespace InkjetOperator.Services
         }
 
         // =========================
+        // HEALTH CHECK (Ping Backend)
+        // =========================
+        /// <summary>เช็คว่า Backend เชื่อมต่อได้ไหม (GET /job/getAll?status=pending ตอบกลับได้)</summary>
+        public async Task<bool> PingAsync()
+        {
+            try
+            {
+                // อ่าน IP ล่าสุดจาก config ทุกครั้ง (ไม่ใช้ _baseUrl ที่ cache ไว้)
+                string freshUrl = AppConfig.ApiUrl;
+
+                using var client = new HttpClient
+                {
+                    BaseAddress = new Uri(freshUrl),
+                    Timeout = TimeSpan.FromSeconds(5)
+                };
+
+                var response = await client.GetAsync("/job/getAll?status=pending");
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // =========================
         // CREATE JOB
         // =========================
         public async Task<bool> CreateJobAsync(CreateJobRequest request)

@@ -20,6 +20,27 @@ namespace InkjetOperator.Services
             _dbPathUV_1 = UvSettingsManager.GetValue("UV1DB3_PATH") ?? "";
         }
 
+        /// <summary>เช็คว่าไฟล์ DB มีอยู่และเปิดได้จริง — โหลด path ใหม่ทุกครั้งจาก Setting</summary>
+        public bool CanConnect()
+        {
+            // อ่าน path ล่าสุดจาก config ทุกครั้ง (ไม่ใช้ _dbPath ที่ cache ไว้)
+            string freshPath = CustomSettingsManager.GetValue("DB_PATH") ?? "";
+
+            if (string.IsNullOrEmpty(freshPath) || !File.Exists(freshPath))
+                return false;
+
+            try
+            {
+                using var conn = new SQLiteConnection($"Data Source={freshPath};Version=3;");
+                conn.Open();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public async Task<PatternDetail> GetPatternDetailAsync(string patternNo)
         {
             try

@@ -183,7 +183,7 @@
             pnlButtons.BackColor = Color.Transparent;
             pnlButtons.Controls.Add(btnCancel);
             pnlButtons.Controls.Add(btnSave);
-            pnlButtons.Location = new Point(464, 732);
+            pnlButtons.Location = new Point(501, 689);
             pnlButtons.Margin = new Padding(3, 4, 3, 4);
             pnlButtons.Name = "pnlButtons";
             pnlButtons.Size = new Size(366, 67);
@@ -196,7 +196,7 @@
             btnCancel.FlatStyle = FlatStyle.Flat;
             btnCancel.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             btnCancel.ForeColor = Color.White;
-            btnCancel.Location = new Point(194, 7);
+            btnCancel.Location = new Point(208, 4);
             btnCancel.Margin = new Padding(3, 4, 3, 4);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(114, 53);
@@ -211,7 +211,7 @@
             btnSave.FlatStyle = FlatStyle.Flat;
             btnSave.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             btnSave.ForeColor = Color.White;
-            btnSave.Location = new Point(57, 7);
+            btnSave.Location = new Point(76, 4);
             btnSave.Margin = new Padding(3, 4, 3, 4);
             btnSave.Name = "btnSave";
             btnSave.Size = new Size(114, 53);
@@ -232,7 +232,7 @@
             pnlPlc.Location = new Point(483, 485);
             pnlPlc.Margin = new Padding(3, 4, 3, 4);
             pnlPlc.Name = "pnlPlc";
-            pnlPlc.Size = new Size(347, 239);
+            pnlPlc.Size = new Size(347, 162);
             pnlPlc.TabIndex = 1;
             // 
             // lblPlc001Status
@@ -314,7 +314,7 @@
             pnlUvPrinters.Location = new Point(50, 485);
             pnlUvPrinters.Margin = new Padding(3, 4, 3, 4);
             pnlUvPrinters.Name = "pnlUvPrinters";
-            pnlUvPrinters.Size = new Size(365, 239);
+            pnlUvPrinters.Size = new Size(365, 270);
             pnlUvPrinters.TabIndex = 2;
             // 
             // lblUv002Status
@@ -465,7 +465,7 @@
             pnlMkPrinters.Location = new Point(50, 31);
             pnlMkPrinters.Margin = new Padding(3, 4, 3, 4);
             pnlMkPrinters.Name = "pnlMkPrinters";
-            pnlMkPrinters.Size = new Size(736, 258);
+            pnlMkPrinters.Size = new Size(736, 276);
             pnlMkPrinters.TabIndex = 3;
             // 
             // lblMk061Status

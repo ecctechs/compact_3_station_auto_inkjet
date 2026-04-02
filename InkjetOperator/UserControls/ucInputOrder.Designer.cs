@@ -63,7 +63,7 @@
             pnlButtons.BackColor = Color.Transparent;
             pnlButtons.Controls.Add(btnCancel);
             pnlButtons.Controls.Add(btnOK);
-            pnlButtons.Location = new Point(311, 690);
+            pnlButtons.Location = new Point(311, 743);
             pnlButtons.Margin = new Padding(3, 4, 3, 4);
             pnlButtons.Name = "pnlButtons";
             pnlButtons.Size = new Size(571, 80);
@@ -262,6 +262,7 @@
             lblScanStatus.TabIndex = 2;
             lblScanStatus.Text = "รอสแกนบาร์โค้ด...";
             lblScanStatus.TextAlign = ContentAlignment.MiddleCenter;
+            lblScanStatus.Visible = false;
             // 
             // picBarcode
             // 
