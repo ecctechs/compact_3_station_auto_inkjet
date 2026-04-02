@@ -54,6 +54,9 @@ const PrintJob = sequelize.define(
     created_by: {
       type: DataTypes.STRING,
     },
+    st_status: {
+      type: DataTypes.STRING(255),
+    },
   },
   { timestamps: true, createdAt: "created_at", updatedAt: "updated_at" }
 );

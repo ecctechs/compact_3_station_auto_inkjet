@@ -11,6 +11,7 @@ const createJobSchema = z.object({
   lot_number: z.string().optional(),
   warning: z.string().optional(),
   created_by: z.string().optional(),
+  st_status: z.string().optional(),
 });
 
 const jobFilterSchema = z.object({

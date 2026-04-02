@@ -282,7 +282,8 @@ namespace InkjetOperator
                 CustomerName = txtCustomerName.Text,
                 Type = txtType.Text,
                 Qty = qty,
-                CreatedBy = "operator"
+                CreatedBy = "operator",
+                st_status = "1"
             };
 
             var success = await _api.CreateJobAsync(req);

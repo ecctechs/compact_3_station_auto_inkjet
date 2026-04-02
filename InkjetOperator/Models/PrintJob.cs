@@ -41,6 +41,9 @@ public class PrintJob
     [JsonPropertyName("attempt")]
     public int Attempt { get; set; }
 
+    [JsonPropertyName("st_status")]
+    public string Station { get; set; }
+
     [JsonPropertyName("created_by")]
     public string? CreatedBy { get; set; }
 

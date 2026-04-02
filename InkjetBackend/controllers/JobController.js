@@ -36,6 +36,7 @@ class JobController {
         pattern_id,
         lot_number,
         created_by,
+        st_status
       } = req.body;
 
       let resolvedPatternId = pattern_id;
@@ -79,6 +80,7 @@ class JobController {
         pattern_no_erp: parsedPatternNoErp,
         lot_number: parsedLotNumber || null,
         created_by,
+        st_status,
         warning,
       });
 
@@ -466,6 +468,54 @@ class JobController {
         200,
         "LastSentJob deleted successfully"
       );
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+   static async update(req, res) {
+    try {
+      const job = await PrintJob.findByPk(req.params.id);
+
+      if (!job) {
+        return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
+      }
+
+      const {
+        barcode_raw,
+        order_no,
+        customer_name,
+        type,
+        qty,
+        pattern_id,
+        lot_number,
+        pattern_no_erp,
+        status,
+        error_message,
+        warning,
+        attempt,
+        created_by,
+        st_status,
+      } = req.body;
+
+      await job.update({
+        barcode_raw,
+        order_no,
+        customer_name,
+        type,
+        qty,
+        pattern_id,
+        lot_number,
+        pattern_no_erp,
+        status,
+        error_message,
+        warning,
+        attempt,
+        created_by,
+        st_status,
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 200, job);
     } catch (err) {
       return ResponseManager.CatchResponse(req, res, err.message);
     }

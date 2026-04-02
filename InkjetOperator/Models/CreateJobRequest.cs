@@ -8,5 +8,6 @@
         public string Type { get; set; }
         public int Qty { get; set; }
         public string CreatedBy { get; set; }
+        public string st_status { get; set; }
     }
 }

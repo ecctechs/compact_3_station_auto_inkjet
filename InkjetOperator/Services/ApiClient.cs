@@ -233,5 +233,27 @@ namespace InkjetOperator.Services
                 return false;
             }
         }
+
+        // =========================
+        // UPDATE JOB
+        // =========================
+        public async Task<bool> UpdateJobAsync(int jobId, object updateData)
+        {
+            try
+            {
+                // ส่งข้อมูลไปยัง /job/update/:id
+                var response = await _http.PutAsJsonAsync($"/job/update/{jobId}", updateData, JsonOptions);
+
+                // ตรวจสอบ Success StatusCode (2xx)
+                response.EnsureSuccessStatusCode();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"UpdateJob error (ID: {jobId}): " + ex.Message);
+                return false;
+            }
+        }
     }
 }

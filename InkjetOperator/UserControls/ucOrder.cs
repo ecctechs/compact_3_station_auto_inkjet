@@ -192,36 +192,74 @@ namespace InkjetOperator
 
         private async void btnSendUV1_Click(object sender, EventArgs e)
         {
-            // 1. ดึง Job ID จาก BindingSource ที่เลือกอยู่ (Current Row)
+            // 1. ดึง Job จาก BindingSource หลัก (รายการ Job)
             if (bindingSource1.Current is not PrintJob selectedJob)
             {
                 MessageBox.Show("กรุณาเลือกรายการ Job ในตารางก่อน");
                 return;
             }
+            MessageBox.Show($"กำลังส่งข้อมูลการพิมพ์ UV สำหรับ Job ID: {selectedJob.Id}"); // Debugging Message
 
-            //currentLot1,currentName1,programName1, bindingSourceUVinkjet ดึงจาก row ที่ 1
+            // 2. ดึงข้อมูลจาก bindingSourceUVinkjet แถวที่ 1 (Index 0)
+            // ตรวจสอบก่อนว่าใน List มีข้อมูลอย่างน้อย 1 แถวหรือไม่
+            if (bindingSourceUVinkjet.Count == 0)
+            {
+                MessageBox.Show("ไม่พบข้อมูล Config ของเครื่องพิมพ์");
+                return;
+            }
+            MessageBox.Show($"กำลังส่งข้อมูลการพิมพ์ UV สำหรับ Job ID: {selectedJob.Id}"); // Debugging Message
 
-            //var uvRequest = new UVinkjet
-            //{
-            //    PrintJobsId = selectedJob.Id,
-            //    InkjetName = "UV Printer 1",
-            //    Lot = currentLot1,
-            //    Name = currentName1,
-            //    ProgramName = programName1,
-            //    Status = "printing",
-            //    Station = "2"
-            //};
+            // ดึงข้อมูลแถวที่ 1 มาเก็บไว้ในตัวแปร (สมมติว่า Model คือ InkjetConfigDto)
+            var firstConfig = bindingSourceUVinkjet[0] as UVinkjet;
 
-            //bool isSaved = await _api.CreateUvInkjetAsync(uvRequest);
+            if (firstConfig == null) return;
 
-            //if (isSaved)
-            //{
-            //    Debug.WriteLine("บันทึกข้อมูลการพิมพ์ UV สำเร็จ");
-            //}
-            //else
-            //{
-            //    MessageBox.Show("ไม่สามารถบันทึกสถานะการพิมพ์ได้");
-            //}
+            // เตรียมตัวแปร (อ้างอิงตาม Property ใน InkjetConfigDto และ PrintJob)
+            string currentLot1 = selectedJob.LotNumber ?? "";
+            string currentName1 = selectedJob.CustomerName ?? "";
+            string programName1 = firstConfig.ProgramName ?? "";
+
+            MessageBox.Show($"ข้อมูลที่จะส่ง: Lot={currentLot1}, Name={currentName1}, Program={programName1}"); // Debugging Message
+
+            // 3. เตรียมข้อมูลส่ง API
+            var uvRequest = new UVinkjet
+            {
+                PrintJobsId = selectedJob.Id,
+                InkjetName = "UV Printer 1",
+                Lot = currentLot1,
+                Name = currentName1,
+                ProgramName = programName1,
+                Status = "printing",
+                Station = "2"
+            };
+
+            // 4. เรียก API บันทึกข้อมูล
+            btnSendUV1.Enabled = false; // ป้องกันการกดซ้ำระหว่างรอ Network
+            try
+            {
+                bool isSaved = await _api.CreateUvInkjetAsync(uvRequest);
+
+                if (isSaved)
+                {
+                    var updatePayload = new { st_status = 2 };
+                    bool isJobUpdated = await _api.UpdateJobAsync(selectedJob.Id, updatePayload);
+
+                    Debug.WriteLine("บันทึกข้อมูลการพิมพ์ UV สำเร็จ");
+                    // อาจจะเพิ่ม MessageBox แสดงความยินดีที่นี่
+                }
+                else
+                {
+                    MessageBox.Show("ไม่สามารถบันทึกสถานะการพิมพ์ได้ (Server Error)");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"เกิดข้อผิดพลาด: {ex.Message}");
+            }
+            finally
+            {
+                btnSendUV1.Enabled = true;
+            }
         }
     }
 }
