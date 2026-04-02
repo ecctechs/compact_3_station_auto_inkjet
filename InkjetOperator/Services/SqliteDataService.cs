@@ -19,27 +19,58 @@ namespace InkjetOperator.Services
 
         public async Task<PatternDetail> GetPatternDetailAsync(string patternNo)
         {
-            if (!File.Exists(_dbPath)) return null;
-
-            using var conn = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
-            await conn.OpenAsync();
-
-            using var cmd = new SQLiteCommand("SELECT * FROM config_data WHERE pattern_no_erp = @p LIMIT 1", conn);
-            cmd.Parameters.AddWithValue("@p", patternNo);
-
-            using var reader = (SQLiteDataReader)await cmd.ExecuteReaderAsync();
-            if (!await reader.ReadAsync()) return null;
-
-            return new PatternDetail
+            try
             {
-                Barcode = GetStr(reader, "pattern_no_erp") ?? patternNo,
-                Description = GetStr(reader, "model_plan_code") ?? GetStr(reader, "program_name") ?? "",
-                InkjetConfigs = new List<InkjetConfigDto>
+                if (!File.Exists(_dbPath))
                 {
-                    BuildMk(reader, "mk1_", 1, "program_name"),
-                    BuildMk(reader, "mk2_", 2, "program_name3")
+                    // แทนที่จะเด้ง ให้ Log หรือแจ้งเตือนแทน
+                    Console.WriteLine($"Database file not found at: {_dbPath}");
+                    return null;
                 }
-            };
+
+                using var conn = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
+                await conn.OpenAsync();
+
+                // ตรวจสอบว่ามี Table นี้อยู่จริงไหมก่อน Query (Optional แต่ปลอดภัยมาก)
+                using var checkCmd = new SQLiteCommand(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='config_data';", conn);
+                var tableExists = await checkCmd.ExecuteScalarAsync();
+
+                if (tableExists == null)
+                {
+                    Console.WriteLine("Error: Table 'config_data' missing in database.");
+                    return null;
+                }
+
+                using var cmd = new SQLiteCommand("SELECT * FROM config_data WHERE pattern_no_erp = @p LIMIT 1", conn);
+                cmd.Parameters.AddWithValue("@p", patternNo);
+
+                using var reader = (SQLiteDataReader)await cmd.ExecuteReaderAsync();
+                if (!await reader.ReadAsync()) return null;
+
+                return new PatternDetail
+                {
+                    Barcode = GetStr(reader, "pattern_no_erp") ?? patternNo,
+                    Description = GetStr(reader, "model_plan_code") ?? GetStr(reader, "program_name") ?? "",
+                    InkjetConfigs = new List<InkjetConfigDto>
+            {
+                BuildMk(reader, "mk1_", 1, "program_name"),
+                BuildMk(reader, "mk2_", 2, "program_name3")
+            }
+                };
+            }
+            catch (SQLiteException ex)
+            {
+                // เมื่อเกิด SQL Error โปรแกรมจะวิ่งมาที่นี่แทนการเด้งออก
+                Console.WriteLine($"SQLite Error: {ex.Message}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                // ดักจับ Error อื่นๆ ทั่วไป
+                Console.WriteLine($"General Error: {ex.Message}");
+                return null;
+            }
         }
 
         private InkjetConfigDto BuildMk(SQLiteDataReader r, string pre, int ord, string pNameCol)
@@ -94,9 +125,9 @@ namespace InkjetOperator.Services
                     // Map คอลัมน์ให้ตรงกับ Schema ของตาราง uv_print_data
                     Id = GetInt(reader, "id") ?? 0,
                     InkjetName = GetStr(reader, "inkjet_name"),
-                    lot = GetStr(reader, "lot"),
-                    name = GetStr(reader, "name"),
-                    program_name = GetStr(reader, "program_name"),
+                    Lot = GetStr(reader, "lot"),
+                    Name = GetStr(reader, "name"),
+                    ProgramName = GetStr(reader, "program_name"),
                     // ถ้าใน Class UVinkjet มีฟิลด์เวลา
                     // UpdateAt = GetStr(reader, "update_at") 
                 });
