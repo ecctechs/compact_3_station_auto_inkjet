@@ -457,7 +457,8 @@ static async getResolved(req, res) {
         type,
         qty,
         sent_time,
-        st_status,
+        st_status
+
       } = req.body;
 
       await lastSentJob.update({
@@ -473,7 +474,7 @@ static async getResolved(req, res) {
         type,
         qty,
         sent_time,
-        st_status,
+        st_status
       });
 
       return ResponseManager.SuccessResponse(req, res, 200, lastSentJob);
@@ -530,6 +531,8 @@ static async getResolved(req, res) {
         attempt,
         created_by,
         st_status,
+        st1_confirmation,
+        st1_send_time,
       } = req.body;
 
       await job.update({
@@ -547,6 +550,8 @@ static async getResolved(req, res) {
         attempt,
         created_by,
         st_status,
+        st1_confirmation,
+        st1_send_time,
       });
 
       return ResponseManager.SuccessResponse(req, res, 200, job);

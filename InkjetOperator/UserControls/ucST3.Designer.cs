@@ -31,14 +31,13 @@
             components = new System.ComponentModel.Container();
             btnRunBot = new Button();
             dgvList = new DataGridView();
-            idDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            bindingSource1 = new BindingSource(components);
+            timer1 = new System.Windows.Forms.Timer(components);
             orderNoDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             customerNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             typeDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             qtyDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            statusDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            bindingSource1 = new BindingSource(components);
-            timer1 = new System.Windows.Forms.Timer(components);
+            st1_confirmation = new DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)dgvList).BeginInit();
             ((System.ComponentModel.ISupportInitialize)bindingSource1).BeginInit();
             SuspendLayout();
@@ -64,7 +63,7 @@
             dgvList.AutoGenerateColumns = false;
             dgvList.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvList.ColumnHeadersHeight = 29;
-            dgvList.Columns.AddRange(new DataGridViewColumn[] { idDataGridViewTextBoxColumn, orderNoDataGridViewTextBoxColumn, customerNameDataGridViewTextBoxColumn, typeDataGridViewTextBoxColumn, qtyDataGridViewTextBoxColumn, statusDataGridViewTextBoxColumn });
+            dgvList.Columns.AddRange(new DataGridViewColumn[] { orderNoDataGridViewTextBoxColumn, customerNameDataGridViewTextBoxColumn, typeDataGridViewTextBoxColumn, qtyDataGridViewTextBoxColumn, st1_confirmation });
             dgvList.DataSource = bindingSource1;
             dgvList.Location = new Point(43, 48);
             dgvList.Name = "dgvList";
@@ -73,13 +72,14 @@
             dgvList.Size = new Size(1062, 569);
             dgvList.TabIndex = 2;
             // 
-            // idDataGridViewTextBoxColumn
+            // bindingSource1
             // 
-            idDataGridViewTextBoxColumn.DataPropertyName = "Id";
-            idDataGridViewTextBoxColumn.HeaderText = "Id";
-            idDataGridViewTextBoxColumn.MinimumWidth = 6;
-            idDataGridViewTextBoxColumn.Name = "idDataGridViewTextBoxColumn";
-            idDataGridViewTextBoxColumn.ReadOnly = true;
+            bindingSource1.DataSource = typeof(PrintJob);
+            // 
+            // timer1
+            // 
+            timer1.Enabled = true;
+            timer1.Tick += timer1_Tick;
             // 
             // orderNoDataGridViewTextBoxColumn
             // 
@@ -113,22 +113,13 @@
             qtyDataGridViewTextBoxColumn.Name = "qtyDataGridViewTextBoxColumn";
             qtyDataGridViewTextBoxColumn.ReadOnly = true;
             // 
-            // statusDataGridViewTextBoxColumn
+            // st1_confirmation
             // 
-            statusDataGridViewTextBoxColumn.DataPropertyName = "Status";
-            statusDataGridViewTextBoxColumn.HeaderText = "Status";
-            statusDataGridViewTextBoxColumn.MinimumWidth = 6;
-            statusDataGridViewTextBoxColumn.Name = "statusDataGridViewTextBoxColumn";
-            statusDataGridViewTextBoxColumn.ReadOnly = true;
-            // 
-            // bindingSource1
-            // 
-            bindingSource1.DataSource = typeof(Models.PrintJob);
-            // 
-            // timer1
-            // 
-            timer1.Enabled = true;
-            timer1.Tick += timer1_Tick;
+            st1_confirmation.DataPropertyName = "st1_confirmation";
+            st1_confirmation.HeaderText = "Status";
+            st1_confirmation.MinimumWidth = 6;
+            st1_confirmation.Name = "st1_confirmation";
+            st1_confirmation.ReadOnly = true;
             // 
             // ucST3
             // 
@@ -149,11 +140,10 @@
         private DataGridView dgvList;
         private BindingSource bindingSource1;
         private System.Windows.Forms.Timer timer1;
-        private DataGridViewTextBoxColumn idDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn orderNoDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn customerNameDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn typeDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn qtyDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn statusDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn st1_confirmation;
     }
 }
