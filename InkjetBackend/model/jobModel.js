@@ -57,6 +57,17 @@ const PrintJob = sequelize.define(
     st_status: {
       type: DataTypes.STRING(255),
     },
+    stations_required: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: [1, 2, 3, 4],
+    },
+    st1_confirmation: {
+      type: DataTypes.STRING,
+    },
+    st1_send_time: {
+      type: DataTypes.DATE,
+    },
   },
   { timestamps: true, createdAt: "created_at", updatedAt: "updated_at" }
 );

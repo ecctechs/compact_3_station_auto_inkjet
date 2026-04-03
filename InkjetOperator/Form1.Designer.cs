@@ -19,6 +19,7 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             pnlMenu = new Panel();
+            button1 = new Button();
             btnBot = new Button();
             lblLanguage = new Label();
             picLogo = new PictureBox();
@@ -27,7 +28,6 @@
             btnOrder = new Button();
             btnInput = new Button();
             pnlContent = new Panel();
-            button1 = new Button();
             pnlMenu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)picLogo).BeginInit();
             SuspendLayout();
@@ -49,6 +49,21 @@
             pnlMenu.Name = "pnlMenu";
             pnlMenu.Size = new Size(1152, 80);
             pnlMenu.TabIndex = 1;
+            // 
+            // button1
+            // 
+            button1.BackColor = Color.FromArgb(160, 160, 160);
+            button1.FlatAppearance.BorderSize = 0;
+            button1.FlatStyle = FlatStyle.Flat;
+            button1.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            button1.ForeColor = Color.White;
+            button1.Location = new Point(825, 13);
+            button1.Margin = new Padding(3, 4, 3, 4);
+            button1.Name = "button1";
+            button1.Size = new Size(142, 53);
+            button1.TabIndex = 5;
+            button1.Text = "Job ST3";
+            button1.UseVisualStyleBackColor = false;
             // 
             // btnBot
             // 
@@ -160,21 +175,6 @@
             pnlContent.Name = "pnlContent";
             pnlContent.Size = new Size(1152, 939);
             pnlContent.TabIndex = 0;
-            // 
-            // button1
-            // 
-            button1.BackColor = Color.FromArgb(160, 160, 160);
-            button1.FlatAppearance.BorderSize = 0;
-            button1.FlatStyle = FlatStyle.Flat;
-            button1.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
-            button1.ForeColor = Color.White;
-            button1.Location = new Point(825, 13);
-            button1.Margin = new Padding(3, 4, 3, 4);
-            button1.Name = "button1";
-            button1.Size = new Size(149, 53);
-            button1.TabIndex = 5;
-            button1.Text = "Job ST3";
-            button1.UseVisualStyleBackColor = false;
             // 
             // Form1
             // 

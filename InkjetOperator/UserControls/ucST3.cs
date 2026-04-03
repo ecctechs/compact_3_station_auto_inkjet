@@ -8,6 +8,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using InkjetOperator.Adapters;
+using InkjetOperator.Models;
 using InkjetOperator.Services;
 
 namespace InkjetOperator.UserControls
@@ -29,10 +31,19 @@ namespace InkjetOperator.UserControls
                 // จำ Job Id ที่เลือกอยู่ก่อน bind ใหม่
                 int? selectedJobId = (bindingSource1.Current as PrintJob)?.Id;
 
-                var jobs = await _api.GetPendingJobsAsync();
+                // 1. ดึงข้อมูลทั้งหมดจาก API
+                var allJobs = await _api.GetPendingJobsAsync();
+
+                // 2. กรองเฉพาะ Job ที่มี Station 3 ขึ้นไปอยู่ในลิสต์ stations_required
+                // ใช้ .Any(s => s >= 3) เพื่อเช็คว่ามีเลข 3, 4... อยู่ใน Array หรือไม่
+                var jobs = allJobs.Where(j => j.stations_required != null &&
+                                             j.stations_required.Any(s => s >= 3))
+                                  .ToList();
+
+                // นำข้อมูลที่กรองแล้วใส่ BindingSource
                 bindingSource1.DataSource = jobs;
 
-                // ครั้งแรก → เลือกแถวแรก + โหลด detail
+                // --- ส่วนที่เหลือคงเดิม (Restore Position) ---
                 if (_isFirstLoad)
                 {
                     _isFirstLoad = false;
@@ -44,18 +55,16 @@ namespace InkjetOperator.UserControls
                     return;
                 }
 
-                // Poll ครั้งถัดไป → restore ตำแหน่งเดิมจาก Id
                 if (selectedJobId.HasValue)
                 {
                     int idx = jobs.FindIndex(j => j.Id == selectedJobId.Value);
                     if (idx >= 0)
                     {
                         bindingSource1.Position = idx;
-                        return; // เจอ row เดิม → ไม่ต้องทำอะไรเพิ่ม
+                        return;
                     }
                 }
 
-                // row เดิมหายไป → fallback เลือกแถวแรก
                 if (bindingSource1.Count > 0)
                     bindingSource1.Position = 0;
             }
@@ -72,6 +81,65 @@ namespace InkjetOperator.UserControls
         private void timer1_Tick(object sender, EventArgs e)
         {
             get_job();
+        }
+
+        private async void btnRunBot_Click(object sender, EventArgs e)
+        {
+            // 1. ดึง Job ที่เลือกอยู่
+            if (bindingSource1.Current is not PrintJob selectedJob)
+            {
+                MessageBox.Show("กรุณาเลือกรายการ Job ในตารางก่อน", "แจ้งเตือน", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // 2. แสดง Popup ยืนยันก่อนเริ่มทำงาน
+            string confirmMsg = $"คุณต้องการส่ง Job ID: {selectedJob.Id}\n" +
+                                $"ไปที่ Station 1 ใช่หรือไม่?";
+
+            DialogResult dialogResult = MessageBox.Show(confirmMsg, "ยืนยันการดำเนินการ",
+                                                       MessageBoxButtons.YesNo,
+                                                       MessageBoxIcon.Question);
+
+            // ถ้า Operator กด "No" ให้หยุดการทำงานทันที
+            if (dialogResult != DialogResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                // เริ่มทำงาน (ปิดปุ่มป้องกันกดซ้ำ)
+                btnRunBot.Enabled = false;
+
+                int jobId = selectedJob.Id;
+                string newStatus = "Request";
+
+                // 3. อัปเดตไปยัง API
+                var updateData = new { st1_confirmation = newStatus , st1_send_time = DateTime.Now };
+                bool isUpdated = await _api.UpdateJobAsync(jobId, updateData);
+
+                if (isUpdated)
+                {
+                    // 4. อัปเดต UI
+                    selectedJob.Status = newStatus;
+                    bindingSource1.ResetCurrentItem();
+
+                    MessageBox.Show($"ดำเนินการส่ง Job ID: {jobId} เรียบร้อยแล้ว",
+                                    "สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("ไม่สามารถอัปเดตสถานะได้ (API Error)", "ผิดพลาด", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("เกิดข้อผิดพลาด: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                btnRunBot.Enabled = true;
+            }
         }
     }
 }

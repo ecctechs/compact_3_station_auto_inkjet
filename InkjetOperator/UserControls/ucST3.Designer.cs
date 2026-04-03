@@ -32,22 +32,11 @@
             btnRunBot = new Button();
             dgvList = new DataGridView();
             idDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            barcodeRawDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             orderNoDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             customerNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             typeDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             qtyDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            patternIdDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            lotNumberDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            patternNoErpDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             statusDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            errorMessageDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            warningDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            attemptDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            stationDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            createdByDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            createdAtDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            updatedAtDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             bindingSource1 = new BindingSource(components);
             timer1 = new System.Windows.Forms.Timer(components);
             ((System.ComponentModel.ISupportInitialize)dgvList).BeginInit();
@@ -67,6 +56,7 @@
             btnRunBot.TabIndex = 1;
             btnRunBot.Text = "Send Job To Station 1";
             btnRunBot.UseVisualStyleBackColor = false;
+            btnRunBot.Click += btnRunBot_Click;
             // 
             // dgvList
             // 
@@ -74,7 +64,7 @@
             dgvList.AutoGenerateColumns = false;
             dgvList.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvList.ColumnHeadersHeight = 29;
-            dgvList.Columns.AddRange(new DataGridViewColumn[] { idDataGridViewTextBoxColumn, barcodeRawDataGridViewTextBoxColumn, orderNoDataGridViewTextBoxColumn, customerNameDataGridViewTextBoxColumn, typeDataGridViewTextBoxColumn, qtyDataGridViewTextBoxColumn, patternIdDataGridViewTextBoxColumn, lotNumberDataGridViewTextBoxColumn, patternNoErpDataGridViewTextBoxColumn, statusDataGridViewTextBoxColumn, errorMessageDataGridViewTextBoxColumn, warningDataGridViewTextBoxColumn, attemptDataGridViewTextBoxColumn, stationDataGridViewTextBoxColumn, createdByDataGridViewTextBoxColumn, createdAtDataGridViewTextBoxColumn, updatedAtDataGridViewTextBoxColumn });
+            dgvList.Columns.AddRange(new DataGridViewColumn[] { idDataGridViewTextBoxColumn, orderNoDataGridViewTextBoxColumn, customerNameDataGridViewTextBoxColumn, typeDataGridViewTextBoxColumn, qtyDataGridViewTextBoxColumn, statusDataGridViewTextBoxColumn });
             dgvList.DataSource = bindingSource1;
             dgvList.Location = new Point(43, 48);
             dgvList.Name = "dgvList";
@@ -90,14 +80,6 @@
             idDataGridViewTextBoxColumn.MinimumWidth = 6;
             idDataGridViewTextBoxColumn.Name = "idDataGridViewTextBoxColumn";
             idDataGridViewTextBoxColumn.ReadOnly = true;
-            // 
-            // barcodeRawDataGridViewTextBoxColumn
-            // 
-            barcodeRawDataGridViewTextBoxColumn.DataPropertyName = "BarcodeRaw";
-            barcodeRawDataGridViewTextBoxColumn.HeaderText = "BarcodeRaw";
-            barcodeRawDataGridViewTextBoxColumn.MinimumWidth = 6;
-            barcodeRawDataGridViewTextBoxColumn.Name = "barcodeRawDataGridViewTextBoxColumn";
-            barcodeRawDataGridViewTextBoxColumn.ReadOnly = true;
             // 
             // orderNoDataGridViewTextBoxColumn
             // 
@@ -131,30 +113,6 @@
             qtyDataGridViewTextBoxColumn.Name = "qtyDataGridViewTextBoxColumn";
             qtyDataGridViewTextBoxColumn.ReadOnly = true;
             // 
-            // patternIdDataGridViewTextBoxColumn
-            // 
-            patternIdDataGridViewTextBoxColumn.DataPropertyName = "PatternId";
-            patternIdDataGridViewTextBoxColumn.HeaderText = "PatternId";
-            patternIdDataGridViewTextBoxColumn.MinimumWidth = 6;
-            patternIdDataGridViewTextBoxColumn.Name = "patternIdDataGridViewTextBoxColumn";
-            patternIdDataGridViewTextBoxColumn.ReadOnly = true;
-            // 
-            // lotNumberDataGridViewTextBoxColumn
-            // 
-            lotNumberDataGridViewTextBoxColumn.DataPropertyName = "LotNumber";
-            lotNumberDataGridViewTextBoxColumn.HeaderText = "LotNumber";
-            lotNumberDataGridViewTextBoxColumn.MinimumWidth = 6;
-            lotNumberDataGridViewTextBoxColumn.Name = "lotNumberDataGridViewTextBoxColumn";
-            lotNumberDataGridViewTextBoxColumn.ReadOnly = true;
-            // 
-            // patternNoErpDataGridViewTextBoxColumn
-            // 
-            patternNoErpDataGridViewTextBoxColumn.DataPropertyName = "PatternNoErp";
-            patternNoErpDataGridViewTextBoxColumn.HeaderText = "PatternNoErp";
-            patternNoErpDataGridViewTextBoxColumn.MinimumWidth = 6;
-            patternNoErpDataGridViewTextBoxColumn.Name = "patternNoErpDataGridViewTextBoxColumn";
-            patternNoErpDataGridViewTextBoxColumn.ReadOnly = true;
-            // 
             // statusDataGridViewTextBoxColumn
             // 
             statusDataGridViewTextBoxColumn.DataPropertyName = "Status";
@@ -163,65 +121,9 @@
             statusDataGridViewTextBoxColumn.Name = "statusDataGridViewTextBoxColumn";
             statusDataGridViewTextBoxColumn.ReadOnly = true;
             // 
-            // errorMessageDataGridViewTextBoxColumn
-            // 
-            errorMessageDataGridViewTextBoxColumn.DataPropertyName = "ErrorMessage";
-            errorMessageDataGridViewTextBoxColumn.HeaderText = "ErrorMessage";
-            errorMessageDataGridViewTextBoxColumn.MinimumWidth = 6;
-            errorMessageDataGridViewTextBoxColumn.Name = "errorMessageDataGridViewTextBoxColumn";
-            errorMessageDataGridViewTextBoxColumn.ReadOnly = true;
-            // 
-            // warningDataGridViewTextBoxColumn
-            // 
-            warningDataGridViewTextBoxColumn.DataPropertyName = "Warning";
-            warningDataGridViewTextBoxColumn.HeaderText = "Warning";
-            warningDataGridViewTextBoxColumn.MinimumWidth = 6;
-            warningDataGridViewTextBoxColumn.Name = "warningDataGridViewTextBoxColumn";
-            warningDataGridViewTextBoxColumn.ReadOnly = true;
-            // 
-            // attemptDataGridViewTextBoxColumn
-            // 
-            attemptDataGridViewTextBoxColumn.DataPropertyName = "Attempt";
-            attemptDataGridViewTextBoxColumn.HeaderText = "Attempt";
-            attemptDataGridViewTextBoxColumn.MinimumWidth = 6;
-            attemptDataGridViewTextBoxColumn.Name = "attemptDataGridViewTextBoxColumn";
-            attemptDataGridViewTextBoxColumn.ReadOnly = true;
-            // 
-            // stationDataGridViewTextBoxColumn
-            // 
-            stationDataGridViewTextBoxColumn.DataPropertyName = "Station";
-            stationDataGridViewTextBoxColumn.HeaderText = "Station";
-            stationDataGridViewTextBoxColumn.MinimumWidth = 6;
-            stationDataGridViewTextBoxColumn.Name = "stationDataGridViewTextBoxColumn";
-            stationDataGridViewTextBoxColumn.ReadOnly = true;
-            // 
-            // createdByDataGridViewTextBoxColumn
-            // 
-            createdByDataGridViewTextBoxColumn.DataPropertyName = "CreatedBy";
-            createdByDataGridViewTextBoxColumn.HeaderText = "CreatedBy";
-            createdByDataGridViewTextBoxColumn.MinimumWidth = 6;
-            createdByDataGridViewTextBoxColumn.Name = "createdByDataGridViewTextBoxColumn";
-            createdByDataGridViewTextBoxColumn.ReadOnly = true;
-            // 
-            // createdAtDataGridViewTextBoxColumn
-            // 
-            createdAtDataGridViewTextBoxColumn.DataPropertyName = "CreatedAt";
-            createdAtDataGridViewTextBoxColumn.HeaderText = "CreatedAt";
-            createdAtDataGridViewTextBoxColumn.MinimumWidth = 6;
-            createdAtDataGridViewTextBoxColumn.Name = "createdAtDataGridViewTextBoxColumn";
-            createdAtDataGridViewTextBoxColumn.ReadOnly = true;
-            // 
-            // updatedAtDataGridViewTextBoxColumn
-            // 
-            updatedAtDataGridViewTextBoxColumn.DataPropertyName = "UpdatedAt";
-            updatedAtDataGridViewTextBoxColumn.HeaderText = "UpdatedAt";
-            updatedAtDataGridViewTextBoxColumn.MinimumWidth = 6;
-            updatedAtDataGridViewTextBoxColumn.Name = "updatedAtDataGridViewTextBoxColumn";
-            updatedAtDataGridViewTextBoxColumn.ReadOnly = true;
-            // 
             // bindingSource1
             // 
-            bindingSource1.DataSource = typeof(PrintJob);
+            bindingSource1.DataSource = typeof(Models.PrintJob);
             // 
             // timer1
             // 
@@ -245,24 +147,13 @@
 
         private Button btnRunBot;
         private DataGridView dgvList;
+        private BindingSource bindingSource1;
+        private System.Windows.Forms.Timer timer1;
         private DataGridViewTextBoxColumn idDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn barcodeRawDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn orderNoDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn customerNameDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn typeDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn qtyDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn patternIdDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn lotNumberDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn patternNoErpDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn statusDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn errorMessageDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn warningDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn attemptDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn stationDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn createdByDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn createdAtDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn updatedAtDataGridViewTextBoxColumn;
-        private BindingSource bindingSource1;
-        private System.Windows.Forms.Timer timer1;
     }
 }

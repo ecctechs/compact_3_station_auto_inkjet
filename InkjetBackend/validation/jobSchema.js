@@ -12,6 +12,7 @@ const createJobSchema = z.object({
   warning: z.string().optional(),
   created_by: z.string().optional(),
   st_status: z.string().optional(),
+  stations_required: z.array(z.number()).optional(),
 });
 
 const jobFilterSchema = z.object({

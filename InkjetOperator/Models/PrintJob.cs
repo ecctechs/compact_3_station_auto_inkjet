@@ -44,6 +44,15 @@ public class PrintJob
     [JsonPropertyName("st_status")]
     public string Station { get; set; }
 
+    [JsonPropertyName("stations_required")]
+    public List<int> stations_required { get; set; }
+
+    [JsonPropertyName("st1_confirmation")]
+    public string st1_confirmation { get; set; }
+
+    [JsonPropertyName("st1_send_time")]
+    public DateTime? st1_send_time { get; set; }
+
     [JsonPropertyName("created_by")]
     public string? CreatedBy { get; set; }
 
