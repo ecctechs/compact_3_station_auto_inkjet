@@ -433,7 +433,7 @@
             Controls.Add(grpProgram);
             Controls.Add(pnlButtons);
             Controls.Add(pnlTop);
-            Name = "ucBot";
+            //Name = "ucBot";
             Size = new Size(1151, 759);
             pnlTop.ResumeLayout(false);
             pnlTop.PerformLayout();

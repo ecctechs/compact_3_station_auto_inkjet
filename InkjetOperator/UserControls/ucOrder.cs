@@ -853,6 +853,16 @@ namespace InkjetOperator
                 btnSendMk3.Enabled = false;
                 btnSendUV2.Enabled = true;
             }
+            else if (station == "5")
+            {
+                // เปิดเฉพาะปุ่มสำหรับ Station 3 (UV1)
+                btnSendUV1.Enabled = false;
+
+                // ปิดปุ่มอื่นๆ
+                btnSendMk1Mk2.Enabled = false;
+                btnSendMk3.Enabled = false;
+                btnSendUV2.Enabled = true;
+            }
             else
             {
                 // กรณีเป็นสถานีอื่นๆ อาจจะปิดทุุกปุ่ม หรือเปิดตามเงื่อนไขอื่น
