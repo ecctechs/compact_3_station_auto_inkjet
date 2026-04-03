@@ -265,6 +265,7 @@ namespace InkjetOperator
             {
                 get_job();
                 get_uv();
+                get_job_form_st3();
             }
             catch (Exception ex)
             {
@@ -365,7 +366,7 @@ namespace InkjetOperator
                 // --- ส่วนการอัปเดต Status กลับไปยัง API ---
                 // ใช้ selectedJob.Id ที่เราดึงมาจากแถวที่เลือก
                 int jobId = selectedJob.Id;
-             
+
                 var updateData = new { status = "Processing" };
                 bool isUpdated = await _api.UpdateJobAsync(jobId, updateData);
 
@@ -554,6 +555,123 @@ namespace InkjetOperator
         private void dgvList_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
 
+        }
+
+        private void tableLayoutPanel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        public async void get_job_form_st3()
+        {
+            try
+            {
+                // 1. จำ Job Id ที่เลือกอยู่ (ใช้จาก BindingSource ตัวที่จะโชว์)
+                int? selectedJobId = (bindingSourceJobSt3.Current as PrintJob)?.Id;
+
+                // 2. ดึงข้อมูลทั้งหมดจาก API
+                var allJobs = await _api.GetPendingJobsAsync();
+
+                // 3. กรองเฉพาะ st1_confirmation เป็น "Request" หรือ "Receive"
+                // ใช้ StringComparison.OrdinalIgnoreCase เพื่อป้องกันปัญหาตัวพิมพ์เล็ก-ใหญ่
+                var filteredJobs = allJobs.Where(j =>
+                    !string.IsNullOrEmpty(j.st1_confirmation) &&
+                    (j.st1_confirmation.Equals("Request", StringComparison.OrdinalIgnoreCase) ||
+                     j.st1_confirmation.Equals("Receive", StringComparison.OrdinalIgnoreCase))
+                ).ToList();
+
+                // 4. นำข้อมูลที่กรองแล้วใส่ BindingSource
+                bindingSourceJobSt3.DataSource = filteredJobs;
+
+                // --- ส่วนการจัดการตำแหน่ง (Restore Position) ---
+
+                if (_isFirstLoad)
+                {
+                    _isFirstLoad = false;
+                    if (bindingSourceJobSt3.Count > 0)
+                    {
+                        bindingSourceJobSt3.Position = 0;
+                        // เปลี่ยน dgvList เป็นชื่อ DataGridView ของตาราง ST3
+                        SelectGridRow(dataGridView2, 0);
+                        await LoadJobDetailAsync();
+                    }
+                    return;
+                }
+
+                if (selectedJobId.HasValue)
+                {
+                    int idx = filteredJobs.FindIndex(j => j.Id == selectedJobId.Value);
+                    if (idx >= 0)
+                    {
+                        bindingSourceJobSt3.Position = idx;
+                        return;
+                    }
+                }
+
+                if (bindingSourceJobSt3.Count > 0)
+                    bindingSourceJobSt3.Position = 0;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Error get_job_form_st3: " + ex.Message);
+            }
+        }
+
+        private async void button1_Click(object sender, EventArgs e)
+        {
+            // 1. ดึง Job ที่เลือกอยู่
+            if (bindingSourceJobSt3.Current is not PrintJob selectedJob)
+            {
+                MessageBox.Show("กรุณาเลือกรายการ Job ST3 ในตารางก่อน", "แจ้งเตือน", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // 2. แสดง Popup ยืนยันก่อนเริ่มทำงาน
+            string confirmMsg = $"คุณต้องการรับ Job ID: {selectedJob.Id}\n" +
+                                $"จากที่ Station 3 ใช่หรือไม่?";
+
+            DialogResult dialogResult = MessageBox.Show(confirmMsg, "ยืนยันการดำเนินการ",
+                                                       MessageBoxButtons.YesNo,
+                                                       MessageBoxIcon.Question);
+
+            // ถ้า Operator กด "No" ให้หยุดการทำงานทันที
+            if (dialogResult != DialogResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+
+                int jobId = selectedJob.Id;
+                string newStatus = "Receive";
+
+                // 3. อัปเดตไปยัง API
+                var updateData = new { st1_confirmation = newStatus, st1_send_time = DateTime.Now };
+                bool isUpdated = await _api.UpdateJobAsync(jobId, updateData);
+
+                if (isUpdated)
+                {
+                    // 4. อัปเดต UI
+                    selectedJob.Status = newStatus;
+                    bindingSourceJobSt3.ResetCurrentItem();
+
+                    MessageBox.Show($"รับงานจาก ST3 Job: {jobId} เรียบร้อยแล้ว",
+                                    "สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("ไม่สามารถอัปเดตสถานะได้ (API Error)", "ผิดพลาด", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("เกิดข้อผิดพลาด: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+               
+            }
         }
     }
 }

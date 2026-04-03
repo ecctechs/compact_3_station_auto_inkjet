@@ -34,6 +34,12 @@
             dgvHistory = new DataGridView();
             timerPoll = new System.Windows.Forms.Timer(components);
             pnlJobs = new Panel();
+            tableLayoutPanel1 = new TableLayoutPanel();
+            button1 = new Button();
+            tableLayoutPanel2 = new TableLayoutPanel();
+            dataGridView2 = new DataGridView();
+            bindingSourceJobSt3 = new BindingSource(components);
+            label1 = new Label();
             btnRefresh = new Button();
             lblJobsTitle = new Label();
             pnlDetail = new Panel();
@@ -82,6 +88,12 @@
             btnSendMk3 = new Button();
             btnSendUV2 = new Button();
             textBlocksBindingSource = new BindingSource(components);
+            dataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
+            dataGridViewTextBoxColumn2 = new DataGridViewTextBoxColumn();
+            dataGridViewTextBoxColumn3 = new DataGridViewTextBoxColumn();
+            dataGridViewTextBoxColumn4 = new DataGridViewTextBoxColumn();
+            st1_confirmation = new DataGridViewTextBoxColumn();
+            st1_send_time = new DataGridViewTextBoxColumn();
             tabControl.SuspendLayout();
             tabList.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvList).BeginInit();
@@ -89,6 +101,10 @@
             tabHistory.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvHistory).BeginInit();
             pnlJobs.SuspendLayout();
+            tableLayoutPanel1.SuspendLayout();
+            tableLayoutPanel2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dataGridView2).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)bindingSourceJobSt3).BeginInit();
             pnlDetail.SuspendLayout();
             tblDetailLayout.SuspendLayout();
             pnlJobInfo.SuspendLayout();
@@ -110,10 +126,10 @@
             tabControl.Controls.Add(tabList);
             tabControl.Controls.Add(tabHistory);
             tabControl.Dock = DockStyle.Fill;
-            tabControl.Location = new Point(6, 36);
+            tabControl.Location = new Point(3, 3);
             tabControl.Name = "tabControl";
             tabControl.SelectedIndex = 0;
-            tabControl.Size = new Size(459, 694);
+            tabControl.Size = new Size(453, 322);
             tabControl.TabIndex = 0;
             // 
             // tabList
@@ -122,7 +138,7 @@
             tabList.Location = new Point(4, 29);
             tabList.Name = "tabList";
             tabList.Padding = new Padding(3);
-            tabList.Size = new Size(451, 661);
+            tabList.Size = new Size(445, 289);
             tabList.TabIndex = 0;
             tabList.Text = "List";
             // 
@@ -139,7 +155,7 @@
             dgvList.Name = "dgvList";
             dgvList.ReadOnly = true;
             dgvList.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
-            dgvList.Size = new Size(445, 655);
+            dgvList.Size = new Size(439, 283);
             dgvList.TabIndex = 0;
             dgvList.CellClick += dgvList_CellClick;
             dgvList.CellContentClick += dgvList_CellContentClick;
@@ -202,7 +218,7 @@
             tabHistory.Location = new Point(4, 29);
             tabHistory.Name = "tabHistory";
             tabHistory.Padding = new Padding(3);
-            tabHistory.Size = new Size(340, 661);
+            tabHistory.Size = new Size(445, 289);
             tabHistory.TabIndex = 1;
             tabHistory.Text = "History";
             // 
@@ -213,7 +229,7 @@
             dgvHistory.Location = new Point(3, 3);
             dgvHistory.Name = "dgvHistory";
             dgvHistory.RowHeadersWidth = 51;
-            dgvHistory.Size = new Size(334, 655);
+            dgvHistory.Size = new Size(439, 283);
             dgvHistory.TabIndex = 0;
             // 
             // timerPoll
@@ -224,7 +240,7 @@
             // 
             // pnlJobs
             // 
-            pnlJobs.Controls.Add(tabControl);
+            pnlJobs.Controls.Add(tableLayoutPanel1);
             pnlJobs.Controls.Add(btnRefresh);
             pnlJobs.Controls.Add(lblJobsTitle);
             pnlJobs.Dock = DockStyle.Left;
@@ -233,6 +249,79 @@
             pnlJobs.Padding = new Padding(6);
             pnlJobs.Size = new Size(471, 772);
             pnlJobs.TabIndex = 0;
+            // 
+            // tableLayoutPanel1
+            // 
+            tableLayoutPanel1.ColumnCount = 1;
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tableLayoutPanel1.Controls.Add(button1, 0, 2);
+            tableLayoutPanel1.Controls.Add(tabControl, 0, 0);
+            tableLayoutPanel1.Controls.Add(tableLayoutPanel2, 0, 1);
+            tableLayoutPanel1.Dock = DockStyle.Fill;
+            tableLayoutPanel1.Location = new Point(6, 36);
+            tableLayoutPanel1.Name = "tableLayoutPanel1";
+            tableLayoutPanel1.RowCount = 3;
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 38F));
+            tableLayoutPanel1.Size = new Size(459, 694);
+            tableLayoutPanel1.TabIndex = 3;
+            tableLayoutPanel1.Paint += tableLayoutPanel1_Paint;
+            // 
+            // button1
+            // 
+            button1.Location = new Point(3, 659);
+            button1.Name = "button1";
+            button1.Size = new Size(130, 32);
+            button1.TabIndex = 3;
+            button1.Text = "Confirm Job ST3";
+            button1.Click += button1_Click;
+            // 
+            // tableLayoutPanel2
+            // 
+            tableLayoutPanel2.ColumnCount = 1;
+            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tableLayoutPanel2.Controls.Add(dataGridView2, 0, 1);
+            tableLayoutPanel2.Controls.Add(label1, 0, 0);
+            tableLayoutPanel2.Dock = DockStyle.Fill;
+            tableLayoutPanel2.Location = new Point(3, 331);
+            tableLayoutPanel2.Name = "tableLayoutPanel2";
+            tableLayoutPanel2.RowCount = 2;
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 9.063444F));
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 90.936554F));
+            tableLayoutPanel2.Size = new Size(453, 322);
+            tableLayoutPanel2.TabIndex = 1;
+            // 
+            // dataGridView2
+            // 
+            dataGridView2.AllowUserToAddRows = false;
+            dataGridView2.AutoGenerateColumns = false;
+            dataGridView2.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridView2.ColumnHeadersHeight = 29;
+            dataGridView2.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn1, dataGridViewTextBoxColumn2, dataGridViewTextBoxColumn3, dataGridViewTextBoxColumn4, st1_confirmation, st1_send_time });
+            dataGridView2.DataSource = bindingSourceJobSt3;
+            dataGridView2.Dock = DockStyle.Fill;
+            dataGridView2.Location = new Point(3, 32);
+            dataGridView2.Name = "dataGridView2";
+            dataGridView2.ReadOnly = true;
+            dataGridView2.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
+            dataGridView2.Size = new Size(447, 287);
+            dataGridView2.TabIndex = 4;
+            // 
+            // bindingSourceJobSt3
+            // 
+            bindingSourceJobSt3.DataSource = typeof(PrintJob);
+            // 
+            // label1
+            // 
+            label1.Dock = DockStyle.Top;
+            label1.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            label1.Location = new Point(3, 0);
+            label1.Name = "label1";
+            label1.Size = new Size(447, 29);
+            label1.TabIndex = 3;
+            label1.Text = "Job Form - ST3";
+            label1.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // btnRefresh
             // 
@@ -709,6 +798,54 @@
             textBlocksBindingSource.DataMember = "TextBlocks";
             textBlocksBindingSource.DataSource = bindSourceInkjetConfigDto;
             // 
+            // dataGridViewTextBoxColumn1
+            // 
+            dataGridViewTextBoxColumn1.DataPropertyName = "OrderNo";
+            dataGridViewTextBoxColumn1.HeaderText = "Order No.";
+            dataGridViewTextBoxColumn1.MinimumWidth = 6;
+            dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
+            dataGridViewTextBoxColumn1.ReadOnly = true;
+            // 
+            // dataGridViewTextBoxColumn2
+            // 
+            dataGridViewTextBoxColumn2.DataPropertyName = "CustomerName";
+            dataGridViewTextBoxColumn2.HeaderText = "Customer";
+            dataGridViewTextBoxColumn2.MinimumWidth = 6;
+            dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
+            dataGridViewTextBoxColumn2.ReadOnly = true;
+            // 
+            // dataGridViewTextBoxColumn3
+            // 
+            dataGridViewTextBoxColumn3.DataPropertyName = "Type";
+            dataGridViewTextBoxColumn3.HeaderText = "Type";
+            dataGridViewTextBoxColumn3.MinimumWidth = 6;
+            dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
+            dataGridViewTextBoxColumn3.ReadOnly = true;
+            // 
+            // dataGridViewTextBoxColumn4
+            // 
+            dataGridViewTextBoxColumn4.DataPropertyName = "Qty";
+            dataGridViewTextBoxColumn4.HeaderText = "Qty";
+            dataGridViewTextBoxColumn4.MinimumWidth = 6;
+            dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
+            dataGridViewTextBoxColumn4.ReadOnly = true;
+            // 
+            // st1_confirmation
+            // 
+            st1_confirmation.DataPropertyName = "st1_confirmation";
+            st1_confirmation.HeaderText = "Status";
+            st1_confirmation.MinimumWidth = 6;
+            st1_confirmation.Name = "st1_confirmation";
+            st1_confirmation.ReadOnly = true;
+            // 
+            // st1_send_time
+            // 
+            st1_send_time.DataPropertyName = "st1_send_time";
+            st1_send_time.HeaderText = "Send time";
+            st1_send_time.MinimumWidth = 6;
+            st1_send_time.Name = "st1_send_time";
+            st1_send_time.ReadOnly = true;
+            // 
             // ucOrder
             // 
             Controls.Add(pnlDetail);
@@ -722,6 +859,10 @@
             tabHistory.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvHistory).EndInit();
             pnlJobs.ResumeLayout(false);
+            tableLayoutPanel1.ResumeLayout(false);
+            tableLayoutPanel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dataGridView2).EndInit();
+            ((System.ComponentModel.ISupportInitialize)bindingSourceJobSt3).EndInit();
             pnlDetail.ResumeLayout(false);
             tblDetailLayout.ResumeLayout(false);
             tblDetailLayout.PerformLayout();
@@ -803,5 +944,17 @@
         private DataGridViewTextBoxColumn qtyDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn statusDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn stationDataGridViewTextBoxColumn;
+        private TableLayoutPanel tableLayoutPanel1;
+        private TableLayoutPanel tableLayoutPanel2;
+        private DataGridView dataGridView2;
+        private Label label1;
+        private Button button1;
+        private BindingSource bindingSourceJobSt3;
+        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
+        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
+        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
+        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
+        private DataGridViewTextBoxColumn st1_confirmation;
+        private DataGridViewTextBoxColumn st1_send_time;
     }
 }
