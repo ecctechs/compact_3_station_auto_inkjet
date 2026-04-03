@@ -393,6 +393,13 @@ namespace InkjetOperator
         {
             try
             {
+                // 1. ดึง Job ที่เลือกอยู่จาก Grid (สมมติใช้ bindingSource1 เก็บรายการจาก API)
+                if (bindingSource1.Current is not PrintJob selectedJob)
+                {
+                    MessageBox.Show("กรุณาเลือกรายการ Job ในตารางก่อนส่งข้อมูล");
+                    return;
+                }
+
                 // 1. ดึงข้อมูล Barcode จากหน้าจอ (เช่นจาก TextBox หรือ Label)
                 // ในที่นี้สมมติว่าดึงจากตัวแปร หรือคุณจะเปลี่ยนเป็น txtBarcode.Text ก็ได้
                 string barcode = "CCRC0291-DEX0663MS";
@@ -437,6 +444,10 @@ namespace InkjetOperator
                 // จากภาพ DB ของคุณ ข้อมูลจะถูกเก็บใน block1_text, block2_text...
                 await SendTextBlocksRawAsync(config.TextBlocks);
 
+                int jobId = selectedJob.Id;
+                var updateData = new { st_status = "3" };
+                await _api.UpdateJobAsync(jobId, updateData);
+
                 MessageBox.Show($"[Success] ส่งข้อมูล {barcode}\nไปยัง Program: {targetProg} เรียบร้อยแล้ว",
                                 "สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -475,7 +486,7 @@ namespace InkjetOperator
                 MessageBox.Show("กรุณาเลือกรายการ Job ในตารางก่อน");
                 return;
             }
-            MessageBox.Show($"กำลังส่งข้อมูลการพิมพ์ UV สำหรับ Job ID: {selectedJob.Id}"); // Debugging Message
+            //MessageBox.Show($"กำลังส่งข้อมูลการพิมพ์ UV สำหรับ Job ID: {selectedJob.Id}"); // Debugging Message
 
             // 2. ดึงข้อมูลจาก bindingSourceUVinkjet แถวที่ 1 (Index 0)
             // ตรวจสอบก่อนว่าใน List มีข้อมูลอย่างน้อย 1 แถวหรือไม่
@@ -484,7 +495,7 @@ namespace InkjetOperator
                 MessageBox.Show("ไม่พบข้อมูล Config ของเครื่องพิมพ์");
                 return;
             }
-            MessageBox.Show($"กำลังส่งข้อมูลการพิมพ์ UV สำหรับ Job ID: {selectedJob.Id}"); // Debugging Message
+            //MessageBox.Show($"กำลังส่งข้อมูลการพิมพ์ UV สำหรับ Job ID: {selectedJob.Id}"); // Debugging Message
 
             // ดึงข้อมูลแถวที่ 1 มาเก็บไว้ในตัวแปร (สมมติว่า Model คือ InkjetConfigDto)
             var firstConfig = bindingSourceUVinkjet[0] as UVinkjet;
@@ -538,16 +549,6 @@ namespace InkjetOperator
             {
                 senderButton.Enabled = true;
             }
-        }
-
-        // ══════════════════════════════════════════════
-        //  DEBUG / TEST
-        // ══════════════════════════════════════════════
-
-        private void btnRetry_Click(object sender, EventArgs e)
-        {
-            string data = PatternEngine.Process("C240801-027", "CCCC-01 CPI291");
-            MessageBox.Show(data);
         }
 
         private void dgvList_CellContentClick(object sender, DataGridViewCellEventArgs e)

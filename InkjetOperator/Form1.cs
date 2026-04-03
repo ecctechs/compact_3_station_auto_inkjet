@@ -15,6 +15,7 @@ namespace InkjetOperator
         private ucEditPattern? _ucEditPattern;
         private ucOrder? _ucOrder;
         private ucBot? _ucBot;
+        private ucST3? _ucST3;
 
         // เก็บ reference ของปุ่มเมนู
         private Button? _btnInput;
@@ -22,6 +23,7 @@ namespace InkjetOperator
         private Button? _btnEdit;
         private Button? _btnSetting;
         private Button? _btnBot;
+        private Button? _btnST3;
         private static readonly string ConfigPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appconfig.json");
 
         public Form1()
@@ -95,6 +97,14 @@ namespace InkjetOperator
             {
                 _btnBot = CreateMenuButton("Bot UV", x, index == 0);
                 _btnBot.Click += (s, e) => { ShowBot(); SetActiveButton(_btnBot); };
+                x += 140;
+                index++;
+            }
+
+            if (_config.ShouldShowMenu("st3"))
+            {
+                _btnST3 = CreateMenuButton("Job Station 3", x, index == 0);
+                _btnST3.Click += (s, e) => { ShowSt3(); SetActiveButton(_btnST3); };
                 x += 140;
                 index++;
             }
@@ -207,6 +217,16 @@ namespace InkjetOperator
             SetActiveButton(_btnBot);
         }
 
+        private void ShowSt3()
+        {
+            pnlContent.Controls.Clear();
+
+            _ucST3 ??= new ucST3();
+            _ucST3.Dock = DockStyle.Fill;
+            pnlContent.Controls.Add(_ucST3);
+
+            SetActiveButton(_btnST3);
+        }
         private void OnBarcodeScanned(object? sender, BarcodeScanEventArgs e)
         {
             MessageBox.Show(
