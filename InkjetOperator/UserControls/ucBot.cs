@@ -317,6 +317,22 @@ namespace InkjetOperator.UserControls
                         await _api.UpdateUvInkjetAsync(programData.Id, new { status = "completed" });
 
 
+                        object updatePayload = null;
+
+                        // 2. เช็คเงื่อนไขตาม MenuMode
+                        if (_config.MenuMode == 2)
+                        {
+                            // สำหรับ Station 2 (UV1) อัปเดต st_status เป็น 3
+                            updatePayload = new { st_status = "3" };
+                        }
+                        else if (_config.MenuMode == 4)
+                        {
+                            // สำหรับ Station 4 (UV2) อัปเดต status เป็น Completed
+                            updatePayload = new { status = "Completed" };
+                        }
+
+                        bool isJobUpdated = await _api.UpdateJobAsync(programData.PrintJobsId, updatePayload);
+
                         // 3. แจ้งเตือนหน้าจอ (ต้องกลับไป UI Thread)
                         if (this.IsHandleCreated)
                         {
@@ -408,8 +424,8 @@ namespace InkjetOperator.UserControls
                 else
                 {
                     // กรณี Mode อื่นๆ อาจจะกรองแบบปกติ หรือไม่กรอง Station
-                    printingItems = uvList.Where(x => x.Status == "printing" && x.Station == "4").ToList();
-                    completedItems = uvList.Where(x => x.Status == "completed" && x.Station == "4").ToList();
+                    printingItems = uvList.Where(x => x.Status == "printing" && x.Station == "5").ToList();
+                    completedItems = uvList.Where(x => x.Status == "completed" && x.Station == "5").ToList();
                 }
 
                 // 3. อัปเดต UI ผ่าน BindingSource

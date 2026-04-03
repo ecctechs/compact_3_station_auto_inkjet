@@ -6,6 +6,7 @@ using InkjetOperator.Adapters;
 using InkjetOperator.Managers;
 using InkjetOperator.Models;
 using InkjetOperator.Services;
+using static System.Collections.Specialized.BitVector32;
 
 namespace InkjetOperator
 {
@@ -41,11 +42,24 @@ namespace InkjetOperator
         {
             try
             {
-                // จำ Job Id ที่เลือกอยู่ก่อน bind ใหม่
+                // 1. จำ Job Id ที่เลือกอยู่ก่อน bind ใหม่
                 int? selectedJobId = (bindingSource1.Current as PrintJob)?.Id;
 
-                var jobs = await _api.GetPendingJobsAsync();
-                bindingSource1.DataSource = jobs;
+                // 2. ดึงข้อมูลทั้งหมดจาก API
+                var allJobs = await _api.GetPendingJobsAsync();
+
+                // 3. กรองเฉพาะ status = "Waiting" หรือ "Processing"
+                // ใช้ StringComparison.OrdinalIgnoreCase เพื่อความปลอดภัยเรื่องตัวพิมพ์เล็ก-ใหญ่
+                var filteredJobs = allJobs.Where(j =>
+                    !string.IsNullOrEmpty(j.Status) &&
+                    (j.Status.Equals("Waiting", StringComparison.OrdinalIgnoreCase) ||
+                     j.Status.Equals("Processing", StringComparison.OrdinalIgnoreCase))
+                ).ToList();
+
+                // 4. นำข้อมูลที่กรองแล้วใส่ DataSource
+                bindingSource1.DataSource = filteredJobs;
+
+                // --- ส่วนการจัดการตำแหน่ง (Position Management) ---
 
                 // ครั้งแรก → เลือกแถวแรก + โหลด detail
                 if (_isFirstLoad)
@@ -56,6 +70,7 @@ namespace InkjetOperator
                         bindingSource1.Position = 0;
                         SelectGridRow(dgvList, 0);
                         await LoadJobDetailAsync();
+                        disable_button();
                     }
                     return;
                 }
@@ -63,19 +78,71 @@ namespace InkjetOperator
                 // Poll ครั้งถัดไป → restore ตำแหน่งเดิมจาก Id
                 if (selectedJobId.HasValue)
                 {
-                    int idx = jobs.FindIndex(j => j.Id == selectedJobId.Value);
+                    // หา Index ในรายการที่กรองแล้ว (filteredJobs)
+                    int idx = filteredJobs.FindIndex(j => j.Id == selectedJobId.Value);
                     if (idx >= 0)
                     {
                         bindingSource1.Position = idx;
-                        return; // เจอ row เดิม → ไม่ต้องทำอะไรเพิ่ม
+                        // เรียก disable_button ทุกครั้งที่โหลดใหม่เพื่อ update สถานะปุ่มตามข้อมูลล่าสุด
+                        disable_button();
+                        return;
                     }
                 }
 
-                // row เดิมหายไป → fallback เลือกแถวแรก
+                // row เดิมหายไป (อาจจะถูกย้ายไปสถานะอื่นที่ไม่ได้กรอง) → fallback เลือกแถวแรก
                 if (bindingSource1.Count > 0)
+                {
                     bindingSource1.Position = 0;
+                    disable_button();
+                }
             }
-            catch (Exception ex) { Debug.WriteLine(ex.Message); }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Error in get_job: " + ex.Message);
+            }
+        }
+
+        public async void get_job_completed()
+        {
+            try
+            {
+                // 1. จำ Job Id ที่เลือกอยู่จาก BindingSource ของตาราง Completed
+                int? selectedJobId = (bindingSourceJobCompleted.Current as PrintJob)?.Id;
+
+                // 2. ดึงข้อมูลทั้งหมดจาก API (หรือใช้ Endpoint เฉพาะถ้ามี)
+                var allJobs = await _api.GetPendingJobsAsync();
+
+                // 3. กรองเฉพาะ status = "Completed"
+                var filteredJobs = allJobs.Where(j =>
+                    !string.IsNullOrEmpty(j.Status) &&
+                    j.Status.Equals("Completed", StringComparison.OrdinalIgnoreCase)
+                ).ToList();
+
+                // 4. นำข้อมูลใส่ DataSource ของตาราง Completed
+                bindingSourceJobCompleted.DataSource = filteredJobs;
+
+                // --- การจัดการตำแหน่ง (Position Management) ---
+
+                if (selectedJobId.HasValue)
+                {
+                    int idx = filteredJobs.FindIndex(j => j.Id == selectedJobId.Value);
+                    if (idx >= 0)
+                    {
+                        bindingSourceJobCompleted.Position = idx;
+                        return;
+                    }
+                }
+
+                // ถ้าหาตัวเดิมไม่เจอ หรือเป็นครั้งแรก ให้เลือกแถวบนสุด
+                if (bindingSourceJobCompleted.Count > 0)
+                {
+                    bindingSourceJobCompleted.Position = 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Error in get_job_completed: " + ex.Message);
+            }
         }
 
         /// <summary>โหลดข้อมูล UV inkjet — รักษา row ที่เลือกอยู่</summary>
@@ -102,35 +169,63 @@ namespace InkjetOperator
         /// <summary>โหลด detail ของ Job ที่เลือกอยู่ → bind Config → เลือก Config แรก → bind TextBlock</summary>
         private async Task LoadJobDetailAsync()
         {
-            if (bindingSource1.Current is not PrintJob selectedJob) return;
+            // 1. ตรวจสอบว่ามีรายการถูกเลือกจาก BindingSource ตัวไหนอยู่
+            // ใช้เครื่องหมาย ?? (Null-coalescing) เพื่อไล่ลำดับการเช็ค
+            var selectedJob = (bindingSource1.Current as PrintJob)
+                           ?? (bindingSourceJobSt3.Current as PrintJob)
+                           ?? (bindingSourceJobCompleted.Current as PrintJob);
 
-            // แสดงข้อมูลหลักของ Job
+            if (selectedJob == null)
+            {
+                ClearDetailUI();
+                return;
+            }
+
+            // 2. แสดงข้อมูลหลัก (Header) ของ Job บน UI
             txtBarcode.Text = selectedJob.BarcodeRaw;
             txtLot.Text = selectedJob.LotNumber;
             txtStatus.Text = selectedJob.Status;
             txtPattern.Text = selectedJob.PatternNoErp;
 
-            // เรียก API ดึง Resolved Job
-            await QueryBackendJobAsync();
-
-            // Bind InkjetConfigs
-            if (_currentResolved?.Pattern?.InkjetConfigs != null)
+            try
             {
-                bindSourceInkjetConfigDto.DataSource = _currentResolved.Pattern.InkjetConfigs;
+                // 3. ดึงข้อมูลรายละเอียดเชิงลึก (Resolved Job) จาก API
+                // มั่นใจว่า QueryBackendJobAsync() อ้างอิง Id จาก selectedJob ตัวล่าสุด
+                await QueryBackendJobAsync();
 
-                // เลือก Config แถวแรก + โหลด TextBlocks
-                if (bindSourceInkjetConfigDto.Count > 0)
+                // 4. ผูกข้อมูล InkjetConfigs เข้ากับ Grid รายละเอียด
+                if (_currentResolved?.Pattern?.InkjetConfigs != null)
                 {
-                    bindSourceInkjetConfigDto.Position = 0;
-                    SelectGridRow(dgvConfigs, 0);
-                    LoadTextBlocksForCurrentConfig();
+                    bindSourceInkjetConfigDto.DataSource = _currentResolved.Pattern.InkjetConfigs;
+
+                    if (bindSourceInkjetConfigDto.Count > 0)
+                    {
+                        bindSourceInkjetConfigDto.Position = 0;
+                        SelectGridRow(dgvConfigs, 0);
+                        LoadTextBlocksForCurrentConfig();
+                    }
+                }
+                else
+                {
+                    bindSourceInkjetConfigDto.DataSource = null;
+                    bindingSourceTextBlockDto.DataSource = null;
                 }
             }
-            else
+            catch (Exception ex)
             {
-                bindSourceInkjetConfigDto.DataSource = null;
-                bindingSourceTextBlockDto.DataSource = null;
+                Debug.WriteLine($"LoadJobDetail Error: {ex.Message}");
             }
+        }
+
+        // ฟังก์ชันสำหรับล้างค่าหน้าจอเมื่อไม่มี Job ถูกเลือก
+        private void ClearDetailUI()
+        {
+            txtBarcode.Clear();
+            txtLot.Clear();
+            txtStatus.Clear();
+            txtPattern.Clear();
+            bindSourceInkjetConfigDto.DataSource = null;
+            bindingSourceTextBlockDto.DataSource = null;
         }
 
         /// <summary>โหลด TextBlocks จาก Config ที่เลือกอยู่ + ประมวลผล Pattern Rule</summary>
@@ -182,6 +277,7 @@ namespace InkjetOperator
 
             // เมื่อเลือก Job ใหม่ → refresh detail ทั้งหมด (Config + TextBlock)
             await LoadJobDetailAsync();
+            disable_button();
         }
 
         private void dgvConfigs_CellClick(object sender, DataGridViewCellEventArgs e)
@@ -220,10 +316,14 @@ namespace InkjetOperator
 
         private async Task QueryBackendJobAsync()
         {
-            // 1. ดึง Job ID จาก BindingSource ที่เลือกอยู่ (Current Row)
-            if (bindingSource1.Current is not PrintJob selectedJob)
+            // 1. ดึง Job จาก BindingSource ที่เลือกอยู่ (ไล่เช็คทีละตัว)
+            var selectedJob = (bindingSource1.Current as PrintJob)
+                           ?? (bindingSourceJobSt3.Current as PrintJob)
+                           ?? (bindingSourceJobCompleted.Current as PrintJob);
+
+            if (selectedJob == null)
             {
-                MessageBox.Show("กรุณาเลือกรายการ Job ในตารางก่อน");
+                // ไม่ต้องโชว์ MessageBox ก็ได้ถ้าเป็นการเรียกแบบ Auto-refresh
                 return;
             }
 
@@ -266,6 +366,8 @@ namespace InkjetOperator
                 get_job();
                 get_uv();
                 get_job_form_st3();
+                disable_button();
+                get_job_completed();
             }
             catch (Exception ex)
             {
@@ -367,7 +469,7 @@ namespace InkjetOperator
                 // ใช้ selectedJob.Id ที่เราดึงมาจากแถวที่เลือก
                 int jobId = selectedJob.Id;
 
-                var updateData = new { status = "Processing" };
+                var updateData = new { status = "Processing", st_status = "1" };
                 bool isUpdated = await _api.UpdateJobAsync(jobId, updateData);
 
                 if (isUpdated)
@@ -376,7 +478,6 @@ namespace InkjetOperator
                     selectedJob.Status = "Processing";
                     txtStatus.Text = "Processing";
                     bindingSource1.ResetCurrentItem(); // สั่งให้ Grid บรรทัดนั้นรีเฟรชตัวอักษร
-
                     MessageBox.Show($"ส่งข้อมูลและเริ่มประมวลผล Job ID: {jobId} เรียบร้อย");
                 }
             }
@@ -446,7 +547,7 @@ namespace InkjetOperator
                 await SendTextBlocksRawAsync(config.TextBlocks);
 
                 int jobId = selectedJob.Id;
-                var updateData = new { st_status = "3" };
+                var updateData = new { st_status = "4" };
                 await _api.UpdateJobAsync(jobId, updateData);
 
                 MessageBox.Show($"[Success] ส่งข้อมูล {barcode}\nไปยัง Program: {targetProg} เรียบร้อยแล้ว",
@@ -475,7 +576,7 @@ namespace InkjetOperator
 
         private async void btnSendUV2_Click_1(object sender, EventArgs e)
         {
-            await SendUvPrintAsync("UV Printer 2", "4", btnSendUV2);
+            await SendUvPrintAsync("UV Printer 2", "5", btnSendUV2);
         }
 
         /// <summary>ส่งข้อมูล UV Print (ใช้ร่วมกันระหว่าง UV1 และ UV2)</summary>
@@ -487,6 +588,20 @@ namespace InkjetOperator
                 MessageBox.Show("กรุณาเลือกรายการ Job ในตารางก่อน");
                 return;
             }
+
+            // 1. Check เบื้องต้นก่อนเริ่มทำงาน (ป้องกัน Logic หลุด)
+            if (selectedJob.Station == "2")
+            {
+                MessageBox.Show("รายการนี้ส่งข้อมูลเรียบร้อยแล้ว ไม่สามารถส่งซ้ำได้", "แจ้งเตือน");
+                return;
+            }
+
+            if (selectedJob.Station == "5")
+            {
+                MessageBox.Show("รายการนี้ส่งข้อมูลเรียบร้อยแล้ว ไม่สามารถส่งซ้ำได้", "แจ้งเตือน");
+                return;
+            }
+
             //MessageBox.Show($"กำลังส่งข้อมูลการพิมพ์ UV สำหรับ Job ID: {selectedJob.Id}"); // Debugging Message
 
             // 2. ดึงข้อมูลจาก bindingSourceUVinkjet แถวที่ 1 (Index 0)
@@ -670,8 +785,98 @@ namespace InkjetOperator
             }
             finally
             {
-               
+
             }
+        }
+
+        private void disable_button()
+        {
+            // 1. ดึง Job ที่เลือกอยู่จาก BindingSource
+            if (bindingSource1.Current is not PrintJob selectedJob)
+            {
+                // หากไม่มีการเลือกแถว ให้ปิดปุ่มทั้งหมดไว้ก่อนเพื่อความปลอดภัย
+                SetAllButtons(false);
+                return;
+            }
+
+            // 2. ตรวจสอบค่า Station (สมมติว่าใน PrintJob มี Property ชื่อ Station)
+            // หมายเหตุ: ตรวจสอบว่าเป็น string "1" หรือ int 1 ตาม Model ของคุณ
+            string station = selectedJob.Station?.ToString();
+
+            if (station == "0")
+            {
+                // เปิดเฉพาะปุ่มสำหรับ Station 1 (Mk1Mk2)
+                btnSendMk1Mk2.Enabled = true;
+
+                // ปิดปุ่มอื่นๆ
+                btnSendUV1.Enabled = false;
+                btnSendMk3.Enabled = false;
+                btnSendUV2.Enabled = false;
+            }
+            else if (station == "1")
+            {
+                // เปิดเฉพาะปุ่มสำหรับ Station 2 (UV1)
+                btnSendUV1.Enabled = true;
+
+                // ปิดปุ่มอื่นๆ
+                btnSendMk1Mk2.Enabled = false;
+                btnSendMk3.Enabled = false;
+                btnSendUV2.Enabled = false;
+            }
+            else if (station == "2")
+            {
+                // เปิดเฉพาะปุ่มสำหรับ Station 3 (UV1)
+                btnSendUV1.Enabled = true;
+
+                // ปิดปุ่มอื่นๆ
+                btnSendMk1Mk2.Enabled = false;
+                btnSendMk3.Enabled = false;
+                btnSendUV2.Enabled = false;
+            }
+            else if (station == "3")
+            {
+                // เปิดเฉพาะปุ่มสำหรับ Station 3 (UV1)
+                btnSendUV1.Enabled = false;
+
+                // ปิดปุ่มอื่นๆ
+                btnSendMk1Mk2.Enabled = false;
+                btnSendMk3.Enabled = true;
+                btnSendUV2.Enabled = false;
+            }
+            else if (station == "4")
+            {
+                // เปิดเฉพาะปุ่มสำหรับ Station 3 (UV1)
+                btnSendUV1.Enabled = false;
+
+                // ปิดปุ่มอื่นๆ
+                btnSendMk1Mk2.Enabled = false;
+                btnSendMk3.Enabled = false;
+                btnSendUV2.Enabled = true;
+            }
+            else
+            {
+                // กรณีเป็นสถานีอื่นๆ อาจจะปิดทุุกปุ่ม หรือเปิดตามเงื่อนไขอื่น
+                SetAllButtons(false);
+            }
+        }
+
+        // ฟังก์ชันเสริมสำหรับเคลียร์สถานะปุ่ม
+        private void SetAllButtons(bool isEnabled)
+        {
+            btnSendMk1Mk2.Enabled = isEnabled;
+            btnSendUV1.Enabled = isEnabled;
+            btnSendMk3.Enabled = isEnabled;
+            btnSendUV2.Enabled = isEnabled;
+        }
+
+        private async void dataGridView2_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            await LoadJobDetailAsync();
+        }
+
+        private async void dgvHistory_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            await LoadJobDetailAsync();
         }
     }
 }

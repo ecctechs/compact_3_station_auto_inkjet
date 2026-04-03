@@ -349,7 +349,7 @@ namespace InkjetOperator
                 Type = txtType.Text,
                 Qty = qty,
                 CreatedBy = "operator",
-                st_status = "1"
+                st_status = "0"
             };
 
             var success = await _api.CreateJobAsync(req);

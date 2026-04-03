@@ -34,11 +34,13 @@ namespace InkjetOperator.UserControls
                 // 1. ดึงข้อมูลทั้งหมดจาก API
                 var allJobs = await _api.GetPendingJobsAsync();
 
-                // 2. กรองเฉพาะ Job ที่มี Station 3 ขึ้นไปอยู่ในลิสต์ stations_required
-                // ใช้ .Any(s => s >= 3) เพื่อเช็คว่ามีเลข 3, 4... อยู่ใน Array หรือไม่
-                var jobs = allJobs.Where(j => j.stations_required != null &&
-                                             j.stations_required.Any(s => s >= 3))
-                                  .ToList();
+                // 2. กรองข้อมูล (Station >= 3 AND Status == "Waiting")
+                var jobs = allJobs.Where(j =>
+                    // เงื่อนไข Station 3 ขึ้นไป
+                    j.stations_required != null && j.stations_required.Any(s => s >= 3) &&
+                    // เพิ่มเงื่อนไข Status ต้องเป็น Waiting เท่านั้น
+                    !string.IsNullOrEmpty(j.Status) && j.Status.Equals("Waiting", StringComparison.OrdinalIgnoreCase)
+                ).ToList();
 
                 // นำข้อมูลที่กรองแล้วใส่ BindingSource
                 bindingSource1.DataSource = jobs;

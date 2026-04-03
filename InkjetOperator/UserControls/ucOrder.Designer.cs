@@ -32,12 +32,24 @@
             bindingSource1 = new BindingSource(components);
             tabHistory = new TabPage();
             dgvHistory = new DataGridView();
+            orderNoDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
+            customerNameDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
+            typeDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
+            qtyDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
+            statusDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
+            bindingSourceJobCompleted = new BindingSource(components);
             timerPoll = new System.Windows.Forms.Timer(components);
             pnlJobs = new Panel();
             tableLayoutPanel1 = new TableLayoutPanel();
             button1 = new Button();
             tableLayoutPanel2 = new TableLayoutPanel();
             dataGridView2 = new DataGridView();
+            dataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
+            dataGridViewTextBoxColumn2 = new DataGridViewTextBoxColumn();
+            dataGridViewTextBoxColumn3 = new DataGridViewTextBoxColumn();
+            dataGridViewTextBoxColumn4 = new DataGridViewTextBoxColumn();
+            st1_confirmation = new DataGridViewTextBoxColumn();
+            st1_send_time = new DataGridViewTextBoxColumn();
             bindingSourceJobSt3 = new BindingSource(components);
             label1 = new Label();
             btnRefresh = new Button();
@@ -88,18 +100,14 @@
             btnSendMk3 = new Button();
             btnSendUV2 = new Button();
             textBlocksBindingSource = new BindingSource(components);
-            dataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
-            dataGridViewTextBoxColumn2 = new DataGridViewTextBoxColumn();
-            dataGridViewTextBoxColumn3 = new DataGridViewTextBoxColumn();
-            dataGridViewTextBoxColumn4 = new DataGridViewTextBoxColumn();
-            st1_confirmation = new DataGridViewTextBoxColumn();
-            st1_send_time = new DataGridViewTextBoxColumn();
+            printJobBindingSource = new BindingSource(components);
             tabControl.SuspendLayout();
             tabList.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvList).BeginInit();
             ((System.ComponentModel.ISupportInitialize)bindingSource1).BeginInit();
             tabHistory.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvHistory).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)bindingSourceJobCompleted).BeginInit();
             pnlJobs.SuspendLayout();
             tableLayoutPanel1.SuspendLayout();
             tableLayoutPanel2.SuspendLayout();
@@ -119,6 +127,7 @@
             ((System.ComponentModel.ISupportInitialize)bindingSourceUVinkjet).BeginInit();
             pnlButtons.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)textBlocksBindingSource).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)printJobBindingSource).BeginInit();
             SuspendLayout();
             // 
             // tabControl
@@ -224,13 +233,64 @@
             // 
             // dgvHistory
             // 
+            dgvHistory.AllowUserToAddRows = false;
+            dgvHistory.AutoGenerateColumns = false;
+            dgvHistory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvHistory.ColumnHeadersHeight = 29;
+            dgvHistory.Columns.AddRange(new DataGridViewColumn[] { orderNoDataGridViewTextBoxColumn1, customerNameDataGridViewTextBoxColumn1, typeDataGridViewTextBoxColumn1, qtyDataGridViewTextBoxColumn1, statusDataGridViewTextBoxColumn1 });
+            dgvHistory.DataSource = bindingSourceJobCompleted;
             dgvHistory.Dock = DockStyle.Fill;
             dgvHistory.Location = new Point(3, 3);
             dgvHistory.Name = "dgvHistory";
+            dgvHistory.ReadOnly = true;
             dgvHistory.RowHeadersWidth = 51;
             dgvHistory.Size = new Size(439, 283);
             dgvHistory.TabIndex = 0;
+            dgvHistory.CellClick += dgvHistory_CellClick;
+            // 
+            // orderNoDataGridViewTextBoxColumn1
+            // 
+            orderNoDataGridViewTextBoxColumn1.DataPropertyName = "OrderNo";
+            orderNoDataGridViewTextBoxColumn1.HeaderText = "Order";
+            orderNoDataGridViewTextBoxColumn1.MinimumWidth = 6;
+            orderNoDataGridViewTextBoxColumn1.Name = "orderNoDataGridViewTextBoxColumn1";
+            orderNoDataGridViewTextBoxColumn1.ReadOnly = true;
+            // 
+            // customerNameDataGridViewTextBoxColumn1
+            // 
+            customerNameDataGridViewTextBoxColumn1.DataPropertyName = "CustomerName";
+            customerNameDataGridViewTextBoxColumn1.HeaderText = "CustomerName";
+            customerNameDataGridViewTextBoxColumn1.MinimumWidth = 6;
+            customerNameDataGridViewTextBoxColumn1.Name = "customerNameDataGridViewTextBoxColumn1";
+            customerNameDataGridViewTextBoxColumn1.ReadOnly = true;
+            // 
+            // typeDataGridViewTextBoxColumn1
+            // 
+            typeDataGridViewTextBoxColumn1.DataPropertyName = "Type";
+            typeDataGridViewTextBoxColumn1.HeaderText = "Type";
+            typeDataGridViewTextBoxColumn1.MinimumWidth = 6;
+            typeDataGridViewTextBoxColumn1.Name = "typeDataGridViewTextBoxColumn1";
+            typeDataGridViewTextBoxColumn1.ReadOnly = true;
+            // 
+            // qtyDataGridViewTextBoxColumn1
+            // 
+            qtyDataGridViewTextBoxColumn1.DataPropertyName = "Qty";
+            qtyDataGridViewTextBoxColumn1.HeaderText = "Qty";
+            qtyDataGridViewTextBoxColumn1.MinimumWidth = 6;
+            qtyDataGridViewTextBoxColumn1.Name = "qtyDataGridViewTextBoxColumn1";
+            qtyDataGridViewTextBoxColumn1.ReadOnly = true;
+            // 
+            // statusDataGridViewTextBoxColumn1
+            // 
+            statusDataGridViewTextBoxColumn1.DataPropertyName = "Status";
+            statusDataGridViewTextBoxColumn1.HeaderText = "Status";
+            statusDataGridViewTextBoxColumn1.MinimumWidth = 6;
+            statusDataGridViewTextBoxColumn1.Name = "statusDataGridViewTextBoxColumn1";
+            statusDataGridViewTextBoxColumn1.ReadOnly = true;
+            // 
+            // bindingSourceJobCompleted
+            // 
+            bindingSourceJobCompleted.DataSource = typeof(PrintJob);
             // 
             // timerPoll
             // 
@@ -307,6 +367,55 @@
             dataGridView2.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
             dataGridView2.Size = new Size(447, 287);
             dataGridView2.TabIndex = 4;
+            dataGridView2.CellClick += dataGridView2_CellClick;
+            // 
+            // dataGridViewTextBoxColumn1
+            // 
+            dataGridViewTextBoxColumn1.DataPropertyName = "OrderNo";
+            dataGridViewTextBoxColumn1.HeaderText = "Order No.";
+            dataGridViewTextBoxColumn1.MinimumWidth = 6;
+            dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
+            dataGridViewTextBoxColumn1.ReadOnly = true;
+            // 
+            // dataGridViewTextBoxColumn2
+            // 
+            dataGridViewTextBoxColumn2.DataPropertyName = "CustomerName";
+            dataGridViewTextBoxColumn2.HeaderText = "Customer";
+            dataGridViewTextBoxColumn2.MinimumWidth = 6;
+            dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
+            dataGridViewTextBoxColumn2.ReadOnly = true;
+            // 
+            // dataGridViewTextBoxColumn3
+            // 
+            dataGridViewTextBoxColumn3.DataPropertyName = "Type";
+            dataGridViewTextBoxColumn3.HeaderText = "Type";
+            dataGridViewTextBoxColumn3.MinimumWidth = 6;
+            dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
+            dataGridViewTextBoxColumn3.ReadOnly = true;
+            // 
+            // dataGridViewTextBoxColumn4
+            // 
+            dataGridViewTextBoxColumn4.DataPropertyName = "Qty";
+            dataGridViewTextBoxColumn4.HeaderText = "Qty";
+            dataGridViewTextBoxColumn4.MinimumWidth = 6;
+            dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
+            dataGridViewTextBoxColumn4.ReadOnly = true;
+            // 
+            // st1_confirmation
+            // 
+            st1_confirmation.DataPropertyName = "st1_confirmation";
+            st1_confirmation.HeaderText = "Status";
+            st1_confirmation.MinimumWidth = 6;
+            st1_confirmation.Name = "st1_confirmation";
+            st1_confirmation.ReadOnly = true;
+            // 
+            // st1_send_time
+            // 
+            st1_send_time.DataPropertyName = "st1_send_time";
+            st1_send_time.HeaderText = "Send time";
+            st1_send_time.MinimumWidth = 6;
+            st1_send_time.Name = "st1_send_time";
+            st1_send_time.ReadOnly = true;
             // 
             // bindingSourceJobSt3
             // 
@@ -798,53 +907,9 @@
             textBlocksBindingSource.DataMember = "TextBlocks";
             textBlocksBindingSource.DataSource = bindSourceInkjetConfigDto;
             // 
-            // dataGridViewTextBoxColumn1
+            // printJobBindingSource
             // 
-            dataGridViewTextBoxColumn1.DataPropertyName = "OrderNo";
-            dataGridViewTextBoxColumn1.HeaderText = "Order No.";
-            dataGridViewTextBoxColumn1.MinimumWidth = 6;
-            dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
-            dataGridViewTextBoxColumn1.ReadOnly = true;
-            // 
-            // dataGridViewTextBoxColumn2
-            // 
-            dataGridViewTextBoxColumn2.DataPropertyName = "CustomerName";
-            dataGridViewTextBoxColumn2.HeaderText = "Customer";
-            dataGridViewTextBoxColumn2.MinimumWidth = 6;
-            dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
-            dataGridViewTextBoxColumn2.ReadOnly = true;
-            // 
-            // dataGridViewTextBoxColumn3
-            // 
-            dataGridViewTextBoxColumn3.DataPropertyName = "Type";
-            dataGridViewTextBoxColumn3.HeaderText = "Type";
-            dataGridViewTextBoxColumn3.MinimumWidth = 6;
-            dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
-            dataGridViewTextBoxColumn3.ReadOnly = true;
-            // 
-            // dataGridViewTextBoxColumn4
-            // 
-            dataGridViewTextBoxColumn4.DataPropertyName = "Qty";
-            dataGridViewTextBoxColumn4.HeaderText = "Qty";
-            dataGridViewTextBoxColumn4.MinimumWidth = 6;
-            dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
-            dataGridViewTextBoxColumn4.ReadOnly = true;
-            // 
-            // st1_confirmation
-            // 
-            st1_confirmation.DataPropertyName = "st1_confirmation";
-            st1_confirmation.HeaderText = "Status";
-            st1_confirmation.MinimumWidth = 6;
-            st1_confirmation.Name = "st1_confirmation";
-            st1_confirmation.ReadOnly = true;
-            // 
-            // st1_send_time
-            // 
-            st1_send_time.DataPropertyName = "st1_send_time";
-            st1_send_time.HeaderText = "Send time";
-            st1_send_time.MinimumWidth = 6;
-            st1_send_time.Name = "st1_send_time";
-            st1_send_time.ReadOnly = true;
+            printJobBindingSource.DataSource = typeof(PrintJob);
             // 
             // ucOrder
             // 
@@ -858,6 +923,7 @@
             ((System.ComponentModel.ISupportInitialize)bindingSource1).EndInit();
             tabHistory.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvHistory).EndInit();
+            ((System.ComponentModel.ISupportInitialize)bindingSourceJobCompleted).EndInit();
             pnlJobs.ResumeLayout(false);
             tableLayoutPanel1.ResumeLayout(false);
             tableLayoutPanel2.ResumeLayout(false);
@@ -879,6 +945,7 @@
             ((System.ComponentModel.ISupportInitialize)bindingSourceUVinkjet).EndInit();
             pnlButtons.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)textBlocksBindingSource).EndInit();
+            ((System.ComponentModel.ISupportInitialize)printJobBindingSource).EndInit();
             ResumeLayout(false);
         }
 
@@ -956,5 +1023,12 @@
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
         private DataGridViewTextBoxColumn st1_confirmation;
         private DataGridViewTextBoxColumn st1_send_time;
+        private BindingSource bindingSourceJobCompleted;
+        private BindingSource printJobBindingSource;
+        private DataGridViewTextBoxColumn orderNoDataGridViewTextBoxColumn1;
+        private DataGridViewTextBoxColumn customerNameDataGridViewTextBoxColumn1;
+        private DataGridViewTextBoxColumn typeDataGridViewTextBoxColumn1;
+        private DataGridViewTextBoxColumn qtyDataGridViewTextBoxColumn1;
+        private DataGridViewTextBoxColumn statusDataGridViewTextBoxColumn1;
     }
 }
