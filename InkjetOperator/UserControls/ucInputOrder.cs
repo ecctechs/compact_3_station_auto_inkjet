@@ -9,7 +9,7 @@ using InkjetOperator.Services;
 
 namespace InkjetOperator
 {
-    public partial class ucInputOrder : UserControl
+    public partial class ucInputOrder : UserControl, ILocalizable
     {
         public event EventHandler<BarcodeScanEventArgs>? BarcodeScanned;
         public event EventHandler? Cancelled;
@@ -34,6 +34,20 @@ namespace InkjetOperator
             this.Dock = DockStyle.Fill;
 
             _api = ApiProvider.Instance; // 🔥 ใช้จาก global
+            ApplyLanguage();
+        }
+
+        public void ApplyLanguage()
+        {
+            lblTitle.Text           = Lang.Get("input.title");
+            lblBarcode.Text         = Lang.Get("input.barcode");
+            lblOrderNo.Text         = Lang.Get("input.order_no");
+            lblCustomerName.Text    = Lang.Get("input.customer");
+            lblType.Text            = Lang.Get("input.type");
+            lblQty.Text             = Lang.Get("input.qty");
+            btnOK.Text              = Lang.Get("input.ok");
+            btnCancel.Text          = Lang.Get("input.cancel");
+            lblScanStatus.Text      = Lang.Get("input.scan_wait");
         }
 
         private void SetupEvents()
