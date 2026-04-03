@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
-using InkjetOperator.Services;
 using InkjetOperator.UserControls;
 
 namespace InkjetOperator
@@ -41,38 +40,6 @@ namespace InkjetOperator
 
             // แสดงหน้าแรก
             ShowFirstAvailablePage();
-
-            // ── Language Toggle ──
-            lblLanguage.Text = Lang.Current;
-            lblLanguage.Cursor = Cursors.Hand;
-            lblLanguage.Click += LblLanguage_Click;
-            Lang.LanguageChanged += OnLanguageChanged;
-        }
-
-        private void LblLanguage_Click(object? sender, EventArgs e)
-        {
-            Lang.Toggle();
-        }
-
-        private void OnLanguageChanged()
-        {
-            // 1. อัปเดต label ภาษา
-            lblLanguage.Text = Lang.Current;
-
-            // 2. อัปเดตปุ่มเมนู
-            if (_btnInput != null)   _btnInput.Text = Lang.Get("menu.input_order");
-            if (_btnOrder != null)   _btnOrder.Text = Lang.Get("menu.order_list");
-            if (_btnEdit != null)    _btnEdit.Text = Lang.Get("menu.edit_pattern");
-            if (_btnSetting != null) _btnSetting.Text = Lang.Get("menu.setting");
-            if (_btnBot != null)     _btnBot.Text = Lang.Get("menu.bot_uv");
-            if (_btnST3 != null)     _btnST3.Text = Lang.Get("menu.job_st3");
-
-            // 3. แจ้ง UserControl ที่เปิดอยู่ให้อัปเดตภาษา
-            foreach (Control c in pnlContent.Controls)
-            {
-                if (c is ILocalizable loc)
-                    loc.ApplyLanguage();
-            }
         }
 
         private void CreateMenuByConfig()
@@ -93,7 +60,7 @@ namespace InkjetOperator
             // Input Order (แสดงเสมอในโหมด 1 และ 2)
             if (_config.ShouldShowMenu("input"))
             {
-                _btnInput = CreateMenuButton(Lang.Get("menu.input_order"), x, index == 0);
+                _btnInput = CreateMenuButton("Input Order", x, index == 0);
                 _btnInput.Click += (s, e) => { ShowInputOrder(); SetActiveButton(_btnInput); };
                 x += 140;
                 index++;
@@ -102,7 +69,7 @@ namespace InkjetOperator
             // Order List (แสดงเฉพาะโหมด 2)
             if (_config.ShouldShowMenu("order"))
             {
-                _btnOrder = CreateMenuButton(Lang.Get("menu.order_list"), x, index == 0);
+                _btnOrder = CreateMenuButton("Order List", x, index == 0);
                 _btnOrder.Click += (s, e) => { ShowOrderList(); SetActiveButton(_btnOrder); };
                 x += 140;
                 index++;
@@ -111,7 +78,7 @@ namespace InkjetOperator
             // Edit Pattern (แสดงเฉพาะโหมด 2)
             if (_config.ShouldShowMenu("edit"))
             {
-                _btnEdit = CreateMenuButton(Lang.Get("menu.edit_pattern"), x, index == 0);
+                _btnEdit = CreateMenuButton("Edit Pattern", x, index == 0);
                 _btnEdit.Click += (s, e) => { ShowEditPattern(); SetActiveButton(_btnEdit); };
                 x += 140;
                 index++;
@@ -120,7 +87,7 @@ namespace InkjetOperator
             // Setting (แสดงเสมอในโหมด 1 และ 2)
             if (_config.ShouldShowMenu("setting"))
             {
-                _btnSetting = CreateMenuButton(Lang.Get("menu.setting"), x, index == 0);
+                _btnSetting = CreateMenuButton("Setting", x, index == 0);
                 _btnSetting.Click += (s, e) => { ShowSetting(); SetActiveButton(_btnSetting); };
                 x += 140;
                 index++;
@@ -128,7 +95,7 @@ namespace InkjetOperator
 
             if (_config.ShouldShowMenu("bot"))
             {
-                _btnBot = CreateMenuButton(Lang.Get("menu.bot_uv"), x, index == 0);
+                _btnBot = CreateMenuButton("Bot UV", x, index == 0);
                 _btnBot.Click += (s, e) => { ShowBot(); SetActiveButton(_btnBot); };
                 x += 140;
                 index++;
@@ -136,7 +103,7 @@ namespace InkjetOperator
 
             if (_config.ShouldShowMenu("st3"))
             {
-                _btnST3 = CreateMenuButton(Lang.Get("menu.job_st3"), x, index == 0);
+                _btnST3 = CreateMenuButton("Job Station 3", x, index == 0);
                 _btnST3.Click += (s, e) => { ShowSt3(); SetActiveButton(_btnST3); };
                 x += 140;
                 index++;

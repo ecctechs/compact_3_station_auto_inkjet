@@ -10,7 +10,7 @@ using static System.Collections.Specialized.BitVector32;
 
 namespace InkjetOperator
 {
-    public partial class ucOrder : UserControl, ILocalizable
+    public partial class ucOrder : UserControl
     {
         private readonly ApiClient _api = ApiProvider.Instance;
         private readonly SqliteDataService _sqliteService = new SqliteDataService();
@@ -31,28 +31,6 @@ namespace InkjetOperator
 
             // 2. ส่ง Manager เข้าไปใน Adapter
             _inkjetAdapter = new MkCompactAdapter(_tcpManager);
-
-            ApplyLanguage();
-        }
-
-        public void ApplyLanguage()
-        {
-            lblJobsTitle.Text       = Lang.Get("order.pending_jobs");
-            lblDetailTitle.Text     = Lang.Get("order.job_detail");
-            lblBarcode.Text         = Lang.Get("order.barcode");
-            lblLot.Text             = Lang.Get("order.lot");
-            lblStatus.Text          = Lang.Get("order.status");
-            lblPattern.Text         = Lang.Get("order.pattern");
-            grpInkjetConfigs.Text   = Lang.Get("order.inkjet_configs");
-            grpTextBlocks.Text      = Lang.Get("order.text_blocks");
-            groupBox1.Text          = Lang.Get("order.inkjet_uv");
-            btnRefresh.Text         = Lang.Get("btn.refresh");
-            btnSendMk1Mk2.Text     = Lang.Get("order.send_mk12");
-            btnSendMk3.Text         = Lang.Get("order.send_mk3");
-            btnSendUV1.Text         = Lang.Get("order.send_uv1");
-            btnSendUV2.Text         = Lang.Get("order.send_uv2");
-            tabList.Text            = Lang.Get("order.tab_list");
-            tabHistory.Text         = Lang.Get("order.tab_history");
         }
 
         // ══════════════════════════════════════════════
