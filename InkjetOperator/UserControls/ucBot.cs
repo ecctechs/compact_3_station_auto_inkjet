@@ -20,7 +20,12 @@ namespace InkjetOperator.UserControls
             InitGrid();
             LoadConfig();
 
-           
+            if(_config.MenuMode == 2)
+                 lblTitle.Text = "UV 1 BotClick";
+            else if (_config.MenuMode == 4) 
+                lblTitle.Text = "UV 2 BotClick";
+
+
         }
 
         // ================= INIT GRID =================

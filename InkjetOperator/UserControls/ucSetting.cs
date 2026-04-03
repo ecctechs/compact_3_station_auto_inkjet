@@ -54,7 +54,7 @@ namespace InkjetOperator
 
         private void ApplyConfigToUI()
         {
-            if (_config.MenuMode == 1)
+            if (_config.MenuMode == 0)
             {
                 pnlMkPrinters.Visible = false;
                 pnlUvPrinters.Visible = false;

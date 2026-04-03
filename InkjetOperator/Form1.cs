@@ -144,14 +144,14 @@ namespace InkjetOperator
             }
         }
 
-        private void ShowFirstAvailablePage()
-        {
-            // แสดงหน้าแรกที่มีในเมนู
-            if (_btnInput != null)
-                ShowInputOrder();
-            else if (_btnSetting != null)
-                ShowSetting();
-        }
+        //private void ShowFirstAvailablePage()
+        //{
+        //    // แสดงหน้าแรกที่มีในเมนู
+        //    if (_btnInput != null)
+        //        ShowInputOrder();
+        //    else if (_btnSetting != null)
+        //        ShowSetting();
+        //}
 
         // ========== Show Methods ==========
 
@@ -242,7 +242,32 @@ namespace InkjetOperator
         {
             _config = AppConfig.Load();
             CreateMenuByConfig();
-            ShowFirstAvailablePage();
+            //ShowFirstAvailablePage();
+        }
+
+        private void ShowFirstAvailablePage()
+        {
+            // ลำดับการตรวจสอบว่าควรเปิดหน้าไหนขึ้นมาเป็นหน้าแรกสุด
+            if (_btnBot != null)
+            {
+                ShowBot(); // ถ้ามีปุ่ม Bot ให้เปิดหน้า Bot ทันที
+            }
+            else if (_btnST3 != null)
+            {
+                ShowSt3(); // ถ้ามีปุ่ม ST3 ให้เปิดหน้า ST3 ทันที
+            }
+            else if (_btnInput != null)
+            {
+                ShowInputOrder();
+            }
+            else if (_btnOrder != null)
+            {
+                ShowOrderList();
+            }
+            else if (_btnSetting != null)
+            {
+                ShowSetting();
+            }
         }
     }
 }

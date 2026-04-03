@@ -44,12 +44,12 @@
             bindingSource2 = new BindingSource(components);
             groupBox1 = new GroupBox();
             dataGridView1 = new DataGridView();
-            bindingSource1 = new BindingSource(components);
-            timer1 = new System.Windows.Forms.Timer(components);
             inkjetNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             lotDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             nameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             programNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            bindingSource1 = new BindingSource(components);
+            timer1 = new System.Windows.Forms.Timer(components);
             InkjetName = new DataGridViewTextBoxColumn();
             Lot = new DataGridViewTextBoxColumn();
             Name = new DataGridViewTextBoxColumn();
@@ -278,7 +278,7 @@
             // grpLog
             // 
             grpLog.Controls.Add(dgvLog);
-            grpLog.Location = new Point(596, 540);
+            grpLog.Location = new Point(596, 534);
             grpLog.Name = "grpLog";
             grpLog.Padding = new Padding(10);
             grpLog.Size = new Size(545, 222);
@@ -321,7 +321,7 @@
             groupBox1.Location = new Point(3, 534);
             groupBox1.Name = "groupBox1";
             groupBox1.Padding = new Padding(10);
-            groupBox1.Size = new Size(587, 225);
+            groupBox1.Size = new Size(587, 222);
             groupBox1.TabIndex = 5;
             groupBox1.TabStop = false;
             groupBox1.Text = "Current job";
@@ -348,18 +348,8 @@
             dataGridView1.Name = "dataGridView1";
             dataGridView1.ReadOnly = true;
             dataGridView1.RowHeadersWidth = 51;
-            dataGridView1.Size = new Size(567, 185);
+            dataGridView1.Size = new Size(567, 182);
             dataGridView1.TabIndex = 0;
-            // 
-            // bindingSource1
-            // 
-            bindingSource1.DataSource = typeof(Models.UVinkjet);
-            // 
-            // timer1
-            // 
-            timer1.Enabled = true;
-            timer1.Interval = 5000;
-            timer1.Tick += timer1_Tick;
             // 
             // inkjetNameDataGridViewTextBoxColumn
             // 
@@ -392,6 +382,16 @@
             programNameDataGridViewTextBoxColumn.MinimumWidth = 6;
             programNameDataGridViewTextBoxColumn.Name = "programNameDataGridViewTextBoxColumn";
             programNameDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // bindingSource1
+            // 
+            bindingSource1.DataSource = typeof(Models.UVinkjet);
+            // 
+            // timer1
+            // 
+            timer1.Enabled = true;
+            timer1.Interval = 5000;
+            timer1.Tick += timer1_Tick;
             // 
             // InkjetName
             // 
@@ -433,7 +433,7 @@
             Controls.Add(grpProgram);
             Controls.Add(pnlButtons);
             Controls.Add(pnlTop);
-            //Name = "ucBot";
+            Name = "ucBot";
             Size = new Size(1151, 759);
             pnlTop.ResumeLayout(false);
             pnlTop.PerformLayout();
@@ -485,13 +485,13 @@
         private BindingSource bindingSource1;
         private System.Windows.Forms.Timer timer1;
         private BindingSource bindingSource2;
-        private DataGridViewTextBoxColumn InkjetName;
-        private DataGridViewTextBoxColumn Lot;
-        private DataGridViewTextBoxColumn Name;
-        private DataGridViewTextBoxColumn ProgramName;
         private DataGridViewTextBoxColumn inkjetNameDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn lotDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn nameDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn programNameDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn InkjetName;
+        private DataGridViewTextBoxColumn Lot;
+        private DataGridViewTextBoxColumn Name;
+        private DataGridViewTextBoxColumn ProgramName;
     }
 }

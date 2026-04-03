@@ -53,12 +53,29 @@ namespace InkjetOperator
         // ตรวจสอบว่าควรแสดงเมนูหรือไม่
         public bool ShouldShowMenu(string menuName)
         {
+            string menu = menuName.ToLower();
+
             return MenuMode switch
             {
-                1 => menuName.ToLower() switch { "input" or "setting" => true, _ => false },
-                2 => true,  // ทั้งหมด
-                3 => menuName.ToLower() switch { "input" or "order" => true, _ => false }, // โหมดใหม่
-                4 => true,  // ทั้งหมด
+                // โหมด 0: หน้าหลักเบื้องต้น
+                0 => menu switch { "input" or "setting" => true, _ => false },
+
+                // โหมด 1: ทั้งหมด ยกเว้น ucBot และ ucST3 (โหมดหน้างานปกติ)
+                1 => menu switch { "bot" or "st3" or "input" => false, _ => true },
+
+                // โหมด 2: โหมด Bot (เน้นใช้ ucBot)
+                2 => menu switch {  "bot"  => true, _ => false },
+
+                // โหมด 3: โหมด Station 3 (เน้นใช้ ucST3)
+                3 => menu switch { "st3"  => true, _ => false },
+
+                // โหมด 4: โหมด Station 4 
+                4 => menu switch { "bot" => true, _ => false },
+
+                // โหมด 5: Developer / Admin (เห็นทุกเมนู)
+                5 => true,
+
+                _ => false
             };
         }
     }
