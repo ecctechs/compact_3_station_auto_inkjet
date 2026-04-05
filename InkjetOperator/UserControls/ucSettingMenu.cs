@@ -15,6 +15,11 @@ namespace InkjetOperator.UserControls
         public ucSettingMenu()
         {
             InitializeComponent();
+
+            // --- เพิ่มส่วนนี้เพื่อจัดการการแสดงผลเมนู ---
+            ApplyMenuVisibility();
+
+
             ShowSetting();
         }
 
@@ -48,7 +53,7 @@ namespace InkjetOperator.UserControls
 
             // เพิ่มเข้า panelSetting
             panelSettingShow.Controls.Add(uc);
-            SetActiveMenuButton(btnDatabaseSetting); 
+            SetActiveMenuButton(btnDatabaseSetting);
         }
 
         private void SetActiveMenuButton(Button activeBtn)
@@ -77,6 +82,27 @@ namespace InkjetOperator.UserControls
                     btn.FlatAppearance.BorderSize = 0;
                 }
             }
+        }
+
+        private void ApplyMenuVisibility()
+        {
+            // ดึงค่า Config (สมมติว่าใช้ AppConfig เหมือนไฟล์ที่แล้ว)
+            var config = AppConfig.Load();
+            int mode = config.MenuMode;
+
+            // เงื่อนไข: ถ้าเป็น 2, 3, 4 ให้ Visible = false (ไม่ต้องโชว์)
+            // นอกเหนือจากนั้น (รวมถึง 0 และ 1) ให้โชว์ปกติ
+            if (mode == 2 || mode == 3 || mode == 4)
+            {
+                btnDatabaseSetting.Visible = false;
+            }
+            else
+            {
+                btnDatabaseSetting.Visible = true;
+            }
+
+            // หรือเขียนแบบสั้น (Shorthand):
+            // btnDatabaseSetting.Visible = !(mode >= 2 && mode <= 4);
         }
     }
 }

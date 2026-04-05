@@ -138,6 +138,11 @@ public class TcpManager
     {
         DataReceived?.Invoke(this, new TcpDataReceivedEventArgs(data));
     }
+
+    public void Dispose()
+    {
+        Disconnect();
+    }
 }
 
 public class TcpDataReceivedEventArgs : EventArgs

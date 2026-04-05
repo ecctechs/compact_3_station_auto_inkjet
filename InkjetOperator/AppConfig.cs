@@ -64,13 +64,13 @@ namespace InkjetOperator
                 1 => menu switch { "bot" or "st3" or "input" => false, _ => true },
 
                 // โหมด 2: โหมด Bot (เน้นใช้ ucBot)
-                2 => menu switch {  "bot"  => true, _ => false },
+                2 => menu switch {  "bot" or "setting" => true, _ => false },
 
                 // โหมด 3: โหมด Station 3 (เน้นใช้ ucST3)
-                3 => menu switch { "st3"  => true, _ => false },
+                3 => menu switch { "st3" or "setting" => true, _ => false },
 
                 // โหมด 4: โหมด Station 4 
-                4 => menu switch { "bot" => true, _ => false },
+                4 => menu switch { "bot" or "setting" => true, _ => false },
 
                 // โหมด 5: Developer / Admin (เห็นทุกเมนู)
                 5 => true,

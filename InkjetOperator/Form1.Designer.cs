@@ -57,7 +57,7 @@
             button1.FlatStyle = FlatStyle.Flat;
             button1.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             button1.ForeColor = Color.White;
-            button1.Location = new Point(825, 13);
+            button1.Location = new Point(666, 13);
             button1.Margin = new Padding(3, 4, 3, 4);
             button1.Name = "button1";
             button1.Size = new Size(142, 53);
@@ -72,7 +72,7 @@
             btnBot.FlatStyle = FlatStyle.Flat;
             btnBot.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             btnBot.ForeColor = Color.White;
-            btnBot.Location = new Point(661, 13);
+            btnBot.Location = new Point(496, 13);
             btnBot.Margin = new Padding(3, 4, 3, 4);
             btnBot.Name = "btnBot";
             btnBot.Size = new Size(149, 53);
@@ -113,7 +113,7 @@
             btnSetting.FlatStyle = FlatStyle.Flat;
             btnSetting.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             btnSetting.ForeColor = Color.White;
-            btnSetting.Location = new Point(491, 13);
+            btnSetting.Location = new Point(825, 13);
             btnSetting.Margin = new Padding(3, 4, 3, 4);
             btnSetting.Name = "btnSetting";
             btnSetting.Size = new Size(149, 53);

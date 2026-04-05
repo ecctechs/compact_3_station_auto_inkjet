@@ -117,14 +117,6 @@ namespace InkjetOperator
                 index++;
             }
 
-            // Setting (แสดงเสมอในโหมด 1 และ 2)
-            if (_config.ShouldShowMenu("setting"))
-            {
-                _btnSetting = CreateMenuButton(Lang.Get("menu.setting"), x, index == 0);
-                _btnSetting.Click += (s, e) => { ShowSetting(); SetActiveButton(_btnSetting); };
-                x += 140;
-                index++;
-            }
 
             if (_config.ShouldShowMenu("bot"))
             {
@@ -141,6 +133,16 @@ namespace InkjetOperator
                 x += 140;
                 index++;
             }
+
+            // Setting (แสดงเสมอในโหมด 1 และ 2)
+            if (_config.ShouldShowMenu("setting"))
+            {
+                _btnSetting = CreateMenuButton(Lang.Get("menu.setting"), x, index == 0);
+                _btnSetting.Click += (s, e) => { ShowSetting(); SetActiveButton(_btnSetting); };
+                x += 140;
+                index++;
+            }
+
 
             // อัปเดตข้อความ title ตาม config
             this.Text = _config.AppName;

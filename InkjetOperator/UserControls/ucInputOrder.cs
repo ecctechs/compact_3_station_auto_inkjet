@@ -39,15 +39,15 @@ namespace InkjetOperator
 
         public void ApplyLanguage()
         {
-            lblTitle.Text           = Lang.Get("input.title");
-            lblBarcode.Text         = Lang.Get("input.barcode");
-            lblOrderNo.Text         = Lang.Get("input.order_no");
-            lblCustomerName.Text    = Lang.Get("input.customer");
-            lblType.Text            = Lang.Get("input.type");
-            lblQty.Text             = Lang.Get("input.qty");
-            btnOK.Text              = Lang.Get("input.ok");
-            btnCancel.Text          = Lang.Get("input.cancel");
-            lblScanStatus.Text      = Lang.Get("input.scan_wait");
+            lblTitle.Text = Lang.Get("input.title");
+            lblBarcode.Text = Lang.Get("input.barcode");
+            lblOrderNo.Text = Lang.Get("input.order_no");
+            lblCustomerName.Text = Lang.Get("input.customer");
+            lblType.Text = Lang.Get("input.type");
+            lblQty.Text = Lang.Get("input.qty");
+            btnOK.Text = Lang.Get("input.ok");
+            btnCancel.Text = Lang.Get("input.cancel");
+            lblScanStatus.Text = Lang.Get("input.scan_wait");
         }
 
         private void SetupEvents()
@@ -499,6 +499,21 @@ namespace InkjetOperator
         private void btnOK_Click_1(object sender, EventArgs e)
         {
 
+        }
+
+        private async void btnCancel_Click_1(object sender, EventArgs e)
+        {
+            var printer = AdapterRegistry.MK058;
+
+            if (printer != null && printer.IsConnected())
+            {
+                // ส่งข้อความไปพิมพ์
+                MessageBox.Show("เครื่องพิมพ์ MK058 เชื่อมต่อ");
+            }
+            else
+            {
+                MessageBox.Show("เครื่องพิมพ์ MK058 ยังไม่ได้เชื่อมต่อ!");
+            }
         }
     }
 
