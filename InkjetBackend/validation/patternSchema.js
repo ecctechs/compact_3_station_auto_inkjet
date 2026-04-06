@@ -18,6 +18,8 @@ const inkjetConfigSchema = z.object({
   width: z.any().optional(),
   height: z.any().optional(),
   trigger_delay: z.any().optional(),
+  pos_act: z.any().optional(),
+  delay: z.any().optional(),
   direction: z.any().optional(),
   steel_type: z.any().nullable().optional(),
   suspended: z.boolean().optional(),

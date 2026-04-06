@@ -57,6 +57,12 @@ const InkjetConfig = sequelize.define(
     trigger_delay: {
       type: DataTypes.INTEGER,
     },
+    pos_act: {
+      type: DataTypes.INTEGER,
+    },
+    delay: {
+      type: DataTypes.INTEGER,
+    },
     direction: {
       type: DataTypes.INTEGER,
     },
