@@ -462,50 +462,178 @@ namespace InkjetOperator
         }
 
         // ══════════════════════════════════════════════
+        //  SHARED HELPERS — Adapter Mapping
+        // ══════════════════════════════════════════════
+
+        /// <summary>Map Ordinal → Adapter ที่เชื่อมต่อจาก ucSetting (AdapterRegistry)</summary>
+        private static IInkjetAdapter? GetAdapterByOrdinal(int ordinal)
+        {
+            return ordinal switch
+            {
+                1 => AdapterRegistry.MK058,
+                2 => AdapterRegistry.MK059,
+                3 => AdapterRegistry.MK060,
+                4 => AdapterRegistry.MK061,
+                _ => null
+            };
+        }
+
+        /// <summary>Map Ordinal → ชื่อเครื่อง (สำหรับแสดง error)</summary>
+        private static string GetAdapterName(int ordinal)
+        {
+            return ordinal switch
+            {
+                1 => CustomSettingsManager.GetValue("MK058_NAME") ?? "MK-058",
+                2 => CustomSettingsManager.GetValue("MK059_NAME") ?? "MK-059",
+                3 => CustomSettingsManager.GetValue("MK060_NAME") ?? "MK-060",
+                4 => CustomSettingsManager.GetValue("MK061_NAME") ?? "MK-061",
+                _ => $"Unknown (Ordinal {ordinal})"
+            };
+        }
+
+        /// <summary>ส่งข้อมูล InkjetConfig ไปยังเครื่องพิมพ์ตาม Ordinal</summary>
+        private async Task<bool> SendConfigToAdapterAsync(InkjetConfigDto config)
+        {
+            int ordinal = config.Ordinal;
+            var adapter = GetAdapterByOrdinal(ordinal);
+            string name = GetAdapterName(ordinal);
+
+            // 1. เช็คว่ามี adapter อยู่ใน Registry ไหม
+            if (adapter == null)
+            {
+                MessageBox.Show(
+                    $"❌ ไม่พบการเชื่อมต่อสำหรับ {name}\n\n" +
+                    $"กรุณาไปที่หน้า Setting ตั้งค่า IP และเชื่อมต่อก่อน",
+                    Lang.Get("msg.connection_error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            // 2. เช็คว่าเชื่อมต่ออยู่จริงไหม
+            if (!adapter.IsConnected())
+            {
+                MessageBox.Show(
+                    $"❌ {name} ไม่ได้เชื่อมต่ออยู่\n\n" +
+                    $"กรุณาไปที่หน้า Setting ตรวจสอบสถานะการเชื่อมต่อ",
+                    Lang.Get("msg.connection_error"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            // 3. ส่งข้อมูลจริง
+            ApplyPatternRules(config.TextBlocks);
+
+            await adapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
+            await adapter.SendConfigAsync(config);
+            await SendTextBlocksToAdapterAsync(adapter, config.TextBlocks);
+
+            return true;
+        }
+
+        /// <summary>ส่ง TextBlocks ทั้งหมดไปยัง adapter ที่ระบุ</summary>
+        private async Task SendTextBlocksToAdapterAsync(IInkjetAdapter adapter, List<TextBlockDto>? textBlocks)
+        {
+            if (textBlocks == null) return;
+
+            foreach (var block in textBlocks)
+            {
+                string textToSend = !string.IsNullOrEmpty(block.RuleResult)
+                                    ? block.RuleResult
+                                    : block.Text ?? "";
+
+                var tempBlock = new TextBlockDto
+                {
+                    BlockNumber = block.BlockNumber,
+                    Text = textToSend,
+                    X = block.X,
+                    Y = block.Y,
+                    Size = block.Size,
+                    Scale = block.Scale
+                };
+
+                await adapter.SendTextBlockAsync(tempBlock, tempBlock.BlockNumber);
+                await Task.Delay(100);
+            }
+        }
+
+        // ══════════════════════════════════════════════
         //  SEND — MK1 / MK2
         // ══════════════════════════════════════════════
 
         private async void btnSendMk1Mk2_Click(object sender, EventArgs e)
         {
-            // 1. ดึง Job ที่เลือกอยู่จาก Grid (สมมติใช้ bindingSource1 เก็บรายการจาก API)
+            // 1. ดึง Job ที่เลือกอยู่
             if (bindingSource1.Current is not PrintJob selectedJob)
             {
-                MessageBox.Show("กรุณาเลือกรายการ Job ในตารางก่อนส่งข้อมูล");
+                MessageBox.Show(Lang.Get("msg.select_job"));
                 return;
             }
 
-            // 2. ดึง Config สำหรับ Inkjet (จากอีก BindingSource หนึ่ง)
-            if (bindSourceInkjetConfigDto.Current is not InkjetConfigDto config) return;
-
+            // 2. ดึง InkjetConfigs ทั้งหมดจาก Resolved Job
+            var configs = _currentResolved?.Pattern?.InkjetConfigs;
+            if (configs == null || configs.Count == 0)
+            {
+                MessageBox.Show(Lang.Get("msg.no_config"));
+                return;
+            }
+            
             try
             {
-                // --- ส่วนการส่งข้อมูล Inkjet ---
-                if (!await ConnectInkjetAsync()) return;
+                // 3. กรองเฉพาะ Ordinal 1 (MK058) และ 2 (MK059) แล้วส่งทีละตัว
+                var mk12Configs = configs.Where(c => c.Ordinal == 1 || c.Ordinal == 2).ToList();
 
-                ApplyPatternRules(config.TextBlocks);
-                await _inkjetAdapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
-                await _inkjetAdapter.SendConfigAsync(config);
-                await SendTextBlocksWithRuleAsync(config.TextBlocks);
-
-                // --- ส่วนการอัปเดต Status กลับไปยัง API ---
-                // ใช้ selectedJob.Id ที่เราดึงมาจากแถวที่เลือก
-                int jobId = selectedJob.Id;
-
-                var updateData = new { status = "Processing", st_status = "1" };
-                bool isUpdated = await _api.UpdateJobAsync(jobId, updateData);
-
-                if (isUpdated)
+                if (mk12Configs.Count == 0)
                 {
-                    // อัปเดต UI ในแอปเราด้วยเพื่อให้ Operator เห็นว่าสถานะเปลี่ยนแล้ว
-                    selectedJob.Status = "Processing";
-                    txtStatus.Text = "Processing";
-                    bindingSource1.ResetCurrentItem(); // สั่งให้ Grid บรรทัดนั้นรีเฟรชตัวอักษร
-                    MessageBox.Show($"ส่งข้อมูลและเริ่มประมวลผล Job ID: {jobId} เรียบร้อย");
+                    MessageBox.Show("ไม่พบ Config สำหรับ MK1/MK2 (Ordinal 1, 2)");
+                    return;
                 }
+
+                var results = new List<string>();
+                bool anyFailed = false;
+
+                foreach (var config in mk12Configs)
+                {
+                    string name = GetAdapterName(config.Ordinal);
+                    var adapter = GetAdapterByOrdinal(config.Ordinal);
+
+                    // ข้ามเครื่องที่ไม่ได้เชื่อมต่อ
+                    if (adapter == null || !adapter.IsConnected())
+                    {
+                        results.Add($"{name}: ⏭️ ข้าม (ไม่ได้เชื่อมต่อ)");
+                        anyFailed = true;
+                        continue;
+                    }
+
+                    bool ok = await SendConfigToAdapterAsync(config);
+                    results.Add($"{name}: {(ok ? "✅ สำเร็จ" : "❌ ล้มเหลว")}");
+                    if (!ok) anyFailed = true;
+                }
+
+                // อัปเดต Status เฉพาะเมื่อส่งสำเร็จทุกเครื่อง
+                if (!anyFailed)
+                {
+                    int jobId = selectedJob.Id;
+                    var updateData = new { status = "Processing", st_status = "1" };
+                    bool isUpdated = await _api.UpdateJobAsync(jobId, updateData);
+
+                    if (isUpdated)
+                    {
+                        selectedJob.Status = "Processing";
+                        txtStatus.Text = "Processing";
+                        bindingSource1.ResetCurrentItem();
+                    }
+                }
+
+                // แสดงผลรวม
+                string summary = string.Join("\n", results);
+                var icon = anyFailed ? MessageBoxIcon.Warning : MessageBoxIcon.Information;
+                var title = anyFailed ? Lang.Get("msg.warning") : Lang.Get("msg.success");
+                MessageBox.Show(
+                    $"ผลการส่ง Job ID: {selectedJob.Id}\n\n{summary}" +
+                    (anyFailed ? "\n\n⚠️ สถานะ Job ยังไม่ถูกอัปเดต เนื่องจากมีเครื่องส่งไม่สำเร็จ" : ""),
+                    title, MessageBoxButtons.OK, icon);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message);
+                MessageBox.Show(Lang.Format("msg.send_error", ex.Message));
             }
         }
 
