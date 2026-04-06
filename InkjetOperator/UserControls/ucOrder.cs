@@ -556,59 +556,87 @@ namespace InkjetOperator
                 return;
             }
 
-            // 2. ดึง InkjetConfigs ทั้งหมดจาก Resolved Job
+            // 2. ดึง Configs (Ordinal 1, 2)
             var configs = _currentResolved?.Pattern?.InkjetConfigs;
-            if (configs == null || configs.Count == 0)
+            var mk12Configs = configs?.Where(c => c.Ordinal == 1 || c.Ordinal == 2).ToList();
+
+            if (mk12Configs == null || mk12Configs.Count == 0)
             {
-                MessageBox.Show(Lang.Get("msg.no_config"));
+                MessageBox.Show("ไม่พบ Config สำหรับ MK1/MK2 (Ordinal 1, 2)");
                 return;
             }
 
-            // 3. ยืนยันก่อนส่ง
+            // 3. ยืนยันการส่ง
             var confirm = MessageBox.Show(
                 $"ต้องการส่งข้อมูลไปยัง MK1/MK2\nJob ID: {selectedJob.Id}\nBarcode: {selectedJob.BarcodeRaw}",
                 "ยืนยันการส่ง", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (confirm != DialogResult.Yes) return;
 
             btnSendMk1Mk2.Enabled = false;
+
             try
             {
-                // 3. กรองเฉพาะ Ordinal 1 (MK058) และ 2 (MK059) แล้วส่งทีละตัว
-                var mk12Configs = configs.Where(c => c.Ordinal == 1 || c.Ordinal == 2).ToList();
-
-                if (mk12Configs.Count == 0)
-                {
-                    MessageBox.Show("ไม่พบ Config สำหรับ MK1/MK2 (Ordinal 1, 2)");
-                    return;
-                }
-
-                var results = new List<string>();
-                bool anyFailed = false;
+                // === STEP 1: [PRE-CHECK] ตรวจสอบความพร้อมและเก็บผลลัพธ์เพื่อแสดงผลแบบรวม ===
+                var checkResults = new List<string>();
+                var readyToProcess = new List<(IInkjetAdapter Adapter, InkjetConfigDto Config, string Name)>();
+                bool isAnyDisconnected = false;
 
                 foreach (var config in mk12Configs)
                 {
                     string name = GetAdapterName(config.Ordinal);
                     var adapter = GetAdapterByOrdinal(config.Ordinal);
+                    bool isConnected = adapter != null && adapter.IsConnected();
 
-                    // ข้ามเครื่องที่ไม่ได้เชื่อมต่อ
-                    if (adapter == null || !adapter.IsConnected())
+                    if (isConnected)
                     {
-                        results.Add($"{name}: ⏭️ ข้าม (ไม่ได้เชื่อมต่อ)");
-                        anyFailed = true;
-                        continue;
+                        checkResults.Add($"{name}: ✅ เชื่อมต่อสำเร็จ");
+                        readyToProcess.Add((adapter!, config, name));
                     }
-
-                    bool ok = await SendConfigToAdapterAsync(config);
-                    results.Add($"{name}: {(ok ? "✅ สำเร็จ" : "❌ ล้มเหลว")}");
-                    if (!ok) anyFailed = true;
+                    else
+                    {
+                        checkResults.Add($"{name}: ❌ เชื่อมต่อไม่สำเร็จ");
+                        isAnyDisconnected = true;
+                    }
                 }
 
-                // อัปเดต Status เฉพาะเมื่อส่งสำเร็จทุกเครื่อง
-                if (!anyFailed)
+                // --- หากมีเครื่องใดเครื่องหนึ่งไม่พร้อม ให้แสดงผลสรุปแบบ Error และหยุดทันที ---
+                if (isAnyDisconnected)
                 {
-                    int jobId = selectedJob.Id;
+                    string checkSummary = string.Join("\n", checkResults);
+                    MessageBox.Show(
+                        $"ผลการตรวจสอบ Job ID: {selectedJob.Id}\n\n" +
+                        $"{checkSummary}\n\n" +
+                        "⚠️ สถานะ Job ยังไม่ถูกอัปเดต เนื่องจากมีเครื่องเชื่อมต่อไม่สำเร็จ",
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+
+                    return; // หยุดการทำงานทันที
+                }
+
+                // === STEP 2: [SENDING] เริ่มส่งข้อมูล (เฉพาะเมื่อทุกเครื่องพร้อมแล้ว) ===
+                var sendResults = new List<string>();
+                bool allSendSuccess = true;
+
+                foreach (var item in readyToProcess)
+                {
+                    ApplyPatternRules(item.Config.TextBlocks);
+                    bool ok = await SendConfigToAdapterAsync(item.Config);
+
+                    sendResults.Add($"{item.Name}: {(ok ? "✅ ส่งสำเร็จ" : "❌ ส่งล้มเหลว")}");
+
+                    if (!ok)
+                    {
+                        allSendSuccess = false;
+                        break; // หยุดส่งเครื่องถัดไปหากเครื่องนี้พลาด
+                    }
+                }
+
+                // === STEP 3: [FINALIZE] อัปเดตสถานะและแจ้งผลการส่ง ===
+                if (allSendSuccess)
+                {
                     var updateData = new { status = "Processing", st_status = "1" };
-                    bool isUpdated = await _api.UpdateJobAsync(jobId, updateData);
+                    bool isUpdated = await _api.UpdateJobAsync(selectedJob.Id, updateData);
 
                     if (isUpdated)
                     {
@@ -616,20 +644,30 @@ namespace InkjetOperator
                         txtStatus.Text = "Processing";
                         bindingSource1.ResetCurrentItem();
                     }
-                }
 
-                // แสดงผลรวม
-                string summary = string.Join("\n", results);
-                var icon = anyFailed ? MessageBoxIcon.Warning : MessageBoxIcon.Information;
-                var title = anyFailed ? Lang.Get("msg.warning") : Lang.Get("msg.success");
-                MessageBox.Show(
-                    $"ผลการส่ง Job ID: {selectedJob.Id}\n\n{summary}" +
-                    (anyFailed ? "\n\n⚠️ สถานะ Job ยังไม่ถูกอัปเดต เนื่องจากมีเครื่องส่งไม่สำเร็จ" : ""),
-                    title, MessageBoxButtons.OK, icon);
+                    MessageBox.Show(
+                        $"ผลการส่ง Job ID: {selectedJob.Id}\n\n{string.Join("\n", sendResults)}",
+                        Lang.Get("msg.success"),
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show(
+                        $"ผลการส่ง Job ID: {selectedJob.Id}\n\n{string.Join("\n", sendResults)}\n\n" +
+                        "⚠️ สถานะ Job ยังไม่ถูกอัปเดต เนื่องจากมีบางเครื่องส่งไม่สำเร็จ",
+                        Lang.Get("msg.warning"),
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(Lang.Format("msg.send_error", ex.Message));
+                MessageBox.Show(Lang.Format("msg.send_error", ex.Message), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                btnSendMk1Mk2.Enabled = true;
             }
         }
 
