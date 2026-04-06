@@ -189,13 +189,23 @@ namespace InkjetOperator
         // ══════════════════════════════════════════════
 
         /// <summary>โหลด detail ของ Job ที่เลือกอยู่ → bind Config → เลือก Config แรก → bind TextBlock</summary>
-        private async Task LoadJobDetailAsync()
+        /// <summary>โหลด detail ของ Job ที่เลือกอยู่ → bind Config → เลือก Config แรก → bind TextBlock</summary>
+        private async Task LoadJobDetailAsync(BindingSource? source = null)
         {
-            // 1. ตรวจสอบว่ามีรายการถูกเลือกจาก BindingSource ตัวไหนอยู่
-            // ใช้เครื่องหมาย ?? (Null-coalescing) เพื่อไล่ลำดับการเช็ค
-            var selectedJob = (bindingSource1.Current as PrintJob)
+            // ถ้าระบุ source มา ใช้ตัวนั้นเลย
+            // ถ้าไม่ระบุ ไล่เช็คตามลำดับ (fallback สำหรับกรณีเรียกจาก timer/first load)
+            PrintJob? selectedJob;
+
+            if (source != null)
+            {
+                selectedJob = source.Current as PrintJob;
+            }
+            else
+            {
+                selectedJob = (bindingSource1.Current as PrintJob)
                            ?? (bindingSourceJobSt3.Current as PrintJob)
                            ?? (bindingSourceJobCompleted.Current as PrintJob);
+            }
 
             if (selectedJob == null)
             {
@@ -212,8 +222,7 @@ namespace InkjetOperator
             try
             {
                 // 3. ดึงข้อมูลรายละเอียดเชิงลึก (Resolved Job) จาก API
-                // มั่นใจว่า QueryBackendJobAsync() อ้างอิง Id จาก selectedJob ตัวล่าสุด
-                await QueryBackendJobAsync();
+                _currentResolved = await _api.GetResolvedJobAsync(selectedJob.Id);
 
                 // 4. ผูกข้อมูล InkjetConfigs เข้ากับ Grid รายละเอียด
                 if (_currentResolved?.Pattern?.InkjetConfigs != null)
@@ -296,9 +305,7 @@ namespace InkjetOperator
         private async void dgvList_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
-
-            // เมื่อเลือก Job ใหม่ → refresh detail ทั้งหมด (Config + TextBlock)
-            await LoadJobDetailAsync();
+            await LoadJobDetailAsync(bindingSource1);
             disable_button();
         }
 
@@ -1031,12 +1038,14 @@ namespace InkjetOperator
 
         private async void dataGridView2_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            await LoadJobDetailAsync();
+            if (e.RowIndex < 0) return;
+            await LoadJobDetailAsync(bindingSourceJobSt3);
         }
 
         private async void dgvHistory_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            await LoadJobDetailAsync();
+            if (e.RowIndex < 0) return;
+            await LoadJobDetailAsync(bindingSourceJobCompleted);
         }
     }
 }
