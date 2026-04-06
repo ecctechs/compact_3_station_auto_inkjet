@@ -890,7 +890,7 @@
             btnSendMk3.Name = "btnSendMk3";
             btnSendMk3.Size = new Size(120, 44);
             btnSendMk3.TabIndex = 3;
-            btnSendMk3.Text = "ส่งหา MK3";
+            btnSendMk3.Text = "ส่งหา MK3,MK4";
             btnSendMk3.Click += btnSendMk3_Click;
             // 
             // btnSendUV2
