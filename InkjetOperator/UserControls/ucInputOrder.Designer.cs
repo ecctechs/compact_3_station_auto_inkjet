@@ -35,8 +35,8 @@
             lblQty = new Label();
             txtQty = new TextBox();
             lblScanStatus = new Label();
-            lblTitle = new Label();
             picBarcode = new PictureBox();
+            lblTitle = new Label();
             pnlMain.SuspendLayout();
             pnlButtons.SuspendLayout();
             pnlFormContainer.SuspendLayout();
@@ -272,18 +272,6 @@
             lblScanStatus.TextAlign = ContentAlignment.MiddleCenter;
             lblScanStatus.Visible = false;
             // 
-            // lblTitle
-            // 
-            lblTitle.AutoSize = true;
-            lblTitle.Font = new Font("Segoe UI", 36F, FontStyle.Bold);
-            lblTitle.ForeColor = Color.Black;
-            lblTitle.Location = new Point(502, 30);
-            lblTitle.Margin = new Padding(4, 0, 4, 0);
-            lblTitle.Name = "lblTitle";
-            lblTitle.Size = new Size(495, 96);
-            lblTitle.TabIndex = 4;
-            lblTitle.Text = "Scan Barcode";
-            // 
             // picBarcode
             // 
             picBarcode.BackColor = Color.FromArgb(230, 240, 250);
@@ -296,6 +284,18 @@
             picBarcode.SizeMode = PictureBoxSizeMode.Zoom;
             picBarcode.TabIndex = 3;
             picBarcode.TabStop = false;
+            // 
+            // lblTitle
+            // 
+            lblTitle.AutoSize = true;
+            lblTitle.Font = new Font("Segoe UI", 36F, FontStyle.Bold);
+            lblTitle.ForeColor = Color.Black;
+            lblTitle.Location = new Point(502, 30);
+            lblTitle.Margin = new Padding(4, 0, 4, 0);
+            lblTitle.Name = "lblTitle";
+            lblTitle.Size = new Size(495, 96);
+            lblTitle.TabIndex = 4;
+            lblTitle.Text = "Scan Barcode";
             // 
             // ucInputOrder
             // 
