@@ -45,9 +45,9 @@
             pnlMenu.Controls.Add(btnInput);
             pnlMenu.Dock = DockStyle.Top;
             pnlMenu.Location = new Point(0, 0);
-            pnlMenu.Margin = new Padding(3, 4, 3, 4);
+            pnlMenu.Margin = new Padding(4, 5, 4, 5);
             pnlMenu.Name = "pnlMenu";
-            pnlMenu.Size = new Size(1152, 80);
+            pnlMenu.Size = new Size(1440, 98);
             pnlMenu.TabIndex = 1;
             // 
             // button1
@@ -57,10 +57,10 @@
             button1.FlatStyle = FlatStyle.Flat;
             button1.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             button1.ForeColor = Color.White;
-            button1.Location = new Point(666, 13);
-            button1.Margin = new Padding(3, 4, 3, 4);
+            button1.Location = new Point(832, 16);
+            button1.Margin = new Padding(4, 5, 4, 5);
             button1.Name = "button1";
-            button1.Size = new Size(142, 53);
+            button1.Size = new Size(178, 66);
             button1.TabIndex = 5;
             button1.Text = "Job ST3";
             button1.UseVisualStyleBackColor = false;
@@ -72,10 +72,10 @@
             btnBot.FlatStyle = FlatStyle.Flat;
             btnBot.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             btnBot.ForeColor = Color.White;
-            btnBot.Location = new Point(496, 13);
-            btnBot.Margin = new Padding(3, 4, 3, 4);
+            btnBot.Location = new Point(620, 16);
+            btnBot.Margin = new Padding(4, 5, 4, 5);
             btnBot.Name = "btnBot";
-            btnBot.Size = new Size(149, 53);
+            btnBot.Size = new Size(186, 66);
             btnBot.TabIndex = 4;
             btnBot.Text = "Bot UV";
             btnBot.UseVisualStyleBackColor = false;
@@ -86,10 +86,11 @@
             lblLanguage.BackColor = Color.Black;
             lblLanguage.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             lblLanguage.ForeColor = Color.White;
-            lblLanguage.Location = new Point(1097, 20);
+            lblLanguage.Location = new Point(1371, 25);
+            lblLanguage.Margin = new Padding(4, 0, 4, 0);
             lblLanguage.Name = "lblLanguage";
-            lblLanguage.Padding = new Padding(6, 3, 6, 3);
-            lblLanguage.Size = new Size(44, 29);
+            lblLanguage.Padding = new Padding(8, 4, 8, 4);
+            lblLanguage.Size = new Size(55, 36);
             lblLanguage.TabIndex = 0;
             lblLanguage.Text = "EN";
             // 
@@ -98,10 +99,10 @@
             picLogo.ErrorImage = null;
             picLogo.Image = (Image)resources.GetObject("picLogo.Image");
             picLogo.InitialImage = (Image)resources.GetObject("picLogo.InitialImage");
-            picLogo.Location = new Point(999, 5);
-            picLogo.Margin = new Padding(3, 4, 3, 4);
+            picLogo.Location = new Point(1249, 6);
+            picLogo.Margin = new Padding(4, 5, 4, 5);
             picLogo.Name = "picLogo";
-            picLogo.Size = new Size(91, 67);
+            picLogo.Size = new Size(114, 84);
             picLogo.SizeMode = PictureBoxSizeMode.Zoom;
             picLogo.TabIndex = 1;
             picLogo.TabStop = false;
@@ -113,10 +114,10 @@
             btnSetting.FlatStyle = FlatStyle.Flat;
             btnSetting.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             btnSetting.ForeColor = Color.White;
-            btnSetting.Location = new Point(825, 13);
-            btnSetting.Margin = new Padding(3, 4, 3, 4);
+            btnSetting.Location = new Point(1031, 16);
+            btnSetting.Margin = new Padding(4, 5, 4, 5);
             btnSetting.Name = "btnSetting";
-            btnSetting.Size = new Size(149, 53);
+            btnSetting.Size = new Size(186, 66);
             btnSetting.TabIndex = 3;
             btnSetting.Text = "Setting";
             btnSetting.UseVisualStyleBackColor = false;
@@ -128,10 +129,10 @@
             btnEdit.FlatStyle = FlatStyle.Flat;
             btnEdit.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             btnEdit.ForeColor = Color.White;
-            btnEdit.Location = new Point(331, 13);
-            btnEdit.Margin = new Padding(3, 4, 3, 4);
+            btnEdit.Location = new Point(414, 16);
+            btnEdit.Margin = new Padding(4, 5, 4, 5);
             btnEdit.Name = "btnEdit";
-            btnEdit.Size = new Size(149, 53);
+            btnEdit.Size = new Size(186, 66);
             btnEdit.TabIndex = 2;
             btnEdit.Text = "Edit Pattern";
             btnEdit.UseVisualStyleBackColor = false;
@@ -143,10 +144,10 @@
             btnOrder.FlatStyle = FlatStyle.Flat;
             btnOrder.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             btnOrder.ForeColor = Color.White;
-            btnOrder.Location = new Point(171, 13);
-            btnOrder.Margin = new Padding(3, 4, 3, 4);
+            btnOrder.Location = new Point(214, 16);
+            btnOrder.Margin = new Padding(4, 5, 4, 5);
             btnOrder.Name = "btnOrder";
-            btnOrder.Size = new Size(149, 53);
+            btnOrder.Size = new Size(186, 66);
             btnOrder.TabIndex = 1;
             btnOrder.Text = "Order List";
             btnOrder.UseVisualStyleBackColor = false;
@@ -158,10 +159,10 @@
             btnInput.FlatStyle = FlatStyle.Flat;
             btnInput.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             btnInput.ForeColor = Color.White;
-            btnInput.Location = new Point(11, 13);
-            btnInput.Margin = new Padding(3, 4, 3, 4);
+            btnInput.Location = new Point(14, 16);
+            btnInput.Margin = new Padding(4, 5, 4, 5);
             btnInput.Name = "btnInput";
-            btnInput.Size = new Size(149, 53);
+            btnInput.Size = new Size(186, 66);
             btnInput.TabIndex = 0;
             btnInput.Text = "Input Order";
             btnInput.UseVisualStyleBackColor = false;
@@ -170,20 +171,20 @@
             // 
             pnlContent.BackColor = Color.White;
             pnlContent.Dock = DockStyle.Fill;
-            pnlContent.Location = new Point(0, 80);
-            pnlContent.Margin = new Padding(3, 4, 3, 4);
+            pnlContent.Location = new Point(0, 98);
+            pnlContent.Margin = new Padding(4, 5, 4, 5);
             pnlContent.Name = "pnlContent";
-            pnlContent.Size = new Size(1152, 939);
+            pnlContent.Size = new Size(1440, 1176);
             pnlContent.TabIndex = 0;
             // 
             // Form1
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1152, 1019);
+            ClientSize = new Size(1440, 1274);
             Controls.Add(pnlContent);
             Controls.Add(pnlMenu);
-            Margin = new Padding(3, 4, 3, 4);
+            Margin = new Padding(4, 5, 4, 5);
             Name = "Form1";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Inkjet Operator";

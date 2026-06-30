@@ -84,6 +84,16 @@ namespace InkjetOperator
                     pnlMenu.Controls.RemoveAt(i);
             }
 
+            int btnHeight = 40;
+            int btnY = 8;
+            pnlMenu.Height = btnY + btnHeight + btnY;
+
+            picLogo.Top = 2;
+            picLogo.Height = pnlMenu.Height - 4;
+            picLogo.Width = picLogo.Height;
+
+            lblLanguage.Top = (pnlMenu.Height - lblLanguage.Height) / 2;
+
             int x = 10;
             int index = 0;
 
@@ -152,7 +162,7 @@ namespace InkjetOperator
         {
             var btn = new Button();
             btn.Text = text;
-            btn.Location = new Point(x, 10);
+            btn.Location = new Point(x, 8);
             btn.Size = new Size(130, 40);
             btn.FlatStyle = FlatStyle.Flat;
             btn.FlatAppearance.BorderSize = 0;

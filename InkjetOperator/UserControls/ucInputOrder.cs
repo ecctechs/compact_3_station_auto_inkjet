@@ -33,8 +33,20 @@ namespace InkjetOperator
             SetupEvents();
             this.Dock = DockStyle.Fill;
 
-            _api = ApiProvider.Instance; // 🔥 ใช้จาก global
+            _api = ApiProvider.Instance;
             ApplyLanguage();
+
+            pnlMain.Resize += (s, e) => CenterControls();
+            CenterControls();
+        }
+
+        private void CenterControls()
+        {
+            int cx = pnlMain.Width / 2;
+            lblTitle.Left = cx - lblTitle.Width / 2;
+            picBarcode.Left = cx - picBarcode.Width / 2;
+            pnlFormContainer.Left = cx - pnlFormContainer.Width / 2;
+            pnlButtons.Left = cx - pnlButtons.Width / 2;
         }
 
         public void ApplyLanguage()
@@ -136,7 +148,6 @@ namespace InkjetOperator
             picBarcode.BackColor = fromScanner
                 ? Color.FromArgb(200, 255, 200)
                 : Color.FromArgb(230, 240, 250);
-            picBarcode.Invalidate();
         }
 
         private void AutoFillFromBarcode(string barcode)
@@ -433,68 +444,6 @@ namespace InkjetOperator
             lblScanStatus.Font = new Font("Segoe UI", 12, FontStyle.Bold);
         }
 
-        private void picBarcode_Paint(object? sender, PaintEventArgs e)
-        {
-            Graphics g = e.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-
-            using (var brush = new SolidBrush(picBarcode.BackColor))
-            {
-                g.FillRectangle(brush, picBarcode.ClientRectangle);
-            }
-
-            using (var pen = new Pen(Color.White, 3))
-            {
-                var rect = new Rectangle(1, 1, picBarcode.Width - 3, picBarcode.Height - 3);
-                using (var path = GetRoundedRect(rect, 20))
-                {
-                    g.DrawPath(pen, path);
-                }
-            }
-
-            DrawBarcodeLines(g);
-        }
-
-        private void DrawBarcodeLines(Graphics g)
-        {
-            int startX = 50;
-            int startY = 25;
-            int height = 50;
-            Random rand = new Random(42);
-
-            for (int i = 0; i < 20; i++)
-            {
-                int width = rand.Next(2, 6);
-                using (var brush = new SolidBrush(Color.Black))
-                {
-                    g.FillRectangle(brush, startX + (i * 10), startY, width, height);
-                }
-            }
-
-            string displayText = string.IsNullOrEmpty(_lastScannedBarcode)
-                ? "SCAN HERE"
-                : _lastScannedBarcode.Substring(0, Math.Min(15, _lastScannedBarcode.Length));
-
-            using (var font = new Font("Consolas", 10, FontStyle.Regular))
-            using (var brush = new SolidBrush(Color.Black))
-            {
-                var size = g.MeasureString(displayText, font);
-                g.DrawString(displayText, font, brush,
-                    (picBarcode.Width - size.Width) / 2, startY + height + 8);
-            }
-        }
-
-        private GraphicsPath GetRoundedRect(Rectangle rect, int radius)
-        {
-            GraphicsPath path = new GraphicsPath();
-            int d = radius * 2;
-            path.AddArc(rect.X, rect.Y, d, d, 180, 90);
-            path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
-            path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
-            path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
-            path.CloseFigure();
-            return path;
-        }
 
         private void btnOK_Click_1(object sender, EventArgs e)
         {
