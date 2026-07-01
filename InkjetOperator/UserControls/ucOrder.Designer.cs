@@ -144,10 +144,10 @@
             // tabList
             // 
             tabList.Controls.Add(dgvList);
-            tabList.Location = new Point(4, 29);
+            tabList.Location = new Point(4, 34);
             tabList.Name = "tabList";
             tabList.Padding = new Padding(3);
-            tabList.Size = new Size(445, 289);
+            tabList.Size = new Size(445, 284);
             tabList.TabIndex = 0;
             tabList.Text = "List";
             // 
@@ -164,7 +164,7 @@
             dgvList.Name = "dgvList";
             dgvList.ReadOnly = true;
             dgvList.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
-            dgvList.Size = new Size(439, 283);
+            dgvList.Size = new Size(439, 278);
             dgvList.TabIndex = 0;
             dgvList.CellClick += dgvList_CellClick;
             dgvList.CellContentClick += dgvList_CellContentClick;
@@ -224,10 +224,10 @@
             // tabHistory
             // 
             tabHistory.Controls.Add(dgvHistory);
-            tabHistory.Location = new Point(4, 29);
+            tabHistory.Location = new Point(4, 34);
             tabHistory.Name = "tabHistory";
             tabHistory.Padding = new Padding(3);
-            tabHistory.Size = new Size(445, 289);
+            tabHistory.Size = new Size(445, 284);
             tabHistory.TabIndex = 1;
             tabHistory.Text = "History";
             // 
@@ -244,7 +244,7 @@
             dgvHistory.Name = "dgvHistory";
             dgvHistory.ReadOnly = true;
             dgvHistory.RowHeadersWidth = 51;
-            dgvHistory.Size = new Size(439, 283);
+            dgvHistory.Size = new Size(439, 278);
             dgvHistory.TabIndex = 0;
             dgvHistory.CellClick += dgvHistory_CellClick;
             // 
@@ -493,7 +493,7 @@
             lblDetailTitle.Location = new Point(3, 6);
             lblDetailTitle.Margin = new Padding(3, 6, 3, 6);
             lblDetailTitle.Name = "lblDetailTitle";
-            lblDetailTitle.Size = new Size(100, 25);
+            lblDetailTitle.Size = new Size(117, 30);
             lblDetailTitle.TabIndex = 0;
             lblDetailTitle.Text = "Job Detail";
             // 
@@ -518,12 +518,12 @@
             pnlJobInfo.Controls.Add(lblPattern, 0, 1);
             pnlJobInfo.Controls.Add(txtPattern, 1, 1);
             pnlJobInfo.Dock = DockStyle.Fill;
-            pnlJobInfo.Location = new Point(3, 40);
+            pnlJobInfo.Location = new Point(3, 45);
             pnlJobInfo.Name = "pnlJobInfo";
             pnlJobInfo.RowCount = 2;
             pnlJobInfo.RowStyles.Add(new RowStyle());
             pnlJobInfo.RowStyles.Add(new RowStyle());
-            pnlJobInfo.Size = new Size(750, 66);
+            pnlJobInfo.Size = new Size(750, 74);
             pnlJobInfo.TabIndex = 1;
             // 
             // lblBarcode
@@ -533,87 +533,87 @@
             lblBarcode.Location = new Point(3, 6);
             lblBarcode.Margin = new Padding(3, 6, 3, 6);
             lblBarcode.Name = "lblBarcode";
-            lblBarcode.Size = new Size(67, 20);
+            lblBarcode.Size = new Size(80, 25);
             lblBarcode.TabIndex = 0;
             lblBarcode.Text = "Barcode:";
             // 
             // txtBarcode
             // 
             txtBarcode.Dock = DockStyle.Fill;
-            txtBarcode.Location = new Point(76, 3);
+            txtBarcode.Location = new Point(89, 3);
             txtBarcode.Name = "txtBarcode";
             txtBarcode.ReadOnly = true;
-            txtBarcode.Size = new Size(168, 27);
+            txtBarcode.Size = new Size(158, 31);
             txtBarcode.TabIndex = 1;
             // 
             // lblLot
             // 
             lblLot.Anchor = AnchorStyles.Left;
             lblLot.AutoSize = true;
-            lblLot.Location = new Point(250, 6);
+            lblLot.Location = new Point(253, 6);
             lblLot.Margin = new Padding(3, 6, 3, 6);
             lblLot.Name = "lblLot";
-            lblLot.Size = new Size(33, 20);
+            lblLot.Size = new Size(41, 25);
             lblLot.TabIndex = 2;
             lblLot.Text = "Lot:";
             // 
             // txtLot
             // 
             txtLot.Dock = DockStyle.Fill;
-            txtLot.Location = new Point(289, 3);
+            txtLot.Location = new Point(300, 3);
             txtLot.Name = "txtLot";
             txtLot.ReadOnly = true;
-            txtLot.Size = new Size(139, 27);
+            txtLot.Size = new Size(130, 31);
             txtLot.TabIndex = 3;
             // 
             // lblStatus
             // 
             lblStatus.Anchor = AnchorStyles.Left;
             lblStatus.AutoSize = true;
-            lblStatus.Location = new Point(434, 6);
+            lblStatus.Location = new Point(436, 6);
             lblStatus.Margin = new Padding(3, 6, 3, 6);
             lblStatus.Name = "lblStatus";
-            lblStatus.Size = new Size(52, 20);
+            lblStatus.Size = new Size(64, 25);
             lblStatus.TabIndex = 4;
             lblStatus.Text = "Status:";
             // 
             // txtStatus
             // 
             txtStatus.Dock = DockStyle.Fill;
-            txtStatus.Location = new Point(492, 3);
+            txtStatus.Location = new Point(506, 3);
             txtStatus.Name = "txtStatus";
             txtStatus.ReadOnly = true;
-            txtStatus.Size = new Size(110, 27);
+            txtStatus.Size = new Size(103, 31);
             txtStatus.TabIndex = 5;
             // 
             // lblPattern
             // 
             lblPattern.Anchor = AnchorStyles.Left;
             lblPattern.AutoSize = true;
-            lblPattern.Location = new Point(3, 39);
+            lblPattern.Location = new Point(3, 43);
             lblPattern.Margin = new Padding(3, 6, 3, 6);
             lblPattern.Name = "lblPattern";
-            lblPattern.Size = new Size(58, 20);
+            lblPattern.Size = new Size(71, 25);
             lblPattern.TabIndex = 6;
             lblPattern.Text = "Pattern:";
             // 
             // txtPattern
             // 
             txtPattern.Dock = DockStyle.Fill;
-            txtPattern.Location = new Point(76, 36);
+            txtPattern.Location = new Point(89, 40);
             txtPattern.Name = "txtPattern";
             txtPattern.ReadOnly = true;
-            txtPattern.Size = new Size(168, 27);
+            txtPattern.Size = new Size(158, 31);
             txtPattern.TabIndex = 7;
             // 
             // grpInkjetConfigs
             // 
             grpInkjetConfigs.Controls.Add(dgvConfigs);
             grpInkjetConfigs.Dock = DockStyle.Fill;
-            grpInkjetConfigs.Location = new Point(3, 112);
+            grpInkjetConfigs.Location = new Point(3, 125);
             grpInkjetConfigs.Name = "grpInkjetConfigs";
             grpInkjetConfigs.Padding = new Padding(3, 4, 3, 4);
-            grpInkjetConfigs.Size = new Size(750, 187);
+            grpInkjetConfigs.Size = new Size(750, 182);
             grpInkjetConfigs.TabIndex = 2;
             grpInkjetConfigs.TabStop = false;
             grpInkjetConfigs.Text = "Inkjet Configs";
@@ -628,11 +628,11 @@
             dgvConfigs.Columns.AddRange(new DataGridViewColumn[] { ordinalDataGridViewTextBoxColumn, programNumberDataGridViewTextBoxColumn, programNameDataGridViewTextBoxColumn, widthDataGridViewTextBoxColumn, heightDataGridViewTextBoxColumn, triggerDelayDataGridViewTextBoxColumn, directionDataGridViewTextBoxColumn });
             dgvConfigs.DataSource = bindSourceInkjetConfigDto;
             dgvConfigs.Dock = DockStyle.Fill;
-            dgvConfigs.Location = new Point(3, 24);
+            dgvConfigs.Location = new Point(3, 28);
             dgvConfigs.Name = "dgvConfigs";
             dgvConfigs.ReadOnly = true;
             dgvConfigs.RowHeadersWidth = 51;
-            dgvConfigs.Size = new Size(744, 159);
+            dgvConfigs.Size = new Size(744, 150);
             dgvConfigs.TabIndex = 0;
             dgvConfigs.CellClick += dgvConfigs_CellClick;
             // 
@@ -700,10 +700,10 @@
             // 
             grpTextBlocks.Controls.Add(dgvTextBlocks);
             grpTextBlocks.Dock = DockStyle.Fill;
-            grpTextBlocks.Location = new Point(3, 305);
+            grpTextBlocks.Location = new Point(3, 313);
             grpTextBlocks.Name = "grpTextBlocks";
             grpTextBlocks.Padding = new Padding(3, 4, 3, 4);
-            grpTextBlocks.Size = new Size(750, 187);
+            grpTextBlocks.Size = new Size(750, 182);
             grpTextBlocks.TabIndex = 3;
             grpTextBlocks.TabStop = false;
             grpTextBlocks.Text = "Text Blocks";
@@ -718,11 +718,11 @@
             dgvTextBlocks.Columns.AddRange(new DataGridViewColumn[] { blockNumberDataGridViewTextBoxColumn, textDataGridViewTextBoxColumn, xDataGridViewTextBoxColumn, yDataGridViewTextBoxColumn, sizeDataGridViewTextBoxColumn, scaleDataGridViewTextBoxColumn, RuleResult });
             dgvTextBlocks.DataSource = bindingSourceTextBlockDto;
             dgvTextBlocks.Dock = DockStyle.Fill;
-            dgvTextBlocks.Location = new Point(3, 24);
+            dgvTextBlocks.Location = new Point(3, 28);
             dgvTextBlocks.Name = "dgvTextBlocks";
             dgvTextBlocks.ReadOnly = true;
             dgvTextBlocks.RowHeadersWidth = 51;
-            dgvTextBlocks.Size = new Size(744, 159);
+            dgvTextBlocks.Size = new Size(744, 150);
             dgvTextBlocks.TabIndex = 0;
             // 
             // blockNumberDataGridViewTextBoxColumn
@@ -789,10 +789,10 @@
             // 
             groupBox1.Controls.Add(dataGridView1);
             groupBox1.Dock = DockStyle.Fill;
-            groupBox1.Location = new Point(3, 498);
+            groupBox1.Location = new Point(3, 501);
             groupBox1.Name = "groupBox1";
             groupBox1.Padding = new Padding(3, 4, 3, 4);
-            groupBox1.Size = new Size(750, 187);
+            groupBox1.Size = new Size(750, 182);
             groupBox1.TabIndex = 4;
             groupBox1.TabStop = false;
             groupBox1.Text = "Inkjet UV";
@@ -807,10 +807,10 @@
             dataGridView1.Columns.AddRange(new DataGridViewColumn[] { idDataGridViewTextBoxColumn, inkjetNameDataGridViewTextBoxColumn, Lot, Name, ProgramName });
             dataGridView1.DataSource = bindingSourceUVinkjet;
             dataGridView1.Dock = DockStyle.Fill;
-            dataGridView1.Location = new Point(3, 24);
+            dataGridView1.Location = new Point(3, 28);
             dataGridView1.Name = "dataGridView1";
             dataGridView1.RowHeadersWidth = 51;
-            dataGridView1.Size = new Size(744, 159);
+            dataGridView1.Size = new Size(744, 150);
             dataGridView1.TabIndex = 0;
             // 
             // idDataGridViewTextBoxColumn
@@ -860,24 +860,24 @@
             pnlButtons.Controls.Add(btnSendMk3);
             pnlButtons.Controls.Add(btnSendUV2);
             pnlButtons.Dock = DockStyle.Fill;
-            pnlButtons.Location = new Point(3, 691);
+            pnlButtons.Location = new Point(3, 689);
             pnlButtons.Name = "pnlButtons";
             pnlButtons.Padding = new Padding(0, 6, 0, 6);
-            pnlButtons.Size = new Size(750, 62);
+            pnlButtons.Size = new Size(750, 64);
             pnlButtons.TabIndex = 5;
             // 
             // btnSendMk1Mk2
             // 
             btnSendMk1Mk2.Location = new Point(3, 9);
             btnSendMk1Mk2.Name = "btnSendMk1Mk2";
-            btnSendMk1Mk2.Size = new Size(130, 44);
+            btnSendMk1Mk2.Size = new Size(160, 44);
             btnSendMk1Mk2.TabIndex = 2;
             btnSendMk1Mk2.Text = "ส่งหา MK1,MK2";
             btnSendMk1Mk2.Click += btnSendMk1Mk2_Click;
             // 
             // btnSendUV1
             // 
-            btnSendUV1.Location = new Point(139, 9);
+            btnSendUV1.Location = new Point(169, 9);
             btnSendUV1.Name = "btnSendUV1";
             btnSendUV1.Size = new Size(120, 44);
             btnSendUV1.TabIndex = 4;
@@ -886,7 +886,7 @@
             // 
             // btnSendMk3
             // 
-            btnSendMk3.Location = new Point(265, 9);
+            btnSendMk3.Location = new Point(295, 9);
             btnSendMk3.Name = "btnSendMk3";
             btnSendMk3.Size = new Size(120, 44);
             btnSendMk3.TabIndex = 3;
@@ -895,7 +895,7 @@
             // 
             // btnSendUV2
             // 
-            btnSendUV2.Location = new Point(391, 9);
+            btnSendUV2.Location = new Point(421, 9);
             btnSendUV2.Name = "btnSendUV2";
             btnSendUV2.Size = new Size(120, 44);
             btnSendUV2.TabIndex = 5;
