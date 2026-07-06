@@ -192,7 +192,7 @@ namespace InkjetOperator
                 return;
 
             string barcodeRaw = txtBarcode.Text.Trim();
-            string patternNo = GetPatternNo(barcodeRaw);
+            string patternNo = BarcodeParser.GetPatternNo(barcodeRaw);
 
             // 2. ตรวจสอบข้อมูลใน SQLite
             var pattern = await _sqliteService.GetPatternDetailAsync(patternNo);
@@ -307,15 +307,6 @@ namespace InkjetOperator
             return true;
         }
 
-        /// <summary>
-        /// จัดการตัดสตริงเอาเฉพาะ Pattern Number
-        /// </summary>
-        private string GetPatternNo(string barcode)
-        {
-            int lastDashIndex = barcode.LastIndexOf('-');
-            // ถ้าผ่าน Validation มาแล้ว lastDashIndex จะไม่มีทางเป็น -1
-            return barcode.Substring(0, lastDashIndex);
-        }
 
         /// <summary>
         /// ทำความสะอาดข้อมูลและส่ง Pattern ไปยัง Backend
