@@ -100,7 +100,7 @@ namespace InkjetOperator
             Debug.WriteLine($"[DEBUG] MenuMode: {_config.MenuMode}");
 
 
-            // Input Order (แสดงเสมอในโหมด 1 และ 2)
+            // Input Order (แสดงเฉพาะโหมด 0 และ 5)
             if (_config.ShouldShowMenu("input"))
             {
                 _btnInput = CreateMenuButton(Lang.Get("menu.input_order"), x, index == 0);

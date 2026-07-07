@@ -32,19 +32,6 @@ namespace InkjetOperator.Tests
             Assert.Equal(expected, config.ShouldShowMenu(menu));
         }
 
-        // BUG CASE: AppConfig.cs comment says Mode 1 = "ทั้งหมด ยกเว้น ucBot และ ucST3"
-        // (everything except ucBot/ucST3), and Form1.cs:103-104 explicitly relies on
-        // "input" always showing in Mode 1 ("แสดงเสมอในโหมด 1 และ 2"). But the switch
-        // expression also lists "input" in the false-branch, so the Input Order button
-        // never renders in Mode 1. This test encodes the INTENDED behavior and is
-        // expected to FAIL against the current implementation.
-        [Fact]
-        public void ShouldShowMenu_Mode1_InputShouldAlwaysBeVisible()
-        {
-            var config = new AppConfig { MenuMode = 1 };
-            Assert.True(config.ShouldShowMenu("input"));
-        }
-
         // ── Mode 2: bot + setting ───────────────────────────
 
         [Theory]

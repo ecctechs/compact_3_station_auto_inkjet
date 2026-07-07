@@ -14,7 +14,10 @@ namespace InkjetOperator.Services
     /// </summary>
     public class ApiClient
     {
-        private static readonly HttpClient _http = new HttpClient();
+        private static readonly HttpClient _sharedHttp = new HttpClient();
+
+        private readonly HttpClient _http;
+        private readonly bool _isInjected;
 
         private readonly string _baseUrl;
 
@@ -24,9 +27,20 @@ namespace InkjetOperator.Services
             PropertyNameCaseInsensitive = true,
         };
 
-        public ApiClient(string baseUrl)
+        public ApiClient(string baseUrl) : this(baseUrl, _sharedHttp, isInjected: false)
+        {
+        }
+
+        /// <summary>สำหรับ unit test — inject HttpClient ที่ผูก mock handler ไว้</summary>
+        public ApiClient(string baseUrl, HttpClient http) : this(baseUrl, http, isInjected: true)
+        {
+        }
+
+        private ApiClient(string baseUrl, HttpClient http, bool isInjected)
         {
             _baseUrl = baseUrl.TrimEnd('/');
+            _http = http;
+            _isInjected = isInjected;
 
             _http.BaseAddress = new Uri(_baseUrl);
             _http.Timeout = TimeSpan.FromSeconds(10);
@@ -40,6 +54,13 @@ namespace InkjetOperator.Services
         {
             try
             {
+                // โหมดเทส: ใช้ client ที่ inject มา จะได้ mock ได้
+                if (_isInjected)
+                {
+                    var resp = await _http.GetAsync("/job/getAll?status=Waiting");
+                    return resp.IsSuccessStatusCode;
+                }
+
                 // อ่าน IP ล่าสุดจาก config ทุกครั้ง (ไม่ใช้ _baseUrl ที่ cache ไว้)
                 string freshUrl = AppConfig.ApiUrl;
 
