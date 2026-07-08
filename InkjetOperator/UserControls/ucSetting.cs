@@ -16,8 +16,6 @@ namespace InkjetOperator
         private TextBox[] txtMkComPorts = new TextBox[4];
         private Label[] lblMkStatus = new Label[4];
         private TextBox[] txtUvIpAddresses = new TextBox[2];
-        private TextBox txtPlcIpAddress;
-        private TextBox txtPlcPort;
         private TextBox txtPcIpAddress;
 
         private AppConfig _config;
@@ -55,8 +53,6 @@ namespace InkjetOperator
             txtUvIpAddresses[0] = txtUv001Ip;
             txtUvIpAddresses[1] = txtUv002Ip;
 
-            txtPlcIpAddress = txtPlc001Ip;
-            txtPlcPort = txtPlc001Port;
             txtPcIpAddress = txtPcip;
         }
 
@@ -68,10 +64,9 @@ namespace InkjetOperator
             // เช็คว่า MenuMode ปัจจุบันอยู่ในกลุ่มนี้หรือไม่
             bool isPcOnly = pcOnlyModes.Contains(_config.MenuMode);
 
-            // ถ้าอยู่ในกลุ่ม PC Only ให้ซ่อนพวก Printer/Plc (Visible = false)
+            // ถ้าอยู่ในกลุ่ม PC Only ให้ซ่อนพวก Printer (Visible = false)
             pnlMkPrinters.Visible = !isPcOnly;
             pnlUvPrinters.Visible = !isPcOnly;
-            pnlPlc.Visible = !isPcOnly;
 
             // ส่วน PC Station จะแสดงผลตรงข้ามกัน
             panelPcStation1.Visible = isPcOnly;
@@ -90,8 +85,6 @@ namespace InkjetOperator
 
             foreach (var txt in txtMkComPorts) addChangeEffect(txt);
             foreach (var txt in txtUvIpAddresses) addChangeEffect(txt);
-            addChangeEffect(txtPlcIpAddress);
-            addChangeEffect(txtPlcPort);
             addChangeEffect(txtPcIpAddress);
 
             // Edit Name Events (Mapping IDs to Labels)
@@ -135,8 +128,6 @@ namespace InkjetOperator
             CustomSettingsManager.SetValue("PC2IP_NAME", lblPC2.Text);
             CustomSettingsManager.SetValue("UV001_IP", txtUvIpAddresses[0].Text.Trim());
             CustomSettingsManager.SetValue("UV002_IP", txtUvIpAddresses[1].Text.Trim());
-            CustomSettingsManager.SetValue("PLC_IP", txtPlcIpAddress.Text.Trim());
-            CustomSettingsManager.SetValue("PLC_PORT", txtPlcPort.Text.Trim());
             CustomSettingsManager.SetValue("PC_IP", txtPcIpAddress.Text.Trim());
 
             ResetColors();
@@ -155,8 +146,6 @@ namespace InkjetOperator
             lblPC2.Text = CustomSettingsManager.GetValue("PC2IP_NAME") ?? "PC2";
             txtUvIpAddresses[0].Text = CustomSettingsManager.GetValue("UV001_IP") ?? "";
             txtUvIpAddresses[1].Text = CustomSettingsManager.GetValue("UV002_IP") ?? "";
-            txtPlcIpAddress.Text = CustomSettingsManager.GetValue("PLC_IP") ?? "";
-            txtPlcPort.Text = CustomSettingsManager.GetValue("PLC_PORT") ?? "502";
             txtPcIpAddress.Text = CustomSettingsManager.GetValue("PC_IP") ?? "";
 
             lblMk058.Text = CustomSettingsManager.GetValue("MK058_NAME") ?? "MK-058";
@@ -306,8 +295,6 @@ namespace InkjetOperator
         {
             foreach (var t in txtMkComPorts) t.BackColor = Color.White;
             foreach (var t in txtUvIpAddresses) t.BackColor = Color.White;
-            txtPlcIpAddress.BackColor = Color.White;
-            txtPlcPort.BackColor = Color.White;
             txtPcIpAddress.BackColor = Color.White;
         }
 

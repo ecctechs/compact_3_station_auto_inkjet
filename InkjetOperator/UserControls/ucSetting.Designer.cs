@@ -29,15 +29,6 @@
             btnCancel = new Button();
             btnSave = new Button();
             pnlButtons = new Panel();
-            pnlPlc = new Panel();
-            txtPlc001Port = new TextBox();
-            label2 = new Label();
-            lblPlc001Status = new Label();
-            btnEditPlc001 = new Button();
-            lblPlc001 = new Label();
-            lblPlcTitle = new Label();
-            txtPlc001Ip = new TextBox();
-            lblPlcIp = new Label();
             pnlUvPrinters = new Panel();
             lblUv002Status = new Label();
             lblUv001Status = new Label();
@@ -75,7 +66,6 @@
             timer1 = new System.Windows.Forms.Timer(components);
             panelPcStation1.SuspendLayout();
             pnlMainContent.SuspendLayout();
-            pnlPlc.SuspendLayout();
             pnlUvPrinters.SuspendLayout();
             pnlMkPrinters.SuspendLayout();
             SuspendLayout();
@@ -168,7 +158,6 @@
             pnlMainContent.Controls.Add(panelPcStation1);
             pnlMainContent.Controls.Add(btnSave);
             pnlMainContent.Controls.Add(pnlButtons);
-            pnlMainContent.Controls.Add(pnlPlc);
             pnlMainContent.Controls.Add(pnlUvPrinters);
             pnlMainContent.Controls.Add(pnlMkPrinters);
             pnlMainContent.Dock = DockStyle.Fill;
@@ -217,110 +206,9 @@
             pnlButtons.Name = "pnlButtons";
             pnlButtons.Size = new Size(458, 84);
             pnlButtons.TabIndex = 0;
-            // 
-            // pnlPlc
-            // 
-            pnlPlc.BackColor = Color.White;
-            pnlPlc.BorderStyle = BorderStyle.FixedSingle;
-            pnlPlc.Controls.Add(txtPlc001Port);
-            pnlPlc.Controls.Add(label2);
-            pnlPlc.Controls.Add(lblPlc001Status);
-            pnlPlc.Controls.Add(btnEditPlc001);
-            pnlPlc.Controls.Add(lblPlc001);
-            pnlPlc.Controls.Add(lblPlcTitle);
-            pnlPlc.Controls.Add(txtPlc001Ip);
-            pnlPlc.Controls.Add(lblPlcIp);
-            pnlPlc.Location = new Point(686, 39);
-            pnlPlc.Margin = new Padding(4, 5, 4, 5);
-            pnlPlc.Name = "pnlPlc";
-            pnlPlc.Size = new Size(433, 260);
-            pnlPlc.TabIndex = 1;
-            // 
-            // txtPlc001Port
-            // 
-            txtPlc001Port.Location = new Point(129, 188);
-            txtPlc001Port.Margin = new Padding(4, 5, 4, 5);
-            txtPlc001Port.Name = "txtPlc001Port";
-            txtPlc001Port.Size = new Size(83, 31);
-            txtPlc001Port.TabIndex = 7;
-            // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.Location = new Point(21, 191);
-            label2.Margin = new Padding(4, 0, 4, 0);
-            label2.Name = "label2";
-            label2.Size = new Size(53, 25);
-            label2.TabIndex = 6;
-            label2.Text = "Port :";
-            // 
-            // lblPlc001Status
-            // 
-            lblPlc001Status.BackColor = Color.FromArgb(100, 200, 100);
-            lblPlc001Status.BorderStyle = BorderStyle.FixedSingle;
-            lblPlc001Status.Location = new Point(21, 84);
-            lblPlc001Status.Margin = new Padding(4, 0, 4, 0);
-            lblPlc001Status.Name = "lblPlc001Status";
-            lblPlc001Status.Size = new Size(21, 23);
-            lblPlc001Status.TabIndex = 0;
-            // 
-            // btnEditPlc001
-            // 
-            btnEditPlc001.FlatAppearance.BorderSize = 0;
-            btnEditPlc001.FlatStyle = FlatStyle.Flat;
-            btnEditPlc001.Font = new Font("Segoe UI", 8F);
-            btnEditPlc001.Location = new Point(158, 75);
-            btnEditPlc001.Margin = new Padding(4, 5, 4, 5);
-            btnEditPlc001.Name = "btnEditPlc001";
-            btnEditPlc001.Size = new Size(36, 41);
-            btnEditPlc001.TabIndex = 1;
-            btnEditPlc001.Text = "✎";
-            // 
-            // lblPlc001
-            // 
-            lblPlc001.BackColor = Color.Black;
-            lblPlc001.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            lblPlc001.ForeColor = Color.White;
-            lblPlc001.Location = new Point(50, 75);
-            lblPlc001.Margin = new Padding(4, 0, 4, 0);
-            lblPlc001.Name = "lblPlc001";
-            lblPlc001.Padding = new Padding(8, 4, 8, 4);
-            lblPlc001.Size = new Size(100, 41);
-            lblPlc001.TabIndex = 2;
-            lblPlc001.Text = "PLC-001";
-            lblPlc001.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // lblPlcTitle
-            // 
-            lblPlcTitle.AutoSize = true;
-            lblPlcTitle.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
-            lblPlcTitle.Location = new Point(14, 16);
-            lblPlcTitle.Margin = new Padding(4, 0, 4, 0);
-            lblPlcTitle.Name = "lblPlcTitle";
-            lblPlcTitle.Size = new Size(64, 38);
-            lblPlcTitle.TabIndex = 3;
-            lblPlcTitle.Text = "PLC";
-            // 
-            // txtPlc001Ip
-            // 
-            txtPlc001Ip.Location = new Point(129, 136);
-            txtPlc001Ip.Margin = new Padding(4, 5, 4, 5);
-            txtPlc001Ip.Name = "txtPlc001Ip";
-            txtPlc001Ip.Size = new Size(284, 31);
-            txtPlc001Ip.TabIndex = 4;
-            // 
-            // lblPlcIp
-            // 
-            lblPlcIp.AutoSize = true;
-            lblPlcIp.Location = new Point(21, 141);
-            lblPlcIp.Margin = new Padding(4, 0, 4, 0);
-            lblPlcIp.Name = "lblPlcIp";
-            lblPlcIp.Size = new Size(106, 25);
-            lblPlcIp.TabIndex = 5;
-            lblPlcIp.Text = "IP Address :";
-            // 
+            //
             // pnlUvPrinters
-            // 
+            //
             pnlUvPrinters.BackColor = Color.White;
             pnlUvPrinters.BorderStyle = BorderStyle.FixedSingle;
             pnlUvPrinters.Controls.Add(lblUv002Status);
@@ -734,8 +622,6 @@
             panelPcStation1.ResumeLayout(false);
             panelPcStation1.PerformLayout();
             pnlMainContent.ResumeLayout(false);
-            pnlPlc.ResumeLayout(false);
-            pnlPlc.PerformLayout();
             pnlUvPrinters.ResumeLayout(false);
             pnlUvPrinters.PerformLayout();
             pnlMkPrinters.ResumeLayout(false);
@@ -749,7 +635,6 @@
         private System.Windows.Forms.Panel pnlMainContent;
         private System.Windows.Forms.Panel pnlMkPrinters;
         private System.Windows.Forms.Panel pnlUvPrinters;
-        private System.Windows.Forms.Panel pnlPlc;
         private System.Windows.Forms.Panel pnlButtons;
 
         // MK Printers
@@ -788,14 +673,6 @@
         private System.Windows.Forms.Label lblUv002Ip;
         private System.Windows.Forms.TextBox txtUv002Ip;
 
-        // PLC
-        private System.Windows.Forms.Label lblPlcTitle;
-        private System.Windows.Forms.Label lblPlc001Status;
-        private System.Windows.Forms.Label lblPlc001;
-        private System.Windows.Forms.Button btnEditPlc001;
-        private System.Windows.Forms.Label lblPlcIp;
-        private System.Windows.Forms.TextBox txtPlc001Ip;
-
         // Buttons
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Button btnCancel;
@@ -807,7 +684,5 @@
         private TextBox txtPcip;
         private Label label4;
         private System.Windows.Forms.Timer timer1;
-        private TextBox txtPlc001Port;
-        private Label label2;
     }
 }

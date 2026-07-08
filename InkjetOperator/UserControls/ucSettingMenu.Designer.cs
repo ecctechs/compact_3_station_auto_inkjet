@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             pnlLeftMenu = new Panel();
+            btnPlcSetting = new Button();
             btnIpAddressSetting = new Button();
             btnDatabaseSetting = new Button();
             panelSettingShow = new Panel();
@@ -38,6 +39,7 @@
             // pnlLeftMenu
             // 
             pnlLeftMenu.BackColor = Color.FromArgb(230, 240, 250);
+            pnlLeftMenu.Controls.Add(btnPlcSetting);
             pnlLeftMenu.Controls.Add(btnIpAddressSetting);
             pnlLeftMenu.Controls.Add(btnDatabaseSetting);
             pnlLeftMenu.Dock = DockStyle.Left;
@@ -46,9 +48,24 @@
             pnlLeftMenu.Name = "pnlLeftMenu";
             pnlLeftMenu.Size = new Size(229, 939);
             pnlLeftMenu.TabIndex = 1;
-            // 
+            //
+            // btnPlcSetting
+            //
+            btnPlcSetting.Dock = DockStyle.Top;
+            btnPlcSetting.FlatAppearance.BorderSize = 0;
+            btnPlcSetting.FlatStyle = FlatStyle.Flat;
+            btnPlcSetting.Font = new Font("Segoe UI", 12F);
+            btnPlcSetting.Location = new Point(0, 134);
+            btnPlcSetting.Margin = new Padding(3, 4, 3, 4);
+            btnPlcSetting.Name = "btnPlcSetting";
+            btnPlcSetting.Size = new Size(229, 67);
+            btnPlcSetting.TabIndex = 2;
+            btnPlcSetting.Text = "PLC Setting";
+            btnPlcSetting.UseVisualStyleBackColor = true;
+            btnPlcSetting.Click += btnPlcSetting_Click;
+            //
             // btnIpAddressSetting
-            // 
+            //
             btnIpAddressSetting.BackColor = Color.FromArgb(50, 100, 180);
             btnIpAddressSetting.Dock = DockStyle.Top;
             btnIpAddressSetting.FlatAppearance.BorderSize = 0;
@@ -101,6 +118,7 @@
         #endregion
 
         private Panel pnlLeftMenu;
+        private Button btnPlcSetting;
         private Button btnIpAddressSetting;
         private Button btnDatabaseSetting;
         private Panel panelSettingShow;
