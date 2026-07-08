@@ -29,16 +29,31 @@ namespace InkjetOperator
             lblPlcTitle = new Label();
             txtPlc001Ip = new TextBox();
             lblPlcIp = new Label();
+            lblPlcMapTitle = new Label();
+            btnAddRow = new Button();
+            dgvPlcMap = new DataGridView();
+            colAddressStart = new DataGridViewTextBoxColumn();
+            colAddressStop = new DataGridViewTextBoxColumn();
+            colPlcStart = new DataGridViewTextBoxColumn();
+            colPlcStop = new DataGridViewTextBoxColumn();
+            colListName = new DataGridViewTextBoxColumn();
+            colDataType = new DataGridViewComboBoxColumn();
+            colBit = new DataGridViewComboBoxColumn();
+            colDelete = new DataGridViewButtonColumn();
             pnlMainContent.SuspendLayout();
             pnlPlc.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvPlcMap).BeginInit();
             SuspendLayout();
-            //
+            // 
             // pnlMainContent
-            //
+            // 
             pnlMainContent.BackColor = Color.White;
             pnlMainContent.Controls.Add(btnCancel);
             pnlMainContent.Controls.Add(btnSave);
             pnlMainContent.Controls.Add(pnlPlc);
+            pnlMainContent.Controls.Add(lblPlcMapTitle);
+            pnlMainContent.Controls.Add(btnAddRow);
+            pnlMainContent.Controls.Add(dgvPlcMap);
             pnlMainContent.Dock = DockStyle.Fill;
             pnlMainContent.Location = new Point(0, 0);
             pnlMainContent.Margin = new Padding(4, 5, 4, 5);
@@ -46,9 +61,9 @@ namespace InkjetOperator
             pnlMainContent.Padding = new Padding(29, 34, 29, 34);
             pnlMainContent.Size = new Size(1152, 939);
             pnlMainContent.TabIndex = 0;
-            //
+            // 
             // btnCancel
-            //
+            // 
             btnCancel.BackColor = Color.FromArgb(150, 150, 150);
             btnCancel.FlatAppearance.BorderSize = 0;
             btnCancel.FlatStyle = FlatStyle.Flat;
@@ -61,9 +76,9 @@ namespace InkjetOperator
             btnCancel.TabIndex = 0;
             btnCancel.Text = "Cancel";
             btnCancel.UseVisualStyleBackColor = false;
-            //
+            // 
             // btnSave
-            //
+            // 
             btnSave.BackColor = Color.FromArgb(70, 130, 180);
             btnSave.FlatAppearance.BorderSize = 0;
             btnSave.FlatStyle = FlatStyle.Flat;
@@ -76,9 +91,9 @@ namespace InkjetOperator
             btnSave.TabIndex = 1;
             btnSave.Text = "Save";
             btnSave.UseVisualStyleBackColor = false;
-            //
+            // 
             // pnlPlc
-            //
+            // 
             pnlPlc.BackColor = Color.White;
             pnlPlc.BorderStyle = BorderStyle.FixedSingle;
             pnlPlc.Controls.Add(txtPlc001Port);
@@ -94,17 +109,17 @@ namespace InkjetOperator
             pnlPlc.Name = "pnlPlc";
             pnlPlc.Size = new Size(433, 260);
             pnlPlc.TabIndex = 2;
-            //
+            // 
             // txtPlc001Port
-            //
+            // 
             txtPlc001Port.Location = new Point(129, 188);
             txtPlc001Port.Margin = new Padding(4, 5, 4, 5);
             txtPlc001Port.Name = "txtPlc001Port";
             txtPlc001Port.Size = new Size(83, 31);
             txtPlc001Port.TabIndex = 7;
-            //
+            // 
             // lblPlcPort
-            //
+            // 
             lblPlcPort.AutoSize = true;
             lblPlcPort.Location = new Point(21, 191);
             lblPlcPort.Margin = new Padding(4, 0, 4, 0);
@@ -112,9 +127,9 @@ namespace InkjetOperator
             lblPlcPort.Size = new Size(53, 25);
             lblPlcPort.TabIndex = 6;
             lblPlcPort.Text = "Port :";
-            //
+            // 
             // lblPlc001Status
-            //
+            // 
             lblPlc001Status.BackColor = Color.FromArgb(100, 200, 100);
             lblPlc001Status.BorderStyle = BorderStyle.FixedSingle;
             lblPlc001Status.Location = new Point(21, 84);
@@ -122,9 +137,9 @@ namespace InkjetOperator
             lblPlc001Status.Name = "lblPlc001Status";
             lblPlc001Status.Size = new Size(21, 23);
             lblPlc001Status.TabIndex = 0;
-            //
+            // 
             // btnEditPlc001
-            //
+            // 
             btnEditPlc001.FlatAppearance.BorderSize = 0;
             btnEditPlc001.FlatStyle = FlatStyle.Flat;
             btnEditPlc001.Font = new Font("Segoe UI", 8F);
@@ -134,9 +149,9 @@ namespace InkjetOperator
             btnEditPlc001.Size = new Size(36, 41);
             btnEditPlc001.TabIndex = 1;
             btnEditPlc001.Text = "✎";
-            //
+            // 
             // lblPlc001
-            //
+            // 
             lblPlc001.BackColor = Color.Black;
             lblPlc001.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             lblPlc001.ForeColor = Color.White;
@@ -148,9 +163,9 @@ namespace InkjetOperator
             lblPlc001.TabIndex = 2;
             lblPlc001.Text = "PLC-001";
             lblPlc001.TextAlign = ContentAlignment.MiddleCenter;
-            //
+            // 
             // lblPlcTitle
-            //
+            // 
             lblPlcTitle.AutoSize = true;
             lblPlcTitle.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
             lblPlcTitle.Location = new Point(14, 16);
@@ -159,17 +174,17 @@ namespace InkjetOperator
             lblPlcTitle.Size = new Size(64, 38);
             lblPlcTitle.TabIndex = 3;
             lblPlcTitle.Text = "PLC";
-            //
+            // 
             // txtPlc001Ip
-            //
+            // 
             txtPlc001Ip.Location = new Point(129, 136);
             txtPlc001Ip.Margin = new Padding(4, 5, 4, 5);
             txtPlc001Ip.Name = "txtPlc001Ip";
             txtPlc001Ip.Size = new Size(284, 31);
             txtPlc001Ip.TabIndex = 4;
-            //
+            // 
             // lblPlcIp
-            //
+            // 
             lblPlcIp.AutoSize = true;
             lblPlcIp.Location = new Point(21, 141);
             lblPlcIp.Margin = new Padding(4, 0, 4, 0);
@@ -177,9 +192,103 @@ namespace InkjetOperator
             lblPlcIp.Size = new Size(106, 25);
             lblPlcIp.TabIndex = 5;
             lblPlcIp.Text = "IP Address :";
-            //
+            // 
+            // lblPlcMapTitle
+            // 
+            lblPlcMapTitle.AutoSize = true;
+            lblPlcMapTitle.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            lblPlcMapTitle.Location = new Point(85, 320);
+            lblPlcMapTitle.Margin = new Padding(4, 0, 4, 0);
+            lblPlcMapTitle.Name = "lblPlcMapTitle";
+            lblPlcMapTitle.Size = new Size(304, 38);
+            lblPlcMapTitle.TabIndex = 3;
+            lblPlcMapTitle.Text = "PLC Register Mapping";
+            // 
+            // btnAddRow
+            // 
+            btnAddRow.BackColor = Color.FromArgb(70, 130, 180);
+            btnAddRow.FlatAppearance.BorderSize = 0;
+            btnAddRow.FlatStyle = FlatStyle.Flat;
+            btnAddRow.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnAddRow.ForeColor = Color.White;
+            btnAddRow.Location = new Point(929, 315);
+            btnAddRow.Margin = new Padding(4, 5, 4, 5);
+            btnAddRow.Name = "btnAddRow";
+            btnAddRow.Size = new Size(140, 48);
+            btnAddRow.TabIndex = 4;
+            btnAddRow.Text = "+ Add Row";
+            btnAddRow.UseVisualStyleBackColor = false;
+            // 
+            // dgvPlcMap
+            // 
+            dgvPlcMap.AllowUserToAddRows = false;
+            dgvPlcMap.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvPlcMap.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllHeaders;
+            dgvPlcMap.BackgroundColor = Color.White;
+            dgvPlcMap.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvPlcMap.Columns.AddRange(new DataGridViewColumn[] { colAddressStart, colAddressStop, colPlcStart, colPlcStop, colListName, colDataType, colBit, colDelete });
+            dgvPlcMap.Location = new Point(85, 373);
+            dgvPlcMap.Margin = new Padding(4, 5, 4, 5);
+            dgvPlcMap.Name = "dgvPlcMap";
+            dgvPlcMap.RowHeadersWidth = 51;
+            dgvPlcMap.Size = new Size(984, 480);
+            dgvPlcMap.TabIndex = 5;
+            dgvPlcMap.CellContentClick += dgvPlcMap_CellContentClick;
+            // 
+            // colAddressStart
+            // 
+            colAddressStart.HeaderText = "Address Start";
+            colAddressStart.MinimumWidth = 8;
+            colAddressStart.Name = "colAddressStart";
+            // 
+            // colAddressStop
+            // 
+            colAddressStop.HeaderText = "Address Stop";
+            colAddressStop.MinimumWidth = 8;
+            colAddressStop.Name = "colAddressStop";
+            // 
+            // colPlcStart
+            // 
+            colPlcStart.HeaderText = "PLC Start";
+            colPlcStart.MinimumWidth = 8;
+            colPlcStart.Name = "colPlcStart";
+            // 
+            // colPlcStop
+            // 
+            colPlcStop.HeaderText = "PLC Stop";
+            colPlcStop.MinimumWidth = 8;
+            colPlcStop.Name = "colPlcStop";
+            // 
+            // colListName
+            // 
+            colListName.HeaderText = "List";
+            colListName.MinimumWidth = 8;
+            colListName.Name = "colListName";
+            // 
+            // colDataType
+            // 
+            colDataType.HeaderText = "Type";
+            colDataType.Items.AddRange(new object[] { "String", "Int" });
+            colDataType.MinimumWidth = 8;
+            colDataType.Name = "colDataType";
+            // 
+            // colBit
+            // 
+            colBit.HeaderText = "Bit";
+            colBit.Items.AddRange(new object[] { 32, 64 });
+            colBit.MinimumWidth = 8;
+            colBit.Name = "colBit";
+            // 
+            // colDelete
+            // 
+            colDelete.HeaderText = "Del";
+            colDelete.MinimumWidth = 8;
+            colDelete.Name = "colDelete";
+            colDelete.Text = "ลบ";
+            colDelete.UseColumnTextForButtonValue = true;
+            // 
             // ucSettingPLC
-            //
+            // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             Controls.Add(pnlMainContent);
@@ -187,8 +296,10 @@ namespace InkjetOperator
             Name = "ucSettingPLC";
             Size = new Size(1152, 939);
             pnlMainContent.ResumeLayout(false);
+            pnlMainContent.PerformLayout();
             pnlPlc.ResumeLayout(false);
             pnlPlc.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvPlcMap).EndInit();
             ResumeLayout(false);
         }
 
@@ -206,6 +317,19 @@ namespace InkjetOperator
         private System.Windows.Forms.TextBox txtPlc001Ip;
         private System.Windows.Forms.Label lblPlcPort;
         private System.Windows.Forms.TextBox txtPlc001Port;
+
+        // Register Mapping Table
+        private System.Windows.Forms.Label lblPlcMapTitle;
+        private System.Windows.Forms.Button btnAddRow;
+        private System.Windows.Forms.DataGridView dgvPlcMap;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colAddressStart;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colAddressStop;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colPlcStart;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colPlcStop;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colListName;
+        private System.Windows.Forms.DataGridViewComboBoxColumn colDataType;
+        private System.Windows.Forms.DataGridViewComboBoxColumn colBit;
+        private System.Windows.Forms.DataGridViewButtonColumn colDelete;
 
         // Buttons
         private System.Windows.Forms.Button btnSave;

@@ -307,6 +307,48 @@ namespace InkjetOperator.Services
 
 
         // =========================
+        // GET ALL PLC SETTINGS
+        // =========================
+        public async Task<List<PlcRegisterMap>> GetAllPlcSettingsAsync()
+        {
+            try
+            {
+                // ไม่ส่ง page/limit — Backend จะคืนทุกแถวเรียงตาม sort_order
+                var response = await _http.GetAsync("/plc-setting/getAll");
+                response.EnsureSuccessStatusCode();
+
+                var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedResult<PlcRegisterMap>>>(JsonOptions);
+
+                return wrapper?.Data?.Data ?? new List<PlcRegisterMap>();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("GetAllPlcSettings error: " + ex.Message);
+                return new List<PlcRegisterMap>();
+            }
+        }
+
+        // =========================
+        // BULK SAVE PLC SETTINGS
+        // =========================
+        /// <summary>แทนที่ตาราง plc_register_map ทั้งชุดใน transaction เดียว</summary>
+        public async Task<bool> BulkSavePlcSettingsAsync(List<PlcRegisterMap> rows)
+        {
+            try
+            {
+                var request = new PlcBulkSaveRequest { Rows = rows };
+                var response = await _http.PostAsJsonAsync("/plc-setting/bulkSave", request, JsonOptions);
+                response.EnsureSuccessStatusCode();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("BulkSavePlcSettings error: " + ex.Message);
+                return false;
+            }
+        }
+
+        // =========================
         // UPDATE JOB
         // =========================
         public async Task<bool> UpdateJobAsync(int jobId, object updateData)
