@@ -27,6 +27,9 @@ namespace InkjetOperator
 
         private void SetupDataGridView()
         {
+            // จัดหัวคอลัมน์ให้อยู่กึ่งกลาง
+            dgvPlcMap.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+
             dgvPlcMap.AutoGenerateColumns = false;
             colAddressStart.DataPropertyName = "AddressStart";
             colAddressStop.DataPropertyName = "AddressStop";

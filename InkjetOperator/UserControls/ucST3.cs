@@ -22,6 +22,9 @@ namespace InkjetOperator.UserControls
         public ucST3()
         {
             InitializeComponent();
+
+            // จัดหัวคอลัมน์ให้อยู่กึ่งกลาง
+            dgvList.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
         }
 
         public async void get_job()

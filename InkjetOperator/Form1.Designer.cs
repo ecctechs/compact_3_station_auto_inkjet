@@ -99,10 +99,10 @@
             picLogo.ErrorImage = null;
             picLogo.Image = (Image)resources.GetObject("picLogo.Image");
             picLogo.InitialImage = (Image)resources.GetObject("picLogo.InitialImage");
-            picLogo.Location = new Point(1249, 6);
+            picLogo.Location = new Point(1203, 4);
             picLogo.Margin = new Padding(4, 5, 4, 5);
             picLogo.Name = "picLogo";
-            picLogo.Size = new Size(114, 84);
+            picLogo.Size = new Size(160, 90);
             picLogo.SizeMode = PictureBoxSizeMode.Zoom;
             picLogo.TabIndex = 1;
             picLogo.TabStop = false;

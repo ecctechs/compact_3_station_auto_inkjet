@@ -27,6 +27,10 @@ namespace InkjetOperator
         {
             InitializeComponent();
 
+            // จัดหัวคอลัมน์ทุกตารางให้อยู่กึ่งกลาง
+            foreach (var dgv in new[] { dgvList, dgvHistory, dataGridView1, dataGridView2, dgvConfigs, dgvTextBlocks })
+                dgv.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+
             // 1. สร้าง Manager
             _tcpManager = new TcpManager();
 

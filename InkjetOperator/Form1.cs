@@ -90,7 +90,12 @@ namespace InkjetOperator
 
             picLogo.Top = 2;
             picLogo.Height = pnlMenu.Height - 4;
-            picLogo.Width = picLogo.Height;
+            // โลโก้เป็นภาพแนวกว้าง ถ้าบังคับกรอบเป็นสี่เหลี่ยมจัตุรัส โหมด Zoom จะย่อภาพจนเล็ก
+            // จึงคำนวณความกว้างตามสัดส่วนภาพจริง แล้วจัดชิดขวาเว้นระยะจากป้ายภาษา
+            picLogo.Width = picLogo.Image != null
+                ? picLogo.Height * picLogo.Image.Width / picLogo.Image.Height
+                : picLogo.Height * 2;
+            picLogo.Left = lblLanguage.Left - picLogo.Width - 12;
 
             lblLanguage.Top = (pnlMenu.Height - lblLanguage.Height) / 2;
 

@@ -345,7 +345,7 @@
             lblUvTitle.Name = "lblUvTitle";
             lblUvTitle.Size = new Size(154, 38);
             lblUvTitle.TabIndex = 10;
-            lblUvTitle.Text = "UV Printer";
+            lblUvTitle.Text = "UV Printers";
             // 
             // pnlMkPrinters
             // 
@@ -603,7 +603,7 @@
             lblMkTitle.Name = "lblMkTitle";
             lblMkTitle.Size = new Size(244, 38);
             lblMkTitle.TabIndex = 28;
-            lblMkTitle.Text = "MK Inkjet Printer";
+            lblMkTitle.Text = "MK Inkjet Printers";
             // 
             // timer1
             // 

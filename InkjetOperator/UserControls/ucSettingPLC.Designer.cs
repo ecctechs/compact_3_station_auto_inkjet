@@ -1,4 +1,4 @@
-namespace InkjetOperator
+﻿namespace InkjetOperator
 {
     partial class ucSettingPLC
     {
