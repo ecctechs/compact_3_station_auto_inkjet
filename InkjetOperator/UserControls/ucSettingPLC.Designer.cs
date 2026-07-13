@@ -121,7 +121,7 @@
             // lblPlcPort
             // 
             lblPlcPort.AutoSize = true;
-            lblPlcPort.Location = new Point(21, 191);
+            lblPlcPort.Location = new Point(21, 192);
             lblPlcPort.Margin = new Padding(4, 0, 4, 0);
             lblPlcPort.Name = "lblPlcPort";
             lblPlcPort.Size = new Size(53, 25);
@@ -143,7 +143,7 @@
             btnEditPlc001.FlatAppearance.BorderSize = 0;
             btnEditPlc001.FlatStyle = FlatStyle.Flat;
             btnEditPlc001.Font = new Font("Segoe UI", 8F);
-            btnEditPlc001.Location = new Point(158, 75);
+            btnEditPlc001.Location = new Point(196, 75);
             btnEditPlc001.Margin = new Padding(4, 5, 4, 5);
             btnEditPlc001.Name = "btnEditPlc001";
             btnEditPlc001.Size = new Size(36, 41);
@@ -159,7 +159,7 @@
             lblPlc001.Margin = new Padding(4, 0, 4, 0);
             lblPlc001.Name = "lblPlc001";
             lblPlc001.Padding = new Padding(8, 4, 8, 4);
-            lblPlc001.Size = new Size(100, 41);
+            lblPlc001.Size = new Size(144, 41);
             lblPlc001.TabIndex = 2;
             lblPlc001.Text = "PLC-001";
             lblPlc001.TextAlign = ContentAlignment.MiddleCenter;
@@ -186,7 +186,7 @@
             // lblPlcIp
             // 
             lblPlcIp.AutoSize = true;
-            lblPlcIp.Location = new Point(21, 141);
+            lblPlcIp.Location = new Point(21, 140);
             lblPlcIp.Margin = new Padding(4, 0, 4, 0);
             lblPlcIp.Name = "lblPlcIp";
             lblPlcIp.Size = new Size(106, 25);
