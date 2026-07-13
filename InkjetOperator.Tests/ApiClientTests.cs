@@ -282,6 +282,133 @@ namespace InkjetOperator.Tests
             Assert.False(await api.PingAsync());
         }
 
+        // ── GetPendingJobsAsync ─────────────────────────────
+
+        [Fact]
+        public async Task GetPendingJobs_Success_ParsesPaginatedWrapper()
+        {
+            string json = """
+                {
+                  "statusCode": 200,
+                  "data": {
+                    "data": [
+                      { "id": 1, "barcode_raw": "C240801-027", "order_no": "ORD-001", "status": "Waiting", "qty": 5 },
+                      { "id": 2, "barcode_raw": "C240801-028", "order_no": "ORD-002", "status": "pending", "qty": 3 }
+                    ],
+                    "total": 2
+                  }
+                }
+                """;
+            var (handler, requests, _) = MockHandler(HttpStatusCode.OK, json);
+            var api = MakeClient(handler);
+
+            var jobs = await api.GetPendingJobsAsync();
+
+            Assert.Equal(2, jobs.Count);
+            Assert.Equal(1, jobs[0].Id);
+            Assert.Equal("C240801-027", jobs[0].BarcodeRaw);
+            Assert.Equal("Waiting", jobs[0].Status);
+            Assert.Equal(3, jobs[1].Qty);
+            var req = Assert.Single(requests);
+            Assert.Equal($"{BaseUrl}/job/getAll", req.RequestUri!.ToString());
+        }
+
+        [Fact]
+        public async Task GetPendingJobs_ServerError_ReturnsEmptyList()
+        {
+            var (handler, _, _) = MockHandler(HttpStatusCode.InternalServerError);
+            var api = MakeClient(handler);
+
+            Assert.Empty(await api.GetPendingJobsAsync());
+        }
+
+        [Fact]
+        public async Task GetPendingJobs_NullData_ReturnsEmptyList()
+        {
+            var (handler, _, _) = MockHandler(HttpStatusCode.OK, """{"statusCode":200,"data":null}""");
+            var api = MakeClient(handler);
+
+            Assert.Empty(await api.GetPendingJobsAsync());
+        }
+
+        [Fact]
+        public async Task GetPendingJobs_MalformedJson_ReturnsEmptyList()
+        {
+            var (handler, _, _) = MockHandler(HttpStatusCode.OK, "not-json");
+            var api = MakeClient(handler);
+
+            Assert.Empty(await api.GetPendingJobsAsync());
+        }
+
+        // ── GetJobByIdAsync ─────────────────────────────────
+
+        [Fact]
+        public async Task GetJobById_Found_ReturnsJob()
+        {
+            string json = """
+                {
+                  "statusCode": 200,
+                  "data": { "id": 42, "barcode_raw": "C240801-027", "status": "Waiting", "qty": 7 }
+                }
+                """;
+            var (handler, requests, _) = MockHandler(HttpStatusCode.OK, json);
+            var api = MakeClient(handler);
+
+            var job = await api.GetJobByIdAsync(42);
+
+            Assert.NotNull(job);
+            Assert.Equal(42, job.Id);
+            Assert.Equal("C240801-027", job.BarcodeRaw);
+            var req = Assert.Single(requests);
+            Assert.Equal($"{BaseUrl}/job/getById/42", req.RequestUri!.ToString());
+        }
+
+        [Fact]
+        public async Task GetJobById_NotFound_ReturnsNull()
+        {
+            var (handler, _, _) = MockHandler(HttpStatusCode.NotFound);
+            var api = MakeClient(handler);
+
+            Assert.Null(await api.GetJobByIdAsync(999));
+        }
+
+        // ── UpdateJobAsync ──────────────────────────────────
+
+        [Fact]
+        public async Task UpdateJob_Success_PostsToCorrectEndpointWithBody()
+        {
+            var (handler, requests, bodies) = MockHandler(HttpStatusCode.OK);
+            var api = MakeClient(handler);
+
+            bool ok = await api.UpdateJobAsync(7, new { st1_confirmation = "Request" });
+
+            Assert.True(ok);
+            var req = Assert.Single(requests);
+            Assert.Equal(HttpMethod.Post, req.Method);
+            Assert.Equal($"{BaseUrl}/job/update/7", req.RequestUri!.ToString());
+            Assert.Contains("\"st1_confirmation\":\"Request\"", Assert.Single(bodies));
+        }
+
+        [Theory]
+        [InlineData(HttpStatusCode.BadRequest)]
+        [InlineData(HttpStatusCode.InternalServerError)]
+        public async Task UpdateJob_ServerError_ReturnsFalse(HttpStatusCode status)
+        {
+            var (handler, _, _) = MockHandler(status);
+            var api = MakeClient(handler);
+
+            Assert.False(await api.UpdateJobAsync(7, new { st1_confirmation = "Request" }));
+        }
+
+        [Fact]
+        public async Task UpdateJob_NetworkError_ReturnsFalse()
+        {
+            var handler = ThrowingHandler(new HttpRequestException("connection refused"));
+            var api = MakeClient(handler);
+
+            Assert.False(await api.UpdateJobAsync(7, new { st1_confirmation = "Request" }));
+        }
+
         // ── BaseUrl normalization ───────────────────────────
 
         [Fact]

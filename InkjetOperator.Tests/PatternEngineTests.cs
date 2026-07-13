@@ -3,6 +3,7 @@ using InkjetOperator.Services;
 
 namespace InkjetOperator.Tests
 {
+    [Collection("PatternStore serial")] // แชร์ static PatternStore.Patterns กับ PatternStoreTests — ห้ามรันขนาน
     public class PatternEngineTests : IDisposable
     {
         public PatternEngineTests()
