@@ -47,7 +47,7 @@
             btnRunBot.BackColor = Color.FromArgb(40, 160, 80);
             btnRunBot.FlatAppearance.BorderSize = 0;
             btnRunBot.FlatStyle = FlatStyle.Flat;
-            btnRunBot.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
+            btnRunBot.Font = new Font("Segoe UI", 17F, FontStyle.Bold);
             btnRunBot.ForeColor = Color.White;
             btnRunBot.Location = new Point(339, 664);
             btnRunBot.Name = "btnRunBot";
