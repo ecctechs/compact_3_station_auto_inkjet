@@ -84,8 +84,8 @@ namespace InkjetOperator
                     pnlMenu.Controls.RemoveAt(i);
             }
 
-            int btnHeight = 40;
-            int btnY = 8;
+            int btnHeight = 56;
+            int btnY = 10;
             pnlMenu.Height = btnY + btnHeight + btnY;
 
             picLogo.Top = 2;
@@ -110,7 +110,7 @@ namespace InkjetOperator
             {
                 _btnInput = CreateMenuButton(Lang.Get("menu.input_order"), x, index == 0);
                 _btnInput.Click += (s, e) => { ShowInputOrder(); SetActiveButton(_btnInput); };
-                x += 160;
+                x += 190;
                 index++;
             }
 
@@ -119,7 +119,7 @@ namespace InkjetOperator
             {
                 _btnOrder = CreateMenuButton(Lang.Get("menu.order_list"), x, index == 0);
                 _btnOrder.Click += (s, e) => { ShowOrderList(); SetActiveButton(_btnOrder); };
-                x += 160;
+                x += 190;
                 index++;
             }
 
@@ -128,7 +128,7 @@ namespace InkjetOperator
             {
                 _btnEdit = CreateMenuButton(Lang.Get("menu.edit_pattern"), x, index == 0);
                 _btnEdit.Click += (s, e) => { ShowEditPattern(); SetActiveButton(_btnEdit); };
-                x += 160;
+                x += 190;
                 index++;
             }
 
@@ -137,7 +137,7 @@ namespace InkjetOperator
             {
                 _btnBot = CreateMenuButton(Lang.Get("menu.bot_uv"), x, index == 0);
                 _btnBot.Click += (s, e) => { ShowBot(); SetActiveButton(_btnBot); };
-                x += 160;
+                x += 190;
                 index++;
             }
 
@@ -145,7 +145,7 @@ namespace InkjetOperator
             {
                 _btnST3 = CreateMenuButton(Lang.Get("menu.job_st3"), x, index == 0);
                 _btnST3.Click += (s, e) => { ShowSt3(); SetActiveButton(_btnST3); };
-                x += 160;
+                x += 190;
                 index++;
             }
 
@@ -154,7 +154,7 @@ namespace InkjetOperator
             {
                 _btnSetting = CreateMenuButton(Lang.Get("menu.setting"), x, index == 0);
                 _btnSetting.Click += (s, e) => { ShowSetting(); SetActiveButton(_btnSetting); };
-                x += 160;
+                x += 190;
                 index++;
             }
 
@@ -167,8 +167,8 @@ namespace InkjetOperator
         {
             var btn = new Button();
             btn.Text = text;
-            btn.Location = new Point(x, 8);
-            btn.Size = new Size(150, 40);
+            btn.Location = new Point(x, 10);
+            btn.Size = new Size(180, 56);
             btn.FlatStyle = FlatStyle.Flat;
             btn.FlatAppearance.BorderSize = 0;
             btn.Font = new Font("Segoe UI", 13, FontStyle.Bold);
