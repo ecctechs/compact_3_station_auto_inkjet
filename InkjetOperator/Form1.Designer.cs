@@ -55,7 +55,7 @@
             button1.BackColor = Color.FromArgb(160, 160, 160);
             button1.FlatAppearance.BorderSize = 0;
             button1.FlatStyle = FlatStyle.Flat;
-            button1.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            button1.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             button1.ForeColor = Color.White;
             button1.Location = new Point(832, 16);
             button1.Margin = new Padding(4, 5, 4, 5);
@@ -70,7 +70,7 @@
             btnBot.BackColor = Color.FromArgb(160, 160, 160);
             btnBot.FlatAppearance.BorderSize = 0;
             btnBot.FlatStyle = FlatStyle.Flat;
-            btnBot.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnBot.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnBot.ForeColor = Color.White;
             btnBot.Location = new Point(620, 16);
             btnBot.Margin = new Padding(4, 5, 4, 5);
@@ -84,7 +84,7 @@
             // 
             lblLanguage.AutoSize = true;
             lblLanguage.BackColor = Color.Black;
-            lblLanguage.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            lblLanguage.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblLanguage.ForeColor = Color.White;
             lblLanguage.Location = new Point(1371, 25);
             lblLanguage.Margin = new Padding(4, 0, 4, 0);
@@ -112,7 +112,7 @@
             btnSetting.BackColor = Color.FromArgb(160, 160, 160);
             btnSetting.FlatAppearance.BorderSize = 0;
             btnSetting.FlatStyle = FlatStyle.Flat;
-            btnSetting.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnSetting.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnSetting.ForeColor = Color.White;
             btnSetting.Location = new Point(1031, 16);
             btnSetting.Margin = new Padding(4, 5, 4, 5);
@@ -127,7 +127,7 @@
             btnEdit.BackColor = Color.FromArgb(160, 160, 160);
             btnEdit.FlatAppearance.BorderSize = 0;
             btnEdit.FlatStyle = FlatStyle.Flat;
-            btnEdit.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnEdit.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnEdit.ForeColor = Color.White;
             btnEdit.Location = new Point(414, 16);
             btnEdit.Margin = new Padding(4, 5, 4, 5);
@@ -142,7 +142,7 @@
             btnOrder.BackColor = Color.FromArgb(160, 160, 160);
             btnOrder.FlatAppearance.BorderSize = 0;
             btnOrder.FlatStyle = FlatStyle.Flat;
-            btnOrder.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnOrder.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnOrder.ForeColor = Color.White;
             btnOrder.Location = new Point(214, 16);
             btnOrder.Margin = new Padding(4, 5, 4, 5);
@@ -157,7 +157,7 @@
             btnInput.BackColor = Color.FromArgb(108, 147, 204);
             btnInput.FlatAppearance.BorderSize = 0;
             btnInput.FlatStyle = FlatStyle.Flat;
-            btnInput.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnInput.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnInput.ForeColor = Color.White;
             btnInput.Location = new Point(14, 16);
             btnInput.Margin = new Padding(4, 5, 4, 5);
