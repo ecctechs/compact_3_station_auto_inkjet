@@ -32,7 +32,7 @@ namespace InkjetOperator
             // lblTitle
             // 
             lblTitle.AutoSize = true;
-            lblTitle.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
+            lblTitle.Font = new Font("Segoe UI", 19F, FontStyle.Bold);
             lblTitle.Location = new Point(30, 20);
             lblTitle.Name = "lblTitle";
             lblTitle.Size = new Size(316, 41);
@@ -42,6 +42,7 @@ namespace InkjetOperator
             // lblPath
             // 
             lblPath.AutoSize = true;
+            lblPath.Font = new Font("Segoe UI", 10F);
             lblPath.Location = new Point(40, 100);
             lblPath.Name = "lblPath";
             lblPath.Size = new Size(131, 20);
@@ -50,6 +51,7 @@ namespace InkjetOperator
             // 
             // txtDbPath
             // 
+            txtDbPath.Font = new Font("Segoe UI", 10F);
             txtDbPath.Location = new Point(200, 95);
             txtDbPath.Name = "txtDbPath";
             txtDbPath.Size = new Size(342, 27);
@@ -69,7 +71,7 @@ namespace InkjetOperator
             btnSave.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             btnSave.BackColor = Color.FromArgb(150, 190, 120);
             btnSave.FlatStyle = FlatStyle.Flat;
-            btnSave.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnSave.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnSave.ForeColor = Color.White;
             btnSave.Location = new Point(812, 833);
             btnSave.Name = "btnSave";
@@ -84,7 +86,7 @@ namespace InkjetOperator
             btnCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             btnCancel.BackColor = Color.Red;
             btnCancel.FlatStyle = FlatStyle.Flat;
-            btnCancel.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnCancel.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnCancel.ForeColor = Color.White;
             btnCancel.Location = new Point(954, 833);
             btnCancel.Name = "btnCancel";

@@ -79,6 +79,7 @@
             this.lstPatterns.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lstPatterns.FormattingEnabled = true;
             this.lstPatterns.ItemHeight = 15;
+            this.lstPatterns.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.lstPatterns.Location = new System.Drawing.Point(10, 10);
             this.lstPatterns.Name = "lstPatterns";
             this.lstPatterns.Size = new System.Drawing.Size(200, 485);
@@ -96,6 +97,7 @@
             // 
             // btnDelPattern
             // 
+            this.btnDelPattern.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.btnDelPattern.Location = new System.Drawing.Point(54, 10);
             this.btnDelPattern.Name = "btnDelPattern";
             this.btnDelPattern.Size = new System.Drawing.Size(45, 25);
@@ -104,6 +106,7 @@
             // 
             // btnNewPattern
             // 
+            this.btnNewPattern.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.btnNewPattern.Location = new System.Drawing.Point(3, 10);
             this.btnNewPattern.Name = "btnNewPattern";
             this.btnNewPattern.Size = new System.Drawing.Size(45, 25);
@@ -123,6 +126,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
+            this.label5.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.label5.Location = new System.Drawing.Point(15, 150);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(51, 15);
@@ -159,6 +163,7 @@
             // colTransform
             // 
             this.colTransform.HeaderText = "Transform Rule";
+            this.colTransform.FillWeight = 160F;
             this.colTransform.Name = "colTransform";
             this.colTransform.Width = 150;
             // 
@@ -171,6 +176,7 @@
             // colDelete
             // 
             this.colDelete.HeaderText = "Del";
+            this.colDelete.FillWeight = 50F;
             this.colDelete.Name = "colDelete";
             this.colDelete.Text = "Remove";
             this.colDelete.UseColumnTextForButtonValue = true;
@@ -179,6 +185,7 @@
             // btnSave
             // 
             this.btnSave.BackColor = System.Drawing.Color.PaleGreen;
+            this.btnSave.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.btnSave.Location = new System.Drawing.Point(560, 495);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(100, 35);
@@ -188,6 +195,7 @@
             // 
             // btnAddRule
             // 
+            this.btnAddRule.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.btnAddRule.Location = new System.Drawing.Point(15, 495);
             this.btnAddRule.Name = "btnAddRule";
             this.btnAddRule.Size = new System.Drawing.Size(100, 35);
@@ -196,6 +204,7 @@
             // 
             // txtBlockText
             // 
+            this.txtBlockText.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.txtBlockText.Location = new System.Drawing.Point(115, 110);
             this.txtBlockText.Name = "txtBlockText";
             this.txtBlockText.Size = new System.Drawing.Size(300, 23);
@@ -204,6 +213,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.label4.Location = new System.Drawing.Point(15, 113);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(63, 15);
@@ -211,6 +221,7 @@
             // 
             // txtBarcodeTest
             // 
+            this.txtBarcodeTest.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.txtBarcodeTest.Location = new System.Drawing.Point(115, 80);
             this.txtBarcodeTest.Name = "txtBarcodeTest";
             this.txtBarcodeTest.Size = new System.Drawing.Size(300, 23);
@@ -219,6 +230,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.label3.Location = new System.Drawing.Point(15, 83);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(53, 15);
@@ -226,6 +238,7 @@
             // 
             // txtDescription
             // 
+            this.txtDescription.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.txtDescription.Location = new System.Drawing.Point(115, 50);
             this.txtDescription.Name = "txtDescription";
             this.txtDescription.Size = new System.Drawing.Size(300, 23);
@@ -234,6 +247,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.label2.Location = new System.Drawing.Point(15, 53);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(70, 15);
@@ -241,6 +255,7 @@
             // 
             // txtPatternName
             // 
+            this.txtPatternName.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.txtPatternName.Location = new System.Drawing.Point(115, 20);
             this.txtPatternName.Name = "txtPatternName";
             this.txtPatternName.Size = new System.Drawing.Size(300, 23);
@@ -249,6 +264,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.label1.Location = new System.Drawing.Point(15, 23);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(68, 15);

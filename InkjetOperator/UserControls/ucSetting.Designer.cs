@@ -100,7 +100,7 @@
             // 
             btnPC2.FlatAppearance.BorderSize = 0;
             btnPC2.FlatStyle = FlatStyle.Flat;
-            btnPC2.Font = new Font("Segoe UI", 8F);
+            btnPC2.Font = new Font("Segoe UI", 9F);
             btnPC2.Location = new Point(196, 75);
             btnPC2.Margin = new Padding(4, 5, 4, 5);
             btnPC2.Name = "btnPC2";
@@ -111,7 +111,7 @@
             // lblPC2
             // 
             lblPC2.BackColor = Color.Black;
-            lblPC2.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            lblPC2.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblPC2.ForeColor = Color.White;
             lblPC2.Location = new Point(50, 75);
             lblPC2.Margin = new Padding(4, 0, 4, 0);
@@ -125,7 +125,7 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            label3.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
             label3.Location = new Point(14, 16);
             label3.Margin = new Padding(4, 0, 4, 0);
             label3.Name = "label3";
@@ -135,6 +135,7 @@
             // 
             // txtPcip
             // 
+            txtPcip.Font = new Font("Segoe UI", 10F);
             txtPcip.Location = new Point(129, 136);
             txtPcip.Margin = new Padding(4, 5, 4, 5);
             txtPcip.Name = "txtPcip";
@@ -144,6 +145,7 @@
             // label4
             // 
             label4.AutoSize = true;
+            label4.Font = new Font("Segoe UI", 10F);
             label4.Location = new Point(21, 140);
             label4.Margin = new Padding(4, 0, 4, 0);
             label4.Name = "label4";
@@ -173,7 +175,7 @@
             btnCancel.BackColor = Color.FromArgb(150, 150, 150);
             btnCancel.FlatAppearance.BorderSize = 0;
             btnCancel.FlatStyle = FlatStyle.Flat;
-            btnCancel.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnCancel.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnCancel.ForeColor = Color.White;
             btnCancel.Location = new Point(955, 873);
             btnCancel.Margin = new Padding(4, 5, 4, 5);
@@ -188,7 +190,7 @@
             btnSave.BackColor = Color.FromArgb(70, 130, 180);
             btnSave.FlatAppearance.BorderSize = 0;
             btnSave.FlatStyle = FlatStyle.Flat;
-            btnSave.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnSave.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnSave.ForeColor = Color.White;
             btnSave.Location = new Point(814, 873);
             btnSave.Margin = new Padding(4, 5, 4, 5);
@@ -252,7 +254,7 @@
             // 
             btnEditUv002.FlatAppearance.BorderSize = 0;
             btnEditUv002.FlatStyle = FlatStyle.Flat;
-            btnEditUv002.Font = new Font("Segoe UI", 8F);
+            btnEditUv002.Font = new Font("Segoe UI", 9F);
             btnEditUv002.Location = new Point(196, 191);
             btnEditUv002.Margin = new Padding(4, 5, 4, 5);
             btnEditUv002.Name = "btnEditUv002";
@@ -264,7 +266,7 @@
             // 
             btnEditUv001.FlatAppearance.BorderSize = 0;
             btnEditUv001.FlatStyle = FlatStyle.Flat;
-            btnEditUv001.Font = new Font("Segoe UI", 8F);
+            btnEditUv001.Font = new Font("Segoe UI", 9F);
             btnEditUv001.Location = new Point(196, 75);
             btnEditUv001.Margin = new Padding(4, 5, 4, 5);
             btnEditUv001.Name = "btnEditUv001";
@@ -274,6 +276,7 @@
             // 
             // txtUv002Ip
             // 
+            txtUv002Ip.Font = new Font("Segoe UI", 10F);
             txtUv002Ip.Location = new Point(129, 254);
             txtUv002Ip.Margin = new Padding(4, 5, 4, 5);
             txtUv002Ip.Name = "txtUv002Ip";
@@ -283,6 +286,7 @@
             // lblUv002Ip
             // 
             lblUv002Ip.AutoSize = true;
+            lblUv002Ip.Font = new Font("Segoe UI", 10F);
             lblUv002Ip.Location = new Point(21, 258);
             lblUv002Ip.Margin = new Padding(4, 0, 4, 0);
             lblUv002Ip.Name = "lblUv002Ip";
@@ -293,7 +297,7 @@
             // lblUv002
             // 
             lblUv002.BackColor = Color.Black;
-            lblUv002.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            lblUv002.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblUv002.ForeColor = Color.White;
             lblUv002.Location = new Point(50, 191);
             lblUv002.Margin = new Padding(4, 0, 4, 0);
@@ -306,6 +310,7 @@
             // 
             // txtUv001Ip
             // 
+            txtUv001Ip.Font = new Font("Segoe UI", 10F);
             txtUv001Ip.Location = new Point(129, 136);
             txtUv001Ip.Margin = new Padding(4, 5, 4, 5);
             txtUv001Ip.Name = "txtUv001Ip";
@@ -315,6 +320,7 @@
             // lblUv001Ip
             // 
             lblUv001Ip.AutoSize = true;
+            lblUv001Ip.Font = new Font("Segoe UI", 10F);
             lblUv001Ip.Location = new Point(21, 140);
             lblUv001Ip.Margin = new Padding(4, 0, 4, 0);
             lblUv001Ip.Name = "lblUv001Ip";
@@ -325,7 +331,7 @@
             // lblUv001
             // 
             lblUv001.BackColor = Color.Black;
-            lblUv001.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            lblUv001.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblUv001.ForeColor = Color.White;
             lblUv001.Location = new Point(50, 75);
             lblUv001.Margin = new Padding(4, 0, 4, 0);
@@ -339,7 +345,7 @@
             // lblUvTitle
             // 
             lblUvTitle.AutoSize = true;
-            lblUvTitle.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            lblUvTitle.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
             lblUvTitle.Location = new Point(14, 16);
             lblUvTitle.Margin = new Padding(4, 0, 4, 0);
             lblUvTitle.Name = "lblUvTitle";
@@ -422,7 +428,7 @@
             // 
             btnEditMk061.FlatAppearance.BorderSize = 0;
             btnEditMk061.FlatStyle = FlatStyle.Flat;
-            btnEditMk061.Font = new Font("Segoe UI", 8F);
+            btnEditMk061.Font = new Font("Segoe UI", 9F);
             btnEditMk061.Location = new Point(196, 252);
             btnEditMk061.Margin = new Padding(4, 5, 4, 5);
             btnEditMk061.Name = "btnEditMk061";
@@ -434,7 +440,7 @@
             // 
             btnEditMk060.FlatAppearance.BorderSize = 0;
             btnEditMk060.FlatStyle = FlatStyle.Flat;
-            btnEditMk060.Font = new Font("Segoe UI", 8F);
+            btnEditMk060.Font = new Font("Segoe UI", 9F);
             btnEditMk060.Location = new Point(196, 193);
             btnEditMk060.Margin = new Padding(4, 5, 4, 5);
             btnEditMk060.Name = "btnEditMk060";
@@ -446,7 +452,7 @@
             // 
             btnEditMk059.FlatAppearance.BorderSize = 0;
             btnEditMk059.FlatStyle = FlatStyle.Flat;
-            btnEditMk059.Font = new Font("Segoe UI", 8F);
+            btnEditMk059.Font = new Font("Segoe UI", 9F);
             btnEditMk059.Location = new Point(196, 134);
             btnEditMk059.Margin = new Padding(4, 5, 4, 5);
             btnEditMk059.Name = "btnEditMk059";
@@ -458,7 +464,7 @@
             // 
             btnEditMk058.FlatAppearance.BorderSize = 0;
             btnEditMk058.FlatStyle = FlatStyle.Flat;
-            btnEditMk058.Font = new Font("Segoe UI", 8F);
+            btnEditMk058.Font = new Font("Segoe UI", 9F);
             btnEditMk058.Location = new Point(196, 75);
             btnEditMk058.Margin = new Padding(4, 5, 4, 5);
             btnEditMk058.Name = "btnEditMk058";
@@ -468,6 +474,7 @@
             // 
             // txtMk061Com
             // 
+            txtMk061Com.Font = new Font("Segoe UI", 10F);
             txtMk061Com.Location = new Point(340, 257);
             txtMk061Com.Margin = new Padding(4, 5, 4, 5);
             txtMk061Com.Name = "txtMk061Com";
@@ -477,6 +484,7 @@
             // lblMk061Com
             // 
             lblMk061Com.AutoSize = true;
+            lblMk061Com.Font = new Font("Segoe UI", 10F);
             lblMk061Com.Location = new Point(232, 261);
             lblMk061Com.Margin = new Padding(4, 0, 4, 0);
             lblMk061Com.Name = "lblMk061Com";
@@ -487,7 +495,7 @@
             // lblMk061
             // 
             lblMk061.BackColor = Color.Black;
-            lblMk061.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            lblMk061.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblMk061.ForeColor = Color.White;
             lblMk061.Location = new Point(50, 252);
             lblMk061.Margin = new Padding(4, 0, 4, 0);
@@ -500,6 +508,7 @@
             // 
             // txtMk060Com
             // 
+            txtMk060Com.Font = new Font("Segoe UI", 10F);
             txtMk060Com.Location = new Point(340, 198);
             txtMk060Com.Margin = new Padding(4, 5, 4, 5);
             txtMk060Com.Name = "txtMk060Com";
@@ -509,6 +518,7 @@
             // lblMk060Com
             // 
             lblMk060Com.AutoSize = true;
+            lblMk060Com.Font = new Font("Segoe UI", 10F);
             lblMk060Com.Location = new Point(232, 202);
             lblMk060Com.Margin = new Padding(4, 0, 4, 0);
             lblMk060Com.Name = "lblMk060Com";
@@ -519,7 +529,7 @@
             // lblMk060
             // 
             lblMk060.BackColor = Color.Black;
-            lblMk060.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            lblMk060.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblMk060.ForeColor = Color.White;
             lblMk060.Location = new Point(50, 193);
             lblMk060.Margin = new Padding(4, 0, 4, 0);
@@ -532,6 +542,7 @@
             // 
             // txtMk059Com
             // 
+            txtMk059Com.Font = new Font("Segoe UI", 10F);
             txtMk059Com.Location = new Point(340, 139);
             txtMk059Com.Margin = new Padding(4, 5, 4, 5);
             txtMk059Com.Name = "txtMk059Com";
@@ -541,6 +552,7 @@
             // lblMk059Com
             // 
             lblMk059Com.AutoSize = true;
+            lblMk059Com.Font = new Font("Segoe UI", 10F);
             lblMk059Com.Location = new Point(232, 143);
             lblMk059Com.Margin = new Padding(4, 0, 4, 0);
             lblMk059Com.Name = "lblMk059Com";
@@ -551,7 +563,7 @@
             // lblMk059
             // 
             lblMk059.BackColor = Color.Black;
-            lblMk059.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            lblMk059.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblMk059.ForeColor = Color.White;
             lblMk059.Location = new Point(50, 134);
             lblMk059.Margin = new Padding(4, 0, 4, 0);
@@ -564,6 +576,7 @@
             // 
             // txtMk058Com
             // 
+            txtMk058Com.Font = new Font("Segoe UI", 10F);
             txtMk058Com.Location = new Point(340, 80);
             txtMk058Com.Margin = new Padding(4, 5, 4, 5);
             txtMk058Com.Name = "txtMk058Com";
@@ -573,6 +586,7 @@
             // lblMk058Com
             // 
             lblMk058Com.AutoSize = true;
+            lblMk058Com.Font = new Font("Segoe UI", 10F);
             lblMk058Com.Location = new Point(232, 84);
             lblMk058Com.Margin = new Padding(4, 0, 4, 0);
             lblMk058Com.Name = "lblMk058Com";
@@ -583,7 +597,7 @@
             // lblMk058
             // 
             lblMk058.BackColor = Color.Black;
-            lblMk058.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            lblMk058.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblMk058.ForeColor = Color.White;
             lblMk058.Location = new Point(50, 75);
             lblMk058.Margin = new Padding(4, 0, 4, 0);
@@ -597,7 +611,7 @@
             // lblMkTitle
             // 
             lblMkTitle.AutoSize = true;
-            lblMkTitle.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            lblMkTitle.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
             lblMkTitle.Location = new Point(14, 16);
             lblMkTitle.Margin = new Padding(4, 0, 4, 0);
             lblMkTitle.Name = "lblMkTitle";

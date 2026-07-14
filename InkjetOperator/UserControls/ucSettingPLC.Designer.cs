@@ -67,7 +67,7 @@
             btnCancel.BackColor = Color.FromArgb(150, 150, 150);
             btnCancel.FlatAppearance.BorderSize = 0;
             btnCancel.FlatStyle = FlatStyle.Flat;
-            btnCancel.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnCancel.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnCancel.ForeColor = Color.White;
             btnCancel.Location = new Point(955, 873);
             btnCancel.Margin = new Padding(4, 5, 4, 5);
@@ -82,7 +82,7 @@
             btnSave.BackColor = Color.FromArgb(70, 130, 180);
             btnSave.FlatAppearance.BorderSize = 0;
             btnSave.FlatStyle = FlatStyle.Flat;
-            btnSave.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnSave.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnSave.ForeColor = Color.White;
             btnSave.Location = new Point(814, 873);
             btnSave.Margin = new Padding(4, 5, 4, 5);
@@ -112,6 +112,7 @@
             // 
             // txtPlc001Port
             // 
+            txtPlc001Port.Font = new Font("Segoe UI", 10F);
             txtPlc001Port.Location = new Point(129, 188);
             txtPlc001Port.Margin = new Padding(4, 5, 4, 5);
             txtPlc001Port.Name = "txtPlc001Port";
@@ -121,6 +122,7 @@
             // lblPlcPort
             // 
             lblPlcPort.AutoSize = true;
+            lblPlcPort.Font = new Font("Segoe UI", 10F);
             lblPlcPort.Location = new Point(21, 192);
             lblPlcPort.Margin = new Padding(4, 0, 4, 0);
             lblPlcPort.Name = "lblPlcPort";
@@ -142,7 +144,7 @@
             // 
             btnEditPlc001.FlatAppearance.BorderSize = 0;
             btnEditPlc001.FlatStyle = FlatStyle.Flat;
-            btnEditPlc001.Font = new Font("Segoe UI", 8F);
+            btnEditPlc001.Font = new Font("Segoe UI", 9F);
             btnEditPlc001.Location = new Point(196, 75);
             btnEditPlc001.Margin = new Padding(4, 5, 4, 5);
             btnEditPlc001.Name = "btnEditPlc001";
@@ -153,7 +155,7 @@
             // lblPlc001
             // 
             lblPlc001.BackColor = Color.Black;
-            lblPlc001.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            lblPlc001.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblPlc001.ForeColor = Color.White;
             lblPlc001.Location = new Point(50, 75);
             lblPlc001.Margin = new Padding(4, 0, 4, 0);
@@ -167,7 +169,7 @@
             // lblPlcTitle
             // 
             lblPlcTitle.AutoSize = true;
-            lblPlcTitle.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            lblPlcTitle.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
             lblPlcTitle.Location = new Point(14, 16);
             lblPlcTitle.Margin = new Padding(4, 0, 4, 0);
             lblPlcTitle.Name = "lblPlcTitle";
@@ -177,6 +179,7 @@
             // 
             // txtPlc001Ip
             // 
+            txtPlc001Ip.Font = new Font("Segoe UI", 10F);
             txtPlc001Ip.Location = new Point(129, 136);
             txtPlc001Ip.Margin = new Padding(4, 5, 4, 5);
             txtPlc001Ip.Name = "txtPlc001Ip";
@@ -186,6 +189,7 @@
             // lblPlcIp
             // 
             lblPlcIp.AutoSize = true;
+            lblPlcIp.Font = new Font("Segoe UI", 10F);
             lblPlcIp.Location = new Point(21, 140);
             lblPlcIp.Margin = new Padding(4, 0, 4, 0);
             lblPlcIp.Name = "lblPlcIp";
@@ -196,7 +200,7 @@
             // lblPlcMapTitle
             // 
             lblPlcMapTitle.AutoSize = true;
-            lblPlcMapTitle.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            lblPlcMapTitle.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
             lblPlcMapTitle.Location = new Point(85, 320);
             lblPlcMapTitle.Margin = new Padding(4, 0, 4, 0);
             lblPlcMapTitle.Name = "lblPlcMapTitle";
@@ -209,7 +213,7 @@
             btnAddRow.BackColor = Color.FromArgb(70, 130, 180);
             btnAddRow.FlatAppearance.BorderSize = 0;
             btnAddRow.FlatStyle = FlatStyle.Flat;
-            btnAddRow.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnAddRow.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnAddRow.ForeColor = Color.White;
             btnAddRow.Location = new Point(929, 315);
             btnAddRow.Margin = new Padding(4, 5, 4, 5);
@@ -238,12 +242,14 @@
             // colAddressStart
             // 
             colAddressStart.HeaderText = "Address Start";
+            colAddressStart.FillWeight = 120F;
             colAddressStart.MinimumWidth = 8;
             colAddressStart.Name = "colAddressStart";
             // 
             // colAddressStop
             // 
             colAddressStop.HeaderText = "Address Stop";
+            colAddressStop.FillWeight = 120F;
             colAddressStop.MinimumWidth = 8;
             colAddressStop.Name = "colAddressStop";
             // 
@@ -262,6 +268,7 @@
             // colListName
             // 
             colListName.HeaderText = "List";
+            colListName.FillWeight = 130F;
             colListName.MinimumWidth = 8;
             colListName.Name = "colListName";
             // 
@@ -282,6 +289,7 @@
             // colDelete
             // 
             colDelete.HeaderText = "Del";
+            colDelete.FillWeight = 50F;
             colDelete.MinimumWidth = 8;
             colDelete.Name = "colDelete";
             colDelete.Text = "ลบ";

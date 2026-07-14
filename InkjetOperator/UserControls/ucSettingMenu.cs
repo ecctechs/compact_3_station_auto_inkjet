@@ -81,7 +81,7 @@ namespace InkjetOperator.UserControls
                         // Active style
                         btn.BackColor = Color.FromArgb(50, 100, 180);
                         btn.ForeColor = Color.White;
-                        btn.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+                        btn.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
                         btn.UseVisualStyleBackColor = false;
                     }
                     else
@@ -89,7 +89,7 @@ namespace InkjetOperator.UserControls
                         // Inactive style
                         btn.BackColor = Color.White;
                         btn.ForeColor = Color.FromArgb(60, 60, 60);
-                        btn.Font = new Font("Segoe UI", 12F, FontStyle.Regular);
+                        btn.Font = new Font("Segoe UI", 13F, FontStyle.Regular);
                         btn.UseVisualStyleBackColor = true;
                     }
                     btn.FlatStyle = FlatStyle.Flat;

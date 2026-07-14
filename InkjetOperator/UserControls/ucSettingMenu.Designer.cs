@@ -54,7 +54,7 @@
             btnPlcSetting.Dock = DockStyle.Top;
             btnPlcSetting.FlatAppearance.BorderSize = 0;
             btnPlcSetting.FlatStyle = FlatStyle.Flat;
-            btnPlcSetting.Font = new Font("Segoe UI", 12F);
+            btnPlcSetting.Font = new Font("Segoe UI", 13F);
             btnPlcSetting.Location = new Point(0, 134);
             btnPlcSetting.Margin = new Padding(3, 4, 3, 4);
             btnPlcSetting.Name = "btnPlcSetting";
@@ -70,7 +70,7 @@
             btnIpAddressSetting.Dock = DockStyle.Top;
             btnIpAddressSetting.FlatAppearance.BorderSize = 0;
             btnIpAddressSetting.FlatStyle = FlatStyle.Flat;
-            btnIpAddressSetting.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnIpAddressSetting.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnIpAddressSetting.ForeColor = Color.White;
             btnIpAddressSetting.Location = new Point(0, 67);
             btnIpAddressSetting.Margin = new Padding(3, 4, 3, 4);
@@ -86,7 +86,7 @@
             btnDatabaseSetting.Dock = DockStyle.Top;
             btnDatabaseSetting.FlatAppearance.BorderSize = 0;
             btnDatabaseSetting.FlatStyle = FlatStyle.Flat;
-            btnDatabaseSetting.Font = new Font("Segoe UI", 12F);
+            btnDatabaseSetting.Font = new Font("Segoe UI", 13F);
             btnDatabaseSetting.Location = new Point(0, 0);
             btnDatabaseSetting.Margin = new Padding(3, 4, 3, 4);
             btnDatabaseSetting.Name = "btnDatabaseSetting";
