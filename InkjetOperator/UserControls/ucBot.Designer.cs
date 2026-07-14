@@ -80,7 +80,7 @@
             // lblTitle
             // 
             lblTitle.AutoSize = true;
-            lblTitle.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
+            lblTitle.Font = new Font("Segoe UI", 17F, FontStyle.Bold);
             lblTitle.ForeColor = Color.White;
             lblTitle.Location = new Point(20, 15);
             lblTitle.Name = "lblTitle";
@@ -104,7 +104,7 @@
             btnRunBot.BackColor = Color.FromArgb(40, 160, 80);
             btnRunBot.FlatAppearance.BorderSize = 0;
             btnRunBot.FlatStyle = FlatStyle.Flat;
-            btnRunBot.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
+            btnRunBot.Font = new Font("Segoe UI", 17F, FontStyle.Bold);
             btnRunBot.ForeColor = Color.White;
             btnRunBot.Location = new Point(20, 15);
             btnRunBot.Name = "btnRunBot";
@@ -118,7 +118,7 @@
             // 
             btnOpenLog.BackColor = Color.FromArgb(200, 200, 200);
             btnOpenLog.FlatStyle = FlatStyle.Flat;
-            btnOpenLog.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+            btnOpenLog.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             btnOpenLog.Location = new Point(340, 15);
             btnOpenLog.Name = "btnOpenLog";
             btnOpenLog.Size = new Size(250, 55);
@@ -150,6 +150,7 @@
             // label1
             // 
             label1.AutoSize = true;
+            label1.Font = new Font("Segoe UI", 10F);
             label1.Location = new Point(20, 114);
             label1.Name = "label1";
             label1.Size = new Size(103, 20);
@@ -175,6 +176,7 @@
             // lblMain
             // 
             lblMain.AutoSize = true;
+            lblMain.Font = new Font("Segoe UI", 10F);
             lblMain.Location = new Point(20, 30);
             lblMain.Name = "lblMain";
             lblMain.Size = new Size(138, 20);
@@ -200,6 +202,7 @@
             // lblBackup
             // 
             lblBackup.AutoSize = true;
+            lblBackup.Font = new Font("Segoe UI", 10F);
             lblBackup.Location = new Point(20, 70);
             lblBackup.Name = "lblBackup";
             lblBackup.Size = new Size(153, 20);
@@ -240,7 +243,7 @@
             dgvXY.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleCenter;
             dataGridViewCellStyle1.BackColor = Color.LightGray;
-            dataGridViewCellStyle1.Font = new Font("Segoe UI", 9F);
+            dataGridViewCellStyle1.Font = new Font("Segoe UI", 10F);
             dataGridViewCellStyle1.ForeColor = SystemColors.WindowText;
             dataGridViewCellStyle1.SelectionBackColor = SystemColors.Highlight;
             dataGridViewCellStyle1.SelectionForeColor = SystemColors.HighlightText;
@@ -293,7 +296,7 @@
             dgvLog.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleCenter;
             dataGridViewCellStyle2.BackColor = Color.LightGray;
-            dataGridViewCellStyle2.Font = new Font("Segoe UI", 9F);
+            dataGridViewCellStyle2.Font = new Font("Segoe UI", 10F);
             dataGridViewCellStyle2.ForeColor = SystemColors.WindowText;
             dataGridViewCellStyle2.SelectionBackColor = SystemColors.Highlight;
             dataGridViewCellStyle2.SelectionForeColor = SystemColors.HighlightText;
@@ -333,7 +336,7 @@
             dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleCenter;
             dataGridViewCellStyle3.BackColor = Color.LightGray;
-            dataGridViewCellStyle3.Font = new Font("Segoe UI", 9F);
+            dataGridViewCellStyle3.Font = new Font("Segoe UI", 10F);
             dataGridViewCellStyle3.ForeColor = SystemColors.WindowText;
             dataGridViewCellStyle3.SelectionBackColor = SystemColors.Highlight;
             dataGridViewCellStyle3.SelectionForeColor = SystemColors.HighlightText;
@@ -397,6 +400,7 @@
             // 
             InkjetName.DataPropertyName = "InkjetName";
             InkjetName.HeaderText = "InkjetName";
+            InkjetName.FillWeight = 120F;
             InkjetName.MinimumWidth = 6;
             InkjetName.Name = "InkjetName";
             InkjetName.ReadOnly = true;
@@ -421,6 +425,7 @@
             // 
             ProgramName.DataPropertyName = "ProgramName";
             ProgramName.HeaderText = "ProgramName";
+            ProgramName.FillWeight = 150F;
             ProgramName.MinimumWidth = 6;
             ProgramName.Name = "ProgramName";
             ProgramName.ReadOnly = true;

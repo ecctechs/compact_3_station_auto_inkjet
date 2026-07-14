@@ -16,6 +16,7 @@ namespace InkjetOperator.UserControls
         public ucBot()
         {
             InitializeComponent();
+            UiStyle.ApplyGrid(dgvXY, dgvLog, dataGridView1);
             _config = AppConfig.Load();
             InitGrid();
             LoadConfig();
