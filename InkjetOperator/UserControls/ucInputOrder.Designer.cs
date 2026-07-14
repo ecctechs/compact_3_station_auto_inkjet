@@ -75,7 +75,7 @@
             btnCancel.BackColor = Color.FromArgb(220, 80, 50);
             btnCancel.FlatAppearance.BorderSize = 3;
             btnCancel.FlatStyle = FlatStyle.Flat;
-            btnCancel.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            btnCancel.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
             btnCancel.ForeColor = Color.White;
             btnCancel.Location = new Point(400, 9);
             btnCancel.Margin = new Padding(4, 5, 4, 5);
@@ -91,7 +91,7 @@
             btnOK.BackColor = Color.FromArgb(165, 195, 130);
             btnOK.FlatAppearance.BorderSize = 3;
             btnOK.FlatStyle = FlatStyle.Flat;
-            btnOK.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            btnOK.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
             btnOK.ForeColor = Color.White;
             btnOK.Location = new Point(114, 9);
             btnOK.Margin = new Padding(4, 5, 4, 5);
@@ -145,7 +145,7 @@
             // 
             lblBarcode.AutoSize = true;
             lblBarcode.Dock = DockStyle.Fill;
-            lblBarcode.Font = new Font("Segoe UI", 11F);
+            lblBarcode.Font = new Font("Segoe UI", 12F);
             lblBarcode.Location = new Point(4, 0);
             lblBarcode.Margin = new Padding(4, 0, 4, 0);
             lblBarcode.Name = "lblBarcode";
@@ -158,7 +158,7 @@
             // 
             txtBarcode.BackColor = Color.WhiteSmoke;
             txtBarcode.Dock = DockStyle.Fill;
-            txtBarcode.Font = new Font("Consolas", 12F, FontStyle.Bold);
+            txtBarcode.Font = new Font("Consolas", 13F, FontStyle.Bold);
             txtBarcode.Location = new Point(218, 9);
             txtBarcode.Margin = new Padding(4, 9, 4, 9);
             txtBarcode.Name = "txtBarcode";
@@ -169,7 +169,7 @@
             // 
             lblOrderNo.AutoSize = true;
             lblOrderNo.Dock = DockStyle.Fill;
-            lblOrderNo.Font = new Font("Segoe UI", 11F);
+            lblOrderNo.Font = new Font("Segoe UI", 12F);
             lblOrderNo.Location = new Point(4, 66);
             lblOrderNo.Margin = new Padding(4, 0, 4, 0);
             lblOrderNo.Name = "lblOrderNo";
@@ -181,7 +181,7 @@
             // txtOrderNo
             // 
             txtOrderNo.Dock = DockStyle.Fill;
-            txtOrderNo.Font = new Font("Segoe UI", 11F);
+            txtOrderNo.Font = new Font("Segoe UI", 12F);
             txtOrderNo.Location = new Point(218, 75);
             txtOrderNo.Margin = new Padding(4, 9, 4, 9);
             txtOrderNo.Name = "txtOrderNo";
@@ -192,7 +192,7 @@
             // 
             lblCustomerName.AutoSize = true;
             lblCustomerName.Dock = DockStyle.Fill;
-            lblCustomerName.Font = new Font("Segoe UI", 11F);
+            lblCustomerName.Font = new Font("Segoe UI", 12F);
             lblCustomerName.Location = new Point(4, 132);
             lblCustomerName.Margin = new Padding(4, 0, 4, 0);
             lblCustomerName.Name = "lblCustomerName";
@@ -204,7 +204,7 @@
             // txtCustomerName
             // 
             txtCustomerName.Dock = DockStyle.Fill;
-            txtCustomerName.Font = new Font("Segoe UI", 11F);
+            txtCustomerName.Font = new Font("Segoe UI", 12F);
             txtCustomerName.Location = new Point(218, 141);
             txtCustomerName.Margin = new Padding(4, 9, 4, 9);
             txtCustomerName.Name = "txtCustomerName";
@@ -215,7 +215,7 @@
             // 
             lblType.AutoSize = true;
             lblType.Dock = DockStyle.Fill;
-            lblType.Font = new Font("Segoe UI", 11F);
+            lblType.Font = new Font("Segoe UI", 12F);
             lblType.Location = new Point(4, 198);
             lblType.Margin = new Padding(4, 0, 4, 0);
             lblType.Name = "lblType";
@@ -227,7 +227,7 @@
             // txtType
             // 
             txtType.Dock = DockStyle.Fill;
-            txtType.Font = new Font("Segoe UI", 11F);
+            txtType.Font = new Font("Segoe UI", 12F);
             txtType.Location = new Point(218, 207);
             txtType.Margin = new Padding(4, 9, 4, 9);
             txtType.Name = "txtType";
@@ -238,7 +238,7 @@
             // 
             lblQty.AutoSize = true;
             lblQty.Dock = DockStyle.Fill;
-            lblQty.Font = new Font("Segoe UI", 11F);
+            lblQty.Font = new Font("Segoe UI", 12F);
             lblQty.Location = new Point(4, 264);
             lblQty.Margin = new Padding(4, 0, 4, 0);
             lblQty.Name = "lblQty";
@@ -250,7 +250,7 @@
             // txtQty
             // 
             txtQty.Dock = DockStyle.Fill;
-            txtQty.Font = new Font("Segoe UI", 11F);
+            txtQty.Font = new Font("Segoe UI", 12F);
             txtQty.Location = new Point(218, 273);
             txtQty.Margin = new Padding(4, 9, 4, 9);
             txtQty.Name = "txtQty";
@@ -261,7 +261,7 @@
             // 
             lblScanStatus.AutoSize = true;
             lblScanStatus.BackColor = Color.Transparent;
-            lblScanStatus.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            lblScanStatus.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             lblScanStatus.ForeColor = Color.White;
             lblScanStatus.Location = new Point(649, 374);
             lblScanStatus.Margin = new Padding(4, 0, 4, 0);

@@ -441,7 +441,7 @@ namespace InkjetOperator
             lblScanStatus.Text = "📷 รอสแกนบาร์โค้ด...";
             lblScanStatus.ForeColor = Color.White;
             lblScanStatus.BackColor = Color.Transparent;
-            lblScanStatus.Font = new Font("Segoe UI", 12, FontStyle.Bold);
+            lblScanStatus.Font = new Font("Segoe UI", 13, FontStyle.Bold);
         }
 
 
