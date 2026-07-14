@@ -173,6 +173,7 @@
             // 
             orderNoDataGridViewTextBoxColumn.DataPropertyName = "OrderNo";
             orderNoDataGridViewTextBoxColumn.HeaderText = "Order No.";
+            orderNoDataGridViewTextBoxColumn.FillWeight = 130F;
             orderNoDataGridViewTextBoxColumn.MinimumWidth = 6;
             orderNoDataGridViewTextBoxColumn.Name = "orderNoDataGridViewTextBoxColumn";
             orderNoDataGridViewTextBoxColumn.ReadOnly = true;
@@ -181,6 +182,7 @@
             // 
             customerNameDataGridViewTextBoxColumn.DataPropertyName = "CustomerName";
             customerNameDataGridViewTextBoxColumn.HeaderText = "Customer";
+            customerNameDataGridViewTextBoxColumn.FillWeight = 140F;
             customerNameDataGridViewTextBoxColumn.MinimumWidth = 6;
             customerNameDataGridViewTextBoxColumn.Name = "customerNameDataGridViewTextBoxColumn";
             customerNameDataGridViewTextBoxColumn.ReadOnly = true;
@@ -189,6 +191,7 @@
             // 
             typeDataGridViewTextBoxColumn.DataPropertyName = "Type";
             typeDataGridViewTextBoxColumn.HeaderText = "Type";
+            typeDataGridViewTextBoxColumn.FillWeight = 60F;
             typeDataGridViewTextBoxColumn.MinimumWidth = 6;
             typeDataGridViewTextBoxColumn.Name = "typeDataGridViewTextBoxColumn";
             typeDataGridViewTextBoxColumn.ReadOnly = true;
@@ -197,6 +200,7 @@
             // 
             qtyDataGridViewTextBoxColumn.DataPropertyName = "Qty";
             qtyDataGridViewTextBoxColumn.HeaderText = "Qty";
+            qtyDataGridViewTextBoxColumn.FillWeight = 50F;
             qtyDataGridViewTextBoxColumn.MinimumWidth = 6;
             qtyDataGridViewTextBoxColumn.Name = "qtyDataGridViewTextBoxColumn";
             qtyDataGridViewTextBoxColumn.ReadOnly = true;
@@ -205,6 +209,7 @@
             // 
             statusDataGridViewTextBoxColumn.DataPropertyName = "Status";
             statusDataGridViewTextBoxColumn.HeaderText = "Status";
+            statusDataGridViewTextBoxColumn.FillWeight = 90F;
             statusDataGridViewTextBoxColumn.MinimumWidth = 6;
             statusDataGridViewTextBoxColumn.Name = "statusDataGridViewTextBoxColumn";
             statusDataGridViewTextBoxColumn.ReadOnly = true;
@@ -213,6 +218,7 @@
             // 
             stationDataGridViewTextBoxColumn.DataPropertyName = "Station";
             stationDataGridViewTextBoxColumn.HeaderText = "Station";
+            stationDataGridViewTextBoxColumn.FillWeight = 70F;
             stationDataGridViewTextBoxColumn.MinimumWidth = 6;
             stationDataGridViewTextBoxColumn.Name = "stationDataGridViewTextBoxColumn";
             stationDataGridViewTextBoxColumn.ReadOnly = true;
@@ -252,6 +258,7 @@
             // 
             orderNoDataGridViewTextBoxColumn1.DataPropertyName = "OrderNo";
             orderNoDataGridViewTextBoxColumn1.HeaderText = "Order";
+            orderNoDataGridViewTextBoxColumn1.FillWeight = 130F;
             orderNoDataGridViewTextBoxColumn1.MinimumWidth = 6;
             orderNoDataGridViewTextBoxColumn1.Name = "orderNoDataGridViewTextBoxColumn1";
             orderNoDataGridViewTextBoxColumn1.ReadOnly = true;
@@ -260,6 +267,7 @@
             // 
             customerNameDataGridViewTextBoxColumn1.DataPropertyName = "CustomerName";
             customerNameDataGridViewTextBoxColumn1.HeaderText = "CustomerName";
+            customerNameDataGridViewTextBoxColumn1.FillWeight = 140F;
             customerNameDataGridViewTextBoxColumn1.MinimumWidth = 6;
             customerNameDataGridViewTextBoxColumn1.Name = "customerNameDataGridViewTextBoxColumn1";
             customerNameDataGridViewTextBoxColumn1.ReadOnly = true;
@@ -268,6 +276,7 @@
             // 
             typeDataGridViewTextBoxColumn1.DataPropertyName = "Type";
             typeDataGridViewTextBoxColumn1.HeaderText = "Type";
+            typeDataGridViewTextBoxColumn1.FillWeight = 60F;
             typeDataGridViewTextBoxColumn1.MinimumWidth = 6;
             typeDataGridViewTextBoxColumn1.Name = "typeDataGridViewTextBoxColumn1";
             typeDataGridViewTextBoxColumn1.ReadOnly = true;
@@ -276,6 +285,7 @@
             // 
             qtyDataGridViewTextBoxColumn1.DataPropertyName = "Qty";
             qtyDataGridViewTextBoxColumn1.HeaderText = "Qty";
+            qtyDataGridViewTextBoxColumn1.FillWeight = 50F;
             qtyDataGridViewTextBoxColumn1.MinimumWidth = 6;
             qtyDataGridViewTextBoxColumn1.Name = "qtyDataGridViewTextBoxColumn1";
             qtyDataGridViewTextBoxColumn1.ReadOnly = true;
@@ -284,6 +294,7 @@
             // 
             statusDataGridViewTextBoxColumn1.DataPropertyName = "Status";
             statusDataGridViewTextBoxColumn1.HeaderText = "Status";
+            statusDataGridViewTextBoxColumn1.FillWeight = 90F;
             statusDataGridViewTextBoxColumn1.MinimumWidth = 6;
             statusDataGridViewTextBoxColumn1.Name = "statusDataGridViewTextBoxColumn1";
             statusDataGridViewTextBoxColumn1.ReadOnly = true;
@@ -373,6 +384,7 @@
             // 
             dataGridViewTextBoxColumn1.DataPropertyName = "OrderNo";
             dataGridViewTextBoxColumn1.HeaderText = "Order No.";
+            dataGridViewTextBoxColumn1.FillWeight = 120F;
             dataGridViewTextBoxColumn1.MinimumWidth = 6;
             dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
             dataGridViewTextBoxColumn1.ReadOnly = true;
@@ -381,6 +393,7 @@
             // 
             dataGridViewTextBoxColumn2.DataPropertyName = "CustomerName";
             dataGridViewTextBoxColumn2.HeaderText = "Customer";
+            dataGridViewTextBoxColumn2.FillWeight = 120F;
             dataGridViewTextBoxColumn2.MinimumWidth = 6;
             dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
             dataGridViewTextBoxColumn2.ReadOnly = true;
@@ -389,6 +402,7 @@
             // 
             dataGridViewTextBoxColumn3.DataPropertyName = "Type";
             dataGridViewTextBoxColumn3.HeaderText = "Type";
+            dataGridViewTextBoxColumn3.FillWeight = 55F;
             dataGridViewTextBoxColumn3.MinimumWidth = 6;
             dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
             dataGridViewTextBoxColumn3.ReadOnly = true;
@@ -397,6 +411,7 @@
             // 
             dataGridViewTextBoxColumn4.DataPropertyName = "Qty";
             dataGridViewTextBoxColumn4.HeaderText = "Qty";
+            dataGridViewTextBoxColumn4.FillWeight = 45F;
             dataGridViewTextBoxColumn4.MinimumWidth = 6;
             dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
             dataGridViewTextBoxColumn4.ReadOnly = true;
@@ -405,6 +420,7 @@
             // 
             st1_confirmation.DataPropertyName = "st1_confirmation";
             st1_confirmation.HeaderText = "Status";
+            st1_confirmation.FillWeight = 80F;
             st1_confirmation.MinimumWidth = 6;
             st1_confirmation.Name = "st1_confirmation";
             st1_confirmation.ReadOnly = true;
@@ -413,6 +429,7 @@
             // 
             st1_send_time.DataPropertyName = "st1_send_time";
             st1_send_time.HeaderText = "Send time";
+            st1_send_time.FillWeight = 130F;
             st1_send_time.MinimumWidth = 6;
             st1_send_time.Name = "st1_send_time";
             st1_send_time.ReadOnly = true;
@@ -424,7 +441,7 @@
             // label1
             // 
             label1.Dock = DockStyle.Top;
-            label1.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            label1.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             label1.Location = new Point(3, 0);
             label1.Name = "label1";
             label1.Size = new Size(447, 29);
@@ -435,6 +452,7 @@
             // btnRefresh
             // 
             btnRefresh.Dock = DockStyle.Bottom;
+            btnRefresh.Font = new Font("Segoe UI", 10F);
             btnRefresh.Location = new Point(6, 730);
             btnRefresh.Name = "btnRefresh";
             btnRefresh.Size = new Size(459, 36);
@@ -444,7 +462,7 @@
             // lblJobsTitle
             // 
             lblJobsTitle.Dock = DockStyle.Top;
-            lblJobsTitle.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            lblJobsTitle.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblJobsTitle.Location = new Point(6, 6);
             lblJobsTitle.Name = "lblJobsTitle";
             lblJobsTitle.Size = new Size(459, 30);
@@ -489,7 +507,7 @@
             // lblDetailTitle
             // 
             lblDetailTitle.AutoSize = true;
-            lblDetailTitle.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+            lblDetailTitle.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             lblDetailTitle.Location = new Point(3, 6);
             lblDetailTitle.Margin = new Padding(3, 6, 3, 6);
             lblDetailTitle.Name = "lblDetailTitle";
@@ -530,6 +548,7 @@
             // 
             lblBarcode.Anchor = AnchorStyles.Left;
             lblBarcode.AutoSize = true;
+            lblBarcode.Font = new Font("Segoe UI", 10F);
             lblBarcode.Location = new Point(3, 6);
             lblBarcode.Margin = new Padding(3, 6, 3, 6);
             lblBarcode.Name = "lblBarcode";
@@ -540,6 +559,7 @@
             // txtBarcode
             // 
             txtBarcode.Dock = DockStyle.Fill;
+            txtBarcode.Font = new Font("Segoe UI", 10F);
             txtBarcode.Location = new Point(89, 3);
             txtBarcode.Name = "txtBarcode";
             txtBarcode.ReadOnly = true;
@@ -550,6 +570,7 @@
             // 
             lblLot.Anchor = AnchorStyles.Left;
             lblLot.AutoSize = true;
+            lblLot.Font = new Font("Segoe UI", 10F);
             lblLot.Location = new Point(253, 6);
             lblLot.Margin = new Padding(3, 6, 3, 6);
             lblLot.Name = "lblLot";
@@ -560,6 +581,7 @@
             // txtLot
             // 
             txtLot.Dock = DockStyle.Fill;
+            txtLot.Font = new Font("Segoe UI", 10F);
             txtLot.Location = new Point(300, 3);
             txtLot.Name = "txtLot";
             txtLot.ReadOnly = true;
@@ -570,6 +592,7 @@
             // 
             lblStatus.Anchor = AnchorStyles.Left;
             lblStatus.AutoSize = true;
+            lblStatus.Font = new Font("Segoe UI", 10F);
             lblStatus.Location = new Point(436, 6);
             lblStatus.Margin = new Padding(3, 6, 3, 6);
             lblStatus.Name = "lblStatus";
@@ -580,6 +603,7 @@
             // txtStatus
             // 
             txtStatus.Dock = DockStyle.Fill;
+            txtStatus.Font = new Font("Segoe UI", 10F);
             txtStatus.Location = new Point(506, 3);
             txtStatus.Name = "txtStatus";
             txtStatus.ReadOnly = true;
@@ -590,6 +614,7 @@
             // 
             lblPattern.Anchor = AnchorStyles.Left;
             lblPattern.AutoSize = true;
+            lblPattern.Font = new Font("Segoe UI", 10F);
             lblPattern.Location = new Point(3, 43);
             lblPattern.Margin = new Padding(3, 6, 3, 6);
             lblPattern.Name = "lblPattern";
@@ -600,6 +625,7 @@
             // txtPattern
             // 
             txtPattern.Dock = DockStyle.Fill;
+            txtPattern.Font = new Font("Segoe UI", 10F);
             txtPattern.Location = new Point(89, 40);
             txtPattern.Name = "txtPattern";
             txtPattern.ReadOnly = true;
@@ -656,6 +682,7 @@
             // 
             programNameDataGridViewTextBoxColumn.DataPropertyName = "ProgramName";
             programNameDataGridViewTextBoxColumn.HeaderText = "ProgramName";
+            programNameDataGridViewTextBoxColumn.FillWeight = 180F;
             programNameDataGridViewTextBoxColumn.MinimumWidth = 6;
             programNameDataGridViewTextBoxColumn.Name = "programNameDataGridViewTextBoxColumn";
             programNameDataGridViewTextBoxColumn.ReadOnly = true;
@@ -729,6 +756,7 @@
             // 
             blockNumberDataGridViewTextBoxColumn.DataPropertyName = "BlockNumber";
             blockNumberDataGridViewTextBoxColumn.HeaderText = "Block#";
+            blockNumberDataGridViewTextBoxColumn.FillWeight = 60F;
             blockNumberDataGridViewTextBoxColumn.MinimumWidth = 6;
             blockNumberDataGridViewTextBoxColumn.Name = "blockNumberDataGridViewTextBoxColumn";
             blockNumberDataGridViewTextBoxColumn.ReadOnly = true;
@@ -737,6 +765,7 @@
             // 
             textDataGridViewTextBoxColumn.DataPropertyName = "Text";
             textDataGridViewTextBoxColumn.HeaderText = "Text";
+            textDataGridViewTextBoxColumn.FillWeight = 200F;
             textDataGridViewTextBoxColumn.MinimumWidth = 6;
             textDataGridViewTextBoxColumn.Name = "textDataGridViewTextBoxColumn";
             textDataGridViewTextBoxColumn.ReadOnly = true;
@@ -745,6 +774,7 @@
             // 
             xDataGridViewTextBoxColumn.DataPropertyName = "X";
             xDataGridViewTextBoxColumn.HeaderText = "X";
+            xDataGridViewTextBoxColumn.FillWeight = 60F;
             xDataGridViewTextBoxColumn.MinimumWidth = 6;
             xDataGridViewTextBoxColumn.Name = "xDataGridViewTextBoxColumn";
             xDataGridViewTextBoxColumn.ReadOnly = true;
@@ -753,6 +783,7 @@
             // 
             yDataGridViewTextBoxColumn.DataPropertyName = "Y";
             yDataGridViewTextBoxColumn.HeaderText = "Y";
+            yDataGridViewTextBoxColumn.FillWeight = 60F;
             yDataGridViewTextBoxColumn.MinimumWidth = 6;
             yDataGridViewTextBoxColumn.Name = "yDataGridViewTextBoxColumn";
             yDataGridViewTextBoxColumn.ReadOnly = true;
@@ -761,6 +792,7 @@
             // 
             sizeDataGridViewTextBoxColumn.DataPropertyName = "Size";
             sizeDataGridViewTextBoxColumn.HeaderText = "Size";
+            sizeDataGridViewTextBoxColumn.FillWeight = 60F;
             sizeDataGridViewTextBoxColumn.MinimumWidth = 6;
             sizeDataGridViewTextBoxColumn.Name = "sizeDataGridViewTextBoxColumn";
             sizeDataGridViewTextBoxColumn.ReadOnly = true;
@@ -769,6 +801,7 @@
             // 
             scaleDataGridViewTextBoxColumn.DataPropertyName = "Scale";
             scaleDataGridViewTextBoxColumn.HeaderText = "Scale";
+            scaleDataGridViewTextBoxColumn.FillWeight = 60F;
             scaleDataGridViewTextBoxColumn.MinimumWidth = 6;
             scaleDataGridViewTextBoxColumn.Name = "scaleDataGridViewTextBoxColumn";
             scaleDataGridViewTextBoxColumn.ReadOnly = true;
@@ -777,6 +810,7 @@
             // 
             RuleResult.DataPropertyName = "RuleResult";
             RuleResult.HeaderText = "RuleResult";
+            RuleResult.FillWeight = 150F;
             RuleResult.MinimumWidth = 6;
             RuleResult.Name = "RuleResult";
             RuleResult.ReadOnly = true;
@@ -817,6 +851,7 @@
             // 
             idDataGridViewTextBoxColumn.DataPropertyName = "Id";
             idDataGridViewTextBoxColumn.HeaderText = "Id";
+            idDataGridViewTextBoxColumn.FillWeight = 40F;
             idDataGridViewTextBoxColumn.MinimumWidth = 6;
             idDataGridViewTextBoxColumn.Name = "idDataGridViewTextBoxColumn";
             // 
@@ -824,6 +859,7 @@
             // 
             inkjetNameDataGridViewTextBoxColumn.DataPropertyName = "InkjetName";
             inkjetNameDataGridViewTextBoxColumn.HeaderText = "InkjetName";
+            inkjetNameDataGridViewTextBoxColumn.FillWeight = 120F;
             inkjetNameDataGridViewTextBoxColumn.MinimumWidth = 6;
             inkjetNameDataGridViewTextBoxColumn.Name = "inkjetNameDataGridViewTextBoxColumn";
             // 
@@ -845,6 +881,7 @@
             // 
             ProgramName.DataPropertyName = "ProgramName";
             ProgramName.HeaderText = "ProgramName";
+            ProgramName.FillWeight = 180F;
             ProgramName.MinimumWidth = 6;
             ProgramName.Name = "ProgramName";
             // 
@@ -868,6 +905,7 @@
             // 
             // btnSendMk1Mk2
             // 
+            btnSendMk1Mk2.Font = new Font("Segoe UI", 10F);
             btnSendMk1Mk2.Location = new Point(3, 9);
             btnSendMk1Mk2.Name = "btnSendMk1Mk2";
             btnSendMk1Mk2.Size = new Size(160, 44);
@@ -877,6 +915,7 @@
             // 
             // btnSendUV1
             // 
+            btnSendUV1.Font = new Font("Segoe UI", 10F);
             btnSendUV1.Location = new Point(169, 9);
             btnSendUV1.Name = "btnSendUV1";
             btnSendUV1.Size = new Size(120, 44);
@@ -886,6 +925,7 @@
             // 
             // btnSendMk3
             // 
+            btnSendMk3.Font = new Font("Segoe UI", 10F);
             btnSendMk3.Location = new Point(295, 9);
             btnSendMk3.Name = "btnSendMk3";
             btnSendMk3.Size = new Size(120, 44);
@@ -895,6 +935,7 @@
             // 
             // btnSendUV2
             // 
+            btnSendUV2.Font = new Font("Segoe UI", 10F);
             btnSendUV2.Location = new Point(421, 9);
             btnSendUV2.Name = "btnSendUV2";
             btnSendUV2.Size = new Size(120, 44);
