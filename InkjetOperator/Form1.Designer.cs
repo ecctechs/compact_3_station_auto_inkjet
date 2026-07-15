@@ -47,7 +47,7 @@
             pnlMenu.Location = new Point(0, 0);
             pnlMenu.Margin = new Padding(4, 5, 4, 5);
             pnlMenu.Name = "pnlMenu";
-            pnlMenu.Size = new Size(1440, 98);
+            pnlMenu.Size = new Size(1531, 98);
             pnlMenu.TabIndex = 1;
             // 
             // button1
@@ -90,7 +90,7 @@
             lblLanguage.Margin = new Padding(4, 0, 4, 0);
             lblLanguage.Name = "lblLanguage";
             lblLanguage.Padding = new Padding(8, 4, 8, 4);
-            lblLanguage.Size = new Size(55, 36);
+            lblLanguage.Size = new Size(58, 38);
             lblLanguage.TabIndex = 0;
             lblLanguage.Text = "EN";
             // 
@@ -174,17 +174,19 @@
             pnlContent.Location = new Point(0, 98);
             pnlContent.Margin = new Padding(4, 5, 4, 5);
             pnlContent.Name = "pnlContent";
-            pnlContent.Size = new Size(1440, 1176);
+            pnlContent.Size = new Size(1531, 1077);
             pnlContent.TabIndex = 0;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1440, 1274);
+            ClientSize = new Size(1531, 1175);
             Controls.Add(pnlContent);
             Controls.Add(pnlMenu);
+            FormBorderStyle = FormBorderStyle.FixedSingle;
             Margin = new Padding(4, 5, 4, 5);
+            MaximizeBox = false;
             Name = "Form1";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Inkjet Operator";
