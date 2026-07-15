@@ -86,7 +86,7 @@
             lblLanguage.BackColor = Color.Black;
             lblLanguage.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblLanguage.ForeColor = Color.White;
-            lblLanguage.Location = new Point(1371, 25);
+            lblLanguage.Location = new Point(1460, 36);
             lblLanguage.Margin = new Padding(4, 0, 4, 0);
             lblLanguage.Name = "lblLanguage";
             lblLanguage.Padding = new Padding(8, 4, 8, 4);
@@ -99,7 +99,7 @@
             picLogo.ErrorImage = null;
             picLogo.Image = (Image)resources.GetObject("picLogo.Image");
             picLogo.InitialImage = (Image)resources.GetObject("picLogo.InitialImage");
-            picLogo.Location = new Point(1203, 4);
+            picLogo.Location = new Point(1292, 5);
             picLogo.Margin = new Padding(4, 5, 4, 5);
             picLogo.Name = "picLogo";
             picLogo.Size = new Size(160, 90);

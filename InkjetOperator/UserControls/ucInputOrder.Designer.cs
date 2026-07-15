@@ -162,7 +162,7 @@
             txtBarcode.Location = new Point(218, 9);
             txtBarcode.Margin = new Padding(4, 9, 4, 9);
             txtBarcode.Name = "txtBarcode";
-            txtBarcode.Size = new Size(434, 36);
+            txtBarcode.Size = new Size(434, 38);
             txtBarcode.TabIndex = 0;
             // 
             // lblOrderNo
@@ -185,7 +185,7 @@
             txtOrderNo.Location = new Point(218, 75);
             txtOrderNo.Margin = new Padding(4, 9, 4, 9);
             txtOrderNo.Name = "txtOrderNo";
-            txtOrderNo.Size = new Size(434, 37);
+            txtOrderNo.Size = new Size(434, 39);
             txtOrderNo.TabIndex = 1;
             // 
             // lblCustomerName
@@ -208,7 +208,7 @@
             txtCustomerName.Location = new Point(218, 141);
             txtCustomerName.Margin = new Padding(4, 9, 4, 9);
             txtCustomerName.Name = "txtCustomerName";
-            txtCustomerName.Size = new Size(434, 37);
+            txtCustomerName.Size = new Size(434, 39);
             txtCustomerName.TabIndex = 2;
             // 
             // lblType
@@ -231,7 +231,7 @@
             txtType.Location = new Point(218, 207);
             txtType.Margin = new Padding(4, 9, 4, 9);
             txtType.Name = "txtType";
-            txtType.Size = new Size(434, 37);
+            txtType.Size = new Size(434, 39);
             txtType.TabIndex = 3;
             // 
             // lblQty
@@ -254,7 +254,7 @@
             txtQty.Location = new Point(218, 273);
             txtQty.Margin = new Padding(4, 9, 4, 9);
             txtQty.Name = "txtQty";
-            txtQty.Size = new Size(434, 37);
+            txtQty.Size = new Size(434, 39);
             txtQty.TabIndex = 4;
             // 
             // lblScanStatus
@@ -266,7 +266,7 @@
             lblScanStatus.Location = new Point(649, 374);
             lblScanStatus.Margin = new Padding(4, 0, 4, 0);
             lblScanStatus.Name = "lblScanStatus";
-            lblScanStatus.Size = new Size(203, 32);
+            lblScanStatus.Size = new Size(216, 36);
             lblScanStatus.TabIndex = 2;
             lblScanStatus.Text = "รอสแกนบาร์โค้ด...";
             lblScanStatus.TextAlign = ContentAlignment.MiddleCenter;
