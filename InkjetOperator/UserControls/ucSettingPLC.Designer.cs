@@ -227,7 +227,7 @@
             // 
             dgvPlcMap.AllowUserToAddRows = false;
             dgvPlcMap.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgvPlcMap.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllHeaders;
+            dgvPlcMap.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
             dgvPlcMap.BackgroundColor = Color.White;
             dgvPlcMap.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvPlcMap.Columns.AddRange(new DataGridViewColumn[] { colAddressStart, colAddressStop, colPlcStart, colPlcStop, colListName, colDataType, colBit, colDelete });
@@ -235,6 +235,7 @@
             dgvPlcMap.Margin = new Padding(4, 5, 4, 5);
             dgvPlcMap.Name = "dgvPlcMap";
             dgvPlcMap.RowHeadersWidth = 51;
+            dgvPlcMap.RowTemplate.Height = 32;
             dgvPlcMap.Size = new Size(984, 480);
             dgvPlcMap.TabIndex = 5;
             dgvPlcMap.CellContentClick += dgvPlcMap_CellContentClick;
