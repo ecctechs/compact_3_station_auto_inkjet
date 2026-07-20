@@ -35,7 +35,7 @@ namespace InkjetOperator
             lblTitle.Font = new Font("Segoe UI", 19F, FontStyle.Bold);
             lblTitle.Location = new Point(30, 20);
             lblTitle.Name = "lblTitle";
-            lblTitle.Size = new Size(316, 41);
+            lblTitle.Size = new Size(400, 51);
             lblTitle.TabIndex = 0;
             lblTitle.Text = "Browse Database File";
             // 
@@ -45,23 +45,23 @@ namespace InkjetOperator
             lblPath.Font = new Font("Segoe UI", 10F);
             lblPath.Location = new Point(40, 100);
             lblPath.Name = "lblPath";
-            lblPath.Size = new Size(131, 20);
+            lblPath.Size = new Size(169, 28);
             lblPath.TabIndex = 1;
             lblPath.Text = "Browse Database :";
             // 
             // txtDbPath
             // 
             txtDbPath.Font = new Font("Segoe UI", 10F);
-            txtDbPath.Location = new Point(200, 95);
+            txtDbPath.Location = new Point(215, 97);
             txtDbPath.Name = "txtDbPath";
-            txtDbPath.Size = new Size(342, 27);
+            txtDbPath.Size = new Size(412, 34);
             txtDbPath.TabIndex = 2;
             // 
             // btnBrowse
             // 
-            btnBrowse.Location = new Point(548, 95);
+            btnBrowse.Location = new Point(657, 95);
             btnBrowse.Name = "btnBrowse";
-            btnBrowse.Size = new Size(40, 30);
+            btnBrowse.Size = new Size(115, 36);
             btnBrowse.TabIndex = 3;
             btnBrowse.Text = "📁";
             btnBrowse.Click += btnBrowse_Click;

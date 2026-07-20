@@ -36,6 +36,25 @@ namespace InkjetOperator
 
             LoadSettings();
             SetupEvents();
+
+            timer1.Enabled = false;
+            lblPcStatus.BackColor = Color.Gray;
+            CheckBackendStatusAsync();
+        }
+
+        private async void CheckBackendStatusAsync()
+        {
+            try
+            {
+                bool backendOk = await _api.PingAsync();
+                if (!this.IsDisposed)
+                    lblPcStatus.BackColor = backendOk ? Color.Green : Color.Red;
+            }
+            catch
+            {
+                if (!this.IsDisposed)
+                    lblPcStatus.BackColor = Color.Red;
+            }
         }
 
         private void InitializeControls()
@@ -132,8 +151,22 @@ namespace InkjetOperator
 
             ResetColors();
 
-            // 2. Reconnect immediately to verify new IPs
-            await ConnectAllAsync(forceReconnect: true);
+            // 2. เช็คการเชื่อมต่อ Backend ตอน Save
+            lblPcStatus.BackColor = Color.Gray;
+            btnSave.Enabled = false;
+            try
+            {
+                bool backendOk = await _api.PingAsync();
+                lblPcStatus.BackColor = backendOk ? Color.Green : Color.Red;
+            }
+            catch
+            {
+                lblPcStatus.BackColor = Color.Red;
+            }
+            finally
+            {
+                btnSave.Enabled = true;
+            }
 
             MessageBox.Show("บันทึกเรียบร้อย", "Save", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -251,44 +284,14 @@ namespace InkjetOperator
             return null;
         }
 
-        private async void UpdateStatusUI()
+        private void UpdateStatusUI()
         {
             if (this.IsDisposed) return;
 
-            // --- 1. เช็คสถานะ Inkjet Printers (Sync Check จาก Registry) ---
             lblMkStatus[0].BackColor = (AdapterRegistry.MK058?.IsConnected() == true) ? Color.Green : Color.Red;
             lblMkStatus[1].BackColor = (AdapterRegistry.MK059?.IsConnected() == true) ? Color.Green : Color.Red;
             lblMkStatus[2].BackColor = (AdapterRegistry.MK060?.IsConnected() == true) ? Color.Green : Color.Red;
             lblMkStatus[3].BackColor = (AdapterRegistry.MK061?.IsConnected() == true) ? Color.Green : Color.Red;
-
-            // --- 2. เช็คสถานะ Backend PC (Async Check) ---
-            // ป้องกันการเรียกซ้ำซ้อนขณะกำลังตรวจสอบ
-            string pcIp = txtPcIpAddress.Text.Trim();
-            if (string.IsNullOrEmpty(pcIp))
-            {
-                txtPcIpAddress.ForeColor = Color.Gray;
-                return;
-            }
-
-            try
-            {
-                // เรียกใช้ PingAsync ที่คุณเขียนไว้ใน API Service
-                // หมายเหตุ: ตัวแปร _api ต้องถูกประกาศและ Initialize ไว้ใน class นี้ด้วย
-                bool backendOk = await _api.PingAsync();
-
-                if (!this.IsDisposed) // เช็คอีกครั้งว่า User ยังไม่ปิดหน้าจอนี้ไปก่อน
-                {
-                    lblPcStatus.BackColor = backendOk ? Color.Green : Color.Red;
-
-                    // ถ้ามี Label แสดงสถานะแยกต่างหาก
-                    // lblPcStatus.Text = backendOk ? "Online" : "Offline";
-                    // lblPcStatus.ForeColor = backendOk ? Color.Green : Color.Red;
-                }
-            }
-            catch
-            {
-                txtPcIpAddress.ForeColor = Color.Red;
-            }
         }
 
         private void ResetColors()
@@ -304,34 +307,8 @@ namespace InkjetOperator
             ResetColors();
         }
 
-        private async void timer1_Tick(object sender, EventArgs e)
+        private void timer1_Tick(object sender, EventArgs e)
         {
-            // 1. หยุด Timer ทันทีเพื่อป้องกัน Re-entry (งานทับซ้อน)
-            timer1.Stop();
-
-            try
-            {
-                // 2. เช็คว่า Form หรือ Control ถูกปิดไปหรือยังก่อนทำงาน
-                if (this.IsDisposed) return;
-
-                // 3. ทำงาน Connect โดยตั้งค่า Timeout ในตัว Manager ให้เหมาะสม
-                await ConnectAllAsync(forceReconnect: false);
-            }
-            catch (Exception ex)
-            {
-                // 4. ต้องมี try-catch เสมอในระดับ Top-level ของ async void
-                // เพื่อป้องกันแอพพัง และเก็บ Log ไว้ดูย้อนหลัง
-                Console.WriteLine($"Polling Error: {ex.Message}");
-            }
-            finally
-            {
-                // 5. เมื่องานเสร็จสิ้น (ไม่ว่าจะสำเร็จหรือ Error) 
-                // ค่อยเริ่มนับถอยหลัง Timer ใหม่อีกครั้ง
-                if (!this.IsDisposed)
-                {
-                    timer1.Start();
-                }
-            }
         }
     }
 }

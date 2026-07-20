@@ -100,25 +100,10 @@ namespace InkjetOperator.UserControls
 
         private void ApplyMenuVisibility()
         {
-            // ดึงค่า Config (สมมติว่าใช้ AppConfig เหมือนไฟล์ที่แล้ว)
             var config = AppConfig.Load();
             int mode = config.MenuMode;
 
-            // เงื่อนไข: ถ้าเป็น 2, 3, 4 ให้ Visible = false (ไม่ต้องโชว์)
-            // นอกเหนือจากนั้น (รวมถึง 0 และ 1) ให้โชว์ปกติ
-            if (mode == 2 || mode == 3 || mode == 4)
-            {
-                btnDatabaseSetting.Visible = false;
-            }
-            else
-            {
-                btnDatabaseSetting.Visible = true;
-            }
-
-            // หรือเขียนแบบสั้น (Shorthand):
-            // btnDatabaseSetting.Visible = !(mode >= 2 && mode <= 4);
-
-            // PLC Setting แสดงเฉพาะโหมด 1 เท่านั้น
+            btnDatabaseSetting.Visible = (mode == 0);
             btnPlcSetting.Visible = (mode == 1);
         }
     }

@@ -383,8 +383,6 @@ namespace InkjetOperator
 
         private void BtnCancel_Click(object? sender, EventArgs e)
         {
-            Cancelled?.Invoke(this, EventArgs.Empty);
-            ClearForm();
         }
 
         private void ClearForm()
@@ -431,19 +429,14 @@ namespace InkjetOperator
 
         }
 
-        private async void btnCancel_Click_1(object sender, EventArgs e)
+        private void btnCancel_Click_1(object sender, EventArgs e)
         {
-            var printer = AdapterRegistry.MK058;
+            var result = MessageBox.Show(
+                "ต้องการล้างข้อมูลทั้งหมดหรือไม่?",
+                "ยืนยัน", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-            if (printer != null && printer.IsConnected())
-            {
-                // ส่งข้อความไปพิมพ์
-                MessageBox.Show("เครื่องพิมพ์ MK058 เชื่อมต่อ");
-            }
-            else
-            {
-                MessageBox.Show("เครื่องพิมพ์ MK058 ยังไม่ได้เชื่อมต่อ!");
-            }
+            if (result == DialogResult.Yes)
+                ClearForm();
         }
     }
 
