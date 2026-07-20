@@ -88,7 +88,7 @@
             // 
             // lblPcStatus
             // 
-            lblPcStatus.BackColor = Color.FromArgb(100, 200, 100);
+            lblPcStatus.BackColor = Color.Gray;
             lblPcStatus.BorderStyle = BorderStyle.FixedSingle;
             lblPcStatus.Location = new Point(21, 84);
             lblPcStatus.Margin = new Padding(4, 0, 4, 0);
@@ -232,7 +232,7 @@
             // 
             // lblUv002Status
             // 
-            lblUv002Status.BackColor = Color.FromArgb(100, 200, 100);
+            lblUv002Status.BackColor = Color.Gray;
             lblUv002Status.BorderStyle = BorderStyle.FixedSingle;
             lblUv002Status.Location = new Point(21, 200);
             lblUv002Status.Margin = new Padding(4, 0, 4, 0);
@@ -242,7 +242,7 @@
             // 
             // lblUv001Status
             // 
-            lblUv001Status.BackColor = Color.FromArgb(100, 200, 100);
+            lblUv001Status.BackColor = Color.Gray;
             lblUv001Status.BorderStyle = BorderStyle.FixedSingle;
             lblUv001Status.Location = new Point(21, 84);
             lblUv001Status.Margin = new Padding(4, 0, 4, 0);
@@ -386,7 +386,7 @@
             // 
             // lblMk061Status
             // 
-            lblMk061Status.BackColor = Color.FromArgb(100, 200, 100);
+            lblMk061Status.BackColor = Color.Gray;
             lblMk061Status.BorderStyle = BorderStyle.FixedSingle;
             lblMk061Status.Location = new Point(21, 261);
             lblMk061Status.Margin = new Padding(4, 0, 4, 0);
@@ -396,7 +396,7 @@
             // 
             // lblMk060Status
             // 
-            lblMk060Status.BackColor = Color.FromArgb(220, 80, 50);
+            lblMk060Status.BackColor = Color.Gray;
             lblMk060Status.BorderStyle = BorderStyle.FixedSingle;
             lblMk060Status.Location = new Point(21, 202);
             lblMk060Status.Margin = new Padding(4, 0, 4, 0);
@@ -406,7 +406,7 @@
             // 
             // lblMk059Status
             // 
-            lblMk059Status.BackColor = Color.FromArgb(100, 200, 100);
+            lblMk059Status.BackColor = Color.Gray;
             lblMk059Status.BorderStyle = BorderStyle.FixedSingle;
             lblMk059Status.Location = new Point(21, 143);
             lblMk059Status.Margin = new Padding(4, 0, 4, 0);
@@ -416,7 +416,7 @@
             // 
             // lblMk058Status
             // 
-            lblMk058Status.BackColor = Color.FromArgb(100, 200, 100);
+            lblMk058Status.BackColor = Color.Gray;
             lblMk058Status.BorderStyle = BorderStyle.FixedSingle;
             lblMk058Status.Location = new Point(21, 84);
             lblMk058Status.Margin = new Padding(4, 0, 4, 0);

@@ -39,16 +39,20 @@ namespace InkjetOperator
 
             timer1.Enabled = false;
             lblPcStatus.BackColor = Color.Gray;
-            CheckBackendStatusAsync();
+            foreach (var lbl in lblMkStatus) lbl.BackColor = Color.Gray;
+            CheckAllStatusAsync();
         }
 
-        private async void CheckBackendStatusAsync()
+        private async void CheckAllStatusAsync()
         {
             try
             {
-                bool backendOk = await _api.PingAsync();
+                var backendTask = _api.PingAsync();
+                var mkTask = ConnectAllAsync(forceReconnect: false);
+                await Task.WhenAll(backendTask, mkTask);
+
                 if (!this.IsDisposed)
-                    lblPcStatus.BackColor = backendOk ? Color.Green : Color.Red;
+                    lblPcStatus.BackColor = backendTask.Result ? Color.Green : Color.Red;
             }
             catch
             {
@@ -151,13 +155,17 @@ namespace InkjetOperator
 
             ResetColors();
 
-            // 2. เช็คการเชื่อมต่อ Backend ตอน Save
+            // 2. เช็คการเชื่อมต่อทั้งหมดตอน Save
             lblPcStatus.BackColor = Color.Gray;
+            foreach (var lbl in lblMkStatus) lbl.BackColor = Color.Gray;
             btnSave.Enabled = false;
             try
             {
-                bool backendOk = await _api.PingAsync();
-                lblPcStatus.BackColor = backendOk ? Color.Green : Color.Red;
+                var backendTask = _api.PingAsync();
+                var mkTask = ConnectAllAsync(forceReconnect: true);
+                await Task.WhenAll(backendTask, mkTask);
+
+                lblPcStatus.BackColor = backendTask.Result ? Color.Green : Color.Red;
             }
             catch
             {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using InkjetOperator.Models;
@@ -22,7 +23,38 @@ namespace InkjetOperator
             LoadSettings();
             SetupEvents();
 
+            lblPlc001Status.BackColor = Color.Gray;
+            CheckPlcStatusAsync();
             _ = LoadTableAsync();
+        }
+
+        private async void CheckPlcStatusAsync()
+        {
+            string ip = txtPlc001Ip.Text.Trim();
+            string portStr = txtPlc001Port.Text.Trim();
+
+            if (string.IsNullOrEmpty(ip) || !int.TryParse(portStr, out int port))
+            {
+                if (!this.IsDisposed)
+                    lblPlc001Status.BackColor = Color.Red;
+                return;
+            }
+
+            try
+            {
+                using var tcp = new TcpClient();
+                var connectTask = tcp.ConnectAsync(ip, port);
+                bool connected = await Task.WhenAny(connectTask, Task.Delay(3000)) == connectTask
+                                 && tcp.Connected;
+
+                if (!this.IsDisposed)
+                    lblPlc001Status.BackColor = connected ? Color.Green : Color.Red;
+            }
+            catch
+            {
+                if (!this.IsDisposed)
+                    lblPlc001Status.BackColor = Color.Red;
+            }
         }
 
         private void SetupDataGridView()
@@ -154,7 +186,11 @@ namespace InkjetOperator
             CustomSettingsManager.SetValue("PLC_IP", txtPlc001Ip.Text.Trim());
             CustomSettingsManager.SetValue("PLC_PORT", txtPlc001Port.Text.Trim());
 
-            // 2. Save ตารางทั้งชุดลง Backend (sort_order ตามลำดับแถวปัจจุบัน)
+            // 2. เช็คการเชื่อมต่อ PLC
+            lblPlc001Status.BackColor = Color.Gray;
+            CheckPlcStatusAsync();
+
+            // 3. Save ตารางทั้งชุดลง Backend (sort_order ตามลำดับแถวปัจจุบัน)
             for (int i = 0; i < _rows.Count; i++)
                 _rows[i].SortOrder = i;
 

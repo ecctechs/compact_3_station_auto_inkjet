@@ -132,7 +132,7 @@
             // 
             // lblPlc001Status
             // 
-            lblPlc001Status.BackColor = Color.FromArgb(100, 200, 100);
+            lblPlc001Status.BackColor = Color.Gray;
             lblPlc001Status.BorderStyle = BorderStyle.FixedSingle;
             lblPlc001Status.Location = new Point(21, 84);
             lblPlc001Status.Margin = new Padding(4, 0, 4, 0);
