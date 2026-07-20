@@ -41,13 +41,12 @@ namespace InkjetOperator.Services
             }
         }
 
-        public async Task<PatternDetail> GetPatternDetailAsync(string patternNo)
+        public async Task<PatternDetail> GetPatternDetailAsync(string barcode)
         {
             try
             {
                 if (!File.Exists(_dbPath))
                 {
-                    // แทนที่จะเด้ง ให้ Log หรือแจ้งเตือนแทน
                     Console.WriteLine($"Database file not found at: {_dbPath}");
                     return null;
                 }
@@ -55,26 +54,25 @@ namespace InkjetOperator.Services
                 using var conn = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
                 await conn.OpenAsync();
 
-                // ตรวจสอบว่ามี Table นี้อยู่จริงไหมก่อน Query (Optional แต่ปลอดภัยมาก)
                 using var checkCmd = new SQLiteCommand(
-                    "SELECT name FROM sqlite_master WHERE type='table' AND name='config_data';", conn);
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='inkjet_data';", conn);
                 var tableExists = await checkCmd.ExecuteScalarAsync();
 
                 if (tableExists == null)
                 {
-                    Console.WriteLine("Error: Table 'config_data' missing in database.");
+                    Console.WriteLine("Error: Table 'inkjet_data' missing in database.");
                     return null;
                 }
 
-                using var cmd = new SQLiteCommand("SELECT * FROM config_data WHERE pattern_no_erp = @p LIMIT 1", conn);
-                cmd.Parameters.AddWithValue("@p", patternNo);
+                using var cmd = new SQLiteCommand("SELECT * FROM inkjet_data WHERE lot_no = @p LIMIT 1", conn);
+                cmd.Parameters.AddWithValue("@p", barcode);
 
                 using var reader = (SQLiteDataReader)await cmd.ExecuteReaderAsync();
                 if (!await reader.ReadAsync()) return null;
 
                 return new PatternDetail
                 {
-                    Barcode = GetStr(reader, "pattern_no_erp") ?? patternNo,
+                    Barcode = GetStr(reader, "lot_no") ?? barcode,
                     Description = GetStr(reader, "model_plan_code") ?? GetStr(reader, "program_name") ?? "",
                     InkjetConfigs = new List<InkjetConfigDto>
             {
@@ -85,13 +83,11 @@ namespace InkjetOperator.Services
             }
             catch (SQLiteException ex)
             {
-                // เมื่อเกิด SQL Error โปรแกรมจะวิ่งมาที่นี่แทนการเด้งออก
                 Console.WriteLine($"SQLite Error: {ex.Message}");
                 return null;
             }
             catch (Exception ex)
             {
-                // ดักจับ Error อื่นๆ ทั่วไป
                 Console.WriteLine($"General Error: {ex.Message}");
                 return null;
             }

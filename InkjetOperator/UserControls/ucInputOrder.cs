@@ -192,18 +192,23 @@ namespace InkjetOperator
                 return;
 
             string barcodeRaw = txtBarcode.Text.Trim();
-            string patternNo = GetPatternNo(barcodeRaw);
 
-            // 2. ตรวจสอบข้อมูลใน SQLite
-            var pattern = await _sqliteService.GetPatternDetailAsync(patternNo);
+            // 2. ตรวจสอบข้อมูลใน SQLite (inkjet_data.lot_no)
+            var pattern = await _sqliteService.GetPatternDetailAsync(barcodeRaw);
             if (pattern == null)
             {
-                MessageBox.Show($"Pattern '{patternNo}' not registered", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(
+                    $"ไม่พบข้อมูล Barcode '{barcodeRaw}' ในตาราง inkjet_data\n\n" +
+                    "สาเหตุที่เป็นไปได้:\n" +
+                    "• ยังไม่ได้ลงทะเบียน lot_no นี้ในระบบ\n" +
+                    "• พิมพ์/สแกน Barcode ผิด\n" +
+                    "• ข้อมูลถูกลบหรือยังไม่ได้ Sync",
+                    "ไม่พบข้อมูล", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             // 3. Sync Pattern ไปยัง Backend
-            bool patternReady = await SyncPatternAsync(pattern, patternNo);
+            bool patternReady = await SyncPatternAsync(pattern, barcodeRaw);
             if (!patternReady)
             {
                 MessageBox.Show("ไม่สามารถจัดเตรียมข้อมูล Pattern ในระบบหลักได้ กรุณาตรวจสอบการเชื่อมต่อหรือข้อมูล", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -251,20 +256,6 @@ namespace InkjetOperator
                 return false;
             }
 
-            // 4. รูปแบบ Barcode ต้องมี '-' อย่างน้อย 1 ตัว
-            string barcode = txtBarcode.Text.Trim();
-            if (!barcode.Contains('-'))
-            {
-                ShowError(
-                    "รูปแบบ Barcode ไม่ถูกต้อง!\n\n" +
-                    "ต้องมีรูปแบบดังนี้:\n" +
-                    "1. [Pattern]-[Sub]-[Lot] (เช่น xxxx-xxx-yyyyyy)\n" +
-                    "2. [Pattern]-[Lot] (เช่น xxxxxx-yyyyy)\n\n" +
-                    "* เครื่องหมาย '-' ตัวสุดท้ายจะถูกใช้เพื่อแยก Lot ออกจาก Pattern");
-                txtBarcode.Focus();
-                return false;
-            }
-
             return true;
         }
 
@@ -305,16 +296,6 @@ namespace InkjetOperator
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// จัดการตัดสตริงเอาเฉพาะ Pattern Number
-        /// </summary>
-        private string GetPatternNo(string barcode)
-        {
-            int lastDashIndex = barcode.LastIndexOf('-');
-            // ถ้าผ่าน Validation มาแล้ว lastDashIndex จะไม่มีทางเป็น -1
-            return barcode.Substring(0, lastDashIndex);
         }
 
         /// <summary>

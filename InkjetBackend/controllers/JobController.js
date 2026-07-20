@@ -41,32 +41,17 @@ class JobController {
 
       let resolvedPatternId = pattern_id;
       let warning = null;
-      let parsedLotNumber = lot_number;
-      let parsedPatternNoErp = null;
 
-      // Parse barcode to extract lot_number and pattern_no_erp
-      // Barcode format: CMSS0297-DPX0839MCS-xxxxxxxx
-      // Last segment = lot_number, rest = pattern_no_erp
-      if (barcode_raw) {
-        const parts = barcode_raw.split("-");
-        if (parts.length >= 2) {
-          parsedLotNumber = parts[parts.length - 1]; // xxxxxxxx
-          parsedPatternNoErp = parts.slice(0, -1).join("-"); // CMSS0297-DPX0839MCS
-        } else {
-          parsedLotNumber = barcode_raw;
-        }
-      }
-
-      // Auto-parse barcode for pattern matching if pattern_id not provided
-      if (!pattern_id && barcode_raw && parsedPatternNoErp) {
+      // ใช้ barcode ทั้งก้อนหา Pattern (ไม่ตัด '-' แล้ว)
+      if (!pattern_id && barcode_raw) {
         const pattern = await Pattern.findOne({
-          where: { barcode: parsedPatternNoErp, is_active: true },
+          where: { barcode: barcode_raw, is_active: true },
         });
 
         if (pattern) {
           resolvedPatternId = pattern.id;
         } else {
-          warning = `No pattern found for barcode "${parsedPatternNoErp}"`;
+          warning = `No pattern found for barcode "${barcode_raw}"`;
         }
       }
 
@@ -77,8 +62,8 @@ class JobController {
         type,
         qty,
         pattern_id: resolvedPatternId,
-        pattern_no_erp: parsedPatternNoErp,
-        lot_number: parsedLotNumber || null,
+        pattern_no_erp: barcode_raw,
+        lot_number: lot_number || barcode_raw,
         created_by,
         st_status,
         warning,
