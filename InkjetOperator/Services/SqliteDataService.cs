@@ -119,6 +119,61 @@ namespace InkjetOperator.Services
             };
         }
 
+        /// <summary>
+        /// ตอน register: query print_data ด้วย lot_no → คืน UV detail 2 แถว (UV1/UV2)
+        /// UV1 = m1_* (Plate/MK063), UV2 = m2_* (Shim/MK067). ไม่พบ lot → คืน list ว่าง
+        /// </summary>
+        public async Task<List<UvJobData>> GetUvDetailAsync(string lot)
+        {
+            var list = new List<UvJobData>();
+
+            if (!File.Exists(_dbPath) || string.IsNullOrWhiteSpace(lot))
+                return list;
+
+            try
+            {
+                using var conn = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
+                await conn.OpenAsync();
+
+                using var cmd = new SQLiteCommand(
+                    "SELECT * FROM print_data WHERE lot_no = @lot LIMIT 1", conn);
+                cmd.Parameters.AddWithValue("@lot", lot.Trim());
+
+                using var r = (SQLiteDataReader)await cmd.ExecuteReaderAsync();
+                if (!await r.ReadAsync()) return list;
+
+                string lotNo = GetStr(r, "lot_no") ?? lot;
+                string erp = GetStr(r, "erp_mfg") ?? "";
+
+                list.Add(BuildUv(r, "UV1", "MK063", "m1_program_name", "m1_block_text", lotNo, erp));
+                list.Add(BuildUv(r, "UV2", "MK067", "m2_program_name", "m2_block_text", lotNo, erp));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"GetUvDetailAsync Error: {ex.Message}");
+            }
+
+            return list;
+        }
+
+        private UvJobData BuildUv(SQLiteDataReader r, string machine, string table,
+                                  string programCol, string blockPrefix, string lot, string name)
+        {
+            return new UvJobData
+            {
+                Machine = machine,
+                TableName = table,
+                ProgramName = GetStr(r, programCol) ?? "",
+                Lot = lot,
+                Name = name,
+                Text1 = GetStr(r, $"{blockPrefix}1"),
+                Text2 = GetStr(r, $"{blockPrefix}2"),
+                Text3 = GetStr(r, $"{blockPrefix}3"),
+                Text4 = GetStr(r, $"{blockPrefix}4"),
+                Text5 = GetStr(r, $"{blockPrefix}5"),
+            };
+        }
+
         // เพิ่มในไฟล์ SqliteDataService.cs
         public async Task<List<UVinkjet>> GetUvPrintDataAsync()
         {
