@@ -358,10 +358,13 @@ namespace InkjetOperator
                 st_status = "0"
             };
 
-            var success = await _api.CreateJobAsync(req);
+            var createdJob = await _api.CreateJobAsync(req);
 
-            if (success)
+            if (createdJob != null)
             {
+                // เก็บ UV detail (UV1/UV2) จาก print_data → backend เพื่อ poll preview ทีหลัง
+                await SyncUvJobDataAsync(createdJob.Id, barcode);
+
                 MessageBox.Show("Create job success", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 //BarcodeScanned?.Invoke(this, new BarcodeScanEventArgs
@@ -378,6 +381,22 @@ namespace InkjetOperator
             else
             {
                 MessageBox.Show("Create job failed: ไม่สามารถสร้างงานในระบบหลักได้", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>query print_data (lot_no) → เก็บ UV detail (UV1/UV2) ลง backend ผูกกับ job — ไม่มีข้อมูล UV ก็ข้ามได้ ไม่ล้ม register</summary>
+        private async Task SyncUvJobDataAsync(int jobId, string lot)
+        {
+            try
+            {
+                var uvRows = await _sqliteService.GetUvDetailAsync(lot);
+                if (uvRows.Count == 0) return; // ไม่มี lot ใน print_data → ข้าม UV
+
+                await _api.CreateUvJobDataAsync(jobId, uvRows);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"SyncUvJobData error: {ex.Message}");
             }
         }
 

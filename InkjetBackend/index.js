@@ -9,6 +9,7 @@ const patternRoute = require("./routes/Pattern");
 const jobRoute = require("./routes/Job");
 const systemRoute = require("./routes/System");
 const uvInkjetRoute = require("./routes/UVInkjet");
+const uvJobDataRoute = require("./routes/UvJobData");
 const plcSettingRoute = require("./routes/PlcSetting");
 
 const app = express();
@@ -20,6 +21,7 @@ app.use(patternRoute);
 app.use(jobRoute);
 app.use(systemRoute);
 app.use(uvInkjetRoute);
+app.use(uvJobDataRoute);
 app.use(plcSettingRoute);
 
 const PORT = process.env.PORT || 3000;
