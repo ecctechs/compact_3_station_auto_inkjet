@@ -125,6 +125,7 @@
             btnSendMk3 = new Button();
             btnSendUV1 = new Button();
             btnSendMk1Mk2 = new Button();
+            btnTestM2 = new Button();
             textBlocksBindingSource = new BindingSource(components);
             printJobBindingSource = new BindingSource(components);
             tabControl.SuspendLayout();
@@ -1236,6 +1237,7 @@
             pnlButtons.Controls.Add(btnSendMk3);
             pnlButtons.Controls.Add(btnSendUV1);
             pnlButtons.Controls.Add(btnSendMk1Mk2);
+            pnlButtons.Controls.Add(btnTestM2);
             pnlButtons.Dock = DockStyle.Fill;
             pnlButtons.FlowDirection = FlowDirection.RightToLeft;
             pnlButtons.Location = new Point(3, 707);
@@ -1253,6 +1255,20 @@
             btnSendUV2.TabIndex = 5;
             btnSendUV2.Text = "ส่งหา UV2";
             btnSendUV2.Click += btnSendUV2_Click_1;
+            //
+            // btnTestM2
+            //
+            btnTestM2.BackColor = Color.FromArgb(230, 145, 56);
+            btnTestM2.FlatStyle = FlatStyle.Flat;
+            btnTestM2.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnTestM2.ForeColor = Color.White;
+            btnTestM2.Location = new Point(3, 7);
+            btnTestM2.Name = "btnTestM2";
+            btnTestM2.Size = new Size(130, 30);
+            btnTestM2.TabIndex = 6;
+            btnTestM2.Text = "TEST: เขียน CPI";
+            btnTestM2.UseVisualStyleBackColor = false;
+            btnTestM2.Click += btnTestM2_Click;
             // 
             // btnSendMk3
             // 
@@ -1381,6 +1397,7 @@
         private Button btnSendUV2;
         private Button btnSendMk3;
         private Button btnSendUV1;
+        private Button btnTestM2;
 
         // Inkjet UV — Tabs
         private TabControl tabUv;

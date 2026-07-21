@@ -174,6 +174,54 @@ namespace InkjetOperator.Services
             };
         }
 
+        /// <summary>
+        /// M2: เขียน UV detail ลง CPI.db3 (ตาราง MK063/MK067) แถว id=1 — lot, name, text1..5
+        /// คืน (สำเร็จไหม, ข้อความผล) เพื่อโชว์ให้ operator
+        /// </summary>
+        public async Task<(bool ok, string msg)> WriteUvToCpiAsync(string dbPath, string table, UvJobData d)
+        {
+            if (string.IsNullOrWhiteSpace(dbPath))
+                return (false, $"{table}: ยังไม่ได้ตั้ง path (browse ใน UV Printer Setting)");
+
+            if (!File.Exists(dbPath))
+                return (false, $"{table}: ไม่พบไฟล์\n{dbPath}");
+
+            try
+            {
+                using var conn = new SQLiteConnection($"Data Source={dbPath};Version=3;Busy Timeout=5000;");
+                await conn.OpenAsync();
+
+                string sql =
+                    $"UPDATE [{table}] SET lot=@lot, name=@name, " +
+                    "text1=@t1, text2=@t2, text3=@t3, text4=@t4, text5=@t5 WHERE id=1";
+
+                using var cmd = new SQLiteCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@lot", d.Lot ?? "");
+                cmd.Parameters.AddWithValue("@name", d.Name ?? "");
+                cmd.Parameters.AddWithValue("@t1", d.Text1 ?? "");
+                cmd.Parameters.AddWithValue("@t2", d.Text2 ?? "");
+                cmd.Parameters.AddWithValue("@t3", d.Text3 ?? "");
+                cmd.Parameters.AddWithValue("@t4", d.Text4 ?? "");
+                cmd.Parameters.AddWithValue("@t5", d.Text5 ?? "");
+
+                int rows = await cmd.ExecuteNonQueryAsync();
+
+                if (rows == 0)
+                    return (false, $"{table}: ไม่มีแถว id=1 ให้อัปเดต (0 rows)");
+
+                return (true, $"{table}: ✅ เขียนสำเร็จ (lot={d.Lot}, name={d.Name})");
+            }
+            catch (SQLiteException ex)
+            {
+                // เช่น "no such table: MK067" หรือ "database is locked"
+                return (false, $"{table}: ❌ {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"{table}: ❌ {ex.Message}");
+            }
+        }
+
         // เพิ่มในไฟล์ SqliteDataService.cs
         public async Task<List<UVinkjet>> GetUvPrintDataAsync()
         {

@@ -23,6 +23,9 @@ namespace InkjetOperator
         private bool _isFirstLoad = true;
         private BindingSource _activeSource;
 
+        /// <summary>UV detail (UV1/UV2) ของงานที่เลือกล่าสุด — ใช้ตอนกดส่ง/เทส M2</summary>
+        private List<UvJobData> _uvPreview = new();
+
         public ucOrder()
         {
             InitializeComponent();
@@ -252,6 +255,7 @@ namespace InkjetOperator
             try
             {
                 var uvRows = await _api.GetUvJobDataByJobAsync(jobId);
+                _uvPreview = uvRows;
 
                 var uv1 = uvRows.FirstOrDefault(u => u.Machine == "UV1");
                 var uv2 = uvRows.FirstOrDefault(u => u.Machine == "UV2");
@@ -285,11 +289,62 @@ namespace InkjetOperator
 
         private void ClearUvPreview()
         {
+            _uvPreview = new();
             dgvUv1Fields.Rows.Clear();
             dgvUv1Blocks.Rows.Clear();
             dgvUv2Fields.Rows.Clear();
             dgvUv2Blocks.Rows.Clear();
             dgvUvSummary.DataSource = null;
+        }
+
+        // ══════════════════════════════════════════════
+        //  M2 (TEST) — เขียน UV detail ลง CPI.db3 (MK063/MK067)
+        // ══════════════════════════════════════════════
+
+        private async void btnTestM2_Click(object sender, EventArgs e)
+        {
+            if (_uvPreview == null || _uvPreview.Count == 0)
+            {
+                MessageBox.Show("ยังไม่มีข้อมูล UV ของงานที่เลือก\n(เลือกงานที่มีข้อมูล UV ก่อน)",
+                    "Test M2", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var uv1 = _uvPreview.FirstOrDefault(u => u.Machine == "UV1");
+            var uv2 = _uvPreview.FirstOrDefault(u => u.Machine == "UV2");
+
+            // path CPI.db3 จาก UV Printer Setting
+            string path1 = UvSettingsManager.GetValue("UV1DB3_PATH") ?? "";
+            string path2 = UvSettingsManager.GetValue("UV1DB3_PATH_2") ?? "";
+
+            btnTestM2.Enabled = false;
+            try
+            {
+                var results = new List<string>();
+
+                if (uv1 != null)
+                {
+                    var (_, msg) = await _sqliteService.WriteUvToCpiAsync(path1, "MK063", uv1);
+                    results.Add("UV1 → " + msg);
+                }
+                if (uv2 != null)
+                {
+                    var (_, msg) = await _sqliteService.WriteUvToCpiAsync(path2, "MK067", uv2);
+                    results.Add("UV2 → " + msg);
+                }
+
+                MessageBox.Show(string.Join("\n\n", results),
+                    "Test M2 — เขียน CPI.db3", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"เกิดข้อผิดพลาด: {ex.Message}", "Test M2",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                btnTestM2.Enabled = true;
+            }
         }
 
         /// <summary>โหลด TextBlocks จาก Config ที่เลือกอยู่ + ประมวลผล Pattern Rule</summary>
