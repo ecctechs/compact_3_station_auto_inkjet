@@ -70,6 +70,20 @@ namespace InkjetOperator.UserControls
             SetActiveMenuButton(btnPlcSetting);
         }
 
+        private void btnUvSetting_Click(object sender, EventArgs e)
+        {
+            // ลบ control เดิมใน panelSetting (ถ้ามี)
+            panelSettingShow.Controls.Clear();
+
+            // สร้าง instance ของ ucSettingUV (browse path CPI.db3 ของ UV1/UV2)
+            var uc = new ucSettingUV();
+            uc.Dock = DockStyle.Fill;
+
+            // เพิ่มเข้า panelSetting
+            panelSettingShow.Controls.Add(uc);
+            SetActiveMenuButton(btnUvSetting);
+        }
+
         private void SetActiveMenuButton(Button activeBtn)
         {
             foreach (Control c in pnlLeftMenu.Controls)
@@ -105,6 +119,7 @@ namespace InkjetOperator.UserControls
 
             btnDatabaseSetting.Visible = (mode == 0);
             btnPlcSetting.Visible = (mode == 1);
+            btnUvSetting.Visible = (mode == 1);
         }
     }
 }

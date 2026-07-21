@@ -97,8 +97,8 @@
             // picLogo
             // 
             picLogo.ErrorImage = null;
-            picLogo.Image = (Image)resources.GetObject("picLogo.Image");
-            picLogo.InitialImage = (Image)resources.GetObject("picLogo.InitialImage");
+            //picLogo.Image = (Image)resources.GetObject("picLogo.Image");
+            //picLogo.InitialImage = (Image)resources.GetObject("picLogo.InitialImage");
             picLogo.Location = new Point(1292, 5);
             picLogo.Margin = new Padding(4, 5, 4, 5);
             picLogo.Name = "picLogo";

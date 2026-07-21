@@ -29,18 +29,6 @@
             btnCancel = new Button();
             btnSave = new Button();
             pnlButtons = new Panel();
-            pnlUvPrinters = new Panel();
-            lblUv002Status = new Label();
-            lblUv001Status = new Label();
-            btnEditUv002 = new Button();
-            btnEditUv001 = new Button();
-            txtUv002Ip = new TextBox();
-            lblUv002Ip = new Label();
-            lblUv002 = new Label();
-            txtUv001Ip = new TextBox();
-            lblUv001Ip = new Label();
-            lblUv001 = new Label();
-            lblUvTitle = new Label();
             pnlMkPrinters = new Panel();
             lblMk061Status = new Label();
             lblMk060Status = new Label();
@@ -66,7 +54,6 @@
             timer1 = new System.Windows.Forms.Timer(components);
             panelPcStation1.SuspendLayout();
             pnlMainContent.SuspendLayout();
-            pnlUvPrinters.SuspendLayout();
             pnlMkPrinters.SuspendLayout();
             SuspendLayout();
             // 
@@ -160,7 +147,6 @@
             pnlMainContent.Controls.Add(panelPcStation1);
             pnlMainContent.Controls.Add(btnSave);
             pnlMainContent.Controls.Add(pnlButtons);
-            pnlMainContent.Controls.Add(pnlUvPrinters);
             pnlMainContent.Controls.Add(pnlMkPrinters);
             pnlMainContent.Dock = DockStyle.Fill;
             pnlMainContent.Location = new Point(0, 0);
@@ -209,152 +195,8 @@
             pnlButtons.Size = new Size(458, 84);
             pnlButtons.TabIndex = 0;
             //
-            // pnlUvPrinters
-            //
-            pnlUvPrinters.BackColor = Color.White;
-            pnlUvPrinters.BorderStyle = BorderStyle.FixedSingle;
-            pnlUvPrinters.Controls.Add(lblUv002Status);
-            pnlUvPrinters.Controls.Add(lblUv001Status);
-            pnlUvPrinters.Controls.Add(btnEditUv002);
-            pnlUvPrinters.Controls.Add(btnEditUv001);
-            pnlUvPrinters.Controls.Add(txtUv002Ip);
-            pnlUvPrinters.Controls.Add(lblUv002Ip);
-            pnlUvPrinters.Controls.Add(lblUv002);
-            pnlUvPrinters.Controls.Add(txtUv001Ip);
-            pnlUvPrinters.Controls.Add(lblUv001Ip);
-            pnlUvPrinters.Controls.Add(lblUv001);
-            pnlUvPrinters.Controls.Add(lblUvTitle);
-            pnlUvPrinters.Location = new Point(85, 425);
-            pnlUvPrinters.Margin = new Padding(4, 5, 4, 5);
-            pnlUvPrinters.Name = "pnlUvPrinters";
-            pnlUvPrinters.Size = new Size(456, 337);
-            pnlUvPrinters.TabIndex = 2;
-            // 
-            // lblUv002Status
-            // 
-            lblUv002Status.BackColor = Color.Gray;
-            lblUv002Status.BorderStyle = BorderStyle.FixedSingle;
-            lblUv002Status.Location = new Point(21, 200);
-            lblUv002Status.Margin = new Padding(4, 0, 4, 0);
-            lblUv002Status.Name = "lblUv002Status";
-            lblUv002Status.Size = new Size(21, 23);
-            lblUv002Status.TabIndex = 0;
-            // 
-            // lblUv001Status
-            // 
-            lblUv001Status.BackColor = Color.Gray;
-            lblUv001Status.BorderStyle = BorderStyle.FixedSingle;
-            lblUv001Status.Location = new Point(21, 84);
-            lblUv001Status.Margin = new Padding(4, 0, 4, 0);
-            lblUv001Status.Name = "lblUv001Status";
-            lblUv001Status.Size = new Size(21, 23);
-            lblUv001Status.TabIndex = 1;
-            // 
-            // btnEditUv002
-            // 
-            btnEditUv002.FlatAppearance.BorderSize = 0;
-            btnEditUv002.FlatStyle = FlatStyle.Flat;
-            btnEditUv002.Font = new Font("Segoe UI", 9F);
-            btnEditUv002.Location = new Point(196, 191);
-            btnEditUv002.Margin = new Padding(4, 5, 4, 5);
-            btnEditUv002.Name = "btnEditUv002";
-            btnEditUv002.Size = new Size(36, 41);
-            btnEditUv002.TabIndex = 2;
-            btnEditUv002.Text = "✎";
-            // 
-            // btnEditUv001
-            // 
-            btnEditUv001.FlatAppearance.BorderSize = 0;
-            btnEditUv001.FlatStyle = FlatStyle.Flat;
-            btnEditUv001.Font = new Font("Segoe UI", 9F);
-            btnEditUv001.Location = new Point(196, 75);
-            btnEditUv001.Margin = new Padding(4, 5, 4, 5);
-            btnEditUv001.Name = "btnEditUv001";
-            btnEditUv001.Size = new Size(36, 41);
-            btnEditUv001.TabIndex = 3;
-            btnEditUv001.Text = "✎";
-            // 
-            // txtUv002Ip
-            // 
-            txtUv002Ip.Font = new Font("Segoe UI", 10F);
-            txtUv002Ip.Location = new Point(129, 254);
-            txtUv002Ip.Margin = new Padding(4, 5, 4, 5);
-            txtUv002Ip.Name = "txtUv002Ip";
-            txtUv002Ip.Size = new Size(284, 31);
-            txtUv002Ip.TabIndex = 4;
-            // 
-            // lblUv002Ip
-            // 
-            lblUv002Ip.AutoSize = true;
-            lblUv002Ip.Font = new Font("Segoe UI", 10F);
-            lblUv002Ip.Location = new Point(21, 258);
-            lblUv002Ip.Margin = new Padding(4, 0, 4, 0);
-            lblUv002Ip.Name = "lblUv002Ip";
-            lblUv002Ip.Size = new Size(106, 25);
-            lblUv002Ip.TabIndex = 5;
-            lblUv002Ip.Text = "IP Address :";
-            // 
-            // lblUv002
-            // 
-            lblUv002.BackColor = Color.Black;
-            lblUv002.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
-            lblUv002.ForeColor = Color.White;
-            lblUv002.Location = new Point(50, 191);
-            lblUv002.Margin = new Padding(4, 0, 4, 0);
-            lblUv002.Name = "lblUv002";
-            lblUv002.Padding = new Padding(8, 4, 8, 4);
-            lblUv002.Size = new Size(144, 41);
-            lblUv002.TabIndex = 6;
-            lblUv002.Text = "UV-002";
-            lblUv002.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // txtUv001Ip
-            // 
-            txtUv001Ip.Font = new Font("Segoe UI", 10F);
-            txtUv001Ip.Location = new Point(129, 136);
-            txtUv001Ip.Margin = new Padding(4, 5, 4, 5);
-            txtUv001Ip.Name = "txtUv001Ip";
-            txtUv001Ip.Size = new Size(284, 31);
-            txtUv001Ip.TabIndex = 7;
-            // 
-            // lblUv001Ip
-            // 
-            lblUv001Ip.AutoSize = true;
-            lblUv001Ip.Font = new Font("Segoe UI", 10F);
-            lblUv001Ip.Location = new Point(21, 140);
-            lblUv001Ip.Margin = new Padding(4, 0, 4, 0);
-            lblUv001Ip.Name = "lblUv001Ip";
-            lblUv001Ip.Size = new Size(106, 25);
-            lblUv001Ip.TabIndex = 8;
-            lblUv001Ip.Text = "IP Address :";
-            // 
-            // lblUv001
-            // 
-            lblUv001.BackColor = Color.Black;
-            lblUv001.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
-            lblUv001.ForeColor = Color.White;
-            lblUv001.Location = new Point(50, 75);
-            lblUv001.Margin = new Padding(4, 0, 4, 0);
-            lblUv001.Name = "lblUv001";
-            lblUv001.Padding = new Padding(8, 4, 8, 4);
-            lblUv001.Size = new Size(144, 41);
-            lblUv001.TabIndex = 9;
-            lblUv001.Text = "UV-001";
-            lblUv001.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // lblUvTitle
-            // 
-            lblUvTitle.AutoSize = true;
-            lblUvTitle.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
-            lblUvTitle.Location = new Point(14, 16);
-            lblUvTitle.Margin = new Padding(4, 0, 4, 0);
-            lblUvTitle.Name = "lblUvTitle";
-            lblUvTitle.Size = new Size(154, 38);
-            lblUvTitle.TabIndex = 10;
-            lblUvTitle.Text = "UV Printers";
-            // 
             // pnlMkPrinters
-            // 
+            //
             pnlMkPrinters.BackColor = Color.White;
             pnlMkPrinters.BorderStyle = BorderStyle.FixedSingle;
             pnlMkPrinters.Controls.Add(lblMk061Status);
@@ -636,8 +478,6 @@
             panelPcStation1.ResumeLayout(false);
             panelPcStation1.PerformLayout();
             pnlMainContent.ResumeLayout(false);
-            pnlUvPrinters.ResumeLayout(false);
-            pnlUvPrinters.PerformLayout();
             pnlMkPrinters.ResumeLayout(false);
             pnlMkPrinters.PerformLayout();
             ResumeLayout(false);
@@ -648,7 +488,6 @@
         // Main Content
         private System.Windows.Forms.Panel pnlMainContent;
         private System.Windows.Forms.Panel pnlMkPrinters;
-        private System.Windows.Forms.Panel pnlUvPrinters;
         private System.Windows.Forms.Panel pnlButtons;
 
         // MK Printers
@@ -673,19 +512,6 @@
         private System.Windows.Forms.Button btnEditMk061;
         private System.Windows.Forms.Label lblMk061Com;
         private System.Windows.Forms.TextBox txtMk061Com;
-
-        // UV Printers
-        private System.Windows.Forms.Label lblUvTitle;
-        private System.Windows.Forms.Label lblUv001Status;
-        private System.Windows.Forms.Label lblUv001;
-        private System.Windows.Forms.Button btnEditUv001;
-        private System.Windows.Forms.Label lblUv001Ip;
-        private System.Windows.Forms.TextBox txtUv001Ip;
-        private System.Windows.Forms.Label lblUv002Status;
-        private System.Windows.Forms.Label lblUv002;
-        private System.Windows.Forms.Button btnEditUv002;
-        private System.Windows.Forms.Label lblUv002Ip;
-        private System.Windows.Forms.TextBox txtUv002Ip;
 
         // Buttons
         private System.Windows.Forms.Button btnSave;

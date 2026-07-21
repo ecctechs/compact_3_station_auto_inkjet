@@ -87,13 +87,6 @@
             RuleResult = new DataGridViewTextBoxColumn();
             bindingSourceTextBlockDto = new BindingSource(components);
             groupBox1 = new GroupBox();
-            pnlUvInfo = new Panel();
-            lblUvBarcode = new Label();
-            txtUvBarcode = new TextBox();
-            lblUvLot = new Label();
-            txtUvLot = new TextBox();
-            lblUvStatusLabel = new Label();
-            txtUvStatus = new TextBox();
             tabUv = new TabControl();
             tabUv1 = new TabPage();
             dgvUv1Blocks = new DataGridView();
@@ -157,7 +150,6 @@
             ((System.ComponentModel.ISupportInitialize)dgvTextBlocks).BeginInit();
             ((System.ComponentModel.ISupportInitialize)bindingSourceTextBlockDto).BeginInit();
             groupBox1.SuspendLayout();
-            pnlUvInfo.SuspendLayout();
             tabUv.SuspendLayout();
             tabUv1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvUv1Blocks).BeginInit();
@@ -867,7 +859,6 @@
             //
             groupBox1.Controls.Add(tabUv);
             groupBox1.Controls.Add(dgvUvSummary);
-            groupBox1.Controls.Add(pnlUvInfo);
             groupBox1.Dock = DockStyle.Fill;
             groupBox1.Location = new Point(3, 501);
             groupBox1.Name = "groupBox1";
@@ -877,85 +868,16 @@
             groupBox1.TabStop = false;
             groupBox1.Text = "Inkjet UV";
             //
-            // pnlUvInfo
-            //
-            pnlUvInfo.BackColor = Color.FromArgb(240, 240, 240);
-            pnlUvInfo.Controls.Add(lblUvBarcode);
-            pnlUvInfo.Controls.Add(txtUvBarcode);
-            pnlUvInfo.Controls.Add(lblUvLot);
-            pnlUvInfo.Controls.Add(txtUvLot);
-            pnlUvInfo.Controls.Add(lblUvStatusLabel);
-            pnlUvInfo.Controls.Add(txtUvStatus);
-            pnlUvInfo.Dock = DockStyle.Top;
-            pnlUvInfo.Location = new Point(3, 20);
-            pnlUvInfo.Name = "pnlUvInfo";
-            pnlUvInfo.Size = new Size(744, 34);
-            pnlUvInfo.TabIndex = 0;
-            //
-            // lblUvBarcode
-            //
-            lblUvBarcode.AutoSize = true;
-            lblUvBarcode.Location = new Point(8, 9);
-            lblUvBarcode.Name = "lblUvBarcode";
-            lblUvBarcode.Size = new Size(55, 15);
-            lblUvBarcode.TabIndex = 0;
-            lblUvBarcode.Text = "Barcode:";
-            //
-            // txtUvBarcode
-            //
-            txtUvBarcode.Font = new Font("Consolas", 9F);
-            txtUvBarcode.Location = new Point(69, 6);
-            txtUvBarcode.Name = "txtUvBarcode";
-            txtUvBarcode.ReadOnly = true;
-            txtUvBarcode.Size = new Size(130, 23);
-            txtUvBarcode.TabIndex = 1;
-            //
-            // lblUvLot
-            //
-            lblUvLot.AutoSize = true;
-            lblUvLot.Location = new Point(212, 9);
-            lblUvLot.Name = "lblUvLot";
-            lblUvLot.Size = new Size(28, 15);
-            lblUvLot.TabIndex = 2;
-            lblUvLot.Text = "Lot:";
-            //
-            // txtUvLot
-            //
-            txtUvLot.BackColor = Color.FromArgb(255, 255, 204);
-            txtUvLot.Font = new Font("Consolas", 9F, FontStyle.Bold);
-            txtUvLot.Location = new Point(246, 6);
-            txtUvLot.Name = "txtUvLot";
-            txtUvLot.ReadOnly = true;
-            txtUvLot.Size = new Size(120, 23);
-            txtUvLot.TabIndex = 3;
-            //
-            // lblUvStatusLabel
-            //
-            lblUvStatusLabel.AutoSize = true;
-            lblUvStatusLabel.Location = new Point(379, 9);
-            lblUvStatusLabel.Name = "lblUvStatusLabel";
-            lblUvStatusLabel.Size = new Size(45, 15);
-            lblUvStatusLabel.TabIndex = 4;
-            lblUvStatusLabel.Text = "Status:";
-            //
-            // txtUvStatus
-            //
-            txtUvStatus.Location = new Point(430, 6);
-            txtUvStatus.Name = "txtUvStatus";
-            txtUvStatus.ReadOnly = true;
-            txtUvStatus.Size = new Size(90, 23);
-            txtUvStatus.TabIndex = 5;
-            //
             // tabUv
             //
             tabUv.Controls.Add(tabUv1);
             tabUv.Controls.Add(tabUv2);
             tabUv.Dock = DockStyle.Fill;
             tabUv.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-            tabUv.Location = new Point(3, 54);
+            tabUv.Location = new Point(3, 20);
             tabUv.Name = "tabUv";
             tabUv.SelectedIndex = 0;
-            tabUv.Size = new Size(744, 32);
+            tabUv.Size = new Size(744, 66);
             tabUv.TabIndex = 2;
             //
             // tabUv1
@@ -1386,8 +1308,6 @@
             ((System.ComponentModel.ISupportInitialize)dgvTextBlocks).EndInit();
             ((System.ComponentModel.ISupportInitialize)bindingSourceTextBlockDto).EndInit();
             groupBox1.ResumeLayout(false);
-            pnlUvInfo.ResumeLayout(false);
-            pnlUvInfo.PerformLayout();
             tabUv.ResumeLayout(false);
             tabUv1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvUv1Blocks).EndInit();
@@ -1446,15 +1366,6 @@
         private Button btnSendUV2;
         private Button btnSendMk3;
         private Button btnSendUV1;
-
-        // Inkjet UV — Info Bar
-        private Panel pnlUvInfo;
-        private Label lblUvBarcode;
-        private TextBox txtUvBarcode;
-        private Label lblUvLot;
-        private TextBox txtUvLot;
-        private Label lblUvStatusLabel;
-        private TextBox txtUvStatus;
 
         // Inkjet UV — Tabs
         private TabControl tabUv;

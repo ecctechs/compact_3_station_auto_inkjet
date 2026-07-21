@@ -29,16 +29,18 @@
         private void InitializeComponent()
         {
             pnlLeftMenu = new Panel();
+            btnUvSetting = new Button();
             btnPlcSetting = new Button();
             btnIpAddressSetting = new Button();
             btnDatabaseSetting = new Button();
             panelSettingShow = new Panel();
             pnlLeftMenu.SuspendLayout();
             SuspendLayout();
-            // 
+            //
             // pnlLeftMenu
-            // 
+            //
             pnlLeftMenu.BackColor = Color.FromArgb(230, 240, 250);
+            pnlLeftMenu.Controls.Add(btnUvSetting);
             pnlLeftMenu.Controls.Add(btnPlcSetting);
             pnlLeftMenu.Controls.Add(btnIpAddressSetting);
             pnlLeftMenu.Controls.Add(btnDatabaseSetting);
@@ -48,6 +50,21 @@
             pnlLeftMenu.Name = "pnlLeftMenu";
             pnlLeftMenu.Size = new Size(229, 939);
             pnlLeftMenu.TabIndex = 1;
+            //
+            // btnUvSetting
+            //
+            btnUvSetting.Dock = DockStyle.Top;
+            btnUvSetting.FlatAppearance.BorderSize = 0;
+            btnUvSetting.FlatStyle = FlatStyle.Flat;
+            btnUvSetting.Font = new Font("Segoe UI", 13F);
+            btnUvSetting.Location = new Point(0, 201);
+            btnUvSetting.Margin = new Padding(3, 4, 3, 4);
+            btnUvSetting.Name = "btnUvSetting";
+            btnUvSetting.Size = new Size(229, 67);
+            btnUvSetting.TabIndex = 3;
+            btnUvSetting.Text = "UV Printer Setting";
+            btnUvSetting.UseVisualStyleBackColor = true;
+            btnUvSetting.Click += btnUvSetting_Click;
             //
             // btnPlcSetting
             //
@@ -118,6 +135,7 @@
         #endregion
 
         private Panel pnlLeftMenu;
+        private Button btnUvSetting;
         private Button btnPlcSetting;
         private Button btnIpAddressSetting;
         private Button btnDatabaseSetting;
