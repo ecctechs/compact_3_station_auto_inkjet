@@ -27,7 +27,8 @@ namespace InkjetOperator
         {
             InitializeComponent();
 
-            UiStyle.ApplyGrid(dgvList, dgvHistory, dataGridView1, dataGridView2, dgvConfigs, dgvTextBlocks);
+            UiStyle.ApplyGrid(dgvList, dgvHistory, dataGridView2, dgvConfigs, dgvTextBlocks);
+            UiStyle.ApplyGrid(dgvUv1Fields, dgvUv1Blocks, dgvUv2Fields, dgvUv2Blocks, dgvUvSummary);
 
             // 1. สร้าง Manager
             _tcpManager = new TcpManager();
