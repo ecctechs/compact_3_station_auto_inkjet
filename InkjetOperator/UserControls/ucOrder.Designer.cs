@@ -1180,7 +1180,7 @@
             //
             // colSumMachine
             //
-            colSumMachine.DataPropertyName = "Machine";
+            colSumMachine.DataPropertyName = "InkjetName";
             colSumMachine.HeaderText = "Machine";
             colSumMachine.FillWeight = 70F;
             colSumMachine.Name = "colSumMachine";

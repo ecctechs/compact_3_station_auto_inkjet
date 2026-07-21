@@ -61,21 +61,18 @@ namespace InkjetOperator.Services
         // =========================
         // CREATE JOB
         // =========================
-        public async Task<PrintJob?> CreateJobAsync(CreateJobRequest request)
+        public async Task<bool> CreateJobAsync(CreateJobRequest request)
         {
             try
             {
                 var response = await _http.PostAsJsonAsync("/job/create", request, JsonOptions);
                 response.EnsureSuccessStatusCode();
-
-                // backend คืน job ที่สร้าง (มี id) → ใช้ link uv_job_data ต่อ
-                var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<PrintJob>>(JsonOptions);
-                return wrapper?.Data;
+                return true;
             }
             catch (Exception ex)
             {
                 Debug.WriteLine("CreateJob error: " + ex);
-                return null;
+                return false;
             }
         }
 
@@ -283,45 +280,6 @@ namespace InkjetOperator.Services
             {
                 Debug.WriteLine("GetAllUvInkjet error: " + ex.Message);
                 return new List<UVinkjet>();
-            }
-        }
-
-        // =========================
-        // UV JOB DATA (preview detail) — capture ตอน register / poll ตอน preview
-        // =========================
-
-        /// <summary>ส่ง UV detail (UV1/UV2) ของงานหนึ่งไปเก็บ backend (upsert ตาม print_jobs_id)</summary>
-        public async Task<bool> CreateUvJobDataAsync(int jobId, List<UvJobData> items)
-        {
-            try
-            {
-                var payload = new { print_jobs_id = jobId, items };
-                var response = await _http.PostAsJsonAsync("/uv-job/create", payload, JsonOptions);
-                response.EnsureSuccessStatusCode();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"CreateUvJobData error (job: {jobId}): " + ex.Message);
-                return false;
-            }
-        }
-
-        /// <summary>poll UV detail ของงานที่เลือก → เอาไปโชว์ preview แท็บ UV1/UV2</summary>
-        public async Task<List<UvJobData>> GetUvJobDataByJobAsync(int jobId)
-        {
-            try
-            {
-                var response = await _http.GetAsync($"/uv-job/getByJob/{jobId}");
-                response.EnsureSuccessStatusCode();
-
-                var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<List<UvJobData>>>(JsonOptions);
-                return wrapper?.Data ?? new List<UvJobData>();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"GetUvJobDataByJob error (job: {jobId}): " + ex.Message);
-                return new List<UvJobData>();
             }
         }
 

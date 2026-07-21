@@ -198,9 +198,6 @@ namespace InkjetOperator
             txtStatus.Text = selectedJob.Status;
             txtPattern.Text = selectedJob.PatternNoErp;
 
-            // preview UV1/UV2 — poll uv_job_data ของงานนี้จาก backend
-            await FillUvPreviewAsync(selectedJob.Id);
-
             try
             {
                 // 3. ดึงข้อมูลรายละเอียดเชิงลึก (Resolved Job) จาก API
@@ -239,57 +236,6 @@ namespace InkjetOperator
             txtPattern.Clear();
             bindSourceInkjetConfigDto.DataSource = null;
             bindingSourceTextBlockDto.DataSource = null;
-            ClearUvPreview();
-        }
-
-        // ══════════════════════════════════════════════
-        //  UV PREVIEW — poll uv_job_data → เติมแท็บ UV1/UV2 (read-only ก่อนส่ง)
-        // ══════════════════════════════════════════════
-
-        /// <summary>poll UV detail ของงานที่เลือก → เติม Fields + Blocks + Summary</summary>
-        private async Task FillUvPreviewAsync(int jobId)
-        {
-            try
-            {
-                var uvRows = await _api.GetUvJobDataByJobAsync(jobId);
-
-                var uv1 = uvRows.FirstOrDefault(u => u.Machine == "UV1");
-                var uv2 = uvRows.FirstOrDefault(u => u.Machine == "UV2");
-
-                FillUvTab(dgvUv1Fields, dgvUv1Blocks, uv1, "MK063");
-                FillUvTab(dgvUv2Fields, dgvUv2Blocks, uv2, "MK067");
-
-                dgvUvSummary.DataSource = uvRows;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"FillUvPreview error: {ex.Message}");
-            }
-        }
-
-        /// <summary>เติม 1 แท็บ: Fields (ProgramName/Table) + Blocks (text1..5 + Status)</summary>
-        private static void FillUvTab(DataGridView fields, DataGridView blocks, UvJobData? uv, string table)
-        {
-            fields.Rows.Clear();
-            fields.Rows.Add("ProgramName", uv?.ProgramName ?? "");
-            fields.Rows.Add("Table", table);
-
-            blocks.Rows.Clear();
-            var texts = new[] { uv?.Text1, uv?.Text2, uv?.Text3, uv?.Text4, uv?.Text5 };
-            for (int i = 0; i < 5; i++)
-            {
-                string t = texts[i] ?? "";
-                blocks.Rows.Add((i + 1).ToString(), t, string.IsNullOrEmpty(t) ? "—" : "Ready");
-            }
-        }
-
-        private void ClearUvPreview()
-        {
-            dgvUv1Fields.Rows.Clear();
-            dgvUv1Blocks.Rows.Clear();
-            dgvUv2Fields.Rows.Clear();
-            dgvUv2Blocks.Rows.Clear();
-            dgvUvSummary.DataSource = null;
         }
 
         /// <summary>โหลด TextBlocks จาก Config ที่เลือกอยู่ + ประมวลผล Pattern Rule</summary>
