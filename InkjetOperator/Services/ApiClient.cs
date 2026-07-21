@@ -18,6 +18,9 @@ namespace InkjetOperator.Services
 
         private readonly string _baseUrl;
 
+        /// <summary>รายละเอียด error ล่าสุดจาก backend (ใช้ debug / แสดงสาเหตุจริง)</summary>
+        public string LastError { get; private set; } = "";
+
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
@@ -203,14 +206,21 @@ namespace InkjetOperator.Services
                 // ส่งไปยัง Endpoint /pattern/create ตามที่ตั้งไว้ใน Backend
                 var response = await _http.PostAsJsonAsync("/pattern/create", request, JsonOptions);
 
-                // ตรวจสอบสถานะ (ถ้าไม่ใช่ 2xx จะโยน Exception ไปที่ catch)
-                response.EnsureSuccessStatusCode();
+                if (!response.IsSuccessStatusCode)
+                {
+                    // เก็บสาเหตุจริงจาก backend (เช่น "Barcode already exists" หรือ validation)
+                    string body = await response.Content.ReadAsStringAsync();
+                    LastError = $"[HTTP {(int)response.StatusCode}] {body}";
+                    Debug.WriteLine("CreatePattern failed: " + LastError);
+                    return false;
+                }
 
+                LastError = "";
                 return true;
             }
             catch (Exception ex)
             {
-                // Debug ดู Error ที่ตอบกลับมาจาก Backend (เช่น Barcode already exists)
+                LastError = ex.Message;
                 Debug.WriteLine("CreatePattern error: " + ex.Message);
                 return false;
             }

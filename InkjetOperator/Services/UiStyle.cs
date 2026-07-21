@@ -16,5 +16,6 @@ namespace InkjetOperator.Services
                 dgv.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             }
         }
+
     }
 }

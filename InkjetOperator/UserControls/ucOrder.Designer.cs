@@ -116,16 +116,15 @@
             lblUv2Status = new Label();
             dgvUvSummary = new DataGridView();
             colSumId = new DataGridViewTextBoxColumn();
-            colSumMachine = new DataGridViewTextBoxColumn();
             colSumProgram = new DataGridViewTextBoxColumn();
             colSumLot = new DataGridViewTextBoxColumn();
             colSumName = new DataGridViewTextBoxColumn();
             bindingSourceUVinkjet = new BindingSource(components);
             pnlButtons = new FlowLayoutPanel();
-            btnSendMk1Mk2 = new Button();
-            btnSendUV1 = new Button();
-            btnSendMk3 = new Button();
             btnSendUV2 = new Button();
+            btnSendMk3 = new Button();
+            btnSendUV1 = new Button();
+            btnSendMk1Mk2 = new Button();
             textBlocksBindingSource = new BindingSource(components);
             printJobBindingSource = new BindingSource(components);
             tabControl.SuspendLayout();
@@ -208,8 +207,8 @@
             // orderNoDataGridViewTextBoxColumn
             // 
             orderNoDataGridViewTextBoxColumn.DataPropertyName = "OrderNo";
-            orderNoDataGridViewTextBoxColumn.HeaderText = "Order No.";
             orderNoDataGridViewTextBoxColumn.FillWeight = 130F;
+            orderNoDataGridViewTextBoxColumn.HeaderText = "Order No.";
             orderNoDataGridViewTextBoxColumn.MinimumWidth = 6;
             orderNoDataGridViewTextBoxColumn.Name = "orderNoDataGridViewTextBoxColumn";
             orderNoDataGridViewTextBoxColumn.ReadOnly = true;
@@ -217,8 +216,8 @@
             // customerNameDataGridViewTextBoxColumn
             // 
             customerNameDataGridViewTextBoxColumn.DataPropertyName = "CustomerName";
-            customerNameDataGridViewTextBoxColumn.HeaderText = "Customer";
             customerNameDataGridViewTextBoxColumn.FillWeight = 140F;
+            customerNameDataGridViewTextBoxColumn.HeaderText = "Customer";
             customerNameDataGridViewTextBoxColumn.MinimumWidth = 6;
             customerNameDataGridViewTextBoxColumn.Name = "customerNameDataGridViewTextBoxColumn";
             customerNameDataGridViewTextBoxColumn.ReadOnly = true;
@@ -226,8 +225,8 @@
             // typeDataGridViewTextBoxColumn
             // 
             typeDataGridViewTextBoxColumn.DataPropertyName = "Type";
-            typeDataGridViewTextBoxColumn.HeaderText = "Type";
             typeDataGridViewTextBoxColumn.FillWeight = 60F;
+            typeDataGridViewTextBoxColumn.HeaderText = "Type";
             typeDataGridViewTextBoxColumn.MinimumWidth = 6;
             typeDataGridViewTextBoxColumn.Name = "typeDataGridViewTextBoxColumn";
             typeDataGridViewTextBoxColumn.ReadOnly = true;
@@ -235,8 +234,8 @@
             // qtyDataGridViewTextBoxColumn
             // 
             qtyDataGridViewTextBoxColumn.DataPropertyName = "Qty";
-            qtyDataGridViewTextBoxColumn.HeaderText = "Qty";
             qtyDataGridViewTextBoxColumn.FillWeight = 50F;
+            qtyDataGridViewTextBoxColumn.HeaderText = "Qty";
             qtyDataGridViewTextBoxColumn.MinimumWidth = 6;
             qtyDataGridViewTextBoxColumn.Name = "qtyDataGridViewTextBoxColumn";
             qtyDataGridViewTextBoxColumn.ReadOnly = true;
@@ -244,8 +243,8 @@
             // statusDataGridViewTextBoxColumn
             // 
             statusDataGridViewTextBoxColumn.DataPropertyName = "Status";
-            statusDataGridViewTextBoxColumn.HeaderText = "Status";
             statusDataGridViewTextBoxColumn.FillWeight = 90F;
+            statusDataGridViewTextBoxColumn.HeaderText = "Status";
             statusDataGridViewTextBoxColumn.MinimumWidth = 6;
             statusDataGridViewTextBoxColumn.Name = "statusDataGridViewTextBoxColumn";
             statusDataGridViewTextBoxColumn.ReadOnly = true;
@@ -253,8 +252,8 @@
             // stationDataGridViewTextBoxColumn
             // 
             stationDataGridViewTextBoxColumn.DataPropertyName = "Station";
-            stationDataGridViewTextBoxColumn.HeaderText = "Station";
             stationDataGridViewTextBoxColumn.FillWeight = 70F;
+            stationDataGridViewTextBoxColumn.HeaderText = "Station";
             stationDataGridViewTextBoxColumn.MinimumWidth = 6;
             stationDataGridViewTextBoxColumn.Name = "stationDataGridViewTextBoxColumn";
             stationDataGridViewTextBoxColumn.ReadOnly = true;
@@ -293,8 +292,8 @@
             // orderNoDataGridViewTextBoxColumn1
             // 
             orderNoDataGridViewTextBoxColumn1.DataPropertyName = "OrderNo";
-            orderNoDataGridViewTextBoxColumn1.HeaderText = "Order";
             orderNoDataGridViewTextBoxColumn1.FillWeight = 130F;
+            orderNoDataGridViewTextBoxColumn1.HeaderText = "Order";
             orderNoDataGridViewTextBoxColumn1.MinimumWidth = 6;
             orderNoDataGridViewTextBoxColumn1.Name = "orderNoDataGridViewTextBoxColumn1";
             orderNoDataGridViewTextBoxColumn1.ReadOnly = true;
@@ -302,8 +301,8 @@
             // customerNameDataGridViewTextBoxColumn1
             // 
             customerNameDataGridViewTextBoxColumn1.DataPropertyName = "CustomerName";
-            customerNameDataGridViewTextBoxColumn1.HeaderText = "CustomerName";
             customerNameDataGridViewTextBoxColumn1.FillWeight = 140F;
+            customerNameDataGridViewTextBoxColumn1.HeaderText = "CustomerName";
             customerNameDataGridViewTextBoxColumn1.MinimumWidth = 6;
             customerNameDataGridViewTextBoxColumn1.Name = "customerNameDataGridViewTextBoxColumn1";
             customerNameDataGridViewTextBoxColumn1.ReadOnly = true;
@@ -311,8 +310,8 @@
             // typeDataGridViewTextBoxColumn1
             // 
             typeDataGridViewTextBoxColumn1.DataPropertyName = "Type";
-            typeDataGridViewTextBoxColumn1.HeaderText = "Type";
             typeDataGridViewTextBoxColumn1.FillWeight = 60F;
+            typeDataGridViewTextBoxColumn1.HeaderText = "Type";
             typeDataGridViewTextBoxColumn1.MinimumWidth = 6;
             typeDataGridViewTextBoxColumn1.Name = "typeDataGridViewTextBoxColumn1";
             typeDataGridViewTextBoxColumn1.ReadOnly = true;
@@ -320,8 +319,8 @@
             // qtyDataGridViewTextBoxColumn1
             // 
             qtyDataGridViewTextBoxColumn1.DataPropertyName = "Qty";
-            qtyDataGridViewTextBoxColumn1.HeaderText = "Qty";
             qtyDataGridViewTextBoxColumn1.FillWeight = 50F;
+            qtyDataGridViewTextBoxColumn1.HeaderText = "Qty";
             qtyDataGridViewTextBoxColumn1.MinimumWidth = 6;
             qtyDataGridViewTextBoxColumn1.Name = "qtyDataGridViewTextBoxColumn1";
             qtyDataGridViewTextBoxColumn1.ReadOnly = true;
@@ -329,8 +328,8 @@
             // statusDataGridViewTextBoxColumn1
             // 
             statusDataGridViewTextBoxColumn1.DataPropertyName = "Status";
-            statusDataGridViewTextBoxColumn1.HeaderText = "Status";
             statusDataGridViewTextBoxColumn1.FillWeight = 90F;
+            statusDataGridViewTextBoxColumn1.HeaderText = "Status";
             statusDataGridViewTextBoxColumn1.MinimumWidth = 6;
             statusDataGridViewTextBoxColumn1.Name = "statusDataGridViewTextBoxColumn1";
             statusDataGridViewTextBoxColumn1.ReadOnly = true;
@@ -419,8 +418,8 @@
             // dataGridViewTextBoxColumn1
             // 
             dataGridViewTextBoxColumn1.DataPropertyName = "OrderNo";
-            dataGridViewTextBoxColumn1.HeaderText = "Order No.";
             dataGridViewTextBoxColumn1.FillWeight = 120F;
+            dataGridViewTextBoxColumn1.HeaderText = "Order No.";
             dataGridViewTextBoxColumn1.MinimumWidth = 6;
             dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
             dataGridViewTextBoxColumn1.ReadOnly = true;
@@ -428,8 +427,8 @@
             // dataGridViewTextBoxColumn2
             // 
             dataGridViewTextBoxColumn2.DataPropertyName = "CustomerName";
-            dataGridViewTextBoxColumn2.HeaderText = "Customer";
             dataGridViewTextBoxColumn2.FillWeight = 120F;
+            dataGridViewTextBoxColumn2.HeaderText = "Customer";
             dataGridViewTextBoxColumn2.MinimumWidth = 6;
             dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
             dataGridViewTextBoxColumn2.ReadOnly = true;
@@ -437,8 +436,8 @@
             // dataGridViewTextBoxColumn3
             // 
             dataGridViewTextBoxColumn3.DataPropertyName = "Type";
-            dataGridViewTextBoxColumn3.HeaderText = "Type";
             dataGridViewTextBoxColumn3.FillWeight = 55F;
+            dataGridViewTextBoxColumn3.HeaderText = "Type";
             dataGridViewTextBoxColumn3.MinimumWidth = 6;
             dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
             dataGridViewTextBoxColumn3.ReadOnly = true;
@@ -446,8 +445,8 @@
             // dataGridViewTextBoxColumn4
             // 
             dataGridViewTextBoxColumn4.DataPropertyName = "Qty";
-            dataGridViewTextBoxColumn4.HeaderText = "Qty";
             dataGridViewTextBoxColumn4.FillWeight = 45F;
+            dataGridViewTextBoxColumn4.HeaderText = "Qty";
             dataGridViewTextBoxColumn4.MinimumWidth = 6;
             dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
             dataGridViewTextBoxColumn4.ReadOnly = true;
@@ -455,8 +454,8 @@
             // st1_confirmation
             // 
             st1_confirmation.DataPropertyName = "st1_confirmation";
-            st1_confirmation.HeaderText = "Status";
             st1_confirmation.FillWeight = 80F;
+            st1_confirmation.HeaderText = "Status";
             st1_confirmation.MinimumWidth = 6;
             st1_confirmation.Name = "st1_confirmation";
             st1_confirmation.ReadOnly = true;
@@ -464,8 +463,8 @@
             // st1_send_time
             // 
             st1_send_time.DataPropertyName = "st1_send_time";
-            st1_send_time.HeaderText = "Send time";
             st1_send_time.FillWeight = 130F;
+            st1_send_time.HeaderText = "Send time";
             st1_send_time.MinimumWidth = 6;
             st1_send_time.Name = "st1_send_time";
             st1_send_time.ReadOnly = true;
@@ -533,9 +532,9 @@
             tblDetailLayout.RowCount = 6;
             tblDetailLayout.RowStyles.Add(new RowStyle());
             tblDetailLayout.RowStyles.Add(new RowStyle());
-            tblDetailLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
-            tblDetailLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
-            tblDetailLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 60F));
+            tblDetailLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 17F));
+            tblDetailLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 17F));
+            tblDetailLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 66F));
             tblDetailLayout.RowStyles.Add(new RowStyle());
             tblDetailLayout.Size = new Size(756, 756);
             tblDetailLayout.TabIndex = 0;
@@ -547,7 +546,7 @@
             lblDetailTitle.Location = new Point(3, 6);
             lblDetailTitle.Margin = new Padding(3, 6, 3, 6);
             lblDetailTitle.Name = "lblDetailTitle";
-            lblDetailTitle.Size = new Size(117, 30);
+            lblDetailTitle.Size = new Size(129, 32);
             lblDetailTitle.TabIndex = 0;
             lblDetailTitle.Text = "Job Detail";
             // 
@@ -572,12 +571,12 @@
             pnlJobInfo.Controls.Add(lblPattern, 0, 1);
             pnlJobInfo.Controls.Add(txtPattern, 1, 1);
             pnlJobInfo.Dock = DockStyle.Fill;
-            pnlJobInfo.Location = new Point(3, 45);
+            pnlJobInfo.Location = new Point(3, 47);
             pnlJobInfo.Name = "pnlJobInfo";
             pnlJobInfo.RowCount = 2;
             pnlJobInfo.RowStyles.Add(new RowStyle());
             pnlJobInfo.RowStyles.Add(new RowStyle());
-            pnlJobInfo.Size = new Size(750, 74);
+            pnlJobInfo.Size = new Size(750, 80);
             pnlJobInfo.TabIndex = 1;
             // 
             // lblBarcode
@@ -588,7 +587,7 @@
             lblBarcode.Location = new Point(3, 6);
             lblBarcode.Margin = new Padding(3, 6, 3, 6);
             lblBarcode.Name = "lblBarcode";
-            lblBarcode.Size = new Size(80, 25);
+            lblBarcode.Size = new Size(87, 28);
             lblBarcode.TabIndex = 0;
             lblBarcode.Text = "Barcode:";
             // 
@@ -596,10 +595,10 @@
             // 
             txtBarcode.Dock = DockStyle.Fill;
             txtBarcode.Font = new Font("Segoe UI", 10F);
-            txtBarcode.Location = new Point(89, 3);
+            txtBarcode.Location = new Point(96, 3);
             txtBarcode.Name = "txtBarcode";
             txtBarcode.ReadOnly = true;
-            txtBarcode.Size = new Size(158, 31);
+            txtBarcode.Size = new Size(153, 34);
             txtBarcode.TabIndex = 1;
             // 
             // lblLot
@@ -607,10 +606,10 @@
             lblLot.Anchor = AnchorStyles.Left;
             lblLot.AutoSize = true;
             lblLot.Font = new Font("Segoe UI", 10F);
-            lblLot.Location = new Point(253, 6);
+            lblLot.Location = new Point(255, 6);
             lblLot.Margin = new Padding(3, 6, 3, 6);
             lblLot.Name = "lblLot";
-            lblLot.Size = new Size(41, 25);
+            lblLot.Size = new Size(44, 28);
             lblLot.TabIndex = 2;
             lblLot.Text = "Lot:";
             // 
@@ -618,10 +617,10 @@
             // 
             txtLot.Dock = DockStyle.Fill;
             txtLot.Font = new Font("Segoe UI", 10F);
-            txtLot.Location = new Point(300, 3);
+            txtLot.Location = new Point(305, 3);
             txtLot.Name = "txtLot";
             txtLot.ReadOnly = true;
-            txtLot.Size = new Size(130, 31);
+            txtLot.Size = new Size(127, 34);
             txtLot.TabIndex = 3;
             // 
             // lblStatus
@@ -629,10 +628,10 @@
             lblStatus.Anchor = AnchorStyles.Left;
             lblStatus.AutoSize = true;
             lblStatus.Font = new Font("Segoe UI", 10F);
-            lblStatus.Location = new Point(436, 6);
+            lblStatus.Location = new Point(438, 6);
             lblStatus.Margin = new Padding(3, 6, 3, 6);
             lblStatus.Name = "lblStatus";
-            lblStatus.Size = new Size(64, 25);
+            lblStatus.Size = new Size(69, 28);
             lblStatus.TabIndex = 4;
             lblStatus.Text = "Status:";
             // 
@@ -640,10 +639,10 @@
             // 
             txtStatus.Dock = DockStyle.Fill;
             txtStatus.Font = new Font("Segoe UI", 10F);
-            txtStatus.Location = new Point(506, 3);
+            txtStatus.Location = new Point(513, 3);
             txtStatus.Name = "txtStatus";
             txtStatus.ReadOnly = true;
-            txtStatus.Size = new Size(103, 31);
+            txtStatus.Size = new Size(100, 34);
             txtStatus.TabIndex = 5;
             // 
             // lblPattern
@@ -651,10 +650,10 @@
             lblPattern.Anchor = AnchorStyles.Left;
             lblPattern.AutoSize = true;
             lblPattern.Font = new Font("Segoe UI", 10F);
-            lblPattern.Location = new Point(3, 43);
+            lblPattern.Location = new Point(3, 46);
             lblPattern.Margin = new Padding(3, 6, 3, 6);
             lblPattern.Name = "lblPattern";
-            lblPattern.Size = new Size(71, 25);
+            lblPattern.Size = new Size(78, 28);
             lblPattern.TabIndex = 6;
             lblPattern.Text = "Pattern:";
             // 
@@ -662,20 +661,20 @@
             // 
             txtPattern.Dock = DockStyle.Fill;
             txtPattern.Font = new Font("Segoe UI", 10F);
-            txtPattern.Location = new Point(89, 40);
+            txtPattern.Location = new Point(96, 43);
             txtPattern.Name = "txtPattern";
             txtPattern.ReadOnly = true;
-            txtPattern.Size = new Size(158, 31);
+            txtPattern.Size = new Size(153, 34);
             txtPattern.TabIndex = 7;
             // 
             // grpInkjetConfigs
             // 
             grpInkjetConfigs.Controls.Add(dgvConfigs);
             grpInkjetConfigs.Dock = DockStyle.Fill;
-            grpInkjetConfigs.Location = new Point(3, 125);
+            grpInkjetConfigs.Location = new Point(3, 133);
             grpInkjetConfigs.Name = "grpInkjetConfigs";
             grpInkjetConfigs.Padding = new Padding(3, 4, 3, 4);
-            grpInkjetConfigs.Size = new Size(750, 182);
+            grpInkjetConfigs.Size = new Size(750, 91);
             grpInkjetConfigs.TabIndex = 2;
             grpInkjetConfigs.TabStop = false;
             grpInkjetConfigs.Text = "Inkjet Configs";
@@ -694,7 +693,7 @@
             dgvConfigs.Name = "dgvConfigs";
             dgvConfigs.ReadOnly = true;
             dgvConfigs.RowHeadersWidth = 51;
-            dgvConfigs.Size = new Size(744, 150);
+            dgvConfigs.Size = new Size(744, 59);
             dgvConfigs.TabIndex = 0;
             dgvConfigs.CellClick += dgvConfigs_CellClick;
             // 
@@ -717,8 +716,8 @@
             // programNameDataGridViewTextBoxColumn
             // 
             programNameDataGridViewTextBoxColumn.DataPropertyName = "ProgramName";
-            programNameDataGridViewTextBoxColumn.HeaderText = "ProgramName";
             programNameDataGridViewTextBoxColumn.FillWeight = 180F;
+            programNameDataGridViewTextBoxColumn.HeaderText = "ProgramName";
             programNameDataGridViewTextBoxColumn.MinimumWidth = 6;
             programNameDataGridViewTextBoxColumn.Name = "programNameDataGridViewTextBoxColumn";
             programNameDataGridViewTextBoxColumn.ReadOnly = true;
@@ -763,10 +762,10 @@
             // 
             grpTextBlocks.Controls.Add(dgvTextBlocks);
             grpTextBlocks.Dock = DockStyle.Fill;
-            grpTextBlocks.Location = new Point(3, 313);
+            grpTextBlocks.Location = new Point(3, 230);
             grpTextBlocks.Name = "grpTextBlocks";
             grpTextBlocks.Padding = new Padding(3, 4, 3, 4);
-            grpTextBlocks.Size = new Size(750, 182);
+            grpTextBlocks.Size = new Size(750, 91);
             grpTextBlocks.TabIndex = 3;
             grpTextBlocks.TabStop = false;
             grpTextBlocks.Text = "Text Blocks";
@@ -785,14 +784,14 @@
             dgvTextBlocks.Name = "dgvTextBlocks";
             dgvTextBlocks.ReadOnly = true;
             dgvTextBlocks.RowHeadersWidth = 51;
-            dgvTextBlocks.Size = new Size(744, 150);
+            dgvTextBlocks.Size = new Size(744, 59);
             dgvTextBlocks.TabIndex = 0;
             // 
             // blockNumberDataGridViewTextBoxColumn
             // 
             blockNumberDataGridViewTextBoxColumn.DataPropertyName = "BlockNumber";
-            blockNumberDataGridViewTextBoxColumn.HeaderText = "Block#";
             blockNumberDataGridViewTextBoxColumn.FillWeight = 60F;
+            blockNumberDataGridViewTextBoxColumn.HeaderText = "Block#";
             blockNumberDataGridViewTextBoxColumn.MinimumWidth = 6;
             blockNumberDataGridViewTextBoxColumn.Name = "blockNumberDataGridViewTextBoxColumn";
             blockNumberDataGridViewTextBoxColumn.ReadOnly = true;
@@ -800,8 +799,8 @@
             // textDataGridViewTextBoxColumn
             // 
             textDataGridViewTextBoxColumn.DataPropertyName = "Text";
-            textDataGridViewTextBoxColumn.HeaderText = "Text";
             textDataGridViewTextBoxColumn.FillWeight = 200F;
+            textDataGridViewTextBoxColumn.HeaderText = "Text";
             textDataGridViewTextBoxColumn.MinimumWidth = 6;
             textDataGridViewTextBoxColumn.Name = "textDataGridViewTextBoxColumn";
             textDataGridViewTextBoxColumn.ReadOnly = true;
@@ -809,8 +808,8 @@
             // xDataGridViewTextBoxColumn
             // 
             xDataGridViewTextBoxColumn.DataPropertyName = "X";
-            xDataGridViewTextBoxColumn.HeaderText = "X";
             xDataGridViewTextBoxColumn.FillWeight = 60F;
+            xDataGridViewTextBoxColumn.HeaderText = "X";
             xDataGridViewTextBoxColumn.MinimumWidth = 6;
             xDataGridViewTextBoxColumn.Name = "xDataGridViewTextBoxColumn";
             xDataGridViewTextBoxColumn.ReadOnly = true;
@@ -818,8 +817,8 @@
             // yDataGridViewTextBoxColumn
             // 
             yDataGridViewTextBoxColumn.DataPropertyName = "Y";
-            yDataGridViewTextBoxColumn.HeaderText = "Y";
             yDataGridViewTextBoxColumn.FillWeight = 60F;
+            yDataGridViewTextBoxColumn.HeaderText = "Y";
             yDataGridViewTextBoxColumn.MinimumWidth = 6;
             yDataGridViewTextBoxColumn.Name = "yDataGridViewTextBoxColumn";
             yDataGridViewTextBoxColumn.ReadOnly = true;
@@ -827,8 +826,8 @@
             // sizeDataGridViewTextBoxColumn
             // 
             sizeDataGridViewTextBoxColumn.DataPropertyName = "Size";
-            sizeDataGridViewTextBoxColumn.HeaderText = "Size";
             sizeDataGridViewTextBoxColumn.FillWeight = 60F;
+            sizeDataGridViewTextBoxColumn.HeaderText = "Size";
             sizeDataGridViewTextBoxColumn.MinimumWidth = 6;
             sizeDataGridViewTextBoxColumn.Name = "sizeDataGridViewTextBoxColumn";
             sizeDataGridViewTextBoxColumn.ReadOnly = true;
@@ -836,8 +835,8 @@
             // scaleDataGridViewTextBoxColumn
             // 
             scaleDataGridViewTextBoxColumn.DataPropertyName = "Scale";
-            scaleDataGridViewTextBoxColumn.HeaderText = "Scale";
             scaleDataGridViewTextBoxColumn.FillWeight = 60F;
+            scaleDataGridViewTextBoxColumn.HeaderText = "Scale";
             scaleDataGridViewTextBoxColumn.MinimumWidth = 6;
             scaleDataGridViewTextBoxColumn.Name = "scaleDataGridViewTextBoxColumn";
             scaleDataGridViewTextBoxColumn.ReadOnly = true;
@@ -845,8 +844,8 @@
             // RuleResult
             // 
             RuleResult.DataPropertyName = "RuleResult";
-            RuleResult.HeaderText = "RuleResult";
             RuleResult.FillWeight = 150F;
+            RuleResult.HeaderText = "RuleResult";
             RuleResult.MinimumWidth = 6;
             RuleResult.Name = "RuleResult";
             RuleResult.ReadOnly = true;
@@ -854,364 +853,380 @@
             // bindingSourceTextBlockDto
             // 
             bindingSourceTextBlockDto.DataSource = typeof(Models.TextBlockDto);
-            //
+            // 
             // groupBox1
-            //
+            // 
             groupBox1.Controls.Add(tabUv);
             groupBox1.Controls.Add(dgvUvSummary);
             groupBox1.Dock = DockStyle.Fill;
-            groupBox1.Location = new Point(3, 501);
+            groupBox1.Location = new Point(3, 327);
             groupBox1.Name = "groupBox1";
             groupBox1.Padding = new Padding(3, 4, 3, 4);
-            groupBox1.Size = new Size(750, 182);
+            groupBox1.Size = new Size(750, 374);
             groupBox1.TabIndex = 4;
             groupBox1.TabStop = false;
             groupBox1.Text = "Inkjet UV";
-            //
+            // 
             // tabUv
-            //
+            // 
             tabUv.Controls.Add(tabUv1);
             tabUv.Controls.Add(tabUv2);
             tabUv.Dock = DockStyle.Fill;
             tabUv.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-            tabUv.Location = new Point(3, 20);
+            tabUv.Location = new Point(3, 28);
             tabUv.Name = "tabUv";
             tabUv.SelectedIndex = 0;
-            tabUv.Size = new Size(744, 66);
+            tabUv.Size = new Size(744, 238);
             tabUv.TabIndex = 2;
-            //
+            // 
             // tabUv1
-            //
+            // 
             tabUv1.Controls.Add(dgvUv1Blocks);
             tabUv1.Controls.Add(dgvUv1Fields);
             tabUv1.Controls.Add(pnlUv1Header);
             tabUv1.Controls.Add(lblUv1Status);
-            tabUv1.Location = new Point(4, 27);
+            tabUv1.Location = new Point(4, 34);
             tabUv1.Name = "tabUv1";
             tabUv1.Padding = new Padding(3);
-            tabUv1.Size = new Size(736, 1);
+            tabUv1.Size = new Size(736, 200);
             tabUv1.TabIndex = 0;
             tabUv1.Text = "UV1 — MK-063";
             tabUv1.UseVisualStyleBackColor = true;
-            //
+            // 
             // dgvUv1Blocks
-            //
+            // 
             dgvUv1Blocks.AllowUserToAddRows = false;
             dgvUv1Blocks.AllowUserToDeleteRows = false;
+            dgvUv1Blocks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvUv1Blocks.BackgroundColor = Color.White;
             dgvUv1Blocks.ColumnHeadersHeight = 26;
             dgvUv1Blocks.Columns.AddRange(new DataGridViewColumn[] { colUv1BlockNo, colUv1BlockText, colUv1BlockStatus });
             dgvUv1Blocks.Dock = DockStyle.Fill;
-            dgvUv1Blocks.Location = new Point(3, 51);
+            dgvUv1Blocks.Location = new Point(3, 150);
             dgvUv1Blocks.Name = "dgvUv1Blocks";
             dgvUv1Blocks.ReadOnly = true;
             dgvUv1Blocks.RowHeadersVisible = false;
+            dgvUv1Blocks.RowHeadersWidth = 62;
             dgvUv1Blocks.RowTemplate.Height = 24;
-            dgvUv1Blocks.Size = new Size(730, 1);
+            dgvUv1Blocks.Size = new Size(730, 27);
             dgvUv1Blocks.TabIndex = 2;
-            //
+            // 
             // colUv1BlockNo
-            //
-            colUv1BlockNo.HeaderText = "Block#";
+            // 
             colUv1BlockNo.FillWeight = 50F;
+            colUv1BlockNo.HeaderText = "Block#";
+            colUv1BlockNo.MinimumWidth = 8;
             colUv1BlockNo.Name = "colUv1BlockNo";
             colUv1BlockNo.ReadOnly = true;
-            //
+            // 
             // colUv1BlockText
-            //
-            colUv1BlockText.HeaderText = "Text";
+            // 
             colUv1BlockText.FillWeight = 200F;
+            colUv1BlockText.HeaderText = "Text";
+            colUv1BlockText.MinimumWidth = 8;
             colUv1BlockText.Name = "colUv1BlockText";
             colUv1BlockText.ReadOnly = true;
-            //
+            // 
             // colUv1BlockStatus
-            //
-            colUv1BlockStatus.HeaderText = "Status";
+            // 
             colUv1BlockStatus.FillWeight = 60F;
+            colUv1BlockStatus.HeaderText = "Status";
+            colUv1BlockStatus.MinimumWidth = 8;
             colUv1BlockStatus.Name = "colUv1BlockStatus";
             colUv1BlockStatus.ReadOnly = true;
-            //
+            // 
             // dgvUv1Fields
-            //
+            // 
             dgvUv1Fields.AllowUserToAddRows = false;
             dgvUv1Fields.AllowUserToDeleteRows = false;
+            dgvUv1Fields.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvUv1Fields.BackgroundColor = Color.White;
             dgvUv1Fields.ColumnHeadersHeight = 26;
             dgvUv1Fields.Columns.AddRange(new DataGridViewColumn[] { colUv1Field, colUv1Value });
             dgvUv1Fields.Dock = DockStyle.Top;
-            dgvUv1Fields.Location = new Point(3, 31);
+            dgvUv1Fields.Location = new Point(3, 48);
             dgvUv1Fields.Name = "dgvUv1Fields";
             dgvUv1Fields.ReadOnly = true;
             dgvUv1Fields.RowHeadersVisible = false;
+            dgvUv1Fields.RowHeadersWidth = 62;
             dgvUv1Fields.RowTemplate.Height = 24;
             dgvUv1Fields.ScrollBars = ScrollBars.None;
-            dgvUv1Fields.Size = new Size(730, 76);
+            dgvUv1Fields.Size = new Size(730, 102);
             dgvUv1Fields.TabIndex = 1;
-            //
+            // 
             // colUv1Field
-            //
-            colUv1Field.HeaderText = "Field";
+            // 
             colUv1Field.FillWeight = 80F;
+            colUv1Field.HeaderText = "Field";
+            colUv1Field.MinimumWidth = 8;
             colUv1Field.Name = "colUv1Field";
             colUv1Field.ReadOnly = true;
-            //
+            // 
             // colUv1Value
-            //
-            colUv1Value.HeaderText = "Value";
+            // 
             colUv1Value.FillWeight = 200F;
+            colUv1Value.HeaderText = "Value";
+            colUv1Value.MinimumWidth = 8;
             colUv1Value.Name = "colUv1Value";
             colUv1Value.ReadOnly = true;
-            //
+            // 
             // pnlUv1Header
-            //
+            // 
             pnlUv1Header.Controls.Add(lblUv1Dot);
             pnlUv1Header.Controls.Add(lblUv1Title);
             pnlUv1Header.Controls.Add(lblUv1Ip);
             pnlUv1Header.Dock = DockStyle.Top;
             pnlUv1Header.Location = new Point(3, 3);
             pnlUv1Header.Name = "pnlUv1Header";
-            pnlUv1Header.Size = new Size(730, 28);
+            pnlUv1Header.Size = new Size(730, 45);
             pnlUv1Header.TabIndex = 0;
-            //
+            // 
             // lblUv1Dot
-            //
+            // 
             lblUv1Dot.BackColor = Color.Gray;
             lblUv1Dot.Location = new Point(6, 6);
             lblUv1Dot.Name = "lblUv1Dot";
             lblUv1Dot.Size = new Size(16, 16);
             lblUv1Dot.TabIndex = 0;
-            //
+            // 
             // lblUv1Title
-            //
+            // 
             lblUv1Title.AutoSize = true;
-            lblUv1Title.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblUv1Title.Font = new Font("Segoe UI", 10.5F, FontStyle.Bold);
             lblUv1Title.Location = new Point(28, 7);
             lblUv1Title.Name = "lblUv1Title";
-            lblUv1Title.Size = new Size(140, 15);
+            lblUv1Title.Size = new Size(236, 30);
             lblUv1Title.TabIndex = 1;
             lblUv1Title.Text = "UV1 — MK-063 (Plate)";
-            //
+            // 
             // lblUv1Ip
-            //
+            // 
             lblUv1Ip.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             lblUv1Ip.AutoSize = true;
             lblUv1Ip.ForeColor = Color.Gray;
             lblUv1Ip.Location = new Point(580, 7);
             lblUv1Ip.Name = "lblUv1Ip";
-            lblUv1Ip.Size = new Size(120, 15);
+            lblUv1Ip.Size = new Size(185, 25);
             lblUv1Ip.TabIndex = 2;
             lblUv1Ip.Text = "192.168.0.3 : 10086";
             lblUv1Ip.TextAlign = ContentAlignment.MiddleRight;
-            //
+            // 
             // lblUv1Status
-            //
+            // 
             lblUv1Status.BackColor = Color.FromArgb(240, 240, 240);
             lblUv1Status.Dock = DockStyle.Bottom;
             lblUv1Status.Font = new Font("Segoe UI", 8F);
             lblUv1Status.ForeColor = Color.DimGray;
-            lblUv1Status.Location = new Point(3, 0);
+            lblUv1Status.Location = new Point(3, 177);
             lblUv1Status.Name = "lblUv1Status";
             lblUv1Status.Size = new Size(730, 20);
             lblUv1Status.TabIndex = 3;
             lblUv1Status.Text = "TCP: — | KEY: —";
             lblUv1Status.TextAlign = ContentAlignment.MiddleLeft;
-            //
+            // 
             // tabUv2
-            //
+            // 
             tabUv2.Controls.Add(dgvUv2Blocks);
             tabUv2.Controls.Add(dgvUv2Fields);
             tabUv2.Controls.Add(pnlUv2Header);
             tabUv2.Controls.Add(lblUv2Status);
-            tabUv2.Location = new Point(4, 27);
+            tabUv2.Location = new Point(4, 34);
             tabUv2.Name = "tabUv2";
             tabUv2.Padding = new Padding(3);
-            tabUv2.Size = new Size(736, 1);
+            tabUv2.Size = new Size(736, 200);
             tabUv2.TabIndex = 1;
             tabUv2.Text = "UV2 — MK-067";
             tabUv2.UseVisualStyleBackColor = true;
-            //
+            // 
             // dgvUv2Blocks
-            //
+            // 
             dgvUv2Blocks.AllowUserToAddRows = false;
             dgvUv2Blocks.AllowUserToDeleteRows = false;
+            dgvUv2Blocks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvUv2Blocks.BackgroundColor = Color.White;
             dgvUv2Blocks.ColumnHeadersHeight = 26;
             dgvUv2Blocks.Columns.AddRange(new DataGridViewColumn[] { colUv2BlockNo, colUv2BlockText, colUv2BlockStatus });
             dgvUv2Blocks.Dock = DockStyle.Fill;
-            dgvUv2Blocks.Location = new Point(3, 51);
+            dgvUv2Blocks.Location = new Point(3, 147);
             dgvUv2Blocks.Name = "dgvUv2Blocks";
             dgvUv2Blocks.ReadOnly = true;
             dgvUv2Blocks.RowHeadersVisible = false;
+            dgvUv2Blocks.RowHeadersWidth = 62;
             dgvUv2Blocks.RowTemplate.Height = 24;
-            dgvUv2Blocks.Size = new Size(730, 1);
+            dgvUv2Blocks.Size = new Size(730, 30);
             dgvUv2Blocks.TabIndex = 2;
-            //
+            // 
             // colUv2BlockNo
-            //
-            colUv2BlockNo.HeaderText = "Block#";
+            // 
             colUv2BlockNo.FillWeight = 50F;
+            colUv2BlockNo.HeaderText = "Block#";
+            colUv2BlockNo.MinimumWidth = 8;
             colUv2BlockNo.Name = "colUv2BlockNo";
             colUv2BlockNo.ReadOnly = true;
-            //
+            // 
             // colUv2BlockText
-            //
-            colUv2BlockText.HeaderText = "Text";
+            // 
             colUv2BlockText.FillWeight = 200F;
+            colUv2BlockText.HeaderText = "Text";
+            colUv2BlockText.MinimumWidth = 8;
             colUv2BlockText.Name = "colUv2BlockText";
             colUv2BlockText.ReadOnly = true;
-            //
+            // 
             // colUv2BlockStatus
-            //
-            colUv2BlockStatus.HeaderText = "Status";
+            // 
             colUv2BlockStatus.FillWeight = 60F;
+            colUv2BlockStatus.HeaderText = "Status";
+            colUv2BlockStatus.MinimumWidth = 8;
             colUv2BlockStatus.Name = "colUv2BlockStatus";
             colUv2BlockStatus.ReadOnly = true;
-            //
+            // 
             // dgvUv2Fields
-            //
+            // 
             dgvUv2Fields.AllowUserToAddRows = false;
             dgvUv2Fields.AllowUserToDeleteRows = false;
+            dgvUv2Fields.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvUv2Fields.BackgroundColor = Color.White;
             dgvUv2Fields.ColumnHeadersHeight = 26;
             dgvUv2Fields.Columns.AddRange(new DataGridViewColumn[] { colUv2Field, colUv2Value });
             dgvUv2Fields.Dock = DockStyle.Top;
-            dgvUv2Fields.Location = new Point(3, 31);
+            dgvUv2Fields.Location = new Point(3, 45);
             dgvUv2Fields.Name = "dgvUv2Fields";
             dgvUv2Fields.ReadOnly = true;
             dgvUv2Fields.RowHeadersVisible = false;
+            dgvUv2Fields.RowHeadersWidth = 62;
             dgvUv2Fields.RowTemplate.Height = 24;
             dgvUv2Fields.ScrollBars = ScrollBars.None;
-            dgvUv2Fields.Size = new Size(730, 76);
+            dgvUv2Fields.Size = new Size(730, 102);
             dgvUv2Fields.TabIndex = 1;
-            //
+            // 
             // colUv2Field
-            //
-            colUv2Field.HeaderText = "Field";
+            // 
             colUv2Field.FillWeight = 80F;
+            colUv2Field.HeaderText = "Field";
+            colUv2Field.MinimumWidth = 8;
             colUv2Field.Name = "colUv2Field";
             colUv2Field.ReadOnly = true;
-            //
+            // 
             // colUv2Value
-            //
-            colUv2Value.HeaderText = "Value";
+            // 
             colUv2Value.FillWeight = 200F;
+            colUv2Value.HeaderText = "Value";
+            colUv2Value.MinimumWidth = 8;
             colUv2Value.Name = "colUv2Value";
             colUv2Value.ReadOnly = true;
-            //
+            // 
             // pnlUv2Header
-            //
+            // 
             pnlUv2Header.Controls.Add(lblUv2Dot);
             pnlUv2Header.Controls.Add(lblUv2Title);
             pnlUv2Header.Controls.Add(lblUv2Ip);
             pnlUv2Header.Dock = DockStyle.Top;
             pnlUv2Header.Location = new Point(3, 3);
             pnlUv2Header.Name = "pnlUv2Header";
-            pnlUv2Header.Size = new Size(730, 28);
+            pnlUv2Header.Size = new Size(730, 42);
             pnlUv2Header.TabIndex = 0;
-            //
+            // 
             // lblUv2Dot
-            //
+            // 
             lblUv2Dot.BackColor = Color.Gray;
             lblUv2Dot.Location = new Point(6, 6);
             lblUv2Dot.Name = "lblUv2Dot";
             lblUv2Dot.Size = new Size(16, 16);
             lblUv2Dot.TabIndex = 0;
-            //
+            // 
             // lblUv2Title
-            //
+            // 
             lblUv2Title.AutoSize = true;
-            lblUv2Title.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblUv2Title.Font = new Font("Segoe UI", 10.5F, FontStyle.Bold);
             lblUv2Title.Location = new Point(28, 7);
             lblUv2Title.Name = "lblUv2Title";
-            lblUv2Title.Size = new Size(140, 15);
+            lblUv2Title.Size = new Size(237, 30);
             lblUv2Title.TabIndex = 1;
             lblUv2Title.Text = "UV2 — MK-067 (Shim)";
-            //
+            // 
             // lblUv2Ip
-            //
+            // 
             lblUv2Ip.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             lblUv2Ip.AutoSize = true;
             lblUv2Ip.ForeColor = Color.Gray;
             lblUv2Ip.Location = new Point(580, 7);
             lblUv2Ip.Name = "lblUv2Ip";
-            lblUv2Ip.Size = new Size(120, 15);
+            lblUv2Ip.Size = new Size(65, 25);
             lblUv2Ip.TabIndex = 2;
             lblUv2Ip.Text = "— : —";
             lblUv2Ip.TextAlign = ContentAlignment.MiddleRight;
-            //
+            // 
             // lblUv2Status
-            //
+            // 
             lblUv2Status.BackColor = Color.FromArgb(240, 240, 240);
             lblUv2Status.Dock = DockStyle.Bottom;
             lblUv2Status.Font = new Font("Segoe UI", 8F);
             lblUv2Status.ForeColor = Color.DimGray;
-            lblUv2Status.Location = new Point(3, 0);
+            lblUv2Status.Location = new Point(3, 177);
             lblUv2Status.Name = "lblUv2Status";
             lblUv2Status.Size = new Size(730, 20);
             lblUv2Status.TabIndex = 3;
             lblUv2Status.Text = "TCP: — | KEY: —";
             lblUv2Status.TextAlign = ContentAlignment.MiddleLeft;
-            //
+            // 
             // dgvUvSummary
-            //
+            // 
             dgvUvSummary.AllowUserToAddRows = false;
             dgvUvSummary.AllowUserToDeleteRows = false;
             dgvUvSummary.AutoGenerateColumns = false;
+            dgvUvSummary.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvUvSummary.BackgroundColor = Color.White;
             dgvUvSummary.ColumnHeadersHeight = 26;
-            dgvUvSummary.Columns.AddRange(new DataGridViewColumn[] { colSumId, colSumMachine, colSumProgram, colSumLot, colSumName });
+            dgvUvSummary.Columns.AddRange(new DataGridViewColumn[] { colSumId, colSumProgram, colSumLot, colSumName });
             dgvUvSummary.DataSource = bindingSourceUVinkjet;
             dgvUvSummary.Dock = DockStyle.Bottom;
-            dgvUvSummary.Location = new Point(3, 86);
+            dgvUvSummary.Location = new Point(3, 266);
             dgvUvSummary.Name = "dgvUvSummary";
             dgvUvSummary.ReadOnly = true;
             dgvUvSummary.RowHeadersVisible = false;
+            dgvUvSummary.RowHeadersWidth = 62;
             dgvUvSummary.RowTemplate.Height = 24;
-            dgvUvSummary.Size = new Size(744, 76);
+            dgvUvSummary.Size = new Size(744, 104);
             dgvUvSummary.TabIndex = 1;
-            //
+            // 
             // colSumId
-            //
+            // 
             colSumId.DataPropertyName = "Id";
-            colSumId.HeaderText = "Id";
             colSumId.FillWeight = 30F;
+            colSumId.HeaderText = "Id";
+            colSumId.MinimumWidth = 8;
             colSumId.Name = "colSumId";
             colSumId.ReadOnly = true;
-            //
-            // colSumMachine
-            //
-            colSumMachine.DataPropertyName = "Machine";
-            colSumMachine.HeaderText = "Machine";
-            colSumMachine.FillWeight = 70F;
-            colSumMachine.Name = "colSumMachine";
-            colSumMachine.ReadOnly = true;
-            //
+            // 
             // colSumProgram
-            //
+            // 
             colSumProgram.DataPropertyName = "ProgramName";
-            colSumProgram.HeaderText = "ProgramName";
             colSumProgram.FillWeight = 150F;
+            colSumProgram.HeaderText = "ProgramName";
+            colSumProgram.MinimumWidth = 8;
             colSumProgram.Name = "colSumProgram";
             colSumProgram.ReadOnly = true;
-            //
+            // 
             // colSumLot
-            //
+            // 
             colSumLot.DataPropertyName = "Lot";
-            colSumLot.HeaderText = "Lot";
             colSumLot.FillWeight = 80F;
+            colSumLot.HeaderText = "Lot";
+            colSumLot.MinimumWidth = 8;
             colSumLot.Name = "colSumLot";
             colSumLot.ReadOnly = true;
-            //
+            // 
             // colSumName
-            //
+            // 
             colSumName.DataPropertyName = "Name";
-            colSumName.HeaderText = "Name";
             colSumName.FillWeight = 150F;
+            colSumName.HeaderText = "Name";
+            colSumName.MinimumWidth = 8;
             colSumName.Name = "colSumName";
             colSumName.ReadOnly = true;
-            //
+            // 
             // bindingSourceUVinkjet
-            //
+            // 
             bindingSourceUVinkjet.DataSource = typeof(Models.UVinkjet);
             // 
             // pnlButtons
@@ -1223,51 +1238,51 @@
             pnlButtons.Controls.Add(btnSendMk1Mk2);
             pnlButtons.Dock = DockStyle.Fill;
             pnlButtons.FlowDirection = FlowDirection.RightToLeft;
-            pnlButtons.Location = new Point(3, 689);
+            pnlButtons.Location = new Point(3, 707);
             pnlButtons.Name = "pnlButtons";
             pnlButtons.Padding = new Padding(0, 4, 0, 4);
-            pnlButtons.Size = new Size(750, 44);
+            pnlButtons.Size = new Size(750, 46);
             pnlButtons.TabIndex = 5;
-            //
-            // btnSendMk1Mk2
-            //
-            btnSendMk1Mk2.Font = new Font("Segoe UI", 9F);
-            btnSendMk1Mk2.Location = new Point(637, 7);
-            btnSendMk1Mk2.Name = "btnSendMk1Mk2";
-            btnSendMk1Mk2.Size = new Size(110, 30);
-            btnSendMk1Mk2.TabIndex = 2;
-            btnSendMk1Mk2.Text = "ส่งหา MK1,MK2";
-            btnSendMk1Mk2.Click += btnSendMk1Mk2_Click;
-            //
-            // btnSendUV1
-            //
-            btnSendUV1.Font = new Font("Segoe UI", 9F);
-            btnSendUV1.Location = new Point(531, 7);
-            btnSendUV1.Name = "btnSendUV1";
-            btnSendUV1.Size = new Size(100, 30);
-            btnSendUV1.TabIndex = 4;
-            btnSendUV1.Text = "ส่งหา UV1";
-            btnSendUV1.Click += btnSendUV1_Click;
-            //
-            // btnSendMk3
-            //
-            btnSendMk3.Font = new Font("Segoe UI", 9F);
-            btnSendMk3.Location = new Point(425, 7);
-            btnSendMk3.Name = "btnSendMk3";
-            btnSendMk3.Size = new Size(100, 30);
-            btnSendMk3.TabIndex = 3;
-            btnSendMk3.Text = "ส่งหา MK3,MK4";
-            btnSendMk3.Click += btnSendMk3_Click;
-            //
+            // 
             // btnSendUV2
-            //
+            // 
             btnSendUV2.Font = new Font("Segoe UI", 9F);
-            btnSendUV2.Location = new Point(319, 7);
+            btnSendUV2.Location = new Point(647, 7);
             btnSendUV2.Name = "btnSendUV2";
             btnSendUV2.Size = new Size(100, 30);
             btnSendUV2.TabIndex = 5;
             btnSendUV2.Text = "ส่งหา UV2";
             btnSendUV2.Click += btnSendUV2_Click_1;
+            // 
+            // btnSendMk3
+            // 
+            btnSendMk3.Font = new Font("Segoe UI", 9F);
+            btnSendMk3.Location = new Point(541, 7);
+            btnSendMk3.Name = "btnSendMk3";
+            btnSendMk3.Size = new Size(100, 30);
+            btnSendMk3.TabIndex = 3;
+            btnSendMk3.Text = "ส่งหา MK3,MK4";
+            btnSendMk3.Click += btnSendMk3_Click;
+            // 
+            // btnSendUV1
+            // 
+            btnSendUV1.Font = new Font("Segoe UI", 9F);
+            btnSendUV1.Location = new Point(435, 7);
+            btnSendUV1.Name = "btnSendUV1";
+            btnSendUV1.Size = new Size(100, 30);
+            btnSendUV1.TabIndex = 4;
+            btnSendUV1.Text = "ส่งหา UV1";
+            btnSendUV1.Click += btnSendUV1_Click;
+            // 
+            // btnSendMk1Mk2
+            // 
+            btnSendMk1Mk2.Font = new Font("Segoe UI", 9F);
+            btnSendMk1Mk2.Location = new Point(319, 7);
+            btnSendMk1Mk2.Name = "btnSendMk1Mk2";
+            btnSendMk1Mk2.Size = new Size(110, 30);
+            btnSendMk1Mk2.TabIndex = 2;
+            btnSendMk1Mk2.Text = "ส่งหา MK1,MK2";
+            btnSendMk1Mk2.Click += btnSendMk1Mk2_Click;
             // 
             // textBlocksBindingSource
             // 
@@ -1282,7 +1297,7 @@
             // 
             Controls.Add(pnlDetail);
             Controls.Add(pnlJobs);
-            //Name = "ucOrder";
+            Name = "ucOrder";
             Size = new Size(1243, 772);
             tabControl.ResumeLayout(false);
             tabList.ResumeLayout(false);

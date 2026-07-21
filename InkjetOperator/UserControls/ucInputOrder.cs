@@ -193,12 +193,15 @@ namespace InkjetOperator
 
             string barcodeRaw = txtBarcode.Text.Trim();
 
-            // 2. ตรวจสอบข้อมูลใน SQLite (inkjet_data.lot_no)
+            // 2. ตรวจสอบข้อมูล: ต้องมีใน inkjet_data (MK) หรือ print_data (UV) อย่างน้อยหนึ่ง
             var pattern = await _sqliteService.GetPatternDetailAsync(barcodeRaw);
-            if (pattern == null)
+            var uvRows = await _sqliteService.GetUvDetailAsync(barcodeRaw);
+
+            if (pattern == null && uvRows.Count == 0)
             {
                 MessageBox.Show(
-                    $"ไม่พบข้อมูล Barcode '{barcodeRaw}' ในตาราง inkjet_data\n\n" +
+                    $"ไม่พบข้อมูล Barcode '{barcodeRaw}'\n\n" +
+                    "ไม่มีทั้งใน inkjet_data (MK) และ print_data (UV)\n\n" +
                     "สาเหตุที่เป็นไปได้:\n" +
                     "• ยังไม่ได้ลงทะเบียน lot_no นี้ในระบบ\n" +
                     "• พิมพ์/สแกน Barcode ผิด\n" +
@@ -207,11 +210,15 @@ namespace InkjetOperator
                 return;
             }
 
+            // งาน UV-only (ไม่มีแถวใน inkjet_data) → สร้าง pattern เปล่าไว้ link job
+            if (pattern == null)
+                pattern = new PatternDetail { Barcode = barcodeRaw };
+
             // 3. Sync Pattern ไปยัง Backend
-            bool patternReady = await SyncPatternAsync(pattern, barcodeRaw);
-            if (!patternReady)
+            string? patternError = await SyncPatternAsync(pattern, barcodeRaw);
+            if (patternError != null)
             {
-                MessageBox.Show("ไม่สามารถจัดเตรียมข้อมูล Pattern ในระบบหลักได้ กรุณาตรวจสอบการเชื่อมต่อหรือข้อมูล", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(patternError, "Pattern Sync Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -301,7 +308,8 @@ namespace InkjetOperator
         /// <summary>
         /// ทำความสะอาดข้อมูลและส่ง Pattern ไปยัง Backend
         /// </summary>
-        private async Task<bool> SyncPatternAsync(PatternDetail pattern, string pattern_barcode)
+        /// <summary>คืน null = สำเร็จ, คืน string = สาเหตุที่ล้มเหลว (เอาไปโชว์ได้เลย)</summary>
+        private async Task<string?> SyncPatternAsync(PatternDetail pattern, string pattern_barcode)
         {
             // 1. ลองหาใน Backend ก่อนว่ามี Pattern นี้หรือยัง
             var existing = await _api.GetPatternByBarcodeAsync(pattern_barcode);
@@ -310,19 +318,12 @@ namespace InkjetOperator
             if (existing != null)
             {
                 Debug.WriteLine($"[SYNC] Pattern '{pattern_barcode}' already exists in backend. Skipping create.");
-
-                // (Option) ถ้าคุณต้องการเอาข้อมูลจาก Backend มาทับตัวแปร local เพื่อใช้ค่าที่ Resolve แล้ว
-                // pattern.InkjetConfigs = existing.InkjetConfigs; 
-
-                return true;
+                return null;
             }
 
-            // 2. ถ้าไม่มีใน Backend (existing == null) ให้เตรียมข้อมูลเพื่อ Create
-            if (pattern.InkjetConfigs == null || pattern.InkjetConfigs.Count == 0)
-                return false;
-
-            // กรองและปรับจูนข้อมูล (Data Cleaning) ก่อนส่งไป Create
-            pattern.InkjetConfigs = pattern.InkjetConfigs
+            // 2. ถ้าไม่มีใน Backend → เตรียมข้อมูล MK (ถ้ามี) แล้วสร้าง pattern
+            //    งาน UV-only อาจไม่มี MK config → สร้าง pattern เปล่าได้ (ไม่ block การ register)
+            pattern.InkjetConfigs = (pattern.InkjetConfigs ?? new())
                 .Where(cfg => cfg.ProgramNumber.HasValue && cfg.ProgramNumber > 0)
                 .Select(cfg =>
                 {
@@ -332,14 +333,14 @@ namespace InkjetOperator
                     return cfg;
                 }).ToList();
 
-            // เช็คอีกครั้งหลังกรอง ถ้าว่างเปล่าไม่ควรส่ง
-            if (pattern.InkjetConfigs.Count == 0) return false;
+            // 3. ส่งไปที่ API เพื่อสร้าง Pattern ใหม่ (configs อาจว่าง = งาน UV-only)
+            Debug.WriteLine($"[SYNC] Creating pattern '{pattern_barcode}' with {pattern.InkjetConfigs.Count} MK config(s)...");
 
-            // 3. ส่งไปที่ API เพื่อสร้าง Pattern ใหม่
-            Debug.WriteLine($"[SYNC] Pattern '{pattern_barcode}' not found. Creating new pattern...");
+            bool ok = await _api.CreatePatternAsync(pattern);
+            if (!ok)
+                return $"สร้าง Pattern '{pattern_barcode}' ไม่สำเร็จที่ backend:\n{_api.LastError}";
 
-            // ตรงนี้เรียก CreatePatternAsync ซึ่งคืนค่า bool (ตามโครงสร้างเดิมของคุณ)
-            return await _api.CreatePatternAsync(pattern);
+            return null;
         }
 
         /// <summary>
