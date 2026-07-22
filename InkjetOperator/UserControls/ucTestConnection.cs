@@ -81,6 +81,20 @@ namespace InkjetOperator
             AppendLog(log);
         }
 
+        // ── Manual SQL ──
+        private async void btnRunSql_Click(object sender, EventArgs e)
+        {
+            btnRunSql.Enabled = false;
+            try
+            {
+                txtSqlResult.Text = await _sqlite.RunSqlAsync(txtDbPath.Text.Trim(), txtSql.Text);
+            }
+            finally
+            {
+                btnRunSql.Enabled = true;
+            }
+        }
+
         private int Port() => int.TryParse(txtPort.Text.Trim(), out int p) && p > 0 ? p : 10086;
 
         private void AppendLog(string line)

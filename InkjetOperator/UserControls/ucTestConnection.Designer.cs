@@ -42,6 +42,13 @@ namespace InkjetOperator
         private Label lblLog;
         private TextBox txtSocketLog;
 
+        // Manual SQL
+        private GroupBox grpSql;
+        private Label lblSql;
+        private TextBox txtSql;
+        private Button btnRunSql;
+        private TextBox txtSqlResult;
+
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null)) components.Dispose();
@@ -68,8 +75,11 @@ namespace InkjetOperator
             lblProg = new Label(); txtProgram = new TextBox();
             btnKey85 = new Button(); btnKey84 = new Button(); btnKey83 = new Button();
             lblLog = new Label(); txtSocketLog = new TextBox();
+            grpSql = new GroupBox(); lblSql = new Label(); txtSql = new TextBox();
+            btnRunSql = new Button(); txtSqlResult = new TextBox();
             grpDb.SuspendLayout();
             grpSocket.SuspendLayout();
+            grpSql.SuspendLayout();
             SuspendLayout();
             //
             // lblTitle
@@ -149,15 +159,42 @@ namespace InkjetOperator
             txtSocketLog.Font = new Font("Consolas", 9.5F); txtSocketLog.Multiline = true; txtSocketLog.ReadOnly = true;
             txtSocketLog.ScrollBars = ScrollBars.Vertical; txtSocketLog.BackColor = Color.White;
             //
+            // grpSql
+            //
+            grpSql.Controls.Add(lblSql);
+            grpSql.Controls.Add(txtSql);
+            grpSql.Controls.Add(btnRunSql);
+            grpSql.Controls.Add(txtSqlResult);
+            grpSql.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+            grpSql.Location = new Point(20, 545);
+            grpSql.Name = "grpSql";
+            grpSql.Size = new Size(1120, 235);
+            grpSql.TabStop = false;
+            grpSql.Text = "3) Manual SQL — รันคำสั่งเองกับ CPI.db3 (ใช้ไฟล์จากช่อง 1)";
+            //
+            NormalField(lblSql, "SQL :", 18, 34);
+            txtSql.Location = new Point(18, 62); txtSql.Size = new Size(980, 65);
+            txtSql.Font = new Font("Consolas", 10F); txtSql.Multiline = true; txtSql.ScrollBars = ScrollBars.Vertical;
+            txtSql.Text = "SELECT * FROM MK063;";
+            btnRunSql.Location = new Point(1008, 62); btnRunSql.Size = new Size(94, 65);
+            btnRunSql.BackColor = Color.FromArgb(70, 130, 180); btnRunSql.ForeColor = Color.White;
+            btnRunSql.FlatStyle = FlatStyle.Flat; btnRunSql.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnRunSql.Text = "Run SQL"; btnRunSql.UseVisualStyleBackColor = false; btnRunSql.Click += btnRunSql_Click;
+            txtSqlResult.Location = new Point(18, 140); txtSqlResult.Size = new Size(1084, 80);
+            txtSqlResult.Font = new Font("Consolas", 9.5F); txtSqlResult.Multiline = true; txtSqlResult.ReadOnly = true;
+            txtSqlResult.ScrollBars = ScrollBars.Both; txtSqlResult.WordWrap = false; txtSqlResult.BackColor = Color.White;
+            //
             // ucTestConnection
             //
             Controls.Add(lblTitle);
             Controls.Add(grpDb);
             Controls.Add(grpSocket);
+            Controls.Add(grpSql);
             Name = "ucTestConnection";
             Size = new Size(1152, 800);
             grpDb.ResumeLayout(false); grpDb.PerformLayout();
             grpSocket.ResumeLayout(false); grpSocket.PerformLayout();
+            grpSql.ResumeLayout(false); grpSql.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }

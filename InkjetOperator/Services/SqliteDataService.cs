@@ -188,38 +188,119 @@ namespace InkjetOperator.Services
 
             try
             {
-                using var conn = new SQLiteConnection($"Data Source={dbPath};Version=3;Busy Timeout=5000;");
+                // UNC path (\\server\share) → System.Data.SQLite ตัด \\ ทิ้ง → ต้องแปลงเป็น file:// URI
+                // เช่น \\192.168.1.59\cpi\CPI.db3 → FullUri=file://192.168.1.59/cpi/CPI.db3
+                // UNC (\\server\share): SQLite parser ตัด \\ เหลือ \ → ต้อง double backslash ก่อน
+                // \\192.168.1.59\cpi\CPI.db3 → \\\\192.168.1.59\\cpi\\CPI.db3 → parser collapse กลับเป็น UNC ถูก
+                // ใช้ Data Source= (branch เดียวกับ local/mapped drive ที่เขียนได้)
+                string source = dbPath.StartsWith(@"\\") ? dbPath.Replace(@"\", @"\\") : dbPath;
+                string connStr = $"Data Source={source};Version=3;Busy Timeout=5000;Journal Mode=Off;Pooling=False;";
+
+                using var conn = new SQLiteConnection(connStr);
                 await conn.OpenAsync();
 
-                string sql =
-                    $"UPDATE [{table}] SET lot=@lot, name=@name, " +
-                    "text1=@t1, text2=@t2, text3=@t3, text4=@t4, text5=@t5 WHERE id=1";
+                // อ่านว่าตารางมีคอลัมน์อะไรบ้าง (schema CPI.db3 แต่ละเครื่อง/เวอร์ชันไม่เหมือนกัน:
+                // เก่า = id,lot,name / ใหม่ = id,lot,name,text1..5) → เขียนเฉพาะที่มีจริง
+                var cols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                using (var pragma = new SQLiteCommand($"PRAGMA table_info([{table}])", conn))
+                using (var pr = (SQLiteDataReader)await pragma.ExecuteReaderAsync())
+                    while (await pr.ReadAsync())
+                        cols.Add(pr["name"].ToString() ?? "");
 
-                using var cmd = new SQLiteCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@lot", d.Lot ?? "");
-                cmd.Parameters.AddWithValue("@name", d.Name ?? "");
-                cmd.Parameters.AddWithValue("@t1", d.Text1 ?? "");
-                cmd.Parameters.AddWithValue("@t2", d.Text2 ?? "");
-                cmd.Parameters.AddWithValue("@t3", d.Text3 ?? "");
-                cmd.Parameters.AddWithValue("@t4", d.Text4 ?? "");
-                cmd.Parameters.AddWithValue("@t5", d.Text5 ?? "");
+                if (cols.Count == 0)
+                    return (false, $"{table}: ❌ ไม่พบตาราง {table} ในไฟล์");
 
+                var wanted = new (string col, string val)[]
+                {
+                    ("lot", d.Lot ?? ""), ("name", d.Name ?? ""),
+                    ("text1", d.Text1 ?? ""), ("text2", d.Text2 ?? ""), ("text3", d.Text3 ?? ""),
+                    ("text4", d.Text4 ?? ""), ("text5", d.Text5 ?? ""),
+                };
+
+                var sets = new List<string>();
+                using var cmd = new SQLiteCommand { Connection = conn };
+                foreach (var (col, val) in wanted)
+                {
+                    if (!cols.Contains(col)) continue;   // ข้ามคอลัมน์ที่ไฟล์ไม่มี
+                    sets.Add($"{col}=@{col}");
+                    cmd.Parameters.AddWithValue("@" + col, val);
+                }
+
+                if (sets.Count == 0)
+                    return (false, $"{table}: ❌ ไม่มีคอลัมน์ lot/name/text ให้เขียน");
+
+                // ตารางบางเวอร์ชันไม่มีคอลัมน์ id → ใช้ rowid ของแถวแรกแทน
+                string where = cols.Contains("id")
+                    ? "WHERE id=1"
+                    : $"WHERE rowid=(SELECT rowid FROM [{table}] ORDER BY rowid LIMIT 1)";
+
+                cmd.CommandText = $"UPDATE [{table}] SET {string.Join(", ", sets)} {where}";
                 int rows = await cmd.ExecuteNonQueryAsync();
 
                 if (rows == 0)
-                    return (false, $"{table}: ไม่มีแถว id=1 ให้อัปเดต (0 rows)");
+                    return (false, $"{table}: ไม่มีแถวให้อัปเดต (ตารางว่าง? 0 rows)");
 
-                return (true, $"{table}: ✅ เขียนสำเร็จ (lot={d.Lot}, name={d.Name})");
+                string wrote = string.Join(", ", sets.ConvertAll(s => s.Split('=')[0]));
+                return (true, $"{table}: ✅ เขียนสำเร็จ (คอลัมน์: {wrote})");
             }
             catch (SQLiteException ex)
             {
-                // เช่น "no such table: MK067" หรือ "database is locked"
-                return (false, $"{table}: ❌ {ex.Message}");
+                // เช่น "no such column: id" หรือ "database is locked"
+                return (false, $"{table}: ❌ [{ex.ResultCode}] {ex.Message}");
             }
             catch (Exception ex)
             {
                 return (false, $"{table}: ❌ {ex.Message}");
             }
+        }
+
+        /// <summary>รัน SQL อะไรก็ได้ (manual) กับ CPI.db3 — คืนผลเป็นข้อความ (SELECT/PRAGMA โชว์แถว, อื่นๆ โชว์ rows affected)</summary>
+        public async Task<string> RunSqlAsync(string dbPath, string sql)
+        {
+            if (string.IsNullOrWhiteSpace(dbPath)) return "❌ ยังไม่ได้เลือกไฟล์ (ช่อง CPI.db3 ด้านบน)";
+            if (!File.Exists(dbPath)) return $"❌ ไม่พบไฟล์:\n{dbPath}";
+            if (string.IsNullOrWhiteSpace(sql)) return "❌ ใส่คำสั่ง SQL ก่อน";
+
+            try
+            {
+                // UNC: double backslash (เหมือน WriteUvToCpiAsync)
+                string source = dbPath.StartsWith(@"\\") ? dbPath.Replace(@"\", @"\\") : dbPath;
+                using var conn = new SQLiteConnection(
+                    $"Data Source={source};Version=3;Busy Timeout=5000;Journal Mode=Off;Pooling=False;");
+                await conn.OpenAsync();
+                using var cmd = new SQLiteCommand(sql, conn);
+
+                string head = sql.TrimStart();
+                bool isQuery = head.StartsWith("SELECT", StringComparison.OrdinalIgnoreCase)
+                            || head.StartsWith("PRAGMA", StringComparison.OrdinalIgnoreCase);
+
+                if (isQuery)
+                {
+                    using var r = (SQLiteDataReader)await cmd.ExecuteReaderAsync();
+                    var lines = new List<string>();
+                    var cols = new List<string>();
+                    for (int i = 0; i < r.FieldCount; i++) cols.Add(r.GetName(i));
+                    lines.Add(string.Join(" | ", cols));
+
+                    int n = 0;
+                    while (await r.ReadAsync() && n < 100)
+                    {
+                        var vals = new List<string>();
+                        for (int i = 0; i < r.FieldCount; i++)
+                            vals.Add(r.IsDBNull(i) ? "NULL" : r.GetValue(i)?.ToString() ?? "");
+                        lines.Add(string.Join(" | ", vals));
+                        n++;
+                    }
+                    return $"✅ {n} row(s)\r\n" + string.Join("\r\n", lines);
+                }
+                else
+                {
+                    int rows = await cmd.ExecuteNonQueryAsync();
+                    return $"✅ สำเร็จ — {rows} row(s) affected";
+                }
+            }
+            catch (SQLiteException ex) { return $"❌ [{ex.ResultCode}] {ex.Message}"; }
+            catch (Exception ex) { return $"❌ {ex.Message}"; }
         }
 
         // เพิ่มในไฟล์ SqliteDataService.cs
