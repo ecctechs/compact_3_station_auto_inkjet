@@ -17,6 +17,7 @@ namespace InkjetOperator
         private ucOrder? _ucOrder;
         private ucBot? _ucBot;
         private ucST3? _ucST3;
+        private ucTestConnection? _ucTest;
 
         // เก็บ reference ของปุ่มเมนู
         private Button? _btnInput;
@@ -25,6 +26,7 @@ namespace InkjetOperator
         private Button? _btnSetting;
         private Button? _btnBot;
         private Button? _btnST3;
+        private Button? _btnTest;
         private static readonly string ConfigPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appconfig.json");
 
         public Form1()
@@ -158,6 +160,15 @@ namespace InkjetOperator
                 index++;
             }
 
+            // Test Connection (โหมด 99 — หน้าเทสหน้างานอย่างเดียว)
+            if (_config.ShouldShowMenu("test"))
+            {
+                _btnTest = CreateMenuButton("Test Connection", x, index == 0);
+                _btnTest.Click += (s, e) => { ShowTest(); SetActiveButton(_btnTest); };
+                x += 190;
+                index++;
+            }
+
 
             // อัปเดตข้อความ title ตาม config
             this.Text = _config.AppName;
@@ -267,6 +278,17 @@ namespace InkjetOperator
             SetActiveButton(_btnBot);
         }
 
+        private void ShowTest()
+        {
+            pnlContent.Controls.Clear();
+
+            _ucTest ??= new ucTestConnection();
+            _ucTest.Dock = DockStyle.Fill;
+            pnlContent.Controls.Add(_ucTest);
+
+            SetActiveButton(_btnTest);
+        }
+
         private void ShowSt3()
         {
             pnlContent.Controls.Clear();
@@ -317,6 +339,10 @@ namespace InkjetOperator
             else if (_btnSetting != null)
             {
                 ShowSetting();
+            }
+            else if (_btnTest != null)
+            {
+                ShowTest();
             }
         }
     }

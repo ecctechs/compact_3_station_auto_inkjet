@@ -60,8 +60,8 @@ namespace InkjetOperator
                 // โหมด 0: หน้าหลักเบื้องต้น
                 0 => menu switch { "input" or "setting" => true, _ => false },
 
-                // โหมด 1: ทั้งหมด ยกเว้น ucBot และ ucST3 (โหมดหน้างานปกติ)
-                1 => menu switch { "bot" or "st3" or "input" => false, _ => true },
+                // โหมด 1: ทั้งหมด ยกเว้น ucBot / ucST3 / test (โหมดหน้างานปกติ)
+                1 => menu switch { "bot" or "st3" or "input" or "test" => false, _ => true },
 
                 // โหมด 2: โหมด Bot (เน้นใช้ ucBot)
                 2 => menu switch {  "bot" or "setting" => true, _ => false },
@@ -74,6 +74,9 @@ namespace InkjetOperator
 
                 // โหมด 5: Developer / Admin (เห็นทุกเมนู)
                 5 => true,
+
+                // โหมด 99: หน้าเทสหน้างานอย่างเดียว (DB3 + Socket) — ลูกค้าเห็นแค่นี้
+                99 => menu switch { "test" => true, _ => false },
 
                 _ => false
             };

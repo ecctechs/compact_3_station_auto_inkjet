@@ -66,6 +66,42 @@ namespace InkjetOperator.Services
             }
         }
 
+        // ── ปุ่มแยก (สำหรับหน้าเทสหน้างาน) ──
+        public Task<(bool ok, string log)> SendLoadAsync(string ip, int port, string program)
+            => SendOneAsync(ip, port, LoadProgramCmd(program), $"KEY:85 โหลด {program}.uvdx");
+
+        public Task<(bool ok, string log)> SendStartAsync(string ip, int port)
+            => SendOneAsync(ip, port, StartCmd, "KEY:84 start");
+
+        public Task<(bool ok, string log)> SendStopAsync(string ip, int port)
+            => SendOneAsync(ip, port, StopCmd, "KEY:83 stop");
+
+        /// <summary>ส่ง 1 command แล้วคืน response</summary>
+        private async Task<(bool ok, string log)> SendOneAsync(string ip, int port, string command, string label)
+        {
+            if (string.IsNullOrWhiteSpace(ip))
+                return (false, "ยังไม่ได้ตั้ง IP");
+
+            var tcp = new TcpManager();
+            try
+            {
+                await tcp.ConnectAsync(ip, port);
+                if (!tcp.IsConnected())
+                    return (false, $"❌ เชื่อมต่อไม่ได้ {ip}:{port}");
+
+                string r = await tcp.SendCommandAsync(command);
+                return (true, $"{label} → {Resp(r)}");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"{label} → ❌ {ex.Message}");
+            }
+            finally
+            {
+                tcp.Disconnect();
+            }
+        }
+
         /// <summary>ส่ง stop (KEY:83)</summary>
         public async Task<(bool ok, string log)> StopAsync(string ip, int port)
         {
