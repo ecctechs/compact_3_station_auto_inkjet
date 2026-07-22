@@ -126,6 +126,7 @@
             btnSendUV1 = new Button();
             btnSendMk1Mk2 = new Button();
             btnTestM2 = new Button();
+            btnTestTcp = new Button();
             textBlocksBindingSource = new BindingSource(components);
             printJobBindingSource = new BindingSource(components);
             tabControl.SuspendLayout();
@@ -1238,6 +1239,7 @@
             pnlButtons.Controls.Add(btnSendUV1);
             pnlButtons.Controls.Add(btnSendMk1Mk2);
             pnlButtons.Controls.Add(btnTestM2);
+            pnlButtons.Controls.Add(btnTestTcp);
             pnlButtons.Dock = DockStyle.Fill;
             pnlButtons.FlowDirection = FlowDirection.RightToLeft;
             pnlButtons.Location = new Point(3, 707);
@@ -1269,6 +1271,20 @@
             btnTestM2.Text = "TEST: เขียน CPI";
             btnTestM2.UseVisualStyleBackColor = false;
             btnTestM2.Click += btnTestM2_Click;
+            //
+            // btnTestTcp
+            //
+            btnTestTcp.BackColor = Color.FromArgb(103, 78, 167);
+            btnTestTcp.FlatStyle = FlatStyle.Flat;
+            btnTestTcp.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnTestTcp.ForeColor = Color.White;
+            btnTestTcp.Location = new Point(139, 7);
+            btnTestTcp.Name = "btnTestTcp";
+            btnTestTcp.Size = new Size(130, 30);
+            btnTestTcp.TabIndex = 7;
+            btnTestTcp.Text = "TEST: TCP KEY";
+            btnTestTcp.UseVisualStyleBackColor = false;
+            btnTestTcp.Click += btnTestTcp_Click;
             // 
             // btnSendMk3
             // 
@@ -1398,6 +1414,7 @@
         private Button btnSendMk3;
         private Button btnSendUV1;
         private Button btnTestM2;
+        private Button btnTestTcp;
 
         // Inkjet UV — Tabs
         private TabControl tabUv;

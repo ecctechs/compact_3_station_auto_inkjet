@@ -26,6 +26,8 @@ namespace InkjetOperator
         /// <summary>UV detail (UV1/UV2) ของงานที่เลือกล่าสุด — ใช้ตอนกดส่ง/เทส M2</summary>
         private List<UvJobData> _uvPreview = new();
 
+        private readonly UvTcpService _uvTcp = new();
+
         public ucOrder()
         {
             InitializeComponent();
@@ -345,6 +347,90 @@ namespace InkjetOperator
             {
                 btnTestM2.Enabled = true;
             }
+        }
+
+        // ══════════════════════════════════════════════
+        //  M3 (TEST) — ส่ง TCP KEY :10086 (โหลด .uvdx + start)
+        // ══════════════════════════════════════════════
+
+        private async void btnTestTcp_Click(object sender, EventArgs e)
+        {
+            if (_uvPreview == null || _uvPreview.Count == 0)
+            {
+                MessageBox.Show("ยังไม่มีข้อมูล UV ของงานที่เลือก",
+                    "Test M3 (TCP)", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var uv1 = _uvPreview.FirstOrDefault(u => u.Machine == "UV1");
+            var uv2 = _uvPreview.FirstOrDefault(u => u.Machine == "UV2");
+
+            // program จาก print_data (P-/S-) มักไม่ตรงกับ .uvdx จริงในเครื่อง (เป็น template คงที่)
+            // → ให้พิมพ์ชื่อ .uvdx จริงตอนเทส เช่น "compact", "Lot Name", "DEX a"
+            string? prog = PromptText(
+                "Test M3 — โหลดโปรแกรม",
+                "ชื่อ .uvdx ที่จะโหลด (ต้องมีจริงในเครื่อง UV) เช่น compact / Lot Name / DEX a :",
+                uv1?.ProgramName ?? "compact");
+            if (prog == null) return;
+
+            btnTestTcp.Enabled = false;
+            try
+            {
+                var results = new List<string>();
+
+                if (uv1 != null)
+                {
+                    string ip = CustomSettingsManager.GetValue("UV001_IP") ?? "";
+                    int port = ParsePort(CustomSettingsManager.GetValue("UV001_PORT"));
+                    var (_, log) = await _uvTcp.LoadAndStartAsync(ip, port, prog);
+                    results.Add("[UV1]\n" + log);
+                }
+                if (uv2 != null)
+                {
+                    string ip = CustomSettingsManager.GetValue("UV002_IP") ?? "";
+                    int port = ParsePort(CustomSettingsManager.GetValue("UV002_PORT"));
+                    var (_, log) = await _uvTcp.LoadAndStartAsync(ip, port, prog);
+                    results.Add("[UV2]\n" + log);
+                }
+
+                MessageBox.Show(string.Join("\n\n", results),
+                    "Test M3 — TCP KEY :10086", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"เกิดข้อผิดพลาด: {ex.Message}", "Test M3 (TCP)",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                btnTestTcp.Enabled = true;
+            }
+        }
+
+        /// <summary>parse port จาก setting — ว่าง/ผิด → default 10086</summary>
+        private static int ParsePort(string? s) =>
+            int.TryParse(s, out int p) && p > 0 ? p : 10086;
+
+        /// <summary>กล่องพิมพ์ข้อความง่าย ๆ — คืน null ถ้ากด Cancel</summary>
+        private static string? PromptText(string title, string label, string defaultValue)
+        {
+            using var dlg = new Form
+            {
+                Text = title,
+                Size = new System.Drawing.Size(440, 170),
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false
+            };
+            var lbl = new Label { Text = label, Location = new System.Drawing.Point(12, 12), AutoSize = true, MaximumSize = new System.Drawing.Size(410, 0) };
+            var txt = new TextBox { Text = defaultValue, Location = new System.Drawing.Point(12, 55), Width = 405 };
+            var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Location = new System.Drawing.Point(255, 90), Width = 78 };
+            var cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Location = new System.Drawing.Point(339, 90), Width = 78 };
+            dlg.Controls.AddRange(new Control[] { lbl, txt, ok, cancel });
+            dlg.AcceptButton = ok;
+            dlg.CancelButton = cancel;
+            return dlg.ShowDialog() == DialogResult.OK ? txt.Text.Trim() : null;
         }
 
         /// <summary>โหลด TextBlocks จาก Config ที่เลือกอยู่ + ประมวลผล Pattern Rule</summary>
