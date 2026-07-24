@@ -299,8 +299,7 @@
             // 
             // ucInputOrder
             // 
-            AutoScaleDimensions = new SizeF(10F, 25F);
-            AutoScaleMode = AutoScaleMode.Font;
+            AutoScaleMode = AutoScaleMode.None;
             Controls.Add(pnlMain);
             Margin = new Padding(4, 5, 4, 5);
             Name = "ucInputOrder";

@@ -122,8 +122,7 @@
             // 
             // ucSettingMenu
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
-            AutoScaleMode = AutoScaleMode.Font;
+            AutoScaleMode = AutoScaleMode.None;
             Controls.Add(panelSettingShow);
             Controls.Add(pnlLeftMenu);
             Name = "ucSettingMenu";
