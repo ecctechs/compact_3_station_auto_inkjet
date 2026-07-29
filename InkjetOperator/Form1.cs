@@ -9,8 +9,6 @@ namespace InkjetOperator
 {
     public partial class Form1 : Form
     {
-        private static readonly Size TargetWindowSize = new Size(1527, 1215);
-
         private AppConfig _config;
         private ucInputOrder? _ucInput;
         //private ucSetting? _ucSetting;
@@ -311,36 +309,7 @@ namespace InkjetOperator
             );
         }
 
-        protected override void OnShown(EventArgs e)
-        {
-            base.OnShown(e);
-
-            this.Size = TargetWindowSize;
-            this.MinimumSize = TargetWindowSize;
-            this.MaximumSize = TargetWindowSize;
-
-            var screen = Screen.FromControl(this);
-            Debug.WriteLine($"[DPI-DEBUG] Screen: {screen.DeviceName}");
-            Debug.WriteLine($"[DPI-DEBUG] Screen WorkingArea: {screen.WorkingArea}");
-            Debug.WriteLine($"[DPI-DEBUG] Screen Bounds: {screen.Bounds}");
-            Debug.WriteLine($"[DPI-DEBUG] Form.Size: {this.Size}");
-            Debug.WriteLine($"[DPI-DEBUG] Form.ClientSize: {this.ClientSize}");
-            Debug.WriteLine($"[DPI-DEBUG] DeviceDpi: {this.DeviceDpi}");
-            Debug.WriteLine($"[DPI-DEBUG] AutoScaleMode: {this.AutoScaleMode}");
-
-            if (screen.WorkingArea.Width < TargetWindowSize.Width ||
-                screen.WorkingArea.Height < TargetWindowSize.Height)
-            {
-                MessageBox.Show(
-                    $"หน้าจอของคุณ ({screen.WorkingArea.Width}x{screen.WorkingArea.Height}) " +
-                    $"เล็กกว่าขนาดหน้าต่างโปรแกรม ({TargetWindowSize.Width}x{TargetWindowSize.Height})\n" +
-                    "โปรแกรมอาจแสดงผลไม่สมบูรณ์",
-                    "Screen Size Warning",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-            }
-        }
-
+        // เปลี่ยนโหมบ while running (ถ้าต้องการ)
         public void ReloadConfig()
         {
             _config = AppConfig.Load();

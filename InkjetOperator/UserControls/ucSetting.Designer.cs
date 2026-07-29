@@ -469,7 +469,8 @@
             // 
             // ucSetting
             // 
-            AutoScaleMode = AutoScaleMode.None;
+            AutoScaleDimensions = new SizeF(10F, 25F);
+            AutoScaleMode = AutoScaleMode.Font;
             Controls.Add(pnlMainContent);
             Margin = new Padding(4, 5, 4, 5);
             Name = "ucSetting";
