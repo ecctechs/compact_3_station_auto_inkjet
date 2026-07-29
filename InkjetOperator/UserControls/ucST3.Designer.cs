@@ -123,7 +123,8 @@
             // 
             // ucST3
             // 
-            AutoScaleMode = AutoScaleMode.None;
+            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleMode = AutoScaleMode.Font;
             Controls.Add(dgvList);
             Controls.Add(btnRunBot);
             Name = "ucST3";

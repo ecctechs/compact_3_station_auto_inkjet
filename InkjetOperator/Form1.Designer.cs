@@ -179,17 +179,15 @@
             // 
             // Form1
             // 
-            AutoScaleMode = AutoScaleMode.None;
+            AutoScaleDimensions = new SizeF(10F, 25F);
+            AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1531, 1175);
             Controls.Add(pnlContent);
             Controls.Add(pnlMenu);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Margin = new Padding(4, 5, 4, 5);
             MaximizeBox = false;
-            MinimumSize = new Size(1527, 1215);
-            MaximumSize = new Size(1527, 1215);
             Name = "Form1";
-            Size = new Size(1527, 1215);
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Inkjet Operator";
             pnlMenu.ResumeLayout(false);

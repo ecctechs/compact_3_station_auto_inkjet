@@ -361,7 +361,8 @@ partial class frmMain
         //  Form
         // ════════════════════════════════════════
 
-        AutoScaleMode = AutoScaleMode.None;
+        AutoScaleDimensions = new SizeF(7F, 15F);
+        AutoScaleMode = AutoScaleMode.Font;
         ClientSize = new Size(1000, 650);
         Controls.Add(pnlDetail);
         Controls.Add(pnlJobs);
