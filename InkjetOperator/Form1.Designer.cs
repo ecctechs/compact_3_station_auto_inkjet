@@ -47,7 +47,7 @@
             pnlMenu.Location = new Point(0, 0);
             pnlMenu.Margin = new Padding(4, 5, 4, 5);
             pnlMenu.Name = "pnlMenu";
-            pnlMenu.Size = new Size(1531, 98);
+            pnlMenu.Size = new Size(1505, 98);
             pnlMenu.TabIndex = 1;
             // 
             // button1
@@ -86,7 +86,7 @@
             lblLanguage.BackColor = Color.Black;
             lblLanguage.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblLanguage.ForeColor = Color.White;
-            lblLanguage.Location = new Point(1460, 36);
+            lblLanguage.Location = new Point(1434, 36);
             lblLanguage.Margin = new Padding(4, 0, 4, 0);
             lblLanguage.Name = "lblLanguage";
             lblLanguage.Padding = new Padding(8, 4, 8, 4);
@@ -97,9 +97,8 @@
             // picLogo
             // 
             picLogo.ErrorImage = null;
-            //picLogo.Image = (Image)resources.GetObject("picLogo.Image");
-            //picLogo.InitialImage = (Image)resources.GetObject("picLogo.InitialImage");
-            picLogo.Location = new Point(1292, 5);
+            picLogo.Image = (Image)resources.GetObject("picLogo.Image");
+            picLogo.Location = new Point(1246, 5);
             picLogo.Margin = new Padding(4, 5, 4, 5);
             picLogo.Name = "picLogo";
             picLogo.Size = new Size(160, 90);
@@ -174,22 +173,21 @@
             pnlContent.Location = new Point(0, 98);
             pnlContent.Margin = new Padding(4, 5, 4, 5);
             pnlContent.Name = "pnlContent";
-            pnlContent.Size = new Size(1531, 1077);
+            pnlContent.Size = new Size(1505, 1061);
             pnlContent.TabIndex = 0;
             // 
             // Form1
             // 
             AutoScaleMode = AutoScaleMode.None;
-            ClientSize = new Size(1531, 1175);
+            ClientSize = new Size(1505, 1159);
             Controls.Add(pnlContent);
             Controls.Add(pnlMenu);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Margin = new Padding(4, 5, 4, 5);
             MaximizeBox = false;
-            MinimumSize = new Size(1527, 1215);
             MaximumSize = new Size(1527, 1215);
+            MinimumSize = new Size(1527, 1215);
             Name = "Form1";
-            Size = new Size(1527, 1215);
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Inkjet Operator";
             pnlMenu.ResumeLayout(false);
