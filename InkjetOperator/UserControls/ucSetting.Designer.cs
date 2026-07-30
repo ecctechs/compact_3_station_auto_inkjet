@@ -116,7 +116,7 @@
             label3.Location = new Point(14, 16);
             label3.Margin = new Padding(4, 0, 4, 0);
             label3.Name = "label3";
-            label3.Size = new Size(75, 38);
+            label3.Size = new Size(80, 41);
             label3.TabIndex = 3;
             label3.Text = "PC 2";
             // 
@@ -126,7 +126,7 @@
             txtPcip.Location = new Point(129, 136);
             txtPcip.Margin = new Padding(4, 5, 4, 5);
             txtPcip.Name = "txtPcip";
-            txtPcip.Size = new Size(284, 31);
+            txtPcip.Size = new Size(284, 34);
             txtPcip.TabIndex = 4;
             // 
             // label4
@@ -136,7 +136,7 @@
             label4.Location = new Point(21, 140);
             label4.Margin = new Padding(4, 0, 4, 0);
             label4.Name = "label4";
-            label4.Size = new Size(106, 25);
+            label4.Size = new Size(112, 28);
             label4.TabIndex = 5;
             label4.Text = "IP Address :";
             // 
@@ -163,7 +163,7 @@
             btnCancel.FlatStyle = FlatStyle.Flat;
             btnCancel.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnCancel.ForeColor = Color.White;
-            btnCancel.Location = new Point(955, 873);
+            btnCancel.Location = new Point(770, 714);
             btnCancel.Margin = new Padding(4, 5, 4, 5);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(114, 53);
@@ -178,7 +178,7 @@
             btnSave.FlatStyle = FlatStyle.Flat;
             btnSave.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnSave.ForeColor = Color.White;
-            btnSave.Location = new Point(814, 873);
+            btnSave.Location = new Point(638, 714);
             btnSave.Margin = new Padding(4, 5, 4, 5);
             btnSave.Name = "btnSave";
             btnSave.Size = new Size(114, 53);
@@ -194,9 +194,9 @@
             pnlButtons.Name = "pnlButtons";
             pnlButtons.Size = new Size(458, 84);
             pnlButtons.TabIndex = 0;
-            //
+            // 
             // pnlMkPrinters
-            //
+            // 
             pnlMkPrinters.BackColor = Color.White;
             pnlMkPrinters.BorderStyle = BorderStyle.FixedSingle;
             pnlMkPrinters.Controls.Add(lblMk061Status);
@@ -320,7 +320,7 @@
             txtMk061Com.Location = new Point(340, 257);
             txtMk061Com.Margin = new Padding(4, 5, 4, 5);
             txtMk061Com.Name = "txtMk061Com";
-            txtMk061Com.Size = new Size(170, 31);
+            txtMk061Com.Size = new Size(170, 34);
             txtMk061Com.TabIndex = 10;
             // 
             // lblMk061Com
@@ -330,7 +330,7 @@
             lblMk061Com.Location = new Point(232, 261);
             lblMk061Com.Margin = new Padding(4, 0, 4, 0);
             lblMk061Com.Name = "lblMk061Com";
-            lblMk061Com.Size = new Size(106, 25);
+            lblMk061Com.Size = new Size(112, 28);
             lblMk061Com.TabIndex = 11;
             lblMk061Com.Text = "IP Address :";
             // 
@@ -354,7 +354,7 @@
             txtMk060Com.Location = new Point(340, 198);
             txtMk060Com.Margin = new Padding(4, 5, 4, 5);
             txtMk060Com.Name = "txtMk060Com";
-            txtMk060Com.Size = new Size(170, 31);
+            txtMk060Com.Size = new Size(170, 34);
             txtMk060Com.TabIndex = 15;
             // 
             // lblMk060Com
@@ -364,7 +364,7 @@
             lblMk060Com.Location = new Point(232, 202);
             lblMk060Com.Margin = new Padding(4, 0, 4, 0);
             lblMk060Com.Name = "lblMk060Com";
-            lblMk060Com.Size = new Size(106, 25);
+            lblMk060Com.Size = new Size(112, 28);
             lblMk060Com.TabIndex = 16;
             lblMk060Com.Text = "IP Address :";
             // 
@@ -388,7 +388,7 @@
             txtMk059Com.Location = new Point(340, 139);
             txtMk059Com.Margin = new Padding(4, 5, 4, 5);
             txtMk059Com.Name = "txtMk059Com";
-            txtMk059Com.Size = new Size(170, 31);
+            txtMk059Com.Size = new Size(170, 34);
             txtMk059Com.TabIndex = 20;
             // 
             // lblMk059Com
@@ -398,7 +398,7 @@
             lblMk059Com.Location = new Point(232, 143);
             lblMk059Com.Margin = new Padding(4, 0, 4, 0);
             lblMk059Com.Name = "lblMk059Com";
-            lblMk059Com.Size = new Size(106, 25);
+            lblMk059Com.Size = new Size(112, 28);
             lblMk059Com.TabIndex = 21;
             lblMk059Com.Text = "IP Address :";
             // 
@@ -422,7 +422,7 @@
             txtMk058Com.Location = new Point(340, 80);
             txtMk058Com.Margin = new Padding(4, 5, 4, 5);
             txtMk058Com.Name = "txtMk058Com";
-            txtMk058Com.Size = new Size(170, 31);
+            txtMk058Com.Size = new Size(170, 34);
             txtMk058Com.TabIndex = 25;
             // 
             // lblMk058Com
@@ -432,7 +432,7 @@
             lblMk058Com.Location = new Point(232, 84);
             lblMk058Com.Margin = new Padding(4, 0, 4, 0);
             lblMk058Com.Name = "lblMk058Com";
-            lblMk058Com.Size = new Size(106, 25);
+            lblMk058Com.Size = new Size(112, 28);
             lblMk058Com.TabIndex = 26;
             lblMk058Com.Text = "IP Address :";
             // 
@@ -457,7 +457,7 @@
             lblMkTitle.Location = new Point(14, 16);
             lblMkTitle.Margin = new Padding(4, 0, 4, 0);
             lblMkTitle.Name = "lblMkTitle";
-            lblMkTitle.Size = new Size(244, 38);
+            lblMkTitle.Size = new Size(274, 41);
             lblMkTitle.TabIndex = 28;
             lblMkTitle.Text = "MK Inkjet Printers";
             // 

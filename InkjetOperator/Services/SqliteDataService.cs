@@ -162,33 +162,46 @@ namespace InkjetOperator.Services
         /// </summary>
         public async Task<PlanRouting?> GetPlanRoutingAsync(string lot)
         {
-            if (!File.Exists(_dbPath) || string.IsNullOrWhiteSpace(lot))
+            string freshPath = CustomSettingsManager.GetValue("DB_PATH") ?? _dbPath;
+            Debug.WriteLine($"[PlanRouting] DB_PATH='{freshPath}', lot='{lot}', exists={File.Exists(freshPath)}");
+
+            if (!File.Exists(freshPath) || string.IsNullOrWhiteSpace(lot))
                 return null;
 
             try
             {
-                using var conn = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
+                using var conn = new SQLiteConnection($"Data Source={freshPath};Version=3;");
                 await conn.OpenAsync();
 
-                // อ่าน column ที่มีจริงในตาราง (ตารางไม่มี → cols ว่าง → return null)
-                // source DB บางเวอร์ชันใช้ lot_no บางเวอร์ชัน log_no → เลือก key column ที่มีจริง
                 var cols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 using (var pragma = new SQLiteCommand("PRAGMA table_info(plan_routing)", conn))
                 using (var pr = (SQLiteDataReader)await pragma.ExecuteReaderAsync())
                     while (await pr.ReadAsync())
                         cols.Add(pr["name"].ToString() ?? "");
 
+                Debug.WriteLine($"[PlanRouting] columns=[{string.Join(",", cols)}]");
+
                 string? keyCol = cols.Contains("lot_no") ? "lot_no"
                                : cols.Contains("log_no") ? "log_no"
                                : null;
-                if (keyCol == null) return null;
+                if (keyCol == null)
+                {
+                    Debug.WriteLine("[PlanRouting] No lot_no/log_no column found");
+                    return null;
+                }
 
                 using var cmd = new SQLiteCommand(
                     $"SELECT * FROM plan_routing WHERE {keyCol} = @lot LIMIT 1", conn);
                 cmd.Parameters.AddWithValue("@lot", lot.Trim());
 
+                Debug.WriteLine($"[PlanRouting] Query: {keyCol} = '{lot.Trim()}'");
+
                 using var r = (SQLiteDataReader)await cmd.ExecuteReaderAsync();
-                if (!await r.ReadAsync()) return null;
+                if (!await r.ReadAsync())
+                {
+                    Debug.WriteLine("[PlanRouting] No rows returned");
+                    return null;
+                }
 
                 return new PlanRouting
                 {
