@@ -26,6 +26,9 @@ namespace InkjetOperator
         /// <summary>UV detail (UV1/UV2) ของงานที่เลือกล่าสุด — ใช้ตอนกดส่ง/เทส M2</summary>
         private List<UvJobData> _uvPreview = new();
 
+        /// <summary>plan_routing ของ job ที่เลือกอยู่ — ใช้ gate ปุ่มส่งเครื่อง (marking_method)</summary>
+        private PlanRouting? _currentPlan;
+
         private readonly UvTcpService _uvTcp = new();
 
         public ucOrder()
@@ -206,6 +209,9 @@ namespace InkjetOperator
             // preview UV1/UV2 — poll uv_job_data ของงานนี้จาก backend
             await FillUvPreviewAsync(selectedJob.Id);
 
+            // plan_routing (marking_method) ของงานนี้ → ใช้ gate ปุ่มส่งเครื่อง
+            _currentPlan = await _api.GetPlanRoutingByJobAsync(selectedJob.Id);
+
             try
             {
                 // 3. ดึงข้อมูลรายละเอียดเชิงลึก (Resolved Job) จาก API
@@ -244,6 +250,7 @@ namespace InkjetOperator
             txtPattern.Clear();
             bindSourceInkjetConfigDto.DataSource = null;
             bindingSourceTextBlockDto.DataSource = null;
+            _currentPlan = null;
             ClearUvPreview();
         }
 
@@ -745,6 +752,66 @@ namespace InkjetOperator
         //  SEND — MK1 / MK2
         // ══════════════════════════════════════════════
 
+        // ══════════════════════════════════════════════
+        //  SEND — Inkjet แยกเครื่อง (gate ด้วย marking_method)
+        //  Inkjet1 = Ordinal 1 / MK058,  Inkjet2 = Ordinal 2 / MK059
+        //  ส่งเข้าเครื่องอย่างเดียว ไม่แตะสถานะ job
+        // ══════════════════════════════════════════════
+
+        private async void btnSendInkjet1_Click(object sender, EventArgs e)
+            => await SendInkjetSingleAsync(1, btnSendInkjet1);
+
+        private async void btnSendInkjet2_Click(object sender, EventArgs e)
+            => await SendInkjetSingleAsync(2, btnSendInkjet2);
+
+        /// <summary>ส่ง inkjet เครื่องเดียวตาม ordinal — gate ชั้นสองด้วย marking_method, ไม่อัพเดตสถานะ job</summary>
+        private async Task SendInkjetSingleAsync(int ordinal, Button btn)
+        {
+            // gate ชั้นสอง: เช็ค marking_method อีกครั้งก่อนส่งจริง (กันพลาด)
+            bool routed = ordinal == 1 ? (_currentPlan?.SendInkjet1 == true)
+                                       : (_currentPlan?.SendInkjet2 == true);
+            if (!routed)
+            {
+                MessageBox.Show(
+                    "งานนี้ไม่ได้ถูก routing ให้ส่งเครื่องนี้ (ตาม marking_method)",
+                    "Inkjet", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var config = _currentResolved?.Pattern?.InkjetConfigs?
+                .FirstOrDefault(c => c.Ordinal == ordinal);
+            if (config == null)
+            {
+                MessageBox.Show(
+                    $"ไม่พบ Inkjet config สำหรับ Ordinal {ordinal} ({GetAdapterName(ordinal)})",
+                    "Inkjet", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            btn.Enabled = false;
+            try
+            {
+                // SendConfigToAdapterAsync จัดการเช็ค adapter/connection + โชว์ error เองถ้าไม่พร้อม
+                bool ok = await SendConfigToAdapterAsync(config);
+                if (ok)
+                {
+                    MessageBox.Show(
+                        $"{GetAdapterName(ordinal)}: ✅ ส่งสำเร็จ",
+                        "Inkjet", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"เกิดข้อผิดพลาด: {ex.Message}",
+                    "Inkjet", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                // คืนสถานะปุ่มตาม gate เดิม (ยังเปิดอยู่เพราะ routed == true)
+                btn.Enabled = routed;
+            }
+        }
+
         private async void btnSendMk1Mk2_Click(object sender, EventArgs e)
         {
             // 1. ดึง Job ที่เลือกอยู่
@@ -1173,26 +1240,24 @@ namespace InkjetOperator
                 return;
             }
 
-            if (!int.TryParse(selectedJob.Station?.ToString(), out int station))
-            {
-                SetAllButtons(false);
-                return;
-            }
-
-            btnSendMk1Mk2.Enabled = station == 0;
-            btnSendUV1.Enabled = station == 1 || station == 2;
-            btnSendMk3.Enabled = station == 3;
-            btnSendUV2.Enabled = station == 4;
+            // gate ด้วย marking_method (plan_routing) — เปิดเฉพาะเครื่องที่งานนี้ต้องส่ง
+            //   UV1=Plate/MK063, UV2=Shim/MK067, Inkjet1=Plate/MK058, Inkjet2=Shim/MK059
+            // ไม่มี plan_routing → ปิดทุกปุ่ม
+            var plan = _currentPlan;
+            btnSendUV1.Enabled     = plan?.SendUv1 == true;
+            btnSendUV2.Enabled     = plan?.SendUv2 == true;
+            btnSendInkjet1.Enabled = plan?.SendInkjet1 == true;
+            btnSendInkjet2.Enabled = plan?.SendInkjet2 == true;
         }
 
 
         // ฟังก์ชันเสริมสำหรับเคลียร์สถานะปุ่ม
         private void SetAllButtons(bool isEnabled)
         {
-            btnSendMk1Mk2.Enabled = isEnabled;
             btnSendUV1.Enabled = isEnabled;
-            btnSendMk3.Enabled = isEnabled;
             btnSendUV2.Enabled = isEnabled;
+            btnSendInkjet1.Enabled = isEnabled;
+            btnSendInkjet2.Enabled = isEnabled;
         }
 
         private async void dataGridView2_CellClick(object sender, DataGridViewCellEventArgs e)

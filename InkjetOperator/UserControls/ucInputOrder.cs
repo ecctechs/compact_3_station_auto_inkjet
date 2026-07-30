@@ -197,6 +197,26 @@ namespace InkjetOperator
             var pattern = await _sqliteService.GetPatternDetailAsync(barcodeRaw);
             var uvRows = await _sqliteService.GetUvDetailAsync(barcodeRaw);
 
+            // 2.1 อ่าน plan_routing (marking_method) — เป็นตัวตัดสินใจว่าจะส่งเครื่องไหน (gate)
+            var plan = await _sqliteService.GetPlanRoutingAsync(barcodeRaw);
+            if (plan == null)
+            {
+                MessageBox.Show(
+                    $"ไม่พบ plan_routing สำหรับ Barcode '{barcodeRaw}'\n\n" +
+                    "งานนี้ยังไม่มีข้อมูลการวางแผน (marking_method) ในระบบ\n" +
+                    "กรุณาตรวจสอบว่า lot_no นี้ถูกลงทะเบียนใน plan_routing แล้ว",
+                    "ไม่พบ Plan Routing", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (!plan.HasAnyMarking)
+            {
+                MessageBox.Show(
+                    $"Barcode '{barcodeRaw}' มี marking_method = \"{plan.NormalizedMarking}\" (No markings)\n\n" +
+                    "งานนี้ไม่ต้อง mark ด้วยเครื่องใดเลย จึงไม่สร้างงาน",
+                    "No Markings", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             if (pattern == null && uvRows.Count == 0)
             {
                 MessageBox.Show(
@@ -226,7 +246,7 @@ namespace InkjetOperator
             btnOK.Enabled = false;
             try
             {
-                await ProcessCreateJobAsync(barcodeRaw, qty);
+                await ProcessCreateJobAsync(barcodeRaw, qty, plan, uvRows);
             }
             finally
             {
@@ -346,7 +366,7 @@ namespace InkjetOperator
         /// <summary>
         /// จัดการสร้าง Job และเรียก Event แจ้งเตือน
         /// </summary>
-        private async Task ProcessCreateJobAsync(string barcode, int qty)
+        private async Task ProcessCreateJobAsync(string barcode, int qty, PlanRouting plan, List<UvJobData> uvRows)
         {
             var req = new CreateJobRequest
             {
@@ -363,8 +383,11 @@ namespace InkjetOperator
 
             if (createdJob != null)
             {
-                // เก็บ UV detail (UV1/UV2) จาก print_data → backend เพื่อ poll preview ทีหลัง
-                await SyncUvJobDataAsync(createdJob.Id, barcode);
+                // เก็บ plan_routing (marking_method) ผูกกับ job → ucOrder ใช้เปิด/ปิดปุ่มส่งเครื่อง
+                await _api.CreatePlanRoutingAsync(createdJob.Id, plan);
+
+                // เก็บ UV detail เฉพาะสถานีที่ marking_method สั่งให้ใช้ UV (gate)
+                await SyncUvJobDataAsync(createdJob.Id, uvRows, plan);
 
                 MessageBox.Show("Create job success", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
@@ -385,15 +408,20 @@ namespace InkjetOperator
             }
         }
 
-        /// <summary>query print_data (lot_no) → เก็บ UV detail (UV1/UV2) ลง backend ผูกกับ job — ไม่มีข้อมูล UV ก็ข้ามได้ ไม่ล้ม register</summary>
-        private async Task SyncUvJobDataAsync(int jobId, string lot)
+        /// <summary>เก็บ UV detail ลง backend ผูกกับ job — gate เฉพาะสถานีที่ marking_method สั่งให้ใช้ UV
+        /// (UV1=Plate/marking[1]=='1', UV2=Shim/marking[0]=='1'). ไม่มีสถานีผ่าน gate ก็ข้ามได้ ไม่ล้ม register</summary>
+        private async Task SyncUvJobDataAsync(int jobId, List<UvJobData> uvRows, PlanRouting plan)
         {
             try
             {
-                var uvRows = await _sqliteService.GetUvDetailAsync(lot);
-                if (uvRows.Count == 0) return; // ไม่มี lot ใน print_data → ข้าม UV
+                // gate: เก็บเฉพาะแถวที่ตรงกับ marking_method
+                var gated = uvRows.Where(u =>
+                    (u.Machine == "UV1" && plan.SendUv1) ||
+                    (u.Machine == "UV2" && plan.SendUv2)).ToList();
 
-                await _api.CreateUvJobDataAsync(jobId, uvRows);
+                if (gated.Count == 0) return; // ไม่มีสถานี UV ที่ต้องส่ง → ข้าม
+
+                await _api.CreateUvJobDataAsync(jobId, gated);
             }
             catch (Exception ex)
             {

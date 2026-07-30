@@ -156,6 +156,69 @@ namespace InkjetOperator.Services
             return list;
         }
 
+        /// <summary>
+        /// ตอน register: query plan_routing ด้วย lot_no → คืน routing (marking_method ฯลฯ)
+        /// ไม่พบ lot หรือไม่มีตาราง → คืน null
+        /// </summary>
+        public async Task<PlanRouting?> GetPlanRoutingAsync(string lot)
+        {
+            if (!File.Exists(_dbPath) || string.IsNullOrWhiteSpace(lot))
+                return null;
+
+            try
+            {
+                using var conn = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
+                await conn.OpenAsync();
+
+                // อ่าน column ที่มีจริงในตาราง (ตารางไม่มี → cols ว่าง → return null)
+                // source DB บางเวอร์ชันใช้ lot_no บางเวอร์ชัน log_no → เลือก key column ที่มีจริง
+                var cols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                using (var pragma = new SQLiteCommand("PRAGMA table_info(plan_routing)", conn))
+                using (var pr = (SQLiteDataReader)await pragma.ExecuteReaderAsync())
+                    while (await pr.ReadAsync())
+                        cols.Add(pr["name"].ToString() ?? "");
+
+                string? keyCol = cols.Contains("lot_no") ? "lot_no"
+                               : cols.Contains("log_no") ? "log_no"
+                               : null;
+                if (keyCol == null) return null;
+
+                using var cmd = new SQLiteCommand(
+                    $"SELECT * FROM plan_routing WHERE {keyCol} = @lot LIMIT 1", conn);
+                cmd.Parameters.AddWithValue("@lot", lot.Trim());
+
+                using var r = (SQLiteDataReader)await cmd.ExecuteReaderAsync();
+                if (!await r.ReadAsync()) return null;
+
+                return new PlanRouting
+                {
+                    LotNo = GetColSafe(r, "lot_no") ?? GetColSafe(r, "log_no") ?? lot.Trim(),
+                    ErpMfg = GetColSafe(r, "erp_mfg"),
+                    MarkingMethod = GetColSafe(r, "marking_method"),
+                    ProcessSequence = GetColSafe(r, "process_sequence"),
+                };
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"GetPlanRoutingAsync Error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>อ่านค่า column แบบปลอดภัย — ถ้าไม่มี column นั้นในตาราง คืน null (ไม่ throw)</summary>
+        private string? GetColSafe(SQLiteDataReader r, string name)
+        {
+            try
+            {
+                int i = r.GetOrdinal(name);
+                return r.IsDBNull(i) ? null : r.GetValue(i)?.ToString();
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return null; // ตารางไม่มี column นี้
+            }
+        }
+
         private UvJobData BuildUv(SQLiteDataReader r, string machine, string table,
                                   string programCol, string blockPrefix, string lot, string name)
         {

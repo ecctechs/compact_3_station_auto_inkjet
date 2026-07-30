@@ -336,6 +336,52 @@ namespace InkjetOperator.Services
         }
 
         // =========================
+        // PLAN ROUTING (marking_method) — capture ตอน register / poll ตอน ucOrder
+        // =========================
+
+        /// <summary>ส่ง plan_routing ของงานหนึ่งไปเก็บ backend (upsert ตาม print_jobs_id)</summary>
+        public async Task<bool> CreatePlanRoutingAsync(int jobId, PlanRouting plan)
+        {
+            try
+            {
+                var payload = new
+                {
+                    print_jobs_id = jobId,
+                    lot_no = plan.LotNo,
+                    erp_mfg = plan.ErpMfg,
+                    marking_method = plan.MarkingMethod,
+                    process_sequence = plan.ProcessSequence,
+                };
+                var response = await _http.PostAsJsonAsync("/plan-routing/create", payload, JsonOptions);
+                response.EnsureSuccessStatusCode();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"CreatePlanRouting error (job: {jobId}): " + ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>poll plan_routing ของงานที่เลือก → ucOrder ใช้เปิด/ปิดปุ่มส่งเครื่อง (ไม่พบ = null)</summary>
+        public async Task<PlanRouting?> GetPlanRoutingByJobAsync(int jobId)
+        {
+            try
+            {
+                var response = await _http.GetAsync($"/plan-routing/getByJob/{jobId}");
+                response.EnsureSuccessStatusCode();
+
+                var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<PlanRouting>>(JsonOptions);
+                return wrapper?.Data;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"GetPlanRoutingByJob error (job: {jobId}): " + ex.Message);
+                return null;
+            }
+        }
+
+        // =========================
         // UPDATE UV INKJET BY ID
         // =========================
         public async Task<bool> UpdateUvInkjetAsync(int id, object updateData)

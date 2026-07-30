@@ -127,6 +127,8 @@
             btnSendMk1Mk2 = new Button();
             btnTestM2 = new Button();
             btnTestTcp = new Button();
+            btnSendInkjet1 = new Button();
+            btnSendInkjet2 = new Button();
             textBlocksBindingSource = new BindingSource(components);
             printJobBindingSource = new BindingSource(components);
             tabControl.SuspendLayout();
@@ -1235,10 +1237,9 @@
             // 
             pnlButtons.AutoSize = true;
             pnlButtons.Controls.Add(btnSendUV2);
-            pnlButtons.Controls.Add(btnSendMk3);
             pnlButtons.Controls.Add(btnSendUV1);
-            pnlButtons.Controls.Add(btnSendMk1Mk2);
-            pnlButtons.Controls.Add(btnTestM2);
+            pnlButtons.Controls.Add(btnSendInkjet2);
+            pnlButtons.Controls.Add(btnSendInkjet1);
             pnlButtons.Controls.Add(btnTestTcp);
             pnlButtons.Dock = DockStyle.Fill;
             pnlButtons.FlowDirection = FlowDirection.RightToLeft;
@@ -1285,6 +1286,26 @@
             btnTestTcp.Text = "TEST: TCP KEY";
             btnTestTcp.UseVisualStyleBackColor = false;
             btnTestTcp.Click += btnTestTcp_Click;
+            //
+            // btnSendInkjet1
+            //
+            btnSendInkjet1.Font = new Font("Segoe UI", 9F);
+            btnSendInkjet1.Location = new Point(211, 7);
+            btnSendInkjet1.Name = "btnSendInkjet1";
+            btnSendInkjet1.Size = new Size(120, 30);
+            btnSendInkjet1.TabIndex = 8;
+            btnSendInkjet1.Text = "ส่งหา Inkjet1 (MK058)";
+            btnSendInkjet1.Click += btnSendInkjet1_Click;
+            //
+            // btnSendInkjet2
+            //
+            btnSendInkjet2.Font = new Font("Segoe UI", 9F);
+            btnSendInkjet2.Location = new Point(85, 7);
+            btnSendInkjet2.Name = "btnSendInkjet2";
+            btnSendInkjet2.Size = new Size(120, 30);
+            btnSendInkjet2.TabIndex = 9;
+            btnSendInkjet2.Text = "ส่งหา Inkjet2 (MK059)";
+            btnSendInkjet2.Click += btnSendInkjet2_Click;
             // 
             // btnSendMk3
             // 
@@ -1415,6 +1436,8 @@
         private Button btnSendUV1;
         private Button btnTestM2;
         private Button btnTestTcp;
+        private Button btnSendInkjet1;
+        private Button btnSendInkjet2;
 
         // Inkjet UV — Tabs
         private TabControl tabUv;
