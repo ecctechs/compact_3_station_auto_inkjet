@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ตัวติดตั้ง MSI ของ InkjetOperator (สร้างด้วย WiX v5)
+  - ฝัง .NET runtime มาด้วย (self-contained) เครื่องปลายทางไม่ต้องลง .NET ก่อน
+  - ติดตั้งลง Program Files, มี shortcut ทั้ง Desktop และ Start Menu
+  - รองรับการอัพเกรดทับเวอร์ชันเก่าอัตโนมัติ (MajorUpgrade)
+
+  วิธี build:  ให้รัน build.ps1 (กดทีเดียวจบ)
+  * UpgradeCode ห้ามเปลี่ยนตลอดชีวิตโปรแกรม (คือรหัสประจำตัวโปรแกรม)
+  * เวลาออกเวอร์ชันใหม่ ใส่เลขผ่าน build.ps1 เช่น  .\build.ps1 1.0.1
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <!--
+    เวอร์ชัน: ถ้าสั่ง build ผ่าน build.ps1 พร้อมเลขเวอร์ชัน จะใช้เลขนั้น
+    ถ้าไม่ใส่เลข จะใช้ค่า default ด้านล่างนี้
+  -->
+  <?ifndef ProductVersion ?>
+    <?define ProductVersion = "1.0.0" ?>
+  <?endif?>
+
+  <Package Name="Inkjet Operator"
+           Manufacturer="ECC Solutions"
+           Version="$(var.ProductVersion)"
+           UpgradeCode="78F046DB-700C-433A-BC44-42EB4D0A1FFC"
+           Scope="perMachine"
+           Codepage="65001"
+           Compressed="yes">
+
+    <!-- อัพเกรดทับเวอร์ชันเก่าให้อัตโนมัติ ห้าม downgrade -->
+    <MajorUpgrade DowngradeErrorMessage="มีเวอร์ชันใหม่กว่าติดตั้งอยู่แล้ว ไม่สามารถติดตั้งเวอร์ชันเก่าทับได้" />
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- โฟลเดอร์ปลายทาง: C:\Program Files\Inkjet Operator -->
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Inkjet Operator" />
+    </StandardDirectory>
+
+    <!-- โฟลเดอร์ใน Start Menu -->
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="AppProgramMenuDir" Name="Inkjet Operator" />
+    </StandardDirectory>
+
+    <!-- ไฟล์โปรแกรมทั้งหมดจากโฟลเดอร์ publish (harvest อัตโนมัติทุกไฟล์) -->
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Files Include="..\publish\**" />
+    </ComponentGroup>
+
+    <!-- shortcut ทั้ง Desktop และ Start Menu ชี้ไปที่ InkjetOperator.exe -->
+    <Component Id="AppShortcuts" Directory="INSTALLFOLDER" Guid="A1B2C3D4-1111-2222-3333-444455556666">
+      <Shortcut Id="StartMenuShortcut"
+                Directory="AppProgramMenuDir"
+                Name="Inkjet Operator"
+                Target="[INSTALLFOLDER]InkjetOperator.exe"
+                WorkingDirectory="INSTALLFOLDER" />
+      <Shortcut Id="DesktopShortcut"
+                Directory="DesktopFolder"
+                Name="Inkjet Operator"
+                Target="[INSTALLFOLDER]InkjetOperator.exe"
+                WorkingDirectory="INSTALLFOLDER" />
+      <!-- ลบโฟลเดอร์ Start Menu ตอน uninstall -->
+      <RemoveFolder Id="CleanupProgramMenuDir" Directory="AppProgramMenuDir" On="uninstall" />
+      <!-- keypath ของ component (จำเป็นสำหรับ component ที่มีแต่ shortcut) -->
+      <RegistryValue Root="HKLM"
+                     Key="Software\ECC Solutions\Inkjet Operator"
+                     Name="installed" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
+    <!-- สิ่งที่จะถูกติดตั้ง -->
+    <Feature Id="Main" Title="Inkjet Operator" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="AppShortcuts" />
+    </Feature>
+
+    <!-- หน้าจอ wizard ติดตั้ง (เลือกโฟลเดอร์ปลายทางได้) -->
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+    <WixVariable Id="WixUILicenseRtf" Value="license.rtf" />
+
+  </Package>
+</Wix>
