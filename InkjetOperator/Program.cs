@@ -7,6 +7,12 @@ static class Program
     {
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
-        Application.Run(new frmMain());
+        Application.Run(new Form
+        {
+            Text = "Scan Barcode Preview",
+            ClientSize = new Size(1100, 920),
+            StartPosition = FormStartPosition.CenterScreen,
+            Controls = { new InkjetOperator.Views.ScanBarcodeUserControl { Dock = DockStyle.Fill } }
+        });
     }
 }
