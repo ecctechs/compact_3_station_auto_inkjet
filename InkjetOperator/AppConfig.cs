@@ -76,7 +76,7 @@ namespace InkjetOperator
                 5 => true,
 
                 // โหมด 99: หน้าเทสหน้างานอย่างเดียว (DB3 + Socket) — ลูกค้าเห็นแค่นี้
-                99 => menu switch { "test" => true, _ => false },
+                99 => menu switch { "test" or "testplc" => true, _ => false },
 
                 _ => false
             };

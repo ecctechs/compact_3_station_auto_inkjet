@@ -20,6 +20,7 @@ namespace InkjetOperator
         private ucBot? _ucBot;
         private ucST3? _ucST3;
         private ucTestConnection? _ucTest;
+        private ucTestPLC? _ucTestPlc;
 
         // เก็บ reference ของปุ่มเมนู
         private Button? _btnInput;
@@ -29,6 +30,7 @@ namespace InkjetOperator
         private Button? _btnBot;
         private Button? _btnST3;
         private Button? _btnTest;
+        private Button? _btnTestPlc;
         private static readonly string ConfigPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appconfig.json");
 
         public Form1()
@@ -171,6 +173,15 @@ namespace InkjetOperator
                 index++;
             }
 
+            // Test PLC (โหมด 99 — เทส Modbus TCP)
+            if (_config.ShouldShowMenu("testplc"))
+            {
+                _btnTestPlc = CreateMenuButton("Test PLC", x, index == 0);
+                _btnTestPlc.Click += (s, e) => { ShowTestPlc(); SetActiveButton(_btnTestPlc); };
+                x += 190;
+                index++;
+            }
+
 
             // อัปเดตข้อความ title ตาม config
             this.Text = _config.AppName;
@@ -289,6 +300,17 @@ namespace InkjetOperator
             pnlContent.Controls.Add(_ucTest);
 
             SetActiveButton(_btnTest);
+        }
+
+        private void ShowTestPlc()
+        {
+            pnlContent.Controls.Clear();
+
+            _ucTestPlc ??= new ucTestPLC();
+            _ucTestPlc.Dock = DockStyle.Fill;
+            pnlContent.Controls.Add(_ucTestPlc);
+
+            SetActiveButton(_btnTestPlc);
         }
 
         private void ShowSt3()
