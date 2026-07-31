@@ -27,219 +27,227 @@ partial class MainShellForm
     /// </summary>
     private void InitializeComponent()
     {
-        tlpShellRoot = new System.Windows.Forms.TableLayoutPanel();
-        tlpMenuBar = new System.Windows.Forms.TableLayoutPanel();
+        System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainShellForm));
+        tlpShellRoot = new TableLayoutPanel();
+        tlpMenuBar = new TableLayoutPanel();
         btnInputOrder = new AntdUI.Button();
         btnOrderList = new AntdUI.Button();
         btnEditPattern = new AntdUI.Button();
         btnSetting = new AntdUI.Button();
-        picLogo = new System.Windows.Forms.PictureBox();
+        picLogo = new PictureBox();
         btnLang = new AntdUI.Button();
-        pnlContent = new System.Windows.Forms.Panel();
-        settingPage = new SettingUserControl();
-        editPatternPage = new EditPatternUserControl();
-        orderListPage = new OrderListUserControl();
+        pnlContent = new Panel();
         scanBarcodePage = new ScanBarcodeUserControl();
+        orderListPage = new OrderListUserControl();
+        editPatternPage = new EditPatternUserControl();
+        settingPage = new SettingUserControl();
         tlpShellRoot.SuspendLayout();
         tlpMenuBar.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)picLogo).BeginInit();
         pnlContent.SuspendLayout();
         SuspendLayout();
-        //
+        // 
         // tlpShellRoot
-        //
-        tlpShellRoot.BackColor = System.Drawing.Color.White;
+        // 
+        tlpShellRoot.BackColor = Color.White;
         tlpShellRoot.ColumnCount = 1;
-        tlpShellRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpShellRoot.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         tlpShellRoot.Controls.Add(tlpMenuBar, 0, 0);
         tlpShellRoot.Controls.Add(pnlContent, 0, 1);
-        tlpShellRoot.Dock = System.Windows.Forms.DockStyle.Fill;
-        tlpShellRoot.Location = new System.Drawing.Point(0, 0);
+        tlpShellRoot.Dock = DockStyle.Fill;
+        tlpShellRoot.Location = new Point(0, 0);
+        tlpShellRoot.Margin = new Padding(4, 4, 4, 4);
         tlpShellRoot.Name = "tlpShellRoot";
         tlpShellRoot.RowCount = 2;
-        tlpShellRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 72F));
-        tlpShellRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpShellRoot.Size = new System.Drawing.Size(1200, 900);
+        tlpShellRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 108F));
+        tlpShellRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        tlpShellRoot.Size = new Size(1800, 1350);
         tlpShellRoot.TabIndex = 0;
-        //
+        // 
         // tlpMenuBar
-        //
-        tlpMenuBar.BackColor = System.Drawing.Color.White;
+        // 
+        tlpMenuBar.BackColor = Color.White;
         tlpMenuBar.ColumnCount = 7;
-        tlpMenuBar.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 200F));
-        tlpMenuBar.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 200F));
-        tlpMenuBar.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 200F));
-        tlpMenuBar.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 200F));
-        tlpMenuBar.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpMenuBar.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 160F));
-        tlpMenuBar.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300F));
+        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300F));
+        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300F));
+        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300F));
+        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 240F));
+        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120F));
         tlpMenuBar.Controls.Add(btnInputOrder, 0, 0);
         tlpMenuBar.Controls.Add(btnOrderList, 1, 0);
         tlpMenuBar.Controls.Add(btnEditPattern, 2, 0);
         tlpMenuBar.Controls.Add(btnSetting, 3, 0);
         tlpMenuBar.Controls.Add(picLogo, 5, 0);
         tlpMenuBar.Controls.Add(btnLang, 6, 0);
-        tlpMenuBar.Dock = System.Windows.Forms.DockStyle.Fill;
-        tlpMenuBar.Location = new System.Drawing.Point(0, 0);
-        tlpMenuBar.Margin = new System.Windows.Forms.Padding(0);
+        tlpMenuBar.Dock = DockStyle.Fill;
+        tlpMenuBar.Location = new Point(0, 0);
+        tlpMenuBar.Margin = new Padding(0);
         tlpMenuBar.Name = "tlpMenuBar";
         tlpMenuBar.RowCount = 1;
-        tlpMenuBar.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpMenuBar.Size = new System.Drawing.Size(1200, 72);
+        tlpMenuBar.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        tlpMenuBar.Size = new Size(1800, 108);
         tlpMenuBar.TabIndex = 0;
-        //
+        // 
         // btnInputOrder
-        //
-        btnInputOrder.DefaultBack = System.Drawing.Color.FromArgb(91, 155, 213);
-        btnInputOrder.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnInputOrder.Dock = System.Windows.Forms.DockStyle.Fill;
-        btnInputOrder.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
-        btnInputOrder.ForeColor = System.Drawing.Color.White;
-        btnInputOrder.Location = new System.Drawing.Point(3, 3);
-        btnInputOrder.Margin = new System.Windows.Forms.Padding(3, 3, 3, 3);
+        // 
+        btnInputOrder.DefaultBack = Color.FromArgb(91, 155, 213);
+        btnInputOrder.DefaultBorderColor = Color.FromArgb(36, 71, 101);
+        btnInputOrder.Dock = DockStyle.Fill;
+        btnInputOrder.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
+        btnInputOrder.ForeColor = Color.White;
+        btnInputOrder.Location = new Point(4, 4);
+        btnInputOrder.Margin = new Padding(4, 4, 4, 4);
         btnInputOrder.Name = "btnInputOrder";
         btnInputOrder.Radius = 0;
-        btnInputOrder.Size = new System.Drawing.Size(194, 66);
+        btnInputOrder.Size = new Size(292, 100);
         btnInputOrder.TabIndex = 0;
         btnInputOrder.Text = "Input Order";
         btnInputOrder.Click += btnInputOrder_Click;
-        //
+        // 
         // btnOrderList
-        //
-        btnOrderList.DefaultBack = System.Drawing.Color.FromArgb(176, 176, 176);
-        btnOrderList.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnOrderList.Dock = System.Windows.Forms.DockStyle.Fill;
-        btnOrderList.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
-        btnOrderList.ForeColor = System.Drawing.Color.White;
-        btnOrderList.Location = new System.Drawing.Point(203, 3);
-        btnOrderList.Margin = new System.Windows.Forms.Padding(3, 3, 3, 3);
+        // 
+        btnOrderList.DefaultBack = Color.FromArgb(176, 176, 176);
+        btnOrderList.DefaultBorderColor = Color.FromArgb(36, 71, 101);
+        btnOrderList.Dock = DockStyle.Fill;
+        btnOrderList.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
+        btnOrderList.ForeColor = Color.White;
+        btnOrderList.Location = new Point(304, 4);
+        btnOrderList.Margin = new Padding(4, 4, 4, 4);
         btnOrderList.Name = "btnOrderList";
         btnOrderList.Radius = 0;
-        btnOrderList.Size = new System.Drawing.Size(194, 66);
+        btnOrderList.Size = new Size(292, 100);
         btnOrderList.TabIndex = 1;
         btnOrderList.Text = "Order List";
         btnOrderList.Click += btnOrderList_Click;
-        //
+        // 
         // btnEditPattern
-        //
-        btnEditPattern.DefaultBack = System.Drawing.Color.FromArgb(176, 176, 176);
-        btnEditPattern.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnEditPattern.Dock = System.Windows.Forms.DockStyle.Fill;
-        btnEditPattern.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
-        btnEditPattern.ForeColor = System.Drawing.Color.White;
-        btnEditPattern.Location = new System.Drawing.Point(403, 3);
-        btnEditPattern.Margin = new System.Windows.Forms.Padding(3, 3, 3, 3);
+        // 
+        btnEditPattern.DefaultBack = Color.FromArgb(176, 176, 176);
+        btnEditPattern.DefaultBorderColor = Color.FromArgb(36, 71, 101);
+        btnEditPattern.Dock = DockStyle.Fill;
+        btnEditPattern.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
+        btnEditPattern.ForeColor = Color.White;
+        btnEditPattern.Location = new Point(604, 4);
+        btnEditPattern.Margin = new Padding(4, 4, 4, 4);
         btnEditPattern.Name = "btnEditPattern";
         btnEditPattern.Radius = 0;
-        btnEditPattern.Size = new System.Drawing.Size(194, 66);
+        btnEditPattern.Size = new Size(292, 100);
         btnEditPattern.TabIndex = 2;
         btnEditPattern.Text = "Edit Pattern";
         btnEditPattern.Click += btnEditPattern_Click;
-        //
+        // 
         // btnSetting
-        //
-        btnSetting.DefaultBack = System.Drawing.Color.FromArgb(176, 176, 176);
-        btnSetting.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnSetting.Dock = System.Windows.Forms.DockStyle.Fill;
-        btnSetting.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
-        btnSetting.ForeColor = System.Drawing.Color.White;
-        btnSetting.Location = new System.Drawing.Point(603, 3);
-        btnSetting.Margin = new System.Windows.Forms.Padding(3, 3, 3, 3);
+        // 
+        btnSetting.DefaultBack = Color.FromArgb(176, 176, 176);
+        btnSetting.DefaultBorderColor = Color.FromArgb(36, 71, 101);
+        btnSetting.Dock = DockStyle.Fill;
+        btnSetting.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
+        btnSetting.ForeColor = Color.White;
+        btnSetting.Location = new Point(904, 4);
+        btnSetting.Margin = new Padding(4, 4, 4, 4);
         btnSetting.Name = "btnSetting";
         btnSetting.Radius = 0;
-        btnSetting.Size = new System.Drawing.Size(194, 66);
+        btnSetting.Size = new Size(292, 100);
         btnSetting.TabIndex = 3;
         btnSetting.Text = "Setting";
         btnSetting.Click += btnSetting_Click;
-        //
+        // 
         // picLogo
-        //
-        picLogo.BackColor = System.Drawing.Color.Transparent;
-        picLogo.Dock = System.Windows.Forms.DockStyle.Fill;
-        picLogo.Location = new System.Drawing.Point(963, 8);
-        picLogo.Margin = new System.Windows.Forms.Padding(3, 8, 3, 8);
+        // 
+        picLogo.BackColor = Color.Transparent;
+        picLogo.Dock = DockStyle.Fill;
+        picLogo.Image = (Image)resources.GetObject("picLogo.Image");
+        picLogo.Location = new Point(1444, 12);
+        picLogo.Margin = new Padding(4, 12, 4, 12);
         picLogo.Name = "picLogo";
-        picLogo.Size = new System.Drawing.Size(154, 56);
-        picLogo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+        picLogo.Size = new Size(232, 84);
+        picLogo.SizeMode = PictureBoxSizeMode.Zoom;
         picLogo.TabIndex = 4;
         picLogo.TabStop = false;
-        //
+        // 
         // btnLang
-        //
-        btnLang.DefaultBack = System.Drawing.Color.FromArgb(26, 26, 26);
-        btnLang.DefaultBorderColor = System.Drawing.Color.FromArgb(26, 26, 26);
-        btnLang.Dock = System.Windows.Forms.DockStyle.Fill;
-        btnLang.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
-        btnLang.ForeColor = System.Drawing.Color.White;
-        btnLang.Location = new System.Drawing.Point(1123, 14);
-        btnLang.Margin = new System.Windows.Forms.Padding(3, 14, 12, 14);
+        // 
+        btnLang.DefaultBack = Color.FromArgb(26, 26, 26);
+        btnLang.DefaultBorderColor = Color.FromArgb(26, 26, 26);
+        btnLang.Dock = DockStyle.Fill;
+        btnLang.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+        btnLang.ForeColor = Color.White;
+        btnLang.Location = new Point(1684, 21);
+        btnLang.Margin = new Padding(4, 21, 18, 21);
         btnLang.Name = "btnLang";
         btnLang.Radius = 4;
-        btnLang.Size = new System.Drawing.Size(65, 44);
+        btnLang.Size = new Size(98, 66);
         btnLang.TabIndex = 5;
         btnLang.Text = "EN";
-        //
+        // 
         // pnlContent
-        //
-        pnlContent.BackColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        // 
+        pnlContent.BackColor = Color.FromArgb(91, 155, 213);
         pnlContent.Controls.Add(scanBarcodePage);
         pnlContent.Controls.Add(orderListPage);
         pnlContent.Controls.Add(editPatternPage);
         pnlContent.Controls.Add(settingPage);
-        pnlContent.Dock = System.Windows.Forms.DockStyle.Fill;
-        pnlContent.Location = new System.Drawing.Point(0, 72);
-        pnlContent.Margin = new System.Windows.Forms.Padding(0);
+        pnlContent.Dock = DockStyle.Fill;
+        pnlContent.Location = new Point(0, 108);
+        pnlContent.Margin = new Padding(0);
         pnlContent.Name = "pnlContent";
-        pnlContent.Size = new System.Drawing.Size(1200, 828);
+        pnlContent.Size = new Size(1800, 1242);
         pnlContent.TabIndex = 1;
-        //
-        // settingPage
-        //
-        settingPage.Dock = System.Windows.Forms.DockStyle.Fill;
-        settingPage.Location = new System.Drawing.Point(0, 0);
-        settingPage.MinimumSize = new System.Drawing.Size(820, 680);
-        settingPage.Name = "settingPage";
-        settingPage.Size = new System.Drawing.Size(1200, 828);
-        settingPage.TabIndex = 3;
-        //
-        // editPatternPage
-        //
-        editPatternPage.Dock = System.Windows.Forms.DockStyle.Fill;
-        editPatternPage.Location = new System.Drawing.Point(0, 0);
-        editPatternPage.MinimumSize = new System.Drawing.Size(820, 680);
-        editPatternPage.Name = "editPatternPage";
-        editPatternPage.Size = new System.Drawing.Size(1200, 828);
-        editPatternPage.TabIndex = 2;
-        //
-        // orderListPage
-        //
-        orderListPage.Dock = System.Windows.Forms.DockStyle.Fill;
-        orderListPage.Location = new System.Drawing.Point(0, 0);
-        orderListPage.MinimumSize = new System.Drawing.Size(820, 680);
-        orderListPage.Name = "orderListPage";
-        orderListPage.Size = new System.Drawing.Size(1200, 828);
-        orderListPage.TabIndex = 1;
-        //
+        // 
         // scanBarcodePage
-        //
-        scanBarcodePage.Dock = System.Windows.Forms.DockStyle.Fill;
-        scanBarcodePage.Location = new System.Drawing.Point(0, 0);
-        scanBarcodePage.MinimumSize = new System.Drawing.Size(820, 680);
+        // 
+        scanBarcodePage.Dock = DockStyle.Fill;
+        scanBarcodePage.Location = new Point(0, 0);
+        scanBarcodePage.Margin = new Padding(6, 6, 6, 6);
+        scanBarcodePage.MinimumSize = new Size(1230, 1020);
         scanBarcodePage.Name = "scanBarcodePage";
-        scanBarcodePage.Size = new System.Drawing.Size(1200, 828);
+        scanBarcodePage.Size = new Size(1800, 1242);
         scanBarcodePage.TabIndex = 0;
-        //
+        // 
+        // orderListPage
+        // 
+        orderListPage.Dock = DockStyle.Fill;
+        orderListPage.Location = new Point(0, 0);
+        orderListPage.Margin = new Padding(6, 6, 6, 6);
+        orderListPage.MinimumSize = new Size(1230, 1020);
+        orderListPage.Name = "orderListPage";
+        orderListPage.Size = new Size(1800, 1242);
+        orderListPage.TabIndex = 1;
+        // 
+        // editPatternPage
+        // 
+        editPatternPage.Dock = DockStyle.Fill;
+        editPatternPage.Location = new Point(0, 0);
+        editPatternPage.Margin = new Padding(6, 6, 6, 6);
+        editPatternPage.MinimumSize = new Size(1230, 1020);
+        editPatternPage.Name = "editPatternPage";
+        editPatternPage.Size = new Size(1800, 1242);
+        editPatternPage.TabIndex = 2;
+        // 
+        // settingPage
+        // 
+        settingPage.Dock = DockStyle.Fill;
+        settingPage.Location = new Point(0, 0);
+        settingPage.Margin = new Padding(6, 6, 6, 6);
+        settingPage.MinimumSize = new Size(1230, 1020);
+        settingPage.Name = "settingPage";
+        settingPage.Size = new Size(1800, 1242);
+        settingPage.TabIndex = 3;
+        // 
         // MainShellForm
-        //
-        AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
-        AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-        ClientSize = new System.Drawing.Size(1200, 900);
+        // 
+        AutoScaleDimensions = new SizeF(144F, 144F);
+        AutoScaleMode = AutoScaleMode.Dpi;
+        ClientSize = new Size(1800, 1350);
         Controls.Add(tlpShellRoot);
-        MinimumSize = new System.Drawing.Size(940, 720);
+        Margin = new Padding(4, 4, 4, 4);
+        MinimumSize = new Size(1399, 1052);
         Name = "MainShellForm";
-        StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+        StartPosition = FormStartPosition.CenterScreen;
         Text = "Compact Inkjet";
-        WindowState = System.Windows.Forms.FormWindowState.Maximized;
+        WindowState = FormWindowState.Maximized;
         tlpShellRoot.ResumeLayout(false);
         tlpMenuBar.ResumeLayout(false);
         ((System.ComponentModel.ISupportInitialize)picLogo).EndInit();
