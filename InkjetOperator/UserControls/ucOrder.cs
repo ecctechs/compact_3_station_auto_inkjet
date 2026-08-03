@@ -57,7 +57,7 @@ namespace InkjetOperator
             groupBox1.Text          = Lang.Get("order.inkjet_uv");
             btnRefresh.Text         = Lang.Get("btn.refresh");
             btnSendMk1Mk2.Text     = Lang.Get("order.send_mk12");
-            btnSendMk3.Text         = Lang.Get("order.send_mk3");
+
             btnSendUV1.Text         = Lang.Get("order.send_uv1");
             btnSendUV2.Text         = Lang.Get("order.send_uv2");
             tabList.Text            = Lang.Get("order.tab_list");
@@ -870,91 +870,6 @@ namespace InkjetOperator
         }
 
         // ══════════════════════════════════════════════
-        //  SEND — MK3
-        // ══════════════════════════════════════════════
-
-        private async void btnSendMk3_Click(object sender, EventArgs e)
-        {
-            // 1. ดึง Job ที่เลือกอยู่
-            if (bindingSource1.Current is not PrintJob selectedJob)
-            {
-                MessageBox.Show(Lang.Get("msg.select_job"));
-                return;
-            }
-
-            // ยืนยันก่อนส่ง
-            var confirm = MessageBox.Show(
-                $"ต้องการส่งข้อมูลไปยัง MK3/MK4\nJob ID: {selectedJob.Id}\nBarcode: {selectedJob.BarcodeRaw}",
-                "ยืนยันการส่ง", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (confirm != DialogResult.Yes) return;
-
-            btnSendMk3.Enabled = false;
-            try
-            {
-
-                // 1. ดึงข้อมูล Barcode จากหน้าจอ (เช่นจาก TextBox หรือ Label)
-                // ในที่นี้สมมติว่าดึงจากตัวแปร หรือคุณจะเปลี่ยนเป็น txtBarcode.Text ก็ได้
-                string barcode = "CCRC0291-DEX0663MS";
-
-                if (string.IsNullOrEmpty(barcode))
-                {
-                    MessageBox.Show("ไม่พบข้อมูล Barcode");
-                    return;
-                }
-
-                // 2. ดึงข้อมูลรายละเอียดจากตาราง config_data_mk3
-                var patternInfo = await _sqliteService.GetPatternDetailMk3Async(barcode);
-
-                if (patternInfo == null)
-                {
-                    MessageBox.Show($"ไม่พบข้อมูล Config สำหรับ: {barcode} ในฐานข้อมูล");
-                    return;
-                }
-
-                // 3. เลือก Config ของเครื่องที่ต้องการ (Ordinal 1 คือ MK1 หรือชุดแรกในไฟล์)
-                var config = patternInfo.InkjetConfigs.FirstOrDefault(x => x.Ordinal == 1);
-                if (config == null) return;
-
-                // --- เริ่มกระบวนการส่งข้อมูลไปยังเครื่องพิมพ์ ---
-
-                // A. เชื่อมต่อ TCP (IP และ Port ของเครื่องพิมพ์ MK3)
-                if (!await ConnectInkjetAsync()) return;
-
-                // B. เปลี่ยน Program Number (คำสั่งบังคับเครื่องเปลี่ยน Job)
-                int targetProg = config.ProgramNumber ?? 158;
-                await _inkjetAdapter.ChangeProgramAsync(targetProg);
-
-                // หน่วงเวลาเล็กน้อยให้เครื่องพิมพ์เตรียมตัว (200-500ms)
-                await Task.Delay(300);
-
-                // C. ส่งการตั้งค่าพื้นฐาน (FM Command) เช่น Width, Height, Delay
-                // ข้อมูลเหล่านี้ดึงมาจากคอลัมน์ mk1_width, mk1_height ฯลฯ
-                await _inkjetAdapter.SendConfigAsync(config);
-                await Task.Delay(100);
-
-                // D. วนลูปส่งข้อความพิมพ์ (FS + F1 Commands) ตามจำนวน Block ที่มีข้อมูล
-                // จากภาพ DB ของคุณ ข้อมูลจะถูกเก็บใน block1_text, block2_text...
-                await SendTextBlocksRawAsync(config.TextBlocks);
-
-                int jobId = selectedJob.Id;
-                var updateData = new { st_status = "4" };
-                await _api.UpdateJobAsync(jobId, updateData);
-
-                MessageBox.Show($"[Success] ส่งข้อมูล {barcode}\nไปยัง Program: {targetProg} เรียบร้อยแล้ว",
-                                "สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("เกิดข้อผิดพลาดในการส่งข้อมูล: " + ex.Message,
-                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                // (Optional) หากต้องการตัดการเชื่อมต่อทันทีหลังส่งจบ ให้เรียกใช้บรรทัดล่างนี้
-                // await _tcpManager.DisconnectAsync();
-            }
-        }
-
         // ══════════════════════════════════════════════
         //  SEND — UV Printer (UV1 / UV2 ใช้ร่วมกัน)
         // ══════════════════════════════════════════════
@@ -1181,7 +1096,7 @@ namespace InkjetOperator
 
             btnSendMk1Mk2.Enabled = station == 0;
             btnSendUV1.Enabled = station == 1 || station == 2;
-            btnSendMk3.Enabled = station == 3;
+
             btnSendUV2.Enabled = station == 4;
         }
 
@@ -1191,7 +1106,7 @@ namespace InkjetOperator
         {
             btnSendMk1Mk2.Enabled = isEnabled;
             btnSendUV1.Enabled = isEnabled;
-            btnSendMk3.Enabled = isEnabled;
+
             btnSendUV2.Enabled = isEnabled;
         }
 

@@ -1,4 +1,4 @@
-﻿namespace InkjetOperator
+namespace InkjetOperator
 {
     partial class ucSetting
     {
@@ -30,20 +30,10 @@
             btnSave = new Button();
             pnlButtons = new Panel();
             pnlMkPrinters = new Panel();
-            lblMk061Status = new Label();
-            lblMk060Status = new Label();
             lblMk059Status = new Label();
             lblMk058Status = new Label();
-            btnEditMk061 = new Button();
-            btnEditMk060 = new Button();
             btnEditMk059 = new Button();
             btnEditMk058 = new Button();
-            txtMk061Com = new TextBox();
-            lblMk061Com = new Label();
-            lblMk061 = new Label();
-            txtMk060Com = new TextBox();
-            lblMk060Com = new Label();
-            lblMk060 = new Label();
             txtMk059Com = new TextBox();
             lblMk059Com = new Label();
             lblMk059 = new Label();
@@ -56,9 +46,9 @@
             pnlMainContent.SuspendLayout();
             pnlMkPrinters.SuspendLayout();
             SuspendLayout();
-            // 
+            //
             // panelPcStation1
-            // 
+            //
             panelPcStation1.BackColor = Color.White;
             panelPcStation1.BorderStyle = BorderStyle.FixedSingle;
             panelPcStation1.Controls.Add(lblPcStatus);
@@ -72,9 +62,9 @@
             panelPcStation1.Name = "panelPcStation1";
             panelPcStation1.Size = new Size(556, 211);
             panelPcStation1.TabIndex = 4;
-            // 
+            //
             // lblPcStatus
-            // 
+            //
             lblPcStatus.BackColor = Color.Gray;
             lblPcStatus.BorderStyle = BorderStyle.FixedSingle;
             lblPcStatus.Location = new Point(21, 84);
@@ -82,9 +72,9 @@
             lblPcStatus.Name = "lblPcStatus";
             lblPcStatus.Size = new Size(21, 23);
             lblPcStatus.TabIndex = 0;
-            // 
+            //
             // btnPC2
-            // 
+            //
             btnPC2.FlatAppearance.BorderSize = 0;
             btnPC2.FlatStyle = FlatStyle.Flat;
             btnPC2.Font = new Font("Segoe UI", 9F);
@@ -94,9 +84,9 @@
             btnPC2.Size = new Size(36, 41);
             btnPC2.TabIndex = 1;
             btnPC2.Text = "✎";
-            // 
+            //
             // lblPC2
-            // 
+            //
             lblPC2.BackColor = Color.Black;
             lblPC2.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblPC2.ForeColor = Color.White;
@@ -108,9 +98,9 @@
             lblPC2.TabIndex = 2;
             lblPC2.Text = "IP Station 1";
             lblPC2.TextAlign = ContentAlignment.MiddleCenter;
-            // 
+            //
             // label3
-            // 
+            //
             label3.AutoSize = true;
             label3.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
             label3.Location = new Point(14, 16);
@@ -119,18 +109,18 @@
             label3.Size = new Size(75, 38);
             label3.TabIndex = 3;
             label3.Text = "PC 2";
-            // 
+            //
             // txtPcip
-            // 
+            //
             txtPcip.Font = new Font("Segoe UI", 10F);
             txtPcip.Location = new Point(129, 136);
             txtPcip.Margin = new Padding(4, 5, 4, 5);
             txtPcip.Name = "txtPcip";
             txtPcip.Size = new Size(284, 31);
             txtPcip.TabIndex = 4;
-            // 
+            //
             // label4
-            // 
+            //
             label4.AutoSize = true;
             label4.Font = new Font("Segoe UI", 10F);
             label4.Location = new Point(21, 140);
@@ -139,9 +129,9 @@
             label4.Size = new Size(106, 25);
             label4.TabIndex = 5;
             label4.Text = "IP Address :";
-            // 
+            //
             // pnlMainContent
-            // 
+            //
             pnlMainContent.BackColor = Color.White;
             pnlMainContent.Controls.Add(btnCancel);
             pnlMainContent.Controls.Add(panelPcStation1);
@@ -155,9 +145,9 @@
             pnlMainContent.Padding = new Padding(29, 34, 29, 34);
             pnlMainContent.Size = new Size(1152, 939);
             pnlMainContent.TabIndex = 1;
-            // 
+            //
             // btnCancel
-            // 
+            //
             btnCancel.BackColor = Color.FromArgb(150, 150, 150);
             btnCancel.FlatAppearance.BorderSize = 0;
             btnCancel.FlatStyle = FlatStyle.Flat;
@@ -170,9 +160,9 @@
             btnCancel.TabIndex = 0;
             btnCancel.Text = "Cancel";
             btnCancel.UseVisualStyleBackColor = false;
-            // 
+            //
             // btnSave
-            // 
+            //
             btnSave.BackColor = Color.FromArgb(70, 130, 180);
             btnSave.FlatAppearance.BorderSize = 0;
             btnSave.FlatStyle = FlatStyle.Flat;
@@ -185,9 +175,9 @@
             btnSave.TabIndex = 1;
             btnSave.Text = "Save";
             btnSave.UseVisualStyleBackColor = false;
-            // 
+            //
             // pnlButtons
-            // 
+            //
             pnlButtons.BackColor = Color.Transparent;
             pnlButtons.Location = new Point(706, 1019);
             pnlButtons.Margin = new Padding(4, 5, 4, 5);
@@ -199,20 +189,10 @@
             //
             pnlMkPrinters.BackColor = Color.White;
             pnlMkPrinters.BorderStyle = BorderStyle.FixedSingle;
-            pnlMkPrinters.Controls.Add(lblMk061Status);
-            pnlMkPrinters.Controls.Add(lblMk060Status);
             pnlMkPrinters.Controls.Add(lblMk059Status);
             pnlMkPrinters.Controls.Add(lblMk058Status);
-            pnlMkPrinters.Controls.Add(btnEditMk061);
-            pnlMkPrinters.Controls.Add(btnEditMk060);
             pnlMkPrinters.Controls.Add(btnEditMk059);
             pnlMkPrinters.Controls.Add(btnEditMk058);
-            pnlMkPrinters.Controls.Add(txtMk061Com);
-            pnlMkPrinters.Controls.Add(lblMk061Com);
-            pnlMkPrinters.Controls.Add(lblMk061);
-            pnlMkPrinters.Controls.Add(txtMk060Com);
-            pnlMkPrinters.Controls.Add(lblMk060Com);
-            pnlMkPrinters.Controls.Add(lblMk060);
             pnlMkPrinters.Controls.Add(txtMk059Com);
             pnlMkPrinters.Controls.Add(lblMk059Com);
             pnlMkPrinters.Controls.Add(lblMk059);
@@ -223,31 +203,11 @@
             pnlMkPrinters.Location = new Point(85, 39);
             pnlMkPrinters.Margin = new Padding(4, 5, 4, 5);
             pnlMkPrinters.Name = "pnlMkPrinters";
-            pnlMkPrinters.Size = new Size(570, 344);
+            pnlMkPrinters.Size = new Size(570, 226);
             pnlMkPrinters.TabIndex = 3;
-            // 
-            // lblMk061Status
-            // 
-            lblMk061Status.BackColor = Color.Gray;
-            lblMk061Status.BorderStyle = BorderStyle.FixedSingle;
-            lblMk061Status.Location = new Point(21, 261);
-            lblMk061Status.Margin = new Padding(4, 0, 4, 0);
-            lblMk061Status.Name = "lblMk061Status";
-            lblMk061Status.Size = new Size(21, 23);
-            lblMk061Status.TabIndex = 0;
-            // 
-            // lblMk060Status
-            // 
-            lblMk060Status.BackColor = Color.Gray;
-            lblMk060Status.BorderStyle = BorderStyle.FixedSingle;
-            lblMk060Status.Location = new Point(21, 202);
-            lblMk060Status.Margin = new Padding(4, 0, 4, 0);
-            lblMk060Status.Name = "lblMk060Status";
-            lblMk060Status.Size = new Size(21, 23);
-            lblMk060Status.TabIndex = 1;
-            // 
+            //
             // lblMk059Status
-            // 
+            //
             lblMk059Status.BackColor = Color.Gray;
             lblMk059Status.BorderStyle = BorderStyle.FixedSingle;
             lblMk059Status.Location = new Point(21, 143);
@@ -255,9 +215,9 @@
             lblMk059Status.Name = "lblMk059Status";
             lblMk059Status.Size = new Size(21, 23);
             lblMk059Status.TabIndex = 2;
-            // 
+            //
             // lblMk058Status
-            // 
+            //
             lblMk058Status.BackColor = Color.Gray;
             lblMk058Status.BorderStyle = BorderStyle.FixedSingle;
             lblMk058Status.Location = new Point(21, 84);
@@ -265,33 +225,9 @@
             lblMk058Status.Name = "lblMk058Status";
             lblMk058Status.Size = new Size(21, 23);
             lblMk058Status.TabIndex = 3;
-            // 
-            // btnEditMk061
-            // 
-            btnEditMk061.FlatAppearance.BorderSize = 0;
-            btnEditMk061.FlatStyle = FlatStyle.Flat;
-            btnEditMk061.Font = new Font("Segoe UI", 9F);
-            btnEditMk061.Location = new Point(196, 252);
-            btnEditMk061.Margin = new Padding(4, 5, 4, 5);
-            btnEditMk061.Name = "btnEditMk061";
-            btnEditMk061.Size = new Size(36, 41);
-            btnEditMk061.TabIndex = 4;
-            btnEditMk061.Text = "✎";
-            // 
-            // btnEditMk060
-            // 
-            btnEditMk060.FlatAppearance.BorderSize = 0;
-            btnEditMk060.FlatStyle = FlatStyle.Flat;
-            btnEditMk060.Font = new Font("Segoe UI", 9F);
-            btnEditMk060.Location = new Point(196, 193);
-            btnEditMk060.Margin = new Padding(4, 5, 4, 5);
-            btnEditMk060.Name = "btnEditMk060";
-            btnEditMk060.Size = new Size(36, 41);
-            btnEditMk060.TabIndex = 5;
-            btnEditMk060.Text = "✎";
-            // 
+            //
             // btnEditMk059
-            // 
+            //
             btnEditMk059.FlatAppearance.BorderSize = 0;
             btnEditMk059.FlatStyle = FlatStyle.Flat;
             btnEditMk059.Font = new Font("Segoe UI", 9F);
@@ -301,9 +237,9 @@
             btnEditMk059.Size = new Size(36, 41);
             btnEditMk059.TabIndex = 6;
             btnEditMk059.Text = "✎";
-            // 
+            //
             // btnEditMk058
-            // 
+            //
             btnEditMk058.FlatAppearance.BorderSize = 0;
             btnEditMk058.FlatStyle = FlatStyle.Flat;
             btnEditMk058.Font = new Font("Segoe UI", 9F);
@@ -313,86 +249,18 @@
             btnEditMk058.Size = new Size(36, 41);
             btnEditMk058.TabIndex = 7;
             btnEditMk058.Text = "✎";
-            // 
-            // txtMk061Com
-            // 
-            txtMk061Com.Font = new Font("Segoe UI", 10F);
-            txtMk061Com.Location = new Point(340, 257);
-            txtMk061Com.Margin = new Padding(4, 5, 4, 5);
-            txtMk061Com.Name = "txtMk061Com";
-            txtMk061Com.Size = new Size(170, 31);
-            txtMk061Com.TabIndex = 10;
-            // 
-            // lblMk061Com
-            // 
-            lblMk061Com.AutoSize = true;
-            lblMk061Com.Font = new Font("Segoe UI", 10F);
-            lblMk061Com.Location = new Point(232, 261);
-            lblMk061Com.Margin = new Padding(4, 0, 4, 0);
-            lblMk061Com.Name = "lblMk061Com";
-            lblMk061Com.Size = new Size(106, 25);
-            lblMk061Com.TabIndex = 11;
-            lblMk061Com.Text = "IP Address :";
-            // 
-            // lblMk061
-            // 
-            lblMk061.BackColor = Color.Black;
-            lblMk061.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
-            lblMk061.ForeColor = Color.White;
-            lblMk061.Location = new Point(50, 252);
-            lblMk061.Margin = new Padding(4, 0, 4, 0);
-            lblMk061.Name = "lblMk061";
-            lblMk061.Padding = new Padding(8, 4, 8, 4);
-            lblMk061.Size = new Size(144, 41);
-            lblMk061.TabIndex = 12;
-            lblMk061.Text = "MK-061";
-            lblMk061.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // txtMk060Com
-            // 
-            txtMk060Com.Font = new Font("Segoe UI", 10F);
-            txtMk060Com.Location = new Point(340, 198);
-            txtMk060Com.Margin = new Padding(4, 5, 4, 5);
-            txtMk060Com.Name = "txtMk060Com";
-            txtMk060Com.Size = new Size(170, 31);
-            txtMk060Com.TabIndex = 15;
-            // 
-            // lblMk060Com
-            // 
-            lblMk060Com.AutoSize = true;
-            lblMk060Com.Font = new Font("Segoe UI", 10F);
-            lblMk060Com.Location = new Point(232, 202);
-            lblMk060Com.Margin = new Padding(4, 0, 4, 0);
-            lblMk060Com.Name = "lblMk060Com";
-            lblMk060Com.Size = new Size(106, 25);
-            lblMk060Com.TabIndex = 16;
-            lblMk060Com.Text = "IP Address :";
-            // 
-            // lblMk060
-            // 
-            lblMk060.BackColor = Color.Black;
-            lblMk060.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
-            lblMk060.ForeColor = Color.White;
-            lblMk060.Location = new Point(50, 193);
-            lblMk060.Margin = new Padding(4, 0, 4, 0);
-            lblMk060.Name = "lblMk060";
-            lblMk060.Padding = new Padding(8, 4, 8, 4);
-            lblMk060.Size = new Size(144, 41);
-            lblMk060.TabIndex = 17;
-            lblMk060.Text = "MK-060";
-            lblMk060.TextAlign = ContentAlignment.MiddleCenter;
-            // 
+            //
             // txtMk059Com
-            // 
+            //
             txtMk059Com.Font = new Font("Segoe UI", 10F);
             txtMk059Com.Location = new Point(340, 139);
             txtMk059Com.Margin = new Padding(4, 5, 4, 5);
             txtMk059Com.Name = "txtMk059Com";
             txtMk059Com.Size = new Size(170, 31);
             txtMk059Com.TabIndex = 20;
-            // 
+            //
             // lblMk059Com
-            // 
+            //
             lblMk059Com.AutoSize = true;
             lblMk059Com.Font = new Font("Segoe UI", 10F);
             lblMk059Com.Location = new Point(232, 143);
@@ -401,9 +269,9 @@
             lblMk059Com.Size = new Size(106, 25);
             lblMk059Com.TabIndex = 21;
             lblMk059Com.Text = "IP Address :";
-            // 
+            //
             // lblMk059
-            // 
+            //
             lblMk059.BackColor = Color.Black;
             lblMk059.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblMk059.ForeColor = Color.White;
@@ -415,18 +283,18 @@
             lblMk059.TabIndex = 22;
             lblMk059.Text = "MK-059";
             lblMk059.TextAlign = ContentAlignment.MiddleCenter;
-            // 
+            //
             // txtMk058Com
-            // 
+            //
             txtMk058Com.Font = new Font("Segoe UI", 10F);
             txtMk058Com.Location = new Point(340, 80);
             txtMk058Com.Margin = new Padding(4, 5, 4, 5);
             txtMk058Com.Name = "txtMk058Com";
             txtMk058Com.Size = new Size(170, 31);
             txtMk058Com.TabIndex = 25;
-            // 
+            //
             // lblMk058Com
-            // 
+            //
             lblMk058Com.AutoSize = true;
             lblMk058Com.Font = new Font("Segoe UI", 10F);
             lblMk058Com.Location = new Point(232, 84);
@@ -435,9 +303,9 @@
             lblMk058Com.Size = new Size(106, 25);
             lblMk058Com.TabIndex = 26;
             lblMk058Com.Text = "IP Address :";
-            // 
+            //
             // lblMk058
-            // 
+            //
             lblMk058.BackColor = Color.Black;
             lblMk058.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblMk058.ForeColor = Color.White;
@@ -449,9 +317,9 @@
             lblMk058.TabIndex = 27;
             lblMk058.Text = "MK-058";
             lblMk058.TextAlign = ContentAlignment.MiddleCenter;
-            // 
+            //
             // lblMkTitle
-            // 
+            //
             lblMkTitle.AutoSize = true;
             lblMkTitle.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
             lblMkTitle.Location = new Point(14, 16);
@@ -460,15 +328,15 @@
             lblMkTitle.Size = new Size(244, 38);
             lblMkTitle.TabIndex = 28;
             lblMkTitle.Text = "MK Inkjet Printers";
-            // 
+            //
             // timer1
-            // 
+            //
             timer1.Enabled = true;
             timer1.Interval = 5000;
             timer1.Tick += timer1_Tick;
-            // 
+            //
             // ucSetting
-            // 
+            //
             AutoScaleMode = AutoScaleMode.None;
             Controls.Add(pnlMainContent);
             Margin = new Padding(4, 5, 4, 5);
@@ -501,16 +369,6 @@
         private System.Windows.Forms.Button btnEditMk059;
         private System.Windows.Forms.Label lblMk059Com;
         private System.Windows.Forms.TextBox txtMk059Com;
-        private System.Windows.Forms.Label lblMk060Status;
-        private System.Windows.Forms.Label lblMk060;
-        private System.Windows.Forms.Button btnEditMk060;
-        private System.Windows.Forms.Label lblMk060Com;
-        private System.Windows.Forms.TextBox txtMk060Com;
-        private System.Windows.Forms.Label lblMk061Status;
-        private System.Windows.Forms.Label lblMk061;
-        private System.Windows.Forms.Button btnEditMk061;
-        private System.Windows.Forms.Label lblMk061Com;
-        private System.Windows.Forms.TextBox txtMk061Com;
 
         // Buttons
         private System.Windows.Forms.Button btnSave;

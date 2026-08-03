@@ -61,7 +61,7 @@ namespace InkjetOperator
                 0 => menu switch { "input" or "setting" => true, _ => false },
 
                 // โหมด 1: ทั้งหมด ยกเว้น ucBot / ucST3 / test (โหมดหน้างานปกติ)
-                1 => menu switch { "bot" or "st3" or "input" or "test" => false, _ => true },
+                1 => menu switch { "bot" or "st3" or "input" or "test" or "testplc" or "uvsetting" => false, _ => true },
 
                 // โหมด 2: โหมด Bot (เน้นใช้ ucBot)
                 2 => menu switch {  "bot" or "setting" => true, _ => false },

@@ -69,7 +69,7 @@
             btnCancel.FlatStyle = FlatStyle.Flat;
             btnCancel.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnCancel.ForeColor = Color.White;
-            btnCancel.Location = new Point(955, 873);
+            btnCancel.Location = new Point(767, 742);
             btnCancel.Margin = new Padding(4, 5, 4, 5);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(114, 53);
@@ -84,7 +84,7 @@
             btnSave.FlatStyle = FlatStyle.Flat;
             btnSave.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnSave.ForeColor = Color.White;
-            btnSave.Location = new Point(814, 873);
+            btnSave.Location = new Point(627, 742);
             btnSave.Margin = new Padding(4, 5, 4, 5);
             btnSave.Name = "btnSave";
             btnSave.Size = new Size(114, 53);
@@ -116,7 +116,7 @@
             txtPlc001Port.Location = new Point(129, 188);
             txtPlc001Port.Margin = new Padding(4, 5, 4, 5);
             txtPlc001Port.Name = "txtPlc001Port";
-            txtPlc001Port.Size = new Size(83, 31);
+            txtPlc001Port.Size = new Size(83, 34);
             txtPlc001Port.TabIndex = 7;
             // 
             // lblPlcPort
@@ -126,7 +126,7 @@
             lblPlcPort.Location = new Point(21, 192);
             lblPlcPort.Margin = new Padding(4, 0, 4, 0);
             lblPlcPort.Name = "lblPlcPort";
-            lblPlcPort.Size = new Size(53, 25);
+            lblPlcPort.Size = new Size(57, 28);
             lblPlcPort.TabIndex = 6;
             lblPlcPort.Text = "Port :";
             // 
@@ -173,7 +173,7 @@
             lblPlcTitle.Location = new Point(14, 16);
             lblPlcTitle.Margin = new Padding(4, 0, 4, 0);
             lblPlcTitle.Name = "lblPlcTitle";
-            lblPlcTitle.Size = new Size(64, 38);
+            lblPlcTitle.Size = new Size(69, 41);
             lblPlcTitle.TabIndex = 3;
             lblPlcTitle.Text = "PLC";
             // 
@@ -183,7 +183,7 @@
             txtPlc001Ip.Location = new Point(129, 136);
             txtPlc001Ip.Margin = new Padding(4, 5, 4, 5);
             txtPlc001Ip.Name = "txtPlc001Ip";
-            txtPlc001Ip.Size = new Size(284, 31);
+            txtPlc001Ip.Size = new Size(284, 34);
             txtPlc001Ip.TabIndex = 4;
             // 
             // lblPlcIp
@@ -193,7 +193,7 @@
             lblPlcIp.Location = new Point(21, 140);
             lblPlcIp.Margin = new Padding(4, 0, 4, 0);
             lblPlcIp.Name = "lblPlcIp";
-            lblPlcIp.Size = new Size(106, 25);
+            lblPlcIp.Size = new Size(112, 28);
             lblPlcIp.TabIndex = 5;
             lblPlcIp.Text = "IP Address :";
             // 
@@ -204,7 +204,7 @@
             lblPlcMapTitle.Location = new Point(85, 320);
             lblPlcMapTitle.Margin = new Padding(4, 0, 4, 0);
             lblPlcMapTitle.Name = "lblPlcMapTitle";
-            lblPlcMapTitle.Size = new Size(304, 38);
+            lblPlcMapTitle.Size = new Size(330, 41);
             lblPlcMapTitle.TabIndex = 3;
             lblPlcMapTitle.Text = "PLC Register Mapping";
             // 
@@ -215,7 +215,7 @@
             btnAddRow.FlatStyle = FlatStyle.Flat;
             btnAddRow.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnAddRow.ForeColor = Color.White;
-            btnAddRow.Location = new Point(929, 315);
+            btnAddRow.Location = new Point(741, 313);
             btnAddRow.Margin = new Padding(4, 5, 4, 5);
             btnAddRow.Name = "btnAddRow";
             btnAddRow.Size = new Size(140, 48);
@@ -227,7 +227,6 @@
             // 
             dgvPlcMap.AllowUserToAddRows = false;
             dgvPlcMap.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgvPlcMap.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
             dgvPlcMap.BackgroundColor = Color.White;
             dgvPlcMap.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvPlcMap.Columns.AddRange(new DataGridViewColumn[] { colAddressStart, colAddressStop, colPlcStart, colPlcStop, colListName, colDataType, colBit, colDelete });
@@ -236,21 +235,21 @@
             dgvPlcMap.Name = "dgvPlcMap";
             dgvPlcMap.RowHeadersWidth = 51;
             dgvPlcMap.RowTemplate.Height = 32;
-            dgvPlcMap.Size = new Size(984, 480);
+            dgvPlcMap.Size = new Size(796, 340);
             dgvPlcMap.TabIndex = 5;
             dgvPlcMap.CellContentClick += dgvPlcMap_CellContentClick;
             // 
             // colAddressStart
             // 
-            colAddressStart.HeaderText = "Address Start";
             colAddressStart.FillWeight = 120F;
+            colAddressStart.HeaderText = "Address Start";
             colAddressStart.MinimumWidth = 8;
             colAddressStart.Name = "colAddressStart";
             // 
             // colAddressStop
             // 
-            colAddressStop.HeaderText = "Address Stop";
             colAddressStop.FillWeight = 120F;
+            colAddressStop.HeaderText = "Address Stop";
             colAddressStop.MinimumWidth = 8;
             colAddressStop.Name = "colAddressStop";
             // 
@@ -268,8 +267,8 @@
             // 
             // colListName
             // 
-            colListName.HeaderText = "List";
             colListName.FillWeight = 130F;
+            colListName.HeaderText = "List";
             colListName.MinimumWidth = 8;
             colListName.Name = "colListName";
             // 
@@ -289,8 +288,8 @@
             // 
             // colDelete
             // 
-            colDelete.HeaderText = "Del";
             colDelete.FillWeight = 50F;
+            colDelete.HeaderText = "Del";
             colDelete.MinimumWidth = 8;
             colDelete.Name = "colDelete";
             colDelete.Text = "ลบ";

@@ -122,7 +122,6 @@
             bindingSourceUVinkjet = new BindingSource(components);
             pnlButtons = new FlowLayoutPanel();
             btnSendUV2 = new Button();
-            btnSendMk3 = new Button();
             btnSendUV1 = new Button();
             btnSendMk1Mk2 = new Button();
             btnTestM2 = new Button();
@@ -1235,7 +1234,6 @@
             // 
             pnlButtons.AutoSize = true;
             pnlButtons.Controls.Add(btnSendUV2);
-            pnlButtons.Controls.Add(btnSendMk3);
             pnlButtons.Controls.Add(btnSendUV1);
             pnlButtons.Controls.Add(btnSendMk1Mk2);
             pnlButtons.Controls.Add(btnTestM2);
@@ -1257,49 +1255,11 @@
             btnSendUV2.TabIndex = 5;
             btnSendUV2.Text = "ส่งหา UV2";
             btnSendUV2.Click += btnSendUV2_Click_1;
-            //
-            // btnTestM2
-            //
-            btnTestM2.BackColor = Color.FromArgb(230, 145, 56);
-            btnTestM2.FlatStyle = FlatStyle.Flat;
-            btnTestM2.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnTestM2.ForeColor = Color.White;
-            btnTestM2.Location = new Point(3, 7);
-            btnTestM2.Name = "btnTestM2";
-            btnTestM2.Size = new Size(130, 30);
-            btnTestM2.TabIndex = 6;
-            btnTestM2.Text = "TEST: เขียน CPI";
-            btnTestM2.UseVisualStyleBackColor = false;
-            btnTestM2.Click += btnTestM2_Click;
-            //
-            // btnTestTcp
-            //
-            btnTestTcp.BackColor = Color.FromArgb(103, 78, 167);
-            btnTestTcp.FlatStyle = FlatStyle.Flat;
-            btnTestTcp.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnTestTcp.ForeColor = Color.White;
-            btnTestTcp.Location = new Point(139, 7);
-            btnTestTcp.Name = "btnTestTcp";
-            btnTestTcp.Size = new Size(130, 30);
-            btnTestTcp.TabIndex = 7;
-            btnTestTcp.Text = "TEST: TCP KEY";
-            btnTestTcp.UseVisualStyleBackColor = false;
-            btnTestTcp.Click += btnTestTcp_Click;
-            // 
-            // btnSendMk3
-            // 
-            btnSendMk3.Font = new Font("Segoe UI", 9F);
-            btnSendMk3.Location = new Point(541, 7);
-            btnSendMk3.Name = "btnSendMk3";
-            btnSendMk3.Size = new Size(100, 30);
-            btnSendMk3.TabIndex = 3;
-            btnSendMk3.Text = "ส่งหา MK3,MK4";
-            btnSendMk3.Click += btnSendMk3_Click;
             // 
             // btnSendUV1
             // 
             btnSendUV1.Font = new Font("Segoe UI", 9F);
-            btnSendUV1.Location = new Point(435, 7);
+            btnSendUV1.Location = new Point(541, 7);
             btnSendUV1.Name = "btnSendUV1";
             btnSendUV1.Size = new Size(100, 30);
             btnSendUV1.TabIndex = 4;
@@ -1309,12 +1269,40 @@
             // btnSendMk1Mk2
             // 
             btnSendMk1Mk2.Font = new Font("Segoe UI", 9F);
-            btnSendMk1Mk2.Location = new Point(319, 7);
+            btnSendMk1Mk2.Location = new Point(380, 7);
             btnSendMk1Mk2.Name = "btnSendMk1Mk2";
-            btnSendMk1Mk2.Size = new Size(110, 30);
+            btnSendMk1Mk2.Size = new Size(155, 30);
             btnSendMk1Mk2.TabIndex = 2;
             btnSendMk1Mk2.Text = "ส่งหา MK1,MK2";
             btnSendMk1Mk2.Click += btnSendMk1Mk2_Click;
+            // 
+            // btnTestM2
+            // 
+            btnTestM2.BackColor = Color.FromArgb(230, 145, 56);
+            btnTestM2.FlatStyle = FlatStyle.Flat;
+            btnTestM2.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnTestM2.ForeColor = Color.White;
+            btnTestM2.Location = new Point(244, 7);
+            btnTestM2.Name = "btnTestM2";
+            btnTestM2.Size = new Size(130, 30);
+            btnTestM2.TabIndex = 6;
+            btnTestM2.Text = "TEST: เขียน CPI";
+            btnTestM2.UseVisualStyleBackColor = false;
+            btnTestM2.Click += btnTestM2_Click;
+            // 
+            // btnTestTcp
+            // 
+            btnTestTcp.BackColor = Color.FromArgb(103, 78, 167);
+            btnTestTcp.FlatStyle = FlatStyle.Flat;
+            btnTestTcp.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnTestTcp.ForeColor = Color.White;
+            btnTestTcp.Location = new Point(108, 7);
+            btnTestTcp.Name = "btnTestTcp";
+            btnTestTcp.Size = new Size(130, 30);
+            btnTestTcp.TabIndex = 7;
+            btnTestTcp.Text = "TEST: TCP KEY";
+            btnTestTcp.UseVisualStyleBackColor = false;
+            btnTestTcp.Click += btnTestTcp_Click;
             // 
             // textBlocksBindingSource
             // 
@@ -1411,7 +1399,7 @@
         private BindingSource bindingSourceUVinkjet;
         private Button btnSendMk1Mk2;
         private Button btnSendUV2;
-        private Button btnSendMk3;
+
         private Button btnSendUV1;
         private Button btnTestM2;
         private Button btnTestTcp;
