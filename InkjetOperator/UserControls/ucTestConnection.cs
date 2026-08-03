@@ -9,11 +9,6 @@ using InkjetOperator.Services;
 
 namespace InkjetOperator
 {
-    /// <summary>
-    /// หน้าเทสหน้างาน (MenuMode 99) — พิสูจน์การเชื่อมต่อเครื่อง UV 2 ทาง:
-    /// (1) DB3 = เขียน CPI.db3 (MK063/MK067)  (2) Socket = TCP KEY :10086
-    /// self-contained: browse ไฟล์ + ใส่ IP เองในหน้านี้ ไม่ต้องพึ่งหน้าอื่น
-    /// </summary>
     public partial class ucTestConnection : UserControl
     {
         private readonly SqliteDataService _sqlite = new SqliteDataService();
@@ -65,15 +60,10 @@ namespace InkjetOperator
             }
         }
 
-        private void btnBrowseDoc_Click(object sender, EventArgs e)
+        private int GetUvNumber()
         {
-            using var dlg = new FolderBrowserDialog
-            {
-                Description = "เลือกโฟลเดอร์ document ที่เก็บไฟล์ .uvdx",
-                ShowNewFolderButton = false
-            };
-            if (dlg.ShowDialog() == DialogResult.OK)
-                txtDocFolder.Text = dlg.SelectedPath;
+            string table = cmbTable.SelectedItem?.ToString() ?? "MK063";
+            return table == "MK067" ? 2 : 1;
         }
 
         // ── Socket ──
@@ -86,37 +76,66 @@ namespace InkjetOperator
                 return;
             }
 
-            string? resolved = ResolveProgram(program);
+            int uvNum = GetUvNumber();
+            string? docFolder = ucSettingUV.GetDocumentFolder(uvNum);
+
+            if (string.IsNullOrEmpty(docFolder))
+            {
+                MessageBox.Show(
+                    $"ยังไม่ได้ตั้งค่าโฟลเดอร์ซอฟต์แวร์ UV{uvNum}\nกรุณาไปตั้งค่าในหน้า UV Setting ก่อน",
+                    "ไม่พบ Document folder", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                AppendLog($"ไม่พบ document folder สำหรับ UV{uvNum} — ตั้งค่าในหน้า UV Setting");
+                return;
+            }
+
+            string? cpiPath = ucSettingUV.GetCpiPath(uvNum);
+            if (cpiPath == null)
+            {
+                MessageBox.Show(
+                    $"ไม่พบ CPI.db3 สำหรับ UV{uvNum}\nกรุณาตรวจสอบโฟลเดอร์ซอฟต์แวร์ในหน้า UV Setting",
+                    "ไม่พบ CPI.db3", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                AppendLog($"ไม่พบ CPI.db3 สำหรับ UV{uvNum}");
+                return;
+            }
+
+            string defaultUvdx = Path.Combine(docFolder, "default.uvdx");
+            if (!File.Exists(defaultUvdx))
+            {
+                MessageBox.Show(
+                    $"ไม่พบ default.uvdx ในโฟลเดอร์:\n{docFolder}\n\nกรุณาเพิ่มไฟล์ default.uvdx ก่อน",
+                    "ไม่พบ default.uvdx", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                AppendLog("ไม่พบ default.uvdx");
+                return;
+            }
+
+            string? resolved = ResolveProgram(program, docFolder);
             if (resolved == null) return;
 
             var (_, log) = await _tcp.SendLoadAsync(txtIp.Text.Trim(), Port(), resolved);
             AppendLog(log);
         }
 
-        private string? ResolveProgram(string program)
+        private string? ResolveProgram(string program, string docFolder)
         {
-            string docFolder = txtDocFolder.Text.Trim();
-            if (string.IsNullOrEmpty(docFolder) || !Directory.Exists(docFolder))
-            {
-                AppendLog("ไม่ได้ระบุ Document folder — ส่งชื่อตรงๆ");
-                return program;
-            }
-
             string baseName = program.EndsWith(".uvdx", StringComparison.OrdinalIgnoreCase)
                 ? Path.GetFileNameWithoutExtension(program)
                 : program;
 
-            if (File.Exists(Path.Combine(docFolder, baseName + ".uvdx")))
-                return baseName;
-
-            var variants = Directory.GetFiles(docFolder, baseName + "-*.uvdx")
+            var allUvdx = Directory.GetFiles(docFolder, "*.uvdx")
                 .Select(f => Path.GetFileNameWithoutExtension(f)!)
+                .Where(name => name.StartsWith(baseName, StringComparison.Ordinal))
                 .OrderBy(n => n)
                 .ToList();
 
-            if (variants.Count > 0)
+            if (allUvdx.Count == 1)
             {
-                string? chosen = PromptVariant(baseName, variants);
+                AppendLog($"พบ 1 โปรแกรม: {allUvdx[0]}.uvdx");
+                return allUvdx[0];
+            }
+
+            if (allUvdx.Count > 1)
+            {
+                string? chosen = PromptVariant(baseName, allUvdx);
                 if (chosen == null)
                 {
                     AppendLog("ยกเลิกการเลือก");

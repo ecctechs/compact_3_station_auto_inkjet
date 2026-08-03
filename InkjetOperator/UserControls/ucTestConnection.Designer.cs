@@ -39,9 +39,6 @@ namespace InkjetOperator
         private TextBox txtPort;
         private Label lblProg;
         private TextBox txtProgram;
-        private Label lblDocFolder;
-        private TextBox txtDocFolder;
-        private Button btnBrowseDoc;
         private Button btnKey85;
         private Button btnKey84;
         private Button btnKey83;
@@ -92,9 +89,6 @@ namespace InkjetOperator
             txtPort = new TextBox();
             lblProg = new Label();
             txtProgram = new TextBox();
-            lblDocFolder = new Label();
-            txtDocFolder = new TextBox();
-            btnBrowseDoc = new Button();
             btnKey85 = new Button();
             btnKey84 = new Button();
             btnKey83 = new Button();
@@ -356,9 +350,6 @@ namespace InkjetOperator
             grpSocket.Controls.Add(txtPort);
             grpSocket.Controls.Add(lblProg);
             grpSocket.Controls.Add(txtProgram);
-            grpSocket.Controls.Add(lblDocFolder);
-            grpSocket.Controls.Add(txtDocFolder);
-            grpSocket.Controls.Add(btnBrowseDoc);
             grpSocket.Controls.Add(btnKey85);
             grpSocket.Controls.Add(btnKey84);
             grpSocket.Controls.Add(btnKey83);
@@ -429,41 +420,13 @@ namespace InkjetOperator
             txtProgram.TabIndex = 5;
             txtProgram.Text = "compact";
             //
-            // lblDocFolder
-            //
-            lblDocFolder.AutoSize = true;
-            lblDocFolder.Font = new Font("Segoe UI", 10F);
-            lblDocFolder.Location = new Point(18, 128);
-            lblDocFolder.Name = "lblDocFolder";
-            lblDocFolder.Size = new Size(110, 28);
-            lblDocFolder.TabIndex = 20;
-            lblDocFolder.Text = "Document :";
-            //
-            // txtDocFolder
-            //
-            txtDocFolder.Font = new Font("Segoe UI", 10F);
-            txtDocFolder.Location = new Point(130, 122);
-            txtDocFolder.Name = "txtDocFolder";
-            txtDocFolder.Size = new Size(310, 34);
-            txtDocFolder.TabIndex = 21;
-            //
-            // btnBrowseDoc
-            //
-            btnBrowseDoc.Font = new Font("Segoe UI", 9F);
-            btnBrowseDoc.Location = new Point(448, 122);
-            btnBrowseDoc.Name = "btnBrowseDoc";
-            btnBrowseDoc.Size = new Size(72, 34);
-            btnBrowseDoc.TabIndex = 22;
-            btnBrowseDoc.Text = "Browse";
-            btnBrowseDoc.Click += btnBrowseDoc_Click;
-            //
             // btnKey85
             //
             btnKey85.BackColor = Color.FromArgb(103, 78, 167);
             btnKey85.FlatStyle = FlatStyle.Flat;
             btnKey85.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
             btnKey85.ForeColor = Color.White;
-            btnKey85.Location = new Point(18, 167);
+            btnKey85.Location = new Point(18, 127);
             btnKey85.Name = "btnKey85";
             btnKey85.Size = new Size(180, 40);
             btnKey85.TabIndex = 6;
@@ -477,7 +440,7 @@ namespace InkjetOperator
             btnKey84.FlatStyle = FlatStyle.Flat;
             btnKey84.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
             btnKey84.ForeColor = Color.White;
-            btnKey84.Location = new Point(208, 167);
+            btnKey84.Location = new Point(208, 127);
             btnKey84.Name = "btnKey84";
             btnKey84.Size = new Size(150, 40);
             btnKey84.TabIndex = 7;
@@ -491,7 +454,7 @@ namespace InkjetOperator
             btnKey83.FlatStyle = FlatStyle.Flat;
             btnKey83.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
             btnKey83.ForeColor = Color.White;
-            btnKey83.Location = new Point(368, 167);
+            btnKey83.Location = new Point(368, 127);
             btnKey83.Name = "btnKey83";
             btnKey83.Size = new Size(150, 40);
             btnKey83.TabIndex = 8;
@@ -503,7 +466,7 @@ namespace InkjetOperator
             //
             lblLog.AutoSize = true;
             lblLog.Font = new Font("Segoe UI", 10F);
-            lblLog.Location = new Point(18, 218);
+            lblLog.Location = new Point(18, 178);
             lblLog.Name = "lblLog";
             lblLog.Size = new Size(103, 28);
             lblLog.TabIndex = 9;
@@ -513,12 +476,12 @@ namespace InkjetOperator
             //
             txtSocketLog.BackColor = Color.White;
             txtSocketLog.Font = new Font("Consolas", 9.5F);
-            txtSocketLog.Location = new Point(18, 245);
+            txtSocketLog.Location = new Point(18, 205);
             txtSocketLog.Multiline = true;
             txtSocketLog.Name = "txtSocketLog";
             txtSocketLog.ReadOnly = true;
             txtSocketLog.ScrollBars = ScrollBars.Vertical;
-            txtSocketLog.Size = new Size(504, 200);
+            txtSocketLog.Size = new Size(504, 240);
             txtSocketLog.TabIndex = 10;
             // 
             // grpSql

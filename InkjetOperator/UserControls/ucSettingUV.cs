@@ -7,17 +7,19 @@ namespace InkjetOperator
 {
     public partial class ucSettingUV : UserControl
     {
-        // ── UV1 → ตาราง MK063 ──
         private const string KEY_UV1_IP = "UV001_IP";
         private const string KEY_UV1_PORT = "UV001_PORT";
-        private const string KEY_UV1_DB = "UV1DB3_PATH";
+        private const string KEY_UV1_FOLDER = "UV1_FOLDER";
         private const string TABLE_UV1 = "MK063";
 
-        // ── UV2 → ตาราง MK067 ──
         private const string KEY_UV2_IP = "UV002_IP";
         private const string KEY_UV2_PORT = "UV002_PORT";
-        private const string KEY_UV2_DB = "UV1DB3_PATH_2";
+        private const string KEY_UV2_FOLDER = "UV2_FOLDER";
         private const string TABLE_UV2 = "MK067";
+
+        private const string REL_CPI = @"database\sys\CPI.db3";
+        private const string REL_DEFAULT_UVDX = @"document\default.uvdx";
+        private const string REL_DOCUMENT = "document";
 
         public ucSettingUV()
         {
@@ -25,97 +27,119 @@ namespace InkjetOperator
             LoadData();
         }
 
-        // ================= LOAD =================
         private void LoadData()
         {
-            // IP/Port เก็บใน CustomSettings (ชุดเดียวกับหน้า IP Address Setting เดิม)
             txtUv1Ip.Text = CustomSettingsManager.GetValue(KEY_UV1_IP) ?? "";
             txtUv1Port.Text = CustomSettingsManager.GetValue(KEY_UV1_PORT) ?? "";
             txtUv2Ip.Text = CustomSettingsManager.GetValue(KEY_UV2_IP) ?? "";
             txtUv2Port.Text = CustomSettingsManager.GetValue(KEY_UV2_PORT) ?? "";
 
-            // path CPI.db3 เก็บใน UvSettings (ชุดเดียวกับที่ SqliteDataService อ่าน)
-            txtUv1Db.Text = UvSettingsManager.GetValue(KEY_UV1_DB) ?? "";
-            txtUv2Db.Text = UvSettingsManager.GetValue(KEY_UV2_DB) ?? "";
+            txtUv1Folder.Text = UvSettingsManager.GetValue(KEY_UV1_FOLDER) ?? "";
+            txtUv2Folder.Text = UvSettingsManager.GetValue(KEY_UV2_FOLDER) ?? "";
+
+            ValidateAndShowStatus(txtUv1Folder.Text, lblUv1Status, TABLE_UV1);
+            ValidateAndShowStatus(txtUv2Folder.Text, lblUv2Status, TABLE_UV2);
         }
 
-        // ================= BROWSE =================
-        private void btnBrowse1_Click(object sender, EventArgs e) => BrowseInto(txtUv1Db);
+        private void btnBrowse1_Click(object sender, EventArgs e) => BrowseFolder(txtUv1Folder, lblUv1Status, TABLE_UV1);
+        private void btnBrowse2_Click(object sender, EventArgs e) => BrowseFolder(txtUv2Folder, lblUv2Status, TABLE_UV2);
 
-        private void btnBrowse2_Click(object sender, EventArgs e) => BrowseInto(txtUv2Db);
-
-        /// <summary>เปิด dialog เลือกไฟล์ .db3 (พิมพ์ UNC \\ip\share ได้) แล้วใส่ผลลง TextBox ที่ระบุ</summary>
-        private void BrowseInto(TextBox target)
+        private void BrowseFolder(TextBox target, Label statusLabel, string requiredTable)
         {
-            using (var dlg = new OpenFileDialog())
+            using var dlg = new FolderBrowserDialog
             {
-                dlg.Filter = "SQLite Database (*.db3)|*.db3|All Files (*.*)|*.*";
-                dlg.Title = "เลือกไฟล์ CPI Database (.db3)";
+                Description = "เลือกโฟลเดอร์ซอฟต์แวร์ UV Inkjet (เช่น uvinkjet-250702-new)",
+                ShowNewFolderButton = false
+            };
 
-                if (!string.IsNullOrEmpty(target.Text))
-                {
-                    try
-                    {
-                        string dir = Path.GetDirectoryName(target.Text);
-                        if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
-                            dlg.InitialDirectory = dir;
-                    }
-                    catch { /* path แปลก ๆ ก็ปล่อยให้เปิด default */ }
-                }
+            if (!string.IsNullOrEmpty(target.Text) && Directory.Exists(target.Text))
+                dlg.SelectedPath = target.Text;
 
-                if (dlg.ShowDialog() == DialogResult.OK)
-                    target.Text = dlg.FileName;
+            if (dlg.ShowDialog() != DialogResult.OK) return;
+
+            target.Text = dlg.SelectedPath;
+            var warnings = ValidateFolder(dlg.SelectedPath, requiredTable);
+            ValidateAndShowStatus(dlg.SelectedPath, statusLabel, requiredTable);
+
+            if (warnings.Count > 0)
+            {
+                MessageBox.Show(
+                    string.Join("\n\n", warnings),
+                    "ตรวจพบปัญหา", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
-        // ================= SAVE =================
+        private System.Collections.Generic.List<string> ValidateFolder(string folder, string requiredTable)
+        {
+            var warnings = new System.Collections.Generic.List<string>();
+            if (string.IsNullOrEmpty(folder)) return warnings;
+
+            string cpiPath = Path.Combine(folder, REL_CPI);
+            string defaultUvdx = Path.Combine(folder, REL_DEFAULT_UVDX);
+
+            if (!File.Exists(cpiPath))
+                warnings.Add($"ไม่พบ CPI.db3:\n{cpiPath}");
+            else if (!HasTable(cpiPath, requiredTable))
+                warnings.Add($"CPI.db3 ไม่มีตาราง '{requiredTable}':\n{cpiPath}");
+
+            if (!File.Exists(defaultUvdx))
+                warnings.Add($"ไม่พบ default.uvdx:\n{defaultUvdx}\n\nกรุณาเพิ่มไฟล์ default.uvdx ในโฟลเดอร์ document");
+
+            return warnings;
+        }
+
+        private void ValidateAndShowStatus(string folder, Label statusLabel, string requiredTable)
+        {
+            if (string.IsNullOrEmpty(folder))
+            {
+                statusLabel.Text = "";
+                return;
+            }
+
+            var warnings = ValidateFolder(folder, requiredTable);
+            if (warnings.Count == 0)
+            {
+                statusLabel.Text = "✓ CPI.db3 + default.uvdx พร้อมใช้งาน";
+                statusLabel.ForeColor = System.Drawing.Color.Green;
+            }
+            else
+            {
+                statusLabel.Text = $"⚠ พบ {warnings.Count} ปัญหา";
+                statusLabel.ForeColor = System.Drawing.Color.Red;
+            }
+        }
+
         private void btnSave_Click(object sender, EventArgs e)
         {
-            string db1 = txtUv1Db.Text.Trim();
-            string db2 = txtUv2Db.Text.Trim();
+            string f1 = txtUv1Folder.Text.Trim();
+            string f2 = txtUv2Folder.Text.Trim();
 
-            // validate เฉพาะช่อง CPI.db3 ที่กรอก (เว้นว่างได้ถ้าเครื่องนั้นไม่ใช้)
-            if (!ValidateDbPath(db1, TABLE_UV1, "UV1")) return;
-            if (!ValidateDbPath(db2, TABLE_UV2, "UV2")) return;
+            if (!string.IsNullOrEmpty(f1) && !Directory.Exists(f1))
+            {
+                MessageBox.Show($"[UV1] ไม่พบโฟลเดอร์:\n{f1}", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (!string.IsNullOrEmpty(f2) && !Directory.Exists(f2))
+            {
+                MessageBox.Show($"[UV2] ไม่พบโฟลเดอร์:\n{f2}", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
-            // IP/Port
             CustomSettingsManager.SetValue(KEY_UV1_IP, txtUv1Ip.Text.Trim());
             CustomSettingsManager.SetValue(KEY_UV1_PORT, txtUv1Port.Text.Trim());
             CustomSettingsManager.SetValue(KEY_UV2_IP, txtUv2Ip.Text.Trim());
             CustomSettingsManager.SetValue(KEY_UV2_PORT, txtUv2Port.Text.Trim());
 
-            // CPI.db3 path
-            UvSettingsManager.SetValue(KEY_UV1_DB, db1);
-            UvSettingsManager.SetValue(KEY_UV2_DB, db2);
+            UvSettingsManager.SetValue(KEY_UV1_FOLDER, f1);
+            UvSettingsManager.SetValue(KEY_UV2_FOLDER, f2);
 
-            MessageBox.Show("บันทึกเรียบร้อย", "Save",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
+            // backward compat: เก็บ CPI path แบบเดิมด้วยเพื่อให้ส่วนอื่นยังอ่านได้
+            if (!string.IsNullOrEmpty(f1))
+                UvSettingsManager.SetValue("UV1DB3_PATH", Path.Combine(f1, REL_CPI));
+            if (!string.IsNullOrEmpty(f2))
+                UvSettingsManager.SetValue("UV1DB3_PATH_2", Path.Combine(f2, REL_CPI));
 
-        /// <summary>ตรวจไฟล์ CPI.db3 ที่กรอก: ต้องมีอยู่จริง + มีตารางที่ต้องการ (ช่องว่าง = ผ่าน)</summary>
-        private bool ValidateDbPath(string path, string requiredTable, string label)
-        {
-            if (string.IsNullOrEmpty(path)) return true;
-
-            if (!File.Exists(path))
-            {
-                MessageBox.Show($"[{label}] ไม่พบไฟล์:\n{path}", "Warning",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return false;
-            }
-
-            if (!HasTable(path, requiredTable))
-            {
-                MessageBox.Show(
-                    $"[{label}] ไฟล์ Database ไม่มีตาราง '{requiredTable}'\n\n" +
-                    $"ไฟล์: {path}\n\n" +
-                    $"กรุณาเลือกไฟล์ CPI.db3 ที่มีตาราง {requiredTable}",
-                    $"ตาราง {requiredTable} ไม่พบ",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return false;
-            }
-
-            return true;
+            MessageBox.Show("บันทึกเรียบร้อย", "Save", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private bool HasTable(string dbPath, string tableName)
@@ -129,16 +153,29 @@ namespace InkjetOperator
                 cmd.Parameters.AddWithValue("@t", tableName);
                 return cmd.ExecuteScalar() != null;
             }
-            catch
-            {
-                return false;
-            }
+            catch { return false; }
         }
 
-        // ================= CANCEL =================
-        private void btnCancel_Click(object sender, EventArgs e)
+        private void btnCancel_Click(object sender, EventArgs e) => LoadData();
+
+        // ── static helpers สำหรับหน้าอื่นเรียกใช้ ──
+
+        public static string? GetCpiPath(int uvNumber)
         {
-            LoadData();
+            string key = uvNumber == 1 ? "UV1_FOLDER" : "UV2_FOLDER";
+            string? folder = UvSettingsManager.GetValue(key);
+            if (string.IsNullOrEmpty(folder)) return null;
+            string path = Path.Combine(folder, REL_CPI);
+            return File.Exists(path) ? path : null;
+        }
+
+        public static string? GetDocumentFolder(int uvNumber)
+        {
+            string key = uvNumber == 1 ? "UV1_FOLDER" : "UV2_FOLDER";
+            string? folder = UvSettingsManager.GetValue(key);
+            if (string.IsNullOrEmpty(folder)) return null;
+            string docPath = Path.Combine(folder, REL_DOCUMENT);
+            return Directory.Exists(docPath) ? docPath : null;
         }
     }
 }

@@ -75,8 +75,8 @@ namespace InkjetOperator
                 // โหมด 5: Developer / Admin (เห็นทุกเมนู)
                 5 => true,
 
-                // โหมด 99: หน้าเทสหน้างานอย่างเดียว (DB3 + Socket) — ลูกค้าเห็นแค่นี้
-                99 => menu switch { "test" or "testplc" => true, _ => false },
+                // โหมด 99: หน้าเทสหน้างานอย่างเดียว (DB3 + Socket + UV Setting)
+                99 => menu switch { "test" or "testplc" or "uvsetting" => true, _ => false },
 
                 _ => false
             };

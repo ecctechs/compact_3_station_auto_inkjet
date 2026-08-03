@@ -21,6 +21,7 @@ namespace InkjetOperator
         private ucST3? _ucST3;
         private ucTestConnection? _ucTest;
         private ucTestPLC? _ucTestPlc;
+        private ucSettingUV? _ucSettingUV;
 
         // เก็บ reference ของปุ่มเมนู
         private Button? _btnInput;
@@ -31,6 +32,7 @@ namespace InkjetOperator
         private Button? _btnST3;
         private Button? _btnTest;
         private Button? _btnTestPlc;
+        private Button? _btnUvSetting;
         private static readonly string ConfigPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appconfig.json");
 
         public Form1()
@@ -182,6 +184,14 @@ namespace InkjetOperator
                 index++;
             }
 
+            // UV Printer Setting (โหมด 99)
+            if (_config.ShouldShowMenu("uvsetting"))
+            {
+                _btnUvSetting = CreateMenuButton("UV Setting", x, index == 0);
+                _btnUvSetting.Click += (s, e) => { ShowUvSetting(); SetActiveButton(_btnUvSetting); };
+                x += 190;
+                index++;
+            }
 
             // อัปเดตข้อความ title ตาม config
             this.Text = _config.AppName;
@@ -311,6 +321,17 @@ namespace InkjetOperator
             pnlContent.Controls.Add(_ucTestPlc);
 
             SetActiveButton(_btnTestPlc);
+        }
+
+        private void ShowUvSetting()
+        {
+            pnlContent.Controls.Clear();
+
+            _ucSettingUV ??= new ucSettingUV();
+            _ucSettingUV.Dock = DockStyle.Fill;
+            pnlContent.Controls.Add(_ucSettingUV);
+
+            SetActiveButton(_btnUvSetting);
         }
 
         private void ShowSt3()
