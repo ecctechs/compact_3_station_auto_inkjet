@@ -32,17 +32,16 @@ namespace InkjetOperator
 
         private void PrefillRegisters()
         {
-            AddRegisterRow(0, 9, "D5000", "D5009", "Model Name", "String", 64);
+            AddRegisterRow(5000, 5009, "D5000", "D5009", "Model Name", "String", 64);
             for (int i = 0; i < 10; i++)
             {
-                int addr = 10 + i * 2;
                 int plc = 5010 + i * 2;
-                AddRegisterRow(addr, addr + 1, $"D{plc}", $"D{plc + 1}", $"Speed Conveyor {i + 1}", "Int", 32);
+                AddRegisterRow(plc, plc + 1, $"D{plc}", $"D{plc + 1}", $"Speed Conveyor {i + 1}", "Int", 32);
             }
-            AddRegisterRow(30, 31, "D5030", "D5031", "Speed IAI 1", "Int", 32);
-            AddRegisterRow(32, 33, "D5032", "D5033", "Position IAI 1", "Int", 32);
-            AddRegisterRow(34, 35, "D5034", "D5035", "Speed IAI 2", "Int", 32);
-            AddRegisterRow(36, 37, "D5036", "D5037", "Position IAI 2", "Int", 32);
+            AddRegisterRow(5030, 5031, "D5030", "D5031", "Speed IAI 1", "Int", 32);
+            AddRegisterRow(5032, 5033, "D5032", "D5033", "Position IAI 1", "Int", 32);
+            AddRegisterRow(5034, 5035, "D5034", "D5035", "Speed IAI 2", "Int", 32);
+            AddRegisterRow(5036, 5037, "D5036", "D5037", "Position IAI 2", "Int", 32);
         }
 
         private void AddRegisterRow(int addrStart, int addrStop, string plcStart, string plcStop,
