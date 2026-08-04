@@ -7,6 +7,9 @@ const {
   ConveyorSpeed,
   ServoConfig,
 } = require("../model/patternModel");
+const { UVInkjet } = require("../model/uvInkjetModel");
+const { UvJobData } = require("../model/uvJobDataModel");
+const sequelize = require("../database");
 const { parseBarcode, resolveTemplates } = require("../utils/templateResolver");
 
 const PATTERN_INCLUDE = [
@@ -33,40 +36,22 @@ class JobController {
         customer_name,
         type,
         qty,
-        pattern_id,
         lot_number,
         created_by,
         st_status
       } = req.body;
 
-      let resolvedPatternId = pattern_id;
-      let warning = null;
-
-      // ใช้ barcode ทั้งก้อนหา Pattern (ไม่ตัด '-' แล้ว)
-      if (!pattern_id && barcode_raw) {
-        const pattern = await Pattern.findOne({
-          where: { barcode: barcode_raw, is_active: true },
-        });
-
-        if (pattern) {
-          resolvedPatternId = pattern.id;
-        } else {
-          warning = `No pattern found for barcode "${barcode_raw}"`;
-        }
-      }
-
+      // job ถูกสร้างก่อน แล้ว client ค่อยสร้าง pattern ผูกกลับมาด้วย job_id
       const job = await PrintJob.create({
         barcode_raw,
         order_no,
         customer_name,
         type,
         qty,
-        pattern_id: resolvedPatternId,
         pattern_no_erp: barcode_raw,
         lot_number: lot_number || barcode_raw,
         created_by,
         st_status,
-        warning,
       });
 
       return ResponseManager.SuccessResponse(req, res, 201, job);
@@ -216,16 +201,9 @@ static async getResolved(req, res) {
       if (!job) {
         return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
       }
-      if (!job.pattern_id) {
-        return ResponseManager.ErrorResponse(
-          req,
-          res,
-          400,
-          "Job has no associated pattern"
-        );
-      }
 
-      const pattern = await Pattern.findByPk(job.pattern_id, {
+      const pattern = await Pattern.findOne({
+        where: { job_id: job.id },
         include: PATTERN_INCLUDE,
       });
       if (!pattern) {
@@ -233,7 +211,7 @@ static async getResolved(req, res) {
           req,
           res,
           404,
-          "Associated pattern not found"
+          "Job has no associated pattern"
         );
       }
 
@@ -320,6 +298,50 @@ static async getResolved(req, res) {
       return ResponseManager.CatchResponse(req, res, err.message);
     }
   }
+
+  /**
+   * DELETE /job/remove/:id
+   * ลบ job ใบเดียว — pattern, configs, text_blocks, servo, conveyor,
+   * command log, UV log, UV detail หายตามด้วย FK CASCADE ทั้งหมด
+   */
+  static async remove(req, res) {
+    const t = await sequelize.transaction();
+    try {
+      const job = await PrintJob.findByPk(req.params.id, { transaction: t });
+      if (!job) {
+        await t.rollback();
+        return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
+      }
+
+      const jobId = job.id;
+
+      // นับไว้ก่อนลบ เพื่อรายงานให้ operator เห็นว่าอะไรหายไปบ้าง
+      const [commands, uvInkjets, uvJobData, patterns] = await Promise.all([
+        PrintJobCommand.count({ where: { job_id: jobId }, transaction: t }),
+        UVInkjet.count({ where: { print_jobs_id: jobId }, transaction: t }),
+        UvJobData.count({ where: { print_jobs_id: jobId }, transaction: t }),
+        Pattern.count({ where: { job_id: jobId }, transaction: t }),
+      ]);
+
+      await job.destroy({ transaction: t });
+      await t.commit();
+
+      return ResponseManager.SuccessResponse(req, res, 200, {
+        message: `Job ${jobId} deleted`,
+        deleted: {
+          job: 1,
+          pattern: patterns,
+          commands,
+          uv_inkjets: uvInkjets,
+          uv_job_data: uvJobData,
+        },
+      });
+    } catch (err) {
+      await t.rollback();
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
   // ==================== LastSentJob (Station 3) ====================
 
   /**

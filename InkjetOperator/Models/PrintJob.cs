@@ -20,9 +20,6 @@ public class PrintJob
     [JsonPropertyName("qty")]
     public int Qty { get; set; }
 
-    [JsonPropertyName("pattern_id")]
-    public int? PatternId { get; set; }
-
     [JsonPropertyName("lot_number")]
     public string? LotNumber { get; set; }
 

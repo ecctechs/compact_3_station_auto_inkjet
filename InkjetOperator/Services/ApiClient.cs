@@ -199,6 +199,33 @@ namespace InkjetOperator.Services
             }
         }
 
+        // =========================
+        // DELETE JOB
+        // =========================
+        /// <summary>ลบ job — pattern, configs, command log, UV log หายตามด้วย CASCADE</summary>
+        public async Task<bool> DeleteJobAsync(int jobId)
+        {
+            try
+            {
+                var response = await _http.DeleteAsync($"/job/remove/{jobId}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    LastError = $"[HTTP {(int)response.StatusCode}] {await response.Content.ReadAsStringAsync()}";
+                    Debug.WriteLine("DeleteJob failed: " + LastError);
+                    return false;
+                }
+
+                LastError = "";
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LastError = ex.Message;
+                Debug.WriteLine("DeleteJob error: " + ex.Message);
+                return false;
+            }
+        }
+
         public async Task<bool> CreatePatternAsync(PatternDetail request)
         {
             try

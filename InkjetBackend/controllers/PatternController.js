@@ -70,11 +70,16 @@ class PatternController {
     }
   }
 
+  /**
+   * GET /pattern/lookup/:barcode
+   * barcode ซ้ำได้ → คืนตัวล่าสุด (สำเนาของ job ที่ register ทีหลังสุด)
+   */
   static async lookup(req, res) {
     try {
       const pattern = await Pattern.findOne({
         where: { barcode: req.params.barcode, is_active: true },
         include: PATTERN_INCLUDE,
+        order: [["id", "DESC"]],
       });
 
       if (!pattern) {
@@ -92,23 +97,27 @@ class PatternController {
     }
   }
 
+  /**
+   * POST /pattern/create
+   * สร้าง pattern เป็นสำเนาของค่าที่ใช้พิมพ์ ผูกกับ job หนึ่งใบ
+   * barcode ซ้ำได้ — lot เดิม register ใหม่ต้องได้ข้อมูลล่าสุดเสมอ
+   */
   static async create(req, res) {
     const t = await sequelize.transaction();
     try {
-      const { barcode, description, inkjet_configs, conveyor_speeds, servo_configs } = req.body;
+      const {
+        job_id,
+        barcode,
+        description,
+        inkjet_configs,
+        conveyor_speeds,
+        servo_configs,
+      } = req.body;
 
-      const existing = await Pattern.findOne({ where: { barcode } });
-      if (existing) {
-        await t.rollback();
-        return ResponseManager.ErrorResponse(
-          req,
-          res,
-          400,
-          "Barcode already exists"
-        );
-      }
-
-      const pattern = await Pattern.create({ barcode, description }, { transaction: t });
+      const pattern = await Pattern.create(
+        { job_id, barcode, description },
+        { transaction: t }
+      );
 
       if (inkjet_configs) {
         for (const cfg of inkjet_configs) {

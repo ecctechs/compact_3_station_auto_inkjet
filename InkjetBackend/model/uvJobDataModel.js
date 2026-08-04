@@ -1,5 +1,6 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../database");
+const { PrintJob } = require("./jobModel");
 
 // UV job detail captured at register time (queried from print_data).
 // 2 rows per job: UV1 (Plate/MK063) + UV2 (Shim/MK067).
@@ -47,5 +48,14 @@ const UvJobData = sequelize.define(
   },
   { timestamps: true, createdAt: "created_at", updatedAt: "updated_at" }
 );
+
+// ลบ job แล้ว UV detail ต้องหายตาม
+PrintJob.hasMany(UvJobData, {
+  foreignKey: "print_jobs_id",
+  as: "uv_job_data",
+  onDelete: "CASCADE",
+  hooks: true,
+});
+UvJobData.belongsTo(PrintJob, { foreignKey: "print_jobs_id" });
 
 module.exports = { UvJobData };

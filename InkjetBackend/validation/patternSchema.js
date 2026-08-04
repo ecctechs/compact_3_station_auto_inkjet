@@ -41,6 +41,7 @@ const servoConfigSchema = z.object({
 });
 
 const createPatternSchema = z.object({
+  job_id: z.coerce.number().int().min(1),
   barcode: z.string().optional(),
   description: z.any().optional(),
   inkjet_configs: z.array(inkjetConfigSchema).optional(),

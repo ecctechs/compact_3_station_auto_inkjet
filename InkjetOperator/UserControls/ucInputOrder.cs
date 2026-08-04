@@ -175,63 +175,90 @@ namespace InkjetOperator
 
         private async void BtnOK_Click(object? sender, EventArgs e)
         {
-            // 0. Pre-flight: เช็ค Backend + DB ก่อนทำอะไรทั้งหมด
             btnOK.Enabled = false;
             try
             {
+                // 1. Pre-flight: เช็ค Backend + DB ก่อนทำอะไรทั้งหมด
                 if (!await CheckConnectionsAsync())
                     return;
+
+                // 2. Validate ข้อมูลหน้าจอ
+                if (!ValidateInput(out int qty))
+                    return;
+
+                string barcodeRaw = txtBarcode.Text.Trim();
+
+                // 3. ต้องมีข้อมูลใน inkjet_data (MK) หรือ print_data (UV) อย่างน้อยหนึ่ง
+                var pattern = await _sqliteService.GetPatternDetailAsync(barcodeRaw);
+                var uvRows = await _sqliteService.GetUvDetailAsync(barcodeRaw);
+
+                if (pattern == null && uvRows.Count == 0)
+                {
+                    MessageBox.Show(
+                        $"ไม่พบข้อมูล Barcode '{barcodeRaw}'\n\n" +
+                        "ไม่มีทั้งใน inkjet_data (MK) และ print_data (UV)\n\n" +
+                        "สาเหตุที่เป็นไปได้:\n" +
+                        "• ยังไม่ได้ลงทะเบียน lot_no นี้ในระบบ\n" +
+                        "• พิมพ์/สแกน Barcode ผิด\n" +
+                        "• ข้อมูลถูกลบหรือยังไม่ได้ Sync",
+                        "ไม่พบข้อมูล", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                await RegisterJobAsync(barcodeRaw, qty, pattern, uvRows);
             }
             finally
             {
                 btnOK.Enabled = true;
             }
+        }
 
-            // 1. Validate ข้อมูลทั้งหมดในฟังก์ชันเดียว
-            if (!ValidateInput(out int qty))
-                return;
-
-            string barcodeRaw = txtBarcode.Text.Trim();
-
-            // 2. ตรวจสอบข้อมูล: ต้องมีใน inkjet_data (MK) หรือ print_data (UV) อย่างน้อยหนึ่ง
-            var pattern = await _sqliteService.GetPatternDetailAsync(barcodeRaw);
-            var uvRows = await _sqliteService.GetUvDetailAsync(barcodeRaw);
-
-            if (pattern == null && uvRows.Count == 0)
+        /// <summary>
+        /// สร้าง job → สร้าง pattern (สำเนาค่าที่ใช้พิมพ์) ผูกกับ job → เก็บ UV detail
+        ///
+        /// ลำดับสำคัญ: job ต้องมาก่อน เพราะ pattern ผูกด้วย job_id
+        /// pattern ล้ม = ลบ job ทิ้ง ไม่ปล่อยงานที่ไม่มีค่าพิมพ์ค้างให้ operator กดส่ง
+        /// </summary>
+        private async Task RegisterJobAsync(string barcode, int qty,
+                                            PatternDetail? pattern, List<UvJobData> uvRows)
+        {
+            var job = await _api.CreateJobAsync(new CreateJobRequest
             {
-                MessageBox.Show(
-                    $"ไม่พบข้อมูล Barcode '{barcodeRaw}'\n\n" +
-                    "ไม่มีทั้งใน inkjet_data (MK) และ print_data (UV)\n\n" +
-                    "สาเหตุที่เป็นไปได้:\n" +
-                    "• ยังไม่ได้ลงทะเบียน lot_no นี้ในระบบ\n" +
-                    "• พิมพ์/สแกน Barcode ผิด\n" +
-                    "• ข้อมูลถูกลบหรือยังไม่ได้ Sync",
-                    "ไม่พบข้อมูล", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                BarcodeRaw = barcode,
+                OrderNo = txtOrderNo.Text,
+                CustomerName = txtCustomerName.Text,
+                Type = txtType.Text,
+                Qty = qty,
+                CreatedBy = "operator",
+                st_status = "0"
+            });
+
+            if (job == null)
+            {
+                MessageBox.Show($"สร้างงานไม่สำเร็จ:\n{_api.LastError}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            // งาน UV-only (ไม่มีแถวใน inkjet_data) → สร้าง pattern เปล่าไว้ link job
-            if (pattern == null)
-                pattern = new PatternDetail { Barcode = barcodeRaw };
+            // งาน UV-only ไม่มีข้อมูลใน inkjet_data → ผูก pattern เปล่าไว้ให้ครบโครงสร้าง
+            pattern ??= new PatternDetail { Barcode = barcode };
+            pattern.JobId = job.Id;
 
-            // 3. Sync Pattern ไปยัง Backend
-            string? patternError = await SyncPatternAsync(pattern, barcodeRaw);
+            string? patternError = await SyncPatternAsync(pattern, barcode);
             if (patternError != null)
             {
-                MessageBox.Show(patternError, "Pattern Sync Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                await _api.DeleteJobAsync(job.Id);
+                MessageBox.Show($"{patternError}\n\n(ยกเลิกงานที่สร้างไว้แล้ว)",
+                    "Pattern Sync Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            // 4. สร้าง Job
-            btnOK.Enabled = false;
-            try
-            {
-                await ProcessCreateJobAsync(barcodeRaw, qty);
-            }
-            finally
-            {
-                btnOK.Enabled = true;
-            }
+            // UV detail — ไม่มีก็ข้ามได้ ไม่ล้ม register
+            await SyncUvJobDataAsync(job.Id, barcode);
+
+            MessageBox.Show("Create job success", "Success",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            ClearForm();
         }
 
         /// <summary>Validate ข้อมูลหน้าจอทั้งหมด: Barcode, OrderNo, Qty, รูปแบบ Barcode</summary>
@@ -306,23 +333,13 @@ namespace InkjetOperator
         }
 
         /// <summary>
-        /// ทำความสะอาดข้อมูลและส่ง Pattern ไปยัง Backend
+        /// สร้าง pattern ใหม่เสมอ — 1 job มี 1 pattern เป็นสำเนาของตัวเอง
+        /// lot เดิม register ซ้ำจึงได้ค่าล่าสุดจาก inkjet_data ทุกครั้ง ไม่ใช้ของเก่าค้าง
+        /// คืน null = สำเร็จ, คืน string = สาเหตุที่ล้มเหลว (เอาไปโชว์ได้เลย)
         /// </summary>
-        /// <summary>คืน null = สำเร็จ, คืน string = สาเหตุที่ล้มเหลว (เอาไปโชว์ได้เลย)</summary>
         private async Task<string?> SyncPatternAsync(PatternDetail pattern, string pattern_barcode)
         {
-            // 1. ลองหาใน Backend ก่อนว่ามี Pattern นี้หรือยัง
-            var existing = await _api.GetPatternByBarcodeAsync(pattern_barcode);
-
-            // ถ้ามีอยู่แล้ว ไม่ต้อง Add ซ้ำ ให้ถือว่าการ Sync สำเร็จ (Ready)
-            if (existing != null)
-            {
-                Debug.WriteLine($"[SYNC] Pattern '{pattern_barcode}' already exists in backend. Skipping create.");
-                return null;
-            }
-
-            // 2. ถ้าไม่มีใน Backend → เตรียมข้อมูล MK (ถ้ามี) แล้วสร้าง pattern
-            //    งาน UV-only อาจไม่มี MK config → สร้าง pattern เปล่าได้ (ไม่ block การ register)
+            // งาน UV-only อาจไม่มี MK config → pattern เปล่าก็สร้างได้ ไม่ block การ register
             pattern.InkjetConfigs = (pattern.InkjetConfigs ?? new())
                 .Where(cfg => cfg.ProgramNumber.HasValue && cfg.ProgramNumber > 0)
                 .Select(cfg =>
@@ -333,8 +350,8 @@ namespace InkjetOperator
                     return cfg;
                 }).ToList();
 
-            // 3. ส่งไปที่ API เพื่อสร้าง Pattern ใหม่ (configs อาจว่าง = งาน UV-only)
-            Debug.WriteLine($"[SYNC] Creating pattern '{pattern_barcode}' with {pattern.InkjetConfigs.Count} MK config(s), " +
+            Debug.WriteLine($"[SYNC] Creating pattern '{pattern_barcode}' for job {pattern.JobId} — " +
+                $"{pattern.InkjetConfigs.Count} MK config(s), " +
                 $"conveyor={pattern.ConveyorSpeeds != null}, servos={pattern.ServoConfigs?.Count ?? 0}");
 
             bool ok = await _api.CreatePatternAsync(pattern);
@@ -342,48 +359,6 @@ namespace InkjetOperator
                 return $"สร้าง Pattern '{pattern_barcode}' ไม่สำเร็จที่ backend:\n{_api.LastError}";
 
             return null;
-        }
-
-        /// <summary>
-        /// จัดการสร้าง Job และเรียก Event แจ้งเตือน
-        /// </summary>
-        private async Task ProcessCreateJobAsync(string barcode, int qty)
-        {
-            var req = new CreateJobRequest
-            {
-                BarcodeRaw = barcode,
-                OrderNo = txtOrderNo.Text,
-                CustomerName = txtCustomerName.Text,
-                Type = txtType.Text,
-                Qty = qty,
-                CreatedBy = "operator",
-                st_status = "0"
-            };
-
-            var createdJob = await _api.CreateJobAsync(req);
-
-            if (createdJob != null)
-            {
-                // เก็บ UV detail (UV1/UV2) จาก print_data → backend เพื่อ poll preview ทีหลัง
-                await SyncUvJobDataAsync(createdJob.Id, barcode);
-
-                MessageBox.Show("Create job success", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                //BarcodeScanned?.Invoke(this, new BarcodeScanEventArgs
-                //{
-                //    Barcode = req.BarcodeRaw,
-                //    OrderNo = req.OrderNo,
-                //    CustomerName = req.CustomerName,
-                //    Type = req.Type,
-                //    Qty = req.Qty.ToString()
-                //});
-
-                ClearForm();
-            }
-            else
-            {
-                MessageBox.Show("Create job failed: ไม่สามารถสร้างงานในระบบหลักได้", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
         }
 
         /// <summary>query print_data (lot_no) → เก็บ UV detail (UV1/UV2) ลง backend ผูกกับ job — ไม่มีข้อมูล UV ก็ข้ามได้ ไม่ล้ม register</summary>

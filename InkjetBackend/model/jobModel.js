@@ -26,9 +26,6 @@ const PrintJob = sequelize.define(
     qty: {
       type: DataTypes.INTEGER,
     },
-    pattern_id: {
-      type: DataTypes.INTEGER,
-    },
     lot_number: {
       type: DataTypes.STRING,
     },
@@ -107,11 +104,23 @@ const PrintJobCommand = sequelize.define(
   { timestamps: false }
 );
 
-// Associations
-PrintJob.hasMany(PrintJobCommand, { foreignKey: "job_id", as: "commands" });
+// Associations — ลบ job แล้ว command log ต้องหายตาม
+PrintJob.hasMany(PrintJobCommand, {
+  foreignKey: "job_id",
+  as: "commands",
+  onDelete: "CASCADE",
+  hooks: true,
+});
 PrintJobCommand.belongsTo(PrintJob, { foreignKey: "job_id" });
 
-PrintJob.belongsTo(Pattern, { foreignKey: "pattern_id", as: "pattern" });
+// pattern เป็นลูกของ job — ลบ job แล้ว pattern + configs หายตามทุกช่องทาง
+PrintJob.hasOne(Pattern, {
+  foreignKey: "job_id",
+  as: "pattern",
+  onDelete: "CASCADE",
+  hooks: true,
+});
+Pattern.belongsTo(PrintJob, { foreignKey: "job_id" });
 
 // LastSentJob Model (Station 3 - Last Sent Jobs)
 const LastSentJob = sequelize.define(
@@ -171,6 +180,11 @@ const LastSentJob = sequelize.define(
 );
 
 // LastSentJob Associations
-LastSentJob.belongsTo(Pattern, { foreignKey: "pattern_id", as: "pattern" });
+// SET NULL: ST3 เก็บสำเนาข้อมูลของตัวเองอยู่แล้ว — pattern ถูกลบไปตาม job ก็ไม่ควรบล็อก
+LastSentJob.belongsTo(Pattern, {
+  foreignKey: "pattern_id",
+  as: "pattern",
+  onDelete: "SET NULL",
+});
 
 module.exports = { PrintJob, PrintJobCommand , LastSentJob };

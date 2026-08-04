@@ -12,6 +12,10 @@ namespace InkjetOperator.Models
         [JsonPropertyName("id")]
         public int Id { get; set; }
 
+        /// <summary>job ที่ pattern นี้เป็นสำเนาค่าให้ — ลบ job แล้ว pattern หายตาม</summary>
+        [JsonPropertyName("job_id")]
+        public int JobId { get; set; }
+
         [JsonPropertyName("barcode")]
         public string Barcode { get; set; } = "";
 

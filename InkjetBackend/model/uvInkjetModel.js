@@ -1,5 +1,6 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../database");
+const { PrintJob } = require("./jobModel");
 
 const UVInkjet = sequelize.define(
   "uv_inkjet",
@@ -50,5 +51,14 @@ const UVInkjet = sequelize.define(
   },
   { timestamps: true, createdAt: "created_at", updatedAt: "updated_at" }
 );
+
+// ลบ job แล้ว log การส่ง UV ต้องหายตาม
+PrintJob.hasMany(UVInkjet, {
+  foreignKey: "print_jobs_id",
+  as: "uv_inkjets",
+  onDelete: "CASCADE",
+  hooks: true,
+});
+UVInkjet.belongsTo(PrintJob, { foreignKey: "print_jobs_id" });
 
 module.exports = { UVInkjet };
