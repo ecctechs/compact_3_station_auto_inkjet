@@ -22,7 +22,6 @@ namespace InkjetOperator
 
         /// <summary>ใช้จำว่า first load เพื่อ auto-select row แรกครั้งเดียว</summary>
         private bool _isFirstLoad = true;
-        private BindingSource _activeSource;
 
         /// <summary>UV detail (UV1/UV2) ของงานที่เลือกล่าสุด — ใช้ตอนกดส่ง/เทส M2</summary>
         private List<UvJobData> _uvPreview = new();
@@ -608,7 +607,6 @@ namespace InkjetOperator
         {
             if (e.RowIndex < 0) return;
             await LoadJobDetailAsync(bindingSource1);
-            disable_button(bindingSource1);
         }
 
         private void dgvConfigs_CellClick(object sender, DataGridViewCellEventArgs e)
@@ -703,8 +701,6 @@ namespace InkjetOperator
                 await get_job_completed();
                 get_uv();
 
-                // disable_button ทำงานหลังข้อมูลพร้อมแล้ว
-                disable_button();
             }
             catch (Exception ex)
             {
@@ -1004,93 +1000,132 @@ namespace InkjetOperator
 
         private async void btnSendUV1_Click(object sender, EventArgs e)
         {
-            await SendUvPrintAsync("UV Printer 1", "2", btnSendUV1);
+            await SendUvPrintAsync("UV Printer 1", "2", 1, "UV1", "MK063", btnSendUV1);
         }
 
         private async void btnSendUV2_Click_1(object sender, EventArgs e)
         {
-            await SendUvPrintAsync("UV Printer 2", "5", btnSendUV2);
+            await SendUvPrintAsync("UV Printer 2", "5", 2, "UV2", "MK067", btnSendUV2);
         }
 
-        /// <summary>ส่งข้อมูล UV Print (ใช้ร่วมกันระหว่าง UV1 และ UV2)</summary>
-        private async Task SendUvPrintAsync(string inkjetName, string station, Button senderButton)
+        private async Task SendUvPrintAsync(string inkjetName, string station, int uvNumber,
+            string machineName, string table, Button senderButton)
         {
-            // 1. ดึง Job จาก BindingSource หลัก (รายการ Job)
+            // 1. ดึง Job
             if (bindingSource1.Current is not PrintJob selectedJob)
             {
                 MessageBox.Show(Lang.Get("msg.select_job"));
                 return;
             }
 
-            // Check เบื้องต้นก่อนเริ่มทำงาน (ป้องกัน Logic หลุด)
             if (selectedJob.Station == "2" || selectedJob.Station == "5")
             {
                 MessageBox.Show("รายการนี้ส่งข้อมูลเรียบร้อยแล้ว ไม่สามารถส่งซ้ำได้", "แจ้งเตือน");
                 return;
             }
 
-            // ยืนยันก่อนส่ง
+            // 2. ดึง UV data จาก _uvPreview
+            var uvData = _uvPreview?.FirstOrDefault(u => u.Machine == machineName);
+            if (uvData == null)
+            {
+                MessageBox.Show($"ยังไม่มีข้อมูล {machineName} ของงานที่เลือก\n(เลือกงานที่มีข้อมูล UV ก่อน)",
+                    inkjetName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // 3. Validate UV Setting
+            string? cpiPath = ucSettingUV.GetCpiPath(uvNumber);
+            if (cpiPath == null)
+            {
+                MessageBox.Show($"ยังไม่ได้ตั้งค่าโฟลเดอร์ UV{uvNumber} ในหน้า UV Setting\nหรือไม่พบ CPI.db3",
+                    inkjetName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string? docFolder = ucSettingUV.GetDocumentFolder(uvNumber);
+            if (docFolder == null)
+            {
+                MessageBox.Show($"ไม่พบโฟลเดอร์ document สำหรับ UV{uvNumber}\nกรุณาตรวจสอบ UV Setting",
+                    inkjetName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // 4. Resolve program
+            string programName = uvData.ProgramName ?? "";
+            string? resolved = string.IsNullOrEmpty(programName)
+                ? "default"
+                : ResolveUvProgram(programName, docFolder);
+            if (resolved == null) return;
+
+            // 5. ยืนยันก่อนส่ง
             var confirm = MessageBox.Show(
-                $"ต้องการส่งข้อมูลไปยัง {inkjetName}\nJob ID: {selectedJob.Id}\nBarcode: {selectedJob.BarcodeRaw}",
+                $"ต้องการส่งข้อมูลไปยัง {inkjetName}\n" +
+                $"Job ID: {selectedJob.Id}\n" +
+                $"Barcode: {selectedJob.BarcodeRaw}\n" +
+                $"Program: {resolved}.uvdx",
                 "ยืนยันการส่ง", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (confirm != DialogResult.Yes) return;
 
-            // 2. ดึงข้อมูลจาก bindingSourceUVinkjet แถวที่ 1 (Index 0)
-            // ตรวจสอบก่อนว่าใน List มีข้อมูลอย่างน้อย 1 แถวหรือไม่
-            if (bindingSourceUVinkjet.Count == 0)
-            {
-                MessageBox.Show("ไม่พบข้อมูล Config ของเครื่องพิมพ์");
-                return;
-            }
-            //MessageBox.Show($"กำลังส่งข้อมูลการพิมพ์ UV สำหรับ Job ID: {selectedJob.Id}"); // Debugging Message
-
-            // ดึงข้อมูลแถวที่ 1 มาเก็บไว้ในตัวแปร (สมมติว่า Model คือ InkjetConfigDto)
-            var firstConfig = bindingSourceUVinkjet[0] as UVinkjet;
-
-            if (firstConfig == null) return;
-
-            // เตรียมตัวแปร (อ้างอิงตาม Property ใน InkjetConfigDto และ PrintJob)
-            string currentLot1 = firstConfig.Lot ?? "";
-            string currentName1 = firstConfig.Name ?? "";
-            string programName1 = firstConfig.ProgramName ?? "";
-
-            MessageBox.Show($"ข้อมูลที่จะส่ง: Lot={currentLot1}, Name={currentName1}, Program={programName1}"); // Debugging Message
-
-            // 3. เตรียมข้อมูลส่ง API
-            var uvRequest = new UVinkjet
-            {
-                PrintJobsId = selectedJob.Id,
-                InkjetName = inkjetName,
-                Lot = currentLot1,
-                Name = currentName1,
-                ProgramName = programName1,
-                Status = "printing",
-                Station = station
-            };
-
-            // 4. เรียก API บันทึกข้อมูล
-            senderButton.Enabled = false; // ป้องกันการกดซ้ำระหว่างรอ Network
+            senderButton.Enabled = false;
             try
             {
-                bool isSaved = await _api.CreateUvInkjetAsync(uvRequest);
+                var results = new List<string>();
 
+                // Step A: เขียน CPI.db3
+                var (writeOk, writeMsg) = await _sqliteService.WriteUvToCpiAsync(cpiPath, table, uvData);
+                results.Add($"เขียน CPI.db3: {writeMsg}");
+                if (!writeOk)
+                {
+                    MessageBox.Show(string.Join("\n", results), inkjetName,
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Step B: TCP KEY:85 โหลดโปรแกรม + start
+                string ip = CustomSettingsManager.GetValue(uvNumber == 1 ? "UV001_IP" : "UV002_IP") ?? "";
+                int port = ParsePort(CustomSettingsManager.GetValue(uvNumber == 1 ? "UV001_PORT" : "UV002_PORT"));
+                var (tcpOk, tcpLog) = await _uvTcp.LoadAndStartAsync(ip, port, resolved);
+                results.Add($"TCP: {tcpLog}");
+                if (!tcpOk)
+                {
+                    MessageBox.Show(string.Join("\n\n", results), inkjetName,
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Step C: บันทึก API
+                var uvRequest = new UVinkjet
+                {
+                    PrintJobsId = selectedJob.Id,
+                    InkjetName = inkjetName,
+                    Lot = uvData.Lot ?? "",
+                    Name = uvData.Name ?? "",
+                    ProgramName = resolved,
+                    Status = "printing",
+                    Station = station
+                };
+
+                bool isSaved = await _api.CreateUvInkjetAsync(uvRequest);
                 if (isSaved)
                 {
                     int stStatus = int.Parse(station);
-                    var updatePayload = new { st_status = stStatus };
-                    bool isJobUpdated = await _api.UpdateJobAsync(selectedJob.Id, updatePayload);
+                    await _api.UpdateJobAsync(selectedJob.Id, new { st_status = stStatus });
+                    results.Add("บันทึก API สำเร็จ");
 
-                    Debug.WriteLine("บันทึกข้อมูลการพิมพ์ UV สำเร็จ");
-                    // อาจจะเพิ่ม MessageBox แสดงความยินดีที่นี่
+                    MessageBox.Show(string.Join("\n\n", results), inkjetName,
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
                 {
-                    MessageBox.Show("ไม่สามารถบันทึกสถานะการพิมพ์ได้ (Server Error)");
+                    results.Add("ไม่สามารถบันทึกสถานะการพิมพ์ได้ (Server Error)");
+                    MessageBox.Show(string.Join("\n\n", results), inkjetName,
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"เกิดข้อผิดพลาด: {ex.Message}");
+                MessageBox.Show($"เกิดข้อผิดพลาด: {ex.Message}", inkjetName,
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
@@ -1200,56 +1235,16 @@ namespace InkjetOperator
             }
         }
 
-        private void disable_button(BindingSource? source = null)
-        {
-            // ถ้าระบุ source → จำไว้เป็น active
-            if (source != null)
-                _activeSource = source;
-
-            // ใช้ source ล่าสุดที่ user เลือก (fallback เป็น bindingSource1)
-            var src = _activeSource ?? bindingSource1;
-            var selectedJob = src.Current as PrintJob;
-
-            if (selectedJob == null)
-            {
-                SetAllButtons(false);
-                return;
-            }
-
-            if (!int.TryParse(selectedJob.Station?.ToString(), out int station))
-            {
-                SetAllButtons(false);
-                return;
-            }
-
-            btnSendMk1Mk2.Enabled = station == 0;
-            btnSendUV1.Enabled = station == 1 || station == 2;
-
-            btnSendUV2.Enabled = station == 4;
-        }
-
-
-        // ฟังก์ชันเสริมสำหรับเคลียร์สถานะปุ่ม
-        private void SetAllButtons(bool isEnabled)
-        {
-            btnSendMk1Mk2.Enabled = isEnabled;
-            btnSendUV1.Enabled = isEnabled;
-
-            btnSendUV2.Enabled = isEnabled;
-        }
-
         private async void dataGridView2_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
             await LoadJobDetailAsync(bindingSourceJobSt3);
-            disable_button(bindingSourceJobSt3);
         }
 
         private async void dgvHistory_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
             await LoadJobDetailAsync(bindingSourceJobCompleted);
-            disable_button(bindingSourceJobCompleted);
         }
     }
 }
