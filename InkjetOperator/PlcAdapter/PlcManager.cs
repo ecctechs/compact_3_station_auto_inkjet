@@ -53,7 +53,7 @@ public class PlcManager
     /// From plc_interface.py write_servo(): writes 4 registers (position, post_act, delay, trigger).
     /// Command format TBD — currently stubbed.
     /// </summary>
-    public Task<bool> WriteServoAsync(int ordinal, int position, int postAct, int delay, int trigger)
+    public Task<bool> WriteServoAsync(int ordinal, int position, double postAct, double delay, int trigger)
     {
         // TODO: Implement when PLC TCP command format is provided by subcontractor
         Console.WriteLine($"PLC WriteServo stub: ordinal={ordinal} pos={position} postAct={postAct} delay={delay} trigger={trigger}");

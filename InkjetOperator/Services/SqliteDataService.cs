@@ -70,16 +70,59 @@ namespace InkjetOperator.Services
                 using var reader = (SQLiteDataReader)await cmd.ExecuteReaderAsync();
                 if (!await reader.ReadAsync()) return null;
 
-                return new PatternDetail
+                var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                for (int i = 0; i < reader.FieldCount; i++)
+                    columns.Add(reader.GetName(i));
+
+                Debug.WriteLine($"[DB] inkjet_data columns: {string.Join(", ", columns.OrderBy(c => c))}");
+
+                var detail = new PatternDetail
                 {
                     Barcode = GetStr(reader, "lot_no") ?? barcode,
-                    Description = GetStr(reader, "model_plan_code") ?? GetStr(reader, "program_name") ?? "",
+                    Description = GetStr(reader, "รุ่น_รหัสแผน") ?? GetStr(reader, "program_name") ?? "",
                     InkjetConfigs = new List<InkjetConfigDto>
-            {
-                BuildMk(reader, "mk1_", 1, "program_name"),
-                BuildMk(reader, "mk2_", 2, "program_name3")
-            }
+                    {
+                        BuildMk(reader, "mk1_", 1, "program_name",
+                            "การหน่วง_ทริกเกอร์", "ความสูง", "ความกว้าง", "ทิศทางของข้อความ", "สเกลด้านข้าง"),
+                        BuildMk(reader, "mk2_", 2, "program_name3",
+                            "การหน่วง_ทริกเกอร์12", "ความสูง13", "ความกว้าง14", "ทิศทางของข้อความ15", "สเกลด้านข้าง")
+                    }
                 };
+
+                if (columns.Contains("สายพาน1_inkjet"))
+                {
+                    detail.ConveyorSpeeds = new ConveyorSpeedDto
+                    {
+                        Speed1 = GetInt(reader, "สายพาน1_inkjet"),
+                        Speed2 = GetInt(reader, "สายพาน2_feed_เข้า_inkjet"),
+                        Speed3 = GetInt(reader, "สายพาน3"),
+                    };
+                }
+
+                var servos = new List<ServoConfigDto>();
+                if (columns.Contains("pos_act"))
+                {
+                    servos.Add(new ServoConfigDto
+                    {
+                        Ordinal = 1,
+                        PostAct = GetDouble(reader, "pos_act"),
+                        Delay = GetDouble(reader, "delay"),
+                    });
+                }
+                if (columns.Contains("pos_act_16"))
+                {
+                    servos.Add(new ServoConfigDto
+                    {
+                        Ordinal = 2,
+                        PostAct = GetDouble(reader, "pos_act_16"),
+                        Delay = GetDouble(reader, "delay17"),
+                    });
+                }
+                Debug.WriteLine($"[DB] servo count={servos.Count}, has pos_act={columns.Contains("pos_act")}, has pos_act_16={columns.Contains("pos_act_16")}");
+                if (servos.Count > 0)
+                    detail.ServoConfigs = servos;
+
+                return detail;
             }
             catch (SQLiteException ex)
             {
@@ -93,17 +136,18 @@ namespace InkjetOperator.Services
             }
         }
 
-        private InkjetConfigDto BuildMk(SQLiteDataReader r, string pre, int ord, string pNameCol)
+        private InkjetConfigDto BuildMk(SQLiteDataReader r, string pre, int ord, string pNameCol,
+            string triggerDelayCol, string heightCol, string widthCol, string directionCol, string scaleSuffix)
         {
             return new InkjetConfigDto
             {
                 Ordinal = ord,
                 ProgramNumber = GetInt(r, $"{pre}program_no"),
                 ProgramName = GetStr(r, pNameCol),
-                Width = GetInt(r, $"{pre}width"),
-                Height = GetInt(r, $"{pre}height"),
-                TriggerDelay = GetInt(r, $"{pre}trigger_delay"),
-                Direction = GetInt(r, $"{pre}text_direction"),
+                Width = GetInt(r, widthCol),
+                Height = GetInt(r, heightCol),
+                TriggerDelay = GetInt(r, triggerDelayCol),
+                Direction = GetInt(r, directionCol),
                 TextBlocks = Enumerable.Range(1, 5)
                     .Select(b => new { b, txt = GetStr(r, $"{pre}block{b}_text") })
                     .Where(x => !string.IsNullOrEmpty(x.txt))
@@ -114,7 +158,7 @@ namespace InkjetOperator.Services
                         X = GetInt(r, $"{pre}block{x.b}_x"),
                         Y = GetInt(r, $"{pre}block{x.b}_y"),
                         Size = GetInt(r, $"{pre}block{x.b}_size"),
-                        Scale = GetInt(r, $"{pre}block{x.b}_scale_side")
+                        Scale = GetInt(r, $"{pre}block{x.b}_{scaleSuffix}")
                     }).ToList()
             };
         }
@@ -414,9 +458,8 @@ namespace InkjetOperator.Services
 
                         InkjetConfigs = new List<InkjetConfigDto>
                 {
-                    // *** จุดสำคัญ: เปลี่ยน "mk1_" เป็น "" (ค่าว่าง) ***
-                    // เพราะในตาราง mk3 ไม่มีคำว่า mk1_ นำหน้าคอลัมน์
-                    BuildMk(reader, "", 1, "program_name")
+                    BuildMk(reader, "", 1, "program_name",
+                        "trigger_delay", "height", "width", "text_direction", "scale_side")
                 }
                     };
                 }
@@ -429,10 +472,20 @@ namespace InkjetOperator.Services
             }
         }
 
-        private string GetStr(SQLiteDataReader r, string n) =>
-            r.IsDBNull(r.GetOrdinal(n)) ? null : r.GetValue(r.GetOrdinal(n)).ToString();
+        private string GetStr(SQLiteDataReader r, string n)
+        {
+            try
+            {
+                int ord = r.GetOrdinal(n);
+                return r.IsDBNull(ord) ? null : r.GetValue(ord).ToString();
+            }
+            catch (IndexOutOfRangeException) { return null; }
+        }
 
         private int? GetInt(SQLiteDataReader r, string n) =>
             int.TryParse(GetStr(r, n), out int res) ? res : (int?)null;
+
+        private double? GetDouble(SQLiteDataReader r, string n) =>
+            double.TryParse(GetStr(r, n), out double res) ? res : (double?)null;
     }
 }

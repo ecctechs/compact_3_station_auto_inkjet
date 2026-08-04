@@ -334,7 +334,8 @@ namespace InkjetOperator
                 }).ToList();
 
             // 3. ส่งไปที่ API เพื่อสร้าง Pattern ใหม่ (configs อาจว่าง = งาน UV-only)
-            Debug.WriteLine($"[SYNC] Creating pattern '{pattern_barcode}' with {pattern.InkjetConfigs.Count} MK config(s)...");
+            Debug.WriteLine($"[SYNC] Creating pattern '{pattern_barcode}' with {pattern.InkjetConfigs.Count} MK config(s), " +
+                $"conveyor={pattern.ConveyorSpeeds != null}, servos={pattern.ServoConfigs?.Count ?? 0}");
 
             bool ok = await _api.CreatePatternAsync(pattern);
             if (!ok)

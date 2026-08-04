@@ -183,10 +183,10 @@ public class ServoConfigDto
     public int? Position { get; set; }
 
     [JsonPropertyName("post_act")]
-    public int? PostAct { get; set; }
+    public double? PostAct { get; set; }
 
     [JsonPropertyName("delay")]
-    public int? Delay { get; set; }
+    public double? Delay { get; set; }
 
     [JsonPropertyName("trigger")]
     public int? Trigger { get; set; }

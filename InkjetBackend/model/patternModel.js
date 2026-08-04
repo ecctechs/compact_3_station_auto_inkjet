@@ -158,10 +158,10 @@ const ServoConfig = sequelize.define(
       type: DataTypes.INTEGER,
     },
     post_act: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.REAL,
     },
     delay: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.REAL,
     },
     trigger: {
       type: DataTypes.INTEGER,
