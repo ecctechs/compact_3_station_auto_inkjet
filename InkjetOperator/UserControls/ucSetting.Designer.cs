@@ -46,9 +46,9 @@ namespace InkjetOperator
             pnlMainContent.SuspendLayout();
             pnlMkPrinters.SuspendLayout();
             SuspendLayout();
-            //
+            // 
             // panelPcStation1
-            //
+            // 
             panelPcStation1.BackColor = Color.White;
             panelPcStation1.BorderStyle = BorderStyle.FixedSingle;
             panelPcStation1.Controls.Add(lblPcStatus);
@@ -62,9 +62,9 @@ namespace InkjetOperator
             panelPcStation1.Name = "panelPcStation1";
             panelPcStation1.Size = new Size(556, 211);
             panelPcStation1.TabIndex = 4;
-            //
+            // 
             // lblPcStatus
-            //
+            // 
             lblPcStatus.BackColor = Color.Gray;
             lblPcStatus.BorderStyle = BorderStyle.FixedSingle;
             lblPcStatus.Location = new Point(21, 84);
@@ -72,9 +72,9 @@ namespace InkjetOperator
             lblPcStatus.Name = "lblPcStatus";
             lblPcStatus.Size = new Size(21, 23);
             lblPcStatus.TabIndex = 0;
-            //
+            // 
             // btnPC2
-            //
+            // 
             btnPC2.FlatAppearance.BorderSize = 0;
             btnPC2.FlatStyle = FlatStyle.Flat;
             btnPC2.Font = new Font("Segoe UI", 9F);
@@ -84,9 +84,9 @@ namespace InkjetOperator
             btnPC2.Size = new Size(36, 41);
             btnPC2.TabIndex = 1;
             btnPC2.Text = "✎";
-            //
+            // 
             // lblPC2
-            //
+            // 
             lblPC2.BackColor = Color.Black;
             lblPC2.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblPC2.ForeColor = Color.White;
@@ -98,40 +98,40 @@ namespace InkjetOperator
             lblPC2.TabIndex = 2;
             lblPC2.Text = "IP Station 1";
             lblPC2.TextAlign = ContentAlignment.MiddleCenter;
-            //
+            // 
             // label3
-            //
+            // 
             label3.AutoSize = true;
             label3.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
             label3.Location = new Point(14, 16);
             label3.Margin = new Padding(4, 0, 4, 0);
             label3.Name = "label3";
-            label3.Size = new Size(75, 38);
+            label3.Size = new Size(80, 41);
             label3.TabIndex = 3;
             label3.Text = "PC 2";
-            //
+            // 
             // txtPcip
-            //
+            // 
             txtPcip.Font = new Font("Segoe UI", 10F);
             txtPcip.Location = new Point(129, 136);
             txtPcip.Margin = new Padding(4, 5, 4, 5);
             txtPcip.Name = "txtPcip";
-            txtPcip.Size = new Size(284, 31);
+            txtPcip.Size = new Size(284, 34);
             txtPcip.TabIndex = 4;
-            //
+            // 
             // label4
-            //
+            // 
             label4.AutoSize = true;
             label4.Font = new Font("Segoe UI", 10F);
             label4.Location = new Point(21, 140);
             label4.Margin = new Padding(4, 0, 4, 0);
             label4.Name = "label4";
-            label4.Size = new Size(106, 25);
+            label4.Size = new Size(112, 28);
             label4.TabIndex = 5;
             label4.Text = "IP Address :";
-            //
+            // 
             // pnlMainContent
-            //
+            // 
             pnlMainContent.BackColor = Color.White;
             pnlMainContent.Controls.Add(btnCancel);
             pnlMainContent.Controls.Add(panelPcStation1);
@@ -145,48 +145,48 @@ namespace InkjetOperator
             pnlMainContent.Padding = new Padding(29, 34, 29, 34);
             pnlMainContent.Size = new Size(1152, 939);
             pnlMainContent.TabIndex = 1;
-            //
+            // 
             // btnCancel
-            //
+            // 
             btnCancel.BackColor = Color.FromArgb(150, 150, 150);
             btnCancel.FlatAppearance.BorderSize = 0;
             btnCancel.FlatStyle = FlatStyle.Flat;
             btnCancel.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnCancel.ForeColor = Color.White;
-            btnCancel.Location = new Point(955, 873);
+            btnCancel.Location = new Point(822, 689);
             btnCancel.Margin = new Padding(4, 5, 4, 5);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(114, 53);
             btnCancel.TabIndex = 0;
             btnCancel.Text = "Cancel";
             btnCancel.UseVisualStyleBackColor = false;
-            //
+            // 
             // btnSave
-            //
+            // 
             btnSave.BackColor = Color.FromArgb(70, 130, 180);
             btnSave.FlatAppearance.BorderSize = 0;
             btnSave.FlatStyle = FlatStyle.Flat;
             btnSave.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             btnSave.ForeColor = Color.White;
-            btnSave.Location = new Point(814, 873);
+            btnSave.Location = new Point(659, 689);
             btnSave.Margin = new Padding(4, 5, 4, 5);
             btnSave.Name = "btnSave";
             btnSave.Size = new Size(114, 53);
             btnSave.TabIndex = 1;
             btnSave.Text = "Save";
             btnSave.UseVisualStyleBackColor = false;
-            //
+            // 
             // pnlButtons
-            //
+            // 
             pnlButtons.BackColor = Color.Transparent;
             pnlButtons.Location = new Point(706, 1019);
             pnlButtons.Margin = new Padding(4, 5, 4, 5);
             pnlButtons.Name = "pnlButtons";
             pnlButtons.Size = new Size(458, 84);
             pnlButtons.TabIndex = 0;
-            //
+            // 
             // pnlMkPrinters
-            //
+            // 
             pnlMkPrinters.BackColor = Color.White;
             pnlMkPrinters.BorderStyle = BorderStyle.FixedSingle;
             pnlMkPrinters.Controls.Add(lblMk059Status);
@@ -205,9 +205,9 @@ namespace InkjetOperator
             pnlMkPrinters.Name = "pnlMkPrinters";
             pnlMkPrinters.Size = new Size(570, 226);
             pnlMkPrinters.TabIndex = 3;
-            //
+            // 
             // lblMk059Status
-            //
+            // 
             lblMk059Status.BackColor = Color.Gray;
             lblMk059Status.BorderStyle = BorderStyle.FixedSingle;
             lblMk059Status.Location = new Point(21, 143);
@@ -215,9 +215,9 @@ namespace InkjetOperator
             lblMk059Status.Name = "lblMk059Status";
             lblMk059Status.Size = new Size(21, 23);
             lblMk059Status.TabIndex = 2;
-            //
+            // 
             // lblMk058Status
-            //
+            // 
             lblMk058Status.BackColor = Color.Gray;
             lblMk058Status.BorderStyle = BorderStyle.FixedSingle;
             lblMk058Status.Location = new Point(21, 84);
@@ -225,9 +225,9 @@ namespace InkjetOperator
             lblMk058Status.Name = "lblMk058Status";
             lblMk058Status.Size = new Size(21, 23);
             lblMk058Status.TabIndex = 3;
-            //
+            // 
             // btnEditMk059
-            //
+            // 
             btnEditMk059.FlatAppearance.BorderSize = 0;
             btnEditMk059.FlatStyle = FlatStyle.Flat;
             btnEditMk059.Font = new Font("Segoe UI", 9F);
@@ -237,9 +237,9 @@ namespace InkjetOperator
             btnEditMk059.Size = new Size(36, 41);
             btnEditMk059.TabIndex = 6;
             btnEditMk059.Text = "✎";
-            //
+            // 
             // btnEditMk058
-            //
+            // 
             btnEditMk058.FlatAppearance.BorderSize = 0;
             btnEditMk058.FlatStyle = FlatStyle.Flat;
             btnEditMk058.Font = new Font("Segoe UI", 9F);
@@ -249,29 +249,29 @@ namespace InkjetOperator
             btnEditMk058.Size = new Size(36, 41);
             btnEditMk058.TabIndex = 7;
             btnEditMk058.Text = "✎";
-            //
+            // 
             // txtMk059Com
-            //
+            // 
             txtMk059Com.Font = new Font("Segoe UI", 10F);
             txtMk059Com.Location = new Point(340, 139);
             txtMk059Com.Margin = new Padding(4, 5, 4, 5);
             txtMk059Com.Name = "txtMk059Com";
-            txtMk059Com.Size = new Size(170, 31);
+            txtMk059Com.Size = new Size(170, 34);
             txtMk059Com.TabIndex = 20;
-            //
+            // 
             // lblMk059Com
-            //
+            // 
             lblMk059Com.AutoSize = true;
             lblMk059Com.Font = new Font("Segoe UI", 10F);
             lblMk059Com.Location = new Point(232, 143);
             lblMk059Com.Margin = new Padding(4, 0, 4, 0);
             lblMk059Com.Name = "lblMk059Com";
-            lblMk059Com.Size = new Size(106, 25);
+            lblMk059Com.Size = new Size(112, 28);
             lblMk059Com.TabIndex = 21;
             lblMk059Com.Text = "IP Address :";
-            //
+            // 
             // lblMk059
-            //
+            // 
             lblMk059.BackColor = Color.Black;
             lblMk059.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblMk059.ForeColor = Color.White;
@@ -283,29 +283,29 @@ namespace InkjetOperator
             lblMk059.TabIndex = 22;
             lblMk059.Text = "MK-059";
             lblMk059.TextAlign = ContentAlignment.MiddleCenter;
-            //
+            // 
             // txtMk058Com
-            //
+            // 
             txtMk058Com.Font = new Font("Segoe UI", 10F);
             txtMk058Com.Location = new Point(340, 80);
             txtMk058Com.Margin = new Padding(4, 5, 4, 5);
             txtMk058Com.Name = "txtMk058Com";
-            txtMk058Com.Size = new Size(170, 31);
+            txtMk058Com.Size = new Size(170, 34);
             txtMk058Com.TabIndex = 25;
-            //
+            // 
             // lblMk058Com
-            //
+            // 
             lblMk058Com.AutoSize = true;
             lblMk058Com.Font = new Font("Segoe UI", 10F);
             lblMk058Com.Location = new Point(232, 84);
             lblMk058Com.Margin = new Padding(4, 0, 4, 0);
             lblMk058Com.Name = "lblMk058Com";
-            lblMk058Com.Size = new Size(106, 25);
+            lblMk058Com.Size = new Size(112, 28);
             lblMk058Com.TabIndex = 26;
             lblMk058Com.Text = "IP Address :";
-            //
+            // 
             // lblMk058
-            //
+            // 
             lblMk058.BackColor = Color.Black;
             lblMk058.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblMk058.ForeColor = Color.White;
@@ -317,26 +317,26 @@ namespace InkjetOperator
             lblMk058.TabIndex = 27;
             lblMk058.Text = "MK-058";
             lblMk058.TextAlign = ContentAlignment.MiddleCenter;
-            //
+            // 
             // lblMkTitle
-            //
+            // 
             lblMkTitle.AutoSize = true;
             lblMkTitle.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
             lblMkTitle.Location = new Point(14, 16);
             lblMkTitle.Margin = new Padding(4, 0, 4, 0);
             lblMkTitle.Name = "lblMkTitle";
-            lblMkTitle.Size = new Size(244, 38);
+            lblMkTitle.Size = new Size(274, 41);
             lblMkTitle.TabIndex = 28;
             lblMkTitle.Text = "MK Inkjet Printers";
-            //
+            // 
             // timer1
-            //
+            // 
             timer1.Enabled = true;
             timer1.Interval = 5000;
             timer1.Tick += timer1_Tick;
-            //
+            // 
             // ucSetting
-            //
+            // 
             AutoScaleMode = AutoScaleMode.None;
             Controls.Add(pnlMainContent);
             Margin = new Padding(4, 5, 4, 5);
