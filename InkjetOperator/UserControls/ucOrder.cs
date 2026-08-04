@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Text.Json;
 using System.Windows.Forms;
 using InkjetOperator.Adapters;
@@ -315,21 +316,33 @@ namespace InkjetOperator
             var uv1 = _uvPreview.FirstOrDefault(u => u.Machine == "UV1");
             var uv2 = _uvPreview.FirstOrDefault(u => u.Machine == "UV2");
 
-            // path CPI.db3 จาก UV Printer Setting
-            string path1 = UvSettingsManager.GetValue("UV1DB3_PATH") ?? "";
-            string path2 = UvSettingsManager.GetValue("UV1DB3_PATH_2") ?? "";
+            string? path1 = ucSettingUV.GetCpiPath(1);
+            string? path2 = ucSettingUV.GetCpiPath(2);
+
+            if (uv1 != null && path1 == null)
+            {
+                MessageBox.Show("ยังไม่ได้ตั้งค่าโฟลเดอร์ UV1 ในหน้า UV Setting\nหรือไม่พบ CPI.db3",
+                    "Test M2", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (uv2 != null && path2 == null)
+            {
+                MessageBox.Show("ยังไม่ได้ตั้งค่าโฟลเดอร์ UV2 ในหน้า UV Setting\nหรือไม่พบ CPI.db3",
+                    "Test M2", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
             btnTestM2.Enabled = false;
             try
             {
                 var results = new List<string>();
 
-                if (uv1 != null)
+                if (uv1 != null && path1 != null)
                 {
                     var (_, msg) = await _sqliteService.WriteUvToCpiAsync(path1, "MK063", uv1);
                     results.Add("UV1 → " + msg);
                 }
-                if (uv2 != null)
+                if (uv2 != null && path2 != null)
                 {
                     var (_, msg) = await _sqliteService.WriteUvToCpiAsync(path2, "MK067", uv2);
                     results.Add("UV2 → " + msg);
@@ -365,11 +378,9 @@ namespace InkjetOperator
             var uv1 = _uvPreview.FirstOrDefault(u => u.Machine == "UV1");
             var uv2 = _uvPreview.FirstOrDefault(u => u.Machine == "UV2");
 
-            // program จาก print_data (P-/S-) มักไม่ตรงกับ .uvdx จริงในเครื่อง (เป็น template คงที่)
-            // → ให้พิมพ์ชื่อ .uvdx จริงตอนเทส เช่น "compact", "Lot Name", "DEX a"
             string? prog = PromptText(
                 "Test M3 — โหลดโปรแกรม",
-                "ชื่อ .uvdx ที่จะโหลด (ต้องมีจริงในเครื่อง UV) เช่น compact / Lot Name / DEX a :",
+                "ชื่อ .uvdx ที่จะโหลด เช่น compact / Lot Name / DEX a :",
                 uv1?.ProgramName ?? "compact");
             if (prog == null) return;
 
@@ -380,17 +391,49 @@ namespace InkjetOperator
 
                 if (uv1 != null)
                 {
-                    string ip = CustomSettingsManager.GetValue("UV001_IP") ?? "";
-                    int port = ParsePort(CustomSettingsManager.GetValue("UV001_PORT"));
-                    var (_, log) = await _uvTcp.LoadAndStartAsync(ip, port, prog);
-                    results.Add("[UV1]\n" + log);
+                    string? docFolder = ucSettingUV.GetDocumentFolder(1);
+                    if (docFolder == null)
+                    {
+                        results.Add("[UV1] ยังไม่ได้ตั้งค่าโฟลเดอร์ UV1 ในหน้า UV Setting");
+                    }
+                    else
+                    {
+                        string? resolved = ResolveUvProgram(prog, docFolder);
+                        if (resolved != null)
+                        {
+                            string ip = CustomSettingsManager.GetValue("UV001_IP") ?? "";
+                            int port = ParsePort(CustomSettingsManager.GetValue("UV001_PORT"));
+                            var (_, log) = await _uvTcp.LoadAndStartAsync(ip, port, resolved);
+                            results.Add("[UV1]\n" + log);
+                        }
+                        else
+                        {
+                            results.Add("[UV1] ยกเลิก");
+                        }
+                    }
                 }
                 if (uv2 != null)
                 {
-                    string ip = CustomSettingsManager.GetValue("UV002_IP") ?? "";
-                    int port = ParsePort(CustomSettingsManager.GetValue("UV002_PORT"));
-                    var (_, log) = await _uvTcp.LoadAndStartAsync(ip, port, prog);
-                    results.Add("[UV2]\n" + log);
+                    string? docFolder = ucSettingUV.GetDocumentFolder(2);
+                    if (docFolder == null)
+                    {
+                        results.Add("[UV2] ยังไม่ได้ตั้งค่าโฟลเดอร์ UV2 ในหน้า UV Setting");
+                    }
+                    else
+                    {
+                        string? resolved = ResolveUvProgram(prog, docFolder);
+                        if (resolved != null)
+                        {
+                            string ip = CustomSettingsManager.GetValue("UV002_IP") ?? "";
+                            int port = ParsePort(CustomSettingsManager.GetValue("UV002_PORT"));
+                            var (_, log) = await _uvTcp.LoadAndStartAsync(ip, port, resolved);
+                            results.Add("[UV2]\n" + log);
+                        }
+                        else
+                        {
+                            results.Add("[UV2] ยกเลิก");
+                        }
+                    }
                 }
 
                 MessageBox.Show(string.Join("\n\n", results),
@@ -405,6 +448,91 @@ namespace InkjetOperator
             {
                 btnTestTcp.Enabled = true;
             }
+        }
+
+        private string? ResolveUvProgram(string program, string docFolder)
+        {
+            string baseName = program.EndsWith(".uvdx", StringComparison.OrdinalIgnoreCase)
+                ? Path.GetFileNameWithoutExtension(program)
+                : program;
+
+            var allUvdx = Directory.GetFiles(docFolder, "*.uvdx")
+                .Select(f => Path.GetFileNameWithoutExtension(f)!)
+                .Where(name => name.StartsWith(baseName, StringComparison.Ordinal))
+                .OrderBy(n => n)
+                .ToList();
+
+            if (allUvdx.Count == 1)
+                return allUvdx[0];
+
+            if (allUvdx.Count > 1)
+                return PromptUvVariant(baseName, allUvdx);
+
+            if (File.Exists(Path.Combine(docFolder, "default.uvdx")))
+            {
+                MessageBox.Show(
+                    $"ไม่พบโปรแกรม \"{baseName}\" ในโฟลเดอร์ document\nจะใช้ default.uvdx ไปก่อน\n\nกรุณาไปเพิ่มไฟล์โปรแกรมก่อน",
+                    "ไม่พบโปรแกรม", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return "default";
+            }
+
+            MessageBox.Show(
+                $"ไม่พบโปรแกรม \"{baseName}\" และไม่มี default.uvdx\nกรุณาไปเพิ่มไฟล์โปรแกรมก่อน",
+                "ไม่พบโปรแกรม", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return null;
+        }
+
+        private string? PromptUvVariant(string baseName, List<string> variants)
+        {
+            using var frm = new Form
+            {
+                Text = "เลือกโปรแกรมย่อย",
+                Size = new Size(360, 260),
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false
+            };
+
+            var lbl = new Label
+            {
+                Text = $"โปรแกรม \"{baseName}\" มีหลายตัวเลือก :",
+                Location = new Point(12, 12),
+                AutoSize = true
+            };
+
+            var lst = new ListBox
+            {
+                Location = new Point(12, 40),
+                Size = new Size(320, 120)
+            };
+            foreach (var v in variants)
+                lst.Items.Add(v + ".uvdx");
+            lst.SelectedIndex = 0;
+
+            var btnOk = new Button
+            {
+                Text = "ตกลง",
+                DialogResult = DialogResult.OK,
+                Location = new Point(170, 175),
+                Size = new Size(80, 32)
+            };
+            var btnCn = new Button
+            {
+                Text = "ยกเลิก",
+                DialogResult = DialogResult.Cancel,
+                Location = new Point(256, 175),
+                Size = new Size(80, 32)
+            };
+
+            frm.Controls.AddRange(new Control[] { lbl, lst, btnOk, btnCn });
+            frm.AcceptButton = btnOk;
+            frm.CancelButton = btnCn;
+
+            if (frm.ShowDialog(this.ParentForm) != DialogResult.OK || lst.SelectedIndex < 0)
+                return null;
+
+            return variants[lst.SelectedIndex];
         }
 
         /// <summary>parse port จาก setting — ว่าง/ผิด → default 10086</summary>
