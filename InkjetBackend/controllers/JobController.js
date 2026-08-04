@@ -7,7 +7,6 @@ const {
   ConveyorSpeed,
   ServoConfig,
 } = require("../model/patternModel");
-const { UVInkjet } = require("../model/uvInkjetModel");
 const { UvJobData } = require("../model/uvJobDataModel");
 const sequelize = require("../database");
 const { parseBarcode, resolveTemplates } = require("../utils/templateResolver");
@@ -302,7 +301,7 @@ static async getResolved(req, res) {
   /**
    * DELETE /job/remove/:id
    * ลบ job ใบเดียว — pattern, configs, text_blocks, servo, conveyor,
-   * command log, UV log, UV detail หายตามด้วย FK CASCADE ทั้งหมด
+   * command log, UV detail หายตามด้วย FK CASCADE ทั้งหมด
    */
   static async remove(req, res) {
     const t = await sequelize.transaction();
@@ -316,9 +315,8 @@ static async getResolved(req, res) {
       const jobId = job.id;
 
       // นับไว้ก่อนลบ เพื่อรายงานให้ operator เห็นว่าอะไรหายไปบ้าง
-      const [commands, uvInkjets, uvJobData, patterns] = await Promise.all([
+      const [commands, uvJobData, patterns] = await Promise.all([
         PrintJobCommand.count({ where: { job_id: jobId }, transaction: t }),
-        UVInkjet.count({ where: { print_jobs_id: jobId }, transaction: t }),
         UvJobData.count({ where: { print_jobs_id: jobId }, transaction: t }),
         Pattern.count({ where: { job_id: jobId }, transaction: t }),
       ]);
@@ -332,7 +330,6 @@ static async getResolved(req, res) {
           job: 1,
           pattern: patterns,
           commands,
-          uv_inkjets: uvInkjets,
           uv_job_data: uvJobData,
         },
       });
