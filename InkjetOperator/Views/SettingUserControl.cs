@@ -4,6 +4,7 @@ public partial class SettingUserControl : UserControl
 {
     private readonly AntdUI.Button[] _menuButtons;
     private AntdUI.Button? _activeButton;
+    private readonly Dictionary<string, UserControl> _subPages = new();
 
     public SettingUserControl()
     {
@@ -40,6 +41,24 @@ public partial class SettingUserControl : UserControl
     private void ShowSubPage(string buttonName)
     {
         pnlContentArea.Controls.Clear();
-        // Sub-page UserControls will be added here when implemented.
+
+        if (!_subPages.TryGetValue(buttonName, out var page))
+        {
+            page = buttonName switch
+            {
+                nameof(btnDatabaseSetting) => new InkjetSettingUserControl(),
+                nameof(btnDB3Setting) => new BackendSettingUserControl(),
+                _ => null,
+            };
+
+            if (page != null)
+            {
+                page.Dock = DockStyle.Fill;
+                _subPages[buttonName] = page;
+            }
+        }
+
+        if (page != null)
+            pnlContentArea.Controls.Add(page);
     }
 }
