@@ -48,6 +48,7 @@ public partial class SettingUserControl : UserControl
             {
                 nameof(btnDatabaseSetting) => new InkjetSettingUserControl(),
                 nameof(btnDB3Setting) => new BackendSettingUserControl(),
+                nameof(btnUVPrinterSetting) => new UvPrinterSettingUserControl(),
                 _ => null,
             };
 

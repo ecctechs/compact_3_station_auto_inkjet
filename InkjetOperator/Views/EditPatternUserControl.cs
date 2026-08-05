@@ -207,7 +207,7 @@ public partial class EditPatternUserControl : UserControl
             _selectedPattern.TestBarcode = txtLotTest.Text;
             _selectedPattern.TestBlockText = txtBlockText.Text;
             SyncRulesToPattern();
-            _selectedPattern.TestPreview = lblPreview.Text;
+            _selectedPattern.TestPreview = lblPreview.Text ?? "";
         }
 
         try
