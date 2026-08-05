@@ -21,6 +21,19 @@ const PATTERN_INCLUDE = [
   { model: ServoConfig, as: "servo_configs" },
 ];
 
+// ไม่ระบุ order = Postgres คืนแถวตามลำดับที่มันสะดวก (เช่น 2,1)
+// ordinal คือช่องเครื่อง (1 = MK-058, 2 = MK-059) จึงต้องเรียงให้แน่นอนเสมอ
+const PATTERN_ORDER = [
+  [{ model: InkjetConfig, as: "inkjet_configs" }, "ordinal", "ASC"],
+  [
+    { model: InkjetConfig, as: "inkjet_configs" },
+    { model: TextBlock, as: "text_blocks" },
+    "block_number",
+    "ASC",
+  ],
+  [{ model: ServoConfig, as: "servo_configs" }, "ordinal", "ASC"],
+];
+
 class JobController {
   /**
    * POST /job/create
@@ -204,6 +217,7 @@ static async getResolved(req, res) {
       const pattern = await Pattern.findOne({
         where: { job_id: job.id },
         include: PATTERN_INCLUDE,
+        order: PATTERN_ORDER,
       });
       if (!pattern) {
         return ResponseManager.ErrorResponse(

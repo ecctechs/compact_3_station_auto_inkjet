@@ -124,6 +124,7 @@
             btnSendUV2 = new Button();
             btnSendUV1 = new Button();
             btnSendMk1Mk2 = new Button();
+            btnSwapOrdinal = new Button();
             btnTestM2 = new Button();
             btnTestTcp = new Button();
             textBlocksBindingSource = new BindingSource(components);
@@ -1236,6 +1237,7 @@
             pnlButtons.Controls.Add(btnSendUV2);
             pnlButtons.Controls.Add(btnSendUV1);
             pnlButtons.Controls.Add(btnSendMk1Mk2);
+            pnlButtons.Controls.Add(btnSwapOrdinal);
             pnlButtons.Controls.Add(btnTestM2);
             pnlButtons.Controls.Add(btnTestTcp);
             pnlButtons.Dock = DockStyle.Fill;
@@ -1275,7 +1277,21 @@
             btnSendMk1Mk2.TabIndex = 2;
             btnSendMk1Mk2.Text = "ส่งหา MK1,MK2";
             btnSendMk1Mk2.Click += btnSendMk1Mk2_Click;
-            // 
+            //
+            // btnSwapOrdinal
+            //
+            btnSwapOrdinal.BackColor = Color.FromArgb(91, 155, 213);
+            btnSwapOrdinal.FlatStyle = FlatStyle.Flat;
+            btnSwapOrdinal.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnSwapOrdinal.ForeColor = Color.White;
+            btnSwapOrdinal.Location = new Point(244, 7);
+            btnSwapOrdinal.Name = "btnSwapOrdinal";
+            btnSwapOrdinal.Size = new Size(130, 30);
+            btnSwapOrdinal.TabIndex = 3;
+            btnSwapOrdinal.Text = "สลับหัวพิมพ์";
+            btnSwapOrdinal.UseVisualStyleBackColor = false;
+            btnSwapOrdinal.Click += btnSwapOrdinal_Click;
+            //
             // btnTestM2
             // 
             btnTestM2.BackColor = Color.FromArgb(230, 145, 56);
@@ -1398,6 +1414,7 @@
         private GroupBox groupBox1;
         private BindingSource bindingSourceUVinkjet;
         private Button btnSendMk1Mk2;
+        private Button btnSwapOrdinal;
         private Button btnSendUV2;
 
         private Button btnSendUV1;

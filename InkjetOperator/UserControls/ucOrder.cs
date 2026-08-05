@@ -26,6 +26,13 @@ namespace InkjetOperator
         /// <summary>UV detail (UV1/UV2) ของงานที่เลือกล่าสุด — ใช้ตอนกดส่ง/เทส M2</summary>
         private List<UvJobData> _uvPreview = new();
 
+        /// <summary>
+        /// สลับหัวพิมพ์ MK-058 ↔ MK-059 ชั่วคราว (ใช้ตอนหัวใดหัวหนึ่งเสีย)
+        /// มีผลเฉพาะข้อมูลในหน่วยความจำที่ใช้ตอนกดส่ง — ไม่เขียนลง database
+        /// ค้างไว้จนกว่าจะกดปิด เพราะหัวเสียแล้วต้องสลับทุกงานจนกว่าจะซ่อมเสร็จ
+        /// </summary>
+        private bool _swapHeads = false;
+
         private readonly UvTcpService _uvTcp = new();
 
         public ucOrder()
@@ -58,6 +65,7 @@ namespace InkjetOperator
             btnRefresh.Text         = Lang.Get("btn.refresh");
             btnSendMk1Mk2.Text     = Lang.Get("order.send_mk12");
 
+            UpdateSwapButtonUi();
             btnSendUV1.Text         = Lang.Get("order.send_uv1");
             btnSendUV2.Text         = Lang.Get("order.send_uv2");
             tabList.Text            = Lang.Get("order.tab_list");
@@ -210,6 +218,12 @@ namespace InkjetOperator
             {
                 // 3. ดึงข้อมูลรายละเอียดเชิงลึก (Resolved Job) จาก API
                 _currentResolved = await _api.GetResolvedJobAsync(selectedJob.Id);
+
+                // ordinal คือช่องเครื่อง (1 = MK-058, 2 = MK-059) ต้องเรียง 1,2 เสมอ
+                SortPatternByOrdinal();
+
+                // กำลังสลับหัวพิมพ์อยู่ → ใช้กับงานที่เพิ่งโหลดด้วย ให้ที่เห็นกับที่ส่งตรงกันเสมอ
+                if (_swapHeads) SwapHeadDataInMemory();
 
                 // 4. ผูกข้อมูล InkjetConfigs เข้ากับ Grid รายละเอียด
                 if (_currentResolved?.Pattern?.InkjetConfigs != null)
@@ -664,6 +678,9 @@ namespace InkjetOperator
 
                 if (_currentResolved != null)
                 {
+                    SortPatternByOrdinal();
+                    if (_swapHeads) SwapHeadDataInMemory();
+
                     // สั่งรีเฟรช Grid เพื่อแสดงค่าใหม่
                     bindingSourceUVinkjet.ResetBindings(false);
                 }
@@ -866,6 +883,92 @@ namespace InkjetOperator
         }
 
         // ══════════════════════════════════════════════
+        //  SWAP — สลับหัวพิมพ์ MK-058 ↔ MK-059 (ชั่วคราว ไม่แตะ database)
+        // ══════════════════════════════════════════════
+
+        /// <summary>
+        /// ย้ายข้อมูลข้ามช่องเครื่อง — ordinal คงเป็นช่องเครื่องเสมอ (1 = MK-058, 2 = MK-059)
+        /// ข้อมูลที่เคยอยู่ช่อง 1 จะไปโผล่ช่อง 2 และกลับกัน
+        ///
+        /// ทำโดยสลับเลข ordinal แล้วเรียงลิสต์ใหม่ตาม ordinal — ได้ผลเท่ากับย้ายข้อมูลทีละฟิลด์
+        /// แต่ไม่ต้องไล่ก๊อปปี้ทุกฟิลด์ จึงไม่มีทางตกหล่นเมื่อมีฟิลด์ใหม่เพิ่มใน DTO ภายหลัง
+        ///
+        /// TextBlock ติดไปกับ InkjetConfig อยู่แล้ว จึงย้ายตามทั้งชุด
+        /// ServoConfig (post_act, delay) ย้ายด้วย เพราะค่าตำแหน่งติดไปกับงาน ไม่ใช่ติดกับสถานี
+        /// </summary>
+        /// <summary>
+        /// เรียง config/servo ตาม ordinal — API ไม่รับประกันลำดับที่คืนมา
+        /// ถ้าไม่เรียง grid อาจโชว์ ordinal 2 ขึ้นก่อน 1 ทำให้ operator อ่านสลับช่อง
+        /// </summary>
+        private void SortPatternByOrdinal()
+        {
+            var pattern = _currentResolved?.Pattern;
+            if (pattern == null) return;
+
+            pattern.InkjetConfigs?.Sort((a, b) => a.Ordinal.CompareTo(b.Ordinal));
+            pattern.ServoConfigs?.Sort((a, b) => a.Ordinal.CompareTo(b.Ordinal));
+        }
+
+        private void SwapHeadDataInMemory()
+        {
+            var pattern = _currentResolved?.Pattern;
+            if (pattern == null) return;
+
+            static int Flip(int o) => o == 1 ? 2 : o == 2 ? 1 : o;
+
+            if (pattern.InkjetConfigs != null)
+            {
+                foreach (var cfg in pattern.InkjetConfigs)
+                    cfg.Ordinal = Flip(cfg.Ordinal);
+
+                pattern.InkjetConfigs.Sort((a, b) => a.Ordinal.CompareTo(b.Ordinal));
+            }
+
+            if (pattern.ServoConfigs != null)
+            {
+                foreach (var servo in pattern.ServoConfigs)
+                    servo.Ordinal = Flip(servo.Ordinal);
+
+                pattern.ServoConfigs.Sort((a, b) => a.Ordinal.CompareTo(b.Ordinal));
+            }
+        }
+
+        /// <summary>ทำให้ปุ่มบอกสถานะชัดเจน — operator ต้องเห็นได้ทันทีว่ากำลังสลับอยู่</summary>
+        private void UpdateSwapButtonUi()
+        {
+            btnSwapOrdinal.Text = Lang.Get(_swapHeads ? "order.swap_on" : "order.swap_ordinal");
+            btnSwapOrdinal.BackColor = _swapHeads
+                ? Color.FromArgb(192, 0, 0)
+                : Color.FromArgb(91, 155, 213);
+        }
+
+        private void btnSwapOrdinal_Click(object sender, EventArgs e)
+        {
+            _swapHeads = !_swapHeads;
+
+            SwapHeadDataInMemory();
+            UpdateSwapButtonUi();
+
+            // ลำดับในลิสต์เปลี่ยน → ผูก DataSource ใหม่ให้ grid วาดใหม่ทั้งตาราง
+            var configs = _currentResolved?.Pattern?.InkjetConfigs;
+            if (configs != null)
+            {
+                int pos = bindSourceInkjetConfigDto.Position;
+
+                bindSourceInkjetConfigDto.DataSource = null;
+                bindSourceInkjetConfigDto.DataSource = configs;
+
+                if (pos >= 0 && pos < bindSourceInkjetConfigDto.Count)
+                {
+                    bindSourceInkjetConfigDto.Position = pos;
+                    SelectGridRow(dgvConfigs, pos);
+                }
+
+                LoadTextBlocksForCurrentConfig();
+            }
+        }
+
+        // ══════════════════════════════════════════════
         //  SEND — MK1 / MK2
         // ══════════════════════════════════════════════
 
@@ -889,8 +992,12 @@ namespace InkjetOperator
             }
 
             // 3. ยืนยันการส่ง
+            string swapNote = _swapHeads
+                ? "\n\n🔄 กำลังสลับหัวพิมพ์ (MK-058 ↔ MK-059)"
+                : "";
+
             var confirm = MessageBox.Show(
-                $"ต้องการส่งข้อมูลไปยัง MK1/MK2\nJob ID: {selectedJob.Id}\nBarcode: {selectedJob.BarcodeRaw}",
+                $"ต้องการส่งข้อมูลไปยัง MK1/MK2\nJob ID: {selectedJob.Id}\nBarcode: {selectedJob.BarcodeRaw}{swapNote}",
                 "ยืนยันการส่ง", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (confirm != DialogResult.Yes) return;
 
@@ -898,90 +1005,38 @@ namespace InkjetOperator
 
             try
             {
-                // === STEP 1: [PRE-CHECK] ตรวจสอบความพร้อมและเก็บผลลัพธ์เพื่อแสดงผลแบบรวม ===
-                var checkResults = new List<string>();
-                var readyToProcess = new List<(IInkjetAdapter Adapter, InkjetConfigDto Config, string Name)>();
-                bool isAnyDisconnected = false;
+                // === STEP 1: [SENDING] ส่งทุกเครื่องที่มี config — เครื่องหนึ่งพลาดไม่หยุดอีกเครื่อง ===
+                var sendResults = new List<string>();
+                bool allSendSuccess = true;
 
                 foreach (var config in mk12Configs)
                 {
                     string name = GetAdapterName(config.Ordinal);
-                    var adapter = GetAdapterByOrdinal(config.Ordinal);
-                    bool isConnected = adapter != null && adapter.IsConnected();
 
-                    if (isConnected)
-                    {
-                        checkResults.Add($"{name}: ✅ เชื่อมต่อสำเร็จ");
-                        readyToProcess.Add((adapter!, config, name));
-                    }
-                    else
-                    {
-                        checkResults.Add($"{name}: ❌ เชื่อมต่อไม่สำเร็จ");
-                        isAnyDisconnected = true;
-                    }
+                    ApplyPatternRules(config.TextBlocks);
+                    bool ok = await SendConfigToAdapterAsync(config);
+
+                    sendResults.Add($"{name}: {(ok ? "✅ ส่งสำเร็จ" : "❌ ส่งล้มเหลว")}");
+
+                    if (!ok) allSendSuccess = false;
                 }
 
-                // --- หากมีเครื่องใดเครื่องหนึ่งไม่พร้อม ให้แสดงผลสรุปแบบ Error และหยุดทันที ---
-                if (isAnyDisconnected)
+                // === STEP 2: [FINALIZE] อัปเดตสถานะและแจ้งผลการส่ง ===
+                var updateData = new { status = "Processing", st_status = "1" };
+                bool isUpdated = await _api.UpdateJobAsync(selectedJob.Id, updateData);
+
+                if (isUpdated)
                 {
-                    string checkSummary = string.Join("\n", checkResults);
-                    MessageBox.Show(
-                        $"ผลการตรวจสอบ Job ID: {selectedJob.Id}\n\n" +
-                        $"{checkSummary}\n\n" +
-                        "⚠️ สถานะ Job ยังไม่ถูกอัปเดต เนื่องจากมีเครื่องเชื่อมต่อไม่สำเร็จ",
-                        "Error",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
-
-                    return; // หยุดการทำงานทันที
+                    selectedJob.Status = "Processing";
+                    txtStatus.Text = "Processing";
+                    bindingSource1.ResetCurrentItem();
                 }
 
-                // === STEP 2: [SENDING] เริ่มส่งข้อมูล (เฉพาะเมื่อทุกเครื่องพร้อมแล้ว) ===
-                var sendResults = new List<string>();
-                bool allSendSuccess = true;
-
-                foreach (var item in readyToProcess)
-                {
-                    ApplyPatternRules(item.Config.TextBlocks);
-                    bool ok = await SendConfigToAdapterAsync(item.Config);
-
-                    sendResults.Add($"{item.Name}: {(ok ? "✅ ส่งสำเร็จ" : "❌ ส่งล้มเหลว")}");
-
-                    if (!ok)
-                    {
-                        allSendSuccess = false;
-                        break; // หยุดส่งเครื่องถัดไปหากเครื่องนี้พลาด
-                    }
-                }
-
-                // === STEP 3: [FINALIZE] อัปเดตสถานะและแจ้งผลการส่ง ===
-                if (allSendSuccess)
-                {
-                    var updateData = new { status = "Processing", st_status = "1" };
-                    bool isUpdated = await _api.UpdateJobAsync(selectedJob.Id, updateData);
-
-                    if (isUpdated)
-                    {
-                        selectedJob.Status = "Processing";
-                        txtStatus.Text = "Processing";
-                        bindingSource1.ResetCurrentItem();
-                    }
-
-                    MessageBox.Show(
-                        $"ผลการส่ง Job ID: {selectedJob.Id}\n\n{string.Join("\n", sendResults)}",
-                        Lang.Get("msg.success"),
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information);
-                }
-                else
-                {
-                    MessageBox.Show(
-                        $"ผลการส่ง Job ID: {selectedJob.Id}\n\n{string.Join("\n", sendResults)}\n\n" +
-                        "⚠️ สถานะ Job ยังไม่ถูกอัปเดต เนื่องจากมีบางเครื่องส่งไม่สำเร็จ",
-                        Lang.Get("msg.warning"),
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Warning);
-                }
+                MessageBox.Show(
+                    $"ผลการส่ง Job ID: {selectedJob.Id}\n\n{string.Join("\n", sendResults)}",
+                    allSendSuccess ? Lang.Get("msg.success") : Lang.Get("msg.warning"),
+                    MessageBoxButtons.OK,
+                    allSendSuccess ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
             }
             catch (Exception ex)
             {

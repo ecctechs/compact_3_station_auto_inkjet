@@ -19,6 +19,19 @@ const PATTERN_INCLUDE = [
   { model: ServoConfig, as: "servo_configs" },
 ];
 
+// ไม่ระบุ order = Postgres คืนแถวตามลำดับที่มันสะดวก (เช่น 2,1)
+// ordinal คือช่องเครื่อง (1 = MK-058, 2 = MK-059) จึงต้องเรียงให้แน่นอนเสมอ
+const PATTERN_ORDER = [
+  [{ model: InkjetConfig, as: "inkjet_configs" }, "ordinal", "ASC"],
+  [
+    { model: InkjetConfig, as: "inkjet_configs" },
+    { model: TextBlock, as: "text_blocks" },
+    "block_number",
+    "ASC",
+  ],
+  [{ model: ServoConfig, as: "servo_configs" }, "ordinal", "ASC"],
+];
+
 class PatternController {
   static async getAll(req, res) {
     try {
@@ -53,6 +66,7 @@ class PatternController {
     try {
       const pattern = await Pattern.findByPk(req.params.id, {
         include: PATTERN_INCLUDE,
+        order: PATTERN_ORDER,
       });
 
       if (!pattern) {
@@ -79,7 +93,7 @@ class PatternController {
       const pattern = await Pattern.findOne({
         where: { barcode: req.params.barcode, is_active: true },
         include: PATTERN_INCLUDE,
-        order: [["id", "DESC"]],
+        order: [["id", "DESC"], ...PATTERN_ORDER],
       });
 
       if (!pattern) {
@@ -158,6 +172,7 @@ class PatternController {
 
       const result = await Pattern.findByPk(pattern.id, {
         include: PATTERN_INCLUDE,
+        order: PATTERN_ORDER,
       });
 
       return ResponseManager.SuccessResponse(req, res, 201, result);
@@ -248,6 +263,7 @@ class PatternController {
 
       const result = await Pattern.findByPk(pattern.id, {
         include: PATTERN_INCLUDE,
+        order: PATTERN_ORDER,
       });
 
       return ResponseManager.SuccessResponse(req, res, 200, result);

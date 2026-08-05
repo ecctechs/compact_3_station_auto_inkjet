@@ -51,6 +51,8 @@
             ["order.send_mk3"]      = new() { ["EN"] = "Send MK3",      ["TH"] = "ส่งหา MK3" },
             ["order.send_uv1"]      = new() { ["EN"] = "Send UV1",      ["TH"] = "ส่งหา UV1" },
             ["order.send_uv2"]      = new() { ["EN"] = "Send UV2",      ["TH"] = "ส่งหา UV2" },
+            ["order.swap_ordinal"]  = new() { ["EN"] = "Swap Head",     ["TH"] = "สลับหัวพิมพ์" },
+            ["order.swap_on"]       = new() { ["EN"] = "🔄 Swapped",    ["TH"] = "🔄 สลับอยู่" },
             ["order.tab_list"]      = new() { ["EN"] = "List",           ["TH"] = "รายการ" },
             ["order.tab_history"]   = new() { ["EN"] = "History",        ["TH"] = "ประวัติ" },
 
