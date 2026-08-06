@@ -10,6 +10,7 @@ const jobRoute = require("./routes/Job");
 const systemRoute = require("./routes/System");
 const uvJobDataRoute = require("./routes/UvJobData");
 const plcSettingRoute = require("./routes/PlcSetting");
+const iaiSettingRoute = require("./routes/IaiSetting");
 
 const app = express();
 app.use(bodyParser.json());
@@ -21,6 +22,7 @@ app.use(jobRoute);
 app.use(systemRoute);
 app.use(uvJobDataRoute);
 app.use(plcSettingRoute);
+app.use(iaiSettingRoute);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`server is running on port ${PORT}`));
