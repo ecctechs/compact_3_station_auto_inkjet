@@ -55,7 +55,7 @@ partial class PlcSettingUserControl
         tlpRoot.Name = "tlpRoot";
         tlpRoot.Padding = new System.Windows.Forms.Padding(16);
         tlpRoot.RowCount = 3;
-        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 232F));
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 272F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 68F));
         tlpRoot.Size = new System.Drawing.Size(960, 820);
@@ -70,7 +70,7 @@ partial class PlcSettingUserControl
         grpConnection.Location = new System.Drawing.Point(19, 19);
         grpConnection.Name = "grpConnection";
         grpConnection.Padding = new System.Windows.Forms.Padding(20, 12, 20, 12);
-        grpConnection.Size = new System.Drawing.Size(922, 210);
+        grpConnection.Size = new System.Drawing.Size(922, 250);
         grpConnection.TabIndex = 0;
         grpConnection.TabStop = false;
         grpConnection.Text = "PLC Connection";
@@ -88,7 +88,7 @@ partial class PlcSettingUserControl
         tlpConn.Controls.Add(txtPlc001Ip, 2, 1);
         tlpConn.Controls.Add(lblPortLabel, 1, 2);
         tlpConn.Controls.Add(txtPlc001Port, 2, 2);
-        tlpConn.Controls.Add(btnCheckStatus, 1, 3);
+        tlpConn.Controls.Add(btnCheckStatus, 2, 3);
         tlpConn.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpConn.Location = new System.Drawing.Point(20, 39);
         tlpConn.Name = "tlpConn";
@@ -96,7 +96,7 @@ partial class PlcSettingUserControl
         tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F));
         tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
         tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
-        tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 56F));
         tlpConn.Size = new System.Drawing.Size(882, 159);
         tlpConn.TabIndex = 0;
         //
