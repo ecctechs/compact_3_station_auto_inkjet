@@ -130,4 +130,39 @@ public class ApiClient
             return false;
         }
     }
+
+    /// <summary>GET /plc-setting/getAll — all register-map rows ordered by sort_order.</summary>
+    public async Task<List<PlcRegisterMap>> GetAllPlcSettingsAsync()
+    {
+        try
+        {
+            var response = await _http.GetAsync("/plc-setting/getAll");
+            response.EnsureSuccessStatusCode();
+
+            var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<List<PlcRegisterMap>>>(JsonOptions);
+            return wrapper?.Data ?? new List<PlcRegisterMap>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("GetAllPlcSettings error: " + ex.Message);
+            return new List<PlcRegisterMap>();
+        }
+    }
+
+    /// <summary>POST /plc-setting/bulkSave — replaces the whole table with these rows.</summary>
+    public async Task<bool> BulkSavePlcSettingsAsync(List<PlcRegisterMap> rows)
+    {
+        try
+        {
+            var payload = new PlcBulkSaveRequest { Rows = rows };
+            var response = await _http.PostAsJsonAsync("/plc-setting/bulkSave", payload, JsonOptions);
+            response.EnsureSuccessStatusCode();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("BulkSavePlcSettings error: " + ex.Message);
+            return false;
+        }
+    }
 }

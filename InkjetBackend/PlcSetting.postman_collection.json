@@ -1,0 +1,108 @@
+{
+  "info": {
+    "name": "InkjetBackend - PLC Setting",
+    "description": "Tests for the PLC register-map API (/plc-setting). Set the {{baseUrl}} variable to your backend (default http://localhost:3000). Run in order: 1) bulkSave sample -> 2) getAll -> 3) bulkSave overlap (expect fail) -> 4) bulkSave clear.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" }
+  ],
+  "item": [
+    {
+      "name": "1. bulkSave (2 sample rows)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/plc-setting/bulkSave", "host": [ "{{baseUrl}}" ], "path": [ "plc-setting", "bulkSave" ] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"rows\": [\n    {\n      \"address_start\": 0,\n      \"address_stop\": 9,\n      \"plc_start\": \"D100\",\n      \"plc_stop\": \"D109\",\n      \"list_name\": \"STATUS\",\n      \"data_type\": \"Int\",\n      \"bit\": 16,\n      \"sort_order\": 0\n    },\n    {\n      \"address_start\": 10,\n      \"address_stop\": 29,\n      \"plc_start\": \"D110\",\n      \"plc_stop\": \"D129\",\n      \"list_name\": \"SPEED\",\n      \"data_type\": \"Int\",\n      \"bit\": 32,\n      \"sort_order\": 1\n    }\n  ]\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.code === 200);",
+              "const b = pm.response.json();",
+              "pm.test('returns 2 created rows', () => pm.expect(b.data.length).to.eql(2));",
+              "pm.test('rows have backend id', () => pm.expect(b.data[0].id).to.be.a('number'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. getAll",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/plc-setting/getAll", "host": [ "{{baseUrl}}" ], "path": [ "plc-setting", "getAll" ] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.code === 200);",
+              "const b = pm.response.json();",
+              "pm.test('data is array', () => pm.expect(b.data).to.be.an('array'));",
+              "pm.test('ordered by sort_order', () => {",
+              "  const s = b.data.map(r => r.sort_order);",
+              "  pm.expect(s).to.eql([...s].sort((a,c)=>a-c));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. bulkSave (replace with 1 row)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/plc-setting/bulkSave", "host": [ "{{baseUrl}}" ], "path": [ "plc-setting", "bulkSave" ] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"rows\": [\n    {\n      \"address_start\": 100,\n      \"address_stop\": 120,\n      \"plc_start\": \"D200\",\n      \"plc_stop\": \"D220\",\n      \"list_name\": \"TEMP\",\n      \"data_type\": \"Float\",\n      \"bit\": 32,\n      \"sort_order\": 0\n    }\n  ]\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.code === 200);",
+              "pm.test('table fully replaced (1 row)', () => pm.expect(pm.response.json().data.length).to.eql(1));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. bulkSave (clear all rows)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/plc-setting/bulkSave", "host": [ "{{baseUrl}}" ], "path": [ "plc-setting", "bulkSave" ] },
+        "body": { "mode": "raw", "raw": "{\n  \"rows\": []\n}" }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.code === 200);",
+              "pm.test('empty table', () => pm.expect(pm.response.json().data.length).to.eql(0));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
