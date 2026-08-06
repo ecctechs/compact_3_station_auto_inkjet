@@ -9,7 +9,7 @@ public partial class SettingUserControl : UserControl
     public SettingUserControl()
     {
         InitializeComponent();
-        _menuButtons = new[] { btnDatabaseSetting, btnDB3Setting, btnPLCSetting, btnUVPrinterSetting };
+        _menuButtons = new[] { btnDatabaseSetting, btnDB3Setting, btnPLCSetting };
         foreach (var btn in _menuButtons)
             btn.Click += MenuButton_Click;
         SelectMenu(btnDatabaseSetting);
@@ -49,7 +49,6 @@ public partial class SettingUserControl : UserControl
                 nameof(btnDatabaseSetting) => new InkjetSettingUserControl(),
                 nameof(btnDB3Setting) => new BackendSettingUserControl(),
                 nameof(btnPLCSetting) => new PlcSettingUserControl(),
-                nameof(btnUVPrinterSetting) => new UvPrinterSettingUserControl(),
                 _ => null,
             };
 

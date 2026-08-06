@@ -1,40 +1,58 @@
 using System.Net.Sockets;
+using Microsoft.Data.Sqlite;
 using InkjetOperator.Services;
 
 namespace InkjetOperator.Views;
 
 public partial class InkjetSettingUserControl : UserControl
 {
-    private const int PrinterPort = 9004;
-    private string _savedMk058Ip = "";
-    private string _savedMk059Ip = "";
+    private const int MkPrinterPort = 9004;
+    private const string REL_CPI = @"database\sys\CPI.db3";
+    private const string REL_DEFAULT_UVDX = @"document\default.uvdx";
 
     public InkjetSettingUserControl()
     {
         InitializeComponent();
-        LoadSettings();
+        LoadAllSettings();
 
         txtMk058Ip.TextChanged += (_, _) => MarkDirty(txtMk058Ip);
         txtMk059Ip.TextChanged += (_, _) => MarkDirty(txtMk059Ip);
-        btnMk058Name.Click += (_, _) => EditName("MK058_NAME", lblMk058Badge);
-        btnMk059Name.Click += (_, _) => EditName("MK059_NAME", lblMk059Badge);
+        txtUv1Ip.TextChanged += (_, _) => MarkDirty(txtUv1Ip);
+        txtUv1Port.TextChanged += (_, _) => MarkDirty(txtUv1Port);
+        txtUv2Ip.TextChanged += (_, _) => MarkDirty(txtUv2Ip);
+        txtUv2Port.TextChanged += (_, _) => MarkDirty(txtUv2Port);
+
+        btnMk058Name.Click += (_, _) => EditMkName("MK058_NAME", lblMk058Badge);
+        btnMk059Name.Click += (_, _) => EditMkName("MK059_NAME", lblMk059Badge);
+        btnUv1Edit.Click += (_, _) => EditUvName("UV1_NAME", lblUv1Badge);
+        btnUv2Edit.Click += (_, _) => EditUvName("UV2_NAME", lblUv2Badge);
+
+        btnUv1Browse.Click += (_, _) => BrowseFolder(txtUv1Folder, lblUv1Status, "MK063");
+        btnUv2Browse.Click += (_, _) => BrowseFolder(txtUv2Folder, lblUv2Status, "MK067");
+
         btnCheckStatus.Click += async (_, _) => await CheckAllStatusAsync();
         btnSave.Click += BtnSave_Click;
-        btnCancel.Click += (_, _) => { LoadSettings(); ResetColors(); };
+        btnCancel.Click += (_, _) => LoadAllSettings();
     }
 
-    private void LoadSettings()
+    private void LoadAllSettings()
     {
-        _savedMk058Ip = CustomSettingsManager.Read("MK058_COM");
-        _savedMk059Ip = CustomSettingsManager.Read("MK059_COM");
-        txtMk058Ip.Text = _savedMk058Ip;
-        txtMk059Ip.Text = _savedMk059Ip;
+        txtMk058Ip.Text = CustomSettingsManager.Read("MK058_COM");
+        txtMk059Ip.Text = CustomSettingsManager.Read("MK059_COM");
+        lblMk058Badge.Text = CustomSettingsManager.Read("MK058_NAME", "MK-058");
+        lblMk059Badge.Text = CustomSettingsManager.Read("MK059_NAME", "MK-059");
 
-        var name058 = CustomSettingsManager.Read("MK058_NAME", "MK-058");
-        var name059 = CustomSettingsManager.Read("MK059_NAME", "MK-059");
-        lblMk058Badge.Text = name058;
-        lblMk059Badge.Text = name059;
+        txtUv1Ip.Text = CustomSettingsManager.Read("UV001_IP");
+        txtUv1Port.Text = CustomSettingsManager.Read("UV001_PORT");
+        txtUv2Ip.Text = CustomSettingsManager.Read("UV002_IP");
+        txtUv2Port.Text = CustomSettingsManager.Read("UV002_PORT");
+        txtUv1Folder.Text = UvSettingsManager.Read("UV1_FOLDER");
+        txtUv2Folder.Text = UvSettingsManager.Read("UV2_FOLDER");
+        lblUv1Badge.Text = UvSettingsManager.Read("UV1_NAME", "UV-001");
+        lblUv2Badge.Text = UvSettingsManager.Read("UV2_NAME", "UV-002");
 
+        ShowFolderStatus(txtUv1Folder.Text, lblUv1Status, "MK063");
+        ShowFolderStatus(txtUv2Folder.Text, lblUv2Status, "MK067");
         ResetColors();
     }
 
@@ -42,24 +60,189 @@ public partial class InkjetSettingUserControl : UserControl
     {
         var ip058 = txtMk058Ip.Text.Trim();
         var ip059 = txtMk059Ip.Text.Trim();
-
         if (!string.IsNullOrEmpty(ip058) && !string.IsNullOrEmpty(ip059) && ip058 == ip059)
         {
-            MessageBox.Show("IP addresses must not be the same.", "Validation",
+            MessageBox.Show("MK058 and MK059 IP addresses must not be the same.",
+                "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var f1 = txtUv1Folder.Text.Trim();
+        var f2 = txtUv2Folder.Text.Trim();
+        if (!string.IsNullOrEmpty(f1) && !Directory.Exists(f1))
+        {
+            MessageBox.Show($"UV1 folder not found:\n{f1}", "Warning",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+        if (!string.IsNullOrEmpty(f2) && !Directory.Exists(f2))
+        {
+            MessageBox.Show($"UV2 folder not found:\n{f2}", "Warning",
                 MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
         CustomSettingsManager.Write("MK058_COM", ip058);
         CustomSettingsManager.Write("MK059_COM", ip059);
-        _savedMk058Ip = ip058;
-        _savedMk059Ip = ip059;
+        CustomSettingsManager.Write("UV001_IP", txtUv1Ip.Text.Trim());
+        CustomSettingsManager.Write("UV001_PORT", txtUv1Port.Text.Trim());
+        CustomSettingsManager.Write("UV002_IP", txtUv2Ip.Text.Trim());
+        CustomSettingsManager.Write("UV002_PORT", txtUv2Port.Text.Trim());
+
+        UvSettingsManager.Write("UV1_FOLDER", f1);
+        UvSettingsManager.Write("UV2_FOLDER", f2);
+        if (!string.IsNullOrEmpty(f1))
+            UvSettingsManager.Write("UV1DB3_PATH", Path.Combine(f1, REL_CPI));
+        if (!string.IsNullOrEmpty(f2))
+            UvSettingsManager.Write("UV1DB3_PATH_2", Path.Combine(f2, REL_CPI));
 
         ResetColors();
-        MessageBox.Show("Saved.", "Settings", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        MessageBox.Show("บันทึกเรียบร้อย", "Settings", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
-    private void EditName(string key, Label badge)
+    // ── Check Status ────────────────────────────────────────────────
+
+    private async Task CheckAllStatusAsync()
+    {
+        btnCheckStatus.Enabled = false;
+        try
+        {
+            await Task.WhenAll(
+                CheckMkPrinterAsync(txtMk058Ip.Text.Trim(), lblMk058Status),
+                CheckMkPrinterAsync(txtMk059Ip.Text.Trim(), lblMk059Status),
+                CheckUvPrinterAsync(txtUv1Ip.Text.Trim(), txtUv1Port.Text.Trim(),
+                    txtUv1Folder.Text.Trim(), "MK063", lblUv1Dot, lblUv1Status),
+                CheckUvPrinterAsync(txtUv2Ip.Text.Trim(), txtUv2Port.Text.Trim(),
+                    txtUv2Folder.Text.Trim(), "MK067", lblUv2Dot, lblUv2Status));
+        }
+        finally { btnCheckStatus.Enabled = true; }
+    }
+
+    private static async Task CheckMkPrinterAsync(string ip, Label dot)
+    {
+        if (string.IsNullOrWhiteSpace(ip)) { SetDotColor(dot, Color.Gray); return; }
+        try
+        {
+            using var tcp = new TcpClient();
+            await tcp.ConnectAsync(ip, MkPrinterPort).WaitAsync(TimeSpan.FromSeconds(3));
+            SetDotColor(dot, Color.FromArgb(76, 175, 80));
+        }
+        catch { SetDotColor(dot, Color.FromArgb(220, 38, 38)); }
+    }
+
+    private static async Task CheckUvPrinterAsync(
+        string ip, string portText, string folder, string table,
+        Label dot, Label statusLabel)
+    {
+        var folderOk = ValidateFolder(folder, table).Count == 0
+                       && !string.IsNullOrWhiteSpace(folder);
+
+        var ipOk = false;
+        if (!string.IsNullOrWhiteSpace(ip) && int.TryParse(portText, out var port) && port > 0)
+        {
+            try
+            {
+                using var tcp = new TcpClient();
+                await tcp.ConnectAsync(ip, port).WaitAsync(TimeSpan.FromSeconds(3));
+                ipOk = true;
+            }
+            catch { /* ipOk stays false */ }
+        }
+
+        void Apply()
+        {
+            if (folderOk && ipOk)
+            {
+                dot.ForeColor = Color.FromArgb(76, 175, 80);
+                statusLabel.Text = "✓ เชื่อมต่อสำเร็จ + ไฟล์พร้อมใช้งาน";
+                statusLabel.ForeColor = Color.FromArgb(21, 128, 61);
+            }
+            else
+            {
+                dot.ForeColor = Color.FromArgb(220, 38, 38);
+                var parts = new List<string>();
+                if (!ipOk) parts.Add("เชื่อมต่อ IP:Port ไม่ได้");
+                if (!folderOk && !string.IsNullOrWhiteSpace(folder))
+                    parts.Add("ไฟล์ไม่ครบ");
+                else if (string.IsNullOrWhiteSpace(folder))
+                    parts.Add("ยังไม่ได้เลือกโฟลเดอร์");
+                statusLabel.Text = "⚠ " + string.Join(" / ", parts);
+                statusLabel.ForeColor = Color.FromArgb(220, 38, 38);
+            }
+        }
+
+        if (dot.InvokeRequired) dot.Invoke(Apply); else Apply();
+    }
+
+    // ── Folder browsing & validation ────────────────────────────────
+
+    private void BrowseFolder(AntdUI.Input target, Label statusLabel, string requiredTable)
+    {
+        using var dlg = new FolderBrowserDialog { ShowNewFolderButton = false };
+        if (!string.IsNullOrEmpty(target.Text) && Directory.Exists(target.Text))
+            dlg.SelectedPath = target.Text;
+        if (dlg.ShowDialog(this) != DialogResult.OK) return;
+
+        target.Text = dlg.SelectedPath;
+        MarkDirty(target);
+
+        var problems = ValidateFolder(dlg.SelectedPath, requiredTable);
+        ShowFolderStatus(dlg.SelectedPath, statusLabel, requiredTable);
+        if (problems.Count > 0)
+            MessageBox.Show(string.Join("\n\n", problems), "Warning",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+    }
+
+    private static List<string> ValidateFolder(string folder, string requiredTable)
+    {
+        var problems = new List<string>();
+        if (string.IsNullOrWhiteSpace(folder)) return problems;
+
+        var cpiPath = Path.Combine(folder, REL_CPI);
+        if (!File.Exists(cpiPath))
+            problems.Add($"ไม่พบ {REL_CPI}");
+        else if (!HasTable(cpiPath, requiredTable))
+            problems.Add($"พบ CPI.db3 แต่ไม่มีตาราง {requiredTable}");
+
+        if (!File.Exists(Path.Combine(folder, REL_DEFAULT_UVDX)))
+            problems.Add($"ไม่พบ {REL_DEFAULT_UVDX}");
+
+        return problems;
+    }
+
+    private static void ShowFolderStatus(string folder, Label lbl, string table)
+    {
+        if (string.IsNullOrWhiteSpace(folder)) { lbl.Text = ""; lbl.ForeColor = Color.Gray; return; }
+        var problems = ValidateFolder(folder, table);
+        if (problems.Count == 0)
+        {
+            lbl.Text = "✓ CPI.db3 + default.uvdx พร้อมใช้งาน";
+            lbl.ForeColor = Color.FromArgb(21, 128, 61);
+        }
+        else
+        {
+            lbl.Text = $"⚠ พบ {problems.Count} ปัญหา";
+            lbl.ForeColor = Color.FromArgb(220, 38, 38);
+        }
+    }
+
+    private static bool HasTable(string dbPath, string tableName)
+    {
+        try
+        {
+            using var conn = new SqliteConnection($"Data Source={dbPath};Mode=ReadOnly");
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=@t";
+            cmd.Parameters.AddWithValue("@t", tableName);
+            return Convert.ToInt64(cmd.ExecuteScalar()) > 0;
+        }
+        catch { return false; }
+    }
+
+    // ── Edit name helpers ───────────────────────────────────────────
+
+    private void EditMkName(string key, Label badge)
     {
         var current = CustomSettingsManager.Read(key, key.Replace("_NAME", ""));
         using var dlg = new InputDialog("Edit Name", "Display name:", current);
@@ -68,52 +251,34 @@ public partial class InkjetSettingUserControl : UserControl
         badge.Text = dlg.Value;
     }
 
-    private async Task CheckAllStatusAsync()
+    private void EditUvName(string key, Label badge)
     {
-        btnCheckStatus.Enabled = false;
-        try
-        {
-            var t1 = CheckPrinterAsync(txtMk058Ip.Text.Trim(), lblMk058Status);
-            var t2 = CheckPrinterAsync(txtMk059Ip.Text.Trim(), lblMk059Status);
-            await Task.WhenAll(t1, t2);
-        }
-        finally { btnCheckStatus.Enabled = true; }
+        var current = UvSettingsManager.Read(key, badge.Text);
+        using var dlg = new InputDialog("Edit Name", "Display name:", current);
+        if (dlg.ShowDialog(this) != DialogResult.OK) return;
+        UvSettingsManager.Write(key, dlg.Value);
+        badge.Text = dlg.Value;
     }
 
-    private static async Task CheckPrinterAsync(string ip, AntdUI.Label statusDot)
-    {
-        if (string.IsNullOrWhiteSpace(ip))
-        {
-            SetStatus(statusDot, Color.Gray);
-            return;
-        }
+    // ── Dirty / reset ───────────────────────────────────────────────
 
-        try
-        {
-            using var tcp = new TcpClient();
-            await tcp.ConnectAsync(ip, PrinterPort).WaitAsync(TimeSpan.FromSeconds(3));
-            SetStatus(statusDot, Color.FromArgb(76, 175, 80));
-        }
-        catch
-        {
-            SetStatus(statusDot, Color.FromArgb(220, 38, 38));
-        }
+    private static void SetDotColor(Label dot, Color color)
+    {
+        if (dot.InvokeRequired) dot.Invoke(() => dot.ForeColor = color);
+        else dot.ForeColor = color;
     }
 
-    private static void SetStatus(AntdUI.Label dot, Color color)
-    {
-        if (dot.InvokeRequired)
-            dot.Invoke(() => dot.ForeColor = color);
-        else
-            dot.ForeColor = color;
-    }
-
-    private void MarkDirty(AntdUI.Input input) =>
-        input.BackColor = Color.LightYellow;
+    private void MarkDirty(AntdUI.Input input) => input.BackColor = Color.LightYellow;
 
     private void ResetColors()
     {
         txtMk058Ip.BackColor = Color.White;
         txtMk059Ip.BackColor = Color.White;
+        txtUv1Ip.BackColor = Color.White;
+        txtUv1Port.BackColor = Color.White;
+        txtUv2Ip.BackColor = Color.White;
+        txtUv2Port.BackColor = Color.White;
+        txtUv1Folder.BackColor = Color.White;
+        txtUv2Folder.BackColor = Color.White;
     }
 }

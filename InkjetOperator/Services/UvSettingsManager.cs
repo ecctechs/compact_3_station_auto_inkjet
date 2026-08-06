@@ -53,4 +53,23 @@ public static class UvSettingsManager
                 new XElement("appSettings")));
         doc.Save(_path);
     }
+
+    private const string REL_CPI = @"database\sys\CPI.db3";
+    private const string REL_DOCUMENT = "document";
+
+    public static string? GetCpiPath(int uvNumber)
+    {
+        var folder = Read(uvNumber == 1 ? "UV1_FOLDER" : "UV2_FOLDER");
+        if (string.IsNullOrWhiteSpace(folder)) return null;
+        var path = Path.Combine(folder, REL_CPI);
+        return File.Exists(path) ? path : null;
+    }
+
+    public static string? GetDocumentFolder(int uvNumber)
+    {
+        var folder = Read(uvNumber == 1 ? "UV1_FOLDER" : "UV2_FOLDER");
+        if (string.IsNullOrWhiteSpace(folder)) return null;
+        var path = Path.Combine(folder, REL_DOCUMENT);
+        return Directory.Exists(path) ? path : null;
+    }
 }

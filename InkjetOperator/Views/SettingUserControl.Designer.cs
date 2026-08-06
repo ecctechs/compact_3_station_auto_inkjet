@@ -33,7 +33,6 @@ partial class SettingUserControl
         btnDatabaseSetting = new AntdUI.Button();
         btnDB3Setting = new AntdUI.Button();
         btnPLCSetting = new AntdUI.Button();
-        btnUVPrinterSetting = new AntdUI.Button();
         pnlContent = new AntdUI.Panel();
         pnlContentArea = new Panel();
         tlpSettingRoot.SuspendLayout();
@@ -82,17 +81,15 @@ partial class SettingUserControl
         tlpSidebar.Controls.Add(btnDatabaseSetting, 0, 0);
         tlpSidebar.Controls.Add(btnDB3Setting, 0, 1);
         tlpSidebar.Controls.Add(btnPLCSetting, 0, 2);
-        tlpSidebar.Controls.Add(btnUVPrinterSetting, 0, 3);
         tlpSidebar.Dock = DockStyle.Top;
         tlpSidebar.Location = new Point(3, 3);
         tlpSidebar.Margin = new Padding(0);
         tlpSidebar.Name = "tlpSidebar";
-        tlpSidebar.RowCount = 4;
+        tlpSidebar.RowCount = 3;
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
-        tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
-        tlpSidebar.Size = new Size(398, 336);
+        tlpSidebar.Size = new Size(398, 252);
         tlpSidebar.TabIndex = 0;
         // 
         // btnDatabaseSetting
@@ -106,7 +103,7 @@ partial class SettingUserControl
         btnDatabaseSetting.Radius = 0;
         btnDatabaseSetting.Size = new Size(398, 84);
         btnDatabaseSetting.TabIndex = 0;
-        btnDatabaseSetting.Text = "MK Printer Setting";
+        btnDatabaseSetting.Text = "Printer Setting";
         // 
         // btnDB3Setting
         // 
@@ -133,19 +130,6 @@ partial class SettingUserControl
         btnPLCSetting.Size = new Size(398, 84);
         btnPLCSetting.TabIndex = 2;
         btnPLCSetting.Text = "PLC Setting";
-        // 
-        // btnUVPrinterSetting
-        // 
-        btnUVPrinterSetting.Dock = DockStyle.Fill;
-        btnUVPrinterSetting.Font = new Font("Segoe UI", 12F);
-        btnUVPrinterSetting.ForeColor = Color.FromArgb(51, 51, 51);
-        btnUVPrinterSetting.Location = new Point(0, 252);
-        btnUVPrinterSetting.Margin = new Padding(0);
-        btnUVPrinterSetting.Name = "btnUVPrinterSetting";
-        btnUVPrinterSetting.Radius = 0;
-        btnUVPrinterSetting.Size = new Size(398, 84);
-        btnUVPrinterSetting.TabIndex = 3;
-        btnUVPrinterSetting.Text = "UV Printer Setting";
         // 
         // pnlContent
         // 
@@ -196,7 +180,6 @@ partial class SettingUserControl
     private AntdUI.Button btnDatabaseSetting;
     private AntdUI.Button btnDB3Setting;
     private AntdUI.Button btnPLCSetting;
-    private AntdUI.Button btnUVPrinterSetting;
     private AntdUI.Panel pnlContent;
     private System.Windows.Forms.Panel pnlContentArea;
 }
