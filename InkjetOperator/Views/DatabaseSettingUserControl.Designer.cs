@@ -62,24 +62,27 @@ partial class DatabaseSettingUserControl
         grpDatabase.TabStop = false;
         grpDatabase.Text = "Database";
         //
-        // tlpForm — 4 cols: dot(36) | label(130) | input(fill) | browse(100)
+        // tlpForm — 6 cols matching InkjetSetting grid
+        //   dot(36) | col1(140) | col2(100) | input(fill) | col4(20) | col5(90)
         //
         tlpForm.BackColor = System.Drawing.Color.White;
-        tlpForm.ColumnCount = 4;
+        tlpForm.ColumnCount = 6;
         tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 36F));
-        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 130F));
-        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
         tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
+        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 90F));
         tlpForm.Controls.Add(lblDot, 0, 0);
         tlpForm.Controls.Add(lblDbPathLabel, 1, 0);
         tlpForm.Controls.Add(txtDbPath, 2, 0);
-        tlpForm.Controls.Add(btnBrowse, 3, 0);
+        tlpForm.Controls.Add(btnBrowse, 5, 0);
         tlpForm.Controls.Add(lblStatus, 1, 1);
         tlpForm.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpForm.Name = "tlpForm";
         tlpForm.RowCount = 3;
         tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
-        tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+        tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
         tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpForm.TabIndex = 0;
         //
@@ -99,12 +102,12 @@ partial class DatabaseSettingUserControl
         lblDbPathLabel.Font = new System.Drawing.Font("Segoe UI", 10F);
         lblDbPathLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         lblDbPathLabel.Name = "lblDbPathLabel";
-        lblDbPathLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
+        lblDbPathLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblDbPathLabel.TabIndex = 1;
         lblDbPathLabel.Text = "Database Path :";
         lblDbPathLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
-        // txtDbPath
+        // txtDbPath — spans col2+col3+col4
         //
         txtDbPath.Dock = System.Windows.Forms.DockStyle.Fill;
         txtDbPath.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
@@ -114,6 +117,7 @@ partial class DatabaseSettingUserControl
         txtDbPath.PlaceholderText = "Select PrintData.db3 file...";
         txtDbPath.Radius = 4;
         txtDbPath.ReadOnly = true;
+        tlpForm.SetColumnSpan(txtDbPath, 3);
         txtDbPath.TabIndex = 2;
         //
         // btnBrowse
@@ -125,18 +129,18 @@ partial class DatabaseSettingUserControl
         btnBrowse.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnBrowse.Name = "btnBrowse";
         btnBrowse.Radius = 6;
-        btnBrowse.Size = new System.Drawing.Size(90, 34);
+        btnBrowse.Size = new System.Drawing.Size(84, 34);
         btnBrowse.TabIndex = 3;
         btnBrowse.Text = "Browse...";
         btnBrowse.Type = AntdUI.TTypeMini.Default;
         //
-        // lblStatus
+        // lblStatus — spans col1..col5
         //
         lblStatus.Dock = System.Windows.Forms.DockStyle.Fill;
         lblStatus.Font = new System.Drawing.Font("Segoe UI", 9F);
         lblStatus.ForeColor = System.Drawing.Color.Gray;
         lblStatus.Name = "lblStatus";
-        tlpForm.SetColumnSpan(lblStatus, 3);
+        tlpForm.SetColumnSpan(lblStatus, 5);
         lblStatus.Padding = new System.Windows.Forms.Padding(0, 2, 0, 0);
         lblStatus.TabIndex = 4;
         lblStatus.Text = "";

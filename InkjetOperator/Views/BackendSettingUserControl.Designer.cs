@@ -18,18 +18,18 @@ partial class BackendSettingUserControl
         grpBackend = new System.Windows.Forms.GroupBox();
         tlpDevice = new System.Windows.Forms.TableLayoutPanel();
 
-        lblPcStatus = new AntdUI.Label();
+        lblPcStatus = new System.Windows.Forms.Label();
         lblPcBadge = new System.Windows.Forms.Label();
         btnPcName = new AntdUI.Button();
-        lblPcIpLabel = new AntdUI.Label();
+        lblPcIpLabel = new System.Windows.Forms.Label();
         txtPcIp = new AntdUI.Input();
-        lblApiUrlLabel = new AntdUI.Label();
-        lblApiUrlValue = new AntdUI.Label();
+        lblApiUrlLabel = new System.Windows.Forms.Label();
+        lblApiUrlValue = new System.Windows.Forms.Label();
 
-        btnCheckStatus = new AntdUI.Button();
         flpActions = new System.Windows.Forms.FlowLayoutPanel();
         btnSave = new AntdUI.Button();
         btnCancel = new AntdUI.Button();
+        btnCheckStatus = new AntdUI.Button();
 
         tlpRoot.SuspendLayout();
         grpBackend.SuspendLayout();
@@ -58,24 +58,25 @@ partial class BackendSettingUserControl
         //
         grpBackend.Controls.Add(tlpDevice);
         grpBackend.Dock = System.Windows.Forms.DockStyle.Fill;
-        grpBackend.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold);
+        grpBackend.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         grpBackend.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
-        grpBackend.Location = new System.Drawing.Point(19, 19);
         grpBackend.Name = "grpBackend";
-        grpBackend.Padding = new System.Windows.Forms.Padding(20, 28, 20, 12);
-        grpBackend.Size = new System.Drawing.Size(742, 698);
+        grpBackend.Padding = new System.Windows.Forms.Padding(16, 24, 16, 8);
         grpBackend.TabIndex = 0;
         grpBackend.TabStop = false;
         grpBackend.Text = "Backend";
         //
-        // tlpDevice
+        // tlpDevice — 6 cols matching InkjetSetting grid
+        //   dot(36) | badge(140) | label/edit(100) | input(fill) | :(20) | extra(90)
         //
         tlpDevice.BackColor = System.Drawing.Color.White;
-        tlpDevice.ColumnCount = 4;
+        tlpDevice.ColumnCount = 6;
         tlpDevice.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 36F));
         tlpDevice.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
-        tlpDevice.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 64F));
+        tlpDevice.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
         tlpDevice.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpDevice.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+        tlpDevice.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 90F));
         tlpDevice.Controls.Add(lblPcStatus, 0, 0);
         tlpDevice.Controls.Add(lblPcBadge, 1, 0);
         tlpDevice.Controls.Add(btnPcName, 2, 0);
@@ -83,27 +84,21 @@ partial class BackendSettingUserControl
         tlpDevice.Controls.Add(txtPcIp, 3, 1);
         tlpDevice.Controls.Add(lblApiUrlLabel, 1, 2);
         tlpDevice.Controls.Add(lblApiUrlValue, 3, 2);
-        tlpDevice.Controls.Add(btnCheckStatus, 0, 4);
         tlpDevice.Dock = System.Windows.Forms.DockStyle.Fill;
-        tlpDevice.Location = new System.Drawing.Point(20, 42);
         tlpDevice.Name = "tlpDevice";
-        tlpDevice.RowCount = 5;
+        tlpDevice.RowCount = 4;
         tlpDevice.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
         tlpDevice.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
         tlpDevice.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
         tlpDevice.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpDevice.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 56F));
-        tlpDevice.Size = new System.Drawing.Size(702, 644);
         tlpDevice.TabIndex = 0;
         //
         // lblPcStatus
         //
         lblPcStatus.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblPcStatus.Font = new System.Drawing.Font("Segoe UI", 22F);
+        lblPcStatus.Font = new System.Drawing.Font("Segoe UI", 20F);
         lblPcStatus.ForeColor = System.Drawing.Color.Gray;
-        lblPcStatus.Location = new System.Drawing.Point(3, 0);
         lblPcStatus.Name = "lblPcStatus";
-        lblPcStatus.Size = new System.Drawing.Size(30, 50);
         lblPcStatus.TabIndex = 0;
         lblPcStatus.Text = "●";
         lblPcStatus.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -112,11 +107,10 @@ partial class BackendSettingUserControl
         //
         lblPcBadge.Anchor = System.Windows.Forms.AnchorStyles.Left;
         lblPcBadge.BackColor = System.Drawing.Color.FromArgb(33, 33, 33);
-        lblPcBadge.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        lblPcBadge.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
         lblPcBadge.ForeColor = System.Drawing.Color.White;
-        lblPcBadge.Location = new System.Drawing.Point(39, 7);
         lblPcBadge.Name = "lblPcBadge";
-        lblPcBadge.Size = new System.Drawing.Size(120, 36);
+        lblPcBadge.Size = new System.Drawing.Size(120, 34);
         lblPcBadge.TabIndex = 1;
         lblPcBadge.Text = "PC";
         lblPcBadge.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -126,96 +120,72 @@ partial class BackendSettingUserControl
         btnPcName.Anchor = System.Windows.Forms.AnchorStyles.Left;
         btnPcName.BorderWidth = 2F;
         btnPcName.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnPcName.Font = new System.Drawing.Font("Segoe UI", 10F);
+        btnPcName.Font = new System.Drawing.Font("Segoe UI", 9F);
         btnPcName.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnPcName.Location = new System.Drawing.Point(179, 7);
         btnPcName.Name = "btnPcName";
         btnPcName.Radius = 6;
-        btnPcName.Size = new System.Drawing.Size(56, 36);
+        btnPcName.Size = new System.Drawing.Size(50, 34);
         btnPcName.TabIndex = 2;
         btnPcName.Text = "Edit";
         btnPcName.Type = AntdUI.TTypeMini.Default;
         //
-        // lblPcIpLabel
+        // lblPcIpLabel — spans col1+col2
         //
         lblPcIpLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblPcIpLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblPcIpLabel.Font = new System.Drawing.Font("Segoe UI", 10F);
         lblPcIpLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-        lblPcIpLabel.Location = new System.Drawing.Point(39, 50);
         lblPcIpLabel.Name = "lblPcIpLabel";
         tlpDevice.SetColumnSpan(lblPcIpLabel, 2);
-        lblPcIpLabel.Size = new System.Drawing.Size(186, 50);
+        lblPcIpLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
         lblPcIpLabel.TabIndex = 3;
         lblPcIpLabel.Text = "IP Address :";
         lblPcIpLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-        lblPcIpLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
         //
-        // txtPcIp
+        // txtPcIp — spans col3+col4+col5
         //
-        txtPcIp.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtPcIp.Dock = System.Windows.Forms.DockStyle.Fill;
         txtPcIp.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtPcIp.Font = new System.Drawing.Font("Segoe UI", 11F);
-        txtPcIp.Location = new System.Drawing.Point(229, 55);
+        txtPcIp.Font = new System.Drawing.Font("Segoe UI", 10F);
         txtPcIp.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtPcIp.Name = "txtPcIp";
         txtPcIp.PlaceholderText = "e.g. 127.0.0.1";
         txtPcIp.Radius = 4;
-        txtPcIp.Size = new System.Drawing.Size(470, 40);
+        tlpDevice.SetColumnSpan(txtPcIp, 3);
         txtPcIp.TabIndex = 4;
         //
-        // lblApiUrlLabel
+        // lblApiUrlLabel — spans col1+col2
         //
         lblApiUrlLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblApiUrlLabel.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblApiUrlLabel.Font = new System.Drawing.Font("Segoe UI", 9F);
         lblApiUrlLabel.ForeColor = System.Drawing.Color.FromArgb(120, 120, 120);
-        lblApiUrlLabel.Location = new System.Drawing.Point(39, 100);
         lblApiUrlLabel.Name = "lblApiUrlLabel";
         tlpDevice.SetColumnSpan(lblApiUrlLabel, 2);
-        lblApiUrlLabel.Size = new System.Drawing.Size(186, 40);
+        lblApiUrlLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
         lblApiUrlLabel.TabIndex = 5;
         lblApiUrlLabel.Text = "API URL :";
         lblApiUrlLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-        lblApiUrlLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
         //
-        // lblApiUrlValue
+        // lblApiUrlValue — spans col3+col4+col5
         //
         lblApiUrlValue.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblApiUrlValue.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblApiUrlValue.Font = new System.Drawing.Font("Segoe UI", 9F);
         lblApiUrlValue.ForeColor = System.Drawing.Color.FromArgb(120, 120, 120);
-        lblApiUrlValue.Location = new System.Drawing.Point(229, 100);
         lblApiUrlValue.Name = "lblApiUrlValue";
-        lblApiUrlValue.Size = new System.Drawing.Size(470, 40);
+        tlpDevice.SetColumnSpan(lblApiUrlValue, 3);
         lblApiUrlValue.TabIndex = 6;
         lblApiUrlValue.Text = "http://127.0.0.1:3000";
         lblApiUrlValue.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-        //
-        // btnCheckStatus
-        //
-        btnCheckStatus.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Bottom;
-        btnCheckStatus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        btnCheckStatus.BorderWidth = 2F;
-        btnCheckStatus.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
-        btnCheckStatus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnCheckStatus.Location = new System.Drawing.Point(3, 594);
-        btnCheckStatus.Name = "btnCheckStatus";
-        btnCheckStatus.Radius = 8;
-        tlpDevice.SetColumnSpan(btnCheckStatus, 2);
-        btnCheckStatus.Size = new System.Drawing.Size(170, 44);
-        btnCheckStatus.TabIndex = 7;
-        btnCheckStatus.Text = "Check Status";
-        btnCheckStatus.Type = AntdUI.TTypeMini.Default;
         //
         // flpActions
         //
         flpActions.BackColor = System.Drawing.Color.White;
         flpActions.Controls.Add(btnSave);
         flpActions.Controls.Add(btnCancel);
+        flpActions.Controls.Add(btnCheckStatus);
         flpActions.Dock = System.Windows.Forms.DockStyle.Fill;
         flpActions.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
-        flpActions.Location = new System.Drawing.Point(16, 720);
         flpActions.Margin = new System.Windows.Forms.Padding(0);
         flpActions.Name = "flpActions";
-        flpActions.Size = new System.Drawing.Size(748, 68);
         flpActions.TabIndex = 1;
         flpActions.WrapContents = false;
         //
@@ -223,7 +193,6 @@ partial class BackendSettingUserControl
         //
         btnSave.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
         btnSave.ForeColor = System.Drawing.Color.White;
-        btnSave.Location = new System.Drawing.Point(591, 12);
         btnSave.Margin = new System.Windows.Forms.Padding(3, 12, 3, 12);
         btnSave.Name = "btnSave";
         btnSave.Radius = 8;
@@ -238,7 +207,6 @@ partial class BackendSettingUserControl
         btnCancel.BorderWidth = 2F;
         btnCancel.Font = new System.Drawing.Font("Segoe UI", 12F);
         btnCancel.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnCancel.Location = new System.Drawing.Point(431, 12);
         btnCancel.Margin = new System.Windows.Forms.Padding(3, 12, 3, 12);
         btnCancel.Name = "btnCancel";
         btnCancel.Radius = 8;
@@ -246,6 +214,20 @@ partial class BackendSettingUserControl
         btnCancel.TabIndex = 1;
         btnCancel.Text = "Cancel";
         btnCancel.Type = AntdUI.TTypeMini.Default;
+        //
+        // btnCheckStatus
+        //
+        btnCheckStatus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnCheckStatus.BorderWidth = 2F;
+        btnCheckStatus.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        btnCheckStatus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnCheckStatus.Margin = new System.Windows.Forms.Padding(16, 12, 3, 12);
+        btnCheckStatus.Name = "btnCheckStatus";
+        btnCheckStatus.Radius = 8;
+        btnCheckStatus.Size = new System.Drawing.Size(170, 44);
+        btnCheckStatus.TabIndex = 2;
+        btnCheckStatus.Text = "Check Status";
+        btnCheckStatus.Type = AntdUI.TTypeMini.Default;
         //
         // BackendSettingUserControl
         //
@@ -267,15 +249,15 @@ partial class BackendSettingUserControl
     private System.Windows.Forms.TableLayoutPanel tlpRoot;
     private System.Windows.Forms.GroupBox grpBackend;
     private System.Windows.Forms.TableLayoutPanel tlpDevice;
-    private AntdUI.Label lblPcStatus;
+    private System.Windows.Forms.Label lblPcStatus;
     private System.Windows.Forms.Label lblPcBadge;
     private AntdUI.Button btnPcName;
-    private AntdUI.Label lblPcIpLabel;
+    private System.Windows.Forms.Label lblPcIpLabel;
     private AntdUI.Input txtPcIp;
-    private AntdUI.Label lblApiUrlLabel;
-    private AntdUI.Label lblApiUrlValue;
-    private AntdUI.Button btnCheckStatus;
+    private System.Windows.Forms.Label lblApiUrlLabel;
+    private System.Windows.Forms.Label lblApiUrlValue;
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnSave;
     private AntdUI.Button btnCancel;
+    private AntdUI.Button btnCheckStatus;
 }

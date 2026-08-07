@@ -60,6 +60,7 @@ public partial class PlcSettingUserControl : UserControl
         btnCancel.Click += BtnCancel_Click;
         btnAddRow.Click += BtnAddRow_Click;
         btnCheckStatus.Click += (_, _) => CheckPlcStatusAsync();
+        btnPlcName.Click += (_, _) => EditName();
 
         txtPlc001Ip.TextChanged += (_, _) => txtPlc001Ip.BackColor = Color.LightYellow;
         txtPlc001Port.TextChanged += (_, _) => txtPlc001Port.BackColor = Color.LightYellow;
@@ -68,10 +69,20 @@ public partial class PlcSettingUserControl : UserControl
         tblPlcMap.CellEndEdit += TblPlcMap_CellEndEdit;
     }
 
+    private void EditName()
+    {
+        var current = CustomSettingsManager.Read("PLC_NAME", "PLC-001");
+        using var dlg = new InputDialog("Edit Name", "Display name:", current);
+        if (dlg.ShowDialog(this) != DialogResult.OK) return;
+        CustomSettingsManager.Write("PLC_NAME", dlg.Value);
+        lblPlcBadge.Text = dlg.Value;
+    }
+
     private void LoadSettings()
     {
         txtPlc001Ip.Text = CustomSettingsManager.Read("PLC_IP", "");
         txtPlc001Port.Text = CustomSettingsManager.Read("PLC_PORT", "502");
+        lblPlcBadge.Text = CustomSettingsManager.Read("PLC_NAME", "PLC-001");
         ResetColors();
     }
 
