@@ -35,4 +35,6 @@ Route.post(
 
 Route.post(RouteName + "/retry/:id", JobController.retry);
 
+Route.delete(RouteName + "/remove/:id", JobController.remove);
+
 module.exports = Route;

@@ -7,7 +7,6 @@ const {
   ConveyorSpeed,
   ServoConfig,
 } = require("../model/patternModel");
-const sequelize = require("../database");
 const { parseBarcode, resolveTemplates } = require("../utils/templateResolver");
 
 const PATTERN_INCLUDE = [
@@ -23,89 +22,27 @@ const PATTERN_INCLUDE = [
 class JobController {
   /**
    * POST /job/create
-   * Scanner sends barcode → backend parses, creates job, clones matching
-   * pattern (with all children) so each job owns its own snapshot.
+   * Creates a print_jobs record. Pattern + UV data are created by separate calls.
    */
   static async create(req, res) {
-    const t = await sequelize.transaction();
     try {
-      const { barcode_raw, created_by, order_no, customer_name, type, qty } =
+      const { barcode_raw, created_by, order_no, customer_name, type, qty, st_status } =
         req.body;
-      const { lotNumber, patternCode } = parseBarcode(barcode_raw);
 
-      const job = await PrintJob.create(
-        {
-          barcode_raw,
-          lot_number: lotNumber,
-          order_no,
-          customer_name,
-          type,
-          qty,
-          created_by,
-        },
-        { transaction: t }
-      );
-
-      const template = await Pattern.findOne({
-        where: { barcode: patternCode, is_active: true },
-        include: PATTERN_INCLUDE,
-        order: [["id", "DESC"]],
+      const job = await PrintJob.create({
+        barcode_raw,
+        lot_number: barcode_raw,
+        pattern_no_erp: barcode_raw,
+        order_no,
+        customer_name,
+        type,
+        qty,
+        created_by,
+        st_status: st_status || "0",
       });
 
-      if (template) {
-        const cloned = await Pattern.create(
-          {
-            job_id: job.id,
-            barcode: template.barcode,
-            description: template.description,
-          },
-          { transaction: t }
-        );
-
-        for (const cfg of template.inkjet_configs || []) {
-          const cfgJson = cfg.toJSON();
-          const { id: _, text_blocks, ...cfgData } = cfgJson;
-          const newCfg = await InkjetConfig.create(
-            { ...cfgData, pattern_id: cloned.id },
-            { transaction: t }
-          );
-
-          for (const block of text_blocks || []) {
-            const { id: __, ...blockData } = block;
-            await TextBlock.create(
-              { ...blockData, inkjet_config_id: newCfg.id },
-              { transaction: t }
-            );
-          }
-        }
-
-        if (template.conveyor_speeds) {
-          const { id: _, ...speedData } = template.conveyor_speeds.toJSON();
-          await ConveyorSpeed.create(
-            { ...speedData, pattern_id: cloned.id },
-            { transaction: t }
-          );
-        }
-
-        for (const servo of template.servo_configs || []) {
-          const { id: _, ...servoData } = servo.toJSON();
-          await ServoConfig.create(
-            { ...servoData, pattern_id: cloned.id },
-            { transaction: t }
-          );
-        }
-      }
-
-      await t.commit();
-
-      const data = job.toJSON();
-      if (!template) {
-        data.warning = `No pattern found for barcode "${patternCode}"`;
-      }
-
-      return ResponseManager.SuccessResponse(req, res, 201, data);
+      return ResponseManager.SuccessResponse(req, res, 201, job);
     } catch (err) {
-      await t.rollback();
       return ResponseManager.CatchResponse(req, res, err.message);
     }
   }
@@ -233,7 +170,6 @@ class JobController {
 
   /**
    * POST /job/postResults/:id
-   * C# posts execution results + command log after sending to hardware.
    */
   static async postResults(req, res) {
     try {
@@ -273,7 +209,6 @@ class JobController {
 
   /**
    * POST /job/retry/:id
-   * Reset a failed job back to Waiting and increment attempt counter.
    */
   static async retry(req, res) {
     try {
@@ -302,6 +237,24 @@ class JobController {
         200,
         "Job reset to Waiting"
       );
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  /**
+   * DELETE /job/remove/:id — deletes job and all children (CASCADE).
+   */
+  static async remove(req, res) {
+    try {
+      const job = await PrintJob.findByPk(req.params.id);
+      if (!job) {
+        return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
+      }
+
+      await job.destroy();
+
+      return ResponseManager.SuccessResponse(req, res, 200, "Job deleted");
     } catch (err) {
       return ResponseManager.CatchResponse(req, res, err.message);
     }

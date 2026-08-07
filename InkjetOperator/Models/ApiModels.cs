@@ -33,14 +33,26 @@ public class PrintJob
     [JsonPropertyName("barcode_raw")]
     public string BarcodeRaw { get; set; } = "";
 
-    [JsonPropertyName("pattern_id")]
-    public int? PatternId { get; set; }
-
     [JsonPropertyName("lot_number")]
     public string? LotNumber { get; set; }
 
+    [JsonPropertyName("pattern_no_erp")]
+    public string? PatternNoErp { get; set; }
+
+    [JsonPropertyName("order_no")]
+    public string? OrderNo { get; set; }
+
+    [JsonPropertyName("customer_name")]
+    public string? CustomerName { get; set; }
+
+    [JsonPropertyName("type")]
+    public string? Type { get; set; }
+
+    [JsonPropertyName("qty")]
+    public int? Qty { get; set; }
+
     [JsonPropertyName("status")]
-    public string Status { get; set; } = "pending";
+    public string Status { get; set; } = "Waiting";
 
     [JsonPropertyName("error_message")]
     public string? ErrorMessage { get; set; }
@@ -53,6 +65,98 @@ public class PrintJob
 
     [JsonPropertyName("warning")]
     public string? Warning { get; set; }
+
+    [JsonPropertyName("st_status")]
+    public string? StStatus { get; set; }
+}
+
+// --- Request DTOs ---
+
+public class CreateJobRequest
+{
+    [JsonPropertyName("barcode_raw")]
+    public string BarcodeRaw { get; set; } = "";
+
+    [JsonPropertyName("created_by")]
+    public string CreatedBy { get; set; } = "operator";
+
+    [JsonPropertyName("order_no")]
+    public string? OrderNo { get; set; }
+
+    [JsonPropertyName("customer_name")]
+    public string? CustomerName { get; set; }
+
+    [JsonPropertyName("type")]
+    public string? Type { get; set; }
+
+    [JsonPropertyName("qty")]
+    public int? Qty { get; set; }
+
+    [JsonPropertyName("st_status")]
+    public string StStatus { get; set; } = "0";
+}
+
+public class CreatePatternRequest
+{
+    [JsonPropertyName("barcode")]
+    public string Barcode { get; set; } = "";
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("job_id")]
+    public int JobId { get; set; }
+
+    [JsonPropertyName("inkjet_configs")]
+    public List<InkjetConfigDto> InkjetConfigs { get; set; } = new();
+
+    [JsonPropertyName("conveyor_speeds")]
+    public ConveyorSpeedDto? ConveyorSpeeds { get; set; }
+
+    [JsonPropertyName("servo_configs")]
+    public List<ServoConfigDto> ServoConfigs { get; set; } = new();
+}
+
+public class CreateUvJobRequest
+{
+    [JsonPropertyName("print_jobs_id")]
+    public int PrintJobsId { get; set; }
+
+    [JsonPropertyName("items")]
+    public List<UvJobItem> Items { get; set; } = new();
+}
+
+public class UvJobItem
+{
+    [JsonPropertyName("machine")]
+    public string Machine { get; set; } = "";
+
+    [JsonPropertyName("table_name")]
+    public string? TableName { get; set; }
+
+    [JsonPropertyName("program_name")]
+    public string? ProgramName { get; set; }
+
+    [JsonPropertyName("lot")]
+    public string? Lot { get; set; }
+
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("text1")]
+    public string? Text1 { get; set; }
+
+    [JsonPropertyName("text2")]
+    public string? Text2 { get; set; }
+
+    [JsonPropertyName("text3")]
+    public string? Text3 { get; set; }
+
+    [JsonPropertyName("text4")]
+    public string? Text4 { get; set; }
+
+    [JsonPropertyName("text5")]
+    public string? Text5 { get; set; }
 }
 
 // --- Pattern models (from GET /job/getResolved) ---
@@ -106,6 +210,12 @@ public class InkjetConfigDto
 
     [JsonPropertyName("trigger_delay")]
     public int? TriggerDelay { get; set; }
+
+    [JsonPropertyName("pos_act")]
+    public int? PosAct { get; set; }
+
+    [JsonPropertyName("delay")]
+    public int? Delay { get; set; }
 
     [JsonPropertyName("direction")]
     public int? Direction { get; set; }
@@ -162,10 +272,10 @@ public class ServoConfigDto
     public int? Position { get; set; }
 
     [JsonPropertyName("post_act")]
-    public int? PostAct { get; set; }
+    public double? PostAct { get; set; }
 
     [JsonPropertyName("delay")]
-    public int? Delay { get; set; }
+    public double? Delay { get; set; }
 
     [JsonPropertyName("trigger")]
     public int? Trigger { get; set; }

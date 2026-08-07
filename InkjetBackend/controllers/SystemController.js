@@ -66,6 +66,10 @@ const TRANSLATIONS = {
 };
 
 class SystemController {
+  static async ping(req, res) {
+    return ResponseManager.SuccessResponse(req, res, 200, { status: "ok" });
+  }
+
   static async getSizeMap(req, res) {
     return ResponseManager.SuccessResponse(req, res, 200, SIZE_CONVERSION);
   }

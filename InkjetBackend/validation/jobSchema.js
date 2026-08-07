@@ -7,6 +7,7 @@ const createJobSchema = z.object({
   customer_name: z.string().optional(),
   type: z.string().optional(),
   qty: z.number().int().optional(),
+  st_status: z.string().optional(),
 });
 
 const jobFilterSchema = z.object({

@@ -4,10 +4,6 @@ using InkjetOperator.Models;
 
 namespace InkjetOperator.Services;
 
-/// <summary>
-/// HTTP client for the InkjetBackend REST API.
-/// Polls for pending jobs, fetches resolved patterns, posts results.
-/// </summary>
 public class ApiClient
 {
     private readonly HttpClient _http;
@@ -29,7 +25,81 @@ public class ApiClient
         };
     }
 
-    /// <summary>GET /job/getAll?status=pending — polled every 5s by frmMain timer.</summary>
+    public async Task<bool> PingAsync()
+    {
+        try
+        {
+            var response = await _http.GetAsync("/system/ping");
+            return response.IsSuccessStatusCode;
+        }
+        catch { return false; }
+    }
+
+    public async Task<(PrintJob? job, string? error)> CreateJobAsync(CreateJobRequest request)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync("/job/create", request, JsonOptions);
+            var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+                return (null, $"[{(int)response.StatusCode}] {body}");
+            var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PrintJob>>(body, JsonOptions);
+            return (wrapper?.Data, null);
+        }
+        catch (Exception ex)
+        {
+            return (null, ex.Message);
+        }
+    }
+
+    public async Task<(PatternDetail? pattern, string? error)> CreatePatternAsync(CreatePatternRequest request)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync("/pattern/create", request, JsonOptions);
+            var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+                return (null, $"[{(int)response.StatusCode}] {body}");
+            var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PatternDetail>>(body, JsonOptions);
+            return (wrapper?.Data, null);
+        }
+        catch (Exception ex)
+        {
+            return (null, ex.Message);
+        }
+    }
+
+    public async Task<(bool ok, string? error)> CreateUvJobDataAsync(CreateUvJobRequest request)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync("/uv-job/create", request, JsonOptions);
+            var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+                return (false, $"[{(int)response.StatusCode}] {body}");
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
+    }
+
+    public async Task<bool> DeleteJobAsync(int jobId)
+    {
+        try
+        {
+            var response = await _http.DeleteAsync($"/job/remove/{jobId}");
+            response.EnsureSuccessStatusCode();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("DeleteJob error: " + ex.Message);
+            return false;
+        }
+    }
+
     public async Task<List<PrintJob>> GetPendingJobsAsync()
     {
         try
@@ -47,7 +117,6 @@ public class ApiClient
         }
     }
 
-    /// <summary>GET /job/getById/:id</summary>
     public async Task<PrintJob?> GetJobByIdAsync(int jobId)
     {
         try
@@ -65,7 +134,6 @@ public class ApiClient
         }
     }
 
-    /// <summary>GET /job/getResolved/:id — returns job + pattern with resolved templates.</summary>
     public async Task<ResolvedJobResponse?> GetResolvedJobAsync(int jobId)
     {
         try
@@ -83,7 +151,6 @@ public class ApiClient
         }
     }
 
-    /// <summary>POST /job/execute/:id — marks job as executing.</summary>
     public async Task<bool> ExecuteJobAsync(int jobId)
     {
         try
@@ -99,7 +166,6 @@ public class ApiClient
         }
     }
 
-    /// <summary>POST /job/postResults/:id — posts command results back to backend.</summary>
     public async Task<bool> PostResultsAsync(int jobId, JobResultsPayload results)
     {
         try
@@ -115,7 +181,6 @@ public class ApiClient
         }
     }
 
-    /// <summary>POST /job/retry/:id — resets failed job to pending.</summary>
     public async Task<bool> RetryJobAsync(int jobId)
     {
         try
@@ -131,7 +196,6 @@ public class ApiClient
         }
     }
 
-    /// <summary>GET /plc-setting/getAll — all register-map rows ordered by sort_order.</summary>
     public async Task<List<PlcRegisterMap>> GetAllPlcSettingsAsync()
     {
         try
@@ -149,7 +213,6 @@ public class ApiClient
         }
     }
 
-    /// <summary>POST /plc-setting/bulkSave — replaces the whole table with these rows.</summary>
     public async Task<bool> BulkSavePlcSettingsAsync(List<PlcRegisterMap> rows)
     {
         try

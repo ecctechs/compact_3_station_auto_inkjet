@@ -15,6 +15,7 @@ sequelize.sync();
 
 const patternRoute = require("./routes/Pattern");
 const jobRoute = require("./routes/Job");
+const uvJobRoute = require("./routes/UvJob");
 const systemRoute = require("./routes/System");
 const plcRoute = require("./routes/Plc");
 
@@ -25,6 +26,7 @@ app.use(cors());
 
 app.use(patternRoute);
 app.use(jobRoute);
+app.use(uvJobRoute);
 app.use(systemRoute);
 app.use(plcRoute);
 

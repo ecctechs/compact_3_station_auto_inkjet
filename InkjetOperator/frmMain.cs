@@ -337,7 +337,7 @@ public partial class frmMain : Form
             {
                 foreach (var servo in resolved.Pattern.ServoConfigs)
                 {
-                    await _plc.WriteServoAsync(servo.Ordinal, servo.Position ?? 0, servo.PostAct ?? 0, servo.Delay ?? 0, servo.Trigger ?? 0);
+                    await _plc.WriteServoAsync(servo.Ordinal, servo.Position ?? 0, (int)(servo.PostAct ?? 0), (int)(servo.Delay ?? 0), servo.Trigger ?? 0);
                     Log($"PLC servo ordinal={servo.Ordinal}: pos={servo.Position}");
                 }
             }

@@ -2,62 +2,58 @@ const { z } = require("zod");
 
 const textBlockSchema = z.object({
   block_number: z.number().int().min(1).max(5),
-  text: z.string().optional(),
-  x: z.number().int().min(0).max(4095).optional(),
-  y: z.number().int().min(0).max(31).optional(),
-  size: z.number().int().min(0).max(22).optional(),
-  scale: z.number().int().min(1).max(10).optional(),
+  text: z.string().nullable().optional(),
+  x: z.number().int().min(0).max(4095).nullable().optional(),
+  y: z.number().int().min(0).max(31).nullable().optional(),
+  size: z.number().int().min(0).max(22).nullable().optional(),
+  scale: z.number().int().nullable().optional(),
 });
 
 const inkjetConfigSchema = z.object({
   ordinal: z.number().int().min(1),
   program_number: z.number().int().min(1).max(500).nullable().optional(),
-  program_name: z.string().optional(),
-  width: z.number().int().min(10).max(500).optional(),
-  height: z.number().int().min(50).max(200).optional(),
-  trigger_delay: z.number().int().min(10).max(99999).optional(),
-  pos_act: z.number().int().optional(),
-  delay: z.number().int().optional(),
-  direction: z
-    .number()
-    .int()
-    .refine((d) => d === 0 || d === 3, { message: "Direction must be 0 or 3" })
-    .optional(),
-  steel_type: z.string().optional(),
+  program_name: z.string().nullable().optional(),
+  width: z.number().int().nullable().optional(),
+  height: z.number().int().nullable().optional(),
+  trigger_delay: z.number().int().nullable().optional(),
+  pos_act: z.number().nullable().optional(),
+  delay: z.number().nullable().optional(),
+  direction: z.number().int().nullable().optional(),
+  steel_type: z.string().nullable().optional(),
   suspended: z.boolean().default(false),
   text_blocks: z.array(textBlockSchema).max(5).optional(),
 });
 
 const conveyorSpeedSchema = z.object({
-  speed1: z.number().int().optional(),
-  speed2: z.number().int().optional(),
-  speed3: z.number().int().optional(),
+  speed1: z.number().int().nullable().optional(),
+  speed2: z.number().int().nullable().optional(),
+  speed3: z.number().int().nullable().optional(),
 });
 
 const servoConfigSchema = z.object({
   ordinal: z.number().int().min(1),
-  position: z.number().int().optional(),
-  post_act: z.number().optional(),
-  delay: z.number().optional(),
-  trigger: z.number().int().optional(),
+  position: z.number().nullable().optional(),
+  post_act: z.number().nullable().optional(),
+  delay: z.number().nullable().optional(),
+  trigger: z.number().int().nullable().optional(),
 });
 
 const createPatternSchema = z.object({
   barcode: z.string().min(1),
-  description: z.string().optional(),
+  description: z.string().nullable().optional(),
   job_id: z.number().int().optional(),
   inkjet_configs: z.array(inkjetConfigSchema).optional(),
-  conveyor_speeds: conveyorSpeedSchema.optional(),
+  conveyor_speeds: conveyorSpeedSchema.nullable().optional(),
   servo_configs: z.array(servoConfigSchema).optional(),
 });
 
 const updatePatternSchema = z.object({
   barcode: z.string().min(1).optional(),
-  description: z.string().optional(),
+  description: z.string().nullable().optional(),
   is_active: z.boolean().optional(),
   job_id: z.number().int().optional(),
   inkjet_configs: z.array(inkjetConfigSchema).optional(),
-  conveyor_speeds: conveyorSpeedSchema.optional(),
+  conveyor_speeds: conveyorSpeedSchema.nullable().optional(),
   servo_configs: z.array(servoConfigSchema).optional(),
 });
 

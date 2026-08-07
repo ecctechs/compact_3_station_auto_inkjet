@@ -281,7 +281,6 @@ partial class ScanBarcodeUserControl
         txtOrderNo.Margin = new System.Windows.Forms.Padding(3, 8, 3, 8);
         txtOrderNo.Name = "txtOrderNo";
         txtOrderNo.Radius = 8;
-        txtOrderNo.ReadOnly = true;
         txtOrderNo.Size = new System.Drawing.Size(458, 46);
         txtOrderNo.TabIndex = 6;
         //
@@ -294,7 +293,6 @@ partial class ScanBarcodeUserControl
         txtCustomerName.Margin = new System.Windows.Forms.Padding(3, 8, 3, 8);
         txtCustomerName.Name = "txtCustomerName";
         txtCustomerName.Radius = 8;
-        txtCustomerName.ReadOnly = true;
         txtCustomerName.Size = new System.Drawing.Size(458, 46);
         txtCustomerName.TabIndex = 7;
         //
@@ -307,7 +305,6 @@ partial class ScanBarcodeUserControl
         txtType.Margin = new System.Windows.Forms.Padding(3, 8, 3, 8);
         txtType.Name = "txtType";
         txtType.Radius = 8;
-        txtType.ReadOnly = true;
         txtType.Size = new System.Drawing.Size(458, 46);
         txtType.TabIndex = 8;
         //
@@ -320,7 +317,6 @@ partial class ScanBarcodeUserControl
         txtQty.Margin = new System.Windows.Forms.Padding(3, 8, 3, 8);
         txtQty.Name = "txtQty";
         txtQty.Radius = 8;
-        txtQty.ReadOnly = true;
         txtQty.Size = new System.Drawing.Size(458, 46);
         txtQty.TabIndex = 9;
         txtQty.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
