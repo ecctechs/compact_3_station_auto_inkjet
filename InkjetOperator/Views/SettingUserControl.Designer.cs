@@ -31,6 +31,7 @@ partial class SettingUserControl
         pnlSidebar = new AntdUI.Panel();
         tlpSidebar = new TableLayoutPanel();
         btnDatabaseSetting = new AntdUI.Button();
+        btnDbPathSetting = new AntdUI.Button();
         btnDB3Setting = new AntdUI.Button();
         btnPLCSetting = new AntdUI.Button();
         pnlContent = new AntdUI.Panel();
@@ -79,17 +80,19 @@ partial class SettingUserControl
         tlpSidebar.ColumnCount = 1;
         tlpSidebar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         tlpSidebar.Controls.Add(btnDatabaseSetting, 0, 0);
-        tlpSidebar.Controls.Add(btnDB3Setting, 0, 1);
-        tlpSidebar.Controls.Add(btnPLCSetting, 0, 2);
+        tlpSidebar.Controls.Add(btnDbPathSetting, 0, 1);
+        tlpSidebar.Controls.Add(btnDB3Setting, 0, 2);
+        tlpSidebar.Controls.Add(btnPLCSetting, 0, 3);
         tlpSidebar.Dock = DockStyle.Top;
         tlpSidebar.Location = new Point(3, 3);
         tlpSidebar.Margin = new Padding(0);
         tlpSidebar.Name = "tlpSidebar";
-        tlpSidebar.RowCount = 3;
+        tlpSidebar.RowCount = 4;
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
-        tlpSidebar.Size = new Size(398, 252);
+        tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
+        tlpSidebar.Size = new Size(398, 336);
         tlpSidebar.TabIndex = 0;
         // 
         // btnDatabaseSetting
@@ -104,18 +107,31 @@ partial class SettingUserControl
         btnDatabaseSetting.Size = new Size(398, 84);
         btnDatabaseSetting.TabIndex = 0;
         btnDatabaseSetting.Text = "Printer Setting";
-        // 
+        //
+        // btnDbPathSetting
+        //
+        btnDbPathSetting.Dock = DockStyle.Fill;
+        btnDbPathSetting.Font = new Font("Segoe UI", 12F);
+        btnDbPathSetting.ForeColor = Color.FromArgb(51, 51, 51);
+        btnDbPathSetting.Location = new Point(0, 84);
+        btnDbPathSetting.Margin = new Padding(0);
+        btnDbPathSetting.Name = "btnDbPathSetting";
+        btnDbPathSetting.Radius = 0;
+        btnDbPathSetting.Size = new Size(398, 84);
+        btnDbPathSetting.TabIndex = 1;
+        btnDbPathSetting.Text = "Database Setting";
+        //
         // btnDB3Setting
         // 
         btnDB3Setting.Dock = DockStyle.Fill;
         btnDB3Setting.Font = new Font("Segoe UI", 12F);
         btnDB3Setting.ForeColor = Color.FromArgb(51, 51, 51);
-        btnDB3Setting.Location = new Point(0, 84);
+        btnDB3Setting.Location = new Point(0, 168);
         btnDB3Setting.Margin = new Padding(0);
         btnDB3Setting.Name = "btnDB3Setting";
         btnDB3Setting.Radius = 0;
         btnDB3Setting.Size = new Size(398, 84);
-        btnDB3Setting.TabIndex = 1;
+        btnDB3Setting.TabIndex = 2;
         btnDB3Setting.Text = "Backend DB Setting";
         // 
         // btnPLCSetting
@@ -123,12 +139,12 @@ partial class SettingUserControl
         btnPLCSetting.Dock = DockStyle.Fill;
         btnPLCSetting.Font = new Font("Segoe UI", 12F);
         btnPLCSetting.ForeColor = Color.FromArgb(51, 51, 51);
-        btnPLCSetting.Location = new Point(0, 168);
+        btnPLCSetting.Location = new Point(0, 252);
         btnPLCSetting.Margin = new Padding(0);
         btnPLCSetting.Name = "btnPLCSetting";
         btnPLCSetting.Radius = 0;
         btnPLCSetting.Size = new Size(398, 84);
-        btnPLCSetting.TabIndex = 2;
+        btnPLCSetting.TabIndex = 3;
         btnPLCSetting.Text = "PLC Setting";
         // 
         // pnlContent
@@ -178,6 +194,7 @@ partial class SettingUserControl
     private AntdUI.Panel pnlSidebar;
     private System.Windows.Forms.TableLayoutPanel tlpSidebar;
     private AntdUI.Button btnDatabaseSetting;
+    private AntdUI.Button btnDbPathSetting;
     private AntdUI.Button btnDB3Setting;
     private AntdUI.Button btnPLCSetting;
     private AntdUI.Panel pnlContent;
