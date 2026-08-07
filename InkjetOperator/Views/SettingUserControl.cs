@@ -79,27 +79,46 @@ public partial class SettingUserControl : UserControl
         ShowSubPage(btn.Name);
     }
 
+    public async Task CheckAllStatusAsync()
+    {
+        EnsureSubPage(nameof(btnDbPathSetting));
+        EnsureSubPage(nameof(btnDB3Setting));
+
+        var tasks = new List<Task>();
+        if (_subPages.TryGetValue(nameof(btnDbPathSetting), out var dbPage) && dbPage is DatabaseSettingUserControl db)
+            tasks.Add(db.CheckStatusAsync());
+        if (_subPages.TryGetValue(nameof(btnDB3Setting), out var bePage) && bePage is BackendSettingUserControl be)
+            tasks.Add(be.CheckStatusAsync());
+
+        await Task.WhenAll(tasks);
+    }
+
+    private void EnsureSubPage(string buttonName)
+    {
+        if (_subPages.ContainsKey(buttonName)) return;
+        var page = CreateSubPage(buttonName);
+        if (page != null)
+        {
+            page.Dock = DockStyle.Fill;
+            _subPages[buttonName] = page;
+        }
+    }
+
+    private static UserControl? CreateSubPage(string buttonName) => buttonName switch
+    {
+        nameof(btnDatabaseSetting) => new InkjetSettingUserControl(),
+        nameof(btnDbPathSetting) => new DatabaseSettingUserControl(),
+        nameof(btnDB3Setting) => new BackendSettingUserControl(),
+        nameof(btnPLCSetting) => new PlcSettingUserControl(),
+        _ => null,
+    };
+
     private void ShowSubPage(string buttonName)
     {
         pnlContentArea.Controls.Clear();
 
-        if (!_subPages.TryGetValue(buttonName, out var page))
-        {
-            page = buttonName switch
-            {
-                nameof(btnDatabaseSetting) => new InkjetSettingUserControl(),
-                nameof(btnDbPathSetting) => new DatabaseSettingUserControl(),
-                nameof(btnDB3Setting) => new BackendSettingUserControl(),
-                nameof(btnPLCSetting) => new PlcSettingUserControl(),
-                _ => null,
-            };
-
-            if (page != null)
-            {
-                page.Dock = DockStyle.Fill;
-                _subPages[buttonName] = page;
-            }
-        }
+        EnsureSubPage(buttonName);
+        _subPages.TryGetValue(buttonName, out var page);
 
         if (page != null)
             pnlContentArea.Controls.Add(page);

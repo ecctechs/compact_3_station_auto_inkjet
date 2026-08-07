@@ -17,6 +17,7 @@ partial class DatabaseSettingUserControl
         tlpRoot = new System.Windows.Forms.TableLayoutPanel();
         grpDatabase = new System.Windows.Forms.GroupBox();
         tlpForm = new System.Windows.Forms.TableLayoutPanel();
+        lblDot = new System.Windows.Forms.Label();
         lblDbPathLabel = new System.Windows.Forms.Label();
         txtDbPath = new AntdUI.Input();
         btnBrowse = new AntdUI.Button();
@@ -24,6 +25,7 @@ partial class DatabaseSettingUserControl
         flpActions = new System.Windows.Forms.FlowLayoutPanel();
         btnSave = new AntdUI.Button();
         btnCancel = new AntdUI.Button();
+        btnCheckStatus = new AntdUI.Button();
 
         tlpRoot.SuspendLayout();
         grpDatabase.SuspendLayout();
@@ -60,17 +62,19 @@ partial class DatabaseSettingUserControl
         grpDatabase.TabStop = false;
         grpDatabase.Text = "Database";
         //
-        // tlpForm — 3 cols: label(160) | input(fill) | browse(90)
+        // tlpForm — 4 cols: dot(36) | label(130) | input(fill) | browse(100)
         //
         tlpForm.BackColor = System.Drawing.Color.White;
-        tlpForm.ColumnCount = 3;
-        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 160F));
+        tlpForm.ColumnCount = 4;
+        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 36F));
+        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 130F));
         tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
-        tlpForm.Controls.Add(lblDbPathLabel, 0, 0);
-        tlpForm.Controls.Add(txtDbPath, 1, 0);
-        tlpForm.Controls.Add(btnBrowse, 2, 0);
-        tlpForm.Controls.Add(lblStatus, 0, 1);
+        tlpForm.Controls.Add(lblDot, 0, 0);
+        tlpForm.Controls.Add(lblDbPathLabel, 1, 0);
+        tlpForm.Controls.Add(txtDbPath, 2, 0);
+        tlpForm.Controls.Add(btnBrowse, 3, 0);
+        tlpForm.Controls.Add(lblStatus, 1, 1);
         tlpForm.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpForm.Name = "tlpForm";
         tlpForm.RowCount = 3;
@@ -79,6 +83,16 @@ partial class DatabaseSettingUserControl
         tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpForm.TabIndex = 0;
         //
+        // lblDot
+        //
+        lblDot.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblDot.Font = new System.Drawing.Font("Segoe UI", 20F);
+        lblDot.ForeColor = System.Drawing.Color.Gray;
+        lblDot.Name = "lblDot";
+        lblDot.TabIndex = 0;
+        lblDot.Text = "●";
+        lblDot.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+        //
         // lblDbPathLabel
         //
         lblDbPathLabel.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -86,7 +100,7 @@ partial class DatabaseSettingUserControl
         lblDbPathLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         lblDbPathLabel.Name = "lblDbPathLabel";
         lblDbPathLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
-        lblDbPathLabel.TabIndex = 0;
+        lblDbPathLabel.TabIndex = 1;
         lblDbPathLabel.Text = "Database Path :";
         lblDbPathLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
@@ -100,7 +114,7 @@ partial class DatabaseSettingUserControl
         txtDbPath.PlaceholderText = "Select PrintData.db3 file...";
         txtDbPath.Radius = 4;
         txtDbPath.ReadOnly = true;
-        txtDbPath.TabIndex = 1;
+        txtDbPath.TabIndex = 2;
         //
         // btnBrowse
         //
@@ -112,7 +126,7 @@ partial class DatabaseSettingUserControl
         btnBrowse.Name = "btnBrowse";
         btnBrowse.Radius = 6;
         btnBrowse.Size = new System.Drawing.Size(90, 34);
-        btnBrowse.TabIndex = 2;
+        btnBrowse.TabIndex = 3;
         btnBrowse.Text = "Browse...";
         btnBrowse.Type = AntdUI.TTypeMini.Default;
         //
@@ -123,8 +137,8 @@ partial class DatabaseSettingUserControl
         lblStatus.ForeColor = System.Drawing.Color.Gray;
         lblStatus.Name = "lblStatus";
         tlpForm.SetColumnSpan(lblStatus, 3);
-        lblStatus.Padding = new System.Windows.Forms.Padding(160, 2, 0, 0);
-        lblStatus.TabIndex = 3;
+        lblStatus.Padding = new System.Windows.Forms.Padding(0, 2, 0, 0);
+        lblStatus.TabIndex = 4;
         lblStatus.Text = "";
         //
         // flpActions
@@ -132,6 +146,7 @@ partial class DatabaseSettingUserControl
         flpActions.BackColor = System.Drawing.Color.White;
         flpActions.Controls.Add(btnSave);
         flpActions.Controls.Add(btnCancel);
+        flpActions.Controls.Add(btnCheckStatus);
         flpActions.Dock = System.Windows.Forms.DockStyle.Fill;
         flpActions.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
         flpActions.Margin = new System.Windows.Forms.Padding(0);
@@ -165,6 +180,20 @@ partial class DatabaseSettingUserControl
         btnCancel.Text = "Cancel";
         btnCancel.Type = AntdUI.TTypeMini.Default;
         //
+        // btnCheckStatus
+        //
+        btnCheckStatus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnCheckStatus.BorderWidth = 2F;
+        btnCheckStatus.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        btnCheckStatus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnCheckStatus.Margin = new System.Windows.Forms.Padding(16, 12, 3, 12);
+        btnCheckStatus.Name = "btnCheckStatus";
+        btnCheckStatus.Radius = 8;
+        btnCheckStatus.Size = new System.Drawing.Size(170, 44);
+        btnCheckStatus.TabIndex = 2;
+        btnCheckStatus.Text = "Check Status";
+        btnCheckStatus.Type = AntdUI.TTypeMini.Default;
+        //
         // DatabaseSettingUserControl
         //
         AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
@@ -185,6 +214,7 @@ partial class DatabaseSettingUserControl
     private System.Windows.Forms.TableLayoutPanel tlpRoot;
     private System.Windows.Forms.GroupBox grpDatabase;
     private System.Windows.Forms.TableLayoutPanel tlpForm;
+    private System.Windows.Forms.Label lblDot;
     private System.Windows.Forms.Label lblDbPathLabel;
     private AntdUI.Input txtDbPath;
     private AntdUI.Button btnBrowse;
@@ -192,4 +222,5 @@ partial class DatabaseSettingUserControl
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnSave;
     private AntdUI.Button btnCancel;
+    private AntdUI.Button btnCheckStatus;
 }

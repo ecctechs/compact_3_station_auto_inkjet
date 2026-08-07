@@ -18,6 +18,15 @@ public partial class MainShellForm : Form
     {
         InitializeComponent();
         ApplyMenuLevel();
+        Load += MainShellForm_Load;
+    }
+
+    private async void MainShellForm_Load(object? sender, EventArgs e)
+    {
+        var raw = Services.CustomSettingsManager.Read("MENU_LEVEL", "1");
+        int.TryParse(raw, out var level);
+        if (level == 0)
+            await settingPage.CheckAllStatusAsync();
     }
 
     private void ApplyMenuLevel()

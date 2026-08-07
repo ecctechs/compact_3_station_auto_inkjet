@@ -53,7 +53,7 @@ public partial class BackendSettingUserControl : UserControl
         lblPcBadge.Text = dlg.Value;
     }
 
-    private async Task CheckStatusAsync()
+    public async Task CheckStatusAsync()
     {
         var ip = txtPcIp.Text.Trim();
         if (string.IsNullOrWhiteSpace(ip))
