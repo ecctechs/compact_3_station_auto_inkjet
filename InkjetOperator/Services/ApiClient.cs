@@ -100,6 +100,24 @@ public class ApiClient
         }
     }
 
+    public async Task<(List<PrintJob> jobs, string? error)> GetAllJobsAsync(int limit = 100)
+    {
+        try
+        {
+            var response = await _http.GetAsync($"/job/getAll?page=1&limit={limit}");
+            var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+                return (new(), $"[{(int)response.StatusCode}] {body}");
+            var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PaginatedResult<PrintJob>>>(body, JsonOptions);
+            var jobs = wrapper?.Data?.Data ?? new();
+            return (jobs, null);
+        }
+        catch (Exception ex)
+        {
+            return (new(), ex.Message);
+        }
+    }
+
     public async Task<List<PrintJob>> GetPendingJobsAsync()
     {
         try

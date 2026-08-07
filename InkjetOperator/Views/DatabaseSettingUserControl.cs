@@ -19,7 +19,7 @@ public partial class DatabaseSettingUserControl : UserControl
     private void LoadData()
     {
         txtDbPath.Text = CustomSettingsManager.Read("DB_PATH");
-        UpdateDot(txtDbPath.Text);
+        UpdateStatus(txtDbPath.Text);
         txtDbPath.BackColor = Color.White;
     }
 
@@ -29,12 +29,12 @@ public partial class DatabaseSettingUserControl : UserControl
         try
         {
             var path = CustomSettingsManager.Read("DB_PATH");
-            await Task.Run(() => UpdateDot(path));
+            await Task.Run(() => UpdateStatus(path));
         }
         finally { btnCheckStatus.Enabled = true; }
     }
 
-    private void UpdateDot(string path)
+    private void UpdateStatus(string path)
     {
         bool ok = !string.IsNullOrWhiteSpace(path)
                   && File.Exists(path)
@@ -44,32 +44,25 @@ public partial class DatabaseSettingUserControl : UserControl
         {
             if (string.IsNullOrWhiteSpace(path))
             {
-                lblDot.ForeColor = Color.Gray;
                 lblStatus.Text = "";
                 lblStatus.ForeColor = Color.Gray;
             }
             else if (ok)
             {
-                lblDot.ForeColor = Color.FromArgb(76, 175, 80);
-                lblStatus.Text = "✓ พร้อมใช้งาน";
+                lblStatus.Text = "✓  พร้อมใช้งาน";
                 lblStatus.ForeColor = Color.FromArgb(21, 128, 61);
             }
             else
             {
-                lblDot.ForeColor = Color.FromArgb(220, 38, 38);
                 if (!File.Exists(path))
-                {
-                    lblStatus.Text = "⚠ ไม่พบไฟล์";
-                }
+                    lblStatus.Text = "✗  ไม่พบไฟล์";
                 else
-                {
-                    lblStatus.Text = "⚠ ไม่มีตาราง 'inkjet_data'";
-                }
+                    lblStatus.Text = "✗  ไม่มีตาราง 'inkjet_data'";
                 lblStatus.ForeColor = Color.FromArgb(220, 38, 38);
             }
         }
 
-        if (lblDot.InvokeRequired) lblDot.Invoke(Apply); else Apply();
+        if (lblStatus.InvokeRequired) lblStatus.Invoke(Apply); else Apply();
     }
 
     private void BrowseFile()
@@ -88,7 +81,7 @@ public partial class DatabaseSettingUserControl : UserControl
 
         txtDbPath.Text = dlg.FileName;
         txtDbPath.BackColor = Color.LightYellow;
-        UpdateDot(dlg.FileName);
+        UpdateStatus(dlg.FileName);
     }
 
     private void BtnSave_Click(object? sender, EventArgs e)
@@ -118,7 +111,7 @@ public partial class DatabaseSettingUserControl : UserControl
 
         CustomSettingsManager.Write("DB_PATH", path);
         txtDbPath.BackColor = Color.White;
-        UpdateDot(path);
+        UpdateStatus(path);
         MessageBox.Show("บันทึกเรียบร้อย", "Settings",
             MessageBoxButtons.OK, MessageBoxIcon.Information);
     }

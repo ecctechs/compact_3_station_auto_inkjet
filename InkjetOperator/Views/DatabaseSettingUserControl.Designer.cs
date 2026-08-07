@@ -17,7 +17,6 @@ partial class DatabaseSettingUserControl
         tlpRoot = new System.Windows.Forms.TableLayoutPanel();
         grpDatabase = new System.Windows.Forms.GroupBox();
         tlpForm = new System.Windows.Forms.TableLayoutPanel();
-        lblDot = new System.Windows.Forms.Label();
         lblDbPathLabel = new System.Windows.Forms.Label();
         txtDbPath = new AntdUI.Input();
         btnBrowse = new AntdUI.Button();
@@ -62,52 +61,38 @@ partial class DatabaseSettingUserControl
         grpDatabase.TabStop = false;
         grpDatabase.Text = "Database";
         //
-        // tlpForm — 6 cols matching InkjetSetting grid
-        //   dot(36) | col1(140) | col2(100) | input(fill) | col4(20) | col5(90)
+        // tlpForm — 4 cols: label(150) | input(fill) | gap(8) | browse(90)
         //
         tlpForm.BackColor = System.Drawing.Color.White;
-        tlpForm.ColumnCount = 6;
-        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 36F));
-        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
-        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
+        tlpForm.ColumnCount = 4;
+        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 150F));
         tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 8F));
         tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 90F));
-        tlpForm.Controls.Add(lblDot, 0, 0);
-        tlpForm.Controls.Add(lblDbPathLabel, 1, 0);
-        tlpForm.Controls.Add(txtDbPath, 2, 0);
-        tlpForm.Controls.Add(btnBrowse, 5, 0);
+        tlpForm.Controls.Add(lblDbPathLabel, 0, 0);
+        tlpForm.Controls.Add(txtDbPath, 1, 0);
+        tlpForm.Controls.Add(btnBrowse, 3, 0);
         tlpForm.Controls.Add(lblStatus, 1, 1);
         tlpForm.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpForm.Name = "tlpForm";
         tlpForm.RowCount = 3;
         tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
-        tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
+        tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
         tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpForm.TabIndex = 0;
-        //
-        // lblDot
-        //
-        lblDot.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblDot.Font = new System.Drawing.Font("Segoe UI", 20F);
-        lblDot.ForeColor = System.Drawing.Color.Gray;
-        lblDot.Name = "lblDot";
-        lblDot.TabIndex = 0;
-        lblDot.Text = "●";
-        lblDot.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
         //
         // lblDbPathLabel
         //
         lblDbPathLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblDbPathLabel.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblDbPathLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
         lblDbPathLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         lblDbPathLabel.Name = "lblDbPathLabel";
         lblDbPathLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
-        lblDbPathLabel.TabIndex = 1;
+        lblDbPathLabel.TabIndex = 0;
         lblDbPathLabel.Text = "Database Path :";
         lblDbPathLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
-        // txtDbPath — spans col2+col3+col4
+        // txtDbPath
         //
         txtDbPath.Dock = System.Windows.Forms.DockStyle.Fill;
         txtDbPath.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
@@ -117,8 +102,7 @@ partial class DatabaseSettingUserControl
         txtDbPath.PlaceholderText = "Select PrintData.db3 file...";
         txtDbPath.Radius = 4;
         txtDbPath.ReadOnly = true;
-        tlpForm.SetColumnSpan(txtDbPath, 3);
-        txtDbPath.TabIndex = 2;
+        txtDbPath.TabIndex = 1;
         //
         // btnBrowse
         //
@@ -130,19 +114,19 @@ partial class DatabaseSettingUserControl
         btnBrowse.Name = "btnBrowse";
         btnBrowse.Radius = 6;
         btnBrowse.Size = new System.Drawing.Size(84, 34);
-        btnBrowse.TabIndex = 3;
+        btnBrowse.TabIndex = 2;
         btnBrowse.Text = "Browse...";
         btnBrowse.Type = AntdUI.TTypeMini.Default;
         //
-        // lblStatus — spans col1..col5
+        // lblStatus — under the input, aligned with it
         //
         lblStatus.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblStatus.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblStatus.Font = new System.Drawing.Font("Segoe UI", 10F);
         lblStatus.ForeColor = System.Drawing.Color.Gray;
         lblStatus.Name = "lblStatus";
-        tlpForm.SetColumnSpan(lblStatus, 5);
-        lblStatus.Padding = new System.Windows.Forms.Padding(0, 2, 0, 0);
-        lblStatus.TabIndex = 4;
+        tlpForm.SetColumnSpan(lblStatus, 3);
+        lblStatus.Padding = new System.Windows.Forms.Padding(4, 4, 0, 0);
+        lblStatus.TabIndex = 3;
         lblStatus.Text = "";
         //
         // flpActions
@@ -218,7 +202,6 @@ partial class DatabaseSettingUserControl
     private System.Windows.Forms.TableLayoutPanel tlpRoot;
     private System.Windows.Forms.GroupBox grpDatabase;
     private System.Windows.Forms.TableLayoutPanel tlpForm;
-    private System.Windows.Forms.Label lblDot;
     private System.Windows.Forms.Label lblDbPathLabel;
     private AntdUI.Input txtDbPath;
     private AntdUI.Button btnBrowse;
