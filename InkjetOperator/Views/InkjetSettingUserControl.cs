@@ -102,7 +102,7 @@ public partial class InkjetSettingUserControl : UserControl
 
     // ── Check Status ────────────────────────────────────────────────
 
-    private async Task CheckAllStatusAsync()
+    public async Task CheckAllStatusAsync()
     {
         btnCheckStatus.Enabled = false;
         try

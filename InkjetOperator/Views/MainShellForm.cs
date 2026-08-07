@@ -25,7 +25,7 @@ public partial class MainShellForm : Form
     {
         var raw = Services.CustomSettingsManager.Read("MENU_LEVEL", "1");
         int.TryParse(raw, out var level);
-        if (level == 0)
+        if (level <= 1)
             await settingPage.CheckAllStatusAsync();
     }
 
@@ -40,6 +40,7 @@ public partial class MainShellForm : Form
         bool[] visible = level switch
         {
             0 => [true, false, false, true],
+            1 => [false, true, true, true],
             _ => [true, true, true, true],
         };
 
@@ -53,6 +54,14 @@ public partial class MainShellForm : Form
         }
 
         _visibleTabs = allTabs.Where((_, i) => visible[i]).ToArray();
+
+        if (_visibleTabs.Length > 0)
+        {
+            var firstTab = _visibleTabs[0];
+            var firstPage = allPages[Array.IndexOf(allTabs, firstTab)];
+            firstPage.BringToFront();
+            SetActiveTab(firstTab);
+        }
     }
 
     private void SetActiveTab(AntdUI.Button active)

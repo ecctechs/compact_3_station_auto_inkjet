@@ -27,7 +27,7 @@ public partial class PlcSettingUserControl : UserControl
         LoadSettings();
 
         lblPlcStatus.ForeColor = StatusGray;   // unknown until checked
-        CheckPlcStatusAsync();                  // fire-and-forget status probe
+        _ = CheckStatusAsync();                  // fire-and-forget status probe
         _ = LoadTableAsync();                   // fire-and-forget table load
     }
 
@@ -59,7 +59,7 @@ public partial class PlcSettingUserControl : UserControl
         btnSave.Click += BtnSave_Click;
         btnCancel.Click += BtnCancel_Click;
         btnAddRow.Click += BtnAddRow_Click;
-        btnCheckStatus.Click += (_, _) => CheckPlcStatusAsync();
+        btnCheckStatus.Click += async (_, _) => await CheckStatusAsync();
         btnPlcName.Click += (_, _) => EditName();
 
         txtPlc001Ip.TextChanged += (_, _) => txtPlc001Ip.BackColor = Color.LightYellow;
@@ -88,12 +88,14 @@ public partial class PlcSettingUserControl : UserControl
 
     // ── Status light ───────────────────────────────────────
 
-    private async void CheckPlcStatusAsync()
+    public async Task CheckStatusAsync()
     {
         var ip = txtPlc001Ip.Text.Trim();
-        if (string.IsNullOrEmpty(ip) || !int.TryParse(txtPlc001Port.Text.Trim(), out int port))
+        var portText = txtPlc001Port.Text.Trim();
+
+        if (string.IsNullOrEmpty(ip) || !int.TryParse(portText, out int port))
         {
-            SetStatus(StatusRed);
+            SetStatus(string.IsNullOrEmpty(ip) ? StatusGray : StatusRed);
             return;
         }
 
@@ -127,11 +129,15 @@ public partial class PlcSettingUserControl : UserControl
 
     private async Task LoadTableAsync()
     {
-        var rows = await _api.GetAllPlcSettingsAsync();
-        if (IsDisposed) return;
+        try
+        {
+            var rows = await _api.GetAllPlcSettingsAsync();
+            if (IsDisposed) return;
 
-        _rows = rows.Select(FromDto).ToList();
-        RebindTable();
+            _rows = rows.Select(FromDto).ToList();
+            RebindTable();
+        }
+        catch { /* backend not available — keep current rows */ }
     }
 
     private void RebindTable()
@@ -242,7 +248,7 @@ public partial class PlcSettingUserControl : UserControl
         CustomSettingsManager.Write("PLC_PORT", txtPlc001Port.Text.Trim());
 
         lblPlcStatus.ForeColor = StatusGray;
-        CheckPlcStatusAsync();
+        _ = CheckStatusAsync();
 
         // SortOrder follows the current row order.
         var dtos = _rows.Select((r, i) => ToDto(r, i)).ToList();

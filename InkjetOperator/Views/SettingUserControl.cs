@@ -24,6 +24,7 @@ public partial class SettingUserControl : UserControl
         bool[] visible = level switch
         {
             0 => [false, true, true, false],
+            1 => [true, false, false, true],
             _ => [true, true, true, true],
         };
 
@@ -81,14 +82,31 @@ public partial class SettingUserControl : UserControl
 
     public async Task CheckAllStatusAsync()
     {
-        EnsureSubPage(nameof(btnDbPathSetting));
-        EnsureSubPage(nameof(btnDB3Setting));
+        var raw = CustomSettingsManager.Read("MENU_LEVEL", "1");
+        int.TryParse(raw, out var level);
 
         var tasks = new List<Task>();
-        if (_subPages.TryGetValue(nameof(btnDbPathSetting), out var dbPage) && dbPage is DatabaseSettingUserControl db)
-            tasks.Add(db.CheckStatusAsync());
-        if (_subPages.TryGetValue(nameof(btnDB3Setting), out var bePage) && bePage is BackendSettingUserControl be)
-            tasks.Add(be.CheckStatusAsync());
+
+        if (level == 0)
+        {
+            EnsureSubPage(nameof(btnDbPathSetting));
+            EnsureSubPage(nameof(btnDB3Setting));
+
+            if (_subPages.TryGetValue(nameof(btnDbPathSetting), out var dbPage) && dbPage is DatabaseSettingUserControl db)
+                tasks.Add(db.CheckStatusAsync());
+            if (_subPages.TryGetValue(nameof(btnDB3Setting), out var bePage) && bePage is BackendSettingUserControl be)
+                tasks.Add(be.CheckStatusAsync());
+        }
+        else if (level == 1)
+        {
+            EnsureSubPage(nameof(btnDatabaseSetting));
+            EnsureSubPage(nameof(btnPLCSetting));
+
+            if (_subPages.TryGetValue(nameof(btnDatabaseSetting), out var inkPage) && inkPage is InkjetSettingUserControl ink)
+                tasks.Add(ink.CheckAllStatusAsync());
+            if (_subPages.TryGetValue(nameof(btnPLCSetting), out var plcPage) && plcPage is PlcSettingUserControl plc)
+                tasks.Add(plc.CheckStatusAsync());
+        }
 
         await Task.WhenAll(tasks);
     }
