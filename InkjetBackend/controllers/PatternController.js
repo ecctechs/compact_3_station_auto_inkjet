@@ -95,20 +95,12 @@ class PatternController {
   static async create(req, res) {
     const t = await sequelize.transaction();
     try {
-      const { barcode, description, inkjet_configs, conveyor_speeds, servo_configs } = req.body;
+      const { barcode, description, job_id, inkjet_configs, conveyor_speeds, servo_configs } = req.body;
 
-      const existing = await Pattern.findOne({ where: { barcode } });
-      if (existing) {
-        await t.rollback();
-        return ResponseManager.ErrorResponse(
-          req,
-          res,
-          400,
-          "Barcode already exists"
-        );
-      }
-
-      const pattern = await Pattern.create({ barcode, description }, { transaction: t });
+      const pattern = await Pattern.create(
+        { barcode, description, job_id },
+        { transaction: t }
+      );
 
       if (inkjet_configs) {
         for (const cfg of inkjet_configs) {

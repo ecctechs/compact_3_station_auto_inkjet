@@ -1,6 +1,5 @@
 const { z } = require("zod");
 
-// Matches validation from csv_extractor.py lines 200-253, 297-346
 const textBlockSchema = z.object({
   block_number: z.number().int().min(1).max(5),
   text: z.string().optional(),
@@ -16,7 +15,9 @@ const inkjetConfigSchema = z.object({
   program_name: z.string().optional(),
   width: z.number().int().min(10).max(500).optional(),
   height: z.number().int().min(50).max(200).optional(),
-  trigger_delay: z.number().int().min(10).max(99999).optional(), // stored as x10 int
+  trigger_delay: z.number().int().min(10).max(99999).optional(),
+  pos_act: z.number().int().optional(),
+  delay: z.number().int().optional(),
   direction: z
     .number()
     .int()
@@ -36,14 +37,15 @@ const conveyorSpeedSchema = z.object({
 const servoConfigSchema = z.object({
   ordinal: z.number().int().min(1),
   position: z.number().int().optional(),
-  post_act: z.number().int().optional(),
-  delay: z.number().int().optional(),
+  post_act: z.number().optional(),
+  delay: z.number().optional(),
   trigger: z.number().int().optional(),
 });
 
 const createPatternSchema = z.object({
   barcode: z.string().min(1),
   description: z.string().optional(),
+  job_id: z.number().int().optional(),
   inkjet_configs: z.array(inkjetConfigSchema).optional(),
   conveyor_speeds: conveyorSpeedSchema.optional(),
   servo_configs: z.array(servoConfigSchema).optional(),
@@ -53,6 +55,7 @@ const updatePatternSchema = z.object({
   barcode: z.string().min(1).optional(),
   description: z.string().optional(),
   is_active: z.boolean().optional(),
+  job_id: z.number().int().optional(),
   inkjet_configs: z.array(inkjetConfigSchema).optional(),
   conveyor_speeds: conveyorSpeedSchema.optional(),
   servo_configs: z.array(servoConfigSchema).optional(),

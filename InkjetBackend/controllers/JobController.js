@@ -7,6 +7,7 @@ const {
   ConveyorSpeed,
   ServoConfig,
 } = require("../model/patternModel");
+const sequelize = require("../database");
 const { parseBarcode, resolveTemplates } = require("../utils/templateResolver");
 
 const PATTERN_INCLUDE = [
@@ -22,32 +23,89 @@ const PATTERN_INCLUDE = [
 class JobController {
   /**
    * POST /job/create
-   * Main entry point — scanner sends barcode, backend parses and creates job.
-   * Ported from client.py press_enter() lines 211-221.
+   * Scanner sends barcode → backend parses, creates job, clones matching
+   * pattern (with all children) so each job owns its own snapshot.
    */
   static async create(req, res) {
+    const t = await sequelize.transaction();
     try {
-      const { barcode_raw, created_by } = req.body;
+      const { barcode_raw, created_by, order_no, customer_name, type, qty } =
+        req.body;
       const { lotNumber, patternCode } = parseBarcode(barcode_raw);
 
-      const pattern = await Pattern.findOne({
+      const job = await PrintJob.create(
+        {
+          barcode_raw,
+          lot_number: lotNumber,
+          order_no,
+          customer_name,
+          type,
+          qty,
+          created_by,
+        },
+        { transaction: t }
+      );
+
+      const template = await Pattern.findOne({
         where: { barcode: patternCode, is_active: true },
+        include: PATTERN_INCLUDE,
+        order: [["id", "DESC"]],
       });
 
-      const job = await PrintJob.create({
-        barcode_raw,
-        pattern_id: pattern ? pattern.id : null,
-        lot_number: lotNumber,
-        created_by,
-      });
+      if (template) {
+        const cloned = await Pattern.create(
+          {
+            job_id: job.id,
+            barcode: template.barcode,
+            description: template.description,
+          },
+          { transaction: t }
+        );
+
+        for (const cfg of template.inkjet_configs || []) {
+          const cfgJson = cfg.toJSON();
+          const { id: _, text_blocks, ...cfgData } = cfgJson;
+          const newCfg = await InkjetConfig.create(
+            { ...cfgData, pattern_id: cloned.id },
+            { transaction: t }
+          );
+
+          for (const block of text_blocks || []) {
+            const { id: __, ...blockData } = block;
+            await TextBlock.create(
+              { ...blockData, inkjet_config_id: newCfg.id },
+              { transaction: t }
+            );
+          }
+        }
+
+        if (template.conveyor_speeds) {
+          const { id: _, ...speedData } = template.conveyor_speeds.toJSON();
+          await ConveyorSpeed.create(
+            { ...speedData, pattern_id: cloned.id },
+            { transaction: t }
+          );
+        }
+
+        for (const servo of template.servo_configs || []) {
+          const { id: _, ...servoData } = servo.toJSON();
+          await ServoConfig.create(
+            { ...servoData, pattern_id: cloned.id },
+            { transaction: t }
+          );
+        }
+      }
+
+      await t.commit();
 
       const data = job.toJSON();
-      if (!pattern) {
+      if (!template) {
         data.warning = `No pattern found for barcode "${patternCode}"`;
       }
 
       return ResponseManager.SuccessResponse(req, res, 201, data);
     } catch (err) {
+      await t.rollback();
       return ResponseManager.CatchResponse(req, res, err.message);
     }
   }
@@ -104,12 +162,12 @@ class JobController {
       if (!job) {
         return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
       }
-      if (job.status !== "pending") {
+      if (job.status !== "Waiting") {
         return ResponseManager.ErrorResponse(
           req,
           res,
           400,
-          `Job status is "${job.status}", expected "pending"`
+          `Job status is "${job.status}", expected "Waiting"`
         );
       }
 
@@ -129,13 +187,6 @@ class JobController {
   /**
    * GET /job/getResolved/:id
    * Returns job data with all template placeholders resolved.
-   * C# calls this right before sending to hardware.
-   *
-   * Templates resolved:
-   *   {yyyy}, {mm}, {dd} — current date
-   *   {s-N}              — sequential counter (N + attempt)
-   *   CCCC               — lot number
-   *   DDDD               — encoded date from lot number
    */
   static async getResolved(req, res) {
     try {
@@ -143,7 +194,12 @@ class JobController {
       if (!job) {
         return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
       }
-      if (!job.pattern_id) {
+
+      const pattern = await Pattern.findOne({
+        where: { job_id: job.id, is_active: true },
+        include: PATTERN_INCLUDE,
+      });
+      if (!pattern) {
         return ResponseManager.ErrorResponse(
           req,
           res,
@@ -152,24 +208,11 @@ class JobController {
         );
       }
 
-      const pattern = await Pattern.findByPk(job.pattern_id, {
-        include: PATTERN_INCLUDE,
-      });
-      if (!pattern) {
-        return ResponseManager.ErrorResponse(
-          req,
-          res,
-          404,
-          "Associated pattern not found"
-        );
-      }
-
       const ctx = {
         lotNumber: job.lot_number || "",
         attempt: job.attempt,
       };
 
-      // Deep-clone pattern and resolve templates in all text block strings
       const resolved = JSON.parse(JSON.stringify(pattern));
       for (const config of resolved.inkjet_configs || []) {
         for (const block of config.text_blocks || []) {
@@ -230,7 +273,7 @@ class JobController {
 
   /**
    * POST /job/retry/:id
-   * Reset a failed job back to pending and increment attempt counter.
+   * Reset a failed job back to Waiting and increment attempt counter.
    */
   static async retry(req, res) {
     try {
@@ -248,7 +291,7 @@ class JobController {
       }
 
       await job.update({
-        status: "pending",
+        status: "Waiting",
         attempt: job.attempt + 1,
         error_message: null,
       });
@@ -257,7 +300,7 @@ class JobController {
         req,
         res,
         200,
-        "Job reset to pending"
+        "Job reset to Waiting"
       );
     } catch (err) {
       return ResponseManager.CatchResponse(req, res, err.message);

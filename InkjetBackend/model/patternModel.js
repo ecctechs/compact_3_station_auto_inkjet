@@ -9,10 +9,12 @@ const Pattern = sequelize.define(
       autoIncrement: true,
       primaryKey: true,
     },
+    job_id: {
+      type: DataTypes.INTEGER,
+    },
     barcode: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
     },
     description: {
       type: DataTypes.STRING,
@@ -23,7 +25,10 @@ const Pattern = sequelize.define(
       defaultValue: true,
     },
   },
-  { timestamps: false }
+  {
+    timestamps: false,
+    indexes: [{ fields: ["barcode"] }, { fields: ["job_id"] }],
+  }
 );
 
 const InkjetConfig = sequelize.define(
@@ -55,6 +60,12 @@ const InkjetConfig = sequelize.define(
       type: DataTypes.INTEGER,
     },
     trigger_delay: {
+      type: DataTypes.INTEGER,
+    },
+    pos_act: {
+      type: DataTypes.INTEGER,
+    },
+    delay: {
       type: DataTypes.INTEGER,
     },
     direction: {
@@ -152,10 +163,10 @@ const ServoConfig = sequelize.define(
       type: DataTypes.INTEGER,
     },
     post_act: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.REAL,
     },
     delay: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.REAL,
     },
     trigger: {
       type: DataTypes.INTEGER,
@@ -165,16 +176,36 @@ const ServoConfig = sequelize.define(
 );
 
 // Associations
-Pattern.hasMany(InkjetConfig, { foreignKey: "pattern_id", as: "inkjet_configs" });
+Pattern.hasMany(InkjetConfig, {
+  foreignKey: "pattern_id",
+  as: "inkjet_configs",
+  onDelete: "CASCADE",
+  hooks: true,
+});
 InkjetConfig.belongsTo(Pattern, { foreignKey: "pattern_id" });
 
-InkjetConfig.hasMany(TextBlock, { foreignKey: "inkjet_config_id", as: "text_blocks" });
+InkjetConfig.hasMany(TextBlock, {
+  foreignKey: "inkjet_config_id",
+  as: "text_blocks",
+  onDelete: "CASCADE",
+  hooks: true,
+});
 TextBlock.belongsTo(InkjetConfig, { foreignKey: "inkjet_config_id" });
 
-Pattern.hasOne(ConveyorSpeed, { foreignKey: "pattern_id", as: "conveyor_speeds" });
+Pattern.hasOne(ConveyorSpeed, {
+  foreignKey: "pattern_id",
+  as: "conveyor_speeds",
+  onDelete: "CASCADE",
+  hooks: true,
+});
 ConveyorSpeed.belongsTo(Pattern, { foreignKey: "pattern_id" });
 
-Pattern.hasMany(ServoConfig, { foreignKey: "pattern_id", as: "servo_configs" });
+Pattern.hasMany(ServoConfig, {
+  foreignKey: "pattern_id",
+  as: "servo_configs",
+  onDelete: "CASCADE",
+  hooks: true,
+});
 ServoConfig.belongsTo(Pattern, { foreignKey: "pattern_id" });
 
 module.exports = { Pattern, InkjetConfig, TextBlock, ConveyorSpeed, ServoConfig };

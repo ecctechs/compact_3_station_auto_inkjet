@@ -11,30 +11,59 @@ const PrintJob = sequelize.define(
       primaryKey: true,
     },
     barcode_raw: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
     },
-    pattern_id: {
+    order_no: {
+      type: DataTypes.STRING,
+    },
+    customer_name: {
+      type: DataTypes.STRING,
+    },
+    type: {
+      type: DataTypes.STRING,
+    },
+    qty: {
       type: DataTypes.INTEGER,
     },
     lot_number: {
       type: DataTypes.STRING,
     },
+    pattern_no_erp: {
+      type: DataTypes.STRING,
+    },
     status: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: "pending",
+      defaultValue: "Waiting",
     },
     error_message: {
       type: DataTypes.TEXT,
     },
-    created_by: {
-      type: DataTypes.STRING,
+    warning: {
+      type: DataTypes.TEXT,
     },
     attempt: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
+    },
+    created_by: {
+      type: DataTypes.STRING,
+    },
+    st_status: {
+      type: DataTypes.STRING(255),
+    },
+    stations_required: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: [1, 2, 3, 4],
+    },
+    st1_confirmation: {
+      type: DataTypes.STRING,
+    },
+    st1_send_time: {
+      type: DataTypes.DATE,
     },
   },
   { timestamps: true, createdAt: "created_at", updatedAt: "updated_at" }
@@ -76,9 +105,20 @@ const PrintJobCommand = sequelize.define(
 );
 
 // Associations
-PrintJob.hasMany(PrintJobCommand, { foreignKey: "job_id", as: "commands" });
+PrintJob.hasMany(PrintJobCommand, {
+  foreignKey: "job_id",
+  as: "commands",
+  onDelete: "CASCADE",
+  hooks: true,
+});
 PrintJobCommand.belongsTo(PrintJob, { foreignKey: "job_id" });
 
-PrintJob.belongsTo(Pattern, { foreignKey: "pattern_id", as: "pattern" });
+PrintJob.hasOne(Pattern, {
+  foreignKey: "job_id",
+  as: "pattern",
+  onDelete: "CASCADE",
+  hooks: true,
+});
+Pattern.belongsTo(PrintJob, { foreignKey: "job_id" });
 
 module.exports = { PrintJob, PrintJobCommand };

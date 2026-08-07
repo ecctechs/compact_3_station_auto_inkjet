@@ -3,6 +3,14 @@ const sequelize = require("./database");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 
+// Load all models (registers associations before sync)
+require("./model/patternModel");
+require("./model/jobModel");
+require("./model/plcModel");
+require("./model/uvJobDataModel");
+require("./model/lastSentJobModel");
+require("./model/iaiSettingModel");
+
 sequelize.sync();
 
 const patternRoute = require("./routes/Pattern");
