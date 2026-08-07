@@ -319,7 +319,6 @@ partial class ScanBarcodeUserControl
         txtQty.Radius = 8;
         txtQty.Size = new System.Drawing.Size(458, 46);
         txtQty.TabIndex = 9;
-        txtQty.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
         //
         // flpActions
         //

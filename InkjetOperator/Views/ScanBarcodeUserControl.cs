@@ -28,22 +28,65 @@ public partial class ScanBarcodeUserControl : UserControl
 
     private async void BtnConfirm_Click(object? sender, EventArgs e)
     {
-        var barcode = txtBarcode.Text.Trim();
-        if (string.IsNullOrEmpty(barcode))
-        {
-            ShowWarning("กรุณาสแกนหรือพิมพ์ Barcode");
-            return;
-        }
+        if (!ValidateForm()) return;
 
         btnConfirm.Enabled = false;
         try
         {
-            await ProcessBarcodeAsync(barcode);
+            await ProcessBarcodeAsync(txtBarcode.Text.Trim());
         }
         finally
         {
             btnConfirm.Enabled = true;
         }
+    }
+
+    private bool ValidateForm()
+    {
+        if (string.IsNullOrWhiteSpace(txtBarcode.Text))
+        {
+            ShowWarning("กรุณาสแกนหรือพิมพ์ Barcode");
+            txtBarcode.Focus();
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(txtOrderNo.Text))
+        {
+            ShowWarning("กรุณากรอก Order No");
+            txtOrderNo.Focus();
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(txtCustomerName.Text))
+        {
+            ShowWarning("กรุณากรอก Customer Name");
+            txtCustomerName.Focus();
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(txtType.Text))
+        {
+            ShowWarning("กรุณากรอก Type");
+            txtType.Focus();
+            return false;
+        }
+
+        var qtyText = txtQty.Text.Trim();
+        if (string.IsNullOrWhiteSpace(qtyText))
+        {
+            ShowWarning("กรุณากรอก Qty");
+            txtQty.Focus();
+            return false;
+        }
+
+        if (!int.TryParse(qtyText, out var qty) || qty <= 0)
+        {
+            ShowWarning("Qty ต้องเป็นตัวเลขจำนวนเต็มที่มากกว่า 0");
+            txtQty.Focus();
+            return false;
+        }
+
+        return true;
     }
 
     private async Task ProcessBarcodeAsync(string barcode)
