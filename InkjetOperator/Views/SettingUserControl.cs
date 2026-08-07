@@ -1,18 +1,59 @@
+using InkjetOperator.Services;
+
 namespace InkjetOperator.Views;
 
 public partial class SettingUserControl : UserControl
 {
-    private readonly AntdUI.Button[] _menuButtons;
+    private AntdUI.Button[] _menuButtons = [];
     private AntdUI.Button? _activeButton;
     private readonly Dictionary<string, UserControl> _subPages = new();
 
     public SettingUserControl()
     {
         InitializeComponent();
-        _menuButtons = new[] { btnDatabaseSetting, btnDbPathSetting, btnDB3Setting, btnPLCSetting };
+        ApplyMenuLevel();
+    }
+
+    private void ApplyMenuLevel()
+    {
+        var raw = CustomSettingsManager.Read("MENU_LEVEL", "1");
+        int.TryParse(raw, out var level);
+
+        var allButtons = new[] { btnDatabaseSetting, btnDbPathSetting, btnDB3Setting, btnPLCSetting };
+
+        bool[] visible = level switch
+        {
+            0 => [false, true, true, false],
+            _ => [true, true, true, true],
+        };
+
+        int row = 0;
+        for (int i = 0; i < allButtons.Length; i++)
+        {
+            allButtons[i].Visible = visible[i];
+            if (visible[i])
+            {
+                tlpSidebar.SetRow(allButtons[i], row);
+                tlpSidebar.RowStyles[row].SizeType = SizeType.Absolute;
+                tlpSidebar.RowStyles[row].Height = 84F;
+                row++;
+            }
+        }
+
+        for (int r = row; r < tlpSidebar.RowStyles.Count; r++)
+        {
+            tlpSidebar.RowStyles[r].SizeType = SizeType.Absolute;
+            tlpSidebar.RowStyles[r].Height = 0F;
+        }
+
+        tlpSidebar.Height = row * 84;
+
+        _menuButtons = allButtons.Where((_, i) => visible[i]).ToArray();
         foreach (var btn in _menuButtons)
             btn.Click += MenuButton_Click;
-        SelectMenu(btnDatabaseSetting);
+
+        if (_menuButtons.Length > 0)
+            SelectMenu(_menuButtons[0]);
     }
 
     private void MenuButton_Click(object? sender, EventArgs e)

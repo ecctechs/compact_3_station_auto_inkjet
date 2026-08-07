@@ -12,14 +12,43 @@ public partial class MainShellForm : Form
     private static readonly System.Drawing.Color ActiveTab = System.Drawing.Color.FromArgb(91, 155, 213);
     private static readonly System.Drawing.Color InactiveTab = System.Drawing.Color.FromArgb(176, 176, 176);
 
+    private AntdUI.Button[] _visibleTabs = [];
+
     public MainShellForm()
     {
         InitializeComponent();
+        ApplyMenuLevel();
+    }
+
+    private void ApplyMenuLevel()
+    {
+        var raw = Services.CustomSettingsManager.Read("MENU_LEVEL", "1");
+        int.TryParse(raw, out var level);
+
+        var allTabs = new[] { btnInputOrder, btnOrderList, btnEditPattern, btnSetting };
+        var allPages = new Control[] { scanBarcodePage, orderListPage, editPatternPage, settingPage };
+
+        bool[] visible = level switch
+        {
+            0 => [true, false, false, true],
+            _ => [true, true, true, true],
+        };
+
+        for (int i = 0; i < allTabs.Length; i++)
+        {
+            allTabs[i].Visible = visible[i];
+            allPages[i].Visible = visible[i];
+            tlpMenuBar.ColumnStyles[i].SizeType = visible[i]
+                ? System.Windows.Forms.SizeType.Absolute : System.Windows.Forms.SizeType.Absolute;
+            tlpMenuBar.ColumnStyles[i].Width = visible[i] ? 300F : 0F;
+        }
+
+        _visibleTabs = allTabs.Where((_, i) => visible[i]).ToArray();
     }
 
     private void SetActiveTab(AntdUI.Button active)
     {
-        foreach (var b in new[] { btnInputOrder, btnOrderList, btnEditPattern, btnSetting })
+        foreach (var b in _visibleTabs)
         {
             var color = b == active ? ActiveTab : InactiveTab;
             b.DefaultBack = color;
