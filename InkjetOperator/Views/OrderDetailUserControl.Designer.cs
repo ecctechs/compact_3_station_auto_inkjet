@@ -60,6 +60,7 @@ partial class OrderDetailUserControl
         txtMk1Program = new AntdUI.Input();
         lblMk1ProgramNo = new AntdUI.Label();
         txtMk1ProgramNo = new AntdUI.Input();
+        btnMk1Abc = new AntdUI.Button();
         tblMk1Blocks = new AntdUI.Table();
         tlpMk1Position = new System.Windows.Forms.TableLayoutPanel();
         lblMk1PositionTitle = new AntdUI.Label();
@@ -83,6 +84,8 @@ partial class OrderDetailUserControl
         txtMk2Program = new AntdUI.Input();
         lblMk2ProgramNo = new AntdUI.Label();
         txtMk2ProgramNo = new AntdUI.Input();
+        btnMk2Abc = new AntdUI.Button();
+        btnMkSwap = new AntdUI.Button();
         tblMk2Blocks = new AntdUI.Table();
         tlpMk2Position = new System.Windows.Forms.TableLayoutPanel();
         lblMk2PositionTitle = new AntdUI.Label();
@@ -581,17 +584,19 @@ partial class OrderDetailUserControl
         // tlpMk1Head
         //
         tlpMk1Head.BackColor = System.Drawing.Color.Transparent;
-        tlpMk1Head.ColumnCount = 5;
+        tlpMk1Head.ColumnCount = 6;
         tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 74F));
-        tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 96F));
+        tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 84F));
         tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 88F));
+        tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 64F));
         tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 70F));
         tlpMk1Head.Controls.Add(pnlMk1Chip, 0, 0);
         tlpMk1Head.Controls.Add(lblMk1Program, 1, 0);
         tlpMk1Head.Controls.Add(txtMk1Program, 2, 0);
         tlpMk1Head.Controls.Add(lblMk1ProgramNo, 3, 0);
         tlpMk1Head.Controls.Add(txtMk1ProgramNo, 4, 0);
+        tlpMk1Head.Controls.Add(btnMk1Abc, 5, 0);
         tlpMk1Head.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpMk1Head.Location = new System.Drawing.Point(0, 0);
         tlpMk1Head.Margin = new System.Windows.Forms.Padding(0);
@@ -681,6 +686,21 @@ partial class OrderDetailUserControl
         txtMk1ProgramNo.Size = new System.Drawing.Size(64, 34);
         txtMk1ProgramNo.TabIndex = 4;
         txtMk1ProgramNo.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+        //
+        // btnMk1Abc
+        //
+        btnMk1Abc.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnMk1Abc.Enabled = false;
+        btnMk1Abc.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnMk1Abc.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnMk1Abc.Location = new System.Drawing.Point(525, 6);
+        btnMk1Abc.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
+        btnMk1Abc.Name = "btnMk1Abc";
+        btnMk1Abc.Radius = 8;
+        btnMk1Abc.Size = new System.Drawing.Size(64, 34);
+        btnMk1Abc.TabIndex = 5;
+        btnMk1Abc.Text = "ABC";
+        btnMk1Abc.Type = AntdUI.TTypeMini.Default;
         //
         // tblMk1Blocks
         //
@@ -938,17 +958,21 @@ partial class OrderDetailUserControl
         // tlpMk2Head
         //
         tlpMk2Head.BackColor = System.Drawing.Color.Transparent;
-        tlpMk2Head.ColumnCount = 5;
+        tlpMk2Head.ColumnCount = 7;
         tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 74F));
-        tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 96F));
+        tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 84F));
         tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 88F));
+        tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 64F));
         tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 70F));
+        tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80F));
         tlpMk2Head.Controls.Add(pnlMk2Chip, 0, 0);
         tlpMk2Head.Controls.Add(lblMk2Program, 1, 0);
         tlpMk2Head.Controls.Add(txtMk2Program, 2, 0);
         tlpMk2Head.Controls.Add(lblMk2ProgramNo, 3, 0);
         tlpMk2Head.Controls.Add(txtMk2ProgramNo, 4, 0);
+        tlpMk2Head.Controls.Add(btnMk2Abc, 5, 0);
+        tlpMk2Head.Controls.Add(btnMkSwap, 6, 0);
         tlpMk2Head.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpMk2Head.Location = new System.Drawing.Point(0, 0);
         tlpMk2Head.Margin = new System.Windows.Forms.Padding(0);
@@ -1038,6 +1062,36 @@ partial class OrderDetailUserControl
         txtMk2ProgramNo.Size = new System.Drawing.Size(64, 34);
         txtMk2ProgramNo.TabIndex = 4;
         txtMk2ProgramNo.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+        //
+        // btnMk2Abc
+        //
+        btnMk2Abc.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnMk2Abc.Enabled = false;
+        btnMk2Abc.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnMk2Abc.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnMk2Abc.Location = new System.Drawing.Point(445, 6);
+        btnMk2Abc.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
+        btnMk2Abc.Name = "btnMk2Abc";
+        btnMk2Abc.Radius = 8;
+        btnMk2Abc.Size = new System.Drawing.Size(64, 34);
+        btnMk2Abc.TabIndex = 5;
+        btnMk2Abc.Text = "ABC";
+        btnMk2Abc.Type = AntdUI.TTypeMini.Default;
+        //
+        // btnMkSwap
+        //
+        btnMkSwap.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnMkSwap.Enabled = false;
+        btnMkSwap.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnMkSwap.ForeColor = System.Drawing.Color.White;
+        btnMkSwap.Location = new System.Drawing.Point(515, 6);
+        btnMkSwap.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
+        btnMkSwap.Name = "btnMkSwap";
+        btnMkSwap.Radius = 8;
+        btnMkSwap.Size = new System.Drawing.Size(74, 34);
+        btnMkSwap.TabIndex = 6;
+        btnMkSwap.Text = "SWAP";
+        btnMkSwap.Type = AntdUI.TTypeMini.Primary;
         //
         // tblMk2Blocks
         //
@@ -1958,6 +2012,7 @@ partial class OrderDetailUserControl
     private AntdUI.Input txtMk1Program;
     private AntdUI.Label lblMk1ProgramNo;
     private AntdUI.Input txtMk1ProgramNo;
+    private AntdUI.Button btnMk1Abc;
     private AntdUI.Table tblMk1Blocks;
     private System.Windows.Forms.TableLayoutPanel tlpMk1Position;
     private AntdUI.Label lblMk1PositionTitle;
@@ -1981,6 +2036,8 @@ partial class OrderDetailUserControl
     private AntdUI.Input txtMk2Program;
     private AntdUI.Label lblMk2ProgramNo;
     private AntdUI.Input txtMk2ProgramNo;
+    private AntdUI.Button btnMk2Abc;
+    private AntdUI.Button btnMkSwap;
     private AntdUI.Table tblMk2Blocks;
     private System.Windows.Forms.TableLayoutPanel tlpMk2Position;
     private AntdUI.Label lblMk2PositionTitle;
