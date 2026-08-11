@@ -46,6 +46,11 @@ partial class OrderDetailUserControl
         lblMarkingMethod = new AntdUI.Label();
         txtMarkingMethod = new AntdUI.Input();
         lblMarkingFlow = new AntdUI.Label();
+        tlpConnStatus = new System.Windows.Forms.TableLayoutPanel();
+        lblConnMk1 = new AntdUI.Label();
+        lblConnMk2 = new AntdUI.Label();
+        lblConnUv1 = new AntdUI.Label();
+        lblConnUv2 = new AntdUI.Label();
         pnlBody = new System.Windows.Forms.Panel();
         tlpSections = new System.Windows.Forms.TableLayoutPanel();
         pnlMkSection = new AntdUI.Panel();
@@ -147,6 +152,7 @@ partial class OrderDetailUserControl
         tlpDetailRoot.SuspendLayout();
         pnlHeaderBar.SuspendLayout();
         tlpJobFields.SuspendLayout();
+        tlpConnStatus.SuspendLayout();
         pnlBody.SuspendLayout();
         tlpSections.SuspendLayout();
         pnlMkSection.SuspendLayout();
@@ -188,14 +194,16 @@ partial class OrderDetailUserControl
         tlpDetailRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpDetailRoot.Controls.Add(pnlHeaderBar, 0, 0);
         tlpDetailRoot.Controls.Add(tlpJobFields, 0, 1);
-        tlpDetailRoot.Controls.Add(pnlBody, 0, 2);
-        tlpDetailRoot.Controls.Add(flpDetailActions, 0, 3);
+        tlpDetailRoot.Controls.Add(tlpConnStatus, 0, 2);
+        tlpDetailRoot.Controls.Add(pnlBody, 0, 3);
+        tlpDetailRoot.Controls.Add(flpDetailActions, 0, 4);
         tlpDetailRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpDetailRoot.Location = new System.Drawing.Point(0, 0);
         tlpDetailRoot.Name = "tlpDetailRoot";
-        tlpDetailRoot.RowCount = 4;
+        tlpDetailRoot.RowCount = 5;
         tlpDetailRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 56F));
         tlpDetailRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 160F));
+        tlpDetailRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
         tlpDetailRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpDetailRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 88F));
         tlpDetailRoot.Size = new System.Drawing.Size(1320, 900);
@@ -469,6 +477,76 @@ partial class OrderDetailUserControl
         lblMarkingFlow.Size = new System.Drawing.Size(826, 62);
         lblMarkingFlow.TabIndex = 14;
         lblMarkingFlow.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // tlpConnStatus
+        //
+        tlpConnStatus.BackColor = System.Drawing.Color.FromArgb(224, 235, 245);
+        tlpConnStatus.ColumnCount = 4;
+        tlpConnStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
+        tlpConnStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
+        tlpConnStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
+        tlpConnStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
+        tlpConnStatus.Controls.Add(lblConnMk1, 0, 0);
+        tlpConnStatus.Controls.Add(lblConnMk2, 1, 0);
+        tlpConnStatus.Controls.Add(lblConnUv1, 2, 0);
+        tlpConnStatus.Controls.Add(lblConnUv2, 3, 0);
+        tlpConnStatus.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpConnStatus.Location = new System.Drawing.Point(0, 216);
+        tlpConnStatus.Margin = new System.Windows.Forms.Padding(0);
+        tlpConnStatus.Name = "tlpConnStatus";
+        tlpConnStatus.Padding = new System.Windows.Forms.Padding(24, 0, 24, 0);
+        tlpConnStatus.RowCount = 1;
+        tlpConnStatus.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpConnStatus.Size = new System.Drawing.Size(1320, 36);
+        tlpConnStatus.TabIndex = 4;
+        //
+        // lblConnMk1
+        //
+        lblConnMk1.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblConnMk1.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblConnMk1.ForeColor = System.Drawing.Color.Gray;
+        lblConnMk1.Location = new System.Drawing.Point(27, 0);
+        lblConnMk1.Name = "lblConnMk1";
+        lblConnMk1.Size = new System.Drawing.Size(312, 36);
+        lblConnMk1.TabIndex = 0;
+        lblConnMk1.Text = "● MK1  —";
+        lblConnMk1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // lblConnMk2
+        //
+        lblConnMk2.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblConnMk2.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblConnMk2.ForeColor = System.Drawing.Color.Gray;
+        lblConnMk2.Location = new System.Drawing.Point(345, 0);
+        lblConnMk2.Name = "lblConnMk2";
+        lblConnMk2.Size = new System.Drawing.Size(312, 36);
+        lblConnMk2.TabIndex = 1;
+        lblConnMk2.Text = "● MK2  —";
+        lblConnMk2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // lblConnUv1
+        //
+        lblConnUv1.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblConnUv1.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblConnUv1.ForeColor = System.Drawing.Color.Gray;
+        lblConnUv1.Location = new System.Drawing.Point(663, 0);
+        lblConnUv1.Name = "lblConnUv1";
+        lblConnUv1.Size = new System.Drawing.Size(312, 36);
+        lblConnUv1.TabIndex = 2;
+        lblConnUv1.Text = "● UV1  —";
+        lblConnUv1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // lblConnUv2
+        //
+        lblConnUv2.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblConnUv2.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblConnUv2.ForeColor = System.Drawing.Color.Gray;
+        lblConnUv2.Location = new System.Drawing.Point(981, 0);
+        lblConnUv2.Name = "lblConnUv2";
+        lblConnUv2.Size = new System.Drawing.Size(312, 36);
+        lblConnUv2.TabIndex = 3;
+        lblConnUv2.Text = "● UV2  —";
+        lblConnUv2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
         //
         // pnlBody
         //
@@ -1984,6 +2062,7 @@ partial class OrderDetailUserControl
         tlpDetailRoot.ResumeLayout(false);
         pnlHeaderBar.ResumeLayout(false);
         tlpJobFields.ResumeLayout(false);
+        tlpConnStatus.ResumeLayout(false);
         pnlBody.ResumeLayout(false);
         tlpSections.ResumeLayout(false);
         pnlMkSection.ResumeLayout(false);
@@ -2040,6 +2119,11 @@ partial class OrderDetailUserControl
     private AntdUI.Label lblMarkingMethod;
     private AntdUI.Input txtMarkingMethod;
     private AntdUI.Label lblMarkingFlow;
+    private System.Windows.Forms.TableLayoutPanel tlpConnStatus;
+    private AntdUI.Label lblConnMk1;
+    private AntdUI.Label lblConnMk2;
+    private AntdUI.Label lblConnUv1;
+    private AntdUI.Label lblConnUv2;
     private System.Windows.Forms.Panel pnlBody;
     private System.Windows.Forms.TableLayoutPanel tlpSections;
     private AntdUI.Panel pnlMkSection;

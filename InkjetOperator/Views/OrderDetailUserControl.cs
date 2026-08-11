@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using InkjetOperator.Models;
 using InkjetOperator.Services;
 
@@ -66,6 +67,7 @@ public partial class OrderDetailUserControl : UserControl
         FillMkSection(_pattern);
         FillConveyor(_pattern);
         FillUvSection(resolved.UvJobData);
+        _ = CheckConnectionsAsync();
     }
 
     private void FillMkChipLabels()
@@ -78,6 +80,71 @@ public partial class OrderDetailUserControl : UserControl
     {
         lblUv1Chip.Text = UvSettingsManager.Read("UV1_NAME", "UV-001");
         lblUv2Chip.Text = UvSettingsManager.Read("UV2_NAME", "UV-002");
+    }
+
+    private async Task CheckConnectionsAsync()
+    {
+        var mk1Ip = CustomSettingsManager.Read("MK058_COM");
+        var mk2Ip = CustomSettingsManager.Read("MK059_COM");
+        var uv1Ip = CustomSettingsManager.Read("UV001_IP");
+        var uv1Port = CustomSettingsManager.Read("UV001_PORT");
+        var uv2Ip = CustomSettingsManager.Read("UV002_IP");
+        var uv2Port = CustomSettingsManager.Read("UV002_PORT");
+
+        var mk1Name = CustomSettingsManager.Read("MK058_NAME", "MK-058");
+        var mk2Name = CustomSettingsManager.Read("MK059_NAME", "MK-059");
+        var uv1Name = UvSettingsManager.Read("UV1_NAME", "UV-001");
+        var uv2Name = UvSettingsManager.Read("UV2_NAME", "UV-002");
+
+        SetConnLabel(lblConnMk1, mk1Name, mk1Ip, "", "กำลังตรวจสอบ...", Color.Gray);
+        SetConnLabel(lblConnMk2, mk2Name, mk2Ip, "", "กำลังตรวจสอบ...", Color.Gray);
+        SetConnLabel(lblConnUv1, uv1Name, uv1Ip, uv1Port, "กำลังตรวจสอบ...", Color.Gray);
+        SetConnLabel(lblConnUv2, uv2Name, uv2Ip, uv2Port, "กำลังตรวจสอบ...", Color.Gray);
+
+        var results = await Task.WhenAll(
+            TcpCheckAsync(mk1Ip, 9004),
+            TcpCheckAsync(mk2Ip, 9004),
+            TcpCheckAsync(uv1Ip, int.TryParse(uv1Port, out var p1) ? p1 : 0),
+            TcpCheckAsync(uv2Ip, int.TryParse(uv2Port, out var p2) ? p2 : 0));
+
+        if (IsDisposed) return;
+
+        SetConnResult(lblConnMk1, mk1Name, mk1Ip, "", results[0]);
+        SetConnResult(lblConnMk2, mk2Name, mk2Ip, "", results[1]);
+        SetConnResult(lblConnUv1, uv1Name, uv1Ip, uv1Port, results[2]);
+        SetConnResult(lblConnUv2, uv2Name, uv2Ip, uv2Port, results[3]);
+    }
+
+    private static void SetConnResult(AntdUI.Label lbl, string name, string ip, string port, bool ok)
+    {
+        var status = ok ? "เชื่อมต่อสำเร็จ" : "ไม่สามารถเชื่อมต่อ";
+        var color = ok ? Color.FromArgb(21, 128, 61) : Color.FromArgb(220, 38, 38);
+        if (string.IsNullOrWhiteSpace(ip)) { color = Color.Gray; status = "ไม่ได้ตั้งค่า"; }
+        SetConnLabel(lbl, name, ip, port, status, color);
+    }
+
+    private static void SetConnLabel(AntdUI.Label lbl, string name, string ip, string port, string status, Color color)
+    {
+        var addr = string.IsNullOrWhiteSpace(ip) ? "—" :
+            string.IsNullOrWhiteSpace(port) ? ip : $"{ip}:{port}";
+        void Apply()
+        {
+            lbl.Text = $"●  {name}  ({addr})  {status}";
+            lbl.ForeColor = color;
+        }
+        if (lbl.InvokeRequired) lbl.Invoke(Apply); else Apply();
+    }
+
+    private static async Task<bool> TcpCheckAsync(string ip, int port)
+    {
+        if (string.IsNullOrWhiteSpace(ip) || port <= 0) return false;
+        try
+        {
+            using var tcp = new TcpClient();
+            await tcp.ConnectAsync(ip, port).WaitAsync(TimeSpan.FromSeconds(3));
+            return true;
+        }
+        catch { return false; }
     }
 
     private static int Flip(int o) => o == 1 ? 2 : o == 2 ? 1 : o;

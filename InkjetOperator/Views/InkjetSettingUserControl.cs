@@ -33,6 +33,8 @@ public partial class InkjetSettingUserControl : UserControl
         btnCheckStatus.Click += async (_, _) => await CheckAllStatusAsync();
         btnSave.Click += BtnSave_Click;
         btnCancel.Click += (_, _) => LoadAllSettings();
+
+        Load += async (_, _) => await CheckAllStatusAsync();
     }
 
     private void LoadAllSettings()
