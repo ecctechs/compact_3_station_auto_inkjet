@@ -1,4 +1,5 @@
 using InkjetOperator.Models;
+using InkjetOperator.Services;
 
 namespace InkjetOperator.Views;
 
@@ -54,9 +55,24 @@ public partial class OrderDetailUserControl : UserControl
 
         SortPatternByOrdinal();
         FillJobInfo(resolved);
+        FillMkChipLabels();
+        FillUvChipLabels();
+        ApplyMarkingMethodButtons(resolved.PlanRouting?.MarkingMethod);
         FillMkSection(_pattern);
         FillConveyor(_pattern);
         FillUvSection(resolved.UvJobData);
+    }
+
+    private void FillMkChipLabels()
+    {
+        lblMk1Chip.Text = CustomSettingsManager.Read("MK058_NAME", "MK-058");
+        lblMk2Chip.Text = CustomSettingsManager.Read("MK059_NAME", "MK-059");
+    }
+
+    private void FillUvChipLabels()
+    {
+        lblUv1Chip.Text = UvSettingsManager.Read("UV1_NAME", "UV-001");
+        lblUv2Chip.Text = UvSettingsManager.Read("UV2_NAME", "UV-002");
     }
 
     private static int Flip(int o) => o == 1 ? 2 : o == 2 ? 1 : o;
@@ -80,6 +96,12 @@ public partial class OrderDetailUserControl : UserControl
         lblMkSectionTitle.ForeColor = _isSwapped
             ? Color.FromArgb(212, 136, 6)
             : Color.FromArgb(36, 71, 101);
+
+        var mk1Name = CustomSettingsManager.Read("MK058_NAME", "MK-058");
+        var mk2Name = CustomSettingsManager.Read("MK059_NAME", "MK-059");
+
+        lblMk1Chip.Text = _isSwapped ? mk2Name : mk1Name;
+        lblMk2Chip.Text = _isSwapped ? mk1Name : mk2Name;
 
         FillMkSection(_pattern);
     }
