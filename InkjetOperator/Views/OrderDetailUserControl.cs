@@ -9,6 +9,8 @@ public partial class OrderDetailUserControl : UserControl
 
     private PatternDetail? _pattern;
     private bool _isSwapped;
+    private List<string> _sendSteps = [];
+    private int _currentStep;
 
     public event EventHandler? CloseRequested;
 
@@ -20,6 +22,9 @@ public partial class OrderDetailUserControl : UserControl
         btnMkSwap.Click += (_, _) => SwapMkData();
         btnMk1Abc.Click += (_, _) => ShowAbcDialog(1);
         btnMk2Abc.Click += (_, _) => ShowAbcDialog(2);
+        btnSendMk.Click += (_, _) => CompleteSendStep("MK");
+        btnSendUv1.Click += (_, _) => CompleteSendStep("UV1");
+        btnSendUv2.Click += (_, _) => CompleteSendStep("UV2");
     }
 
     private void ConfigureColumns()
@@ -160,6 +165,93 @@ public partial class OrderDetailUserControl : UserControl
 
         dlg.Controls.Add(txt);
         dlg.ShowDialog();
+    }
+
+    private void ApplyMarkingMethodButtons(string? markingMethod)
+    {
+        char a = '0', b = '0';
+        if (markingMethod is { Length: >= 2 })
+        {
+            a = markingMethod[0];
+            b = markingMethod[1];
+        }
+
+        bool needMk = a == '2' || b == '2';
+        bool needUv1 = b == '1' || b == '3';
+        bool needUv2 = a == '1' || a == '3';
+
+        _sendSteps = [];
+        if (needMk) _sendSteps.Add("MK");
+        if (needUv1) _sendSteps.Add("UV1");
+        if (needUv2) _sendSteps.Add("UV2");
+        _currentStep = 0;
+
+        bool is22 = a == '2' && b == '2';
+        BuildFlowLabel(_sendSteps, is22);
+        ApplyStepButtons();
+    }
+
+    private void BuildFlowLabel(List<string> steps, bool isTwoRound)
+    {
+        if (steps.Count == 0)
+        {
+            lblMarkingFlow.Text = "";
+            return;
+        }
+
+        var parts = steps.Select(s => s switch
+        {
+            "MK" when isTwoRound => "MK (×2)",
+            _ => s
+        });
+        lblMarkingFlow.Text = string.Join("  ➜  ", parts);
+    }
+
+    private void ApplyStepButtons()
+    {
+        btnSendMk.Enabled = false;
+        btnSendUv1.Enabled = false;
+        btnSendUv2.Enabled = false;
+
+        if (_currentStep < _sendSteps.Count)
+        {
+            var step = _sendSteps[_currentStep];
+            GetSendButton(step).Enabled = true;
+        }
+
+        for (int i = 0; i < _currentStep && i < _sendSteps.Count; i++)
+            MarkButtonSent(GetSendButton(_sendSteps[i]));
+    }
+
+    private void CompleteSendStep(string stepName)
+    {
+        if (_currentStep >= _sendSteps.Count) return;
+        if (_sendSteps[_currentStep] != stepName) return;
+
+        var btn = GetSendButton(stepName);
+        btn.Enabled = false;
+        MarkButtonSent(btn);
+
+        _currentStep++;
+        if (_currentStep < _sendSteps.Count)
+            GetSendButton(_sendSteps[_currentStep]).Enabled = true;
+    }
+
+    private AntdUI.Button GetSendButton(string step) => step switch
+    {
+        "MK" => btnSendMk,
+        "UV1" => btnSendUv1,
+        _ => btnSendUv2,
+    };
+
+    private static void MarkButtonSent(AntdUI.Button btn)
+    {
+        btn.Enabled = false;
+        btn.DefaultBack = Color.FromArgb(200, 220, 200);
+        btn.ForeColor = Color.FromArgb(21, 128, 61);
+        btn.Type = AntdUI.TTypeMini.Default;
+        if (!btn.Text.StartsWith("✓"))
+            btn.Text = "✓ " + btn.Text;
     }
 
     private void FillJobInfo(ResolvedJobResponse resolved)

@@ -45,6 +45,7 @@ partial class OrderDetailUserControl
         txtJobStatus = new AntdUI.Input();
         lblMarkingMethod = new AntdUI.Label();
         txtMarkingMethod = new AntdUI.Input();
+        lblMarkingFlow = new AntdUI.Label();
         pnlBody = new System.Windows.Forms.Panel();
         tlpSections = new System.Windows.Forms.TableLayoutPanel();
         pnlMkSection = new AntdUI.Panel();
@@ -251,6 +252,8 @@ partial class OrderDetailUserControl
         tlpJobFields.Controls.Add(txtJobStatus, 5, 1);
         tlpJobFields.Controls.Add(lblMarkingMethod, 0, 2);
         tlpJobFields.Controls.Add(txtMarkingMethod, 1, 2);
+        tlpJobFields.Controls.Add(lblMarkingFlow, 2, 2);
+        tlpJobFields.SetColumnSpan(lblMarkingFlow, 4);
         tlpJobFields.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpJobFields.Location = new System.Drawing.Point(0, 56);
         tlpJobFields.Margin = new System.Windows.Forms.Padding(0);
@@ -454,6 +457,18 @@ partial class OrderDetailUserControl
         txtMarkingMethod.Size = new System.Drawing.Size(250, 40);
         txtMarkingMethod.TabIndex = 13;
         txtMarkingMethod.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+        //
+        // lblMarkingFlow
+        //
+        lblMarkingFlow.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMarkingFlow.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
+        lblMarkingFlow.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblMarkingFlow.Location = new System.Drawing.Point(491, 88);
+        lblMarkingFlow.Margin = new System.Windows.Forms.Padding(6, 0, 3, 0);
+        lblMarkingFlow.Name = "lblMarkingFlow";
+        lblMarkingFlow.Size = new System.Drawing.Size(826, 62);
+        lblMarkingFlow.TabIndex = 14;
+        lblMarkingFlow.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
         //
         // pnlBody
         //
@@ -2024,6 +2039,7 @@ partial class OrderDetailUserControl
     private AntdUI.Input txtJobStatus;
     private AntdUI.Label lblMarkingMethod;
     private AntdUI.Input txtMarkingMethod;
+    private AntdUI.Label lblMarkingFlow;
     private System.Windows.Forms.Panel pnlBody;
     private System.Windows.Forms.TableLayoutPanel tlpSections;
     private AntdUI.Panel pnlMkSection;
