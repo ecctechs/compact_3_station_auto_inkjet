@@ -1,4 +1,5 @@
-using System.Net.Sockets;
+using InkjetOperator.Adapters;
+using InkjetOperator.Managers;
 using InkjetOperator.Models;
 using InkjetOperator.Services;
 
@@ -12,6 +13,8 @@ public partial class OrderDetailUserControl : UserControl
     private bool _isSwapped;
     private List<string> _sendSteps = [];
     private int _currentStep;
+    private int _jobId;
+    private ApiClient? _api;
 
     public event EventHandler? CloseRequested;
 
@@ -23,7 +26,7 @@ public partial class OrderDetailUserControl : UserControl
         btnMkSwap.Click += (_, _) => SwapMkData();
         btnMk1Abc.Click += (_, _) => ShowAbcDialog(1);
         btnMk2Abc.Click += (_, _) => ShowAbcDialog(2);
-        btnSendMk.Click += (_, _) => CompleteSendStep("MK");
+        btnSendMk.Click += async (_, _) => await SendToMkAsync();
         btnSendUv1.Click += (_, _) => CompleteSendStep("UV1");
         btnSendUv2.Click += (_, _) => CompleteSendStep("UV2");
     }
@@ -52,10 +55,12 @@ public partial class OrderDetailUserControl : UserControl
         new AntdUI.Column("Value", "Value", AntdUI.ColumnAlign.Left),
     ];
 
-    public void LoadDetail(ResolvedJobResponse resolved)
+    public void LoadDetail(ResolvedJobResponse resolved, ApiClient? api = null)
     {
         _pattern = resolved.Pattern;
         _isSwapped = false;
+        _jobId = resolved.Job.Id;
+        _api = api;
 
         lblHeaderTitle.Text = $"Job Information — Job #{resolved.Job.Id}";
 
@@ -64,6 +69,8 @@ public partial class OrderDetailUserControl : UserControl
         FillMkChipLabels();
         FillUvChipLabels();
         ApplyMarkingMethodButtons(resolved.PlanRouting?.MarkingMethod);
+        RestoreCompletedSteps(resolved.Commands);
+        ApplyStepButtons();
         FillMkSection(_pattern);
         FillConveyor(_pattern);
         FillUvSection(resolved.UvJobData);
@@ -138,13 +145,14 @@ public partial class OrderDetailUserControl : UserControl
     private static async Task<bool> TcpCheckAsync(string ip, int port)
     {
         if (string.IsNullOrWhiteSpace(ip) || port <= 0) return false;
+        var tcp = new TcpManager();
         try
         {
-            using var tcp = new TcpClient();
             await tcp.ConnectAsync(ip, port).WaitAsync(TimeSpan.FromSeconds(3));
-            return true;
+            return tcp.IsConnected();
         }
         catch { return false; }
+        finally { tcp.Disconnect(); }
     }
 
     private static int Flip(int o) => o == 1 ? 2 : o == 2 ? 1 : o;
@@ -274,6 +282,21 @@ public partial class OrderDetailUserControl : UserControl
         lblMarkingFlow.Text = string.Join("  ➜  ", parts);
     }
 
+    private void RestoreCompletedSteps(List<CommandResult> commands)
+    {
+        var completed = new HashSet<string>(
+            commands
+                .Where(c => c.Success)
+                .Select(c => c.Command),
+            StringComparer.OrdinalIgnoreCase);
+
+        while (_currentStep < _sendSteps.Count
+               && completed.Contains(_sendSteps[_currentStep]))
+        {
+            _currentStep++;
+        }
+    }
+
     private void ApplyStepButtons()
     {
         btnSendMk.Enabled = false;
@@ -302,6 +325,8 @@ public partial class OrderDetailUserControl : UserControl
         _currentStep++;
         if (_currentStep < _sendSteps.Count)
             GetSendButton(_sendSteps[_currentStep]).Enabled = true;
+
+        _ = _api?.SaveSendStepAsync(_jobId, stepName);
     }
 
     private AntdUI.Button GetSendButton(string step) => step switch
@@ -319,6 +344,99 @@ public partial class OrderDetailUserControl : UserControl
         btn.Type = AntdUI.TTypeMini.Default;
         if (!btn.Text.StartsWith("✓"))
             btn.Text = "✓ " + btn.Text;
+    }
+
+    private async Task SendToMkAsync()
+    {
+        if (_pattern == null) return;
+
+        btnSendMk.Enabled = false;
+        var originalText = btnSendMk.Text;
+        btnSendMk.Text = "กำลังส่ง...";
+
+        try
+        {
+            var mk1Ip = CustomSettingsManager.Read("MK058_COM");
+            var mk2Ip = CustomSettingsManager.Read("MK059_COM");
+            var config1 = _pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == 1);
+            var config2 = _pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == 2);
+
+            var errors = new List<string>();
+            int sent = 0;
+
+            if (config1 != null && !string.IsNullOrWhiteSpace(mk1Ip))
+            {
+                var err = await SendToOneMkAsync(mk1Ip, config1, "MK1");
+                if (err != null) errors.Add(err);
+                else sent++;
+            }
+
+            if (config2 != null && !string.IsNullOrWhiteSpace(mk2Ip))
+            {
+                var err = await SendToOneMkAsync(mk2Ip, config2, "MK2");
+                if (err != null) errors.Add(err);
+                else sent++;
+            }
+
+            if (errors.Count > 0 || sent == 0)
+            {
+                btnSendMk.Text = originalText;
+                btnSendMk.Enabled = true;
+                var msg = sent == 0 && errors.Count == 0
+                    ? "ไม่มีเครื่อง MK ที่ตั้งค่า IP ไว้"
+                    : string.Join("\n", errors);
+                MessageBox.Show(msg,
+                    "ส่งไม่สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            CompleteSendStep("MK");
+        }
+        catch (Exception ex)
+        {
+            btnSendMk.Text = originalText;
+            btnSendMk.Enabled = true;
+            MessageBox.Show($"เกิดข้อผิดพลาด: {ex.Message}",
+                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    private static async Task<string?> SendToOneMkAsync(string ip, InkjetConfigDto config, string label)
+    {
+        var tcp = new TcpManager();
+        try
+        {
+            await tcp.ConnectAsync(ip, 9004).WaitAsync(TimeSpan.FromSeconds(3));
+            var adapter = new MkCompactAdapter(tcp);
+
+            var sr = await adapter.SuspendAsync();
+            if (!sr.Success) return $"{label}: Suspend ไม่สำเร็จ";
+
+            var fw = await adapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
+            if (!fw.Success) return $"{label}: เปลี่ยนโปรแกรมไม่สำเร็จ";
+
+            var fm = await adapter.SendConfigAsync(config);
+            if (!fm.Success) return $"{label}: ส่ง Config ไม่สำเร็จ";
+
+            foreach (var block in config.TextBlocks.OrderBy(b => b.BlockNumber))
+            {
+                var fb = await adapter.SendTextBlockAsync(block, block.BlockNumber);
+                if (!fb.Success) return $"{label}: ส่ง Block {block.BlockNumber} ไม่สำเร็จ";
+            }
+
+            var sq = await adapter.ResumeAsync();
+            if (!sq.Success) return $"{label}: Resume ไม่สำเร็จ";
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return $"{label}: {ex.Message}";
+        }
+        finally
+        {
+            tcp.Disconnect();
+        }
     }
 
     private void FillJobInfo(ResolvedJobResponse resolved)

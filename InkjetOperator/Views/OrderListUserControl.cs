@@ -132,7 +132,7 @@ public partial class OrderListUserControl : UserControl
         ShowDetailDialog(row.Id, resolved);
     }
 
-    private static void ShowDetailDialog(int jobId, ResolvedJobResponse resolved)
+    private void ShowDetailDialog(int jobId, ResolvedJobResponse resolved)
     {
         using var dlg = new Form
         {
@@ -145,7 +145,7 @@ public partial class OrderListUserControl : UserControl
         };
 
         var detail = new OrderDetailUserControl { Dock = DockStyle.Fill };
-        detail.LoadDetail(resolved);
+        detail.LoadDetail(resolved, _api);
         detail.CloseRequested += (_, _) => dlg.Close();
 
         dlg.Controls.Add(detail);

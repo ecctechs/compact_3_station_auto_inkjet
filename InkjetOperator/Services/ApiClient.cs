@@ -215,6 +215,22 @@ public class ApiClient
         }
     }
 
+    public async Task<bool> SaveSendStepAsync(int jobId, string stepName)
+    {
+        try
+        {
+            var payload = new
+            {
+                command = stepName,
+                success = true,
+                sent_at = DateTime.UtcNow.ToString("o"),
+            };
+            var response = await _http.PostAsJsonAsync($"/job/addCommand/{jobId}", payload, JsonOptions);
+            return response.IsSuccessStatusCode;
+        }
+        catch { return false; }
+    }
+
     public async Task<bool> RetryJobAsync(int jobId)
     {
         try

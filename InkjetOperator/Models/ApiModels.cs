@@ -196,6 +196,9 @@ public class ResolvedJobResponse
 
     [JsonPropertyName("uv_job_data")]
     public List<UvJobDataDto> UvJobData { get; set; } = new();
+
+    [JsonPropertyName("commands")]
+    public List<CommandResult> Commands { get; set; } = new();
 }
 
 public class UvJobDataDto

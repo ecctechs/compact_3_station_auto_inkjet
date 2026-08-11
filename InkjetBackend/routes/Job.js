@@ -33,6 +33,8 @@ Route.post(
   JobController.postResults
 );
 
+Route.post(RouteName + "/addCommand/:id", JobController.addCommand);
+
 Route.post(RouteName + "/retry/:id", JobController.retry);
 
 Route.delete(RouteName + "/remove/:id", JobController.remove);

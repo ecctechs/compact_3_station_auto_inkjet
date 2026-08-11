@@ -172,11 +172,17 @@ class JobController {
         order: [["id", "ASC"]],
       });
 
+      const commands = await PrintJobCommand.findAll({
+        where: { job_id: job.id },
+        order: [["id", "ASC"]],
+      });
+
       return ResponseManager.SuccessResponse(req, res, 200, {
         job,
         pattern: resolved,
         plan_routing: planRouting,
         uv_job_data: uvJobData,
+        commands,
       });
     } catch (err) {
       return ResponseManager.CatchResponse(req, res, err.message);
@@ -217,6 +223,32 @@ class JobController {
         message: success ? "Job completed" : "Job failed",
         status: newStatus,
       });
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  /**
+   * POST /job/addCommand/:id
+   */
+  static async addCommand(req, res) {
+    try {
+      const job = await PrintJob.findByPk(req.params.id);
+      if (!job) {
+        return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
+      }
+
+      const { command, ordinal, success, sent_at } = req.body;
+
+      const created = await PrintJobCommand.create({
+        job_id: job.id,
+        command,
+        ordinal: ordinal || null,
+        success: success ?? true,
+        sent_at: sent_at || new Date(),
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 201, created);
     } catch (err) {
       return ResponseManager.CatchResponse(req, res, err.message);
     }
