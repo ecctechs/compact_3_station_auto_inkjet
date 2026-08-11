@@ -113,6 +113,10 @@ public class SqliteDataService
         return pattern;
     }
 
+    /// <summary>
+    /// อ่าน UV detail ของ lot นี้จาก print_data — 1 lot ได้สูงสุด 2 แถว (UV1/UV2)
+    /// เครื่องที่ไม่มีทั้งชื่อโปรแกรมและข้อความ = ไม่มีงาน UV → ไม่เก็บ
+    /// </summary>
     public List<UvJobItem> GetUvDetail(string barcode)
     {
         var items = new List<UvJobItem>();
@@ -124,21 +128,46 @@ public class SqliteDataService
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
         {
-            items.Add(new UvJobItem
-            {
-                Machine = ReadStr(reader, "machine") ?? "",
-                TableName = ReadStr(reader, "table_name"),
-                ProgramName = ReadStr(reader, "program_name"),
-                Lot = ReadStr(reader, "lot"),
-                Name = ReadStr(reader, "name"),
-                Text1 = ReadStr(reader, "text1"),
-                Text2 = ReadStr(reader, "text2"),
-                Text3 = ReadStr(reader, "text3"),
-                Text4 = ReadStr(reader, "text4"),
-                Text5 = ReadStr(reader, "text5"),
-            });
+            var lot = ReadStr(reader, "lot_no") ?? barcode;
+            var name = ReadStr(reader, "erp_mfg");
+
+            AddIfHasData(items, BuildUv(reader, "UV1", "MK063", "m1_", lot, name));
+            AddIfHasData(items, BuildUv(reader, "UV2", "MK067", "m2_", lot, name));
         }
         return items;
+    }
+
+    // m1_* → UV1/MK063 (Plate), m2_* → UV2/MK067 (Shim)
+    // ยืนยันจากชื่อโปรแกรมในข้อมูลจริง: m1 ขึ้นต้น "P-" (Plate), m2 ขึ้นต้น "S-" (Shim)
+    private static UvJobItem BuildUv(
+        SqliteDataReader r, string machine, string table, string prefix, string lot, string? name)
+    {
+        return new UvJobItem
+        {
+            Machine = machine,
+            TableName = table,
+            ProgramName = ReadStr(r, $"{prefix}program_name"),
+            Lot = lot,
+            Name = name,
+            Text1 = ReadStr(r, $"{prefix}block_text1"),
+            Text2 = ReadStr(r, $"{prefix}block_text2"),
+            Text3 = ReadStr(r, $"{prefix}block_text3"),
+            Text4 = ReadStr(r, $"{prefix}block_text4"),
+            Text5 = ReadStr(r, $"{prefix}block_text5"),
+        };
+    }
+
+    private static void AddIfHasData(List<UvJobItem> items, UvJobItem item)
+    {
+        bool hasData =
+            !string.IsNullOrWhiteSpace(item.ProgramName) ||
+            !string.IsNullOrWhiteSpace(item.Text1) ||
+            !string.IsNullOrWhiteSpace(item.Text2) ||
+            !string.IsNullOrWhiteSpace(item.Text3) ||
+            !string.IsNullOrWhiteSpace(item.Text4) ||
+            !string.IsNullOrWhiteSpace(item.Text5);
+
+        if (hasData) items.Add(item);
     }
 
     /// <summary>

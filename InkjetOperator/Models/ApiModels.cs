@@ -190,6 +190,48 @@ public class ResolvedJobResponse
 
     [JsonPropertyName("plan_routing")]
     public PlanRoutingDto? PlanRouting { get; set; }
+
+    [JsonPropertyName("uv_job_data")]
+    public List<UvJobDataDto> UvJobData { get; set; } = new();
+}
+
+public class UvJobDataDto
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("print_jobs_id")]
+    public int? PrintJobsId { get; set; }
+
+    [JsonPropertyName("machine")]
+    public string? Machine { get; set; }
+
+    [JsonPropertyName("table_name")]
+    public string? TableName { get; set; }
+
+    [JsonPropertyName("program_name")]
+    public string? ProgramName { get; set; }
+
+    [JsonPropertyName("lot")]
+    public string? Lot { get; set; }
+
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("text1")]
+    public string? Text1 { get; set; }
+
+    [JsonPropertyName("text2")]
+    public string? Text2 { get; set; }
+
+    [JsonPropertyName("text3")]
+    public string? Text3 { get; set; }
+
+    [JsonPropertyName("text4")]
+    public string? Text4 { get; set; }
+
+    [JsonPropertyName("text5")]
+    public string? Text5 { get; set; }
 }
 
 public class PlanRoutingDto

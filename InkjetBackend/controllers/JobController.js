@@ -8,6 +8,7 @@ const {
   ServoConfig,
 } = require("../model/patternModel");
 const { PlanRouting } = require("../model/planRoutingModel");
+const { UvJobData } = require("../model/uvJobDataModel");
 const { parseBarcode, resolveTemplates } = require("../utils/templateResolver");
 
 const PATTERN_INCLUDE = [
@@ -165,10 +166,17 @@ class JobController {
         where: { print_jobs_id: job.id },
       });
 
+      // uv_job_data (UV1/UV2) — ไม่มีก็ส่ง array ว่าง
+      const uvJobData = await UvJobData.findAll({
+        where: { print_jobs_id: job.id },
+        order: [["id", "ASC"]],
+      });
+
       return ResponseManager.SuccessResponse(req, res, 200, {
         job,
         pattern: resolved,
         plan_routing: planRouting,
+        uv_job_data: uvJobData,
       });
     } catch (err) {
       return ResponseManager.CatchResponse(req, res, err.message);
