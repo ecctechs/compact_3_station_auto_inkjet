@@ -7,6 +7,7 @@ const {
   ConveyorSpeed,
   ServoConfig,
 } = require("../model/patternModel");
+const { PlanRouting } = require("../model/planRoutingModel");
 const { parseBarcode, resolveTemplates } = require("../utils/templateResolver");
 
 const PATTERN_INCLUDE = [
@@ -159,9 +160,15 @@ class JobController {
         }
       }
 
+      // plan_routing ของ job นี้ — ไม่มีก็ส่ง null ไม่ถือว่า error
+      const planRouting = await PlanRouting.findOne({
+        where: { print_jobs_id: job.id },
+      });
+
       return ResponseManager.SuccessResponse(req, res, 200, {
         job,
         pattern: resolved,
+        plan_routing: planRouting,
       });
     } catch (err) {
       return ResponseManager.CatchResponse(req, res, err.message);

@@ -115,6 +115,7 @@ public partial class ScanBarcodeUserControl : UserControl
         }
 
         var uvItems = sqlite.GetUvDetail(barcode);
+        var planRouting = sqlite.GetPlanRouting(barcode, 0);
 
         // Step 2A: POST /job/create
         var jobRequest = new CreateJobRequest
@@ -158,6 +159,21 @@ public partial class ScanBarcodeUserControl : UserControl
             {
                 ShowWarning($"บันทึก UV Data ไม่สำเร็จ แต่ Job + Pattern สร้างแล้ว\n{uvErr}");
             }
+        }
+
+        // Step 2D: POST /plan-routing/create (skip if lot has no plan_routing row)
+        if (planRouting != null)
+        {
+            planRouting.PrintJobsId = job.Id;
+            var (planOk, planErr) = await api.CreatePlanRoutingAsync(planRouting);
+            if (!planOk)
+            {
+                ShowWarning($"บันทึก Plan Routing ไม่สำเร็จ แต่ Job + Pattern สร้างแล้ว\n{planErr}");
+            }
+        }
+        else
+        {
+            ShowWarning($"ไม่พบข้อมูลใน plan_routing สำหรับ barcode: {barcode}\nJob ถูกสร้างแล้วแต่ไม่มีข้อมูล marking_method");
         }
 
         MessageBox.Show(

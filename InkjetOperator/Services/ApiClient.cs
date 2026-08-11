@@ -85,6 +85,22 @@ public class ApiClient
         }
     }
 
+    public async Task<(bool ok, string? error)> CreatePlanRoutingAsync(CreatePlanRoutingRequest request)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync("/plan-routing/create", request, JsonOptions);
+            var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+                return (false, $"[{(int)response.StatusCode}] {body}");
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
+    }
+
     public async Task<bool> DeleteJobAsync(int jobId)
     {
         try

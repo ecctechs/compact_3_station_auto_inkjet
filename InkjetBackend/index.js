@@ -8,14 +8,18 @@ require("./model/patternModel");
 require("./model/jobModel");
 require("./model/plcModel");
 require("./model/uvJobDataModel");
+require("./model/planRoutingModel");
 require("./model/lastSentJobModel");
 require("./model/iaiSettingModel");
 
-sequelize.sync();
+const ensurePlanRoutingCascade = require("./migrations/ensurePlanRoutingCascade");
+
+sequelize.sync().then(ensurePlanRoutingCascade);
 
 const patternRoute = require("./routes/Pattern");
 const jobRoute = require("./routes/Job");
 const uvJobRoute = require("./routes/UvJob");
+const planRoutingRoute = require("./routes/PlanRouting");
 const systemRoute = require("./routes/System");
 const plcRoute = require("./routes/Plc");
 
@@ -27,6 +31,7 @@ app.use(cors());
 app.use(patternRoute);
 app.use(jobRoute);
 app.use(uvJobRoute);
+app.use(planRoutingRoute);
 app.use(systemRoute);
 app.use(plcRoute);
 

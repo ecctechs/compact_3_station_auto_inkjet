@@ -141,6 +141,37 @@ public class SqliteDataService
         return items;
     }
 
+    /// <summary>
+    /// อ่าน plan_routing ของ lot นี้จาก source DB — ไม่พบแถว/ไม่มีตาราง คืน null
+    /// เก็บค่าดิบทั้งหมด (marking_method เป็น NULL ได้)
+    /// </summary>
+    public CreatePlanRoutingRequest? GetPlanRouting(string barcode, int jobId)
+    {
+        try
+        {
+            using var conn = Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT * FROM plan_routing WHERE lot_no = @barcode LIMIT 1";
+            cmd.Parameters.AddWithValue("@barcode", barcode);
+
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read()) return null;
+
+            return new CreatePlanRoutingRequest
+            {
+                PrintJobsId = jobId,
+                LotNo = ReadStr(reader, "lot_no") ?? barcode,
+                ErpMfg = ReadStr(reader, "erp_mfg"),
+                MarkingMethod = ReadStr(reader, "marking_method"),
+                ProcessSequence = ReadStr(reader, "process_sequence"),
+            };
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private SqliteConnection Open()
     {
         var conn = new SqliteConnection($"Data Source={_dbPath};Mode=ReadOnly");

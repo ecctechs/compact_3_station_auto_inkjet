@@ -159,6 +159,25 @@ public class UvJobItem
     public string? Text5 { get; set; }
 }
 
+// plan_routing ที่อ่านมาจาก source DB ตอน register — เก็บค่าดิบ ไม่ตีความ
+public class CreatePlanRoutingRequest
+{
+    [JsonPropertyName("print_jobs_id")]
+    public int PrintJobsId { get; set; }
+
+    [JsonPropertyName("lot_no")]
+    public string? LotNo { get; set; }
+
+    [JsonPropertyName("erp_mfg")]
+    public string? ErpMfg { get; set; }
+
+    [JsonPropertyName("marking_method")]
+    public string? MarkingMethod { get; set; }
+
+    [JsonPropertyName("process_sequence")]
+    public string? ProcessSequence { get; set; }
+}
+
 // --- Pattern models (from GET /job/getResolved) ---
 
 public class ResolvedJobResponse
@@ -168,6 +187,30 @@ public class ResolvedJobResponse
 
     [JsonPropertyName("pattern")]
     public PatternDetail Pattern { get; set; } = new();
+
+    [JsonPropertyName("plan_routing")]
+    public PlanRoutingDto? PlanRouting { get; set; }
+}
+
+public class PlanRoutingDto
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("print_jobs_id")]
+    public int? PrintJobsId { get; set; }
+
+    [JsonPropertyName("lot_no")]
+    public string? LotNo { get; set; }
+
+    [JsonPropertyName("erp_mfg")]
+    public string? ErpMfg { get; set; }
+
+    [JsonPropertyName("marking_method")]
+    public string? MarkingMethod { get; set; }
+
+    [JsonPropertyName("process_sequence")]
+    public string? ProcessSequence { get; set; }
 }
 
 public class PatternDetail
