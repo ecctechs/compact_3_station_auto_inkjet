@@ -6,7 +6,9 @@ public partial class OrderDetailUserControl : UserControl
 {
     private const string Dash = "-";
 
-    /// <summary>เกิดเมื่อกดปุ่มปิด — ให้ host (Form/หน้าหลัก) เป็นคนตัดสินใจว่าจะปิดยังไง</summary>
+    private PatternDetail? _pattern;
+    private bool _isSwapped;
+
     public event EventHandler? CloseRequested;
 
     public OrderDetailUserControl()
@@ -14,6 +16,9 @@ public partial class OrderDetailUserControl : UserControl
         InitializeComponent();
         ConfigureColumns();
         btnDetailClose.Click += (_, _) => CloseRequested?.Invoke(this, EventArgs.Empty);
+        btnMkSwap.Click += (_, _) => SwapMkData();
+        btnMk1Abc.Click += (_, _) => ShowAbcDialog(1);
+        btnMk2Abc.Click += (_, _) => ShowAbcDialog(2);
     }
 
     private void ConfigureColumns()
@@ -40,17 +45,99 @@ public partial class OrderDetailUserControl : UserControl
         new AntdUI.Column("Value", "Value", AntdUI.ColumnAlign.Left),
     ];
 
-    /// <summary>
-    /// เติมข้อมูลจาก GET /job/getResolved (job + pattern + plan_routing + uv_job_data)
-    /// </summary>
     public void LoadDetail(ResolvedJobResponse resolved)
     {
+        _pattern = resolved.Pattern;
+        _isSwapped = false;
+
         lblHeaderTitle.Text = $"Job Information — Job #{resolved.Job.Id}";
 
+        SortPatternByOrdinal();
         FillJobInfo(resolved);
-        FillMkSection(resolved.Pattern);
-        FillConveyor(resolved.Pattern);
+        FillMkSection(_pattern);
+        FillConveyor(_pattern);
         FillUvSection(resolved.UvJobData);
+    }
+
+    private static int Flip(int o) => o == 1 ? 2 : o == 2 ? 1 : o;
+
+    private void SwapMkData()
+    {
+        if (_pattern == null) return;
+
+        foreach (var cfg in _pattern.InkjetConfigs)
+            cfg.Ordinal = Flip(cfg.Ordinal);
+
+        foreach (var servo in _pattern.ServoConfigs)
+            servo.Ordinal = Flip(servo.Ordinal);
+
+        SortPatternByOrdinal();
+
+        _isSwapped = !_isSwapped;
+        lblMkSectionTitle.Text = _isSwapped
+            ? "MK Section (MK Inkjet) — SWAPPED"
+            : "MK Section (MK Inkjet)";
+        lblMkSectionTitle.ForeColor = _isSwapped
+            ? Color.FromArgb(212, 136, 6)
+            : Color.FromArgb(36, 71, 101);
+
+        FillMkSection(_pattern);
+    }
+
+    private void SortPatternByOrdinal()
+    {
+        if (_pattern == null) return;
+        _pattern.InkjetConfigs = _pattern.InkjetConfigs
+            .OrderBy(c => c.Ordinal).ToList();
+        _pattern.ServoConfigs = _pattern.ServoConfigs
+            .OrderBy(s => s.Ordinal).ToList();
+    }
+
+    private void ShowAbcDialog(int ordinal)
+    {
+        if (_pattern == null) return;
+
+        var config = _pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
+        if (config == null)
+        {
+            MessageBox.Show($"ไม่พบ InkjetConfig ordinal {ordinal}",
+                "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var lines = config.TextBlocks
+            .OrderBy(b => b.BlockNumber)
+            .Select(b => $"[Block {b.BlockNumber}]  {b.Text ?? Dash}")
+            .ToList();
+
+        var preview = lines.Count == 0
+            ? "(No text blocks)"
+            : string.Join(Environment.NewLine, lines);
+
+        using var dlg = new Form
+        {
+            Text = $"MK-{ordinal} — Text Preview",
+            Size = new Size(480, 320),
+            StartPosition = FormStartPosition.CenterParent,
+            MinimizeBox = false,
+            MaximizeBox = false,
+            ShowIcon = false,
+        };
+
+        var txt = new TextBox
+        {
+            Multiline = true,
+            ReadOnly = true,
+            ScrollBars = ScrollBars.Vertical,
+            Dock = DockStyle.Fill,
+            Font = new Font("Consolas", 13F),
+            BackColor = Color.FromArgb(237, 243, 249),
+            ForeColor = Color.FromArgb(17, 17, 17),
+            Text = preview,
+        };
+
+        dlg.Controls.Add(txt);
+        dlg.ShowDialog();
     }
 
     private void FillJobInfo(ResolvedJobResponse resolved)
@@ -64,7 +151,6 @@ public partial class OrderDetailUserControl : UserControl
         txtJobQty.Text = job.Qty?.ToString() ?? Dash;
         txtJobStatus.Text = OrDash(job.Status);
 
-        // ยังไม่ตีความ marking_method — แสดงค่าดิบ ค่าว่าง/NULL แสดงเป็นข้อความบอกสถานะ
         var marking = resolved.PlanRouting?.MarkingMethod;
         txtMarkingMethod.Text = string.IsNullOrWhiteSpace(marking) ? "ไม่ระบุ" : marking;
     }
@@ -132,7 +218,6 @@ public partial class OrderDetailUserControl : UserControl
         var uv1 = uvRows.FirstOrDefault(r => r.Machine == "UV1");
         var uv2 = uvRows.FirstOrDefault(r => r.Machine == "UV2");
 
-        // qty มาจาก print_data แถวเดียวกัน UV1/UV2 จึงใช้ค่าร่วมกันเสมอ
         txtUvQtyShared.Text = (uv1?.Qty ?? uv2?.Qty)?.ToString() ?? Dash;
 
         FillUv(uv1, txtUv1Program, txtUv1ErpMfg, tblUv1Texts);

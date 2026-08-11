@@ -690,7 +690,6 @@ partial class OrderDetailUserControl
         // btnMk1Abc
         //
         btnMk1Abc.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        btnMk1Abc.Enabled = false;
         btnMk1Abc.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
         btnMk1Abc.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnMk1Abc.Location = new System.Drawing.Point(525, 6);
@@ -1066,7 +1065,6 @@ partial class OrderDetailUserControl
         // btnMk2Abc
         //
         btnMk2Abc.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        btnMk2Abc.Enabled = false;
         btnMk2Abc.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
         btnMk2Abc.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnMk2Abc.Location = new System.Drawing.Point(445, 6);
@@ -1081,7 +1079,6 @@ partial class OrderDetailUserControl
         // btnMkSwap
         //
         btnMkSwap.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        btnMkSwap.Enabled = false;
         btnMkSwap.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
         btnMkSwap.ForeColor = System.Drawing.Color.White;
         btnMkSwap.Location = new System.Drawing.Point(515, 6);
