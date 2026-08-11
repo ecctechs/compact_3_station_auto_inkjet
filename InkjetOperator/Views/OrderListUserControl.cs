@@ -1,4 +1,3 @@
-using System.Text.Json;
 using InkjetOperator.Models;
 using InkjetOperator.Services;
 
@@ -130,61 +129,29 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        var json = JsonSerializer.Serialize(resolved, new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-        });
-
-        ShowJsonDialog(row.Id, json);
+        ShowDetailDialog(row.Id, resolved);
     }
 
-    private static void ShowJsonDialog(int jobId, string json)
+    private static void ShowDetailDialog(int jobId, ResolvedJobResponse resolved)
     {
         using var dlg = new Form
         {
-            Text = $"Job #{jobId} — Detail",
-            Size = new Size(720, 600),
+            Text = $"Job #{jobId} — Order Detail",
+            Size = new Size(1320, 940),
             StartPosition = FormStartPosition.CenterParent,
             MinimizeBox = false,
             MaximizeBox = true,
             ShowIcon = false,
         };
 
-        var txt = new TextBox
-        {
-            Multiline = true,
-            ReadOnly = true,
-            ScrollBars = ScrollBars.Both,
-            WordWrap = false,
-            Dock = DockStyle.Fill,
-            Font = new Font("Consolas", 11F),
-            BackColor = Color.FromArgb(30, 30, 30),
-            ForeColor = Color.FromArgb(212, 212, 212),
-            Text = json,
-        };
+        var detail = new OrderDetailUserControl { Dock = DockStyle.Fill };
+        detail.LoadDetail(resolved);
+        detail.CloseRequested += (_, _) => dlg.Close();
 
-        var btnCopy = new Button
-        {
-            Text = "Copy JSON",
-            Dock = DockStyle.Bottom,
-            Height = 40,
-            Font = new Font("Segoe UI", 11F, FontStyle.Bold),
-            FlatStyle = FlatStyle.Flat,
-            BackColor = Color.FromArgb(91, 155, 213),
-            ForeColor = Color.White,
-            Cursor = Cursors.Hand,
-        };
-        btnCopy.Click += (_, _) =>
-        {
-            Clipboard.SetText(json);
-            btnCopy.Text = "Copied!";
-        };
-
-        dlg.Controls.Add(txt);
-        dlg.Controls.Add(btnCopy);
+        dlg.Controls.Add(detail);
         dlg.ShowDialog();
     }
+
 
     private static OrderRow ToRow(PrintJob job)
     {

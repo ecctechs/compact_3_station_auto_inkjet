@@ -1,0 +1,2039 @@
+namespace InkjetOperator.Views;
+
+partial class OrderDetailUserControl
+{
+    /// <summary>
+    /// Required designer variable.
+    /// </summary>
+    private System.ComponentModel.IContainer components = null;
+
+    /// <summary>
+    /// Clean up any resources being used.
+    /// </summary>
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing && (components != null))
+        {
+            components.Dispose();
+        }
+        base.Dispose(disposing);
+    }
+
+    #region Component Designer generated code
+
+    /// <summary>
+    /// Required method for Designer support - do not modify
+    /// the contents of this method with the code editor.
+    /// </summary>
+    private void InitializeComponent()
+    {
+        tlpDetailRoot = new System.Windows.Forms.TableLayoutPanel();
+        pnlHeaderBar = new AntdUI.Panel();
+        lblHeaderTitle = new AntdUI.Label();
+        tlpJobFields = new System.Windows.Forms.TableLayoutPanel();
+        lblJobOrderNo = new AntdUI.Label();
+        lblJobLotNo = new AntdUI.Label();
+        lblJobCustomer = new AntdUI.Label();
+        lblJobType = new AntdUI.Label();
+        lblJobQty = new AntdUI.Label();
+        lblJobStatus = new AntdUI.Label();
+        txtJobOrderNo = new AntdUI.Input();
+        txtJobLotNo = new AntdUI.Input();
+        txtJobCustomer = new AntdUI.Input();
+        txtJobType = new AntdUI.Input();
+        txtJobQty = new AntdUI.Input();
+        txtJobStatus = new AntdUI.Input();
+        lblMarkingMethod = new AntdUI.Label();
+        txtMarkingMethod = new AntdUI.Input();
+        pnlBody = new System.Windows.Forms.Panel();
+        tlpSections = new System.Windows.Forms.TableLayoutPanel();
+        pnlMkSection = new AntdUI.Panel();
+        tlpMkSection = new System.Windows.Forms.TableLayoutPanel();
+        lblMkSectionTitle = new AntdUI.Label();
+        tlpMkPair = new System.Windows.Forms.TableLayoutPanel();
+        pnlMk1 = new AntdUI.Panel();
+        tlpMk1 = new System.Windows.Forms.TableLayoutPanel();
+        tlpMk1Head = new System.Windows.Forms.TableLayoutPanel();
+        pnlMk1Chip = new AntdUI.Panel();
+        lblMk1Chip = new AntdUI.Label();
+        lblMk1Program = new AntdUI.Label();
+        txtMk1Program = new AntdUI.Input();
+        lblMk1ProgramNo = new AntdUI.Label();
+        txtMk1ProgramNo = new AntdUI.Input();
+        tblMk1Blocks = new AntdUI.Table();
+        tlpMk1Position = new System.Windows.Forms.TableLayoutPanel();
+        lblMk1PositionTitle = new AntdUI.Label();
+        lblMk1Trigger = new AntdUI.Label();
+        txtMk1Trigger = new AntdUI.Input();
+        lblMk1PosAct = new AntdUI.Label();
+        txtMk1PosAct = new AntdUI.Input();
+        lblMk1Delay = new AntdUI.Label();
+        txtMk1Delay = new AntdUI.Input();
+        tlpMk1Foot = new System.Windows.Forms.TableLayoutPanel();
+        lblMk1Width = new AntdUI.Label();
+        txtMk1Width = new AntdUI.Input();
+        lblMk1Height = new AntdUI.Label();
+        txtMk1Height = new AntdUI.Input();
+        pnlMk2 = new AntdUI.Panel();
+        tlpMk2 = new System.Windows.Forms.TableLayoutPanel();
+        tlpMk2Head = new System.Windows.Forms.TableLayoutPanel();
+        pnlMk2Chip = new AntdUI.Panel();
+        lblMk2Chip = new AntdUI.Label();
+        lblMk2Program = new AntdUI.Label();
+        txtMk2Program = new AntdUI.Input();
+        lblMk2ProgramNo = new AntdUI.Label();
+        txtMk2ProgramNo = new AntdUI.Input();
+        tblMk2Blocks = new AntdUI.Table();
+        tlpMk2Position = new System.Windows.Forms.TableLayoutPanel();
+        lblMk2PositionTitle = new AntdUI.Label();
+        lblMk2Trigger = new AntdUI.Label();
+        txtMk2Trigger = new AntdUI.Input();
+        lblMk2PosAct = new AntdUI.Label();
+        txtMk2PosAct = new AntdUI.Input();
+        lblMk2Delay = new AntdUI.Label();
+        txtMk2Delay = new AntdUI.Input();
+        tlpMk2Foot = new System.Windows.Forms.TableLayoutPanel();
+        lblMk2Width = new AntdUI.Label();
+        txtMk2Width = new AntdUI.Input();
+        lblMk2Height = new AntdUI.Label();
+        txtMk2Height = new AntdUI.Input();
+        pnlConveyorSection = new AntdUI.Panel();
+        tlpConveyor = new System.Windows.Forms.TableLayoutPanel();
+        lblConveyorTitle = new AntdUI.Label();
+        lblConveyor1 = new AntdUI.Label();
+        txtConveyor1 = new AntdUI.Input();
+        lblConveyor2 = new AntdUI.Label();
+        txtConveyor2 = new AntdUI.Input();
+        lblConveyor3 = new AntdUI.Label();
+        txtConveyor3 = new AntdUI.Input();
+        pnlUvSection = new AntdUI.Panel();
+        tlpUvSection = new System.Windows.Forms.TableLayoutPanel();
+        tlpUvHead = new System.Windows.Forms.TableLayoutPanel();
+        lblUvSectionTitle = new AntdUI.Label();
+        lblUvQtyShared = new AntdUI.Label();
+        txtUvQtyShared = new AntdUI.Input();
+        tlpUvPair = new System.Windows.Forms.TableLayoutPanel();
+        pnlUv1 = new AntdUI.Panel();
+        tlpUv1 = new System.Windows.Forms.TableLayoutPanel();
+        tlpUv1Head = new System.Windows.Forms.TableLayoutPanel();
+        pnlUv1Chip = new AntdUI.Panel();
+        lblUv1Chip = new AntdUI.Label();
+        lblUv1Program = new AntdUI.Label();
+        txtUv1Program = new AntdUI.Input();
+        lblUv1ErpMfg = new AntdUI.Label();
+        txtUv1ErpMfg = new AntdUI.Input();
+        tblUv1Texts = new AntdUI.Table();
+        pnlUv2 = new AntdUI.Panel();
+        tlpUv2 = new System.Windows.Forms.TableLayoutPanel();
+        tlpUv2Head = new System.Windows.Forms.TableLayoutPanel();
+        pnlUv2Chip = new AntdUI.Panel();
+        lblUv2Chip = new AntdUI.Label();
+        lblUv2Program = new AntdUI.Label();
+        txtUv2Program = new AntdUI.Input();
+        lblUv2ErpMfg = new AntdUI.Label();
+        txtUv2ErpMfg = new AntdUI.Input();
+        tblUv2Texts = new AntdUI.Table();
+        flpDetailActions = new System.Windows.Forms.FlowLayoutPanel();
+        btnSendMk = new AntdUI.Button();
+        btnSendUv1 = new AntdUI.Button();
+        btnSendUv2 = new AntdUI.Button();
+        btnDetailClose = new AntdUI.Button();
+        tlpDetailRoot.SuspendLayout();
+        pnlHeaderBar.SuspendLayout();
+        tlpJobFields.SuspendLayout();
+        pnlBody.SuspendLayout();
+        tlpSections.SuspendLayout();
+        pnlMkSection.SuspendLayout();
+        tlpMkSection.SuspendLayout();
+        tlpMkPair.SuspendLayout();
+        pnlMk1.SuspendLayout();
+        tlpMk1.SuspendLayout();
+        tlpMk1Head.SuspendLayout();
+        pnlMk1Chip.SuspendLayout();
+        tlpMk1Position.SuspendLayout();
+        tlpMk1Foot.SuspendLayout();
+        pnlMk2.SuspendLayout();
+        tlpMk2.SuspendLayout();
+        tlpMk2Head.SuspendLayout();
+        pnlMk2Chip.SuspendLayout();
+        tlpMk2Position.SuspendLayout();
+        tlpMk2Foot.SuspendLayout();
+        pnlConveyorSection.SuspendLayout();
+        tlpConveyor.SuspendLayout();
+        pnlUvSection.SuspendLayout();
+        tlpUvSection.SuspendLayout();
+        tlpUvHead.SuspendLayout();
+        tlpUvPair.SuspendLayout();
+        pnlUv1.SuspendLayout();
+        tlpUv1.SuspendLayout();
+        tlpUv1Head.SuspendLayout();
+        pnlUv1Chip.SuspendLayout();
+        pnlUv2.SuspendLayout();
+        tlpUv2.SuspendLayout();
+        tlpUv2Head.SuspendLayout();
+        pnlUv2Chip.SuspendLayout();
+        flpDetailActions.SuspendLayout();
+        SuspendLayout();
+        //
+        // tlpDetailRoot
+        //
+        tlpDetailRoot.BackColor = System.Drawing.Color.FromArgb(234, 241, 248);
+        tlpDetailRoot.ColumnCount = 1;
+        tlpDetailRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpDetailRoot.Controls.Add(pnlHeaderBar, 0, 0);
+        tlpDetailRoot.Controls.Add(tlpJobFields, 0, 1);
+        tlpDetailRoot.Controls.Add(pnlBody, 0, 2);
+        tlpDetailRoot.Controls.Add(flpDetailActions, 0, 3);
+        tlpDetailRoot.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpDetailRoot.Location = new System.Drawing.Point(0, 0);
+        tlpDetailRoot.Name = "tlpDetailRoot";
+        tlpDetailRoot.RowCount = 4;
+        tlpDetailRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 56F));
+        tlpDetailRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 160F));
+        tlpDetailRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpDetailRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 88F));
+        tlpDetailRoot.Size = new System.Drawing.Size(1320, 900);
+        tlpDetailRoot.TabIndex = 0;
+        //
+        // pnlHeaderBar
+        //
+        pnlHeaderBar.Back = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlHeaderBar.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlHeaderBar.Controls.Add(lblHeaderTitle);
+        pnlHeaderBar.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlHeaderBar.Location = new System.Drawing.Point(0, 0);
+        pnlHeaderBar.Margin = new System.Windows.Forms.Padding(0);
+        pnlHeaderBar.Name = "pnlHeaderBar";
+        pnlHeaderBar.Padding = new System.Windows.Forms.Padding(24, 0, 24, 0);
+        pnlHeaderBar.Radius = 0;
+        pnlHeaderBar.Size = new System.Drawing.Size(1320, 56);
+        pnlHeaderBar.TabIndex = 0;
+        //
+        // lblHeaderTitle
+        //
+        lblHeaderTitle.BackColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblHeaderTitle.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblHeaderTitle.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
+        lblHeaderTitle.ForeColor = System.Drawing.Color.White;
+        lblHeaderTitle.Location = new System.Drawing.Point(24, 0);
+        lblHeaderTitle.Name = "lblHeaderTitle";
+        lblHeaderTitle.Size = new System.Drawing.Size(1272, 56);
+        lblHeaderTitle.TabIndex = 0;
+        lblHeaderTitle.Text = "Job Information";
+        lblHeaderTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // tlpJobFields
+        //
+        tlpJobFields.BackColor = System.Drawing.Color.White;
+        tlpJobFields.ColumnCount = 6;
+        tlpJobFields.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 16F));
+        tlpJobFields.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 20F));
+        tlpJobFields.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 22F));
+        tlpJobFields.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 16F));
+        tlpJobFields.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 12F));
+        tlpJobFields.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 14F));
+        tlpJobFields.Controls.Add(lblJobOrderNo, 0, 0);
+        tlpJobFields.Controls.Add(lblJobLotNo, 1, 0);
+        tlpJobFields.Controls.Add(lblJobCustomer, 2, 0);
+        tlpJobFields.Controls.Add(lblJobType, 3, 0);
+        tlpJobFields.Controls.Add(lblJobQty, 4, 0);
+        tlpJobFields.Controls.Add(lblJobStatus, 5, 0);
+        tlpJobFields.Controls.Add(txtJobOrderNo, 0, 1);
+        tlpJobFields.Controls.Add(txtJobLotNo, 1, 1);
+        tlpJobFields.Controls.Add(txtJobCustomer, 2, 1);
+        tlpJobFields.Controls.Add(txtJobType, 3, 1);
+        tlpJobFields.Controls.Add(txtJobQty, 4, 1);
+        tlpJobFields.Controls.Add(txtJobStatus, 5, 1);
+        tlpJobFields.Controls.Add(lblMarkingMethod, 0, 2);
+        tlpJobFields.Controls.Add(txtMarkingMethod, 1, 2);
+        tlpJobFields.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpJobFields.Location = new System.Drawing.Point(0, 56);
+        tlpJobFields.Margin = new System.Windows.Forms.Padding(0);
+        tlpJobFields.Name = "tlpJobFields";
+        tlpJobFields.Padding = new System.Windows.Forms.Padding(24, 14, 24, 10);
+        tlpJobFields.RowCount = 3;
+        tlpJobFields.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
+        tlpJobFields.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 46F));
+        tlpJobFields.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpJobFields.Size = new System.Drawing.Size(1320, 160);
+        tlpJobFields.TabIndex = 1;
+        //
+        // lblJobOrderNo
+        //
+        lblJobOrderNo.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblJobOrderNo.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblJobOrderNo.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblJobOrderNo.Location = new System.Drawing.Point(27, 14);
+        lblJobOrderNo.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblJobOrderNo.Name = "lblJobOrderNo";
+        lblJobOrderNo.Size = new System.Drawing.Size(199, 28);
+        lblJobOrderNo.TabIndex = 0;
+        lblJobOrderNo.Text = "Order No.";
+        lblJobOrderNo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // lblJobLotNo
+        //
+        lblJobLotNo.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblJobLotNo.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblJobLotNo.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblJobLotNo.Location = new System.Drawing.Point(232, 14);
+        lblJobLotNo.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblJobLotNo.Name = "lblJobLotNo";
+        lblJobLotNo.Size = new System.Drawing.Size(250, 28);
+        lblJobLotNo.TabIndex = 1;
+        lblJobLotNo.Text = "Barcode / Lot No.";
+        lblJobLotNo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // lblJobCustomer
+        //
+        lblJobCustomer.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblJobCustomer.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblJobCustomer.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblJobCustomer.Location = new System.Drawing.Point(488, 14);
+        lblJobCustomer.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblJobCustomer.Name = "lblJobCustomer";
+        lblJobCustomer.Size = new System.Drawing.Size(276, 28);
+        lblJobCustomer.TabIndex = 2;
+        lblJobCustomer.Text = "Customer Name";
+        lblJobCustomer.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // lblJobType
+        //
+        lblJobType.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblJobType.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblJobType.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblJobType.Location = new System.Drawing.Point(770, 14);
+        lblJobType.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblJobType.Name = "lblJobType";
+        lblJobType.Size = new System.Drawing.Size(199, 28);
+        lblJobType.TabIndex = 3;
+        lblJobType.Text = "Type";
+        lblJobType.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // lblJobQty
+        //
+        lblJobQty.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblJobQty.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblJobQty.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblJobQty.Location = new System.Drawing.Point(975, 14);
+        lblJobQty.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblJobQty.Name = "lblJobQty";
+        lblJobQty.Size = new System.Drawing.Size(148, 28);
+        lblJobQty.TabIndex = 4;
+        lblJobQty.Text = "Qty";
+        lblJobQty.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // lblJobStatus
+        //
+        lblJobStatus.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblJobStatus.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblJobStatus.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblJobStatus.Location = new System.Drawing.Point(1129, 14);
+        lblJobStatus.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblJobStatus.Name = "lblJobStatus";
+        lblJobStatus.Size = new System.Drawing.Size(166, 28);
+        lblJobStatus.TabIndex = 5;
+        lblJobStatus.Text = "Status";
+        lblJobStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtJobOrderNo
+        //
+        txtJobOrderNo.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtJobOrderNo.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtJobOrderNo.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtJobOrderNo.Font = new System.Drawing.Font("Segoe UI", 11F);
+        txtJobOrderNo.Location = new System.Drawing.Point(27, 46);
+        txtJobOrderNo.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+        txtJobOrderNo.Name = "txtJobOrderNo";
+        txtJobOrderNo.Radius = 8;
+        txtJobOrderNo.ReadOnly = true;
+        txtJobOrderNo.Size = new System.Drawing.Size(199, 38);
+        txtJobOrderNo.TabIndex = 6;
+        //
+        // txtJobLotNo
+        //
+        txtJobLotNo.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtJobLotNo.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtJobLotNo.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtJobLotNo.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        txtJobLotNo.Location = new System.Drawing.Point(232, 46);
+        txtJobLotNo.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+        txtJobLotNo.Name = "txtJobLotNo";
+        txtJobLotNo.Radius = 8;
+        txtJobLotNo.ReadOnly = true;
+        txtJobLotNo.Size = new System.Drawing.Size(250, 38);
+        txtJobLotNo.TabIndex = 7;
+        //
+        // txtJobCustomer
+        //
+        txtJobCustomer.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtJobCustomer.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtJobCustomer.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtJobCustomer.Font = new System.Drawing.Font("Segoe UI", 11F);
+        txtJobCustomer.Location = new System.Drawing.Point(488, 46);
+        txtJobCustomer.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+        txtJobCustomer.Name = "txtJobCustomer";
+        txtJobCustomer.Radius = 8;
+        txtJobCustomer.ReadOnly = true;
+        txtJobCustomer.Size = new System.Drawing.Size(276, 38);
+        txtJobCustomer.TabIndex = 8;
+        //
+        // txtJobType
+        //
+        txtJobType.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtJobType.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtJobType.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtJobType.Font = new System.Drawing.Font("Segoe UI", 11F);
+        txtJobType.Location = new System.Drawing.Point(770, 46);
+        txtJobType.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+        txtJobType.Name = "txtJobType";
+        txtJobType.Radius = 8;
+        txtJobType.ReadOnly = true;
+        txtJobType.Size = new System.Drawing.Size(199, 38);
+        txtJobType.TabIndex = 9;
+        //
+        // txtJobQty
+        //
+        txtJobQty.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtJobQty.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtJobQty.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtJobQty.Font = new System.Drawing.Font("Segoe UI", 11F);
+        txtJobQty.Location = new System.Drawing.Point(975, 46);
+        txtJobQty.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+        txtJobQty.Name = "txtJobQty";
+        txtJobQty.Radius = 8;
+        txtJobQty.ReadOnly = true;
+        txtJobQty.Size = new System.Drawing.Size(148, 38);
+        txtJobQty.TabIndex = 10;
+        //
+        // txtJobStatus
+        //
+        txtJobStatus.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtJobStatus.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtJobStatus.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        txtJobStatus.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        txtJobStatus.Location = new System.Drawing.Point(1129, 46);
+        txtJobStatus.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+        txtJobStatus.Name = "txtJobStatus";
+        txtJobStatus.Radius = 8;
+        txtJobStatus.ReadOnly = true;
+        txtJobStatus.Size = new System.Drawing.Size(166, 38);
+        txtJobStatus.TabIndex = 11;
+        txtJobStatus.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+        //
+        // lblMarkingMethod
+        //
+        lblMarkingMethod.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMarkingMethod.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        lblMarkingMethod.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblMarkingMethod.Location = new System.Drawing.Point(27, 88);
+        lblMarkingMethod.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMarkingMethod.Name = "lblMarkingMethod";
+        lblMarkingMethod.Size = new System.Drawing.Size(199, 62);
+        lblMarkingMethod.TabIndex = 12;
+        lblMarkingMethod.Text = "Marking Method";
+        lblMarkingMethod.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtMarkingMethod
+        //
+        txtMarkingMethod.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMarkingMethod.BackColor = System.Drawing.Color.FromArgb(255, 247, 230);
+        txtMarkingMethod.BorderColor = System.Drawing.Color.FromArgb(250, 173, 20);
+        txtMarkingMethod.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        txtMarkingMethod.ForeColor = System.Drawing.Color.FromArgb(212, 136, 6);
+        txtMarkingMethod.Location = new System.Drawing.Point(232, 99);
+        txtMarkingMethod.Margin = new System.Windows.Forms.Padding(3, 11, 3, 11);
+        txtMarkingMethod.Name = "txtMarkingMethod";
+        txtMarkingMethod.Radius = 8;
+        txtMarkingMethod.ReadOnly = true;
+        txtMarkingMethod.Size = new System.Drawing.Size(250, 40);
+        txtMarkingMethod.TabIndex = 13;
+        txtMarkingMethod.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+        //
+        // pnlBody
+        //
+        pnlBody.AutoScroll = true;
+        pnlBody.BackColor = System.Drawing.Color.FromArgb(234, 241, 248);
+        pnlBody.Controls.Add(tlpSections);
+        pnlBody.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlBody.Location = new System.Drawing.Point(0, 216);
+        pnlBody.Margin = new System.Windows.Forms.Padding(0);
+        pnlBody.Name = "pnlBody";
+        pnlBody.Padding = new System.Windows.Forms.Padding(24, 0, 24, 8);
+        pnlBody.Size = new System.Drawing.Size(1320, 596);
+        pnlBody.TabIndex = 2;
+        //
+        // tlpSections
+        //
+        tlpSections.BackColor = System.Drawing.Color.FromArgb(234, 241, 248);
+        tlpSections.ColumnCount = 1;
+        tlpSections.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpSections.Controls.Add(pnlMkSection, 0, 0);
+        tlpSections.Controls.Add(pnlConveyorSection, 0, 1);
+        tlpSections.Controls.Add(pnlUvSection, 0, 2);
+        tlpSections.Dock = System.Windows.Forms.DockStyle.Top;
+        tlpSections.Location = new System.Drawing.Point(24, 0);
+        tlpSections.Margin = new System.Windows.Forms.Padding(0);
+        tlpSections.Name = "tlpSections";
+        tlpSections.RowCount = 3;
+        tlpSections.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 470F));
+        tlpSections.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 110F));
+        tlpSections.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 400F));
+        tlpSections.Size = new System.Drawing.Size(1272, 980);
+        tlpSections.TabIndex = 0;
+        //
+        // pnlMkSection
+        //
+        pnlMkSection.Back = System.Drawing.Color.White;
+        pnlMkSection.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        pnlMkSection.BorderWidth = 1F;
+        pnlMkSection.Controls.Add(tlpMkSection);
+        pnlMkSection.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlMkSection.Location = new System.Drawing.Point(0, 0);
+        pnlMkSection.Margin = new System.Windows.Forms.Padding(0, 0, 0, 10);
+        pnlMkSection.Name = "pnlMkSection";
+        pnlMkSection.Padding = new System.Windows.Forms.Padding(14);
+        pnlMkSection.Radius = 12;
+        pnlMkSection.Size = new System.Drawing.Size(1272, 460);
+        pnlMkSection.TabIndex = 0;
+        //
+        // tlpMkSection
+        //
+        tlpMkSection.BackColor = System.Drawing.Color.White;
+        tlpMkSection.ColumnCount = 1;
+        tlpMkSection.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMkSection.Controls.Add(lblMkSectionTitle, 0, 0);
+        tlpMkSection.Controls.Add(tlpMkPair, 0, 1);
+        tlpMkSection.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpMkSection.Location = new System.Drawing.Point(14, 14);
+        tlpMkSection.Name = "tlpMkSection";
+        tlpMkSection.RowCount = 2;
+        tlpMkSection.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
+        tlpMkSection.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMkSection.Size = new System.Drawing.Size(1244, 432);
+        tlpMkSection.TabIndex = 0;
+        //
+        // lblMkSectionTitle
+        //
+        lblMkSectionTitle.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMkSectionTitle.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        lblMkSectionTitle.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblMkSectionTitle.Location = new System.Drawing.Point(3, 0);
+        lblMkSectionTitle.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMkSectionTitle.Name = "lblMkSectionTitle";
+        lblMkSectionTitle.Size = new System.Drawing.Size(1238, 36);
+        lblMkSectionTitle.TabIndex = 0;
+        lblMkSectionTitle.Text = "MK Section (MK Inkjet)";
+        lblMkSectionTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // tlpMkPair
+        //
+        tlpMkPair.BackColor = System.Drawing.Color.White;
+        tlpMkPair.ColumnCount = 2;
+        tlpMkPair.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpMkPair.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpMkPair.Controls.Add(pnlMk1, 0, 0);
+        tlpMkPair.Controls.Add(pnlMk2, 1, 0);
+        tlpMkPair.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpMkPair.Location = new System.Drawing.Point(0, 36);
+        tlpMkPair.Margin = new System.Windows.Forms.Padding(0);
+        tlpMkPair.Name = "tlpMkPair";
+        tlpMkPair.RowCount = 1;
+        tlpMkPair.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMkPair.Size = new System.Drawing.Size(1244, 396);
+        tlpMkPair.TabIndex = 1;
+        //
+        // pnlMk1
+        //
+        pnlMk1.Back = System.Drawing.Color.White;
+        pnlMk1.BorderColor = System.Drawing.Color.FromArgb(190, 214, 236);
+        pnlMk1.BorderWidth = 1F;
+        pnlMk1.Controls.Add(tlpMk1);
+        pnlMk1.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlMk1.Location = new System.Drawing.Point(0, 0);
+        pnlMk1.Margin = new System.Windows.Forms.Padding(0, 0, 6, 0);
+        pnlMk1.Name = "pnlMk1";
+        pnlMk1.Padding = new System.Windows.Forms.Padding(12);
+        pnlMk1.Radius = 12;
+        pnlMk1.Size = new System.Drawing.Size(616, 396);
+        pnlMk1.TabIndex = 0;
+        //
+        // tlpMk1
+        //
+        tlpMk1.BackColor = System.Drawing.Color.Transparent;
+        tlpMk1.ColumnCount = 1;
+        tlpMk1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMk1.Controls.Add(tlpMk1Head, 0, 0);
+        tlpMk1.Controls.Add(tblMk1Blocks, 0, 1);
+        tlpMk1.Controls.Add(tlpMk1Position, 0, 2);
+        tlpMk1.Controls.Add(tlpMk1Foot, 0, 3);
+        tlpMk1.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpMk1.Location = new System.Drawing.Point(12, 12);
+        tlpMk1.Name = "tlpMk1";
+        tlpMk1.RowCount = 4;
+        tlpMk1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 46F));
+        tlpMk1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMk1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 52F));
+        tlpMk1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 46F));
+        tlpMk1.Size = new System.Drawing.Size(592, 372);
+        tlpMk1.TabIndex = 0;
+        //
+        // tlpMk1Head
+        //
+        tlpMk1Head.BackColor = System.Drawing.Color.Transparent;
+        tlpMk1Head.ColumnCount = 5;
+        tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 74F));
+        tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 96F));
+        tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 88F));
+        tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 70F));
+        tlpMk1Head.Controls.Add(pnlMk1Chip, 0, 0);
+        tlpMk1Head.Controls.Add(lblMk1Program, 1, 0);
+        tlpMk1Head.Controls.Add(txtMk1Program, 2, 0);
+        tlpMk1Head.Controls.Add(lblMk1ProgramNo, 3, 0);
+        tlpMk1Head.Controls.Add(txtMk1ProgramNo, 4, 0);
+        tlpMk1Head.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpMk1Head.Location = new System.Drawing.Point(0, 0);
+        tlpMk1Head.Margin = new System.Windows.Forms.Padding(0);
+        tlpMk1Head.Name = "tlpMk1Head";
+        tlpMk1Head.RowCount = 1;
+        tlpMk1Head.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMk1Head.Size = new System.Drawing.Size(592, 46);
+        tlpMk1Head.TabIndex = 0;
+        //
+        // pnlMk1Chip
+        //
+        pnlMk1Chip.Back = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlMk1Chip.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlMk1Chip.Controls.Add(lblMk1Chip);
+        pnlMk1Chip.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlMk1Chip.Location = new System.Drawing.Point(0, 5);
+        pnlMk1Chip.Margin = new System.Windows.Forms.Padding(0, 5, 8, 5);
+        pnlMk1Chip.Name = "pnlMk1Chip";
+        pnlMk1Chip.Radius = 8;
+        pnlMk1Chip.Size = new System.Drawing.Size(66, 36);
+        pnlMk1Chip.TabIndex = 0;
+        //
+        // lblMk1Chip
+        //
+        lblMk1Chip.BackColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblMk1Chip.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk1Chip.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        lblMk1Chip.ForeColor = System.Drawing.Color.White;
+        lblMk1Chip.Location = new System.Drawing.Point(0, 0);
+        lblMk1Chip.Name = "lblMk1Chip";
+        lblMk1Chip.Size = new System.Drawing.Size(66, 36);
+        lblMk1Chip.TabIndex = 0;
+        lblMk1Chip.Text = "MK-1";
+        lblMk1Chip.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+        //
+        // lblMk1Program
+        //
+        lblMk1Program.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk1Program.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblMk1Program.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMk1Program.Location = new System.Drawing.Point(77, 0);
+        lblMk1Program.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMk1Program.Name = "lblMk1Program";
+        lblMk1Program.Size = new System.Drawing.Size(90, 46);
+        lblMk1Program.TabIndex = 1;
+        lblMk1Program.Text = "Program Name";
+        lblMk1Program.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtMk1Program
+        //
+        txtMk1Program.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMk1Program.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk1Program.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk1Program.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtMk1Program.Location = new System.Drawing.Point(173, 6);
+        txtMk1Program.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
+        txtMk1Program.Name = "txtMk1Program";
+        txtMk1Program.Radius = 8;
+        txtMk1Program.ReadOnly = true;
+        txtMk1Program.Size = new System.Drawing.Size(188, 34);
+        txtMk1Program.TabIndex = 2;
+        //
+        // lblMk1ProgramNo
+        //
+        lblMk1ProgramNo.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk1ProgramNo.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblMk1ProgramNo.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMk1ProgramNo.Location = new System.Drawing.Point(367, 0);
+        lblMk1ProgramNo.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMk1ProgramNo.Name = "lblMk1ProgramNo";
+        lblMk1ProgramNo.Size = new System.Drawing.Size(82, 46);
+        lblMk1ProgramNo.TabIndex = 3;
+        lblMk1ProgramNo.Text = "Program No.";
+        lblMk1ProgramNo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtMk1ProgramNo
+        //
+        txtMk1ProgramNo.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMk1ProgramNo.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk1ProgramNo.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk1ProgramNo.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtMk1ProgramNo.Location = new System.Drawing.Point(455, 6);
+        txtMk1ProgramNo.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
+        txtMk1ProgramNo.Name = "txtMk1ProgramNo";
+        txtMk1ProgramNo.Radius = 8;
+        txtMk1ProgramNo.ReadOnly = true;
+        txtMk1ProgramNo.Size = new System.Drawing.Size(64, 34);
+        txtMk1ProgramNo.TabIndex = 4;
+        txtMk1ProgramNo.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+        //
+        // tblMk1Blocks
+        //
+        tblMk1Blocks.AutoSizeColumnsMode = AntdUI.ColumnsMode.Fill;
+        tblMk1Blocks.Bordered = true;
+        tblMk1Blocks.ColumnBack = System.Drawing.Color.FromArgb(36, 71, 101);
+        tblMk1Blocks.ColumnFont = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+        tblMk1Blocks.ColumnFore = System.Drawing.Color.White;
+        tblMk1Blocks.Dock = System.Windows.Forms.DockStyle.Fill;
+        tblMk1Blocks.EmptyText = "No text blocks";
+        tblMk1Blocks.Font = new System.Drawing.Font("Segoe UI", 9F);
+        tblMk1Blocks.Location = new System.Drawing.Point(0, 46);
+        tblMk1Blocks.Margin = new System.Windows.Forms.Padding(0, 0, 0, 6);
+        tblMk1Blocks.Name = "tblMk1Blocks";
+        tblMk1Blocks.Radius = 8;
+        tblMk1Blocks.RowHeight = 34;
+        tblMk1Blocks.Size = new System.Drawing.Size(592, 222);
+        tblMk1Blocks.TabIndex = 1;
+        //
+        // tlpMk1Position
+        //
+        tlpMk1Position.BackColor = System.Drawing.Color.FromArgb(245, 249, 253);
+        tlpMk1Position.ColumnCount = 7;
+        tlpMk1Position.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 74F));
+        tlpMk1Position.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 84F));
+        tlpMk1Position.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33F));
+        tlpMk1Position.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
+        tlpMk1Position.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33F));
+        tlpMk1Position.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpMk1Position.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 34F));
+        tlpMk1Position.Controls.Add(lblMk1PositionTitle, 0, 0);
+        tlpMk1Position.Controls.Add(lblMk1Trigger, 1, 0);
+        tlpMk1Position.Controls.Add(txtMk1Trigger, 2, 0);
+        tlpMk1Position.Controls.Add(lblMk1PosAct, 3, 0);
+        tlpMk1Position.Controls.Add(txtMk1PosAct, 4, 0);
+        tlpMk1Position.Controls.Add(lblMk1Delay, 5, 0);
+        tlpMk1Position.Controls.Add(txtMk1Delay, 6, 0);
+        tlpMk1Position.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpMk1Position.Location = new System.Drawing.Point(0, 274);
+        tlpMk1Position.Margin = new System.Windows.Forms.Padding(0);
+        tlpMk1Position.Name = "tlpMk1Position";
+        tlpMk1Position.RowCount = 1;
+        tlpMk1Position.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMk1Position.Size = new System.Drawing.Size(592, 52);
+        tlpMk1Position.TabIndex = 2;
+        //
+        // lblMk1PositionTitle
+        //
+        lblMk1PositionTitle.BackColor = System.Drawing.Color.FromArgb(245, 249, 253);
+        lblMk1PositionTitle.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk1PositionTitle.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        lblMk1PositionTitle.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblMk1PositionTitle.Location = new System.Drawing.Point(3, 0);
+        lblMk1PositionTitle.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMk1PositionTitle.Name = "lblMk1PositionTitle";
+        lblMk1PositionTitle.Size = new System.Drawing.Size(68, 52);
+        lblMk1PositionTitle.TabIndex = 0;
+        lblMk1PositionTitle.Text = "Position";
+        lblMk1PositionTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // lblMk1Trigger
+        //
+        lblMk1Trigger.BackColor = System.Drawing.Color.FromArgb(245, 249, 253);
+        lblMk1Trigger.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk1Trigger.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblMk1Trigger.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMk1Trigger.Location = new System.Drawing.Point(3, 30);
+        lblMk1Trigger.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMk1Trigger.Name = "lblMk1Trigger";
+        lblMk1Trigger.Size = new System.Drawing.Size(78, 52);
+        lblMk1Trigger.TabIndex = 1;
+        lblMk1Trigger.Text = "Trigger Delay";
+        lblMk1Trigger.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtMk1Trigger
+        //
+        txtMk1Trigger.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMk1Trigger.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk1Trigger.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk1Trigger.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtMk1Trigger.Location = new System.Drawing.Point(3, 57);
+        txtMk1Trigger.Margin = new System.Windows.Forms.Padding(3, 9, 3, 9);
+        txtMk1Trigger.Name = "txtMk1Trigger";
+        txtMk1Trigger.Radius = 8;
+        txtMk1Trigger.ReadOnly = true;
+        txtMk1Trigger.Size = new System.Drawing.Size(70, 34);
+        txtMk1Trigger.TabIndex = 2;
+        //
+        // lblMk1PosAct
+        //
+        lblMk1PosAct.BackColor = System.Drawing.Color.FromArgb(245, 249, 253);
+        lblMk1PosAct.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk1PosAct.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblMk1PosAct.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMk1PosAct.Location = new System.Drawing.Point(3, 94);
+        lblMk1PosAct.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMk1PosAct.Name = "lblMk1PosAct";
+        lblMk1PosAct.Size = new System.Drawing.Size(94, 52);
+        lblMk1PosAct.TabIndex = 3;
+        lblMk1PosAct.Text = "Servo Post Act.";
+        lblMk1PosAct.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtMk1PosAct
+        //
+        txtMk1PosAct.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMk1PosAct.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk1PosAct.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk1PosAct.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtMk1PosAct.Location = new System.Drawing.Point(3, 121);
+        txtMk1PosAct.Margin = new System.Windows.Forms.Padding(3, 9, 3, 9);
+        txtMk1PosAct.Name = "txtMk1PosAct";
+        txtMk1PosAct.Radius = 8;
+        txtMk1PosAct.ReadOnly = true;
+        txtMk1PosAct.Size = new System.Drawing.Size(70, 34);
+        txtMk1PosAct.TabIndex = 4;
+        //
+        // lblMk1Delay
+        //
+        lblMk1Delay.BackColor = System.Drawing.Color.FromArgb(245, 249, 253);
+        lblMk1Delay.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk1Delay.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblMk1Delay.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMk1Delay.Location = new System.Drawing.Point(3, 158);
+        lblMk1Delay.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMk1Delay.Name = "lblMk1Delay";
+        lblMk1Delay.Size = new System.Drawing.Size(70, 52);
+        lblMk1Delay.TabIndex = 5;
+        lblMk1Delay.Text = "Delay (mm.)";
+        lblMk1Delay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtMk1Delay
+        //
+        txtMk1Delay.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMk1Delay.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk1Delay.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk1Delay.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtMk1Delay.Location = new System.Drawing.Point(3, 185);
+        txtMk1Delay.Margin = new System.Windows.Forms.Padding(3, 9, 3, 9);
+        txtMk1Delay.Name = "txtMk1Delay";
+        txtMk1Delay.Radius = 8;
+        txtMk1Delay.ReadOnly = true;
+        txtMk1Delay.Size = new System.Drawing.Size(70, 34);
+        txtMk1Delay.TabIndex = 6;
+        //
+        // tlpMk1Foot
+        //
+        tlpMk1Foot.BackColor = System.Drawing.Color.Transparent;
+        tlpMk1Foot.ColumnCount = 4;
+        tlpMk1Foot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 60F));
+        tlpMk1Foot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpMk1Foot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 60F));
+        tlpMk1Foot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpMk1Foot.Controls.Add(lblMk1Width, 0, 0);
+        tlpMk1Foot.Controls.Add(txtMk1Width, 1, 0);
+        tlpMk1Foot.Controls.Add(lblMk1Height, 2, 0);
+        tlpMk1Foot.Controls.Add(txtMk1Height, 3, 0);
+        tlpMk1Foot.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpMk1Foot.Location = new System.Drawing.Point(0, 326);
+        tlpMk1Foot.Margin = new System.Windows.Forms.Padding(0);
+        tlpMk1Foot.Name = "tlpMk1Foot";
+        tlpMk1Foot.RowCount = 1;
+        tlpMk1Foot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMk1Foot.Size = new System.Drawing.Size(592, 46);
+        tlpMk1Foot.TabIndex = 2;
+        //
+        // lblMk1Width
+        //
+        lblMk1Width.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk1Width.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblMk1Width.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMk1Width.Location = new System.Drawing.Point(3, 0);
+        lblMk1Width.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMk1Width.Name = "lblMk1Width";
+        lblMk1Width.Size = new System.Drawing.Size(54, 46);
+        lblMk1Width.TabIndex = 0;
+        lblMk1Width.Text = "Width";
+        lblMk1Width.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtMk1Width
+        //
+        txtMk1Width.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMk1Width.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk1Width.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk1Width.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtMk1Width.Location = new System.Drawing.Point(63, 6);
+        txtMk1Width.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
+        txtMk1Width.Name = "txtMk1Width";
+        txtMk1Width.Radius = 8;
+        txtMk1Width.ReadOnly = true;
+        txtMk1Width.Size = new System.Drawing.Size(230, 34);
+        txtMk1Width.TabIndex = 1;
+        //
+        // lblMk1Height
+        //
+        lblMk1Height.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk1Height.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblMk1Height.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMk1Height.Location = new System.Drawing.Point(299, 0);
+        lblMk1Height.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMk1Height.Name = "lblMk1Height";
+        lblMk1Height.Size = new System.Drawing.Size(54, 46);
+        lblMk1Height.TabIndex = 2;
+        lblMk1Height.Text = "Height";
+        lblMk1Height.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtMk1Height
+        //
+        txtMk1Height.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMk1Height.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk1Height.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk1Height.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtMk1Height.Location = new System.Drawing.Point(359, 6);
+        txtMk1Height.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
+        txtMk1Height.Name = "txtMk1Height";
+        txtMk1Height.Radius = 8;
+        txtMk1Height.ReadOnly = true;
+        txtMk1Height.Size = new System.Drawing.Size(230, 34);
+        txtMk1Height.TabIndex = 3;
+        //
+        // pnlMk2
+        //
+        pnlMk2.Back = System.Drawing.Color.White;
+        pnlMk2.BorderColor = System.Drawing.Color.FromArgb(190, 214, 236);
+        pnlMk2.BorderWidth = 1F;
+        pnlMk2.Controls.Add(tlpMk2);
+        pnlMk2.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlMk2.Location = new System.Drawing.Point(628, 0);
+        pnlMk2.Margin = new System.Windows.Forms.Padding(6, 0, 0, 0);
+        pnlMk2.Name = "pnlMk2";
+        pnlMk2.Padding = new System.Windows.Forms.Padding(12);
+        pnlMk2.Radius = 12;
+        pnlMk2.Size = new System.Drawing.Size(616, 396);
+        pnlMk2.TabIndex = 1;
+        //
+        // tlpMk2
+        //
+        tlpMk2.BackColor = System.Drawing.Color.Transparent;
+        tlpMk2.ColumnCount = 1;
+        tlpMk2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMk2.Controls.Add(tlpMk2Head, 0, 0);
+        tlpMk2.Controls.Add(tblMk2Blocks, 0, 1);
+        tlpMk2.Controls.Add(tlpMk2Position, 0, 2);
+        tlpMk2.Controls.Add(tlpMk2Foot, 0, 3);
+        tlpMk2.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpMk2.Location = new System.Drawing.Point(12, 12);
+        tlpMk2.Name = "tlpMk2";
+        tlpMk2.RowCount = 4;
+        tlpMk2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 46F));
+        tlpMk2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMk2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 52F));
+        tlpMk2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 46F));
+        tlpMk2.Size = new System.Drawing.Size(592, 372);
+        tlpMk2.TabIndex = 0;
+        //
+        // tlpMk2Head
+        //
+        tlpMk2Head.BackColor = System.Drawing.Color.Transparent;
+        tlpMk2Head.ColumnCount = 5;
+        tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 74F));
+        tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 96F));
+        tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 88F));
+        tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 70F));
+        tlpMk2Head.Controls.Add(pnlMk2Chip, 0, 0);
+        tlpMk2Head.Controls.Add(lblMk2Program, 1, 0);
+        tlpMk2Head.Controls.Add(txtMk2Program, 2, 0);
+        tlpMk2Head.Controls.Add(lblMk2ProgramNo, 3, 0);
+        tlpMk2Head.Controls.Add(txtMk2ProgramNo, 4, 0);
+        tlpMk2Head.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpMk2Head.Location = new System.Drawing.Point(0, 0);
+        tlpMk2Head.Margin = new System.Windows.Forms.Padding(0);
+        tlpMk2Head.Name = "tlpMk2Head";
+        tlpMk2Head.RowCount = 1;
+        tlpMk2Head.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMk2Head.Size = new System.Drawing.Size(592, 46);
+        tlpMk2Head.TabIndex = 0;
+        //
+        // pnlMk2Chip
+        //
+        pnlMk2Chip.Back = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlMk2Chip.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlMk2Chip.Controls.Add(lblMk2Chip);
+        pnlMk2Chip.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlMk2Chip.Location = new System.Drawing.Point(0, 5);
+        pnlMk2Chip.Margin = new System.Windows.Forms.Padding(0, 5, 8, 5);
+        pnlMk2Chip.Name = "pnlMk2Chip";
+        pnlMk2Chip.Radius = 8;
+        pnlMk2Chip.Size = new System.Drawing.Size(66, 36);
+        pnlMk2Chip.TabIndex = 0;
+        //
+        // lblMk2Chip
+        //
+        lblMk2Chip.BackColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblMk2Chip.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk2Chip.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        lblMk2Chip.ForeColor = System.Drawing.Color.White;
+        lblMk2Chip.Location = new System.Drawing.Point(0, 0);
+        lblMk2Chip.Name = "lblMk2Chip";
+        lblMk2Chip.Size = new System.Drawing.Size(66, 36);
+        lblMk2Chip.TabIndex = 0;
+        lblMk2Chip.Text = "MK-2";
+        lblMk2Chip.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+        //
+        // lblMk2Program
+        //
+        lblMk2Program.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk2Program.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblMk2Program.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMk2Program.Location = new System.Drawing.Point(77, 0);
+        lblMk2Program.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMk2Program.Name = "lblMk2Program";
+        lblMk2Program.Size = new System.Drawing.Size(90, 46);
+        lblMk2Program.TabIndex = 1;
+        lblMk2Program.Text = "Program Name";
+        lblMk2Program.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtMk2Program
+        //
+        txtMk2Program.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMk2Program.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk2Program.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk2Program.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtMk2Program.Location = new System.Drawing.Point(173, 6);
+        txtMk2Program.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
+        txtMk2Program.Name = "txtMk2Program";
+        txtMk2Program.Radius = 8;
+        txtMk2Program.ReadOnly = true;
+        txtMk2Program.Size = new System.Drawing.Size(188, 34);
+        txtMk2Program.TabIndex = 2;
+        //
+        // lblMk2ProgramNo
+        //
+        lblMk2ProgramNo.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk2ProgramNo.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblMk2ProgramNo.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMk2ProgramNo.Location = new System.Drawing.Point(367, 0);
+        lblMk2ProgramNo.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMk2ProgramNo.Name = "lblMk2ProgramNo";
+        lblMk2ProgramNo.Size = new System.Drawing.Size(82, 46);
+        lblMk2ProgramNo.TabIndex = 3;
+        lblMk2ProgramNo.Text = "Program No.";
+        lblMk2ProgramNo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtMk2ProgramNo
+        //
+        txtMk2ProgramNo.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMk2ProgramNo.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk2ProgramNo.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk2ProgramNo.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtMk2ProgramNo.Location = new System.Drawing.Point(455, 6);
+        txtMk2ProgramNo.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
+        txtMk2ProgramNo.Name = "txtMk2ProgramNo";
+        txtMk2ProgramNo.Radius = 8;
+        txtMk2ProgramNo.ReadOnly = true;
+        txtMk2ProgramNo.Size = new System.Drawing.Size(64, 34);
+        txtMk2ProgramNo.TabIndex = 4;
+        txtMk2ProgramNo.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+        //
+        // tblMk2Blocks
+        //
+        tblMk2Blocks.AutoSizeColumnsMode = AntdUI.ColumnsMode.Fill;
+        tblMk2Blocks.Bordered = true;
+        tblMk2Blocks.ColumnBack = System.Drawing.Color.FromArgb(36, 71, 101);
+        tblMk2Blocks.ColumnFont = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+        tblMk2Blocks.ColumnFore = System.Drawing.Color.White;
+        tblMk2Blocks.Dock = System.Windows.Forms.DockStyle.Fill;
+        tblMk2Blocks.EmptyText = "No text blocks";
+        tblMk2Blocks.Font = new System.Drawing.Font("Segoe UI", 9F);
+        tblMk2Blocks.Location = new System.Drawing.Point(0, 46);
+        tblMk2Blocks.Margin = new System.Windows.Forms.Padding(0, 0, 0, 6);
+        tblMk2Blocks.Name = "tblMk2Blocks";
+        tblMk2Blocks.Radius = 8;
+        tblMk2Blocks.RowHeight = 34;
+        tblMk2Blocks.Size = new System.Drawing.Size(592, 222);
+        tblMk2Blocks.TabIndex = 1;
+        //
+        // tlpMk2Position
+        //
+        tlpMk2Position.BackColor = System.Drawing.Color.FromArgb(245, 249, 253);
+        tlpMk2Position.ColumnCount = 7;
+        tlpMk2Position.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 74F));
+        tlpMk2Position.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 84F));
+        tlpMk2Position.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33F));
+        tlpMk2Position.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
+        tlpMk2Position.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33F));
+        tlpMk2Position.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpMk2Position.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 34F));
+        tlpMk2Position.Controls.Add(lblMk2PositionTitle, 0, 0);
+        tlpMk2Position.Controls.Add(lblMk2Trigger, 1, 0);
+        tlpMk2Position.Controls.Add(txtMk2Trigger, 2, 0);
+        tlpMk2Position.Controls.Add(lblMk2PosAct, 3, 0);
+        tlpMk2Position.Controls.Add(txtMk2PosAct, 4, 0);
+        tlpMk2Position.Controls.Add(lblMk2Delay, 5, 0);
+        tlpMk2Position.Controls.Add(txtMk2Delay, 6, 0);
+        tlpMk2Position.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpMk2Position.Location = new System.Drawing.Point(0, 274);
+        tlpMk2Position.Margin = new System.Windows.Forms.Padding(0);
+        tlpMk2Position.Name = "tlpMk2Position";
+        tlpMk2Position.RowCount = 1;
+        tlpMk2Position.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMk2Position.Size = new System.Drawing.Size(592, 52);
+        tlpMk2Position.TabIndex = 2;
+        //
+        // lblMk2PositionTitle
+        //
+        lblMk2PositionTitle.BackColor = System.Drawing.Color.FromArgb(245, 249, 253);
+        lblMk2PositionTitle.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk2PositionTitle.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        lblMk2PositionTitle.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblMk2PositionTitle.Location = new System.Drawing.Point(3, 0);
+        lblMk2PositionTitle.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMk2PositionTitle.Name = "lblMk2PositionTitle";
+        lblMk2PositionTitle.Size = new System.Drawing.Size(68, 52);
+        lblMk2PositionTitle.TabIndex = 0;
+        lblMk2PositionTitle.Text = "Position";
+        lblMk2PositionTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // lblMk2Trigger
+        //
+        lblMk2Trigger.BackColor = System.Drawing.Color.FromArgb(245, 249, 253);
+        lblMk2Trigger.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk2Trigger.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblMk2Trigger.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMk2Trigger.Location = new System.Drawing.Point(3, 30);
+        lblMk2Trigger.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMk2Trigger.Name = "lblMk2Trigger";
+        lblMk2Trigger.Size = new System.Drawing.Size(78, 52);
+        lblMk2Trigger.TabIndex = 1;
+        lblMk2Trigger.Text = "Trigger Delay";
+        lblMk2Trigger.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtMk2Trigger
+        //
+        txtMk2Trigger.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMk2Trigger.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk2Trigger.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk2Trigger.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtMk2Trigger.Location = new System.Drawing.Point(3, 57);
+        txtMk2Trigger.Margin = new System.Windows.Forms.Padding(3, 9, 3, 9);
+        txtMk2Trigger.Name = "txtMk2Trigger";
+        txtMk2Trigger.Radius = 8;
+        txtMk2Trigger.ReadOnly = true;
+        txtMk2Trigger.Size = new System.Drawing.Size(70, 34);
+        txtMk2Trigger.TabIndex = 2;
+        //
+        // lblMk2PosAct
+        //
+        lblMk2PosAct.BackColor = System.Drawing.Color.FromArgb(245, 249, 253);
+        lblMk2PosAct.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk2PosAct.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblMk2PosAct.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMk2PosAct.Location = new System.Drawing.Point(3, 94);
+        lblMk2PosAct.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMk2PosAct.Name = "lblMk2PosAct";
+        lblMk2PosAct.Size = new System.Drawing.Size(94, 52);
+        lblMk2PosAct.TabIndex = 3;
+        lblMk2PosAct.Text = "Servo Post Act.";
+        lblMk2PosAct.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtMk2PosAct
+        //
+        txtMk2PosAct.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMk2PosAct.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk2PosAct.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk2PosAct.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtMk2PosAct.Location = new System.Drawing.Point(3, 121);
+        txtMk2PosAct.Margin = new System.Windows.Forms.Padding(3, 9, 3, 9);
+        txtMk2PosAct.Name = "txtMk2PosAct";
+        txtMk2PosAct.Radius = 8;
+        txtMk2PosAct.ReadOnly = true;
+        txtMk2PosAct.Size = new System.Drawing.Size(70, 34);
+        txtMk2PosAct.TabIndex = 4;
+        //
+        // lblMk2Delay
+        //
+        lblMk2Delay.BackColor = System.Drawing.Color.FromArgb(245, 249, 253);
+        lblMk2Delay.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk2Delay.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblMk2Delay.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMk2Delay.Location = new System.Drawing.Point(3, 158);
+        lblMk2Delay.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMk2Delay.Name = "lblMk2Delay";
+        lblMk2Delay.Size = new System.Drawing.Size(70, 52);
+        lblMk2Delay.TabIndex = 5;
+        lblMk2Delay.Text = "Delay (mm.)";
+        lblMk2Delay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtMk2Delay
+        //
+        txtMk2Delay.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMk2Delay.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk2Delay.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk2Delay.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtMk2Delay.Location = new System.Drawing.Point(3, 185);
+        txtMk2Delay.Margin = new System.Windows.Forms.Padding(3, 9, 3, 9);
+        txtMk2Delay.Name = "txtMk2Delay";
+        txtMk2Delay.Radius = 8;
+        txtMk2Delay.ReadOnly = true;
+        txtMk2Delay.Size = new System.Drawing.Size(70, 34);
+        txtMk2Delay.TabIndex = 6;
+        //
+        // tlpMk2Foot
+        //
+        tlpMk2Foot.BackColor = System.Drawing.Color.Transparent;
+        tlpMk2Foot.ColumnCount = 4;
+        tlpMk2Foot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 60F));
+        tlpMk2Foot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpMk2Foot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 60F));
+        tlpMk2Foot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpMk2Foot.Controls.Add(lblMk2Width, 0, 0);
+        tlpMk2Foot.Controls.Add(txtMk2Width, 1, 0);
+        tlpMk2Foot.Controls.Add(lblMk2Height, 2, 0);
+        tlpMk2Foot.Controls.Add(txtMk2Height, 3, 0);
+        tlpMk2Foot.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpMk2Foot.Location = new System.Drawing.Point(0, 326);
+        tlpMk2Foot.Margin = new System.Windows.Forms.Padding(0);
+        tlpMk2Foot.Name = "tlpMk2Foot";
+        tlpMk2Foot.RowCount = 1;
+        tlpMk2Foot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMk2Foot.Size = new System.Drawing.Size(592, 46);
+        tlpMk2Foot.TabIndex = 2;
+        //
+        // lblMk2Width
+        //
+        lblMk2Width.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk2Width.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblMk2Width.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMk2Width.Location = new System.Drawing.Point(3, 0);
+        lblMk2Width.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMk2Width.Name = "lblMk2Width";
+        lblMk2Width.Size = new System.Drawing.Size(54, 46);
+        lblMk2Width.TabIndex = 0;
+        lblMk2Width.Text = "Width";
+        lblMk2Width.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtMk2Width
+        //
+        txtMk2Width.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMk2Width.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk2Width.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk2Width.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtMk2Width.Location = new System.Drawing.Point(63, 6);
+        txtMk2Width.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
+        txtMk2Width.Name = "txtMk2Width";
+        txtMk2Width.Radius = 8;
+        txtMk2Width.ReadOnly = true;
+        txtMk2Width.Size = new System.Drawing.Size(230, 34);
+        txtMk2Width.TabIndex = 1;
+        //
+        // lblMk2Height
+        //
+        lblMk2Height.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk2Height.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblMk2Height.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMk2Height.Location = new System.Drawing.Point(299, 0);
+        lblMk2Height.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMk2Height.Name = "lblMk2Height";
+        lblMk2Height.Size = new System.Drawing.Size(54, 46);
+        lblMk2Height.TabIndex = 2;
+        lblMk2Height.Text = "Height";
+        lblMk2Height.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtMk2Height
+        //
+        txtMk2Height.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMk2Height.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk2Height.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk2Height.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtMk2Height.Location = new System.Drawing.Point(359, 6);
+        txtMk2Height.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
+        txtMk2Height.Name = "txtMk2Height";
+        txtMk2Height.Radius = 8;
+        txtMk2Height.ReadOnly = true;
+        txtMk2Height.Size = new System.Drawing.Size(230, 34);
+        txtMk2Height.TabIndex = 3;
+        //
+        // pnlConveyorSection
+        //
+        pnlConveyorSection.Back = System.Drawing.Color.White;
+        pnlConveyorSection.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        pnlConveyorSection.BorderWidth = 1F;
+        pnlConveyorSection.Controls.Add(tlpConveyor);
+        pnlConveyorSection.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlConveyorSection.Location = new System.Drawing.Point(0, 470);
+        pnlConveyorSection.Margin = new System.Windows.Forms.Padding(0, 0, 0, 10);
+        pnlConveyorSection.Name = "pnlConveyorSection";
+        pnlConveyorSection.Padding = new System.Windows.Forms.Padding(14);
+        pnlConveyorSection.Radius = 12;
+        pnlConveyorSection.Size = new System.Drawing.Size(1272, 100);
+        pnlConveyorSection.TabIndex = 1;
+        //
+        // tlpConveyor
+        //
+        tlpConveyor.BackColor = System.Drawing.Color.White;
+        tlpConveyor.ColumnCount = 7;
+        tlpConveyor.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 190F));
+        tlpConveyor.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 96F));
+        tlpConveyor.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33F));
+        tlpConveyor.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 96F));
+        tlpConveyor.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33F));
+        tlpConveyor.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 96F));
+        tlpConveyor.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 34F));
+        tlpConveyor.Controls.Add(lblConveyorTitle, 0, 0);
+        tlpConveyor.Controls.Add(lblConveyor1, 1, 0);
+        tlpConveyor.Controls.Add(txtConveyor1, 2, 0);
+        tlpConveyor.Controls.Add(lblConveyor2, 3, 0);
+        tlpConveyor.Controls.Add(txtConveyor2, 4, 0);
+        tlpConveyor.Controls.Add(lblConveyor3, 5, 0);
+        tlpConveyor.Controls.Add(txtConveyor3, 6, 0);
+        tlpConveyor.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpConveyor.Location = new System.Drawing.Point(14, 14);
+        tlpConveyor.Name = "tlpConveyor";
+        tlpConveyor.RowCount = 1;
+        tlpConveyor.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpConveyor.Size = new System.Drawing.Size(1244, 72);
+        tlpConveyor.TabIndex = 0;
+        //
+        // lblConveyorTitle
+        //
+        lblConveyorTitle.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblConveyorTitle.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        lblConveyorTitle.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblConveyorTitle.Location = new System.Drawing.Point(3, 0);
+        lblConveyorTitle.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblConveyorTitle.Name = "lblConveyorTitle";
+        lblConveyorTitle.Size = new System.Drawing.Size(184, 72);
+        lblConveyorTitle.TabIndex = 0;
+        lblConveyorTitle.Text = "Conveyor Speed";
+        lblConveyorTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // lblConveyor1
+        //
+        lblConveyor1.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblConveyor1.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblConveyor1.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblConveyor1.Location = new System.Drawing.Point(193, 0);
+        lblConveyor1.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblConveyor1.Name = "lblConveyor1";
+        lblConveyor1.Size = new System.Drawing.Size(90, 72);
+        lblConveyor1.TabIndex = 1;
+        lblConveyor1.Text = "Conveyor 1 (Hz)";
+        lblConveyor1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtConveyor1
+        //
+        txtConveyor1.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtConveyor1.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtConveyor1.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtConveyor1.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtConveyor1.Location = new System.Drawing.Point(289, 19);
+        txtConveyor1.Margin = new System.Windows.Forms.Padding(3, 3, 3, 3);
+        txtConveyor1.Name = "txtConveyor1";
+        txtConveyor1.Radius = 8;
+        txtConveyor1.ReadOnly = true;
+        txtConveyor1.Size = new System.Drawing.Size(246, 34);
+        txtConveyor1.TabIndex = 2;
+        //
+        // lblConveyor2
+        //
+        lblConveyor2.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblConveyor2.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblConveyor2.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblConveyor2.Location = new System.Drawing.Point(541, 0);
+        lblConveyor2.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblConveyor2.Name = "lblConveyor2";
+        lblConveyor2.Size = new System.Drawing.Size(90, 72);
+        lblConveyor2.TabIndex = 3;
+        lblConveyor2.Text = "Conveyor 2 (Hz)";
+        lblConveyor2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtConveyor2
+        //
+        txtConveyor2.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtConveyor2.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtConveyor2.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtConveyor2.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtConveyor2.Location = new System.Drawing.Point(637, 19);
+        txtConveyor2.Margin = new System.Windows.Forms.Padding(3, 3, 3, 3);
+        txtConveyor2.Name = "txtConveyor2";
+        txtConveyor2.Radius = 8;
+        txtConveyor2.ReadOnly = true;
+        txtConveyor2.Size = new System.Drawing.Size(246, 34);
+        txtConveyor2.TabIndex = 4;
+        //
+        // lblConveyor3
+        //
+        lblConveyor3.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblConveyor3.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblConveyor3.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblConveyor3.Location = new System.Drawing.Point(889, 0);
+        lblConveyor3.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblConveyor3.Name = "lblConveyor3";
+        lblConveyor3.Size = new System.Drawing.Size(90, 72);
+        lblConveyor3.TabIndex = 5;
+        lblConveyor3.Text = "Conveyor 3 (Hz)";
+        lblConveyor3.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtConveyor3
+        //
+        txtConveyor3.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtConveyor3.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtConveyor3.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtConveyor3.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtConveyor3.Location = new System.Drawing.Point(985, 19);
+        txtConveyor3.Margin = new System.Windows.Forms.Padding(3, 3, 3, 3);
+        txtConveyor3.Name = "txtConveyor3";
+        txtConveyor3.Radius = 8;
+        txtConveyor3.ReadOnly = true;
+        txtConveyor3.Size = new System.Drawing.Size(256, 34);
+        txtConveyor3.TabIndex = 6;
+        //
+        // pnlUvSection
+        //
+        pnlUvSection.Back = System.Drawing.Color.White;
+        pnlUvSection.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        pnlUvSection.BorderWidth = 1F;
+        pnlUvSection.Controls.Add(tlpUvSection);
+        pnlUvSection.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlUvSection.Location = new System.Drawing.Point(0, 580);
+        pnlUvSection.Margin = new System.Windows.Forms.Padding(0, 0, 0, 10);
+        pnlUvSection.Name = "pnlUvSection";
+        pnlUvSection.Padding = new System.Windows.Forms.Padding(14);
+        pnlUvSection.Radius = 12;
+        pnlUvSection.Size = new System.Drawing.Size(1272, 390);
+        pnlUvSection.TabIndex = 2;
+        //
+        // tlpUvSection
+        //
+        tlpUvSection.BackColor = System.Drawing.Color.White;
+        tlpUvSection.ColumnCount = 1;
+        tlpUvSection.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUvSection.Controls.Add(tlpUvHead, 0, 0);
+        tlpUvSection.Controls.Add(tlpUvPair, 0, 1);
+        tlpUvSection.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpUvSection.Location = new System.Drawing.Point(14, 14);
+        tlpUvSection.Name = "tlpUvSection";
+        tlpUvSection.RowCount = 2;
+        tlpUvSection.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
+        tlpUvSection.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUvSection.Size = new System.Drawing.Size(1244, 362);
+        tlpUvSection.TabIndex = 0;
+        //
+        // tlpUvHead
+        //
+        tlpUvHead.BackColor = System.Drawing.Color.White;
+        tlpUvHead.ColumnCount = 3;
+        tlpUvHead.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUvHead.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 110F));
+        tlpUvHead.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 90F));
+        tlpUvHead.Controls.Add(lblUvSectionTitle, 0, 0);
+        tlpUvHead.Controls.Add(lblUvQtyShared, 1, 0);
+        tlpUvHead.Controls.Add(txtUvQtyShared, 2, 0);
+        tlpUvHead.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpUvHead.Location = new System.Drawing.Point(0, 0);
+        tlpUvHead.Margin = new System.Windows.Forms.Padding(0);
+        tlpUvHead.Name = "tlpUvHead";
+        tlpUvHead.RowCount = 1;
+        tlpUvHead.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUvHead.Size = new System.Drawing.Size(1244, 40);
+        tlpUvHead.TabIndex = 0;
+        //
+        // lblUvSectionTitle
+        //
+        lblUvSectionTitle.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblUvSectionTitle.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        lblUvSectionTitle.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblUvSectionTitle.Location = new System.Drawing.Point(3, 0);
+        lblUvSectionTitle.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblUvSectionTitle.Name = "lblUvSectionTitle";
+        lblUvSectionTitle.Size = new System.Drawing.Size(1038, 40);
+        lblUvSectionTitle.TabIndex = 0;
+        lblUvSectionTitle.Text = "UV Section";
+        lblUvSectionTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // lblUvQtyShared
+        //
+        lblUvQtyShared.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblUvQtyShared.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblUvQtyShared.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblUvQtyShared.Location = new System.Drawing.Point(1047, 0);
+        lblUvQtyShared.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblUvQtyShared.Name = "lblUvQtyShared";
+        lblUvQtyShared.Size = new System.Drawing.Size(104, 40);
+        lblUvQtyShared.TabIndex = 1;
+        lblUvQtyShared.Text = "Qty (Shared)";
+        lblUvQtyShared.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        //
+        // txtUvQtyShared
+        //
+        txtUvQtyShared.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtUvQtyShared.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtUvQtyShared.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtUvQtyShared.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        txtUvQtyShared.Location = new System.Drawing.Point(1157, 3);
+        txtUvQtyShared.Margin = new System.Windows.Forms.Padding(3, 3, 3, 3);
+        txtUvQtyShared.Name = "txtUvQtyShared";
+        txtUvQtyShared.Radius = 8;
+        txtUvQtyShared.ReadOnly = true;
+        txtUvQtyShared.Size = new System.Drawing.Size(84, 34);
+        txtUvQtyShared.TabIndex = 2;
+        txtUvQtyShared.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+        //
+        // tlpUvPair
+        //
+        tlpUvPair.BackColor = System.Drawing.Color.White;
+        tlpUvPair.ColumnCount = 2;
+        tlpUvPair.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpUvPair.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpUvPair.Controls.Add(pnlUv1, 0, 0);
+        tlpUvPair.Controls.Add(pnlUv2, 1, 0);
+        tlpUvPair.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpUvPair.Location = new System.Drawing.Point(0, 40);
+        tlpUvPair.Margin = new System.Windows.Forms.Padding(0);
+        tlpUvPair.Name = "tlpUvPair";
+        tlpUvPair.RowCount = 1;
+        tlpUvPair.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUvPair.Size = new System.Drawing.Size(1244, 322);
+        tlpUvPair.TabIndex = 1;
+        //
+        // pnlUv1
+        //
+        pnlUv1.Back = System.Drawing.Color.White;
+        pnlUv1.BorderColor = System.Drawing.Color.FromArgb(190, 214, 236);
+        pnlUv1.BorderWidth = 1F;
+        pnlUv1.Controls.Add(tlpUv1);
+        pnlUv1.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlUv1.Location = new System.Drawing.Point(0, 0);
+        pnlUv1.Margin = new System.Windows.Forms.Padding(0, 0, 6, 0);
+        pnlUv1.Name = "pnlUv1";
+        pnlUv1.Padding = new System.Windows.Forms.Padding(12);
+        pnlUv1.Radius = 12;
+        pnlUv1.Size = new System.Drawing.Size(616, 322);
+        pnlUv1.TabIndex = 0;
+        //
+        // tlpUv1
+        //
+        tlpUv1.BackColor = System.Drawing.Color.Transparent;
+        tlpUv1.ColumnCount = 1;
+        tlpUv1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv1.Controls.Add(tlpUv1Head, 0, 0);
+        tlpUv1.Controls.Add(tblUv1Texts, 0, 1);
+        tlpUv1.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpUv1.Location = new System.Drawing.Point(12, 12);
+        tlpUv1.Name = "tlpUv1";
+        tlpUv1.RowCount = 2;
+        tlpUv1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 92F));
+        tlpUv1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv1.Size = new System.Drawing.Size(592, 298);
+        tlpUv1.TabIndex = 0;
+        //
+        // tlpUv1Head
+        //
+        tlpUv1Head.BackColor = System.Drawing.Color.Transparent;
+        tlpUv1Head.ColumnCount = 3;
+        tlpUv1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 74F));
+        tlpUv1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 96F));
+        tlpUv1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv1Head.Controls.Add(pnlUv1Chip, 0, 0);
+        tlpUv1Head.Controls.Add(lblUv1Program, 1, 0);
+        tlpUv1Head.Controls.Add(txtUv1Program, 2, 0);
+        tlpUv1Head.Controls.Add(lblUv1ErpMfg, 1, 1);
+        tlpUv1Head.Controls.Add(txtUv1ErpMfg, 2, 1);
+        tlpUv1Head.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpUv1Head.Location = new System.Drawing.Point(0, 0);
+        tlpUv1Head.Margin = new System.Windows.Forms.Padding(0);
+        tlpUv1Head.Name = "tlpUv1Head";
+        tlpUv1Head.RowCount = 2;
+        tlpUv1Head.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpUv1Head.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpUv1Head.Size = new System.Drawing.Size(592, 92);
+        tlpUv1Head.TabIndex = 0;
+        //
+        // pnlUv1Chip
+        //
+        pnlUv1Chip.Back = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlUv1Chip.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlUv1Chip.Controls.Add(lblUv1Chip);
+        pnlUv1Chip.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlUv1Chip.Location = new System.Drawing.Point(0, 14);
+        pnlUv1Chip.Margin = new System.Windows.Forms.Padding(0, 14, 8, 14);
+        pnlUv1Chip.Name = "pnlUv1Chip";
+        pnlUv1Chip.Radius = 8;
+        pnlUv1Chip.Size = new System.Drawing.Size(66, 64);
+        pnlUv1Chip.TabIndex = 0;
+        tlpUv1Head.SetRowSpan(pnlUv1Chip, 2);
+        //
+        // lblUv1Chip
+        //
+        lblUv1Chip.BackColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblUv1Chip.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblUv1Chip.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        lblUv1Chip.ForeColor = System.Drawing.Color.White;
+        lblUv1Chip.Location = new System.Drawing.Point(0, 0);
+        lblUv1Chip.Name = "lblUv1Chip";
+        lblUv1Chip.Size = new System.Drawing.Size(66, 64);
+        lblUv1Chip.TabIndex = 0;
+        lblUv1Chip.Text = "UV1";
+        lblUv1Chip.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+        //
+        // lblUv1Program
+        //
+        lblUv1Program.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblUv1Program.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblUv1Program.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblUv1Program.Location = new System.Drawing.Point(77, 0);
+        lblUv1Program.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblUv1Program.Name = "lblUv1Program";
+        lblUv1Program.Size = new System.Drawing.Size(90, 46);
+        lblUv1Program.TabIndex = 1;
+        lblUv1Program.Text = "Program Name";
+        lblUv1Program.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtUv1Program
+        //
+        txtUv1Program.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtUv1Program.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtUv1Program.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtUv1Program.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtUv1Program.Location = new System.Drawing.Point(173, 6);
+        txtUv1Program.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
+        txtUv1Program.Name = "txtUv1Program";
+        txtUv1Program.Radius = 8;
+        txtUv1Program.ReadOnly = true;
+        txtUv1Program.Size = new System.Drawing.Size(416, 34);
+        txtUv1Program.TabIndex = 2;
+        //
+        // lblUv1ErpMfg
+        //
+        lblUv1ErpMfg.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblUv1ErpMfg.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblUv1ErpMfg.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblUv1ErpMfg.Location = new System.Drawing.Point(77, 46);
+        lblUv1ErpMfg.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblUv1ErpMfg.Name = "lblUv1ErpMfg";
+        lblUv1ErpMfg.Size = new System.Drawing.Size(90, 46);
+        lblUv1ErpMfg.TabIndex = 3;
+        lblUv1ErpMfg.Text = "ERP MFG";
+        lblUv1ErpMfg.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtUv1ErpMfg
+        //
+        txtUv1ErpMfg.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtUv1ErpMfg.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtUv1ErpMfg.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtUv1ErpMfg.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtUv1ErpMfg.Location = new System.Drawing.Point(173, 52);
+        txtUv1ErpMfg.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
+        txtUv1ErpMfg.Name = "txtUv1ErpMfg";
+        txtUv1ErpMfg.Radius = 8;
+        txtUv1ErpMfg.ReadOnly = true;
+        txtUv1ErpMfg.Size = new System.Drawing.Size(416, 34);
+        txtUv1ErpMfg.TabIndex = 4;
+        //
+        // tblUv1Texts
+        //
+        tblUv1Texts.AutoSizeColumnsMode = AntdUI.ColumnsMode.Fill;
+        tblUv1Texts.Bordered = true;
+        tblUv1Texts.ColumnBack = System.Drawing.Color.FromArgb(36, 71, 101);
+        tblUv1Texts.ColumnFont = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+        tblUv1Texts.ColumnFore = System.Drawing.Color.White;
+        tblUv1Texts.Dock = System.Windows.Forms.DockStyle.Fill;
+        tblUv1Texts.EmptyText = "No UV data";
+        tblUv1Texts.Font = new System.Drawing.Font("Segoe UI", 9F);
+        tblUv1Texts.Location = new System.Drawing.Point(0, 92);
+        tblUv1Texts.Margin = new System.Windows.Forms.Padding(0);
+        tblUv1Texts.Name = "tblUv1Texts";
+        tblUv1Texts.Radius = 8;
+        tblUv1Texts.RowHeight = 32;
+        tblUv1Texts.Size = new System.Drawing.Size(592, 206);
+        tblUv1Texts.TabIndex = 1;
+        //
+        // pnlUv2
+        //
+        pnlUv2.Back = System.Drawing.Color.White;
+        pnlUv2.BorderColor = System.Drawing.Color.FromArgb(190, 214, 236);
+        pnlUv2.BorderWidth = 1F;
+        pnlUv2.Controls.Add(tlpUv2);
+        pnlUv2.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlUv2.Location = new System.Drawing.Point(628, 0);
+        pnlUv2.Margin = new System.Windows.Forms.Padding(6, 0, 0, 0);
+        pnlUv2.Name = "pnlUv2";
+        pnlUv2.Padding = new System.Windows.Forms.Padding(12);
+        pnlUv2.Radius = 12;
+        pnlUv2.Size = new System.Drawing.Size(616, 322);
+        pnlUv2.TabIndex = 1;
+        //
+        // tlpUv2
+        //
+        tlpUv2.BackColor = System.Drawing.Color.Transparent;
+        tlpUv2.ColumnCount = 1;
+        tlpUv2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv2.Controls.Add(tlpUv2Head, 0, 0);
+        tlpUv2.Controls.Add(tblUv2Texts, 0, 1);
+        tlpUv2.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpUv2.Location = new System.Drawing.Point(12, 12);
+        tlpUv2.Name = "tlpUv2";
+        tlpUv2.RowCount = 2;
+        tlpUv2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 92F));
+        tlpUv2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv2.Size = new System.Drawing.Size(592, 298);
+        tlpUv2.TabIndex = 0;
+        //
+        // tlpUv2Head
+        //
+        tlpUv2Head.BackColor = System.Drawing.Color.Transparent;
+        tlpUv2Head.ColumnCount = 3;
+        tlpUv2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 74F));
+        tlpUv2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 96F));
+        tlpUv2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv2Head.Controls.Add(pnlUv2Chip, 0, 0);
+        tlpUv2Head.Controls.Add(lblUv2Program, 1, 0);
+        tlpUv2Head.Controls.Add(txtUv2Program, 2, 0);
+        tlpUv2Head.Controls.Add(lblUv2ErpMfg, 1, 1);
+        tlpUv2Head.Controls.Add(txtUv2ErpMfg, 2, 1);
+        tlpUv2Head.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpUv2Head.Location = new System.Drawing.Point(0, 0);
+        tlpUv2Head.Margin = new System.Windows.Forms.Padding(0);
+        tlpUv2Head.Name = "tlpUv2Head";
+        tlpUv2Head.RowCount = 2;
+        tlpUv2Head.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpUv2Head.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpUv2Head.Size = new System.Drawing.Size(592, 92);
+        tlpUv2Head.TabIndex = 0;
+        //
+        // pnlUv2Chip
+        //
+        pnlUv2Chip.Back = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlUv2Chip.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlUv2Chip.Controls.Add(lblUv2Chip);
+        pnlUv2Chip.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlUv2Chip.Location = new System.Drawing.Point(0, 14);
+        pnlUv2Chip.Margin = new System.Windows.Forms.Padding(0, 14, 8, 14);
+        pnlUv2Chip.Name = "pnlUv2Chip";
+        pnlUv2Chip.Radius = 8;
+        pnlUv2Chip.Size = new System.Drawing.Size(66, 64);
+        pnlUv2Chip.TabIndex = 0;
+        tlpUv2Head.SetRowSpan(pnlUv2Chip, 2);
+        //
+        // lblUv2Chip
+        //
+        lblUv2Chip.BackColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblUv2Chip.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblUv2Chip.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        lblUv2Chip.ForeColor = System.Drawing.Color.White;
+        lblUv2Chip.Location = new System.Drawing.Point(0, 0);
+        lblUv2Chip.Name = "lblUv2Chip";
+        lblUv2Chip.Size = new System.Drawing.Size(66, 64);
+        lblUv2Chip.TabIndex = 0;
+        lblUv2Chip.Text = "UV2";
+        lblUv2Chip.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+        //
+        // lblUv2Program
+        //
+        lblUv2Program.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblUv2Program.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblUv2Program.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblUv2Program.Location = new System.Drawing.Point(77, 0);
+        lblUv2Program.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblUv2Program.Name = "lblUv2Program";
+        lblUv2Program.Size = new System.Drawing.Size(90, 46);
+        lblUv2Program.TabIndex = 1;
+        lblUv2Program.Text = "Program Name";
+        lblUv2Program.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtUv2Program
+        //
+        txtUv2Program.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtUv2Program.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtUv2Program.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtUv2Program.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtUv2Program.Location = new System.Drawing.Point(173, 6);
+        txtUv2Program.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
+        txtUv2Program.Name = "txtUv2Program";
+        txtUv2Program.Radius = 8;
+        txtUv2Program.ReadOnly = true;
+        txtUv2Program.Size = new System.Drawing.Size(416, 34);
+        txtUv2Program.TabIndex = 2;
+        //
+        // lblUv2ErpMfg
+        //
+        lblUv2ErpMfg.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblUv2ErpMfg.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblUv2ErpMfg.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblUv2ErpMfg.Location = new System.Drawing.Point(77, 46);
+        lblUv2ErpMfg.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblUv2ErpMfg.Name = "lblUv2ErpMfg";
+        lblUv2ErpMfg.Size = new System.Drawing.Size(90, 46);
+        lblUv2ErpMfg.TabIndex = 3;
+        lblUv2ErpMfg.Text = "ERP MFG";
+        lblUv2ErpMfg.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtUv2ErpMfg
+        //
+        txtUv2ErpMfg.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtUv2ErpMfg.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtUv2ErpMfg.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtUv2ErpMfg.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtUv2ErpMfg.Location = new System.Drawing.Point(173, 52);
+        txtUv2ErpMfg.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
+        txtUv2ErpMfg.Name = "txtUv2ErpMfg";
+        txtUv2ErpMfg.Radius = 8;
+        txtUv2ErpMfg.ReadOnly = true;
+        txtUv2ErpMfg.Size = new System.Drawing.Size(416, 34);
+        txtUv2ErpMfg.TabIndex = 4;
+        //
+        // tblUv2Texts
+        //
+        tblUv2Texts.AutoSizeColumnsMode = AntdUI.ColumnsMode.Fill;
+        tblUv2Texts.Bordered = true;
+        tblUv2Texts.ColumnBack = System.Drawing.Color.FromArgb(36, 71, 101);
+        tblUv2Texts.ColumnFont = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+        tblUv2Texts.ColumnFore = System.Drawing.Color.White;
+        tblUv2Texts.Dock = System.Windows.Forms.DockStyle.Fill;
+        tblUv2Texts.EmptyText = "No UV data";
+        tblUv2Texts.Font = new System.Drawing.Font("Segoe UI", 9F);
+        tblUv2Texts.Location = new System.Drawing.Point(0, 92);
+        tblUv2Texts.Margin = new System.Windows.Forms.Padding(0);
+        tblUv2Texts.Name = "tblUv2Texts";
+        tblUv2Texts.Radius = 8;
+        tblUv2Texts.RowHeight = 32;
+        tblUv2Texts.Size = new System.Drawing.Size(592, 206);
+        tblUv2Texts.TabIndex = 1;
+        //
+        // flpDetailActions
+        //
+        flpDetailActions.BackColor = System.Drawing.Color.White;
+        flpDetailActions.Controls.Add(btnSendMk);
+        flpDetailActions.Controls.Add(btnSendUv1);
+        flpDetailActions.Controls.Add(btnSendUv2);
+        flpDetailActions.Controls.Add(btnDetailClose);
+        flpDetailActions.Dock = System.Windows.Forms.DockStyle.Fill;
+        flpDetailActions.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
+        flpDetailActions.Location = new System.Drawing.Point(0, 812);
+        flpDetailActions.Margin = new System.Windows.Forms.Padding(0);
+        flpDetailActions.Name = "flpDetailActions";
+        flpDetailActions.Padding = new System.Windows.Forms.Padding(24, 16, 24, 16);
+        flpDetailActions.Size = new System.Drawing.Size(1320, 88);
+        flpDetailActions.TabIndex = 3;
+        flpDetailActions.WrapContents = false;
+        //
+        // btnSendMk
+        //
+        btnSendMk.Enabled = false;
+        btnSendMk.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
+        btnSendMk.ForeColor = System.Drawing.Color.White;
+        btnSendMk.Location = new System.Drawing.Point(24, 16);
+        btnSendMk.Margin = new System.Windows.Forms.Padding(0, 0, 12, 0);
+        btnSendMk.Name = "btnSendMk";
+        btnSendMk.Radius = 10;
+        btnSendMk.Size = new System.Drawing.Size(260, 56);
+        btnSendMk.TabIndex = 0;
+        btnSendMk.Text = "ส่งหา MK1, MK2";
+        btnSendMk.Type = AntdUI.TTypeMini.Success;
+        //
+        // btnSendUv1
+        //
+        btnSendUv1.Enabled = false;
+        btnSendUv1.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
+        btnSendUv1.ForeColor = System.Drawing.Color.White;
+        btnSendUv1.Location = new System.Drawing.Point(296, 16);
+        btnSendUv1.Margin = new System.Windows.Forms.Padding(0, 0, 12, 0);
+        btnSendUv1.Name = "btnSendUv1";
+        btnSendUv1.Radius = 10;
+        btnSendUv1.Size = new System.Drawing.Size(220, 56);
+        btnSendUv1.TabIndex = 1;
+        btnSendUv1.Text = "ส่งหา UV1";
+        btnSendUv1.Type = AntdUI.TTypeMini.Primary;
+        //
+        // btnSendUv2
+        //
+        btnSendUv2.Enabled = false;
+        btnSendUv2.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
+        btnSendUv2.ForeColor = System.Drawing.Color.White;
+        btnSendUv2.Location = new System.Drawing.Point(528, 16);
+        btnSendUv2.Margin = new System.Windows.Forms.Padding(0, 0, 12, 0);
+        btnSendUv2.Name = "btnSendUv2";
+        btnSendUv2.Radius = 10;
+        btnSendUv2.Size = new System.Drawing.Size(220, 56);
+        btnSendUv2.TabIndex = 2;
+        btnSendUv2.Text = "ส่งหา UV2";
+        btnSendUv2.Type = AntdUI.TTypeMini.Primary;
+        //
+        // btnDetailClose
+        //
+        btnDetailClose.Font = new System.Drawing.Font("Segoe UI", 13F);
+        btnDetailClose.ForeColor = System.Drawing.Color.White;
+        btnDetailClose.Location = new System.Drawing.Point(760, 16);
+        btnDetailClose.Margin = new System.Windows.Forms.Padding(0);
+        btnDetailClose.Name = "btnDetailClose";
+        btnDetailClose.Radius = 10;
+        btnDetailClose.Size = new System.Drawing.Size(160, 56);
+        btnDetailClose.TabIndex = 3;
+        btnDetailClose.Text = "ปิด";
+        btnDetailClose.Type = AntdUI.TTypeMini.Error;
+        //
+        // OrderDetailUserControl
+        //
+        AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+        AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+        BackColor = System.Drawing.Color.FromArgb(234, 241, 248);
+        Controls.Add(tlpDetailRoot);
+        MinimumSize = new System.Drawing.Size(1080, 720);
+        Name = "OrderDetailUserControl";
+        Size = new System.Drawing.Size(1320, 900);
+        tlpDetailRoot.ResumeLayout(false);
+        pnlHeaderBar.ResumeLayout(false);
+        tlpJobFields.ResumeLayout(false);
+        pnlBody.ResumeLayout(false);
+        tlpSections.ResumeLayout(false);
+        pnlMkSection.ResumeLayout(false);
+        tlpMkSection.ResumeLayout(false);
+        tlpMkPair.ResumeLayout(false);
+        pnlMk1.ResumeLayout(false);
+        tlpMk1.ResumeLayout(false);
+        tlpMk1Head.ResumeLayout(false);
+        pnlMk1Chip.ResumeLayout(false);
+        tlpMk1Position.ResumeLayout(false);
+        tlpMk1Foot.ResumeLayout(false);
+        pnlMk2.ResumeLayout(false);
+        tlpMk2.ResumeLayout(false);
+        tlpMk2Head.ResumeLayout(false);
+        pnlMk2Chip.ResumeLayout(false);
+        tlpMk2Position.ResumeLayout(false);
+        tlpMk2Foot.ResumeLayout(false);
+        pnlConveyorSection.ResumeLayout(false);
+        tlpConveyor.ResumeLayout(false);
+        pnlUvSection.ResumeLayout(false);
+        tlpUvSection.ResumeLayout(false);
+        tlpUvHead.ResumeLayout(false);
+        tlpUvPair.ResumeLayout(false);
+        pnlUv1.ResumeLayout(false);
+        tlpUv1.ResumeLayout(false);
+        tlpUv1Head.ResumeLayout(false);
+        pnlUv1Chip.ResumeLayout(false);
+        pnlUv2.ResumeLayout(false);
+        tlpUv2.ResumeLayout(false);
+        tlpUv2Head.ResumeLayout(false);
+        pnlUv2Chip.ResumeLayout(false);
+        flpDetailActions.ResumeLayout(false);
+        ResumeLayout(false);
+    }
+
+    #endregion
+
+    private System.Windows.Forms.TableLayoutPanel tlpDetailRoot;
+    private AntdUI.Panel pnlHeaderBar;
+    private AntdUI.Label lblHeaderTitle;
+    private System.Windows.Forms.TableLayoutPanel tlpJobFields;
+    private AntdUI.Label lblJobOrderNo;
+    private AntdUI.Label lblJobLotNo;
+    private AntdUI.Label lblJobCustomer;
+    private AntdUI.Label lblJobType;
+    private AntdUI.Label lblJobQty;
+    private AntdUI.Label lblJobStatus;
+    private AntdUI.Input txtJobOrderNo;
+    private AntdUI.Input txtJobLotNo;
+    private AntdUI.Input txtJobCustomer;
+    private AntdUI.Input txtJobType;
+    private AntdUI.Input txtJobQty;
+    private AntdUI.Input txtJobStatus;
+    private AntdUI.Label lblMarkingMethod;
+    private AntdUI.Input txtMarkingMethod;
+    private System.Windows.Forms.Panel pnlBody;
+    private System.Windows.Forms.TableLayoutPanel tlpSections;
+    private AntdUI.Panel pnlMkSection;
+    private System.Windows.Forms.TableLayoutPanel tlpMkSection;
+    private AntdUI.Label lblMkSectionTitle;
+    private System.Windows.Forms.TableLayoutPanel tlpMkPair;
+    private AntdUI.Panel pnlMk1;
+    private System.Windows.Forms.TableLayoutPanel tlpMk1;
+    private System.Windows.Forms.TableLayoutPanel tlpMk1Head;
+    private AntdUI.Panel pnlMk1Chip;
+    private AntdUI.Label lblMk1Chip;
+    private AntdUI.Label lblMk1Program;
+    private AntdUI.Input txtMk1Program;
+    private AntdUI.Label lblMk1ProgramNo;
+    private AntdUI.Input txtMk1ProgramNo;
+    private AntdUI.Table tblMk1Blocks;
+    private System.Windows.Forms.TableLayoutPanel tlpMk1Position;
+    private AntdUI.Label lblMk1PositionTitle;
+    private AntdUI.Label lblMk1Trigger;
+    private AntdUI.Input txtMk1Trigger;
+    private AntdUI.Label lblMk1PosAct;
+    private AntdUI.Input txtMk1PosAct;
+    private AntdUI.Label lblMk1Delay;
+    private AntdUI.Input txtMk1Delay;
+    private System.Windows.Forms.TableLayoutPanel tlpMk1Foot;
+    private AntdUI.Label lblMk1Width;
+    private AntdUI.Input txtMk1Width;
+    private AntdUI.Label lblMk1Height;
+    private AntdUI.Input txtMk1Height;
+    private AntdUI.Panel pnlMk2;
+    private System.Windows.Forms.TableLayoutPanel tlpMk2;
+    private System.Windows.Forms.TableLayoutPanel tlpMk2Head;
+    private AntdUI.Panel pnlMk2Chip;
+    private AntdUI.Label lblMk2Chip;
+    private AntdUI.Label lblMk2Program;
+    private AntdUI.Input txtMk2Program;
+    private AntdUI.Label lblMk2ProgramNo;
+    private AntdUI.Input txtMk2ProgramNo;
+    private AntdUI.Table tblMk2Blocks;
+    private System.Windows.Forms.TableLayoutPanel tlpMk2Position;
+    private AntdUI.Label lblMk2PositionTitle;
+    private AntdUI.Label lblMk2Trigger;
+    private AntdUI.Input txtMk2Trigger;
+    private AntdUI.Label lblMk2PosAct;
+    private AntdUI.Input txtMk2PosAct;
+    private AntdUI.Label lblMk2Delay;
+    private AntdUI.Input txtMk2Delay;
+    private System.Windows.Forms.TableLayoutPanel tlpMk2Foot;
+    private AntdUI.Label lblMk2Width;
+    private AntdUI.Input txtMk2Width;
+    private AntdUI.Label lblMk2Height;
+    private AntdUI.Input txtMk2Height;
+    private AntdUI.Panel pnlConveyorSection;
+    private System.Windows.Forms.TableLayoutPanel tlpConveyor;
+    private AntdUI.Label lblConveyorTitle;
+    private AntdUI.Label lblConveyor1;
+    private AntdUI.Input txtConveyor1;
+    private AntdUI.Label lblConveyor2;
+    private AntdUI.Input txtConveyor2;
+    private AntdUI.Label lblConveyor3;
+    private AntdUI.Input txtConveyor3;
+    private AntdUI.Panel pnlUvSection;
+    private System.Windows.Forms.TableLayoutPanel tlpUvSection;
+    private System.Windows.Forms.TableLayoutPanel tlpUvHead;
+    private AntdUI.Label lblUvSectionTitle;
+    private AntdUI.Label lblUvQtyShared;
+    private AntdUI.Input txtUvQtyShared;
+    private System.Windows.Forms.TableLayoutPanel tlpUvPair;
+    private AntdUI.Panel pnlUv1;
+    private System.Windows.Forms.TableLayoutPanel tlpUv1;
+    private System.Windows.Forms.TableLayoutPanel tlpUv1Head;
+    private AntdUI.Panel pnlUv1Chip;
+    private AntdUI.Label lblUv1Chip;
+    private AntdUI.Label lblUv1Program;
+    private AntdUI.Input txtUv1Program;
+    private AntdUI.Label lblUv1ErpMfg;
+    private AntdUI.Input txtUv1ErpMfg;
+    private AntdUI.Table tblUv1Texts;
+    private AntdUI.Panel pnlUv2;
+    private System.Windows.Forms.TableLayoutPanel tlpUv2;
+    private System.Windows.Forms.TableLayoutPanel tlpUv2Head;
+    private AntdUI.Panel pnlUv2Chip;
+    private AntdUI.Label lblUv2Chip;
+    private AntdUI.Label lblUv2Program;
+    private AntdUI.Input txtUv2Program;
+    private AntdUI.Label lblUv2ErpMfg;
+    private AntdUI.Input txtUv2ErpMfg;
+    private AntdUI.Table tblUv2Texts;
+    private System.Windows.Forms.FlowLayoutPanel flpDetailActions;
+    private AntdUI.Button btnSendMk;
+    private AntdUI.Button btnSendUv1;
+    private AntdUI.Button btnSendUv2;
+    private AntdUI.Button btnDetailClose;
+}
