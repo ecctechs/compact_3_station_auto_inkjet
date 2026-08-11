@@ -140,8 +140,11 @@ public class UvJobItem
     [JsonPropertyName("lot")]
     public string? Lot { get; set; }
 
-    [JsonPropertyName("name")]
-    public string? Name { get; set; }
+    [JsonPropertyName("erp_mfg")]
+    public string? ErpMfg { get; set; }
+
+    [JsonPropertyName("qty")]
+    public int? Qty { get; set; }
 
     [JsonPropertyName("text1")]
     public string? Text1 { get; set; }
@@ -215,8 +218,11 @@ public class UvJobDataDto
     [JsonPropertyName("lot")]
     public string? Lot { get; set; }
 
-    [JsonPropertyName("name")]
-    public string? Name { get; set; }
+    [JsonPropertyName("erp_mfg")]
+    public string? ErpMfg { get; set; }
+
+    [JsonPropertyName("qty")]
+    public int? Qty { get; set; }
 
     [JsonPropertyName("text1")]
     public string? Text1 { get; set; }

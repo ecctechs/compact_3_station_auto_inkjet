@@ -129,10 +129,11 @@ public class SqliteDataService
         while (reader.Read())
         {
             var lot = ReadStr(reader, "lot_no") ?? barcode;
-            var name = ReadStr(reader, "erp_mfg");
+            var erpMfg = ReadStr(reader, "erp_mfg");
+            var qty = ReadInt(reader, "qty");   // เก็บเป็น TEXT ใน DB3 → ReadInt แปลงให้
 
-            AddIfHasData(items, BuildUv(reader, "UV1", "MK063", "m1_", lot, name));
-            AddIfHasData(items, BuildUv(reader, "UV2", "MK067", "m2_", lot, name));
+            AddIfHasData(items, BuildUv(reader, "UV1", "MK063", "m1_", lot, erpMfg, qty));
+            AddIfHasData(items, BuildUv(reader, "UV2", "MK067", "m2_", lot, erpMfg, qty));
         }
         return items;
     }
@@ -140,7 +141,8 @@ public class SqliteDataService
     // m1_* → UV1/MK063 (Plate), m2_* → UV2/MK067 (Shim)
     // ยืนยันจากชื่อโปรแกรมในข้อมูลจริง: m1 ขึ้นต้น "P-" (Plate), m2 ขึ้นต้น "S-" (Shim)
     private static UvJobItem BuildUv(
-        SqliteDataReader r, string machine, string table, string prefix, string lot, string? name)
+        SqliteDataReader r, string machine, string table, string prefix,
+        string lot, string? erpMfg, int? qty)
     {
         return new UvJobItem
         {
@@ -148,7 +150,8 @@ public class SqliteDataService
             TableName = table,
             ProgramName = ReadStr(r, $"{prefix}program_name"),
             Lot = lot,
-            Name = name,
+            ErpMfg = erpMfg,
+            Qty = qty,
             Text1 = ReadStr(r, $"{prefix}block_text1"),
             Text2 = ReadStr(r, $"{prefix}block_text2"),
             Text3 = ReadStr(r, $"{prefix}block_text3"),

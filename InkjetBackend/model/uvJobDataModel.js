@@ -25,8 +25,11 @@ const UvJobData = sequelize.define(
     lot: {
       type: DataTypes.STRING,
     },
-    name: {
+    erp_mfg: {
       type: DataTypes.STRING,
+    },
+    qty: {
+      type: DataTypes.INTEGER,
     },
     text1: {
       type: DataTypes.STRING,

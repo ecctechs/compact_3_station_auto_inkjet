@@ -12,9 +12,9 @@ require("./model/planRoutingModel");
 require("./model/lastSentJobModel");
 require("./model/iaiSettingModel");
 
-const ensurePlanRoutingCascade = require("./migrations/ensurePlanRoutingCascade");
+const runMigrations = require("./migrations");
 
-sequelize.sync().then(ensurePlanRoutingCascade);
+sequelize.sync().then(runMigrations);
 
 const patternRoute = require("./routes/Pattern");
 const jobRoute = require("./routes/Job");
