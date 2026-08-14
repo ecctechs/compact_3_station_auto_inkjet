@@ -117,7 +117,10 @@ public partial class SettingUserControl : UserControl
         var page = CreateSubPage(buttonName);
         if (page != null)
         {
-            page.Dock = DockStyle.Fill;
+            page.Dock = DockStyle.Top;
+            page.AutoSize = true;
+            page.AutoSizeMode = AutoSizeMode.GrowOnly;
+            page.MinimumSize = new Size(0, page.Height);
             _subPages[buttonName] = page;
         }
     }

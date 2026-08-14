@@ -164,6 +164,7 @@ partial class SettingUserControl
         // 
         // pnlContentArea
         // 
+        pnlContentArea.AutoScroll = true;
         pnlContentArea.BackColor = Color.White;
         pnlContentArea.Dock = DockStyle.Fill;
         pnlContentArea.Location = new Point(15, 15);

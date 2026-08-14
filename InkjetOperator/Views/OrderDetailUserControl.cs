@@ -16,6 +16,7 @@ public partial class OrderDetailUserControl : UserControl
     private int _jobId;
     private ApiClient? _api;
     private ImageHoverPopup? _refPopup;
+    private List<UvJobDataDto> _uvData = [];
 
     public event EventHandler? CloseRequested;
 
@@ -28,8 +29,8 @@ public partial class OrderDetailUserControl : UserControl
         btnMk1Abc.Click += (_, _) => ShowAbcDialog(1);
         btnMk2Abc.Click += (_, _) => ShowAbcDialog(2);
         btnSendMk.Click += async (_, _) => await SendToMkAsync();
-        btnSendUv1.Click += (_, _) => CompleteSendStep("UV1");
-        btnSendUv2.Click += (_, _) => CompleteSendStep("UV2");
+        btnSendUv1.Click += async (_, _) => await SendToUvAsync(1);
+        btnSendUv2.Click += async (_, _) => await SendToUvAsync(2);
 
         WireRefImageHover();
         Disposed += (_, _) => _refPopup?.Dispose();
@@ -93,6 +94,7 @@ public partial class OrderDetailUserControl : UserControl
         _isSwapped = false;
         _jobId = resolved.Job.Id;
         _api = api;
+        _uvData = resolved.UvJobData;
 
         lblHeaderTitle.Text = $"Job Information — Job #{resolved.Job.Id}";
 
@@ -472,6 +474,163 @@ public partial class OrderDetailUserControl : UserControl
         {
             tcp.Disconnect();
         }
+    }
+
+    private async Task SendToUvAsync(int uvNumber)
+    {
+        string stepName = uvNumber == 1 ? "UV1" : "UV2";
+        string table = uvNumber == 1 ? "MK063" : "MK067";
+        var btn = GetSendButton(stepName);
+
+        var uvRow = _uvData.FirstOrDefault(r => r.Machine == stepName);
+        if (uvRow == null)
+        {
+            MessageBox.Show($"ยังไม่มีข้อมูล {stepName} ของงานที่เลือก",
+                "ไม่มีข้อมูล", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var cpiPath = UvSettingsManager.GetCpiPath(uvNumber);
+        if (cpiPath == null)
+        {
+            MessageBox.Show($"ยังไม่ได้ตั้งค่าโฟลเดอร์ UV{uvNumber} หรือไม่พบ CPI.db3",
+                "ตั้งค่าไม่ครบ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber);
+        string? programFile = ResolveUvProgram(uvRow.ProgramName, docFolder);
+        if (programFile == null) return;
+
+        btn.Enabled = false;
+        var originalText = btn.Text;
+        btn.Text = "กำลังส่ง...";
+        var results = new List<string>();
+
+        try
+        {
+            var (writeOk, writeMsg) = await CpiWriteService.WriteAsync(
+                cpiPath, table,
+                uvRow.Lot, uvRow.ErpMfg,
+                uvRow.Text1, uvRow.Text2, uvRow.Text3, uvRow.Text4, uvRow.Text5);
+            results.Add(writeMsg);
+            if (!writeOk)
+            {
+                btn.Text = originalText;
+                btn.Enabled = true;
+                MessageBox.Show(string.Join("\n", results),
+                    "เขียน CPI.db3 ไม่สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var ip = CustomSettingsManager.Read($"UV00{uvNumber}_IP");
+            var portStr = CustomSettingsManager.Read($"UV00{uvNumber}_PORT");
+            int port = int.TryParse(portStr, out var p) ? p : 10086;
+
+            if (string.IsNullOrWhiteSpace(ip))
+            {
+                btn.Text = originalText;
+                btn.Enabled = true;
+                MessageBox.Show($"ยังไม่ได้ตั้งค่า IP ของ UV{uvNumber}",
+                    "ตั้งค่าไม่ครบ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var uvTcp = new UvTcpService();
+            var (tcpOk, tcpLog) = await uvTcp.LoadAndStartAsync(ip, port, programFile);
+            results.Add(tcpLog);
+            if (!tcpOk)
+            {
+                btn.Text = originalText;
+                btn.Enabled = true;
+                MessageBox.Show(string.Join("\n", results),
+                    $"สั่งเครื่อง UV{uvNumber} ไม่สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            CompleteSendStep(stepName);
+        }
+        catch (Exception ex)
+        {
+            btn.Text = originalText;
+            btn.Enabled = true;
+            MessageBox.Show($"เกิดข้อผิดพลาด: {ex.Message}",
+                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    private static string? ResolveUvProgram(string? programName, string? docFolder)
+    {
+        if (string.IsNullOrWhiteSpace(programName))
+        {
+            MessageBox.Show("ไม่มีชื่อโปรแกรม UV",
+                "ข้อมูลไม่ครบ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return null;
+        }
+
+        if (docFolder == null)
+            return Path.GetFileNameWithoutExtension(programName);
+
+        var baseName = Path.GetFileNameWithoutExtension(programName);
+
+        var matches = Directory.GetFiles(docFolder, "*.uvdx")
+            .Select(Path.GetFileNameWithoutExtension)
+            .Where(f => f != null && f.StartsWith(baseName, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(f => f)
+            .ToList();
+
+        if (matches.Count == 1) return matches[0];
+
+        if (matches.Count > 1)
+        {
+            var selected = PromptUvVariant(matches!);
+            return selected;
+        }
+
+        return baseName;
+    }
+
+    private static string? PromptUvVariant(List<string> variants)
+    {
+        using var dlg = new Form
+        {
+            Text = "เลือกโปรแกรม UV",
+            Size = new Size(400, 300),
+            StartPosition = FormStartPosition.CenterParent,
+            MinimizeBox = false,
+            MaximizeBox = false,
+            ShowIcon = false,
+        };
+
+        var listBox = new ListBox
+        {
+            Dock = DockStyle.Fill,
+            Font = new Font("Segoe UI", 12F),
+        };
+        foreach (var v in variants)
+            listBox.Items.Add(v + ".uvdx");
+        listBox.SelectedIndex = 0;
+
+        string? result = null;
+
+        var btnOk = new Button
+        {
+            Text = "ตกลง",
+            DialogResult = DialogResult.OK,
+            Dock = DockStyle.Bottom,
+            Height = 40,
+        };
+        btnOk.Click += (_, _) =>
+        {
+            if (listBox.SelectedIndex >= 0)
+                result = variants[listBox.SelectedIndex];
+        };
+
+        dlg.Controls.Add(listBox);
+        dlg.Controls.Add(btnOk);
+        dlg.AcceptButton = btnOk;
+
+        return dlg.ShowDialog() == DialogResult.OK ? result : null;
     }
 
     private void FillJobInfo(ResolvedJobResponse resolved)
