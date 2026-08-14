@@ -30,6 +30,9 @@ public partial class InkjetSettingUserControl : UserControl
         btnUv1Browse.Click += (_, _) => BrowseFolder(txtUv1Folder, lblUv1Status, "MK063");
         btnUv2Browse.Click += (_, _) => BrowseFolder(txtUv2Folder, lblUv2Status, "MK067");
 
+        btnMarkingRefBrowse.Click += (_, _) => BrowseMarkingRefFolder();
+        txtMarkingRefFolder.TextChanged += (_, _) => MarkDirty(txtMarkingRefFolder);
+
         btnCheckStatus.Click += async (_, _) => await CheckAllStatusAsync();
         btnSave.Click += BtnSave_Click;
         btnCancel.Click += (_, _) => LoadAllSettings();
@@ -52,6 +55,8 @@ public partial class InkjetSettingUserControl : UserControl
         txtUv2Folder.Text = UvSettingsManager.Read("UV2_FOLDER");
         lblUv1Badge.Text = UvSettingsManager.Read("UV1_NAME", "UV-001");
         lblUv2Badge.Text = UvSettingsManager.Read("UV2_NAME", "UV-002");
+
+        txtMarkingRefFolder.Text = CustomSettingsManager.Read("MARKING_REF_FOLDER", "");
 
         ShowFolderStatus(txtUv1Folder.Text, lblUv1Status, "MK063");
         ShowFolderStatus(txtUv2Folder.Text, lblUv2Status, "MK067");
@@ -97,6 +102,8 @@ public partial class InkjetSettingUserControl : UserControl
             UvSettingsManager.Write("UV1DB3_PATH", Path.Combine(f1, REL_CPI));
         if (!string.IsNullOrEmpty(f2))
             UvSettingsManager.Write("UV1DB3_PATH_2", Path.Combine(f2, REL_CPI));
+
+        CustomSettingsManager.Write("MARKING_REF_FOLDER", txtMarkingRefFolder.Text.Trim());
 
         ResetColors();
         MessageBox.Show("บันทึกเรียบร้อย", "Settings", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -270,6 +277,17 @@ public partial class InkjetSettingUserControl : UserControl
         else dot.ForeColor = color;
     }
 
+    private void BrowseMarkingRefFolder()
+    {
+        using var dlg = new FolderBrowserDialog { ShowNewFolderButton = false };
+        if (!string.IsNullOrEmpty(txtMarkingRefFolder.Text) && Directory.Exists(txtMarkingRefFolder.Text))
+            dlg.SelectedPath = txtMarkingRefFolder.Text;
+        if (dlg.ShowDialog(this) != DialogResult.OK) return;
+
+        txtMarkingRefFolder.Text = dlg.SelectedPath;
+        MarkDirty(txtMarkingRefFolder);
+    }
+
     private void MarkDirty(AntdUI.Input input) => input.BackColor = Color.LightYellow;
 
     private void ResetColors()
@@ -282,5 +300,6 @@ public partial class InkjetSettingUserControl : UserControl
         txtUv2Port.BackColor = Color.White;
         txtUv1Folder.BackColor = Color.White;
         txtUv2Folder.BackColor = Color.White;
+        txtMarkingRefFolder.BackColor = Color.White;
     }
 }

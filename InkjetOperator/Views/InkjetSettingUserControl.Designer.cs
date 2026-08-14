@@ -60,6 +60,11 @@ partial class InkjetSettingUserControl
         btnCheckStatus = new AntdUI.Button();
         btnSave = new AntdUI.Button();
         btnCancel = new AntdUI.Button();
+        grpMarkingRef = new System.Windows.Forms.GroupBox();
+        tlpMarkingRef = new System.Windows.Forms.TableLayoutPanel();
+        lblMarkingRefLabel = new System.Windows.Forms.Label();
+        txtMarkingRefFolder = new AntdUI.Input();
+        btnMarkingRefBrowse = new AntdUI.Button();
 
         tlpRoot.SuspendLayout();
         grpInkjet.SuspendLayout();
@@ -67,6 +72,8 @@ partial class InkjetSettingUserControl
         grpUv.SuspendLayout();
         tlpUv.SuspendLayout();
         flpActions.SuspendLayout();
+        grpMarkingRef.SuspendLayout();
+        tlpMarkingRef.SuspendLayout();
         SuspendLayout();
 
         // =================================================================
@@ -77,14 +84,16 @@ partial class InkjetSettingUserControl
         tlpRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpRoot.Controls.Add(grpInkjet, 0, 0);
         tlpRoot.Controls.Add(grpUv, 0, 1);
-        tlpRoot.Controls.Add(flpActions, 0, 2);
+        tlpRoot.Controls.Add(grpMarkingRef, 0, 2);
+        tlpRoot.Controls.Add(flpActions, 0, 3);
         tlpRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpRoot.Location = new System.Drawing.Point(0, 0);
         tlpRoot.Name = "tlpRoot";
         tlpRoot.Padding = new System.Windows.Forms.Padding(16);
-        tlpRoot.RowCount = 3;
+        tlpRoot.RowCount = 4;
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 230F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 118F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 68F));
         tlpRoot.Size = new System.Drawing.Size(780, 900);
         tlpRoot.TabIndex = 0;
@@ -599,6 +608,71 @@ partial class InkjetSettingUserControl
         lblUv2Status.Text = "";
 
         // =================================================================
+        // grpMarkingRef
+        // =================================================================
+        grpMarkingRef.Controls.Add(tlpMarkingRef);
+        grpMarkingRef.Dock = System.Windows.Forms.DockStyle.Fill;
+        grpMarkingRef.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        grpMarkingRef.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        grpMarkingRef.Name = "grpMarkingRef";
+        grpMarkingRef.Padding = new System.Windows.Forms.Padding(16, 20, 16, 12);
+        grpMarkingRef.TabIndex = 2;
+        grpMarkingRef.TabStop = false;
+        grpMarkingRef.Text = "Marking Reference Image";
+        //
+        // tlpMarkingRef
+        //
+        tlpMarkingRef.BackColor = System.Drawing.Color.White;
+        tlpMarkingRef.ColumnCount = 3;
+        tlpMarkingRef.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 90F));
+        tlpMarkingRef.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMarkingRef.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 120F));
+        tlpMarkingRef.Controls.Add(lblMarkingRefLabel, 0, 0);
+        tlpMarkingRef.Controls.Add(txtMarkingRefFolder, 1, 0);
+        tlpMarkingRef.Controls.Add(btnMarkingRefBrowse, 2, 0);
+        tlpMarkingRef.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpMarkingRef.Name = "tlpMarkingRef";
+        tlpMarkingRef.RowCount = 1;
+        tlpMarkingRef.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMarkingRef.TabIndex = 0;
+        //
+        // lblMarkingRefLabel
+        //
+        lblMarkingRefLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMarkingRefLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblMarkingRefLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMarkingRefLabel.Name = "lblMarkingRefLabel";
+        lblMarkingRefLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
+        lblMarkingRefLabel.TabIndex = 0;
+        lblMarkingRefLabel.Text = "Folder :";
+        lblMarkingRefLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        //
+        // txtMarkingRefFolder
+        //
+        txtMarkingRefFolder.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMarkingRefFolder.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtMarkingRefFolder.Font = new System.Drawing.Font("Segoe UI", 11F);
+        txtMarkingRefFolder.Margin = new System.Windows.Forms.Padding(3, 10, 3, 10);
+        txtMarkingRefFolder.Name = "txtMarkingRefFolder";
+        txtMarkingRefFolder.PlaceholderText = @"\\server\share\Marking reference image";
+        txtMarkingRefFolder.Radius = 4;
+        txtMarkingRefFolder.Size = new System.Drawing.Size(484, 40);
+        txtMarkingRefFolder.TabIndex = 1;
+        //
+        // btnMarkingRefBrowse
+        //
+        btnMarkingRefBrowse.Anchor = System.Windows.Forms.AnchorStyles.Left;
+        btnMarkingRefBrowse.BorderWidth = 2F;
+        btnMarkingRefBrowse.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnMarkingRefBrowse.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        btnMarkingRefBrowse.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnMarkingRefBrowse.Name = "btnMarkingRefBrowse";
+        btnMarkingRefBrowse.Radius = 6;
+        btnMarkingRefBrowse.Size = new System.Drawing.Size(110, 44);
+        btnMarkingRefBrowse.TabIndex = 2;
+        btnMarkingRefBrowse.Text = "Browse";
+        btnMarkingRefBrowse.Type = AntdUI.TTypeMini.Default;
+        // =================================================================
         // flpActions
         // =================================================================
         flpActions.BackColor = System.Drawing.Color.White;
@@ -666,6 +740,8 @@ partial class InkjetSettingUserControl
         grpUv.ResumeLayout(false);
         tlpUv.ResumeLayout(false);
         flpActions.ResumeLayout(false);
+        grpMarkingRef.ResumeLayout(false);
+        tlpMarkingRef.ResumeLayout(false);
         ResumeLayout(false);
     }
 
@@ -717,4 +793,9 @@ partial class InkjetSettingUserControl
     private AntdUI.Button btnCheckStatus;
     private AntdUI.Button btnSave;
     private AntdUI.Button btnCancel;
+    private System.Windows.Forms.GroupBox grpMarkingRef;
+    private System.Windows.Forms.TableLayoutPanel tlpMarkingRef;
+    private System.Windows.Forms.Label lblMarkingRefLabel;
+    private AntdUI.Input txtMarkingRefFolder;
+    private AntdUI.Button btnMarkingRefBrowse;
 }

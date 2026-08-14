@@ -15,6 +15,7 @@ public partial class OrderDetailUserControl : UserControl
     private int _currentStep;
     private int _jobId;
     private ApiClient? _api;
+    private ImageHoverPopup? _refPopup;
 
     public event EventHandler? CloseRequested;
 
@@ -29,6 +30,37 @@ public partial class OrderDetailUserControl : UserControl
         btnSendMk.Click += async (_, _) => await SendToMkAsync();
         btnSendUv1.Click += (_, _) => CompleteSendStep("UV1");
         btnSendUv2.Click += (_, _) => CompleteSendStep("UV2");
+
+        WireRefImageHover();
+        Disposed += (_, _) => _refPopup?.Dispose();
+    }
+
+    // ── Marking reference image (hover preview) ──────────────
+
+    private void WireRefImageHover()
+    {
+        foreach (var box in new[] { txtMk1Program, txtMk2Program, txtUv1Program, txtUv2Program })
+        {
+            box.MouseEnter += ProgramField_MouseEnter;
+            box.MouseLeave += ProgramField_MouseLeave;
+        }
+    }
+
+    private void ProgramField_MouseEnter(object? sender, EventArgs e)
+    {
+        if (sender is not AntdUI.Input box) return;
+
+        var paths = MarkingRefImageService.FindImages(box.Text);
+        if (paths.Count == 0) return;
+
+        _refPopup ??= new ImageHoverPopup();
+        var anchor = box.PointToScreen(new Point(0, box.Height + 4));
+        _refPopup.ShowImages(paths, anchor);
+    }
+
+    private void ProgramField_MouseLeave(object? sender, EventArgs e)
+    {
+        _refPopup?.HidePopup();
     }
 
     private void ConfigureColumns()
