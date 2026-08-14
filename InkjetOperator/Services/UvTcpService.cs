@@ -1,5 +1,6 @@
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 
 namespace InkjetOperator.Services;
 
@@ -7,58 +8,80 @@ public class UvTcpService
 {
     private const int DefaultPort = 10086;
     private const int TimeoutMs = 5000;
+    private const int ReadTimeoutMs = 3000;
 
     public async Task<(bool ok, string log)> LoadAndStartAsync(string ip, int port, string programName)
     {
         if (port <= 0) port = DefaultPort;
         var log = new StringBuilder();
 
-        using var client = new TcpClient();
+        // KEY:85 — load program
+        using (var client85 = new TcpClient())
+        {
+            try
+            {
+                await client85.ConnectAsync(ip, port).WaitAsync(TimeSpan.FromMilliseconds(TimeoutMs));
+            }
+            catch (Exception ex)
+            {
+                return (false, $"เชื่อมต่อ {ip}:{port} ไม่สำเร็จ: {ex.Message}");
+            }
+
+            var loadCmd = JsonSerializer.Serialize(new { KEY = 85, DATA = $"{programName}.uvdx" });
+            await SendJsonAsync(client85.GetStream(), loadCmd);
+
+            var (rs85, _) = await ReadJsonResponseAsync(client85.GetStream());
+            log.AppendLine($"โหลดโปรแกรม {programName}.uvdx → {(rs85 == 0 ? "สำเร็จ" : "ล้มเหลว")}");
+
+            if (rs85 != 0)
+                return (false, log.ToString());
+        }
+
+        await Task.Delay(1000);
+
+        // KEY:83 — start print
+        using var clientStart = new TcpClient();
         try
         {
-            await client.ConnectAsync(ip, port).WaitAsync(TimeSpan.FromMilliseconds(TimeoutMs));
-            log.AppendLine($"เชื่อมต่อ {ip}:{port} สำเร็จ");
+            await clientStart.ConnectAsync(ip, port).WaitAsync(TimeSpan.FromMilliseconds(TimeoutMs));
         }
         catch (Exception ex)
         {
-            return (false, $"เชื่อมต่อ {ip}:{port} ไม่สำเร็จ: {ex.Message}");
+            return (false, log.AppendLine($"เชื่อมต่อสำหรับ Start ไม่สำเร็จ: {ex.Message}").ToString());
         }
 
-        var stream = client.GetStream();
-        stream.ReadTimeout = TimeoutMs;
-        stream.WriteTimeout = TimeoutMs;
+        var startCmd = JsonSerializer.Serialize(new { KEY = 83 });
+        await SendJsonAsync(clientStart.GetStream(), startCmd);
 
-        var loadCmd = $"KEY:85,{programName}";
-        var (loadOk, loadReply) = await SendCommandAsync(stream, loadCmd);
-        log.AppendLine($"KEY:85 → {loadReply}");
-        if (!loadOk) return (false, log.ToString());
-
-        await Task.Delay(500);
-
-        var (startOk, startReply) = await SendCommandAsync(stream, "KEY:84");
-        log.AppendLine($"KEY:84 → {startReply}");
-        if (!startOk) return (false, log.ToString());
+        var (rs83, _) = await ReadJsonResponseAsync(clientStart.GetStream());
+        log.AppendLine($"สั่ง Start → {(rs83 == 0 ? "สำเร็จ" : "ล้มเหลว (เครื่องอาจยังไม่พร้อม)")}");
 
         return (true, log.ToString());
     }
 
-    private static async Task<(bool ok, string reply)> SendCommandAsync(NetworkStream stream, string command)
+    private static async Task SendJsonAsync(NetworkStream stream, string json)
     {
+        var data = Encoding.UTF8.GetBytes(json);
+        await stream.WriteAsync(data);
+        await stream.FlushAsync();
+    }
+
+    private static async Task<(int rs, string raw)> ReadJsonResponseAsync(NetworkStream stream)
+    {
+        var buffer = new byte[4096];
         try
         {
-            var data = Encoding.ASCII.GetBytes(command);
-            await stream.WriteAsync(data);
-            await stream.FlushAsync();
-
-            var buffer = new byte[1024];
             var read = await stream.ReadAsync(buffer).AsTask()
-                .WaitAsync(TimeSpan.FromMilliseconds(3000));
-            var reply = Encoding.ASCII.GetString(buffer, 0, read).Trim();
-            return (true, reply);
+                .WaitAsync(TimeSpan.FromMilliseconds(ReadTimeoutMs));
+            var raw = Encoding.UTF8.GetString(buffer, 0, read).Trim();
+
+            using var doc = JsonDocument.Parse(raw);
+            var rs = doc.RootElement.GetProperty("RS").GetInt32();
+            return (rs, raw);
         }
-        catch (Exception ex)
+        catch
         {
-            return (false, ex.Message);
+            return (-1, "(no response)");
         }
     }
 }

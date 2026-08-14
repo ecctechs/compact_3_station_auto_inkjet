@@ -535,13 +535,21 @@ public partial class OrderDetailUserControl : UserControl
         }
 
         var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber);
-        string? programFile = ResolveUvProgram(uvRow.ProgramName, docFolder);
+        var (programFile, isDefault) = ResolveUvProgram(uvRow.ProgramName, docFolder);
         if (programFile == null) return;
+
+        if (isDefault)
+        {
+            MessageBox.Show(
+                $"ไม่พบโปรแกรม \"{uvRow.ProgramName}\" ในโฟลเดอร์ document\n"
+                + "กรุณาไปเพิ่มไฟล์โปรแกรมก่อน\n\n"
+                + "จะใช้ default.uvdx แทนไปก่อน",
+                "ไม่พบโปรแกรม", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
 
         btn.Enabled = false;
         var originalText = btn.Text;
         btn.Text = "กำลังส่ง...";
-        var results = new List<string>();
 
         try
         {
@@ -549,12 +557,11 @@ public partial class OrderDetailUserControl : UserControl
                 cpiPath, table,
                 uvRow.Lot, uvRow.ErpMfg,
                 uvRow.Text1, uvRow.Text2, uvRow.Text3, uvRow.Text4, uvRow.Text5);
-            results.Add(writeMsg);
             if (!writeOk)
             {
                 btn.Text = originalText;
                 btn.Enabled = true;
-                MessageBox.Show(string.Join("\n", results),
+                MessageBox.Show(writeMsg,
                     "เขียน CPI.db3 ไม่สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
@@ -574,17 +581,29 @@ public partial class OrderDetailUserControl : UserControl
 
             var uvTcp = new UvTcpService();
             var (tcpOk, tcpLog) = await uvTcp.LoadAndStartAsync(ip, port, programFile);
-            results.Add(tcpLog);
             if (!tcpOk)
             {
                 btn.Text = originalText;
                 btn.Enabled = true;
-                MessageBox.Show(string.Join("\n", results),
+                MessageBox.Show(tcpLog,
                     $"สั่งเครื่อง UV{uvNumber} ไม่สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             CompleteSendStep(stepName);
+
+            var uvName = uvNumber == 1
+                ? UvSettingsManager.Read("UV1_NAME", "UV-001")
+                : UvSettingsManager.Read("UV2_NAME", "UV-002");
+            var summary = $"ส่ง {uvName} สำเร็จ\n\n"
+                + $"• เขียน CPI.db3 ({table})\n"
+                + $"  Lot: {uvRow.Lot}\n"
+                + $"  Name: {uvRow.ErpMfg}\n"
+                + $"• โหลดโปรแกรม {programFile}.uvdx\n"
+                + $"• สั่ง Start เครื่อง\n"
+                + tcpLog;
+            MessageBox.Show(summary, $"{uvName} — สำเร็จ",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         catch (Exception ex)
         {
@@ -595,35 +614,47 @@ public partial class OrderDetailUserControl : UserControl
         }
     }
 
-    private static string? ResolveUvProgram(string? programName, string? docFolder)
+    private static (string? program, bool isDefault) ResolveUvProgram(string? programName, string? docFolder)
     {
         if (string.IsNullOrWhiteSpace(programName))
         {
             MessageBox.Show("ไม่มีชื่อโปรแกรม UV",
                 "ข้อมูลไม่ครบ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return null;
+            return (null, false);
         }
-
-        if (docFolder == null)
-            return Path.GetFileNameWithoutExtension(programName);
 
         var baseName = Path.GetFileNameWithoutExtension(programName);
 
+        if (docFolder == null)
+            return (baseName, false);
+
         var matches = Directory.GetFiles(docFolder, "*.uvdx")
             .Select(Path.GetFileNameWithoutExtension)
-            .Where(f => f != null && f.StartsWith(baseName, StringComparison.OrdinalIgnoreCase))
-            .OrderBy(f => f)
+            .Where(f => f != null && f.Equals(baseName, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        if (matches.Count == 1) return matches[0];
+        if (matches.Count == 1) return (matches[0], false);
 
-        if (matches.Count > 1)
+        if (matches.Count == 0)
         {
-            var selected = PromptUvVariant(matches!);
-            return selected;
+            var startsWith = Directory.GetFiles(docFolder, "*.uvdx")
+                .Select(Path.GetFileNameWithoutExtension)
+                .Where(f => f != null && f.StartsWith(baseName, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(f => f)
+                .ToList();
+
+            if (startsWith.Count == 1) return (startsWith[0], false);
+            if (startsWith.Count > 1)
+            {
+                var picked = PromptUvVariant(startsWith!);
+                return (picked, false);
+            }
         }
 
-        return baseName;
+        if (File.Exists(Path.Combine(docFolder, baseName + ".uvdx")))
+            return (baseName, false);
+
+        return ("default", true);
     }
 
     private static string? PromptUvVariant(List<string> variants)
