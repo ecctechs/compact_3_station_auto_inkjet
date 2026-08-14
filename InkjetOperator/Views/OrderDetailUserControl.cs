@@ -247,13 +247,27 @@ public partial class OrderDetailUserControl : UserControl
         char a = '0', b = '0';
         if (markingMethod is { Length: >= 2 })
         {
-            a = markingMethod[0];
-            b = markingMethod[1];
+            a = markingMethod[0]; // Shim digit
+            b = markingMethod[1]; // Plate digit
+        }
+
+        // '3' behaves the same as '1' (UV).
+        if (a == '3') a = '1';
+        if (b == '3') b = '1';
+
+        // "No case": Shim=Inkjet(2) + Plate=UV(1) — e.g. 21 — does not exist per spec.
+        if (a == '2' && b == '1')
+        {
+            _sendSteps = [];
+            _currentStep = 0;
+            lblMarkingFlow.Text = "ไม่มีเคสนี้";
+            ApplyStepButtons();
+            return;
         }
 
         bool needMk = a == '2' || b == '2';
-        bool needUv1 = b == '1' || b == '3';
-        bool needUv2 = a == '1' || a == '3';
+        bool needUv1 = b == '1';
+        bool needUv2 = a == '1';
 
         _sendSteps = [];
         if (needMk) _sendSteps.Add("MK");
@@ -261,25 +275,14 @@ public partial class OrderDetailUserControl : UserControl
         if (needUv2) _sendSteps.Add("UV2");
         _currentStep = 0;
 
-        bool is22 = a == '2' && b == '2';
-        BuildFlowLabel(_sendSteps, is22);
+        // Show which machine marks the Plate / Shim.
+        // marking_method = [Shim][Plate]: 0=None, 1=UV (Plate→UV1, Shim→UV2), 2=Inkjet(MK).
+        string plate = b switch { '1' => "UV1", '2' => "MK", _ => "None" };
+        string shim = a switch { '1' => "UV2", '2' => "MK", _ => "None" };
+        string twoRound = (a == '2' && b == '2') ? "   (MK วิ่ง 2 รอบ)" : "";
+        lblMarkingFlow.Text = $"Plate - {plate}{Environment.NewLine}Shim - {shim}{twoRound}";
+
         ApplyStepButtons();
-    }
-
-    private void BuildFlowLabel(List<string> steps, bool isTwoRound)
-    {
-        if (steps.Count == 0)
-        {
-            lblMarkingFlow.Text = "";
-            return;
-        }
-
-        var parts = steps.Select(s => s switch
-        {
-            "MK" when isTwoRound => "MK (×2)",
-            _ => s
-        });
-        lblMarkingFlow.Text = string.Join("  ➜  ", parts);
     }
 
     private void RestoreCompletedSteps(List<CommandResult> commands)
