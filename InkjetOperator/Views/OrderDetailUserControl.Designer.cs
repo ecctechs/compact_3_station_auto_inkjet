@@ -127,7 +127,6 @@ partial class OrderDetailUserControl
         tlpUv1Head = new System.Windows.Forms.TableLayoutPanel();
         pnlUv1Chip = new AntdUI.Panel();
         lblUv1Chip = new AntdUI.Label();
-        lblUv1Role = new AntdUI.Label();
         lblUv1Program = new AntdUI.Label();
         txtUv1Program = new AntdUI.Input();
         lblUv1ErpMfg = new AntdUI.Label();
@@ -138,7 +137,6 @@ partial class OrderDetailUserControl
         tlpUv2Head = new System.Windows.Forms.TableLayoutPanel();
         pnlUv2Chip = new AntdUI.Panel();
         lblUv2Chip = new AntdUI.Label();
-        lblUv2Role = new AntdUI.Label();
         lblUv2Program = new AntdUI.Label();
         txtUv2Program = new AntdUI.Input();
         lblUv2ErpMfg = new AntdUI.Label();
@@ -148,7 +146,6 @@ partial class OrderDetailUserControl
         btnSendMk = new AntdUI.Button();
         btnSendUv1 = new AntdUI.Button();
         btnSendUv2 = new AntdUI.Button();
-        btnModeToggle = new AntdUI.Button();
         btnDetailClose = new AntdUI.Button();
         tlpDetailRoot.SuspendLayout();
         pnlHeaderBar.SuspendLayout();
@@ -1681,17 +1678,15 @@ partial class OrderDetailUserControl
         // tlpUv1Head
         //
         tlpUv1Head.BackColor = System.Drawing.Color.Transparent;
-        tlpUv1Head.ColumnCount = 4;
+        tlpUv1Head.ColumnCount = 3;
         tlpUv1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 74F));
-        tlpUv1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 54F));
         tlpUv1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 96F));
         tlpUv1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpUv1Head.Controls.Add(pnlUv1Chip, 0, 0);
-        tlpUv1Head.Controls.Add(lblUv1Role, 1, 0);
-        tlpUv1Head.Controls.Add(lblUv1Program, 2, 0);
-        tlpUv1Head.Controls.Add(txtUv1Program, 3, 0);
-        tlpUv1Head.Controls.Add(lblUv1ErpMfg, 2, 1);
-        tlpUv1Head.Controls.Add(txtUv1ErpMfg, 3, 1);
+        tlpUv1Head.Controls.Add(lblUv1Program, 1, 0);
+        tlpUv1Head.Controls.Add(txtUv1Program, 2, 0);
+        tlpUv1Head.Controls.Add(lblUv1ErpMfg, 1, 1);
+        tlpUv1Head.Controls.Add(txtUv1ErpMfg, 2, 1);
         tlpUv1Head.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpUv1Head.Location = new System.Drawing.Point(0, 0);
         tlpUv1Head.Margin = new System.Windows.Forms.Padding(0);
@@ -1728,18 +1723,6 @@ partial class OrderDetailUserControl
         lblUv1Chip.TabIndex = 0;
         lblUv1Chip.Text = "UV-001";
         lblUv1Chip.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-        //
-        // lblUv1Role
-        //
-        lblUv1Role.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblUv1Role.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Bold);
-        lblUv1Role.ForeColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        lblUv1Role.Name = "lblUv1Role";
-        lblUv1Role.Size = new System.Drawing.Size(48, 92);
-        lblUv1Role.TabIndex = 5;
-        lblUv1Role.Text = "(Plate)";
-        lblUv1Role.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-        tlpUv1Head.SetRowSpan(lblUv1Role, 2);
         //
         // lblUv1Program
         //
@@ -1847,17 +1830,15 @@ partial class OrderDetailUserControl
         // tlpUv2Head
         //
         tlpUv2Head.BackColor = System.Drawing.Color.Transparent;
-        tlpUv2Head.ColumnCount = 4;
+        tlpUv2Head.ColumnCount = 3;
         tlpUv2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 74F));
-        tlpUv2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 54F));
         tlpUv2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 96F));
         tlpUv2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpUv2Head.Controls.Add(pnlUv2Chip, 0, 0);
-        tlpUv2Head.Controls.Add(lblUv2Role, 1, 0);
-        tlpUv2Head.Controls.Add(lblUv2Program, 2, 0);
-        tlpUv2Head.Controls.Add(txtUv2Program, 3, 0);
-        tlpUv2Head.Controls.Add(lblUv2ErpMfg, 2, 1);
-        tlpUv2Head.Controls.Add(txtUv2ErpMfg, 3, 1);
+        tlpUv2Head.Controls.Add(lblUv2Program, 1, 0);
+        tlpUv2Head.Controls.Add(txtUv2Program, 2, 0);
+        tlpUv2Head.Controls.Add(lblUv2ErpMfg, 1, 1);
+        tlpUv2Head.Controls.Add(txtUv2ErpMfg, 2, 1);
         tlpUv2Head.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpUv2Head.Location = new System.Drawing.Point(0, 0);
         tlpUv2Head.Margin = new System.Windows.Forms.Padding(0);
@@ -1894,18 +1875,6 @@ partial class OrderDetailUserControl
         lblUv2Chip.TabIndex = 0;
         lblUv2Chip.Text = "UV-002";
         lblUv2Chip.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-        //
-        // lblUv2Role
-        //
-        lblUv2Role.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblUv2Role.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Bold);
-        lblUv2Role.ForeColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        lblUv2Role.Name = "lblUv2Role";
-        lblUv2Role.Size = new System.Drawing.Size(48, 92);
-        lblUv2Role.TabIndex = 5;
-        lblUv2Role.Text = "(Shim)";
-        lblUv2Role.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-        tlpUv2Head.SetRowSpan(lblUv2Role, 2);
         //
         // lblUv2Program
         //
@@ -1982,7 +1951,6 @@ partial class OrderDetailUserControl
         // flpDetailActions
         //
         flpDetailActions.BackColor = System.Drawing.Color.White;
-        flpDetailActions.Controls.Add(btnModeToggle);
         flpDetailActions.Controls.Add(btnSendMk);
         flpDetailActions.Controls.Add(btnSendUv1);
         flpDetailActions.Controls.Add(btnSendUv2);
@@ -1996,20 +1964,6 @@ partial class OrderDetailUserControl
         flpDetailActions.Size = new System.Drawing.Size(1320, 88);
         flpDetailActions.TabIndex = 3;
         flpDetailActions.WrapContents = false;
-        //
-        // btnModeToggle
-        //
-        btnModeToggle.BorderWidth = 2F;
-        btnModeToggle.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnModeToggle.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
-        btnModeToggle.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnModeToggle.Margin = new System.Windows.Forms.Padding(0, 0, 16, 0);
-        btnModeToggle.Name = "btnModeToggle";
-        btnModeToggle.Radius = 10;
-        btnModeToggle.Size = new System.Drawing.Size(140, 56);
-        btnModeToggle.TabIndex = 10;
-        btnModeToggle.Text = "Production";
-        btnModeToggle.Type = AntdUI.TTypeMini.Default;
         //
         // btnSendMk
         //
@@ -2216,7 +2170,6 @@ partial class OrderDetailUserControl
     private System.Windows.Forms.TableLayoutPanel tlpUv1Head;
     private AntdUI.Panel pnlUv1Chip;
     private AntdUI.Label lblUv1Chip;
-    private AntdUI.Label lblUv1Role;
     private AntdUI.Label lblUv1Program;
     private AntdUI.Input txtUv1Program;
     private AntdUI.Label lblUv1ErpMfg;
@@ -2227,14 +2180,12 @@ partial class OrderDetailUserControl
     private System.Windows.Forms.TableLayoutPanel tlpUv2Head;
     private AntdUI.Panel pnlUv2Chip;
     private AntdUI.Label lblUv2Chip;
-    private AntdUI.Label lblUv2Role;
     private AntdUI.Label lblUv2Program;
     private AntdUI.Input txtUv2Program;
     private AntdUI.Label lblUv2ErpMfg;
     private AntdUI.Input txtUv2ErpMfg;
     private AntdUI.Table tblUv2Texts;
     private System.Windows.Forms.FlowLayoutPanel flpDetailActions;
-    private AntdUI.Button btnModeToggle;
     private AntdUI.Button btnSendMk;
     private AntdUI.Button btnSendUv1;
     private AntdUI.Button btnSendUv2;

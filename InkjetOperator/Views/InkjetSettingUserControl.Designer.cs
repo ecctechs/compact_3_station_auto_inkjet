@@ -332,7 +332,7 @@ partial class InkjetSettingUserControl
         lblUv1Header.Name = "lblUv1Header";
         tlpUv.SetColumnSpan(lblUv1Header, 6);
         lblUv1Header.TabIndex = 0;
-        lblUv1Header.Text = "UV1 — MK063 (Plate)";
+        lblUv1Header.Text = "UV1 — MK063";
         lblUv1Header.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
         lblUv1Header.Padding = new System.Windows.Forms.Padding(4, 0, 0, 2);
         //
@@ -473,7 +473,7 @@ partial class InkjetSettingUserControl
         lblUv2Header.Name = "lblUv2Header";
         tlpUv.SetColumnSpan(lblUv2Header, 6);
         lblUv2Header.TabIndex = 12;
-        lblUv2Header.Text = "UV2 — MK067 (Shim)";
+        lblUv2Header.Text = "UV2 — MK067";
         lblUv2Header.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
         lblUv2Header.Padding = new System.Windows.Forms.Padding(4, 0, 0, 2);
         //

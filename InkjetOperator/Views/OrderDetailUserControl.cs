@@ -17,7 +17,6 @@ public partial class OrderDetailUserControl : UserControl
     private ApiClient? _api;
     private ImageHoverPopup? _refPopup;
     private List<UvJobDataDto> _uvData = [];
-    private bool _isTestMode;
 
     public event EventHandler? CloseRequested;
 
@@ -32,7 +31,6 @@ public partial class OrderDetailUserControl : UserControl
         btnSendMk.Click += async (_, _) => await SendToMkAsync();
         btnSendUv1.Click += async (_, _) => await SendToUvAsync(1);
         btnSendUv2.Click += async (_, _) => await SendToUvAsync(2);
-        btnModeToggle.Click += (_, _) => ToggleMode();
 
         WireRefImageHover();
         Disposed += (_, _) => _refPopup?.Dispose();
@@ -336,36 +334,8 @@ public partial class OrderDetailUserControl : UserControl
         }
     }
 
-    private void ToggleMode()
-    {
-        _isTestMode = !_isTestMode;
-
-        if (_isTestMode)
-        {
-            btnModeToggle.Text = "Test";
-            btnModeToggle.Type = AntdUI.TTypeMini.Warn;
-            btnModeToggle.ForeColor = Color.White;
-        }
-        else
-        {
-            btnModeToggle.Text = "Production";
-            btnModeToggle.Type = AntdUI.TTypeMini.Default;
-            btnModeToggle.ForeColor = Color.FromArgb(36, 71, 101);
-        }
-
-        ApplyStepButtons();
-    }
-
     private void ApplyStepButtons()
     {
-        if (_isTestMode)
-        {
-            btnSendMk.Enabled = true;
-            btnSendUv1.Enabled = true;
-            btnSendUv2.Enabled = true;
-            return;
-        }
-
         btnSendMk.Enabled = false;
         btnSendUv1.Enabled = false;
         btnSendUv2.Enabled = false;
@@ -382,12 +352,6 @@ public partial class OrderDetailUserControl : UserControl
 
     private void CompleteSendStep(string stepName)
     {
-        if (_isTestMode)
-        {
-            _ = _api?.SaveSendStepAsync(_jobId, stepName);
-            return;
-        }
-
         if (_currentStep >= _sendSteps.Count) return;
         if (_sendSteps[_currentStep] != stepName) return;
 
@@ -624,7 +588,7 @@ public partial class OrderDetailUserControl : UserControl
         }
         finally
         {
-            // สำเร็จในโหมดปกติ CompleteSendStep จะ MarkButtonSent ให้แล้ว นอกนั้นคืนปุ่มเอง
+            // สำเร็จแล้ว CompleteSendStep จะ MarkButtonSent ให้เอง นอกนั้นคืนปุ่มกลับสภาพเดิม
             if (btn.Text?.StartsWith('✓') != true)
             {
                 btn.Text = originalText;
