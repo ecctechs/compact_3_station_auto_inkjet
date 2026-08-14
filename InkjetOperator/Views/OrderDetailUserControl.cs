@@ -415,7 +415,7 @@ public partial class OrderDetailUserControl : UserControl
         btn.DefaultBack = Color.FromArgb(200, 220, 200);
         btn.ForeColor = Color.FromArgb(21, 128, 61);
         btn.Type = AntdUI.TTypeMini.Default;
-        if (!btn.Text.StartsWith("✓"))
+        if (btn.Text?.StartsWith('✓') != true)
             btn.Text = "✓ " + btn.Text;
     }
 
@@ -512,6 +512,12 @@ public partial class OrderDetailUserControl : UserControl
         }
     }
 
+    /// <summary>
+    /// ปุ่มเดียวจบงาน: หยุดเครื่อง → เขียน CPI.db3 → โหลดโปรแกรม → เริ่มพิมพ์
+    ///
+    /// dialog ที่ถามผู้ใช้ทั้งหมดต้องจบก่อนคำสั่งแรกที่ส่งถึงเครื่อง
+    /// ถ้าถามทีหลังแล้วผู้ใช้กดยกเลิก จะทิ้งเครื่องค้างอยู่ในสถานะหยุดโดยไม่ตั้งใจ
+    /// </summary>
     private async Task SendToUvAsync(int uvNumber)
     {
         string stepName = uvNumber == 1 ? "UV1" : "UV2";
@@ -534,84 +540,110 @@ public partial class OrderDetailUserControl : UserControl
             return;
         }
 
+        // อ่าน IP ตั้งแต่ต้น เพราะขั้นแรกของ flow คือสั่งหยุดเครื่อง
+        var ip = CustomSettingsManager.Read($"UV00{uvNumber}_IP");
+        if (string.IsNullOrWhiteSpace(ip))
+        {
+            MessageBox.Show($"ยังไม่ได้ตั้งค่า IP ของ UV{uvNumber}",
+                "ตั้งค่าไม่ครบ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+        int port = int.TryParse(CustomSettingsManager.Read($"UV00{uvNumber}_PORT"), out var p)
+            ? p
+            : 10086;
+
         var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber);
         var (programFile, isDefault) = ResolveUvProgram(uvRow.ProgramName, docFolder);
         if (programFile == null) return;
 
         if (isDefault)
         {
-            MessageBox.Show(
-                $"ไม่พบโปรแกรม \"{uvRow.ProgramName}\" ในโฟลเดอร์ document\n"
-                + "กรุณาไปเพิ่มไฟล์โปรแกรมก่อน\n\n"
-                + "จะใช้ default.uvdx แทนไปก่อน",
-                "ไม่พบโปรแกรม", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            var confirm = MessageBox.Show(
+                $"ไม่พบโปรแกรม \"{uvRow.ProgramName}\" ในเครื่อง {stepName}\n\n"
+                + "ระบบจะใช้โปรแกรม default.uvdx แทนไปก่อน\n"
+                + "กรุณาแจ้งผู้ดูแลให้เพิ่มโปรแกรมนี้เข้าเครื่อง\n\n"
+                + "ต้องการทำต่อหรือไม่?",
+                "ไม่พบโปรแกรม",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2);
+
+            if (confirm != DialogResult.Yes) return;
         }
 
-        btn.Enabled = false;
+        var uvName = uvNumber == 1
+            ? UvSettingsManager.Read("UV1_NAME", "UV-001")
+            : UvSettingsManager.Read("UV2_NAME", "UV-002");
+
         var originalText = btn.Text;
+        btn.Enabled = false;
         btn.Text = "กำลังส่ง...";
 
+        var done = new List<string>();
         try
         {
+            var uvTcp = new UvTcpService();
+
+            // 1. หยุดเครื่องก่อนเสมอ — ไม่ตอบรับก็ไปต่อ เพราะเครื่องอาจหยุดอยู่แล้ว
+            var (stopOk, _) = await uvTcp.StopAsync(ip, port);
+            done.Add(stopOk ? "สั่งหยุดเครื่อง" : "สั่งหยุดเครื่อง (ไม่ตอบรับ — ทำต่อ)");
+
+            // 2. เขียนข้อความลง CPI.db3
             var (writeOk, writeMsg) = await CpiWriteService.WriteAsync(
                 cpiPath, table,
                 uvRow.Lot, uvRow.ErpMfg,
                 uvRow.Text1, uvRow.Text2, uvRow.Text3, uvRow.Text4, uvRow.Text5);
+
             if (!writeOk)
             {
-                btn.Text = originalText;
-                btn.Enabled = true;
-                MessageBox.Show(writeMsg,
-                    "เขียน CPI.db3 ไม่สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ShowUvFailure(uvName, done, $"เขียน CPI.db3 ({table}) — {writeMsg}");
                 return;
             }
+            done.Add($"เขียน CPI.db3 ({table})\n    Lot: {OrDash(uvRow.Lot)}\n    Name: {OrDash(uvRow.ErpMfg)}");
 
-            var ip = CustomSettingsManager.Read($"UV00{uvNumber}_IP");
-            var portStr = CustomSettingsManager.Read($"UV00{uvNumber}_PORT");
-            int port = int.TryParse(portStr, out var p) ? p : 10086;
-
-            if (string.IsNullOrWhiteSpace(ip))
-            {
-                btn.Text = originalText;
-                btn.Enabled = true;
-                MessageBox.Show($"ยังไม่ได้ตั้งค่า IP ของ UV{uvNumber}",
-                    "ตั้งค่าไม่ครบ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            var uvTcp = new UvTcpService();
+            // 3. โหลดโปรแกรม แล้วสั่งเริ่มพิมพ์
             var (tcpOk, tcpLog) = await uvTcp.LoadAndStartAsync(ip, port, programFile);
             if (!tcpOk)
             {
-                btn.Text = originalText;
-                btn.Enabled = true;
-                MessageBox.Show(tcpLog,
-                    $"สั่งเครื่อง UV{uvNumber} ไม่สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ShowUvFailure(uvName, done, tcpLog.Trim());
                 return;
             }
+            done.Add($"โหลดโปรแกรม {programFile}.uvdx");
+            done.Add("สั่งเริ่มพิมพ์");
 
             CompleteSendStep(stepName);
 
-            var uvName = uvNumber == 1
-                ? UvSettingsManager.Read("UV1_NAME", "UV-001")
-                : UvSettingsManager.Read("UV2_NAME", "UV-002");
             var summary = $"ส่ง {uvName} สำเร็จ\n\n"
-                + $"• เขียน CPI.db3 ({table})\n"
-                + $"  Lot: {uvRow.Lot}\n"
-                + $"  Name: {uvRow.ErpMfg}\n"
-                + $"• โหลดโปรแกรม {programFile}.uvdx\n"
-                + $"• สั่ง Start เครื่อง\n"
-                + tcpLog;
+                + string.Join("\n", done.Select(s => "• " + s))
+                + (isDefault ? "\n\n⚠ ใช้ default.uvdx เพราะไม่พบโปรแกรมที่ต้องการ" : "");
+
             MessageBox.Show(summary, $"{uvName} — สำเร็จ",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         catch (Exception ex)
         {
-            btn.Text = originalText;
-            btn.Enabled = true;
-            MessageBox.Show($"เกิดข้อผิดพลาด: {ex.Message}",
-                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            ShowUvFailure(uvName, done, ex.Message);
         }
+        finally
+        {
+            // สำเร็จในโหมดปกติ CompleteSendStep จะ MarkButtonSent ให้แล้ว นอกนั้นคืนปุ่มเอง
+            if (btn.Text?.StartsWith('✓') != true)
+            {
+                btn.Text = originalText;
+                btn.Enabled = true;
+            }
+        }
+    }
+
+    /// <summary>บอกว่าทำอะไรสำเร็จไปแล้วบ้างและหยุดที่ขั้นไหน — เครื่องยังค้างอยู่ในสถานะหยุด</summary>
+    private static void ShowUvFailure(string uvName, List<string> done, string failReason)
+    {
+        var msg = $"ส่ง {uvName} ไม่สำเร็จ\n\n"
+            + string.Join("\n", done.Select(s => "✔ " + s))
+            + (done.Count > 0 ? "\n" : "")
+            + $"✖ {failReason}\n\n"
+            + "ยังไม่ได้สั่งเริ่มพิมพ์ — เครื่องอยู่ในสถานะหยุด";
+
+        MessageBox.Show(msg, $"{uvName} — ไม่สำเร็จ",
+            MessageBoxButtons.OK, MessageBoxIcon.Warning);
     }
 
     private static (string? program, bool isDefault) ResolveUvProgram(string? programName, string? docFolder)
