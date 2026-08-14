@@ -148,6 +148,7 @@ partial class OrderDetailUserControl
         btnSendMk = new AntdUI.Button();
         btnSendUv1 = new AntdUI.Button();
         btnSendUv2 = new AntdUI.Button();
+        btnModeToggle = new AntdUI.Button();
         btnDetailClose = new AntdUI.Button();
         tlpDetailRoot.SuspendLayout();
         pnlHeaderBar.SuspendLayout();
@@ -1981,6 +1982,7 @@ partial class OrderDetailUserControl
         // flpDetailActions
         //
         flpDetailActions.BackColor = System.Drawing.Color.White;
+        flpDetailActions.Controls.Add(btnModeToggle);
         flpDetailActions.Controls.Add(btnSendMk);
         flpDetailActions.Controls.Add(btnSendUv1);
         flpDetailActions.Controls.Add(btnSendUv2);
@@ -1994,6 +1996,20 @@ partial class OrderDetailUserControl
         flpDetailActions.Size = new System.Drawing.Size(1320, 88);
         flpDetailActions.TabIndex = 3;
         flpDetailActions.WrapContents = false;
+        //
+        // btnModeToggle
+        //
+        btnModeToggle.BorderWidth = 2F;
+        btnModeToggle.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnModeToggle.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        btnModeToggle.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnModeToggle.Margin = new System.Windows.Forms.Padding(0, 0, 16, 0);
+        btnModeToggle.Name = "btnModeToggle";
+        btnModeToggle.Radius = 10;
+        btnModeToggle.Size = new System.Drawing.Size(140, 56);
+        btnModeToggle.TabIndex = 10;
+        btnModeToggle.Text = "Production";
+        btnModeToggle.Type = AntdUI.TTypeMini.Default;
         //
         // btnSendMk
         //
@@ -2218,6 +2234,7 @@ partial class OrderDetailUserControl
     private AntdUI.Input txtUv2ErpMfg;
     private AntdUI.Table tblUv2Texts;
     private System.Windows.Forms.FlowLayoutPanel flpDetailActions;
+    private AntdUI.Button btnModeToggle;
     private AntdUI.Button btnSendMk;
     private AntdUI.Button btnSendUv1;
     private AntdUI.Button btnSendUv2;
