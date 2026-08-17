@@ -17,6 +17,7 @@ public partial class OrderDetailUserControl : UserControl
     private ApiClient? _api;
     private ImageHoverPopup? _refPopup;
     private List<UvJobDataDto> _uvData = [];
+    private readonly bool _isDevMode;
 
     public event EventHandler? CloseRequested;
 
@@ -24,6 +25,10 @@ public partial class OrderDetailUserControl : UserControl
     {
         InitializeComponent();
         ConfigureColumns();
+
+        var rawLevel = CustomSettingsManager.Read("MENU_LEVEL", "1");
+        _isDevMode = int.TryParse(rawLevel, out var lvl) && lvl == 99;
+
         btnDetailClose.Click += (_, _) => CloseRequested?.Invoke(this, EventArgs.Empty);
         btnMkSwap.Click += (_, _) => SwapMkData();
         btnMk1Abc.Click += (_, _) => ShowAbcDialog(1);
@@ -336,6 +341,14 @@ public partial class OrderDetailUserControl : UserControl
 
     private void ApplyStepButtons()
     {
+        if (_isDevMode)
+        {
+            btnSendMk.Enabled = true;
+            btnSendUv1.Enabled = true;
+            btnSendUv2.Enabled = true;
+            return;
+        }
+
         btnSendMk.Enabled = false;
         btnSendUv1.Enabled = false;
         btnSendUv2.Enabled = false;
@@ -352,6 +365,12 @@ public partial class OrderDetailUserControl : UserControl
 
     private void CompleteSendStep(string stepName)
     {
+        if (_isDevMode)
+        {
+            _ = _api?.SaveSendStepAsync(_jobId, stepName);
+            return;
+        }
+
         if (_currentStep >= _sendSteps.Count) return;
         if (_sendSteps[_currentStep] != stepName) return;
 
@@ -504,7 +523,6 @@ public partial class OrderDetailUserControl : UserControl
             return;
         }
 
-        // อ่าน IP ตั้งแต่ต้น เพราะขั้นแรกของ flow คือสั่งหยุดเครื่อง
         var ip = CustomSettingsManager.Read($"UV00{uvNumber}_IP");
         if (string.IsNullOrWhiteSpace(ip))
         {
@@ -515,6 +533,13 @@ public partial class OrderDetailUserControl : UserControl
         int port = int.TryParse(CustomSettingsManager.Read($"UV00{uvNumber}_PORT"), out var p)
             ? p
             : 10086;
+
+        var uvName = uvNumber == 1
+            ? UvSettingsManager.Read("UV1_NAME", "UV-001")
+            : UvSettingsManager.Read("UV2_NAME", "UV-002");
+
+        if (!await TestUvConnectionAsync(ip, port, uvName))
+            return;
 
         var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber);
         var (programFile, isDefault) = ResolveUvProgram(uvRow.ProgramName, docFolder);
@@ -532,10 +557,6 @@ public partial class OrderDetailUserControl : UserControl
 
             if (confirm != DialogResult.Yes) return;
         }
-
-        var uvName = uvNumber == 1
-            ? UvSettingsManager.Read("UV1_NAME", "UV-001")
-            : UvSettingsManager.Read("UV2_NAME", "UV-002");
 
         var originalText = btn.Text;
         btn.Enabled = false;
@@ -597,6 +618,28 @@ public partial class OrderDetailUserControl : UserControl
         }
     }
 
+    private static async Task<bool> TestUvConnectionAsync(string ip, int port, string uvName)
+    {
+        try
+        {
+            using var tcp = new System.Net.Sockets.TcpClient();
+            await tcp.ConnectAsync(ip, port).WaitAsync(TimeSpan.FromSeconds(3));
+            return true;
+        }
+        catch
+        {
+            MessageBox.Show(
+                $"ไม่สามารถเชื่อมต่อ {uvName} ({ip}:{port}) ได้\n\n"
+                + "กรุณาตรวจสอบ:\n"
+                + "• เครื่อง UV เปิดอยู่หรือไม่\n"
+                + "• ซอฟต์แวร์ UV เปิดอยู่หรือไม่\n"
+                + "• IP และ Port ถูกต้องหรือไม่",
+                $"{uvName} — เชื่อมต่อไม่ได้",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return false;
+        }
+    }
+
     /// <summary>บอกว่าทำอะไรสำเร็จไปแล้วบ้างและหยุดที่ขั้นไหน — เครื่องยังค้างอยู่ในสถานะหยุด</summary>
     private static void ShowUvFailure(string uvName, List<string> done, string failReason)
     {
@@ -624,31 +667,23 @@ public partial class OrderDetailUserControl : UserControl
         if (docFolder == null)
             return (baseName, false);
 
-        var matches = Directory.GetFiles(docFolder, "*.uvdx")
+        var allFiles = Directory.GetFiles(docFolder, "*.uvdx")
             .Select(Path.GetFileNameWithoutExtension)
-            .Where(f => f != null && f.Equals(baseName, StringComparison.OrdinalIgnoreCase))
+            .Where(f => f != null)
             .ToList();
 
-        if (matches.Count == 1) return (matches[0], false);
+        var candidates = allFiles
+            .Where(f => f!.StartsWith(baseName, StringComparison.Ordinal))
+            .OrderBy(f => f)
+            .ToList();
 
-        if (matches.Count == 0)
+        if (candidates.Count == 1) return (candidates[0], false);
+
+        if (candidates.Count > 1)
         {
-            var startsWith = Directory.GetFiles(docFolder, "*.uvdx")
-                .Select(Path.GetFileNameWithoutExtension)
-                .Where(f => f != null && f.StartsWith(baseName, StringComparison.OrdinalIgnoreCase))
-                .OrderBy(f => f)
-                .ToList();
-
-            if (startsWith.Count == 1) return (startsWith[0], false);
-            if (startsWith.Count > 1)
-            {
-                var picked = PromptUvVariant(startsWith!);
-                return (picked, false);
-            }
+            var picked = PromptUvVariant(candidates!);
+            return (picked, false);
         }
-
-        if (File.Exists(Path.Combine(docFolder, baseName + ".uvdx")))
-            return (baseName, false);
 
         return ("default", true);
     }
