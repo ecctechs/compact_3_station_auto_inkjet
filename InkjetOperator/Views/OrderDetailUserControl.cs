@@ -10,6 +10,7 @@ public partial class OrderDetailUserControl : UserControl
     private const string Dash = "-";
 
     private PatternDetail? _pattern;
+    private string _barcode = "";
     private bool _isSwapped;
     private List<string> _sendSteps = [];
     private int _currentStep;
@@ -80,7 +81,7 @@ public partial class OrderDetailUserControl : UserControl
     private static AntdUI.ColumnCollection BuildBlockColumns() =>
     [
         new AntdUI.Column("Block", "Block", AntdUI.ColumnAlign.Center) { Width = "70" },
-        new AntdUI.Column("Text", "Text", AntdUI.ColumnAlign.Left),
+        new AntdUI.Column("BlockText", "Text", AntdUI.ColumnAlign.Left),
         new AntdUI.Column("X", "X", AntdUI.ColumnAlign.Center) { Width = "60" },
         new AntdUI.Column("Y", "Y", AntdUI.ColumnAlign.Center) { Width = "60" },
         new AntdUI.Column("Size", "Size", AntdUI.ColumnAlign.Center) { Width = "60" },
@@ -96,6 +97,7 @@ public partial class OrderDetailUserControl : UserControl
     public void LoadDetail(ResolvedJobResponse resolved, ApiClient? api = null)
     {
         _pattern = resolved.Pattern;
+        _barcode = resolved.Job.BarcodeRaw ?? "";
         _isSwapped = false;
         _jobId = resolved.Job.Id;
         _api = api;
@@ -764,7 +766,7 @@ public partial class OrderDetailUserControl : UserControl
             txtMk2Trigger, txtMk2PosAct, txtMk2Delay, tblMk2Blocks);
     }
 
-    private static void FillMk(
+    private void FillMk(
         InkjetConfigDto? config, ServoConfigDto? servo,
         AntdUI.Input program, AntdUI.Input programNo,
         AntdUI.Input width, AntdUI.Input height,
@@ -781,14 +783,23 @@ public partial class OrderDetailUserControl : UserControl
 
         var rows = (config?.TextBlocks ?? [])
             .OrderBy(b => b.BlockNumber)
-            .Select(b => new BlockRow
+            .Select(b =>
             {
-                Block = b.BlockNumber.ToString(),
-                Text = OrDash(b.Text),
-                X = Number(b.X),
-                Y = Number(b.Y),
-                Size = Number(b.Size),
-                Scale = Number(b.Scale),
+                var original = b.Text ?? "";
+                var result = PatternEngine.Process(_barcode, original);
+                bool matched = !string.IsNullOrEmpty(_barcode)
+                    && !string.IsNullOrEmpty(original)
+                    && result != original;
+
+                return new BlockRow
+                {
+                    Block = b.BlockNumber.ToString(),
+                    BlockText = OrDash(matched ? result : original),
+                    X = Number(b.X),
+                    Y = Number(b.Y),
+                    Size = Number(b.Size),
+                    Scale = Number(b.Scale),
+                };
             })
             .ToList();
 
@@ -843,7 +854,7 @@ public partial class OrderDetailUserControl : UserControl
 internal class BlockRow : AntdUI.NotifyProperty
 {
     public string Block { get; set; } = "";
-    public string Text { get; set; } = "";
+    public string BlockText { get; set; } = "";
     public string X { get; set; } = "";
     public string Y { get; set; } = "";
     public string Size { get; set; } = "";
