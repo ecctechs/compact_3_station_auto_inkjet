@@ -28,6 +28,8 @@ partial class PlcSettingUserControl
         tlpMap = new System.Windows.Forms.TableLayoutPanel();
         tlpMapHeader = new System.Windows.Forms.TableLayoutPanel();
         lblMapHint = new System.Windows.Forms.Label();
+        btnUnlock = new AntdUI.Button();
+        btnReadAll = new AntdUI.Button();
         btnAddRow = new AntdUI.Button();
         tblPlcMap = new AntdUI.Table();
         flpActions = new System.Windows.Forms.FlowLayoutPanel();
@@ -74,8 +76,7 @@ partial class PlcSettingUserControl
         grpConnection.TabStop = false;
         grpConnection.Text = "PLC Connection";
         //
-        // tlpConn — 6 cols matching template
-        //   dot(36) | badge(140) | label/edit(100) | input(fill) | :(20) | extra(90)
+        // tlpConn
         //
         tlpConn.BackColor = System.Drawing.Color.White;
         tlpConn.ColumnCount = 6;
@@ -137,7 +138,7 @@ partial class PlcSettingUserControl
         btnPlcName.Text = "Edit";
         btnPlcName.Type = AntdUI.TTypeMini.Default;
         //
-        // lblIpLabel — spans col1+col2
+        // lblIpLabel
         //
         lblIpLabel.Dock = System.Windows.Forms.DockStyle.Fill;
         lblIpLabel.Font = new System.Drawing.Font("Segoe UI", 10F);
@@ -149,7 +150,7 @@ partial class PlcSettingUserControl
         lblIpLabel.Text = "IP Address :";
         lblIpLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
-        // txtPlc001Ip — spans col3+col4+col5
+        // txtPlc001Ip
         //
         txtPlc001Ip.Dock = System.Windows.Forms.DockStyle.Fill;
         txtPlc001Ip.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
@@ -161,7 +162,7 @@ partial class PlcSettingUserControl
         tlpConn.SetColumnSpan(txtPlc001Ip, 3);
         txtPlc001Ip.TabIndex = 4;
         //
-        // lblPortLabel — spans col1+col2
+        // lblPortLabel
         //
         lblPortLabel.Dock = System.Windows.Forms.DockStyle.Fill;
         lblPortLabel.Font = new System.Drawing.Font("Segoe UI", 10F);
@@ -213,11 +214,15 @@ partial class PlcSettingUserControl
         // tlpMapHeader
         //
         tlpMapHeader.BackColor = System.Drawing.Color.White;
-        tlpMapHeader.ColumnCount = 2;
+        tlpMapHeader.ColumnCount = 4;
         tlpMapHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpMapHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
+        tlpMapHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
+        tlpMapHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
         tlpMapHeader.Controls.Add(lblMapHint, 0, 0);
-        tlpMapHeader.Controls.Add(btnAddRow, 1, 0);
+        tlpMapHeader.Controls.Add(btnUnlock, 1, 0);
+        tlpMapHeader.Controls.Add(btnReadAll, 2, 0);
+        tlpMapHeader.Controls.Add(btnAddRow, 3, 0);
         tlpMapHeader.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpMapHeader.Margin = new System.Windows.Forms.Padding(0);
         tlpMapHeader.Name = "tlpMapHeader";
@@ -232,8 +237,36 @@ partial class PlcSettingUserControl
         lblMapHint.ForeColor = System.Drawing.Color.FromArgb(120, 120, 120);
         lblMapHint.Name = "lblMapHint";
         lblMapHint.TabIndex = 0;
-        lblMapHint.Text = "Address ranges must not overlap; List names must be unique.";
+        lblMapHint.Text = "กด Read All เพื่ออ่านค่าจาก PLC ทุก Address";
         lblMapHint.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // btnUnlock
+        //
+        btnUnlock.Anchor = System.Windows.Forms.AnchorStyles.Right;
+        btnUnlock.DefaultBorderColor = System.Drawing.Color.FromArgb(220, 160, 40);
+        btnUnlock.BorderWidth = 2F;
+        btnUnlock.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        btnUnlock.ForeColor = System.Drawing.Color.FromArgb(140, 90, 10);
+        btnUnlock.Name = "btnUnlock";
+        btnUnlock.Radius = 8;
+        btnUnlock.Size = new System.Drawing.Size(134, 42);
+        btnUnlock.TabIndex = 3;
+        btnUnlock.Text = "🔒 Unlock";
+        btnUnlock.Type = AntdUI.TTypeMini.Default;
+        //
+        // btnReadAll
+        //
+        btnReadAll.Anchor = System.Windows.Forms.AnchorStyles.Right;
+        btnReadAll.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnReadAll.BorderWidth = 2F;
+        btnReadAll.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        btnReadAll.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnReadAll.Name = "btnReadAll";
+        btnReadAll.Radius = 8;
+        btnReadAll.Size = new System.Drawing.Size(134, 42);
+        btnReadAll.TabIndex = 2;
+        btnReadAll.Text = "Read All";
+        btnReadAll.Type = AntdUI.TTypeMini.Default;
         //
         // btnAddRow
         //
@@ -352,6 +385,8 @@ partial class PlcSettingUserControl
     private System.Windows.Forms.TableLayoutPanel tlpMap;
     private System.Windows.Forms.TableLayoutPanel tlpMapHeader;
     private System.Windows.Forms.Label lblMapHint;
+    private AntdUI.Button btnUnlock;
+    private AntdUI.Button btnReadAll;
     private AntdUI.Button btnAddRow;
     private AntdUI.Table tblPlcMap;
     private System.Windows.Forms.FlowLayoutPanel flpActions;

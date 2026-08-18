@@ -4,19 +4,18 @@ using InkjetOperator.Services;
 
 namespace InkjetOperator.Views;
 
-/// <summary>
-/// PLC settings sub-page (under the Setting hub's "PLC" tab).
-/// IP/Port are stored locally in Setting.config; the register map is stored in
-/// the backend table plc_register_maps and replaced wholesale via bulkSave.
-/// </summary>
 public partial class PlcSettingUserControl : UserControl
 {
     private static readonly Color StatusGray = Color.Gray;
     private static readonly Color StatusGreen = Color.FromArgb(76, 175, 80);
     private static readonly Color StatusRed = Color.FromArgb(220, 38, 38);
 
+    private static readonly HashSet<string> FixedAddresses = new()
+        { "0", "1", "2", "3", "5", "6", "7", "8", "10", "11", "12" };
+
     private readonly ApiClient _api;
     private List<PlcRow> _rows = new();
+    private bool _unlocked;
 
     public PlcSettingUserControl()
     {
@@ -25,10 +24,11 @@ public partial class PlcSettingUserControl : UserControl
         ConfigurePlcColumns();
         SetupEvents();
         LoadSettings();
+        ApplyLockState();
 
-        lblPlcStatus.ForeColor = StatusGray;   // unknown until checked
-        _ = CheckStatusAsync();                  // fire-and-forget status probe
-        _ = LoadTableAsync();                   // fire-and-forget table load
+        lblPlcStatus.ForeColor = StatusGray;
+        _ = CheckStatusAsync();
+        _ = LoadTableAsync();
     }
 
     private static string BuildBaseUrl()
@@ -43,14 +43,16 @@ public partial class PlcSettingUserControl : UserControl
     {
         tblPlcMap.Columns = new AntdUI.ColumnCollection
         {
-            new AntdUI.Column("AddressStart", "Addr Start", AntdUI.ColumnAlign.Center) { Editable = true, Width = "110" },
-            new AntdUI.Column("AddressStop", "Addr Stop", AntdUI.ColumnAlign.Center) { Editable = true, Width = "110" },
-            new AntdUI.Column("PlcStart", "PLC Start") { Editable = true, Width = "120" },
-            new AntdUI.Column("PlcStop", "PLC Stop") { Editable = true, Width = "120" },
-            new AntdUI.Column("ListName", "List Name") { Editable = true, Width = "170" },
-            new AntdUI.Column("DataType", "Data Type", AntdUI.ColumnAlign.Center) { Editable = true, Width = "100" },
-            new AntdUI.Column("Bit", "Bit", AntdUI.ColumnAlign.Center) { Editable = true, Width = "80" },
-            new AntdUI.Column("Op", "Action", AntdUI.ColumnAlign.Center) { Width = "90" },
+            new AntdUI.Column("AddressStart", "Addr Start", AntdUI.ColumnAlign.Center) { Editable = true, Width = "90" },
+            new AntdUI.Column("AddressStop", "Addr Stop", AntdUI.ColumnAlign.Center) { Editable = true, Width = "90" },
+            new AntdUI.Column("PlcStart", "PLC Start") { Editable = true, Width = "90" },
+            new AntdUI.Column("PlcStop", "PLC Stop") { Editable = true, Width = "90" },
+            new AntdUI.Column("ListName", "List Name") { Editable = true, Width = "150" },
+            new AntdUI.Column("DataType", "Data Type", AntdUI.ColumnAlign.Center) { Editable = true, Width = "80" },
+            new AntdUI.Column("Bit", "Bit", AntdUI.ColumnAlign.Center) { Editable = true, Width = "60" },
+            new AntdUI.Column("Value", "Value", AntdUI.ColumnAlign.Center) { Width = "80" },
+            new AntdUI.Column("WriteValue", "Write", AntdUI.ColumnAlign.Center) { Editable = true, Width = "80" },
+            new AntdUI.Column("Op", "Action", AntdUI.ColumnAlign.Center) { Width = "200" },
         };
     }
 
@@ -59,6 +61,8 @@ public partial class PlcSettingUserControl : UserControl
         btnSave.Click += BtnSave_Click;
         btnCancel.Click += BtnCancel_Click;
         btnAddRow.Click += BtnAddRow_Click;
+        btnReadAll.Click += async (_, _) => await ReadAllAsync();
+        btnUnlock.Click += (_, _) => ToggleLock();
         btnCheckStatus.Click += async (_, _) => await CheckStatusAsync();
         btnPlcName.Click += (_, _) => EditName();
 
@@ -84,6 +88,44 @@ public partial class PlcSettingUserControl : UserControl
         txtPlc001Port.Text = CustomSettingsManager.Read("PLC_PORT", "502");
         lblPlcBadge.Text = CustomSettingsManager.Read("PLC_NAME", "PLC-001");
         ResetColors();
+    }
+
+    // ── Lock / Unlock ──────────────────────────────────────
+
+    private void ToggleLock()
+    {
+        if (_unlocked)
+        {
+            _unlocked = false;
+            ApplyLockState();
+            return;
+        }
+
+        var password = CustomSettingsManager.Read("PLC_PASSWORD", "1234");
+        using var dlg = new InputDialog("Unlock", "กรุณาใส่รหัสผ่าน:", "");
+        if (dlg.ShowDialog(this) != DialogResult.OK) return;
+
+        if (dlg.Value != password)
+        {
+            MessageBox.Show("รหัสผ่านไม่ถูกต้อง", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        _unlocked = true;
+        ApplyLockState();
+    }
+
+    private void ApplyLockState()
+    {
+        btnUnlock.Text = _unlocked ? "🔓 Lock" : "🔒 Unlock";
+        btnAddRow.Enabled = _unlocked;
+        btnSave.Enabled = _unlocked;
+        btnCancel.Enabled = _unlocked;
+        btnPlcName.Enabled = _unlocked;
+        txtPlc001Ip.Enabled = _unlocked;
+        txtPlc001Port.Enabled = _unlocked;
+
+        tblPlcMap.EditMode = _unlocked ? AntdUI.TEditMode.Click : AntdUI.TEditMode.None;
     }
 
     // ── Status light ───────────────────────────────────────
@@ -135,9 +177,34 @@ public partial class PlcSettingUserControl : UserControl
             if (IsDisposed) return;
 
             _rows = rows.Select(FromDto).ToList();
-            RebindTable();
         }
         catch { /* backend not available — keep current rows */ }
+
+        if (_rows.Count == 0)
+            _rows = DefaultRows();
+
+        RebindTable();
+    }
+
+    private static List<PlcRow> DefaultRows()
+    {
+        var mk1 = CustomSettingsManager.Read("MK058_NAME", "MK-058");
+        var mk2 = CustomSettingsManager.Read("MK059_NAME", "MK-059");
+
+        return
+        [
+            new PlcRow { AddressStart = "0",  AddressStop = "0",  PlcStart = "D0",  PlcStop = "D0",  ListName = $"{mk1} Position",  DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
+            new PlcRow { AddressStart = "1",  AddressStop = "1",  PlcStart = "D1",  PlcStop = "D1",  ListName = $"{mk1} PostAct",   DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
+            new PlcRow { AddressStart = "2",  AddressStop = "2",  PlcStart = "D2",  PlcStop = "D2",  ListName = $"{mk1} Delay",     DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
+            new PlcRow { AddressStart = "3",  AddressStop = "3",  PlcStart = "D3",  PlcStop = "D3",  ListName = $"{mk1} Trigger",   DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
+            new PlcRow { AddressStart = "5",  AddressStop = "5",  PlcStart = "D5",  PlcStop = "D5",  ListName = $"{mk2} Position",  DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
+            new PlcRow { AddressStart = "6",  AddressStop = "6",  PlcStart = "D6",  PlcStop = "D6",  ListName = $"{mk2} PostAct",   DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
+            new PlcRow { AddressStart = "7",  AddressStop = "7",  PlcStart = "D7",  PlcStop = "D7",  ListName = $"{mk2} Delay",     DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
+            new PlcRow { AddressStart = "8",  AddressStop = "8",  PlcStart = "D8",  PlcStop = "D8",  ListName = $"{mk2} Trigger",   DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
+            new PlcRow { AddressStart = "10", AddressStop = "10", PlcStart = "D10", PlcStop = "D10", ListName = "Conveyor Speed 1",  DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
+            new PlcRow { AddressStart = "11", AddressStop = "11", PlcStart = "D11", PlcStop = "D11", ListName = "Conveyor Speed 2",  DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
+            new PlcRow { AddressStart = "12", AddressStop = "12", PlcStart = "D12", PlcStop = "D12", ListName = "Conveyor Speed 3",  DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
+        ];
     }
 
     private void RebindTable()
@@ -148,16 +215,66 @@ public partial class PlcSettingUserControl : UserControl
 
     private void BtnAddRow_Click(object? sender, EventArgs e)
     {
-        _rows.Add(new PlcRow { Op = NewDeleteButtons() });
+        _rows.Add(new PlcRow { Op = NewRowButtons() });
         RebindTable();
     }
 
-    private void TblPlcMap_CellButtonClick(object? sender, AntdUI.TableButtonEventArgs e)
+    private async void TblPlcMap_CellButtonClick(object? sender, AntdUI.TableButtonEventArgs e)
     {
-        if (e.Btn?.Id == "del" && e.Record is PlcRow row)
+        if (e.Record is not PlcRow row) return;
+
+        if (e.Btn?.Id == "del")
         {
+            if (row.IsFixed) return;
             _rows.Remove(row);
             RebindTable();
+            return;
+        }
+
+        var ip = txtPlc001Ip.Text.Trim();
+        if (!int.TryParse(txtPlc001Port.Text.Trim(), out int port) || string.IsNullOrEmpty(ip))
+        {
+            Warn("กรุณาตั้งค่า IP / Port ก่อน");
+            return;
+        }
+        if (!int.TryParse(row.AddressStart, out int addr))
+        {
+            Warn("Address ไม่ถูกต้อง");
+            return;
+        }
+
+        if (e.Btn?.Id == "read")
+        {
+            var (ok, values, error) = await ModbusTcpService.ReadHoldingRegistersAsync(ip, port, addr, 1);
+            if (ok && values.Length > 0)
+            {
+                row.Value = values[0].ToString();
+                RebindTable();
+            }
+            else
+            {
+                Warn($"Read D{addr} ล้มเหลว: {error}");
+            }
+        }
+        else if (e.Btn?.Id == "write")
+        {
+            if (!int.TryParse(row.WriteValue?.Trim(), out int writeVal))
+            {
+                Warn($"กรุณากรอกค่าที่ต้องการเขียนลง D{addr}");
+                return;
+            }
+
+            var (ok, error) = await ModbusTcpService.WriteSingleRegisterAsync(ip, port, addr, writeVal);
+            if (ok)
+            {
+                var (rOk, rVal, _) = await ModbusTcpService.ReadHoldingRegistersAsync(ip, port, addr, 1);
+                if (rOk && rVal.Length > 0) row.Value = rVal[0].ToString();
+                RebindTable();
+            }
+            else
+            {
+                Warn($"Write D{addr} ล้มเหลว: {error}");
+            }
         }
     }
 
@@ -165,6 +282,14 @@ public partial class PlcSettingUserControl : UserControl
     {
         if (e.Record is PlcRow row)
         {
+            if (e.Column?.Key == "WriteValue")
+            {
+                row.WriteValue = e.Value ?? "";
+                return true;
+            }
+
+            if (!_unlocked) return false;
+
             switch (e.Column?.Key)
             {
                 case "AddressStart": row.AddressStart = e.Value ?? ""; break;
@@ -177,6 +302,71 @@ public partial class PlcSettingUserControl : UserControl
             }
         }
         return true;
+    }
+
+    // ── Read All ──────────────────────────────────────────
+
+    private async Task ReadAllAsync()
+    {
+        var ip = txtPlc001Ip.Text.Trim();
+        if (!int.TryParse(txtPlc001Port.Text.Trim(), out int port) || string.IsNullOrEmpty(ip))
+        {
+            Warn("กรุณาตั้งค่า IP / Port ก่อน");
+            return;
+        }
+
+        if (_rows.Count == 0) return;
+
+        btnReadAll.Enabled = false;
+        btnReadAll.Text = "Reading...";
+
+        var addresses = _rows
+            .Select(r => int.TryParse(r.AddressStart, out int a) ? a : -1)
+            .Where(a => a >= 0)
+            .ToList();
+
+        if (addresses.Count == 0)
+        {
+            btnReadAll.Enabled = true;
+            btnReadAll.Text = "Read All";
+            return;
+        }
+
+        int minAddr = addresses.Min();
+        int maxAddr = addresses.Max();
+        int qty = maxAddr - minAddr + 1;
+
+        if (qty > 125)
+        {
+            Warn("ช่วง Address กว้างเกินไป (สูงสุด 125 registers)");
+            btnReadAll.Enabled = true;
+            btnReadAll.Text = "Read All";
+            return;
+        }
+
+        var (ok, values, error) = await ModbusTcpService.ReadHoldingRegistersAsync(ip, port, minAddr, qty);
+
+        if (IsDisposed) return;
+        btnReadAll.Enabled = true;
+        btnReadAll.Text = "Read All";
+
+        if (!ok)
+        {
+            Warn($"อ่านไม่สำเร็จ: {error}");
+            return;
+        }
+
+        foreach (var row in _rows)
+        {
+            if (int.TryParse(row.AddressStart, out int addr))
+            {
+                int idx = addr - minAddr;
+                if (idx >= 0 && idx < values.Length)
+                    row.Value = values[idx].ToString();
+            }
+        }
+
+        RebindTable();
     }
 
     // ── Validation ─────────────────────────────────────────
@@ -216,7 +406,6 @@ public partial class PlcSettingUserControl : UserControl
             }
         }
 
-        // Cross-row: address ranges must not overlap.
         for (int i = 0; i < _rows.Count; i++)
         {
             for (int j = i + 1; j < _rows.Count; j++)
@@ -250,7 +439,6 @@ public partial class PlcSettingUserControl : UserControl
         lblPlcStatus.ForeColor = StatusGray;
         _ = CheckStatusAsync();
 
-        // SortOrder follows the current row order.
         var dtos = _rows.Select((r, i) => ToDto(r, i)).ToList();
 
         btnSave.Enabled = false;
@@ -262,7 +450,7 @@ public partial class PlcSettingUserControl : UserControl
 
         if (ok)
         {
-            await LoadTableAsync();   // reload so new rows get their backend Id
+            await LoadTableAsync();
             if (IsDisposed) return;
             MessageBox.Show("บันทึกเรียบร้อย", "Settings", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -288,20 +476,36 @@ public partial class PlcSettingUserControl : UserControl
 
     // ── Mapping helpers ────────────────────────────────────
 
-    private static AntdUI.CellButton[] NewDeleteButtons() =>
-        new[] { new AntdUI.CellButton("del", "Delete", AntdUI.TTypeMini.Error) { Radius = 6 } };
+    private static AntdUI.CellButton[] NewFixedButtons() =>
+    [
+        new AntdUI.CellButton("read", "Read", AntdUI.TTypeMini.Default) { Radius = 6 },
+        new AntdUI.CellButton("write", "Write", AntdUI.TTypeMini.Primary) { Radius = 6 },
+    ];
 
-    private static PlcRow FromDto(PlcRegisterMap d) => new()
+    private static AntdUI.CellButton[] NewRowButtons() =>
+    [
+        new AntdUI.CellButton("read", "Read", AntdUI.TTypeMini.Default) { Radius = 6 },
+        new AntdUI.CellButton("write", "Write", AntdUI.TTypeMini.Primary) { Radius = 6 },
+        new AntdUI.CellButton("del", "Del", AntdUI.TTypeMini.Error) { Radius = 6 },
+    ];
+
+    private static PlcRow FromDto(PlcRegisterMap d)
     {
-        AddressStart = d.AddressStart.ToString(),
-        AddressStop = d.AddressStop.ToString(),
-        PlcStart = d.PlcStart ?? "",
-        PlcStop = d.PlcStop ?? "",
-        ListName = d.ListName ?? "",
-        DataType = string.IsNullOrEmpty(d.DataType) ? "Int" : d.DataType,
-        Bit = d.Bit.ToString(),
-        Op = NewDeleteButtons(),
-    };
+        var addr = d.AddressStart.ToString();
+        bool isFixed = FixedAddresses.Contains(addr);
+        return new PlcRow
+        {
+            AddressStart = addr,
+            AddressStop = d.AddressStop.ToString(),
+            PlcStart = d.PlcStart ?? "",
+            PlcStop = d.PlcStop ?? "",
+            ListName = d.ListName ?? "",
+            DataType = string.IsNullOrEmpty(d.DataType) ? "Int" : d.DataType,
+            Bit = d.Bit.ToString(),
+            IsFixed = isFixed,
+            Op = isFixed ? NewFixedButtons() : NewRowButtons(),
+        };
+    }
 
     private static PlcRegisterMap ToDto(PlcRow r, int sortOrder) => new()
     {
@@ -320,7 +524,6 @@ public partial class PlcSettingUserControl : UserControl
     private static int ParseIntOr(string? s, int fallback) => int.TryParse((s ?? "").Trim(), out int v) ? v : fallback;
 }
 
-/// <summary>Row view-model bound to the AntdUI.Table (string cells + delete button).</summary>
 internal class PlcRow
 {
     public string AddressStart { get; set; } = "0";
@@ -330,5 +533,8 @@ internal class PlcRow
     public string ListName { get; set; } = "";
     public string DataType { get; set; } = "Int";
     public string Bit { get; set; } = "32";
+    public string Value { get; set; } = "-";
+    public string WriteValue { get; set; } = "";
+    public bool IsFixed { get; set; }
     public AntdUI.CellButton[] Op { get; set; } = Array.Empty<AntdUI.CellButton>();
 }
