@@ -1,4 +1,4 @@
-using InkjetOperator.Services;
+﻿using InkjetOperator.Services;
 
 namespace InkjetOperator.Views;
 
@@ -19,13 +19,13 @@ public partial class SettingUserControl : UserControl
         var raw = CustomSettingsManager.Read("MENU_LEVEL", "1");
         int.TryParse(raw, out var level);
 
-        var allButtons = new[] { btnDatabaseSetting, btnDbPathSetting, btnDB3Setting, btnPLCSetting };
+        var allButtons = new[] { btnDatabaseSetting, btnDbPathSetting, btnDB3Setting, btnPLCSetting, btnClampSetting };
 
         bool[] visible = level switch
         {
-            0 => [false, true, true, false],
-            1 => [true, false, false, true],
-            _ => [true, true, true, true],
+            0 => [false, true, true, false, false],
+            1 => [true, false, false, true, true],
+            _ => [true, true, true, true, true],
         };
 
         int row = 0;
@@ -106,6 +106,10 @@ public partial class SettingUserControl : UserControl
                 tasks.Add(ink.CheckAllStatusAsync());
             if (_subPages.TryGetValue(nameof(btnPLCSetting), out var plcPage) && plcPage is PlcSettingUserControl plc)
                 tasks.Add(plc.CheckStatusAsync());
+
+            EnsureSubPage(nameof(btnClampSetting));
+            if (_subPages.TryGetValue(nameof(btnClampSetting), out var clampPage) && clampPage is ClampSettingUserControl clamp)
+                tasks.Add(clamp.CheckStatusAsync());
         }
 
         await Task.WhenAll(tasks);
@@ -131,6 +135,7 @@ public partial class SettingUserControl : UserControl
         nameof(btnDbPathSetting) => new DatabaseSettingUserControl(),
         nameof(btnDB3Setting) => new BackendSettingUserControl(),
         nameof(btnPLCSetting) => new PlcSettingUserControl(),
+        nameof(btnClampSetting) => new ClampSettingUserControl(),
         _ => null,
     };
 

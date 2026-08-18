@@ -1,4 +1,4 @@
-namespace InkjetOperator.Views;
+﻿namespace InkjetOperator.Views;
 
 partial class SettingUserControl
 {
@@ -34,6 +34,7 @@ partial class SettingUserControl
         btnDbPathSetting = new AntdUI.Button();
         btnDB3Setting = new AntdUI.Button();
         btnPLCSetting = new AntdUI.Button();
+        btnClampSetting = new AntdUI.Button();
         pnlContent = new AntdUI.Panel();
         pnlContentArea = new Panel();
         tlpSettingRoot.SuspendLayout();
@@ -83,16 +84,18 @@ partial class SettingUserControl
         tlpSidebar.Controls.Add(btnDbPathSetting, 0, 1);
         tlpSidebar.Controls.Add(btnDB3Setting, 0, 2);
         tlpSidebar.Controls.Add(btnPLCSetting, 0, 3);
+        tlpSidebar.Controls.Add(btnClampSetting, 0, 4);
         tlpSidebar.Dock = DockStyle.Top;
         tlpSidebar.Location = new Point(3, 3);
         tlpSidebar.Margin = new Padding(0);
         tlpSidebar.Name = "tlpSidebar";
-        tlpSidebar.RowCount = 4;
+        tlpSidebar.RowCount = 5;
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
-        tlpSidebar.Size = new Size(398, 336);
+        tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
+        tlpSidebar.Size = new Size(398, 420);
         tlpSidebar.TabIndex = 0;
         // 
         // btnDatabaseSetting
@@ -146,6 +149,19 @@ partial class SettingUserControl
         btnPLCSetting.Size = new Size(398, 84);
         btnPLCSetting.TabIndex = 3;
         btnPLCSetting.Text = "PLC Setting";
+        //
+        // btnClampSetting
+        //
+        btnClampSetting.Dock = DockStyle.Fill;
+        btnClampSetting.Font = new Font("Segoe UI", 12F);
+        btnClampSetting.ForeColor = Color.FromArgb(51, 51, 51);
+        btnClampSetting.Location = new Point(0, 336);
+        btnClampSetting.Margin = new Padding(0);
+        btnClampSetting.Name = "btnClampSetting";
+        btnClampSetting.Radius = 0;
+        btnClampSetting.Size = new Size(398, 84);
+        btnClampSetting.TabIndex = 4;
+        btnClampSetting.Text = "Clamp Setting";
         // 
         // pnlContent
         // 
@@ -198,6 +214,7 @@ partial class SettingUserControl
     private AntdUI.Button btnDbPathSetting;
     private AntdUI.Button btnDB3Setting;
     private AntdUI.Button btnPLCSetting;
+    private AntdUI.Button btnClampSetting;
     private AntdUI.Panel pnlContent;
     private System.Windows.Forms.Panel pnlContentArea;
 }
