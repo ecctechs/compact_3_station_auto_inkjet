@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using System.Text.Json;
 using InkjetOperator.Models;
 
@@ -82,6 +82,42 @@ public class ApiClient
         catch (Exception ex)
         {
             return (false, ex.Message);
+        }
+    }
+
+    /// <summary>บันทึกระยะแคลมป์ของงาน — job เดิมเรียกซ้ำจะทับแถวเดิม ไม่สร้างซ้ำ</summary>
+    public async Task<(bool ok, string? error)> CreateIaiAsync(IaiCreateRequest request)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync("/iai/create", request, JsonOptions);
+            var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+                return (false, $"[{(int)response.StatusCode}] {body}");
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
+    }
+
+    /// <summary>อ่านระยะแคลมป์ของงานจาก backend</summary>
+    public async Task<(IaiClampSettingDto? result, string? error)> GetIaiByJobAsync(int jobId)
+    {
+        try
+        {
+            var response = await _http.GetAsync($"/iai/getByJob/{jobId}");
+            var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+                return (null, $"[{(int)response.StatusCode}] {body}");
+
+            var wrapper = JsonSerializer.Deserialize<ApiResponse<IaiClampSettingDto>>(body, JsonOptions);
+            return (wrapper?.Data, null);
+        }
+        catch (Exception ex)
+        {
+            return (null, ex.Message);
         }
     }
 

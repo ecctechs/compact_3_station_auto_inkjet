@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace InkjetOperator.Models;
 
@@ -124,6 +124,49 @@ public class CreateUvJobRequest
 
     [JsonPropertyName("items")]
     public List<UvJobItem> Items { get; set; } = new();
+}
+
+/// <summary>
+/// ระยะแคลมป์ (IAI) ที่งานหนึ่งใช้ — 1 job = 1 แถว เก็บทั้งฝั่ง Plate และ Shim
+/// ค่าที่หาไม่เจอส่ง null มาได้ ระบบเก็บ null ไว้เพื่อบอกว่า "หาแล้วไม่มี"
+/// </summary>
+public class IaiCreateRequest
+{
+    [JsonPropertyName("print_jobs_id")]
+    public int PrintJobsId { get; set; }
+
+    [JsonPropertyName("m1_program_name")]
+    public string? M1ProgramName { get; set; }
+
+    [JsonPropertyName("iaip")]
+    public int? Iaip { get; set; }
+
+    [JsonPropertyName("m2_program_name")]
+    public string? M2ProgramName { get; set; }
+
+    [JsonPropertyName("iai")]
+    public int? Iai { get; set; }
+}
+
+public class IaiClampSettingDto
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("print_jobs_id")]
+    public int? PrintJobsId { get; set; }
+
+    [JsonPropertyName("m1_program_name")]
+    public string? M1ProgramName { get; set; }
+
+    [JsonPropertyName("iaip")]
+    public int? Iaip { get; set; }
+
+    [JsonPropertyName("m2_program_name")]
+    public string? M2ProgramName { get; set; }
+
+    [JsonPropertyName("iai")]
+    public int? Iai { get; set; }
 }
 
 public class UvJobItem

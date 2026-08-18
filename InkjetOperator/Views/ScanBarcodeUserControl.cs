@@ -176,6 +176,9 @@ public partial class ScanBarcodeUserControl : UserControl
             ShowWarning($"ไม่พบข้อมูลใน plan_routing สำหรับ barcode: {barcode}\nJob ถูกสร้างแล้วแต่ไม่มีข้อมูล marking_method");
         }
 
+        // Step 2E: บันทึกระยะแคลมป์ (IAI) ของงานนี้ลง backend
+        await SyncIaiAsync(api, job.Id, uvItems);
+
         MessageBox.Show(
             $"สร้าง Job #{job.Id} สำเร็จ",
             "สำเร็จ",
@@ -183,6 +186,55 @@ public partial class ScanBarcodeUserControl : UserControl
             MessageBoxIcon.Information);
 
         ClearForm();
+    }
+
+    /// <summary>
+    /// บันทึกระยะแคลมป์ (IAI) ที่งานนี้ใช้ลง backend — 1 job = 1 แถว
+    ///
+    /// UV1 = Plate (ชื่อขึ้นต้น "P-") → iaip · UV2 = Shim → iai
+    /// หาค่าไม่เจอก็ยังส่งขึ้นไป เก็บเป็น null เพื่อบอกว่า "หาแล้วไม่มี"
+    /// ต่างจาก "ยังไม่เคยหา" ซึ่งคือไม่มีแถวเลย
+    ///
+    /// เป็นขั้นตอนเสริม ล้มเหลวก็ไม่กระทบการ register — job สร้างครบไปแล้ว
+    /// </summary>
+    private static async Task SyncIaiAsync(ApiClient api, int jobId, List<UvJobItem> uvItems)
+    {
+        var clampDbPath = CustomSettingsManager.Read("CLAMP_DB_PATH", "");
+        bool canRead = !string.IsNullOrWhiteSpace(clampDbPath) && File.Exists(clampDbPath);
+
+        var request = new IaiCreateRequest { PrintJobsId = jobId };
+
+        foreach (var item in uvItems)
+        {
+            var program = (item.ProgramName ?? "").Trim();
+            if (program.Length == 0) continue;
+
+            // แยกช่องด้วย prefix ของชื่อโปรแกรม กฎเดียวกับ backend และระบบเดิม
+            bool isPlate = program.StartsWith("P-", StringComparison.OrdinalIgnoreCase);
+
+            // ไม่มี path ก็ยังเก็บชื่อโปรแกรมไว้ ค่าเป็น null
+            int? value = canRead
+                ? ClampService.Lookup(clampDbPath, program) is { Found: true } hit
+                    ? hit.ValueMm
+                    : null
+                : null;
+
+            if (isPlate)
+            {
+                request.M1ProgramName = program;
+                request.Iaip = value;
+            }
+            else
+            {
+                request.M2ProgramName = program;
+                request.Iai = value;
+            }
+        }
+
+        // ไม่มีชื่อโปรแกรมเลย = งานนี้ไม่เกี่ยวกับ UV → ไม่ต้องสร้างแถว
+        if (request.M1ProgramName == null && request.M2ProgramName == null) return;
+
+        await api.CreateIaiAsync(request);
     }
 
     private void BtnCancel_Click(object? sender, EventArgs e)
