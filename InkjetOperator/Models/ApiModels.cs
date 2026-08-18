@@ -162,11 +162,23 @@ public class IaiClampSettingDto
     [JsonPropertyName("iaip")]
     public int? Iaip { get; set; }
 
+    [JsonPropertyName("iaip_z1")]
+    public int? IaipZ1 { get; set; }
+
+    [JsonPropertyName("iaip_z2")]
+    public int? IaipZ2 { get; set; }
+
     [JsonPropertyName("m2_program_name")]
     public string? M2ProgramName { get; set; }
 
     [JsonPropertyName("iai")]
     public int? Iai { get; set; }
+
+    [JsonPropertyName("iai_z1")]
+    public int? IaiZ1 { get; set; }
+
+    [JsonPropertyName("iai_z2")]
+    public int? IaiZ2 { get; set; }
 }
 
 public class UvJobItem

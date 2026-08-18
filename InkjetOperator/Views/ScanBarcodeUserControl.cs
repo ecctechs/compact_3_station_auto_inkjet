@@ -106,6 +106,10 @@ public partial class ScanBarcodeUserControl : UserControl
             return;
         }
 
+        // ยังไม่ได้เลือก mydatabase.db3 → ระยะแคลมป์จะถูกเก็บเป็นค่าว่าง
+        // เตือนแล้วให้เลือกเองว่าจะไปตั้งค่าก่อน หรือลงทะเบียนไปเลย
+        if (!ConfirmClampDatabase()) return;
+
         // Step 1: Query SQLite
         var patternTemplate = sqlite.GetPatternDetail(barcode, 0);
         if (patternTemplate == null)
@@ -186,6 +190,33 @@ public partial class ScanBarcodeUserControl : UserControl
             MessageBoxIcon.Information);
 
         ClearForm();
+    }
+
+    /// <summary>
+    /// เตือนเมื่อยังไม่ได้เลือก mydatabase.db3 — ระยะแคลมป์จะถูกเก็บเป็นค่าว่าง
+    /// ไม่บล็อกการลงทะเบียน เพราะงานที่ไม่ผ่าน UV ก็ไม่ต้องใช้ค่านี้
+    /// คืน false = ผู้ใช้ขอไปตั้งค่าก่อน
+    /// </summary>
+    private static bool ConfirmClampDatabase()
+    {
+        var path = CustomSettingsManager.Read("CLAMP_DB_PATH", "");
+        bool ready = !string.IsNullOrWhiteSpace(path) && File.Exists(path);
+        if (ready) return true;
+
+        var reason = string.IsNullOrWhiteSpace(path)
+            ? "ยังไม่ได้เลือกไฟล์ mydatabase.db3"
+            : $"ไม่พบไฟล์ที่ตั้งไว้:\n{path}";
+
+        var answer = MessageBox.Show(
+            $"{reason}\n\n" +
+            "ระยะแคลมป์ (IAI) ของงานนี้จะถูกบันทึกเป็นค่าว่าง\n" +
+            "ตั้งค่าได้ที่ Setting → Clamp Setting → Browse\n\n" +
+            "ต้องการลงทะเบียนต่อไปหรือไม่?",
+            "ยังไม่ได้ตั้งค่า Clamp Database",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning);
+
+        return answer == DialogResult.Yes;
     }
 
     /// <summary>

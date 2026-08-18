@@ -115,6 +115,8 @@ public partial class OrderDetailUserControl : UserControl
         FillMkSection(_pattern);
         FillConveyor(_pattern);
         FillUvSection(resolved.UvJobData);
+        ClearIaiFields();
+        _ = LoadIaiAsync(resolved.Job.Id);
         _ = CheckConnectionsAsync();
     }
 
@@ -824,6 +826,40 @@ public partial class OrderDetailUserControl : UserControl
 
         FillUv(uv1, txtUv1Program, txtUv1ErpMfg, tblUv1Texts);
         FillUv(uv2, txtUv2Program, txtUv2ErpMfg, tblUv2Texts);
+    }
+
+    /// <summary>
+    /// โหลดระยะแคลมป์ของงานจาก backend มาโชว์ใต้ Program Name
+    /// UV1 = Plate → iaip/z1/z2 · UV2 = Shim → iai/z1/z2
+    /// ค่า null โชว์ "-" เพื่อให้เห็นว่ามีช่องนี้อยู่แต่ยังไม่ได้ setup
+    /// </summary>
+    private async Task LoadIaiAsync(int jobId)
+    {
+        if (_api == null || jobId <= 0) return;
+
+        var (iai, _) = await _api.GetIaiByJobAsync(jobId);
+        if (IsDisposed) return;
+
+        // ไม่มีข้อมูล (404) → คงค่า "-" ที่ ClearIaiFields ตั้งไว้
+        if (iai == null) return;
+
+        txtUv1Iai.Text = Number(iai.Iaip);
+        txtUv1IaiZ1.Text = Number(iai.IaipZ1);
+        txtUv1IaiZ2.Text = Number(iai.IaipZ2);
+
+        txtUv2Iai.Text = Number(iai.Iai);
+        txtUv2IaiZ1.Text = Number(iai.IaiZ1);
+        txtUv2IaiZ2.Text = Number(iai.IaiZ2);
+    }
+
+    private void ClearIaiFields()
+    {
+        foreach (var box in new[]
+                 {
+                     txtUv1Iai, txtUv1IaiZ1, txtUv1IaiZ2,
+                     txtUv2Iai, txtUv2IaiZ1, txtUv2IaiZ2,
+                 })
+            box.Text = Dash;
     }
 
     private static void FillUv(

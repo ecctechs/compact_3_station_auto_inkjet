@@ -21,6 +21,10 @@ partial class DatabaseSettingUserControl
         txtDbPath = new AntdUI.Input();
         btnBrowse = new AntdUI.Button();
         lblStatus = new System.Windows.Forms.Label();
+        lblClampPathLabel = new System.Windows.Forms.Label();
+        txtClampPath = new AntdUI.Input();
+        btnBrowseClamp = new AntdUI.Button();
+        lblClampStatus = new System.Windows.Forms.Label();
         flpActions = new System.Windows.Forms.FlowLayoutPanel();
         btnSave = new AntdUI.Button();
         btnCancel = new AntdUI.Button();
@@ -73,9 +77,15 @@ partial class DatabaseSettingUserControl
         tlpForm.Controls.Add(txtDbPath, 1, 0);
         tlpForm.Controls.Add(btnBrowse, 3, 0);
         tlpForm.Controls.Add(lblStatus, 1, 1);
+        tlpForm.Controls.Add(lblClampPathLabel, 0, 2);
+        tlpForm.Controls.Add(txtClampPath, 1, 2);
+        tlpForm.Controls.Add(btnBrowseClamp, 3, 2);
+        tlpForm.Controls.Add(lblClampStatus, 1, 3);
         tlpForm.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpForm.Name = "tlpForm";
-        tlpForm.RowCount = 3;
+        tlpForm.RowCount = 5;
+        tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
         tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
         tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
         tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
@@ -125,9 +135,57 @@ partial class DatabaseSettingUserControl
         lblStatus.ForeColor = System.Drawing.Color.Gray;
         lblStatus.Name = "lblStatus";
         tlpForm.SetColumnSpan(lblStatus, 3);
+        tlpForm.SetColumnSpan(lblClampStatus, 3);
         lblStatus.Padding = new System.Windows.Forms.Padding(4, 4, 0, 0);
         lblStatus.TabIndex = 3;
         lblStatus.Text = "";
+        //
+        // lblClampPathLabel
+        //
+        lblClampPathLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblClampPathLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblClampPathLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblClampPathLabel.Name = "lblClampPathLabel";
+        lblClampPathLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
+        lblClampPathLabel.TabIndex = 4;
+        lblClampPathLabel.Text = "Clamp Database :";
+        lblClampPathLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        //
+        // txtClampPath
+        //
+        txtClampPath.Dock = System.Windows.Forms.DockStyle.Fill;
+        txtClampPath.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtClampPath.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtClampPath.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
+        txtClampPath.Name = "txtClampPath";
+        txtClampPath.PlaceholderText = "Select mydatabase.db3 file...";
+        txtClampPath.Radius = 4;
+        txtClampPath.ReadOnly = true;
+        txtClampPath.TabIndex = 5;
+        //
+        // btnBrowseClamp
+        //
+        btnBrowseClamp.Anchor = System.Windows.Forms.AnchorStyles.Left;
+        btnBrowseClamp.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnBrowseClamp.BorderWidth = 2F;
+        btnBrowseClamp.Font = new System.Drawing.Font("Segoe UI", 9F);
+        btnBrowseClamp.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnBrowseClamp.Name = "btnBrowseClamp";
+        btnBrowseClamp.Radius = 6;
+        btnBrowseClamp.Size = new System.Drawing.Size(84, 34);
+        btnBrowseClamp.TabIndex = 6;
+        btnBrowseClamp.Text = "Browse...";
+        btnBrowseClamp.Type = AntdUI.TTypeMini.Default;
+        //
+        // lblClampStatus
+        //
+        lblClampStatus.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblClampStatus.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblClampStatus.ForeColor = System.Drawing.Color.Gray;
+        lblClampStatus.Name = "lblClampStatus";
+        lblClampStatus.Padding = new System.Windows.Forms.Padding(4, 4, 0, 0);
+        lblClampStatus.TabIndex = 7;
+        lblClampStatus.Text = "";
         //
         // flpActions
         //
@@ -206,6 +264,10 @@ partial class DatabaseSettingUserControl
     private AntdUI.Input txtDbPath;
     private AntdUI.Button btnBrowse;
     private System.Windows.Forms.Label lblStatus;
+    private System.Windows.Forms.Label lblClampPathLabel;
+    private AntdUI.Input txtClampPath;
+    private AntdUI.Button btnBrowseClamp;
+    private System.Windows.Forms.Label lblClampStatus;
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnSave;
     private AntdUI.Button btnCancel;

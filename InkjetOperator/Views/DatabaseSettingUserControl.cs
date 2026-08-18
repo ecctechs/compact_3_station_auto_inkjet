@@ -11,6 +11,7 @@ public partial class DatabaseSettingUserControl : UserControl
         LoadData();
 
         btnBrowse.Click += (_, _) => BrowseFile();
+        btnBrowseClamp.Click += (_, _) => BrowseClampFile();
         btnCheckStatus.Click += async (_, _) => await CheckStatusAsync();
         btnSave.Click += BtnSave_Click;
         btnCancel.Click += (_, _) => LoadData();
@@ -21,6 +22,10 @@ public partial class DatabaseSettingUserControl : UserControl
         txtDbPath.Text = CustomSettingsManager.Read("DB_PATH");
         UpdateStatus(txtDbPath.Text);
         txtDbPath.BackColor = Color.White;
+
+        txtClampPath.Text = CustomSettingsManager.Read("CLAMP_DB_PATH");
+        UpdateClampStatus(txtClampPath.Text);
+        txtClampPath.BackColor = Color.White;
     }
 
     public async Task CheckStatusAsync()
@@ -29,7 +34,12 @@ public partial class DatabaseSettingUserControl : UserControl
         try
         {
             var path = CustomSettingsManager.Read("DB_PATH");
-            await Task.Run(() => UpdateStatus(path));
+            var clampPath = CustomSettingsManager.Read("CLAMP_DB_PATH");
+            await Task.Run(() =>
+            {
+                UpdateStatus(path);
+                UpdateClampStatus(clampPath);
+            });
         }
         finally { btnCheckStatus.Enabled = true; }
     }
@@ -63,6 +73,56 @@ public partial class DatabaseSettingUserControl : UserControl
         }
 
         if (lblStatus.InvokeRequired) lblStatus.Invoke(Apply); else Apply();
+    }
+
+    /// <summary>
+    /// สถานะของ mydatabase.db3 — ต้องมีตาราง MainTable ถึงจะอ่านระยะแคลมป์ได้
+    /// ไม่ตั้งค่าก็ไม่ถือว่าผิด (งานที่ไม่ผ่าน UV ไม่ต้องใช้) จึงขึ้นเป็นข้อความเทาเฉยๆ
+    /// </summary>
+    private void UpdateClampStatus(string path)
+    {
+        bool exists = !string.IsNullOrWhiteSpace(path) && File.Exists(path);
+        bool ok = exists && HasTable(path, "MainTable");
+
+        void Apply()
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                lblClampStatus.Text = "ยังไม่ได้ตั้งค่า — ระยะแคลมป์ (IAI) จะถูกบันทึกเป็นค่าว่าง";
+                lblClampStatus.ForeColor = Color.Gray;
+            }
+            else if (ok)
+            {
+                lblClampStatus.Text = "✓  พร้อมใช้งาน";
+                lblClampStatus.ForeColor = Color.FromArgb(21, 128, 61);
+            }
+            else
+            {
+                lblClampStatus.Text = exists ? "✗  ไม่มีตาราง 'MainTable'" : "✗  ไม่พบไฟล์";
+                lblClampStatus.ForeColor = Color.FromArgb(220, 38, 38);
+            }
+        }
+
+        if (lblClampStatus.InvokeRequired) lblClampStatus.Invoke(Apply); else Apply();
+    }
+
+    private void BrowseClampFile()
+    {
+        using var dlg = new OpenFileDialog
+        {
+            Filter = "SQLite Database (*.db3)|*.db3|All Files (*.*)|*.*",
+            Title = "Select mydatabase.db3"
+        };
+
+        var current = txtClampPath.Text.Trim();
+        if (!string.IsNullOrEmpty(current) && File.Exists(current))
+            dlg.InitialDirectory = Path.GetDirectoryName(current);
+
+        if (dlg.ShowDialog(this) != DialogResult.OK) return;
+
+        txtClampPath.Text = dlg.FileName;
+        txtClampPath.BackColor = Color.LightYellow;
+        UpdateClampStatus(dlg.FileName);
     }
 
     private void BrowseFile()
@@ -109,21 +169,48 @@ public partial class DatabaseSettingUserControl : UserControl
             return;
         }
 
+        // Clamp DB ไม่บังคับ — ว่างไว้ได้ แต่ถ้าใส่มาต้องใช้ได้จริง
+        var clampPath = txtClampPath.Text.Trim();
+        if (clampPath.Length > 0)
+        {
+            if (!File.Exists(clampPath))
+            {
+                MessageBox.Show($"ไม่พบไฟล์ Clamp Database:\n{clampPath}",
+                    "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!HasTable(clampPath, "MainTable"))
+            {
+                MessageBox.Show("ไฟล์ Clamp Database ไม่มีตาราง 'MainTable'",
+                    "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+        }
+
         CustomSettingsManager.Write("DB_PATH", path);
+        CustomSettingsManager.Write("CLAMP_DB_PATH", clampPath);
+
         txtDbPath.BackColor = Color.White;
+        txtClampPath.BackColor = Color.White;
         UpdateStatus(path);
+        UpdateClampStatus(clampPath);
+
         MessageBox.Show("บันทึกเรียบร้อย", "Settings",
             MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
-    private static bool HasInkjetDataTable(string dbPath)
+    private static bool HasInkjetDataTable(string dbPath) => HasTable(dbPath, "inkjet_data");
+
+    private static bool HasTable(string dbPath, string tableName)
     {
         try
         {
             using var conn = new SqliteConnection($"Data Source={dbPath};Mode=ReadOnly");
             conn.Open();
             using var cmd = conn.CreateCommand();
-            cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='inkjet_data'";
+            cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name=@t";
+            cmd.Parameters.AddWithValue("@t", tableName);
             return cmd.ExecuteScalar() != null;
         }
         catch { return false; }
