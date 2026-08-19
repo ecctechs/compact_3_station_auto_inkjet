@@ -48,18 +48,18 @@ partial class SettingUserControl
         // 
         tlpSettingRoot.BackColor = Color.FromArgb(91, 155, 213);
         tlpSettingRoot.ColumnCount = 2;
-        tlpSettingRoot.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 420F));
+        tlpSettingRoot.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 280F));
         tlpSettingRoot.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         tlpSettingRoot.Controls.Add(pnlSidebar, 0, 0);
         tlpSettingRoot.Controls.Add(pnlContent, 1, 0);
         tlpSettingRoot.Dock = DockStyle.Fill;
         tlpSettingRoot.Location = new Point(0, 0);
-        tlpSettingRoot.Margin = new Padding(4);
+        tlpSettingRoot.Margin = new Padding(3);
         tlpSettingRoot.Name = "tlpSettingRoot";
-        tlpSettingRoot.Padding = new Padding(48);
+        tlpSettingRoot.Padding = new Padding(32);
         tlpSettingRoot.RowCount = 1;
         tlpSettingRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        tlpSettingRoot.Size = new Size(1650, 1290);
+        tlpSettingRoot.Size = new Size(1100, 860);
         tlpSettingRoot.TabIndex = 0;
         // 
         // pnlSidebar
@@ -69,11 +69,11 @@ partial class SettingUserControl
         pnlSidebar.BorderWidth = 2F;
         pnlSidebar.Controls.Add(tlpSidebar);
         pnlSidebar.Dock = DockStyle.Fill;
-        pnlSidebar.Location = new Point(52, 52);
-        pnlSidebar.Margin = new Padding(4, 4, 12, 4);
+        pnlSidebar.Location = new Point(35, 35);
+        pnlSidebar.Margin = new Padding(3, 3, 8, 3);
         pnlSidebar.Name = "pnlSidebar";
         pnlSidebar.Radius = 12;
-        pnlSidebar.Size = new Size(404, 1186);
+        pnlSidebar.Size = new Size(269, 791);
         pnlSidebar.TabIndex = 0;
         // 
         // tlpSidebar
@@ -88,17 +88,17 @@ partial class SettingUserControl
         tlpSidebar.Controls.Add(btnClampSetting, 0, 4);
         tlpSidebar.Controls.Add(btnUvTest, 0, 5);
         tlpSidebar.Dock = DockStyle.Top;
-        tlpSidebar.Location = new Point(3, 3);
+        tlpSidebar.Location = new Point(2, 2);
         tlpSidebar.Margin = new Padding(0);
         tlpSidebar.Name = "tlpSidebar";
         tlpSidebar.RowCount = 6;
-        tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
-        tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
-        tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
-        tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
-        tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
-        tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
-        tlpSidebar.Size = new Size(398, 504);
+        tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
+        tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
+        tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
+        tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
+        tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
+        tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
+        tlpSidebar.Size = new Size(265, 336);
         tlpSidebar.TabIndex = 0;
         // 
         // btnDatabaseSetting
@@ -110,7 +110,7 @@ partial class SettingUserControl
         btnDatabaseSetting.Margin = new Padding(0);
         btnDatabaseSetting.Name = "btnDatabaseSetting";
         btnDatabaseSetting.Radius = 0;
-        btnDatabaseSetting.Size = new Size(398, 84);
+        btnDatabaseSetting.Size = new Size(265, 56);
         btnDatabaseSetting.TabIndex = 0;
         btnDatabaseSetting.Text = "Printer Setting";
         //
@@ -119,11 +119,11 @@ partial class SettingUserControl
         btnDbPathSetting.Dock = DockStyle.Fill;
         btnDbPathSetting.Font = new Font("Segoe UI", 12F);
         btnDbPathSetting.ForeColor = Color.FromArgb(51, 51, 51);
-        btnDbPathSetting.Location = new Point(0, 84);
+        btnDbPathSetting.Location = new Point(0, 56);
         btnDbPathSetting.Margin = new Padding(0);
         btnDbPathSetting.Name = "btnDbPathSetting";
         btnDbPathSetting.Radius = 0;
-        btnDbPathSetting.Size = new Size(398, 84);
+        btnDbPathSetting.Size = new Size(265, 56);
         btnDbPathSetting.TabIndex = 1;
         btnDbPathSetting.Text = "Database Setting";
         //
@@ -132,11 +132,11 @@ partial class SettingUserControl
         btnDB3Setting.Dock = DockStyle.Fill;
         btnDB3Setting.Font = new Font("Segoe UI", 12F);
         btnDB3Setting.ForeColor = Color.FromArgb(51, 51, 51);
-        btnDB3Setting.Location = new Point(0, 168);
+        btnDB3Setting.Location = new Point(0, 112);
         btnDB3Setting.Margin = new Padding(0);
         btnDB3Setting.Name = "btnDB3Setting";
         btnDB3Setting.Radius = 0;
-        btnDB3Setting.Size = new Size(398, 84);
+        btnDB3Setting.Size = new Size(265, 56);
         btnDB3Setting.TabIndex = 2;
         btnDB3Setting.Text = "Backend DB Setting";
         // 
@@ -145,11 +145,11 @@ partial class SettingUserControl
         btnPLCSetting.Dock = DockStyle.Fill;
         btnPLCSetting.Font = new Font("Segoe UI", 12F);
         btnPLCSetting.ForeColor = Color.FromArgb(51, 51, 51);
-        btnPLCSetting.Location = new Point(0, 252);
+        btnPLCSetting.Location = new Point(0, 168);
         btnPLCSetting.Margin = new Padding(0);
         btnPLCSetting.Name = "btnPLCSetting";
         btnPLCSetting.Radius = 0;
-        btnPLCSetting.Size = new Size(398, 84);
+        btnPLCSetting.Size = new Size(265, 56);
         btnPLCSetting.TabIndex = 3;
         btnPLCSetting.Text = "PLC Setting";
         //
@@ -158,11 +158,11 @@ partial class SettingUserControl
         btnClampSetting.Dock = DockStyle.Fill;
         btnClampSetting.Font = new Font("Segoe UI", 12F);
         btnClampSetting.ForeColor = Color.FromArgb(51, 51, 51);
-        btnClampSetting.Location = new Point(0, 336);
+        btnClampSetting.Location = new Point(0, 224);
         btnClampSetting.Margin = new Padding(0);
         btnClampSetting.Name = "btnClampSetting";
         btnClampSetting.Radius = 0;
-        btnClampSetting.Size = new Size(398, 84);
+        btnClampSetting.Size = new Size(265, 56);
         btnClampSetting.TabIndex = 4;
         btnClampSetting.Text = "Clamp Setting";
         //
@@ -171,11 +171,11 @@ partial class SettingUserControl
         btnUvTest.Dock = DockStyle.Fill;
         btnUvTest.Font = new Font("Segoe UI", 12F);
         btnUvTest.ForeColor = Color.FromArgb(51, 51, 51);
-        btnUvTest.Location = new Point(0, 420);
+        btnUvTest.Location = new Point(0, 280);
         btnUvTest.Margin = new Padding(0);
         btnUvTest.Name = "btnUvTest";
         btnUvTest.Radius = 0;
-        btnUvTest.Size = new Size(398, 84);
+        btnUvTest.Size = new Size(265, 56);
         btnUvTest.TabIndex = 5;
         btnUvTest.Text = "UV Test";
         // 
@@ -186,12 +186,12 @@ partial class SettingUserControl
         pnlContent.BorderWidth = 2F;
         pnlContent.Controls.Add(pnlContentArea);
         pnlContent.Dock = DockStyle.Fill;
-        pnlContent.Location = new Point(472, 52);
-        pnlContent.Margin = new Padding(4);
+        pnlContent.Location = new Point(315, 35);
+        pnlContent.Margin = new Padding(3);
         pnlContent.Name = "pnlContent";
-        pnlContent.Padding = new Padding(12);
+        pnlContent.Padding = new Padding(8);
         pnlContent.Radius = 12;
-        pnlContent.Size = new Size(1126, 1186);
+        pnlContent.Size = new Size(751, 791);
         pnlContent.TabIndex = 1;
         // 
         // pnlContentArea
@@ -199,21 +199,21 @@ partial class SettingUserControl
         pnlContentArea.AutoScroll = true;
         pnlContentArea.BackColor = Color.White;
         pnlContentArea.Dock = DockStyle.Fill;
-        pnlContentArea.Location = new Point(15, 15);
-        pnlContentArea.Margin = new Padding(4);
+        pnlContentArea.Location = new Point(10, 10);
+        pnlContentArea.Margin = new Padding(3);
         pnlContentArea.Name = "pnlContentArea";
-        pnlContentArea.Size = new Size(1096, 1156);
+        pnlContentArea.Size = new Size(731, 771);
         pnlContentArea.TabIndex = 0;
         // 
         // SettingUserControl
         // 
-        AutoScaleDimensions = new SizeF(144F, 144F);
+        AutoScaleDimensions = new SizeF(96F, 96F);
         AutoScaleMode = AutoScaleMode.Dpi;
         Controls.Add(tlpSettingRoot);
-        Margin = new Padding(4);
-        MinimumSize = new Size(1230, 1020);
+        Margin = new Padding(3);
+        MinimumSize = new Size(820, 680);
         Name = "SettingUserControl";
-        Size = new Size(1650, 1290);
+        Size = new Size(1100, 860);
         tlpSettingRoot.ResumeLayout(false);
         pnlSidebar.ResumeLayout(false);
         tlpSidebar.ResumeLayout(false);

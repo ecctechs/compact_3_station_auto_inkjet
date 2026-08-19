@@ -28,6 +28,7 @@ partial class MainShellForm
     private void InitializeComponent()
     {
         System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainShellForm));
+        titleBar = new AppTitleBarUserControl();
         tlpShellRoot = new TableLayoutPanel();
         tlpMenuBar = new TableLayoutPanel();
         btnInputOrder = new AntdUI.Button();
@@ -52,29 +53,41 @@ partial class MainShellForm
         tlpShellRoot.BackColor = Color.White;
         tlpShellRoot.ColumnCount = 1;
         tlpShellRoot.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        tlpShellRoot.Controls.Add(tlpMenuBar, 0, 0);
-        tlpShellRoot.Controls.Add(pnlContent, 0, 1);
+        tlpShellRoot.Controls.Add(titleBar, 0, 0);
+        tlpShellRoot.Controls.Add(tlpMenuBar, 0, 1);
+        tlpShellRoot.Controls.Add(pnlContent, 0, 2);
         tlpShellRoot.Dock = DockStyle.Fill;
         tlpShellRoot.Location = new Point(0, 0);
-        tlpShellRoot.Margin = new Padding(4, 4, 4, 4);
+        tlpShellRoot.Margin = new Padding(3, 3, 3, 3);
         tlpShellRoot.Name = "tlpShellRoot";
-        tlpShellRoot.RowCount = 2;
-        tlpShellRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 108F));
+        tlpShellRoot.RowCount = 3;
+        tlpShellRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
+        tlpShellRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 72F));
         tlpShellRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        tlpShellRoot.Size = new Size(1800, 1350);
+        tlpShellRoot.Size = new Size(1200, 900);
         tlpShellRoot.TabIndex = 0;
+        // 
+        // titleBar
+        // 
+        titleBar.Dock = DockStyle.Fill;
+        titleBar.Location = new Point(0, 0);
+        titleBar.Margin = new Padding(0);
+        titleBar.Name = "titleBar";
+        titleBar.Size = new Size(1200, 40);
+        titleBar.TabIndex = 0;
+        titleBar.TitleText = "Compact Inkjet";
         // 
         // tlpMenuBar
         // 
         tlpMenuBar.BackColor = Color.White;
         tlpMenuBar.ColumnCount = 7;
-        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300F));
-        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300F));
-        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300F));
-        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300F));
+        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200F));
+        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200F));
+        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200F));
+        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200F));
         tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 240F));
-        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120F));
+        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160F));
+        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80F));
         tlpMenuBar.Controls.Add(btnInputOrder, 0, 0);
         tlpMenuBar.Controls.Add(btnOrderList, 1, 0);
         tlpMenuBar.Controls.Add(btnEditPattern, 2, 0);
@@ -87,7 +100,7 @@ partial class MainShellForm
         tlpMenuBar.Name = "tlpMenuBar";
         tlpMenuBar.RowCount = 1;
         tlpMenuBar.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        tlpMenuBar.Size = new Size(1800, 108);
+        tlpMenuBar.Size = new Size(1200, 72);
         tlpMenuBar.TabIndex = 0;
         // 
         // btnInputOrder
@@ -97,11 +110,11 @@ partial class MainShellForm
         btnInputOrder.Dock = DockStyle.Fill;
         btnInputOrder.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
         btnInputOrder.ForeColor = Color.White;
-        btnInputOrder.Location = new Point(4, 4);
-        btnInputOrder.Margin = new Padding(4, 4, 4, 4);
+        btnInputOrder.Location = new Point(3, 3);
+        btnInputOrder.Margin = new Padding(3, 3, 3, 3);
         btnInputOrder.Name = "btnInputOrder";
         btnInputOrder.Radius = 0;
-        btnInputOrder.Size = new Size(292, 100);
+        btnInputOrder.Size = new Size(195, 67);
         btnInputOrder.TabIndex = 0;
         btnInputOrder.Text = "Input Order";
         btnInputOrder.Click += btnInputOrder_Click;
@@ -113,11 +126,11 @@ partial class MainShellForm
         btnOrderList.Dock = DockStyle.Fill;
         btnOrderList.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
         btnOrderList.ForeColor = Color.White;
-        btnOrderList.Location = new Point(304, 4);
-        btnOrderList.Margin = new Padding(4, 4, 4, 4);
+        btnOrderList.Location = new Point(203, 3);
+        btnOrderList.Margin = new Padding(3, 3, 3, 3);
         btnOrderList.Name = "btnOrderList";
         btnOrderList.Radius = 0;
-        btnOrderList.Size = new Size(292, 100);
+        btnOrderList.Size = new Size(195, 67);
         btnOrderList.TabIndex = 1;
         btnOrderList.Text = "Order List";
         btnOrderList.Click += btnOrderList_Click;
@@ -129,11 +142,11 @@ partial class MainShellForm
         btnEditPattern.Dock = DockStyle.Fill;
         btnEditPattern.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
         btnEditPattern.ForeColor = Color.White;
-        btnEditPattern.Location = new Point(604, 4);
-        btnEditPattern.Margin = new Padding(4, 4, 4, 4);
+        btnEditPattern.Location = new Point(403, 3);
+        btnEditPattern.Margin = new Padding(3, 3, 3, 3);
         btnEditPattern.Name = "btnEditPattern";
         btnEditPattern.Radius = 0;
-        btnEditPattern.Size = new Size(292, 100);
+        btnEditPattern.Size = new Size(195, 67);
         btnEditPattern.TabIndex = 2;
         btnEditPattern.Text = "Edit Pattern";
         btnEditPattern.Click += btnEditPattern_Click;
@@ -145,11 +158,11 @@ partial class MainShellForm
         btnSetting.Dock = DockStyle.Fill;
         btnSetting.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
         btnSetting.ForeColor = Color.White;
-        btnSetting.Location = new Point(904, 4);
-        btnSetting.Margin = new Padding(4, 4, 4, 4);
+        btnSetting.Location = new Point(603, 3);
+        btnSetting.Margin = new Padding(3, 3, 3, 3);
         btnSetting.Name = "btnSetting";
         btnSetting.Radius = 0;
-        btnSetting.Size = new Size(292, 100);
+        btnSetting.Size = new Size(195, 67);
         btnSetting.TabIndex = 3;
         btnSetting.Text = "Setting";
         btnSetting.Click += btnSetting_Click;
@@ -159,10 +172,10 @@ partial class MainShellForm
         picLogo.BackColor = Color.Transparent;
         picLogo.Dock = DockStyle.Fill;
         picLogo.Image = (Image)resources.GetObject("picLogo.Image");
-        picLogo.Location = new Point(1444, 12);
-        picLogo.Margin = new Padding(4, 12, 4, 12);
+        picLogo.Location = new Point(963, 8);
+        picLogo.Margin = new Padding(3, 8, 3, 8);
         picLogo.Name = "picLogo";
-        picLogo.Size = new Size(232, 84);
+        picLogo.Size = new Size(155, 56);
         picLogo.SizeMode = PictureBoxSizeMode.Zoom;
         picLogo.TabIndex = 4;
         picLogo.TabStop = false;
@@ -174,11 +187,11 @@ partial class MainShellForm
         btnLang.Dock = DockStyle.Fill;
         btnLang.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
         btnLang.ForeColor = Color.White;
-        btnLang.Location = new Point(1684, 21);
-        btnLang.Margin = new Padding(4, 21, 18, 21);
+        btnLang.Location = new Point(1123, 14);
+        btnLang.Margin = new Padding(3, 14, 12, 14);
         btnLang.Name = "btnLang";
         btnLang.Radius = 4;
-        btnLang.Size = new Size(98, 66);
+        btnLang.Size = new Size(65, 44);
         btnLang.TabIndex = 5;
         btnLang.Text = "EN";
         // 
@@ -190,60 +203,60 @@ partial class MainShellForm
         pnlContent.Controls.Add(editPatternPage);
         pnlContent.Controls.Add(settingPage);
         pnlContent.Dock = DockStyle.Fill;
-        pnlContent.Location = new Point(0, 108);
+        pnlContent.Location = new Point(0, 72);
         pnlContent.Margin = new Padding(0);
         pnlContent.Name = "pnlContent";
-        pnlContent.Size = new Size(1800, 1242);
+        pnlContent.Size = new Size(1200, 828);
         pnlContent.TabIndex = 1;
         // 
         // scanBarcodePage
         // 
         scanBarcodePage.Dock = DockStyle.Fill;
         scanBarcodePage.Location = new Point(0, 0);
-        scanBarcodePage.Margin = new Padding(6, 6, 6, 6);
-        scanBarcodePage.MinimumSize = new Size(1230, 1020);
+        scanBarcodePage.Margin = new Padding(4, 4, 4, 4);
+        scanBarcodePage.MinimumSize = new Size(820, 680);
         scanBarcodePage.Name = "scanBarcodePage";
-        scanBarcodePage.Size = new Size(1800, 1242);
+        scanBarcodePage.Size = new Size(1200, 828);
         scanBarcodePage.TabIndex = 0;
         // 
         // orderListPage
         // 
         orderListPage.Dock = DockStyle.Fill;
         orderListPage.Location = new Point(0, 0);
-        orderListPage.Margin = new Padding(6, 6, 6, 6);
-        orderListPage.MinimumSize = new Size(1230, 1020);
+        orderListPage.Margin = new Padding(4, 4, 4, 4);
+        orderListPage.MinimumSize = new Size(820, 680);
         orderListPage.Name = "orderListPage";
-        orderListPage.Size = new Size(1800, 1242);
+        orderListPage.Size = new Size(1200, 828);
         orderListPage.TabIndex = 1;
         // 
         // editPatternPage
         // 
         editPatternPage.Dock = DockStyle.Fill;
         editPatternPage.Location = new Point(0, 0);
-        editPatternPage.Margin = new Padding(6, 6, 6, 6);
-        editPatternPage.MinimumSize = new Size(1230, 1020);
+        editPatternPage.Margin = new Padding(4, 4, 4, 4);
+        editPatternPage.MinimumSize = new Size(820, 680);
         editPatternPage.Name = "editPatternPage";
-        editPatternPage.Size = new Size(1800, 1242);
+        editPatternPage.Size = new Size(1200, 828);
         editPatternPage.TabIndex = 2;
         // 
         // settingPage
         // 
         settingPage.Dock = DockStyle.Fill;
         settingPage.Location = new Point(0, 0);
-        settingPage.Margin = new Padding(6, 6, 6, 6);
-        settingPage.MinimumSize = new Size(1230, 1020);
+        settingPage.Margin = new Padding(4, 4, 4, 4);
+        settingPage.MinimumSize = new Size(820, 680);
         settingPage.Name = "settingPage";
-        settingPage.Size = new Size(1800, 1242);
+        settingPage.Size = new Size(1200, 828);
         settingPage.TabIndex = 3;
         // 
         // MainShellForm
         // 
-        AutoScaleDimensions = new SizeF(144F, 144F);
+        AutoScaleDimensions = new SizeF(96F, 96F);
         AutoScaleMode = AutoScaleMode.Dpi;
-        ClientSize = new Size(1800, 1350);
+        ClientSize = new Size(1200, 900);
         Controls.Add(tlpShellRoot);
-        Margin = new Padding(4, 4, 4, 4);
-        MinimumSize = new Size(1399, 1052);
+        Margin = new Padding(3, 3, 3, 3);
+        MinimumSize = new Size(933, 701);
         Name = "MainShellForm";
         StartPosition = FormStartPosition.CenterScreen;
         Text = "Compact Inkjet";
@@ -257,6 +270,7 @@ partial class MainShellForm
 
     #endregion
 
+    private AppTitleBarUserControl titleBar;
     private System.Windows.Forms.TableLayoutPanel tlpShellRoot;
     private System.Windows.Forms.TableLayoutPanel tlpMenuBar;
     private AntdUI.Button btnInputOrder;

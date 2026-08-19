@@ -9,7 +9,7 @@ namespace InkjetOperator.Views;
 /// Order tab shows the Scan Barcode page. Only navigation/tab-state code lives
 /// here — no other business logic, no runtime control creation, no custom paint.
 /// </summary>
-public partial class MainShellForm : Form
+public partial class MainShellForm : AntdUI.Window
 {
     private static readonly System.Drawing.Color ActiveTab = DesignTokens.PrimaryBlue;
     private static readonly System.Drawing.Color InactiveTab = DesignTokens.Inactive;
@@ -21,6 +21,30 @@ public partial class MainShellForm : Form
         InitializeComponent();
         ApplyMenuLevel();
         Load += MainShellForm_Load;
+
+        // AntdUI.Window draws no system chrome, so titleBar is what closes,
+        // minimises, maximises and moves the window now.
+        titleBar.MinimizeRequested += (_, _) => Min();
+        titleBar.MaximizeRequested += (_, _) => ToggleMaximize();
+        titleBar.CloseRequested += (_, _) => Close();
+        titleBar.DragRequested += (_, _) => DraggableMouseDown();
+
+        Resize += (_, _) => titleBar.SetMaximized(WindowState == FormWindowState.Maximized);
+        titleBar.SetMaximized(WindowState == FormWindowState.Maximized);
+    }
+
+    private void ToggleMaximize()
+    {
+        if (WindowState == FormWindowState.Maximized)
+        {
+            WindowState = FormWindowState.Normal;
+        }
+        else
+        {
+            Max();
+        }
+
+        titleBar.SetMaximized(WindowState == FormWindowState.Maximized);
     }
 
     private async void MainShellForm_Load(object? sender, EventArgs e)
