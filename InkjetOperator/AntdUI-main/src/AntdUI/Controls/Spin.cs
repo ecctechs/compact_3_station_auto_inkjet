@@ -1,0 +1,1085 @@
+// Copyright (C) Tom <17379620>. All Rights Reserved.
+// AntdUI WinForm Library | Licensed under Apache-2.0 License
+// Gitee: https://gitee.com/AntdUI/AntdUI
+// GitHub: https://github.com/AntdUI/AntdUI
+// GitCode: https://gitcode.com/AntdUI/AntdUI
+
+using System;
+using System.ComponentModel;
+using System.Drawing;
+using System.Drawing.Design;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace AntdUI
+{
+    /// <summary>
+    /// Spin 加载中
+    /// </summary>
+    /// <remarks>用于页面和区块的加载中状态。</remarks>
+    [Description("Spin 加载中")]
+    [ToolboxItem(true)]
+    public class Spin : IControl
+    {
+        Config config = new Config();
+
+        #region 属性
+
+        [Description("颜色"), Category(nameof(CategoryAttribute.Appearance)), DefaultValue(null)]
+        [Editor(typeof(Design.ColorEditor), typeof(UITypeEditor))]
+        public Color? Fill
+        {
+            get => config.Color;
+            set => config.Color = value;
+        }
+
+        /// <summary>
+        /// 文字颜色
+        /// </summary>
+        [Description("文字颜色"), Category(nameof(CategoryAttribute.Appearance)), DefaultValue(null)]
+        [Editor(typeof(Design.ColorEditor), typeof(UITypeEditor))]
+        public new Color? ForeColor
+        {
+            get => config.Fore;
+            set
+            {
+                if (config.Fore == value) return;
+                config.Fore = value;
+                Invalidate();
+                OnPropertyChanged(nameof(ForeColor));
+            }
+        }
+
+        string? text;
+        /// <summary>
+        /// 文本
+        /// </summary>
+        [Description("文本"), Category(nameof(CategoryAttribute.Appearance)), DefaultValue(null)]
+        public override string? Text
+        {
+#pragma warning disable CS8764, CS8766
+            get => this.GetLangI(LocalizationText, text);
+#pragma warning restore CS8764, CS8766
+            set
+            {
+                if (text == value) return;
+                text = value;
+                spin_core.Clear();
+                Invalidate();
+                OnTextChanged(EventArgs.Empty);
+                OnPropertyChanged(nameof(Text));
+            }
+        }
+
+        [Description("文本"), Category("国际化"), DefaultValue(null)]
+        public string? LocalizationText { get; set; }
+
+        [Description("加载指示符"), Category(nameof(CategoryAttribute.Appearance)), DefaultValue(null)]
+        public Image? Indicator
+        {
+            get => config.Indicator;
+            set => config.Indicator = value;
+        }
+
+        [Description("加载指示符SVG"), Category(nameof(CategoryAttribute.Appearance)), DefaultValue(null)]
+        public string? IndicatorSvg
+        {
+            get => config.IndicatorSvg;
+            set => config.IndicatorSvg = value;
+        }
+
+        [Description("加载圈大小"), Category(nameof(CategoryAttribute.Appearance)), DefaultValue(null)]
+        public int? CirSize
+        {
+            get => config.CirSize;
+            set => config.CirSize = value;
+        }
+
+        [Description("加载圈粗细"), Category(nameof(CategoryAttribute.Appearance)), DefaultValue(null)]
+        public int? CirWidth
+        {
+            get => config.CirWidth;
+            set => config.CirWidth = value;
+        }
+
+        #endregion
+
+        #region 动画
+
+        SpinCore spin_core = new SpinCore();
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            spin_core.Start(this);
+        }
+
+        protected override void OnFontChanged(EventArgs e)
+        {
+            spin_core.Clear();
+            base.OnFontChanged(e);
+        }
+
+        #endregion
+
+        protected override void OnDraw(DrawEventArgs e)
+        {
+            var rect = e.Rect.PaddingRect(Padding);
+            if (rect.Width == 0 || rect.Height == 0) return;
+            config.Text = this.GetLangI(LocalizationText, text);
+            spin_core.Paint(e.Canvas, rect, config, this);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            spin_core.Dispose();
+            base.Dispose(disposing);
+        }
+
+        #region 鼠标
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            spin_core.MouseMove(e.X, e.Y);
+        }
+        protected override void OnMouseClick(MouseEventArgs e)
+        {
+            base.OnMouseClick(e);
+            if (spin_core.MouseClick(e.X, e.Y, config)) spin_core.Dispose();
+        }
+
+        #endregion
+
+        /// <summary>
+        /// 配置
+        /// </summary>
+        public class Config
+        {
+            public Config()
+            { }
+
+            public Config(string text)
+            {
+                Text = text;
+            }
+
+            /// <summary>
+            /// 文本
+            /// </summary>
+            public string? Text { get; set; }
+
+            /// <summary>
+            /// 背景颜色
+            /// </summary>
+            public Color? Back { get; set; }
+
+            /// <summary>
+            /// 文本颜色
+            /// </summary>
+            public Color? Fore { get; set; }
+
+            /// <summary>
+            /// 颜色
+            /// </summary>
+            public Color? Color { get; set; }
+
+            /// <summary>
+            /// 字体
+            /// </summary>
+
+            public Font? Font { get; set; }
+
+            /// <summary>
+            /// 圆角
+            /// </summary>
+            public int? Radius { get; set; }
+
+            /// <summary>
+            /// 加载指示符
+            /// </summary>
+            public Image? Indicator { get; set; }
+
+            /// <summary>
+            /// 加载指示符SVG
+            /// </summary>
+            public string? IndicatorSvg { get; set; }
+
+            /// <summary>
+            /// 进度
+            /// </summary>
+            public float? Value { get; set; }
+
+            /// <summary>
+            /// 进度速率
+            /// </summary>
+            public float? Rate { get; set; }
+
+            /// <summary>
+            /// 大小
+            /// </summary>
+            public int? CirSize { get; set; }
+
+            /// <summary>
+            /// 粗细
+            /// </summary>
+            public int? CirWidth { get; set; }
+
+            #region 取消按钮
+
+            /// <summary>
+            /// 取消令牌
+            /// </summary>
+            public CancellationToken? CancelToken => CancelTokenSource?.Token;
+
+            public void ThrowIfCancellationRequested() => CancelTokenSource?.Token.ThrowIfCancellationRequested();
+            public bool IsCancellationRequested => CancelTokenSource?.Token.IsCancellationRequested ?? false;
+
+            /// <summary>
+            /// 取消令牌源
+            /// </summary>
+            public CancellationTokenSource? CancelTokenSource { get; set; }
+
+            string? canceltext = Localization.Get("Cancel", "取消");
+            /// <summary>
+            /// 取消按钮文字
+            /// </summary>
+            public string? CancelText
+            {
+                get => canceltext;
+                set
+                {
+                    if (canceltext == value) return;
+                    canceltext = value;
+                }
+            }
+
+            #endregion
+
+            #region 设置
+
+            public Config SetText(string? value)
+            {
+                Text = value;
+                return this;
+            }
+            public Config SetBack(Color? value)
+            {
+                Back = value;
+                return this;
+            }
+            public Config SetFore(Color? value)
+            {
+                Fore = value;
+                return this;
+            }
+            public Config SetColor(Color? value)
+            {
+                Color = value;
+                return this;
+            }
+            public Config SetFont(Font? value)
+            {
+                Font = value;
+                return this;
+            }
+            public Config SetRadius(int? value)
+            {
+                Radius = value;
+                return this;
+            }
+            public Config SetValue(float? value)
+            {
+                Value = value;
+                return this;
+            }
+            public Config SetIndicator(Image? value)
+            {
+                Indicator = value;
+                return this;
+            }
+            public Config SetIndicator(string? value)
+            {
+                IndicatorSvg = value;
+                return this;
+            }
+            public Config SetRate(float? value)
+            {
+                Rate = value;
+                return this;
+            }
+            public Config SetCirSize(int? value)
+            {
+                CirSize = value;
+                return this;
+            }
+            public Config SetCirWidth(int? value)
+            {
+                CirWidth = value;
+                return this;
+            }
+            public Config SetCancel(string? value)
+            {
+                CancelText = value;
+                return this;
+            }
+            public Config SetCancelToken(CancellationTokenSource? value)
+            {
+                CancelTokenSource = value;
+                return this;
+            }
+            public Config SetCancel(CancellationTokenSource? value)
+            {
+                CancelTokenSource = value;
+                return this;
+            }
+
+            #endregion
+        }
+
+        #region 静态方法
+
+        #region 同步
+
+        /// <summary>
+        /// Spin 加载中
+        /// </summary>
+        /// <param name="control">控件主体</param>
+        /// <param name="action">需要等待的委托</param>
+        /// <param name="end">运行结束后的回调</param>
+        /// <param name="error">发生错误时的回调</param>
+        public static Task open(Control control, Action<Config> action, Action? end = null, Action<Exception>? error = null) => open(control, new Config(), action, end, error);
+
+        /// <summary>
+        /// Spin 加载中
+        /// </summary>
+        /// <param name="control">控件主体</param>
+        /// <param name="text">加载文本</param>
+        /// <param name="action">需要等待的委托</param>
+        /// <param name="end">运行结束后的回调</param>
+        /// <param name="error">发生错误时的回调</param>
+        public static Task open(Control control, string text, Action<Config> action, Action? end = null, Action<Exception>? error = null) => open(control, new Config(text), action, end, error);
+
+
+        /// <summary>
+        /// Spin 加载中
+        /// </summary>
+        /// <param name="control">控件主体</param>
+        /// <param name="action">需要等待的委托</param>
+        /// <param name="token">取消令牌</param>
+        /// <param name="end">运行结束后的回调</param>
+        /// <param name="error">发生错误时的回调</param>
+        public static Task open(Control control, Action<Config> action, CancellationTokenSource? token, Action? end = null, Action<Exception>? error = null) => open(control, new Config().SetCancel(token), action, end, error);
+
+        /// <summary>
+        /// Spin 加载中
+        /// </summary>
+        /// <param name="control">控件主体</param>
+        /// <param name="text">加载文本</param>
+        /// <param name="action">需要等待的委托</param>
+        /// <param name="token">取消令牌</param>
+        /// <param name="end">运行结束后的回调</param>
+        /// <param name="error">发生错误时的回调</param>
+        public static Task open(Control control, string text, Action<Config> action, CancellationTokenSource? token, Action? end = null, Action<Exception>? error = null) => open(control, new Config(text).SetCancel(token), action, end, error);
+
+        /// <summary>
+        /// Spin 加载中
+        /// </summary>
+        /// <param name="control">控件主体</param>
+        /// <param name="config">自定义配置</param>
+        /// <param name="action">需要等待的委托</param>
+        /// <param name="end">运行结束后的回调</param>
+        /// <param name="error">发生错误时的回调</param>
+        public static Task open(Control control, Config config, Action<Config> action, Action? end = null, Action<Exception>? error = null)
+        {
+            var parent = control.FindPARENT();
+            if (parent is LayeredFormAsynLoad model)
+            {
+                if (model.IsLoad)
+                {
+                    var Event = new ManualResetEvent(false);
+                    model.LoadCompleted += () => Event.SetWait();
+                    return ITask.Run(() =>
+                    {
+                        var r = Event.Wait(1000);
+                        Event.Dispose();
+                        if (r) return;
+                        open_core(control, true, parent, config, action, end, error)?.Wait();
+                    });
+                }
+                else return open_core(control, control.InvokeRequired, parent, config, action, end, error);
+            }
+            return open_core(control, control.InvokeRequired, parent, config, action, end, error);
+        }
+
+        static SpinForm open_core(Control control, bool InvokeRequired, Form? parent, Config config)
+        {
+            SpinForm frm;
+            if (InvokeRequired) return ITask.Invoke(control, new Func<SpinForm>(() => open_core(control, false, parent, config)))!;
+            frm = new SpinForm(control, parent, config);
+            frm.Show(control);
+            return frm;
+        }
+        static Task open_core(Control control, bool InvokeRequired, Form? parent, Config config, Action<Config> action, Action? end = null, Action<Exception>? error = null)
+        {
+            var frm = open_core(control, InvokeRequired, parent, config);
+            bool hasError = false;
+            return ITask.Run(() =>
+            {
+                if (frm == null) return;
+                Exception? ex = null;
+                try
+                {
+                    action(config);
+                }
+                catch (Exception e)
+                {
+                    ex = e;
+                    hasError = true;
+                    try
+                    {
+                        error?.Invoke(e);
+                    }
+                    catch { }
+                }
+                if (frm.IsDisposed) return;
+                try
+                {
+                    frm.Invoke(() => frm.Dispose());
+                }
+                catch { }
+                // 如果没有提供错误回调，则重新抛出异常
+                if (ex != null && error == null) throw ex;
+            }, () =>
+            {
+                if (end == null || hasError) return;
+                // 只有在没有错误且提供了完成回调时才执行
+                try
+                {
+                    end();
+                }
+                catch
+                { }
+            });
+        }
+
+        #endregion
+
+        #region 异步
+
+        /// <summary>
+        /// Spin 加载中
+        /// </summary>
+        /// <param name="control">控件主体</param>
+        /// <param name="action">需要等待的委托</param>
+        /// <param name="end">运行结束后的回调</param>
+        /// <param name="error">发生错误时的回调</param>
+        public static Task open(Control control, Func<Config, Task> action, Action? end = null, Action<Exception>? error = null) => open(control, new Config(), action, end, error);
+
+        /// <summary>
+        /// Spin 加载中
+        /// </summary>
+        /// <param name="control">控件主体</param>
+        /// <param name="text">加载文本</param>
+        /// <param name="action">需要等待的委托</param>
+        /// <param name="end">运行结束后的回调</param>
+        /// <param name="error">发生错误时的回调</param>
+        public static Task open(Control control, string text, Func<Config, Task> action, Action? end = null, Action<Exception>? error = null) => open(control, new Config(text), action, end, error);
+
+        /// <summary>
+        /// Spin 加载中
+        /// </summary>
+        /// <param name="control">控件主体</param>
+        /// <param name="action">需要等待的委托</param>
+        /// <param name="token">取消令牌</param>
+        /// <param name="end">运行结束后的回调</param>
+        /// <param name="error">发生错误时的回调</param>
+        public static Task open(Control control, Func<Config, Task> action, CancellationTokenSource? token, Action? end = null, Action<Exception>? error = null) => open(control, new Config().SetCancel(token), action, end, error);
+
+        /// <summary>
+        /// Spin 加载中
+        /// </summary>
+        /// <param name="control">控件主体</param>
+        /// <param name="text">加载文本</param>
+        /// <param name="action">需要等待的委托</param>
+        /// <param name="token">取消令牌</param>
+        /// <param name="end">运行结束后的回调</param>
+        /// <param name="error">发生错误时的回调</param>
+        public static Task open(Control control, string text, Func<Config, Task> action, CancellationTokenSource? token, Action? end = null, Action<Exception>? error = null) => open(control, new Config(text).SetCancel(token), action, end, error);
+
+        /// <summary>
+        /// Spin 加载中
+        /// </summary>
+        /// <param name="control">控件主体</param>
+        /// <param name="config">自定义配置</param>
+        /// <param name="action">需要等待的委托</param>
+        /// <param name="end">运行结束后的回调</param>
+        /// <param name="error">发生错误时的回调</param>
+        public static Task open(Control control, Config config, Func<Config, Task> action, Action? end = null, Action<Exception>? error = null)
+        {
+            var parent = control.FindPARENT();
+            if (parent is LayeredFormAsynLoad model)
+            {
+                if (model.IsLoad)
+                {
+                    var Event = new ManualResetEvent(false);
+                    model.LoadCompleted += () => Event.SetWait();
+                    return ITask.Run(() =>
+                    {
+                        var r = Event.Wait(1000);
+                        Event.Dispose();
+                        if (r) return;
+                        open_core(control, true, parent, config, action, end, error)?.Wait();
+                    });
+                }
+                else return open_core(control, control.InvokeRequired, parent, config, action, end, error);
+            }
+            return open_core(control, control.InvokeRequired, parent, config, action, end, error);
+        }
+
+        static Task open_core(Control control, bool InvokeRequired, Form? parent, Config config, Func<Config, Task> action, Action? end = null, Action<Exception>? error = null)
+        {
+            var frm = open_core(control, InvokeRequired, parent, config);
+            bool hasError = false;
+            return ITask.Run(() =>
+            {
+                if (frm == null) return;
+                Exception? ex = null;
+                try
+                {
+                    var task = action(config);
+                    if (task != null) task.Wait();
+                }
+                catch (Exception e)
+                {
+                    ex = e;
+                    hasError = true;
+                    try
+                    {
+                        error?.Invoke(e);
+                    }
+                    catch { }
+                }
+                if (frm.IsDisposed) return;
+                try
+                {
+                    frm.Invoke(() => frm.Dispose());
+                }
+                catch { }
+                // 如果没有提供错误回调，则重新抛出异常
+                if (ex != null && error == null) throw ex;
+            }, () =>
+            {
+                if (end == null || hasError) return;
+                // 只有在没有错误且提供了完成回调时才执行
+                try
+                {
+                    end();
+                }
+                catch
+                { }
+            });
+        }
+
+        #endregion
+
+        #endregion
+    }
+
+    internal class SpinCore : IDisposable
+    {
+        AnimationTask? thread = null;
+
+        float LineWidth = 6, LineAngle = 0;
+        int prog_size = 0;
+
+        #region GIF
+
+        const int PropertyTagFrameDelay = 0x5100;
+
+        Image? gifImage;
+        FrameDimension? gifFrameDimension;
+        int gifFrameCount = 0;
+        int[]? gifFrameDelays;
+        int gifFrameIndex = 0;
+        int gifLastTick = 0;
+
+        void ResetGif()
+        {
+            gifImage = null;
+            gifFrameDimension = null;
+            gifFrameCount = 0;
+            gifFrameDelays = null;
+            gifFrameIndex = 0;
+            gifLastTick = 0;
+        }
+
+        bool UpdateGifFrame(Image image)
+        {
+            if (!ReferenceEquals(gifImage, image))
+            {
+                if (!InitGif(image)) return false;
+                return true;
+            }
+
+            if (gifFrameDimension == null || gifFrameDelays == null || gifFrameCount <= 1) return false;
+
+            var now = Environment.TickCount;
+            var elapsed = unchecked(now - gifLastTick);
+            var delay = gifFrameDelays[gifFrameIndex];
+
+            if (elapsed >= delay)
+            {
+                gifFrameIndex++;
+                if (gifFrameIndex >= gifFrameCount) gifFrameIndex = 0;
+
+                gifLastTick = now;
+                image.SelectActiveFrame(gifFrameDimension, gifFrameIndex);
+            }
+
+            return true;
+        }
+
+        bool InitGif(Image image)
+        {
+            ResetGif();
+
+            try
+            {
+                foreach (var item in image.FrameDimensionsList)
+                {
+                    var dimension = new FrameDimension(item);
+                    var count = image.GetFrameCount(dimension);
+
+                    if (count <= 1) continue;
+
+                    gifImage = image;
+                    gifFrameDimension = dimension;
+                    gifFrameCount = count;
+                    gifFrameDelays = GetGifDelays(image, count);
+                    gifFrameIndex = 0;
+                    gifLastTick = Environment.TickCount;
+
+                    image.SelectActiveFrame(gifFrameDimension, gifFrameIndex);
+                    return true;
+                }
+            }
+            catch
+            {
+                ResetGif();
+            }
+
+            return false;
+        }
+
+        int[] GetGifDelays(Image image, int count)
+        {
+            var delays = new int[count];
+            for (int i = 0; i < delays.Length; i++) delays[i] = 100;
+
+            try
+            {
+                if (Array.IndexOf(image.PropertyIdList, PropertyTagFrameDelay) < 0) return delays;
+
+                var item = image.GetPropertyItem(PropertyTagFrameDelay);
+                if (item?.Value == null) return delays;
+
+                for (int i = 0; i < count; i++)
+                {
+                    var offset = i * 4;
+                    if (offset + 4 > item.Value.Length) break;
+
+                    var delay = BitConverter.ToInt32(item.Value, offset) * 10;
+                    delays[i] = delay > 0 ? Math.Max(delay, 10) : 100;
+                }
+            }
+            catch { }
+
+            return delays;
+        }
+
+        #endregion
+
+        public void Clear()
+        {
+            prog_size = 0;
+            ResetGif();
+        }
+
+        public void Start(IControl control)
+        {
+            Stop();
+            bool ProgState = false;
+            thread = new AnimationTask(control, () =>
+            {
+                if (GRun()) return true;
+                Animation(ref ProgState);
+                control.Invalidate();
+                return true;
+            }, 10);
+        }
+        public void Start(ILayeredForm control)
+        {
+            Stop();
+            bool ProgState = false;
+            thread = new AnimationTask(control, () =>
+            {
+                if (GRun()) return true;
+                Animation(ref ProgState);
+                control.Print();
+                return true;
+            }, 10);
+        }
+
+        bool GRun()
+        {
+            if (Count > 0)
+            {
+                Count--;
+                return true;
+            }
+            return false;
+        }
+
+        public int Count = 0;
+
+        void Animation(ref bool ProgState)
+        {
+            switch (mode)
+            {
+                case 0:
+                    if (ProgState)
+                    {
+                        LineAngle = LineAngle.Calculate(9F);
+                        LineWidth = LineWidth.Calculate(0.6F);
+                        if (LineWidth > 75) ProgState = false;
+                    }
+                    else
+                    {
+                        LineAngle = LineAngle.Calculate(9.6F);
+                        LineWidth = LineWidth.Calculate(-0.6F);
+                        if (LineWidth < 6) ProgState = true;
+                    }
+                    break;
+                case 1:
+                    LineAngle = LineAngle.Calculate(2F);
+                    break;
+                case 3:
+                    break;
+                case 2:
+                default:
+                    LineAngle = LineAngle.Calculate(rate ?? 8F);
+                    break;
+            }
+            if (LineAngle >= 360) LineAngle = 0;
+        }
+
+        public void Stop()
+        {
+            ResetGif();
+            thread?.Dispose();
+            thread = null;
+        }
+
+        readonly FormatFlags s_f = FormatFlags.Center | FormatFlags.NoWrapEllipsis;
+
+        float? rate;
+        int mode = 0;
+        Rectangle? rect_button;
+        bool hover_button = false;
+        public void Paint(Canvas g, Rectangle rect, Spin.Config config, Control control)
+        {
+            var font = config.Font ?? control.Font;
+            if (prog_size == 0) prog_size = g.MeasureText(config.Text ?? Config.NullText, font).Height;
+            int cirSize = config.CirSize.HasValue ? (int)(config.CirSize.Value * g.Dpi) : (int)(prog_size * 1.6F),
+                cirWidth = config.CirWidth.HasValue ? (int)(config.CirWidth.Value * g.Dpi) : (int)(prog_size * .2F);
+            var cirContainer = new Rectangle(rect.X + (rect.Width - cirSize) / 2, rect.Y + (rect.Height - cirSize) / 2, cirSize, cirSize);
+            if (config.CancelToken != null && config.CancelText != null)
+            {
+                var canceltext = config.CancelText;
+                var size_btn = g.MeasureText(canceltext, font).Size(12, 6);
+                var y = cirContainer.Bottom;
+                cirContainer.Offset(0, -cirSize);
+                rect_button = new Rectangle(rect.X + (rect.Width - size_btn.Width) / 2, y, size_btn.Width, size_btn.Height);
+                using (var path = rect_button.Value.RoundPath(6 * g.Dpi))
+                {
+                    g.Fill(Colour.DefaultBg.Get(nameof(Spin)), path);
+                    if (hover_button) g.Fill(Colour.FillSecondary.Get(nameof(Spin)), path);
+                    g.Draw(Colour.DefaultBorder.Get(nameof(Spin)), g.Dpi, path);
+                    g.String(canceltext, font, Colour.Text.Get(nameof(Spin)), rect_button.Value, s_f);
+                }
+            }
+            if (config.Text != null)
+            {
+                var y = cirContainer.Bottom;
+                cirContainer.Offset(0, -cirSize / 2);
+                g.DrawText(config.Text, font, config.Fore ?? Colour.Primary.Get(nameof(Spin)), new Rectangle(rect.X, y, rect.Width, prog_size), s_f);
+            }
+            var color = config.Color ?? Colour.Primary.Get(nameof(Spin));
+            if (config.Indicator != null && UpdateGifFrame(config.Indicator))
+            {
+                mode = 3;
+                g.Image(config.Indicator, cirContainer);
+                return;
+            }
+            if (config.Indicator != null || config.IndicatorSvg != null)
+            {
+                rate = config.Rate;
+                mode = 2;
+                var cirSize2 = cirSize / 2F;
+                int cirSizeNum = (int)cirSize2;
+                g.TranslateTransform(cirContainer.X + cirSize2, cirContainer.Y + cirSize2);
+                g.RotateTransform(LineAngle);
+                var rect_center = new Rectangle(-cirSizeNum, -cirSizeNum, cirSize, cirSize);
+                if (config.Indicator != null) g.Image(config.Indicator, rect_center);
+                if (config.IndicatorSvg != null) g.Svg(config.IndicatorSvg, rect_center, color);
+                g.ResetTransform();
+            }
+            else
+            {
+                g.DrawEllipse(Colour.Fill.Get(nameof(Spin)), cirWidth, cirContainer);
+                using (var brush = new Pen(color, cirWidth))
+                {
+                    brush.StartCap = brush.EndCap = LineCap.Round;
+                    if (config.Value.HasValue)
+                    {
+                        mode = 1;
+                        g.DrawArc(brush, cirContainer, LineAngle, config.Value.Value * 360F);
+                    }
+                    else
+                    {
+                        mode = 0;
+                        g.DrawArc(brush, cirContainer, LineAngle, LineWidth * 3.6F);
+                    }
+                }
+            }
+        }
+
+        public void MouseMove(int x, int y)
+        {
+            if (rect_button.HasValue) hover_button = rect_button.Value.Contains(x, y);
+            else hover_button = false;
+        }
+        public bool MouseClick(int x, int y, Spin.Config config)
+        {
+            if (rect_button.HasValue && rect_button.Value.Contains(x, y))
+            {
+                config.CancelTokenSource?.Cancel();
+                return true;
+            }
+            return false;
+        }
+
+        public void Dispose() => Stop();
+    }
+
+    internal class SpinForm : ILayeredFormOpacity
+    {
+        Control control;
+        Form? parent;
+
+        Spin.Config config;
+        public SpinForm(Control _control, Form? _parent, Spin.Config _config)
+        {
+            config = _config;
+            control = _control;
+            parent = _parent;
+            Font = _control.Font;
+            SetTopMost(_control, Handle);
+            SetDpi(_parent, _control);
+            if (_control is Form form)
+            {
+                SetSize(form.Size);
+                SetLocation(form.Location);
+                if (_config.Radius.HasValue) Radius = _config.Radius.Value;
+                else HasBor = form.FormFrame(out Radius, out Bor);
+            }
+            else
+            {
+                SetSize(_control.Size);
+                SetLocation(_control.PointToScreen(Point.Empty));
+                if (_config.Radius.HasValue) Radius = _config.Radius.Value;
+                else if (_control is IControl icontrol) RenderRegion = () => icontrol.RenderRegion;
+            }
+        }
+
+        public override string name => nameof(Spin);
+
+        Func<GraphicsPath>? RenderRegion;
+        int Radius = 0, Bor = 0;
+        bool HasBor = false;
+
+        Control[]? controls;
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            control.VisibleChanged += Parent_VisibleChanged;
+            control.LocationChanged += Parent_LocationChanged;
+            control.SizeChanged += Parent_SizeChanged;
+            var list = control.FindPARENTs();
+            if (control is TabPage page) page.ShowedChanged += Parent_VisibleChanged;
+            if (parent != null)
+            {
+                list.Remove(parent);
+                parent.VisibleChanged += Parent_VisibleChanged;
+                parent.LocationChanged += Parent_LocationChanged;
+                parent.SizeChanged += Parent_SizeChanged;
+            }
+            if (list.Count > 0)
+            {
+                foreach (var it in list)
+                {
+                    if (it is TabPage page2) page2.ShowedChanged += Parent_VisibleChanged;
+                    else it.VisibleChanged += Parent_VisibleChanged;
+                }
+                controls = list.ToArray();
+            }
+            LoadVisible();
+        }
+
+        bool visible = false;
+        void LoadVisible()
+        {
+            var tmp = GetVisible();
+            if (visible == tmp) return;
+            visible = tmp;
+            if (tmp) spin_core.Start(this);
+            else
+            {
+                spin_core.Stop();
+                Print();
+            }
+        }
+        bool GetVisible()
+        {
+            if (!GetVisible(control)) return false;
+            if (controls == null) return true;
+            foreach (var it in controls)
+            {
+                if (!GetVisible(it)) return false;
+            }
+            return true;
+        }
+        bool GetVisible(Control control)
+        {
+            if (control is TabPage page) return page.Showed;
+            return control.Visible;
+        }
+
+        private void Parent_VisibleChanged(object? sender, EventArgs e) => LoadVisible();
+        private void Parent_LocationChanged(object? sender, EventArgs e)
+        {
+            spin_core.Count++;
+            LoadVisible();
+            if (visible)
+            {
+                if (control is Form form) SetLocation(form.Location);
+                else SetLocation(control.PointToScreen(Point.Empty));
+                PrintCache();
+            }
+        }
+        private void Parent_SizeChanged(object? sender, EventArgs e)
+        {
+            LoadVisible();
+            if (visible)
+            {
+                if (control is Form form)
+                {
+                    SetSize(form.Size);
+                    SetLocation(form.Location);
+                }
+                else
+                {
+                    SetLocation(control.PointToScreen(Point.Empty));
+                    SetSize(control.Size);
+                }
+            }
+        }
+
+        #region 渲染
+
+        SpinCore spin_core = new SpinCore();
+        public override Bitmap? PrintBit()
+        {
+            Rectangle rect_read = TargetRectXY, rect = HasBor ? new Rectangle(Bor, 0, rect_read.Width - Bor * 2, rect_read.Height - Bor) : rect_read;
+            var rbmp = new Bitmap(rect_read.Width, rect_read.Height);
+            if (visible)
+            {
+                using (var g = Graphics.FromImage(rbmp).HighLay(Dpi))
+                {
+                    using (var brush = new SolidBrush(config.Back ?? Style.rgba(Colour.BgBase.Get(nameof(Spin)), .8F)))
+                    {
+                        if (RenderRegion == null)
+                        {
+                            if (Radius > 0)
+                            {
+                                using (var path = rect.RoundPath(Radius))
+                                {
+                                    g.Fill(brush, path);
+                                }
+                            }
+                            else g.Fill(brush, rect);
+                        }
+                        else
+                        {
+                            using (var path = RenderRegion())
+                            {
+                                g.Fill(brush, path);
+                            }
+                        }
+                    }
+                    spin_core.Paint(g, rect, config, this);
+                }
+            }
+            return rbmp;
+        }
+
+        #endregion
+
+        #region 鼠标
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            spin_core.MouseMove(e.X, e.Y);
+        }
+        protected override void OnMouseClick(MouseEventArgs e)
+        {
+            base.OnMouseClick(e);
+            if (spin_core.MouseClick(e.X, e.Y, config))
+            {
+                spin_core.Dispose();
+                Close();
+            }
+        }
+
+        #endregion
+
+        protected override void Dispose(bool disposing)
+        {
+            spin_core.Dispose();
+            control.VisibleChanged -= Parent_VisibleChanged;
+            control.LocationChanged -= Parent_LocationChanged;
+            control.SizeChanged -= Parent_SizeChanged;
+            if (control is TabPage page) page.ShowedChanged -= Parent_VisibleChanged;
+            if (parent != null)
+            {
+                parent.VisibleChanged -= Parent_VisibleChanged;
+                parent.LocationChanged -= Parent_LocationChanged;
+                parent.SizeChanged -= Parent_SizeChanged;
+            }
+            if (controls != null)
+            {
+                foreach (var it in controls)
+                {
+                    if (it is TabPage page2) page2.ShowedChanged -= Parent_VisibleChanged;
+                    else it.VisibleChanged -= Parent_VisibleChanged;
+                }
+            }
+            base.Dispose(disposing);
+            if (control == null) return;
+        }
+    }
+}

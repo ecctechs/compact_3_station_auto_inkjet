@@ -1,0 +1,449 @@
+// Copyright (C) Tom <17379620>. All Rights Reserved.
+// AntdUI WinForm Library | Licensed under Apache-2.0 License
+// Gitee: https://gitee.com/AntdUI/AntdUI
+// GitHub: https://github.com/AntdUI/AntdUI
+// GitCode: https://gitcode.com/AntdUI/AntdUI
+
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Threading;
+using System.Windows.Forms;
+
+namespace AntdUI
+{
+    internal class LayeredFormPopover : ILayeredShadowFormOpacity
+    {
+        Popover.Config config;
+        Form? form;
+
+        int ArrowSize = 8;
+        public LayeredFormPopover(Popover.Config _config)
+        {
+            config = _config;
+            CloseMode = CloseMode.Click;
+            SetTopMost(config.Control, Handle);
+            SetDpi(config.Control);
+            Font = config.Font ?? config.Control.Font;
+
+            this.GDI(g =>
+            {
+                Radius = (int)(config.Radius * Dpi);
+                ArrowSize = (int)(config.ArrowSize * Dpi);
+
+                int sp = (int)Math.Round(config.Gap * Dpi), paddingx = (int)(config.Padding.Width * Dpi),
+                paddingy = (int)(config.Padding.Height * Dpi), paddingx2 = paddingx * 2, paddingy2 = paddingy * 2;
+                Padding = new Padding(paddingx, paddingy, paddingx, paddingy);
+                if (config.Content is Control control)
+                {
+                    control.Parent = this;
+                    control.BackColor = config.Back ?? Colour.BgElevated.Get(config.ColorScheme, name);
+                    control.ForeColor = config.Fore ?? Colour.Text.Get(config.ColorScheme, name);
+                    Win32.WindowTheme(control, config.ColorScheme);
+                    Helper.DpiAuto(config.Dpi ?? Dpi, control);
+                    int cw = control.Width, ch = control.Height;
+                    int h;
+                    if (_config.Title == null)
+                    {
+                        h = ch;
+                        rectContent = new Rectangle(paddingx, paddingy, cw, ch);
+                    }
+                    else
+                    {
+                        using (var fontTitle = new Font(Font.FontFamily, Font.Size, FontStyle.Bold))
+                        {
+                            var sizeTitle = g.MeasureString(config.Title, fontTitle, cw);
+                            h = sizeTitle.Height + sp + ch;
+                            rectTitle = new Rectangle(paddingx, paddingy, cw, sizeTitle.Height + sp);
+                            rectContent = new Rectangle(rectTitle.X, rectTitle.Bottom, cw, ch);
+                        }
+                    }
+                    rectContent.Offset(shadow, shadow);
+                    SetSize(cw + paddingx2, h + paddingy2);
+                    BeginInvoke(() => tempContent = control.CaptureControl());
+                }
+                else if (config.Content is IList<Popover.TextRow> list)
+                {
+                    rtext = true;
+
+                    if (_config.Title == null)
+                    {
+                        var _texts = new List<int[]>(list.Count);
+                        int has_x = 0, max_h = 0;
+                        foreach (var txt in list)
+                        {
+                            if (txt.Call != null) hasmouse = true;
+                            var sizeContent = g.MeasureString(txt.Text, txt.Font ?? Font);
+                            int txt_w = sizeContent.Width + (int)(txt.Gap * Dpi);
+                            _texts.Add(new int[] { paddingx + has_x, paddingy, txt_w });
+                            if (max_h < sizeContent.Height) max_h = sizeContent.Height;
+                            has_x += txt_w;
+                        }
+                        var texts = new List<InRect>(_texts.Count);
+                        for (int i = 0; i < _texts.Count; i++)
+                        {
+                            var txt = _texts[i];
+                            texts.Add(new InRect(list[i], new Rectangle(txt[0], txt[1], txt[2], max_h)));
+                        }
+                        rectsContent = texts.ToArray();
+                        rectContent = new Rectangle(paddingx, paddingy, has_x, max_h);
+                        SetSize(has_x + paddingx2, max_h + paddingy2);
+                    }
+                    else
+                    {
+                        using (var fontTitle = new Font(Font.FontFamily, Font.Size, FontStyle.Bold))
+                        {
+                            var sizeTitle = g.MeasureString(config.Title, fontTitle);
+
+                            var _texts = new List<int[]>(list.Count);
+                            int has_x = 0, max_h = 0;
+                            foreach (var txt in list)
+                            {
+                                if (txt.Call != null) hasmouse = true;
+                                var sizeContent = g.MeasureString(txt.Text, txt.Font ?? Font);
+                                int txt_w = sizeContent.Width + (int)(txt.Gap * Dpi);
+                                _texts.Add(new int[] { paddingx + has_x, paddingy + sizeTitle.Height + sp, txt_w });
+                                if (max_h < sizeContent.Height) max_h = sizeContent.Height;
+                                has_x += txt_w;
+                            }
+                            var texts = new List<InRect>(_texts.Count);
+                            for (int i = 0; i < _texts.Count; i++)
+                            {
+                                var txt = _texts[i];
+                                texts.Add(new InRect(list[i], new Rectangle(txt[0], txt[1], txt[2], max_h)));
+                            }
+                            rectsContent = texts.ToArray();
+
+                            int w = has_x > sizeTitle.Width ? has_x : sizeTitle.Width, h = sizeTitle.Height + sp + max_h;
+
+                            rectTitle = new Rectangle(paddingx, paddingy, w, sizeTitle.Height + sp);
+                            rectContent = new Rectangle(rectTitle.X, rectTitle.Bottom, w, max_h);
+
+                            SetSize(w + paddingx2, h + paddingy2);
+                        }
+                    }
+                }
+                else
+                {
+                    rtext = true;
+                    var content = config.Content.ToString();
+
+                    if (_config.Title == null)
+                    {
+                        var sizeContent = g.MeasureText(content, Font);
+                        int w = sizeContent.Width, h = sizeContent.Height;
+                        rectContent = new Rectangle(paddingx, paddingy, w, h);
+                        SetSize(w + paddingx2, h + paddingy2);
+                    }
+                    else
+                    {
+                        using (var fontTitle = new Font(Font.FontFamily, Font.Size, FontStyle.Bold))
+                        {
+                            Size sizeTitle = g.MeasureText(config.Title, fontTitle), sizeContent = g.MeasureText(content, Font);
+                            int w = sizeContent.Width > sizeTitle.Width ? sizeContent.Width : sizeTitle.Width, h = sizeTitle.Height + sp + sizeContent.Height;
+
+                            rectTitle = new Rectangle(paddingx, paddingy, w, sizeTitle.Height + sp);
+                            rectContent = new Rectangle(rectTitle.X, rectTitle.Bottom, w, h - sizeTitle.Height - sp);
+
+                            SetSize(w + paddingx2, h + paddingy2);
+                        }
+                    }
+                }
+            });
+            if (config.CustomPoint.HasValue)
+            {
+                new CalculateCoordinate(this, config.CustomPoint.Value, TargetRect, Radius, ArrowSize, shadow, shadow2, config.Offset).Auto(config.ArrowAlign, true, out int x, out int y, out ArrowLine);
+                SetLocation(x, y);
+            }
+            else
+            {
+                new CalculateCoordinate(this, config.Control, TargetRect, Radius, ArrowSize, shadow, shadow2, config.Offset).Auto(config.ArrowAlign, true, out int x, out int y, out ArrowLine);
+                SetLocation(x, y);
+            }
+        }
+
+        public void LoadOffset(Rectangle rect)
+        {
+            new CalculateCoordinate(this, config.Control, TargetRect, Radius, ArrowSize, shadow, shadow2, rect).Auto(config.ArrowAlign, true, out int x, out int y, out ArrowLine);
+            SetLocation(x, y);
+            PrintCache();
+            if (form == null) return;
+            var flocation = new Point(TargetRect.Location.X + rectContent.X, TargetRect.Location.Y + rectContent.Y);
+            var fsize = new Size(rectContent.Width, rectContent.Height);
+            form.Location = flocation;
+            form.MaximumSize = form.MinimumSize = form.Size = fsize;
+        }
+
+        public override string name => nameof(Popover);
+
+        public override void LoadOK()
+        {
+            if (IsHandleCreated)
+            {
+                if (config.Content is Control control) BeginInvoke(() => LoadContent(control));
+                else base.LoadOK();
+            }
+            else base.LoadOK();
+            if (config.AutoClose > 0)
+            {
+                ITask.Run(() =>
+                {
+                    Thread.Sleep(config.AutoClose * 1000);
+                    IClose();
+                });
+            }
+        }
+
+        Bitmap? tempContent;
+        Form? parent;
+        void LoadContent(Control control)
+        {
+            var flocation = new Point(TargetRect.Location.X + rectContent.X, TargetRect.Location.Y + rectContent.Y);
+            var fsize = new Size(rectContent.Width, rectContent.Height);
+            form = new DoubleBufferForm(this, control, config.Focus)
+            {
+                StartPosition = FormStartPosition.Manual,
+                FormBorderStyle = FormBorderStyle.None,
+                Bounds = new Rectangle(flocation, fsize),
+                MaximumSize = fsize,
+                MinimumSize = fsize
+            };
+            control.Disposed += Control_Disposed;
+            form.Show(this);
+            PARENT = form;
+            parent = control.FindPARENT();
+            config.OnControlLoad?.Invoke();
+            control.ControlEvent();
+            if (config.Content is ControlEvent controlEvent) controlEvent.LoadCompleted();
+            base.LoadOK();
+            if (parent != null) parent.VisibleChanged += Parent_VisibleChanged;
+            control.SizeChanged += Control_SizeChanged;
+        }
+
+        private void Parent_VisibleChanged(object? sender, EventArgs e)
+        {
+            if (form == null) return;
+            form.Visible = parent!.Visible;
+        }
+
+        private void Control_SizeChanged(object? sender, EventArgs e)
+        {
+            if (IsDisposed || Disposing || form == null) return;
+            if (sender is Control control)
+            {
+                int cw = control.Width, ch = control.Height;
+                // 内容大小未变化则跳过，避免与 Dock=Fill 布局产生循环触发
+                if (cw == rectContent.Width && ch == rectContent.Height) return;
+
+                // 同步内容区域大小，标题宽度跟随内容宽度
+                rectContent.Width = cw;
+                rectContent.Height = ch;
+                if (config.Title != null) rectTitle.Width = cw;
+
+                // 重新计算气泡窗体大小（内容 + 标题区 + 内边距）
+                int paddingx = Padding.Left, paddingy = Padding.Top;
+                int titleHeight = rectContent.Y - paddingy - shadow;
+                SetSize(cw + paddingx * 2, ch + titleHeight + paddingy * 2);
+
+                // 重新计算坐标与箭头
+                if (config.CustomPoint.HasValue)
+                {
+                    new CalculateCoordinate(this, config.CustomPoint.Value, TargetRect, Radius, ArrowSize, shadow, shadow2, config.Offset).Auto(config.ArrowAlign, true, out int x, out int y, out ArrowLine);
+                    SetLocation(x, y);
+                }
+                else
+                {
+                    new CalculateCoordinate(this, config.Control, TargetRect, Radius, ArrowSize, shadow, shadow2, config.Offset).Auto(config.ArrowAlign, true, out int x, out int y, out ArrowLine);
+                    SetLocation(x, y);
+                }
+
+                // 同步内部容器（DoubleBufferForm）位置与大小
+                var flocation = new Point(TargetRect.Location.X + rectContent.X, TargetRect.Location.Y + rectContent.Y);
+                var fsize = new Size(rectContent.Width, rectContent.Height);
+                form.MaximumSize = form.MinimumSize = Size.Empty;
+                form.Bounds = new Rectangle(flocation, fsize);
+                form.MaximumSize = form.MinimumSize = fsize;
+
+                // 重新捕获内容快照并重绘气泡
+                tempContent?.Dispose();
+                tempContent = control.CaptureControl();
+                Print();
+            }
+        }
+
+        #region 关闭
+
+        private void Control_Disposed(object? sender, EventArgs e) => IClose();
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            if (config.Content is Control control)
+            {
+                if (config.OnClosing != null)
+                {
+                    config.OnClosing(config, e);
+                    if (e.Cancel) return;
+                }
+                if (control.IsDisposed)
+                {
+                    form?.Dispose();
+                    base.OnFormClosing(e);
+                    return;
+                }
+                tempContent = control.CaptureControl();
+                if (form != null) form.Location = Helper.OffScreenLocation(form.Width, form.Height);
+            }
+            base.OnFormClosing(e);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            tempContent?.Dispose();
+            tempContent = null;
+            if (parent != null) parent.VisibleChanged -= Parent_VisibleChanged;
+            if (config.Content is Control control)
+            {
+                control.Disposed -= Control_Disposed;
+                control.SizeChanged -= Control_SizeChanged;
+                control.Dispose();
+            }
+#pragma warning disable CS8625
+            config.Content = null;
+#pragma warning restore CS8625
+            form?.Dispose();
+            base.Dispose(disposing);
+        }
+
+        List<Form> forms = new List<Form>();
+        public void CloseLockedAdd(Form form)
+        {
+            lock (forms)
+            {
+                forms.Add(form);
+            }
+        }
+        public void CloseLockedDel(Form form)
+        {
+            lock (forms)
+            {
+                forms.Remove(form);
+            }
+        }
+        public override bool ICanClose()
+        {
+            if (config.Content is ControlPopup controlPopup && controlPopup.Locked) return false;
+            if (forms.Count > 0) return false;
+            return true;
+        }
+
+        #endregion
+
+        Rectangle rectTitle, rectContent;
+        InRect[]? rectsContent;
+        bool rtext = false;
+        bool hasmouse = false;
+
+        #region 渲染
+
+        readonly FormatFlags stringLeft = FormatFlags.Left | FormatFlags.VerticalCenter | FormatFlags.EllipsisCharacter,
+            stringCenter = FormatFlags.Center | FormatFlags.NoWrap;
+
+        public override void PrintContent(Canvas g, Rectangle rect, GraphicsState state)
+        {
+            if (config.Title != null || rtext)
+            {
+                using (var brush = new SolidBrush(config.Fore ?? Colour.Text.Get(config.ColorScheme, name)))
+                {
+                    using (var fontTitle = new Font(Font.FontFamily, Font.Size, FontStyle.Bold))
+                    {
+                        g.DrawText(config.Title, fontTitle, brush, rectTitle, stringLeft);
+                    }
+                    if (rtext)
+                    {
+                        if (config.Content == null) return;
+                        if (config.Content is IList<Popover.TextRow> list && rectsContent != null)
+                        {
+                            for (int i = 0; i < list.Count; i++)
+                            {
+                                var txt = list[i];
+                                g.String(txt.Text, txt.Font ?? Font, txt.Fore, brush, rectsContent[i].Rect, stringCenter);
+                            }
+                        }
+                        else g.DrawText(config.Content.ToString(), Font, brush, rectContent, stringLeft);
+                    }
+                }
+            }
+        }
+
+        public override void PrintBg(Canvas g, Rectangle rect, GraphicsPath path)
+        {
+            using (var brush = new SolidBrush(config.Back ?? Colour.BgElevated.Get(config.ColorScheme, name)))
+            {
+                g.Fill(brush, path);
+                if (shadow == 0)
+                {
+                    int bor = (int)(Dpi), bor2 = bor * 2;
+                    using (var path2 = new Rectangle(rect.X + bor, rect.Y + bor, rect.Width - bor2, rect.Height - bor2).RoundPath(Radius))
+                    {
+                        g.Draw(Colour.BorderColor.Get(config.ColorScheme, name), bor, path2);
+                    }
+                    if (tempContent != null) g.Image(tempContent, rectContent);
+                    return;
+                }
+                if (ArrowLine != null) g.FillPolygon(brush, ArrowLine);
+            }
+            if (tempContent != null) g.Image(tempContent, rectContent);
+        }
+
+        #endregion
+
+        #region 鼠标
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            if (hasmouse && rectsContent != null)
+            {
+                foreach (var it in rectsContent)
+                {
+                    if (it.Text.Call != null && it.Rect.Contains(e.X, e.Y))
+                    {
+                        SetCursor(true);
+                        return;
+                    }
+                }
+                SetCursor(false);
+            }
+            base.OnMouseMove(e);
+        }
+
+        protected override void OnMouseClick(MouseEventArgs e)
+        {
+            if (hasmouse && rectsContent != null && e.Button == MouseButtons.Left)
+            {
+                foreach (var it in rectsContent)
+                {
+                    if (it.Text.Call != null && it.Rect.Contains(e.X, e.Y))
+                    {
+                        it.Text.Call();
+                        return;
+                    }
+                }
+            }
+            base.OnMouseClick(e);
+        }
+
+        #endregion
+
+        class InRect
+        {
+            public InRect(Popover.TextRow text, Rectangle rect)
+            {
+                Text = text;
+                Rect = rect;
+            }
+            public Popover.TextRow Text { get; set; }
+            public Rectangle Rect { get; set; }
+        }
+    }
+}

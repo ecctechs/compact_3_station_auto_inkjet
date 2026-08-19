@@ -1,0 +1,823 @@
+// Copyright (C) Tom <17379620>. All Rights Reserved.
+// AntdUI WinForm Library | Licensed under Apache-2.0 License
+// Gitee: https://gitee.com/AntdUI/AntdUI
+// GitHub: https://github.com/AntdUI/AntdUI
+// GitCode: https://gitcode.com/AntdUI/AntdUI
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
+using System.Drawing.Design;
+using System.Drawing.Drawing2D;
+using System.Windows.Forms;
+
+namespace AntdUI
+{
+    /// <summary>
+    /// Panel 面板
+    /// </summary>
+    /// <remarks>内容区域。</remarks>
+    [Description("Panel 面板")]
+    [ToolboxItem(true)]
+    [DefaultProperty("Text")]
+    [Designer(typeof(IControlDesigner))]
+    public class Panel : IControl, ShadowConfig, IMessageFilter, IEventListener
+    {
+        #region 属性
+
+        int radius = 6;
+        /// <summary>
+        /// 圆角
+        /// </summary>
+        [Description("圆角"), Category(nameof(CategoryAttribute.Appearance)), DefaultValue(6)]
+        public int Radius
+        {
+            get => radius;
+            set
+            {
+                if (radius == value) return;
+                radius = value;
+                if (XScroll != null) XScroll.Radius = value;
+                if (YScroll != null) YScroll.Radius = value;
+                Invalidate();
+                OnPropertyChanged(nameof(Radius));
+            }
+        }
+
+        TAlignRound radiusAlign = TAlignRound.ALL;
+        /// <summary>
+        /// 圆角方向
+        /// </summary>
+        [Description("圆角方向"), Category(nameof(CategoryAttribute.Appearance)), DefaultValue(TAlignRound.ALL)]
+        public TAlignRound RadiusAlign
+        {
+            get => radiusAlign;
+            set
+            {
+                if (radiusAlign == value) return;
+                radiusAlign = value;
+                Invalidate();
+                OnPropertyChanged(nameof(RadiusAlign));
+            }
+        }
+
+        #region 阴影
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        [Obsolete("use InnerPadding"), Description("内边距"), Category(nameof(CategoryAttribute.Appearance)), DefaultValue(typeof(Padding), "0, 0, 0, 0")]
+        public Padding padding
+        {
+            get => InnerPadding;
+            set => InnerPadding = value;
+        }
+
+        Padding _padding = new Padding(0);
+        /// <summary>
+        /// 内边距
+        /// </summary>
+        [Description("内边距"), Category(nameof(CategoryAttribute.Appearance)), DefaultValue(typeof(Padding), "0, 0, 0, 0")]
+        public Padding InnerPadding
+        {
+            get => _padding;
+            set
+            {
+                if (_padding == value) return;
+                _padding = value;
+                shadow_temp.Change();
+                IOnSizeChanged();
+                OnPropertyChanged(nameof(InnerPadding));
+
+            }
+        }
+
+        int shadow = 0;
+        /// <summary>
+        /// 阴影大小
+        /// </summary>
+        [Description("阴影"), Category(nameof(CategoryAttribute.Appearance)), DefaultValue(0)]
+        public int Shadow
+        {
+            get => shadow;
+            set
+            {
+                if (shadow == value) return;
+                shadow = value;
+                shadow_temp.Change();
+                IOnSizeChanged();
+                OnPropertyChanged(nameof(Shadow));
+            }
+        }
+
+        Color? shadowColor;
+        /// <summary>
+        /// 阴影颜色
+        /// </summary>
+        [Description("阴影颜色"), Category("阴影"), DefaultValue(null)]
+        [Editor(typeof(Design.ColorEditor), typeof(UITypeEditor))]
+        public Color? ShadowColor
+        {
+            get => shadowColor;
+            set
+            {
+                if (shadowColor == value) return;
+                shadowColor = value;
+                shadow_temp.Change();
+                Invalidate();
+                OnPropertyChanged(nameof(ShadowColor));
+            }
+        }
+
+        int shadowOffsetX = 0;
+        /// <summary>
+        /// 阴影偏移X
+        /// </summary>
+        [Description("阴影偏移X"), Category("阴影"), DefaultValue(0)]
+        public int ShadowOffsetX
+        {
+            get => shadowOffsetX;
+            set
+            {
+                if (shadowOffsetX == value) return;
+                shadowOffsetX = value;
+                shadow_temp.Change();
+                IOnSizeChanged();
+                OnPropertyChanged(nameof(ShadowOffsetX));
+            }
+        }
+
+        int shadowOffsetY = 0;
+        /// <summary>
+        /// 阴影偏移Y
+        /// </summary>
+        [Description("阴影偏移Y"), Category("阴影"), DefaultValue(0)]
+        public int ShadowOffsetY
+        {
+            get => shadowOffsetY;
+            set
+            {
+                if (shadowOffsetY == value) return;
+                shadowOffsetY = value;
+                shadow_temp.Change();
+                IOnSizeChanged();
+                OnPropertyChanged(nameof(ShadowOffsetY));
+            }
+        }
+
+        float shadowOpacity = 0.1F;
+        /// <summary>
+        /// 阴影透明度
+        /// </summary>
+        [Description("阴影透明度"), Category("阴影"), DefaultValue(0.1F)]
+        public float ShadowOpacity
+        {
+            get => shadowOpacity;
+            set
+            {
+                if (shadowOpacity == value) return;
+                if (value < 0) value = 0;
+                else if (value > 1) value = 1;
+                shadowOpacity = value;
+                AnimationHoverValue = shadowOpacity;
+                Invalidate();
+                OnPropertyChanged(nameof(ShadowOpacity));
+            }
+        }
+
+        bool shadowOpacityAnimation = false;
+        /// <summary>
+        /// 阴影透明度动画使能
+        /// </summary>
+        [Description("阴影透明度动画使能"), Category("阴影"), DefaultValue(false)]
+        public bool ShadowOpacityAnimation
+        {
+            get => shadowOpacityAnimation;
+            set
+            {
+                if (shadowOpacityAnimation == value) return;
+                shadowOpacityAnimation = value;
+                if (shadowOpacityAnimation)
+                {
+                    if (IsHandleCreated) Application.AddMessageFilter(this);
+                }
+                else Application.RemoveMessageFilter(this);
+            }
+        }
+
+        float shadowOpacityHover = 0.3F;
+        /// <summary>
+        /// 悬停阴影后透明度
+        /// </summary>
+        [Description("悬停阴影后透明度"), Category("阴影"), DefaultValue(0.3F)]
+        public float ShadowOpacityHover
+        {
+            get => shadowOpacityHover;
+            set
+            {
+                if (shadowOpacityHover == value) return;
+                if (value < 0) value = 0;
+                else if (value > 1) value = 1;
+                shadowOpacityHover = value;
+                Invalidate();
+                OnPropertyChanged(nameof(ShadowOpacityHover));
+            }
+        }
+
+        TAlignMini shadowAlign = TAlignMini.None;
+        /// <summary>
+        /// 阴影方向
+        /// </summary>
+        [Description("阴影方向"), Category("阴影"), DefaultValue(TAlignMini.None)]
+        public TAlignMini ShadowAlign
+        {
+            get => shadowAlign;
+            set
+            {
+                if (shadowAlign == value) return;
+                shadowAlign = value;
+                shadow_temp.Change();
+                IOnSizeChanged();
+                OnPropertyChanged(nameof(ShadowAlign));
+            }
+        }
+
+        /// <summary>
+        /// 阴影延迟毫秒
+        /// </summary>
+        [Description("阴影延迟毫秒"), Category("阴影"), DefaultValue(100)]
+        public int ShadowDelay { get; set; } = 100;
+
+        #endregion
+
+        #region 背景
+
+        Color? back;
+        /// <summary>
+        /// 背景颜色
+        /// </summary>
+        [Description("背景颜色"), Category(nameof(CategoryAttribute.Appearance)), DefaultValue(null)]
+        [Editor(typeof(Design.ColorEditor), typeof(UITypeEditor))]
+        public Color? Back
+        {
+            get => back;
+            set
+            {
+                if (back == value) return;
+                back = value;
+                Invalidate();
+                OnPropertyChanged(nameof(Back));
+            }
+        }
+
+        string? backExtend;
+        /// <summary>
+        /// 背景渐变色
+        /// </summary>
+        [Description("背景渐变色"), Category(nameof(CategoryAttribute.Appearance)), DefaultValue(null)]
+        public string? BackExtend
+        {
+            get => backExtend;
+            set
+            {
+                if (backExtend == value) return;
+                backExtend = value;
+                Invalidate();
+                OnPropertyChanged(nameof(BackExtend));
+            }
+        }
+
+        Image? backImage;
+        /// <summary>
+        /// 背景图片
+        /// </summary>
+        [Description("背景图片"), Category(nameof(CategoryAttribute.Appearance)), DefaultValue(null)]
+        public new Image? BackgroundImage
+        {
+            get => backImage;
+            set
+            {
+                if (backImage == value) return;
+                backImage = value;
+                Invalidate();
+                OnPropertyChanged(nameof(BackgroundImage));
+            }
+        }
+
+        TFit backFit = TFit.Fill;
+        /// <summary>
+        /// 背景图片布局
+        /// </summary>
+        [Description("背景图片布局"), Category(nameof(CategoryAttribute.Appearance)), DefaultValue(TFit.Fill)]
+        public new TFit BackgroundImageLayout
+        {
+            get => backFit;
+            set
+            {
+                if (backFit == value) return;
+                backFit = value;
+                Invalidate();
+                OnPropertyChanged(nameof(BackgroundImageLayout));
+            }
+        }
+
+        #endregion
+
+        #region 箭头
+
+        int arrwoSize = 8;
+        /// <summary>
+        /// 箭头大小
+        /// </summary>
+        [Description("箭头大小"), Category("箭头"), DefaultValue(8)]
+        public int ArrowSize
+        {
+            get => arrwoSize;
+            set
+            {
+                if (arrwoSize == value) return;
+                arrwoSize = value;
+                Invalidate();
+                OnPropertyChanged(nameof(ArrowSize));
+            }
+        }
+
+        TAlign arrowAlign = TAlign.None;
+        /// <summary>
+        /// 箭头方向
+        /// </summary>
+        [Description("箭头方向"), Category("箭头"), DefaultValue(TAlign.None)]
+        public TAlign ArrowAlign
+        {
+            get => arrowAlign;
+            set
+            {
+                if (arrowAlign == value) return;
+                arrowAlign = value;
+                Invalidate();
+                OnPropertyChanged(nameof(ArrowAlign));
+            }
+        }
+
+        #endregion
+
+        #region 边框
+
+        float borderWidth = 0F;
+        /// <summary>
+        /// 边框宽度
+        /// </summary>
+        [Description("边框宽度"), Category("边框"), DefaultValue(0F)]
+        public float BorderWidth
+        {
+            get => borderWidth;
+            set
+            {
+                if (borderWidth == value) return;
+                borderWidth = value;
+                IOnSizeChanged();
+                OnPropertyChanged(nameof(BorderWidth));
+            }
+        }
+
+        Color? borderColor;
+        /// <summary>
+        /// 边框颜色
+        /// </summary>
+        [Description("边框颜色"), Category("边框"), DefaultValue(null)]
+        [Editor(typeof(Design.ColorEditor), typeof(UITypeEditor))]
+        public Color? BorderColor
+        {
+            get => borderColor;
+            set
+            {
+                if (borderColor == value) return;
+                borderColor = value;
+                if (borderWidth > 0) Invalidate();
+                OnPropertyChanged(nameof(BorderColor));
+            }
+        }
+
+        DashStyle borderStyle = DashStyle.Solid;
+        /// <summary>
+        /// 边框样式
+        /// </summary>
+        [Description("边框样式"), Category("边框"), DefaultValue(DashStyle.Solid)]
+        public DashStyle BorderStyle
+        {
+            get => borderStyle;
+            set
+            {
+                if (borderStyle == value) return;
+                borderStyle = value;
+                if (borderWidth > 0) Invalidate();
+                OnPropertyChanged(nameof(BorderStyle));
+            }
+        }
+
+        #endregion
+
+        #endregion
+
+        public override Rectangle DisplayRectangle => ClientRectangle.DeflateRect(Padding, this, shadowAlign, borderWidth);
+
+        #region 渲染
+
+        protected override void OnDraw(DrawEventArgs e)
+        {
+            var g = e.Canvas;
+            var rect_read = ReadRectangle;
+            if (rect_read.Width > 0 && rect_read.Height > 0)
+            {
+                float _radius = radius * Dpi;
+                var bg = back ?? Colour.BgContainer.Get(ColorScheme, nameof(Panel), Name);
+                using (var path = DrawShadow(g, _radius, e.Rect, rect_read))
+                {
+                    using (var brush = backExtend.BrushEx(rect_read, bg))
+                    {
+                        g.Fill(brush, path);
+                    }
+                    if (backImage != null) g.Image(rect_read, backImage, backFit, _radius, false);
+                    if (borderWidth > 0) g.Draw(borderColor ?? Colour.BorderColor.Get(ColorScheme, nameof(Panel), Name), borderWidth * Dpi, borderStyle, path);
+                }
+                if (ArrowAlign != TAlign.None) g.FillPolygon(bg, ArrowAlign.AlignLines(ArrowSize, e.Rect, rect_read));
+            }
+            base.OnDraw(e);
+        }
+
+        AsyncShadow shadow_temp;
+        public Panel()
+        {
+            shadow_temp = new AsyncShadow(this, rect => rect.RoundPath(radius, shadowAlign, radiusAlign));
+        }
+
+        /// <summary>
+        /// 绘制阴影
+        /// </summary>
+        /// <param name="g">GDI</param>
+        /// <param name="rect_client">客户区域</param>
+        /// <param name="rect_read">真实区域</param>
+        GraphicsPath DrawShadow(Canvas g, float radius, Rectangle rect_client, Rectangle rect_read)
+        {
+            var path = rect_read.RoundPath(radius, shadowAlign, radiusAlign);
+            if (shadow > 0)
+            {
+                float opacity;
+                if (AnimationHover) opacity = AnimationHoverValue;
+                else if (ExtraMouseHover) opacity = shadowOpacityHover;
+                else opacity = shadowOpacity;
+                shadow_temp.Draw(g, rect_client, rect_read, Dpi, shadow, ShadowOffsetX, ShadowOffsetY, shadowColor ?? Colour.TextBase.Get(ColorScheme, nameof(Panel), Name), opacity);
+            }
+            return path;
+        }
+
+        public override Rectangle ReadRectangle => ClientRectangle.DeflateRect(_padding, Dpi).PaddingRect(this, shadowAlign, borderWidth / 2F);
+
+        public override GraphicsPath RenderRegion => ReadRectangle.RoundPath(radius * Dpi);
+
+        #endregion
+
+        #region 鼠标
+
+        float AnimationHoverValue = 0.1F;
+        bool AnimationHover = false;
+        bool _mouseHover = false;
+        bool ExtraMouseHover
+        {
+            get => _mouseHover;
+            set
+            {
+                if (_mouseHover == value) return;
+                if (Enabled && ShadowOpacityAnimation && shadow > 0 && shadowOpacityHover > 0 && shadowOpacityHover > shadowOpacity)
+                {
+                    _mouseHover = value;
+                    if (Config.HasAnimation(nameof(Panel), Name))
+                    {
+                        ThreadHover?.Dispose();
+                        AnimationHover = true;
+                        float addvalue = shadowOpacityHover / 12F;
+                        if (value)
+                        {
+                            ThreadHover = new AnimationTask(new AnimationLinearFConfig(this, i =>
+                            {
+                                AnimationHoverValue = i;
+                                Invalidate();
+                                return true;
+                            }, 20).SetAdd(addvalue).SetMax(shadowOpacityHover).SetValue(AnimationHoverValue).SetEnd(() =>
+                            {
+                                AnimationHover = false;
+                                Invalidate();
+                            }));
+                        }
+                        else
+                        {
+                            ThreadHover = new AnimationTask(new AnimationLinearFConfig(this, i =>
+                            {
+                                AnimationHoverValue = i;
+                                Invalidate();
+                                return true;
+                            }, 20).SetAdd(-addvalue).SetMax(shadowOpacity).SetValue(AnimationHoverValue).SetEnd(() =>
+                            {
+                                AnimationHover = false;
+                                Invalidate();
+                            }));
+                        }
+                    }
+                    else Invalidate();
+                }
+            }
+        }
+
+        public void SetMouseHover(bool val) { ExtraMouseHover = val; }
+
+        #region 动画
+
+        protected override void Dispose(bool disposing)
+        {
+            ThreadHover?.Dispose();
+            ThreadHover = null;
+            ShadowOpacityAnimation = false;
+            shadow_temp.Dispose();
+            base.Dispose(disposing);
+        }
+        AnimationTask? ThreadHover;
+
+        #endregion
+
+        protected override void OnMouseEnter(EventArgs e)
+        {
+            base.OnMouseEnter(e);
+            ExtraMouseHover = true;
+        }
+
+        #region 离开监控
+
+
+        public bool PreFilterMessage(ref System.Windows.Forms.Message m)
+        {
+            if (m.Msg == 0x2a1 || m.Msg == 0x2a3)
+            {
+                ExtraMouseHover = ClientRectangle.Contains(PointToClient(MousePosition));
+                return false;
+            }
+            return false;
+        }
+
+        #endregion
+
+        protected override void OnLeave(EventArgs e)
+        {
+            base.OnLeave(e);
+            ExtraMouseHover = false;
+        }
+
+        #endregion
+
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            this.AddListener();
+            if (ShadowOpacityAnimation) Application.AddMessageFilter(this);
+            if (autoscroll) InitScroll();
+        }
+
+        #region 主题变化
+
+        public void HandleEvent(EventType id, object? tag)
+        {
+            switch (id)
+            {
+                case EventType.THEME:
+                    shadow_temp.Change();
+                    if (IPanel != null) InitScrollBg(IPanel);
+                    if (XScroll != null) InitScrollBg(XScroll);
+                    if (YScroll != null) InitScrollBg(YScroll);
+                    break;
+            }
+        }
+
+        #endregion
+
+        #region 滚动条
+
+        /// <summary>
+        /// 内部容器背景透明
+        /// </summary>
+        [Description("内部容器背景透明"), Category(nameof(CategoryAttribute.Appearance)), DefaultValue(false)]
+        public bool AutoContainerBgTransparent { get; set; }
+
+        bool autoscroll = false;
+        /// <summary>
+        /// 是否显示滚动条
+        /// </summary>
+        [Description("是否显示滚动条"), Category(nameof(CategoryAttribute.Appearance)), DefaultValue(false)]
+        public bool AutoScroll
+        {
+            get => autoscroll;
+            set
+            {
+                if (autoscroll == value) return;
+                autoscroll = value;
+                if (IsHandleCreated) InitScroll();
+                OnPropertyChanged(nameof(AutoScroll));
+            }
+        }
+
+        private PanelCore? IPanel;
+        public XScrollBar? XScroll;
+        public YScrollBar? YScroll;
+
+        #region 滚动条
+
+        void InitScroll()
+        {
+            if (autoscroll)
+            {
+                if (DesignMode) return;
+                if (IPanel == null)
+                {
+                    IPanel = new PanelCore(ScrollInfo)
+                    {
+                        Name = "__IN__",
+                        Dock = DockStyle.Fill,
+                        AutoScroll = true,
+                        Bounds = DisplayRectangle
+                    };
+                    InitScrollBg(IPanel);
+                    var controls = new List<Control>(IPanel.Controls.Count);
+                    foreach (Control it in base.Controls)
+                    {
+                        if (it.Name == "__IN__" || it.Name == "__BARX__" || it.Name == "__BARY__") continue;
+                        controls.Add(it);
+                    }
+                    if (controls.Count > 0) IPanel.Controls.AddRange(controls.ToArray());
+                    base.Controls.Add(IPanel);
+                }
+                if (XScroll == null)
+                {
+                    int h = SystemInformation.HorizontalScrollBarHeight, w = IPanel.Width;
+                    XScroll = new XScrollBar
+                    {
+                        Name = "__BARX__",
+                        Dock = DockStyle.Bottom,
+                        MinimumSize = new Size(0, h),
+                        Size = new Size(w, h),
+                        Radius = Radius
+                    };
+                    InitScrollBg(XScroll);
+                    XScroll.ValueChanged += ScrollX_ValueChanged;
+                    base.Controls.Add(XScroll);
+                }
+                if (YScroll == null)
+                {
+                    int w = SystemInformation.VerticalScrollBarWidth, h = IPanel.Height;
+                    YScroll = new YScrollBar
+                    {
+                        Name = "__BARY__",
+                        Dock = DockStyle.Right,
+                        MinimumSize = new Size(w, 0),
+                        Size = new Size(w, h),
+                        Radius = Radius
+                    };
+                    InitScrollBg(YScroll);
+                    YScroll.ShowChanged += ScrollY_ShowChanged;
+                    YScroll.ValueChanged += ScrollY_ValueChanged;
+                    base.Controls.Add(YScroll);
+                }
+            }
+            else
+            {
+                if (IPanel != null)
+                {
+                    if (IPanel.Controls.Count > 0)
+                    {
+                        var controls = new List<Control>(IPanel.Controls.Count);
+                        foreach (Control it in IPanel.Controls) controls.Add(it);
+                        base.Controls.AddRange(controls.ToArray());
+                    }
+                    IPanel?.Dispose();
+                    IPanel = null;
+                }
+                if (YScroll != null)
+                {
+                    YScroll.ValueChanged -= ScrollY_ValueChanged;
+                    YScroll.ShowChanged -= ScrollY_ShowChanged;
+                    YScroll.Dispose();
+                    YScroll = null;
+                }
+                if (XScroll != null)
+                {
+                    XScroll.ValueChanged -= ScrollX_ValueChanged;
+                    XScroll.Dispose();
+                    XScroll = null;
+                }
+            }
+        }
+        void InitScrollBg(Control control)
+        {
+            if (AutoContainerBgTransparent) control.BackColor = Color.Transparent;
+            else control.BackColor = back ?? Colour.BgContainer.Get(ColorScheme, nameof(Panel), Name);
+        }
+
+        private void ScrollY_ShowChanged(object? sender, BoolEventArgs e)
+        {
+            if (XScroll == null || YScroll == null) return;
+            XScroll.RadiusRB = !e.Value;
+        }
+        private void ScrollX_ValueChanged(object? sender, IntEventArgs e)
+        {
+            if (IPanel == null || XScroll == null) return;
+            XScroll.SetValue(IPanel.HorizontalScroll);
+        }
+        private void ScrollY_ValueChanged(object? sender, IntEventArgs e)
+        {
+            if (IPanel == null || YScroll == null) return;
+            YScroll.SetValue(IPanel.VerticalScroll);
+        }
+
+        private void ScrollInfo()
+        {
+            if (IPanel == null || YScroll == null || XScroll == null) return;
+            YScroll.LoadValue(IPanel.VerticalScroll);
+            XScroll.LoadValue(IPanel.HorizontalScroll);
+        }
+
+        protected override void OnControlAdded(ControlEventArgs e)
+        {
+            if (e.Control == null) return;
+            if (IPanel == null || e.Control.Name == "__IN__" || e.Control.Name == "__BARX__" || e.Control.Name == "__BARY__")
+            {
+                base.OnControlAdded(e);
+                return;
+            }
+            if (DesignMode)
+            {
+                base.OnControlAdded(e);
+                return;
+            }
+            IPanel.Controls.Add(e.Control);
+        }
+
+        public void Add(Control control) => Controls.Add(control);
+
+        [Browsable(false)]
+        public new ControlCollection Controls
+        {
+            get
+            {
+                if (IPanel == null) return base.Controls;
+                return IPanel.Controls;
+            }
+        }
+
+        public void ScrollControlIntoView(Control? activeControl) => IPanel?.ScrollControlIntoView(activeControl);
+
+        protected override void OnContextMenuStripChanged(EventArgs e)
+        {
+            base.OnContextMenuStripChanged(e);
+            if (IPanel != null) IPanel.ContextMenuStrip = ContextMenuStrip;
+        }
+
+        #endregion
+
+        internal class PanelCore : ScrollableControl
+        {
+            public PanelCore(Action loadScroll)
+            {
+                LoadScroll = loadScroll;
+                SetStyle(
+                    ControlStyles.AllPaintingInWmPaint |
+                    ControlStyles.OptimizedDoubleBuffer |
+                    ControlStyles.ResizeRedraw |
+                    ControlStyles.SupportsTransparentBackColor |
+                    ControlStyles.UserPaint, true);
+                UpdateStyles();
+            }
+
+            public Action LoadScroll;
+
+            protected override void WndProc(ref System.Windows.Forms.Message m)
+            {
+                switch ((Win32.User32.WindowMessage)m.Msg)
+                {
+                    case Win32.User32.WindowMessage.WM_PAINT:
+                    case Win32.User32.WindowMessage.WM_MOUSEWHEEL:
+                    case Win32.User32.WindowMessage.WM_SIZE:
+                        Win32.User32.HideScrollBar(Handle);
+                        LoadScroll();
+                        break;
+                    case Win32.User32.WindowMessage.WM_NCCALCSIZE:
+                        Win32.User32.HideScrollBar(Handle);
+                        break;
+                }
+                base.WndProc(ref m);
+            }
+        }
+
+        #endregion
+    }
+
+    internal class IControlDesigner : System.Windows.Forms.Design.ParentControlDesigner
+    {
+
+    }
+}
