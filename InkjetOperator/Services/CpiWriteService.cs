@@ -62,4 +62,59 @@ public static class CpiWriteService
             return (false, $"เขียน CPI.db3 ไม่สำเร็จ: {ex.Message}");
         }
     }
+
+    /// <summary>ค่าที่อยู่ในแถว id=1 ของตาราง CPI ตอนนี้</summary>
+    public sealed record CpiRow(
+        string? Lot, string? Name,
+        string? Text1, string? Text2, string? Text3, string? Text4, string? Text5);
+
+    /// <summary>
+    /// อ่านค่าปัจจุบันจาก CPI.db3 — ใช้ตอนทดสอบเพื่อดูว่าตอนนี้เครื่องถืออะไรอยู่ก่อนเขียนทับ
+    /// เปิดแบบ ReadOnly เพราะซอฟต์แวร์ UV อาจเปิดไฟล์ค้างอยู่
+    /// </summary>
+    public static async Task<(bool ok, CpiRow? row, string msg)> ReadAsync(string dbPath, string table)
+    {
+        try
+        {
+            var connPath = dbPath.StartsWith(@"\\") ? dbPath.Replace(@"\", "/") : dbPath;
+
+            await using var conn = new SqliteConnection($"Data Source={connPath};Mode=ReadOnly");
+            await conn.OpenAsync();
+
+            var cols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            await using (var info = conn.CreateCommand())
+            {
+                info.CommandText = $"PRAGMA table_info({table})";
+                await using var r = await info.ExecuteReaderAsync();
+                while (await r.ReadAsync()) cols.Add(r.GetString(1));
+            }
+
+            if (cols.Count == 0)
+                return (false, null, $"ไม่พบตาราง {table} ในไฟล์");
+
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = $"SELECT * FROM {table} WHERE id = 1 LIMIT 1";
+            await using var reader = await cmd.ExecuteReaderAsync();
+
+            if (!await reader.ReadAsync())
+                return (false, null, $"ไม่พบแถว id=1 ในตาราง {table}");
+
+            string? Get(string col)
+            {
+                if (!cols.Contains(col)) return null;
+                int i = reader.GetOrdinal(col);
+                return reader.IsDBNull(i) ? null : reader.GetValue(i)?.ToString();
+            }
+
+            var row = new CpiRow(
+                Get("lot"), Get("name"),
+                Get("text1"), Get("text2"), Get("text3"), Get("text4"), Get("text5"));
+
+            return (true, row, $"อ่าน CPI.db3 ({table}) สำเร็จ");
+        }
+        catch (Exception ex)
+        {
+            return (false, null, $"อ่าน CPI.db3 ไม่สำเร็จ: {ex.Message}");
+        }
+    }
 }

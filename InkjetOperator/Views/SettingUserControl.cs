@@ -19,13 +19,14 @@ public partial class SettingUserControl : UserControl
         var raw = CustomSettingsManager.Read("MENU_LEVEL", "1");
         int.TryParse(raw, out var level);
 
-        var allButtons = new[] { btnDatabaseSetting, btnDbPathSetting, btnDB3Setting, btnPLCSetting, btnClampSetting };
+        var allButtons = new[] { btnDatabaseSetting, btnDbPathSetting, btnDB3Setting, btnPLCSetting, btnClampSetting, btnUvTest };
 
         bool[] visible = level switch
         {
-            0 => [false, true, true, false, false],
-            1 => [true, false, false, true, true],
-            _ => [true, true, true, true, true],
+            0 => [false, true, true, false, false, true],
+            1 => [true, false, false, true, true, true],
+            9 => [false, false, false, true, true, true],   // ทดสอบหน้างาน: PLC / Clamp / UV Test
+            _ => [true, true, true, true, true, true],
         };
 
         int row = 0;
@@ -111,6 +112,17 @@ public partial class SettingUserControl : UserControl
             if (_subPages.TryGetValue(nameof(btnClampSetting), out var clampPage) && clampPage is ClampSettingUserControl clamp)
                 tasks.Add(clamp.CheckStatusAsync());
         }
+        else if (level == 9)
+        {
+            // โหมดทดสอบหน้างาน — เช็คเฉพาะสามหน้าที่เปิดให้ใช้
+            EnsureSubPage(nameof(btnPLCSetting));
+            EnsureSubPage(nameof(btnClampSetting));
+
+            if (_subPages.TryGetValue(nameof(btnPLCSetting), out var plcTest) && plcTest is PlcSettingUserControl plc9)
+                tasks.Add(plc9.CheckStatusAsync());
+            if (_subPages.TryGetValue(nameof(btnClampSetting), out var clampTest) && clampTest is ClampSettingUserControl clamp9)
+                tasks.Add(clamp9.CheckStatusAsync());
+        }
 
         await Task.WhenAll(tasks);
     }
@@ -136,6 +148,7 @@ public partial class SettingUserControl : UserControl
         nameof(btnDB3Setting) => new BackendSettingUserControl(),
         nameof(btnPLCSetting) => new PlcSettingUserControl(),
         nameof(btnClampSetting) => new ClampSettingUserControl(),
+        nameof(btnUvTest) => new UvTestUserControl(),
         _ => null,
     };
 

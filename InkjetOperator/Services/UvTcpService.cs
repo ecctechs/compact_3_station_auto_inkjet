@@ -24,6 +24,17 @@ public class UvTcpService
     public Task<(bool ok, string log)> StopAsync(string ip, int port)
         => SendKeyAsync(ip, port, new { KEY = 84 }, "สั่งหยุดเครื่อง", ReadTimeoutMs);
 
+    /// <summary>KEY:85 — โหลดโปรแกรมอย่างเดียว ไม่สั่งเริ่มพิมพ์ (ใช้ในหน้าทดสอบ)</summary>
+    public Task<(bool ok, string log)> LoadAsync(string ip, int port, string programName)
+        => SendKeyAsync(ip, port,
+            new { KEY = 85, DATA = $"{programName}.uvdx" },
+            $"โหลดโปรแกรม {programName}.uvdx",
+            LoadReadTimeoutMs);
+
+    /// <summary>KEY:83 — สั่งเริ่มพิมพ์อย่างเดียว (ใช้ในหน้าทดสอบ)</summary>
+    public Task<(bool ok, string log)> StartAsync(string ip, int port)
+        => SendKeyAsync(ip, port, new { KEY = 83 }, "สั่งเริ่มพิมพ์", ReadTimeoutMs);
+
     /// <summary>KEY:85 โหลดโปรแกรม รอให้เครื่องโหลดเสร็จ แล้ว KEY:83 สั่งเริ่มพิมพ์</summary>
     public async Task<(bool ok, string log)> LoadAndStartAsync(string ip, int port, string programName)
     {

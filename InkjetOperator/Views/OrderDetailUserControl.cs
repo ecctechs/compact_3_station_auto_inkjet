@@ -1,4 +1,4 @@
-using InkjetOperator.Adapters;
+﻿using InkjetOperator.Adapters;
 using InkjetOperator.Managers;
 using InkjetOperator.Models;
 using InkjetOperator.Services;
@@ -546,21 +546,14 @@ public partial class OrderDetailUserControl : UserControl
             return;
 
         var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber);
-        var (programFile, isDefault) = ResolveUvProgram(uvRow.ProgramName, docFolder);
+        var pick = UvProgramResolver.Resolve(uvRow.ProgramName, docFolder, this);
+
+        var programFile = pick.Program;
         if (programFile == null) return;
 
-        if (isDefault)
-        {
-            var confirm = MessageBox.Show(
-                $"ไม่พบโปรแกรม \"{uvRow.ProgramName}\" ในเครื่อง {stepName}\n\n"
-                + "ระบบจะใช้โปรแกรม default.uvdx แทนไปก่อน\n"
-                + "กรุณาแจ้งผู้ดูแลให้เพิ่มโปรแกรมนี้เข้าเครื่อง\n\n"
-                + "ต้องการทำต่อหรือไม่?",
-                "ไม่พบโปรแกรม",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2);
-
-            if (confirm != DialogResult.Yes) return;
-        }
+        if (pick.IsDefault &&
+            !UvProgramResolver.ConfirmDefault(uvRow.ProgramName ?? "", uvName, this))
+            return;
 
         var originalText = btn.Text;
         btn.Enabled = false;
@@ -602,7 +595,7 @@ public partial class OrderDetailUserControl : UserControl
 
             var summary = $"ส่ง {uvName} สำเร็จ\n\n"
                 + string.Join("\n", done.Select(s => "• " + s))
-                + (isDefault ? "\n\n⚠ ใช้ default.uvdx เพราะไม่พบโปรแกรมที่ต้องการ" : "");
+                + (pick.IsDefault ? "\n\n⚠ ใช้ default.uvdx เพราะไม่พบโปรแกรมที่ต้องการ" : "");
 
             MessageBox.Show(summary, $"{uvName} — สำเร็จ",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -655,86 +648,6 @@ public partial class OrderDetailUserControl : UserControl
 
         MessageBox.Show(msg, $"{uvName} — ไม่สำเร็จ",
             MessageBoxButtons.OK, MessageBoxIcon.Warning);
-    }
-
-    private static (string? program, bool isDefault) ResolveUvProgram(string? programName, string? docFolder)
-    {
-        if (string.IsNullOrWhiteSpace(programName))
-        {
-            MessageBox.Show("ไม่มีชื่อโปรแกรม UV",
-                "ข้อมูลไม่ครบ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return (null, false);
-        }
-
-        var baseName = Path.GetFileNameWithoutExtension(programName);
-
-        if (docFolder == null)
-            return (baseName, false);
-
-        var allFiles = Directory.GetFiles(docFolder, "*.uvdx")
-            .Select(Path.GetFileNameWithoutExtension)
-            .Where(f => f != null)
-            .ToList();
-
-        // รุ่นย่อยคือชื่อเดิมต่อด้วย "-" เท่านั้น เช่น S-DEX-1624 → S-DEX-1624-1
-        // ใช้ StartsWith เปล่าๆ จะกินชื่อที่แค่ขึ้นต้นเหมือนกันด้วย (S-DEX-16240, S-DEX-1624A)
-        var candidates = allFiles
-            .Where(f => f! == baseName || f!.StartsWith(baseName + "-", StringComparison.Ordinal))
-            .OrderBy(f => f)
-            .ToList();
-
-        if (candidates.Count == 1) return (candidates[0], false);
-
-        if (candidates.Count > 1)
-        {
-            var picked = PromptUvVariant(candidates!);
-            return (picked, false);
-        }
-
-        return ("default", true);
-    }
-
-    private static string? PromptUvVariant(List<string> variants)
-    {
-        using var dlg = new Form
-        {
-            Text = "เลือกโปรแกรม UV",
-            Size = new Size(400, 300),
-            StartPosition = FormStartPosition.CenterParent,
-            MinimizeBox = false,
-            MaximizeBox = false,
-            ShowIcon = false,
-        };
-
-        var listBox = new ListBox
-        {
-            Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 12F),
-        };
-        foreach (var v in variants)
-            listBox.Items.Add(v + ".uvdx");
-        listBox.SelectedIndex = 0;
-
-        string? result = null;
-
-        var btnOk = new Button
-        {
-            Text = "ตกลง",
-            DialogResult = DialogResult.OK,
-            Dock = DockStyle.Bottom,
-            Height = 40,
-        };
-        btnOk.Click += (_, _) =>
-        {
-            if (listBox.SelectedIndex >= 0)
-                result = variants[listBox.SelectedIndex];
-        };
-
-        dlg.Controls.Add(listBox);
-        dlg.Controls.Add(btnOk);
-        dlg.AcceptButton = btnOk;
-
-        return dlg.ShowDialog() == DialogResult.OK ? result : null;
     }
 
     private void FillJobInfo(ResolvedJobResponse resolved)

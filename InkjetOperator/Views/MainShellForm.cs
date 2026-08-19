@@ -1,4 +1,4 @@
-namespace InkjetOperator.Views;
+﻿namespace InkjetOperator.Views;
 
 /// <summary>
 /// Application main window (shell): top menu bar + content host. The pages are
@@ -25,7 +25,7 @@ public partial class MainShellForm : Form
     {
         var raw = Services.CustomSettingsManager.Read("MENU_LEVEL", "1");
         int.TryParse(raw, out var level);
-        if (level <= 1)
+        if (level <= 1 || level == 9)
             await settingPage.CheckAllStatusAsync();
     }
 
@@ -41,6 +41,7 @@ public partial class MainShellForm : Form
         {
             0 => [true, false, false, true],
             1 => [false, true, true, true],
+            9 => [false, false, false, true],   // โหมดทดสอบหน้างาน — เข้าได้เฉพาะ Setting
             _ => [true, true, true, true],
         };
 

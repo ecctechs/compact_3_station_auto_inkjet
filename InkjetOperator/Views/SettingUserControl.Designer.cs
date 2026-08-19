@@ -35,6 +35,7 @@ partial class SettingUserControl
         btnDB3Setting = new AntdUI.Button();
         btnPLCSetting = new AntdUI.Button();
         btnClampSetting = new AntdUI.Button();
+        btnUvTest = new AntdUI.Button();
         pnlContent = new AntdUI.Panel();
         pnlContentArea = new Panel();
         tlpSettingRoot.SuspendLayout();
@@ -85,17 +86,19 @@ partial class SettingUserControl
         tlpSidebar.Controls.Add(btnDB3Setting, 0, 2);
         tlpSidebar.Controls.Add(btnPLCSetting, 0, 3);
         tlpSidebar.Controls.Add(btnClampSetting, 0, 4);
+        tlpSidebar.Controls.Add(btnUvTest, 0, 5);
         tlpSidebar.Dock = DockStyle.Top;
         tlpSidebar.Location = new Point(3, 3);
         tlpSidebar.Margin = new Padding(0);
         tlpSidebar.Name = "tlpSidebar";
-        tlpSidebar.RowCount = 5;
+        tlpSidebar.RowCount = 6;
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
-        tlpSidebar.Size = new Size(398, 420);
+        tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
+        tlpSidebar.Size = new Size(398, 504);
         tlpSidebar.TabIndex = 0;
         // 
         // btnDatabaseSetting
@@ -162,6 +165,19 @@ partial class SettingUserControl
         btnClampSetting.Size = new Size(398, 84);
         btnClampSetting.TabIndex = 4;
         btnClampSetting.Text = "Clamp Setting";
+        //
+        // btnUvTest
+        //
+        btnUvTest.Dock = DockStyle.Fill;
+        btnUvTest.Font = new Font("Segoe UI", 12F);
+        btnUvTest.ForeColor = Color.FromArgb(51, 51, 51);
+        btnUvTest.Location = new Point(0, 420);
+        btnUvTest.Margin = new Padding(0);
+        btnUvTest.Name = "btnUvTest";
+        btnUvTest.Radius = 0;
+        btnUvTest.Size = new Size(398, 84);
+        btnUvTest.TabIndex = 5;
+        btnUvTest.Text = "UV Test";
         // 
         // pnlContent
         // 
@@ -215,6 +231,7 @@ partial class SettingUserControl
     private AntdUI.Button btnDB3Setting;
     private AntdUI.Button btnPLCSetting;
     private AntdUI.Button btnClampSetting;
+    private AntdUI.Button btnUvTest;
     private AntdUI.Panel pnlContent;
     private System.Windows.Forms.Panel pnlContentArea;
 }
