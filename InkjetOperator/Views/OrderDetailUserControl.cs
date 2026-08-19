@@ -676,8 +676,10 @@ public partial class OrderDetailUserControl : UserControl
             .Where(f => f != null)
             .ToList();
 
+        // รุ่นย่อยคือชื่อเดิมต่อด้วย "-" เท่านั้น เช่น S-DEX-1624 → S-DEX-1624-1
+        // ใช้ StartsWith เปล่าๆ จะกินชื่อที่แค่ขึ้นต้นเหมือนกันด้วย (S-DEX-16240, S-DEX-1624A)
         var candidates = allFiles
-            .Where(f => f!.StartsWith(baseName, StringComparison.Ordinal))
+            .Where(f => f! == baseName || f!.StartsWith(baseName + "-", StringComparison.Ordinal))
             .OrderBy(f => f)
             .ToList();
 
