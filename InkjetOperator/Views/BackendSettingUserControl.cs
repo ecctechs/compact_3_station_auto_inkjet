@@ -1,5 +1,7 @@
 using InkjetOperator.Services;
 
+using InkjetOperator.Theme;
+
 namespace InkjetOperator.Views;
 
 public partial class BackendSettingUserControl : UserControl
@@ -41,7 +43,7 @@ public partial class BackendSettingUserControl : UserControl
         _savedPcIp = ip;
 
         ResetColors();
-        MessageBox.Show("Saved.", "Settings", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        Notify.Success(this, "Saved.");
     }
 
     private void EditName()
@@ -67,11 +69,11 @@ public partial class BackendSettingUserControl : UserControl
         {
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
             var response = await http.GetAsync($"http://{ip}:3000/");
-            SetStatus(Color.FromArgb(76, 175, 80));
+            SetStatus(DesignTokens.Success);
         }
         catch
         {
-            SetStatus(Color.FromArgb(220, 38, 38));
+            SetStatus(DesignTokens.Danger);
         }
         finally { btnCheckStatus.Enabled = true; }
     }

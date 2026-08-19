@@ -2,13 +2,15 @@ using System.Net.Sockets;
 using InkjetOperator.Models;
 using InkjetOperator.Services;
 
+using InkjetOperator.Theme;
+
 namespace InkjetOperator.Views;
 
 public partial class PlcSettingUserControl : UserControl
 {
     private static readonly Color StatusGray = Color.Gray;
-    private static readonly Color StatusGreen = Color.FromArgb(76, 175, 80);
-    private static readonly Color StatusRed = Color.FromArgb(220, 38, 38);
+    private static readonly Color StatusGreen = DesignTokens.Success;
+    private static readonly Color StatusRed = DesignTokens.Danger;
 
     private static readonly HashSet<string> FixedAddresses = new()
         { "0", "1", "2", "3", "5", "6", "7", "8", "10", "11", "12" };
@@ -107,7 +109,7 @@ public partial class PlcSettingUserControl : UserControl
 
         if (dlg.Value != password)
         {
-            MessageBox.Show("รหัสผ่านไม่ถูกต้อง", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            Notify.Warn(this, "รหัสผ่านไม่ถูกต้อง");
             return;
         }
 
@@ -425,7 +427,7 @@ public partial class PlcSettingUserControl : UserControl
     }
 
     private static void Warn(string message) =>
-        MessageBox.Show(message, "ตรวจสอบข้อมูล", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        Notify.Warn(null, message);
 
     // ── Save / Cancel ──────────────────────────────────────
 
@@ -452,12 +454,11 @@ public partial class PlcSettingUserControl : UserControl
         {
             await LoadTableAsync();
             if (IsDisposed) return;
-            MessageBox.Show("บันทึกเรียบร้อย", "Settings", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            Notify.Success(this, "บันทึกเรียบร้อย");
         }
         else
         {
-            MessageBox.Show("บันทึกไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อ Backend",
-                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            Notify.Error(this, "บันทึกไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อ Backend");
         }
     }
 

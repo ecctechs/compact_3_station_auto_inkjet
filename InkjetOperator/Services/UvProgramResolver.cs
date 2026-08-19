@@ -1,3 +1,5 @@
+using InkjetOperator.Theme;
+
 namespace InkjetOperator.Services;
 
 /// <summary>ผลการหาไฟล์โปรแกรม UV</summary>
@@ -86,7 +88,7 @@ public static class UvProgramResolver
         var list = new ListBox
         {
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 12F),
+            Font = DesignTokens.Body(12f),
             IntegralHeight = false,
         };
         foreach (var v in variants) list.Items.Add(v + ".uvdx");

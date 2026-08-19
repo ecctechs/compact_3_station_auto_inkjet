@@ -8,10 +8,15 @@ static class Program
     [STAThread]
     static void Main()
     {
-        InitAntdUiIconDb();
+        // Must be the very first call. It applies <ApplicationHighDpiMode>,
+        // <ApplicationDefaultFont>, EnableVisualStyles() and
+        // SetCompatibleTextRenderingDefault(false) from InkjetOperator.csproj.
+        // Process DPI awareness can only be set before the first window exists,
+        // and AntdUI caches Config.Dpi the first time anything reads it - so this
+        // has to happen before ConfigureAntdUi() touches the library.
+        ApplicationConfiguration.Initialize();
 
-        Application.EnableVisualStyles();
-        Application.SetCompatibleTextRenderingDefault(false);
+        ConfigureAntdUi();
 
         // Load local transform patterns (patterns.xml next to the exe).
         string patternsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "patterns.xml");
@@ -19,6 +24,43 @@ static class Program
         PatternStore.SeedDefaults(patternsPath);
 
         Application.Run(new Views.MainShellForm());
+    }
+
+    /// <summary>
+    /// Global AntdUI settings. Everything here has to be applied before the first
+    /// AntdUI control is constructed, so it runs straight after
+    /// <see cref="ApplicationConfiguration.Initialize"/> in <c>Main</c>.
+    /// <para>
+    /// Mirrors the configuration used by the NastoKeyence reference project. The
+    /// application font is deliberately not set here: <c>AntdUI.Config.Font</c> is
+    /// marked <c>[Obsolete]</c> in 2.4.3, so the font comes from
+    /// <c>&lt;ApplicationDefaultFont&gt;</c> in the .csproj instead.
+    /// </para>
+    /// </summary>
+    private static void ConfigureAntdUi()
+    {
+        // Build the icon table first - see InitAntdUiIconDb() for why.
+        InitAntdUiIconDb();
+
+        AntdUI.Config.Animation = true;
+
+        // Show Message/Notification inside the application window instead of as
+        // separate desktop-level windows floating over whatever else is on screen.
+        AntdUI.Config.ShowInWindow = true;
+        AntdUI.Config.ShowInWindowByMessage = true;
+        AntdUI.Config.ShowInWindowByNotification = true;
+
+        // AntdUI splits a string into runs so it can draw emoji in a separate font.
+        // The splitter drops combining characters, and this UI has no emoji in it,
+        // so drawing each string in one pass is both safer and cheaper.
+        AntdUI.Config.EmojiEnabled = false;
+
+        // Draw glyphs as antialiased outlines (GraphicsPath) rather than through
+        // GDI+ DrawString - this is what keeps AntdUI text even at fractional
+        // display scaling instead of showing uneven stems.
+        AntdUI.Config.TextRenderingHighQuality = true;
+
+        AntdUI.Config.Mode = AntdUI.TMode.Light;
     }
 
     /// <summary>

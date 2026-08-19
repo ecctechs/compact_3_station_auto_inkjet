@@ -186,12 +186,9 @@ public partial class EditPatternUserControl : UserControl
     {
         if (_patterns == null || _selectedPattern == null) return;
 
-        var confirm = MessageBox.Show(
-            $"Delete pattern \"{_selectedPattern.Name}\"?",
-            "Confirm delete",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Warning);
-        if (confirm != DialogResult.Yes) return;
+        if (!Confirm.Ask(this, "Confirm delete",
+                $"Delete pattern \"{_selectedPattern.Name}\"?"))
+            return;
 
         _patterns.Remove(_selectedPattern);
         SaveQuiet();
@@ -214,11 +211,11 @@ public partial class EditPatternUserControl : UserControl
         {
             PatternStore.Save(_patternsPath);
             RefreshPatternListDisplay();
-            MessageBox.Show("Patterns saved.", "Saved", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            Notify.Success(this, "Patterns saved.");
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Save failed: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            Notify.Error(this, "Save failed: " + ex.Message);
         }
     }
 

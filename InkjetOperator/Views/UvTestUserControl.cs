@@ -1,6 +1,8 @@
 using System.Net.Sockets;
 using InkjetOperator.Services;
 
+using InkjetOperator.Theme;
+
 namespace InkjetOperator.Views;
 
 /// <summary>
@@ -10,8 +12,8 @@ namespace InkjetOperator.Views;
 /// </summary>
 public partial class UvTestUserControl : UserControl
 {
-    private static readonly Color Green = Color.FromArgb(21, 128, 61);
-    private static readonly Color Red = Color.FromArgb(220, 38, 38);
+    private static readonly Color Green = DesignTokens.SuccessText;
+    private static readonly Color Red = DesignTokens.Danger;
 
     private readonly UvTcpService _uvTcp = new();
     private int _uvNumber = 1;
@@ -51,8 +53,8 @@ public partial class UvTestUserControl : UserControl
 
         btnUv1.Type = uvNumber == 1 ? AntdUI.TTypeMini.Primary : AntdUI.TTypeMini.Default;
         btnUv2.Type = uvNumber == 2 ? AntdUI.TTypeMini.Primary : AntdUI.TTypeMini.Default;
-        btnUv1.ForeColor = uvNumber == 1 ? Color.White : Color.FromArgb(36, 71, 101);
-        btnUv2.ForeColor = uvNumber == 2 ? Color.White : Color.FromArgb(36, 71, 101);
+        btnUv1.ForeColor = uvNumber == 1 ? DesignTokens.TextOnPrimary : DesignTokens.DarkNavy;
+        btnUv2.ForeColor = uvNumber == 2 ? DesignTokens.TextOnPrimary : DesignTokens.DarkNavy;
 
         btnUv1.Text = UvSettingsManager.Read("UV1_NAME", "UV-001");
         btnUv2.Text = UvSettingsManager.Read("UV2_NAME", "UV-002");
@@ -182,7 +184,7 @@ public partial class UvTestUserControl : UserControl
         var list = new ListBox
         {
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 11F),
+            Font = DesignTokens.Body(11f),
             IntegralHeight = false,
         };
         list.Items.AddRange(items.ToArray());
@@ -305,10 +307,9 @@ public partial class UvTestUserControl : UserControl
     {
         if (!TryGetCpi(out var cpiPath, out var table)) return;
 
-        var confirm = MessageBox.Show(
-            $"เขียนทับแถว id=1 ของตาราง {table}\n{cpiPath}\n\nยืนยันหรือไม่?",
-            "ยืนยันเขียน CPI.db3", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-        if (confirm != DialogResult.Yes) return;
+        if (!Confirm.Ask(this, "ยืนยันเขียน CPI.db3",
+                $"เขียนทับแถว id=1 ของตาราง {table}\n{cpiPath}\n\nยืนยันหรือไม่?"))
+            return;
 
         SetBusy(true);
         try
@@ -416,5 +417,5 @@ public partial class UvTestUserControl : UserControl
     }
 
     private static void Warn(string message) =>
-        MessageBox.Show(message, "ทดสอบ UV", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        Notify.Warn(null, message);
 }

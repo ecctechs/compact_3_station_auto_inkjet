@@ -2,6 +2,8 @@ using System.Net.Sockets;
 using Microsoft.Data.Sqlite;
 using InkjetOperator.Services;
 
+using InkjetOperator.Theme;
+
 namespace InkjetOperator.Views;
 
 public partial class InkjetSettingUserControl : UserControl
@@ -69,8 +71,7 @@ public partial class InkjetSettingUserControl : UserControl
         var ip059 = txtMk059Ip.Text.Trim();
         if (!string.IsNullOrEmpty(ip058) && !string.IsNullOrEmpty(ip059) && ip058 == ip059)
         {
-            MessageBox.Show("MK058 and MK059 IP addresses must not be the same.",
-                "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            Notify.Warn(this, "MK058 and MK059 IP addresses must not be the same.");
             return;
         }
 
@@ -78,14 +79,12 @@ public partial class InkjetSettingUserControl : UserControl
         var f2 = txtUv2Folder.Text.Trim();
         if (!string.IsNullOrEmpty(f1) && !Directory.Exists(f1))
         {
-            MessageBox.Show($"UV1 folder not found:\n{f1}", "Warning",
-                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            Notify.Warn(this, $"UV1 folder not found:\n{f1}");
             return;
         }
         if (!string.IsNullOrEmpty(f2) && !Directory.Exists(f2))
         {
-            MessageBox.Show($"UV2 folder not found:\n{f2}", "Warning",
-                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            Notify.Warn(this, $"UV2 folder not found:\n{f2}");
             return;
         }
 
@@ -106,7 +105,7 @@ public partial class InkjetSettingUserControl : UserControl
         CustomSettingsManager.Write("MARKING_REF_FOLDER", txtMarkingRefFolder.Text.Trim());
 
         ResetColors();
-        MessageBox.Show("บันทึกเรียบร้อย", "Settings", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        Notify.Success(this, "บันทึกเรียบร้อย");
     }
 
     // ── Check Status ────────────────────────────────────────────────
@@ -134,9 +133,9 @@ public partial class InkjetSettingUserControl : UserControl
         {
             using var tcp = new TcpClient();
             await tcp.ConnectAsync(ip, MkPrinterPort).WaitAsync(TimeSpan.FromSeconds(3));
-            SetDotColor(dot, Color.FromArgb(76, 175, 80));
+            SetDotColor(dot, DesignTokens.Success);
         }
-        catch { SetDotColor(dot, Color.FromArgb(220, 38, 38)); }
+        catch { SetDotColor(dot, DesignTokens.Danger); }
     }
 
     private static async Task CheckUvPrinterAsync(
@@ -162,13 +161,13 @@ public partial class InkjetSettingUserControl : UserControl
         {
             if (folderOk && ipOk)
             {
-                dot.ForeColor = Color.FromArgb(76, 175, 80);
+                dot.ForeColor = DesignTokens.Success;
                 statusLabel.Text = "✓ เชื่อมต่อสำเร็จ + ไฟล์พร้อมใช้งาน";
-                statusLabel.ForeColor = Color.FromArgb(21, 128, 61);
+                statusLabel.ForeColor = DesignTokens.SuccessText;
             }
             else
             {
-                dot.ForeColor = Color.FromArgb(220, 38, 38);
+                dot.ForeColor = DesignTokens.Danger;
                 var parts = new List<string>();
                 if (!ipOk) parts.Add("เชื่อมต่อ IP:Port ไม่ได้");
                 if (!folderOk && !string.IsNullOrWhiteSpace(folder))
@@ -176,7 +175,7 @@ public partial class InkjetSettingUserControl : UserControl
                 else if (string.IsNullOrWhiteSpace(folder))
                     parts.Add("ยังไม่ได้เลือกโฟลเดอร์");
                 statusLabel.Text = "⚠ " + string.Join(" / ", parts);
-                statusLabel.ForeColor = Color.FromArgb(220, 38, 38);
+                statusLabel.ForeColor = DesignTokens.Danger;
             }
         }
 
@@ -198,8 +197,7 @@ public partial class InkjetSettingUserControl : UserControl
         var problems = ValidateFolder(dlg.SelectedPath, requiredTable);
         ShowFolderStatus(dlg.SelectedPath, statusLabel, requiredTable);
         if (problems.Count > 0)
-            MessageBox.Show(string.Join("\n\n", problems), "Warning",
-                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            Notify.Warn(this, string.Join("\n\n", problems));
     }
 
     private static List<string> ValidateFolder(string folder, string requiredTable)
@@ -226,12 +224,12 @@ public partial class InkjetSettingUserControl : UserControl
         if (problems.Count == 0)
         {
             lbl.Text = "✓ CPI.db3 + default.uvdx พร้อมใช้งาน";
-            lbl.ForeColor = Color.FromArgb(21, 128, 61);
+            lbl.ForeColor = DesignTokens.SuccessText;
         }
         else
         {
             lbl.Text = $"⚠ พบ {problems.Count} ปัญหา";
-            lbl.ForeColor = Color.FromArgb(220, 38, 38);
+            lbl.ForeColor = DesignTokens.Danger;
         }
     }
 

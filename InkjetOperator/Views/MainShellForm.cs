@@ -1,4 +1,6 @@
-﻿namespace InkjetOperator.Views;
+﻿using InkjetOperator.Theme;
+
+namespace InkjetOperator.Views;
 
 /// <summary>
 /// Application main window (shell): top menu bar + content host. The pages are
@@ -9,8 +11,8 @@
 /// </summary>
 public partial class MainShellForm : Form
 {
-    private static readonly System.Drawing.Color ActiveTab = System.Drawing.Color.FromArgb(91, 155, 213);
-    private static readonly System.Drawing.Color InactiveTab = System.Drawing.Color.FromArgb(176, 176, 176);
+    private static readonly System.Drawing.Color ActiveTab = DesignTokens.PrimaryBlue;
+    private static readonly System.Drawing.Color InactiveTab = DesignTokens.Inactive;
 
     private AntdUI.Button[] _visibleTabs = [];
 

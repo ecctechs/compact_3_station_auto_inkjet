@@ -1,5 +1,7 @@
 ﻿using InkjetOperator.Services;
 
+using InkjetOperator.Theme;
+
 namespace InkjetOperator.Views;
 
 public partial class SettingUserControl : UserControl
@@ -69,13 +71,9 @@ public partial class SettingUserControl : UserControl
         if (_activeButton == btn) return;
 
         foreach (var b in _menuButtons)
-        {
-            b.Type = AntdUI.TTypeMini.Default;
-            b.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-        }
+            ButtonStyles.SetSelected(b, false);
 
-        btn.Type = AntdUI.TTypeMini.Primary;
-        btn.ForeColor = System.Drawing.Color.White;
+        ButtonStyles.SetSelected(btn, true);
         _activeButton = btn;
 
         ShowSubPage(btn.Name);

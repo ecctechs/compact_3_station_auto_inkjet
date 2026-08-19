@@ -1,12 +1,14 @@
 using InkjetOperator.Models;
 using InkjetOperator.Services;
 
+using InkjetOperator.Theme;
+
 namespace InkjetOperator.Views;
 
 public partial class OrderListUserControl : UserControl
 {
-    private static readonly Color RowGreen = Color.FromArgb(212, 237, 188);
-    private static readonly Color StatusRed = Color.FromArgb(220, 38, 38);
+    private static readonly Color RowGreen = DesignTokens.RowSuccess;
+    private static readonly Color StatusRed = DesignTokens.Danger;
 
     private static readonly string[] ActiveStatuses = ["Waiting", "executing"];
     private static readonly string[] HistoryStatuses = ["completed", "failed"];
@@ -92,11 +94,8 @@ public partial class OrderListUserControl : UserControl
     {
         _showHistory = showHistory;
 
-        btnTabList.Type = showHistory ? AntdUI.TTypeMini.Default : AntdUI.TTypeMini.Primary;
-        btnTabList.ForeColor = showHistory ? Color.FromArgb(51, 51, 51) : Color.White;
-
-        btnTabHistory.Type = showHistory ? AntdUI.TTypeMini.Primary : AntdUI.TTypeMini.Default;
-        btnTabHistory.ForeColor = showHistory ? Color.White : Color.FromArgb(51, 51, 51);
+        ButtonStyles.SetSelected(btnTabList, !showHistory);
+        ButtonStyles.SetSelected(btnTabHistory, showHistory);
 
         RebindTable();
     }
@@ -124,8 +123,7 @@ public partial class OrderListUserControl : UserControl
         var resolved = await _api.GetResolvedJobAsync(row.Id);
         if (resolved == null)
         {
-            MessageBox.Show($"ไม่สามารถโหลด Detail ของ Job #{row.Id} ได้",
-                "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            Notify.Warn(this, $"ไม่สามารถโหลด Detail ของ Job #{row.Id} ได้");
             return;
         }
 

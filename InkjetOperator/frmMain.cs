@@ -222,7 +222,7 @@ public partial class frmMain : Form
     {
         if (_currentResolved == null || _selectedJobId < 0)
         {
-            MessageBox.Show("No job selected.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            Views.Notify.Warn(this, "No job selected.");
             return;
         }
 

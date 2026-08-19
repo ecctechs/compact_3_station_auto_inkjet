@@ -1,5 +1,7 @@
 using InkjetOperator.Services;
 
+using InkjetOperator.Theme;
+
 namespace InkjetOperator.Views;
 
 /// <summary>
@@ -21,7 +23,7 @@ internal sealed class ImageHoverPopup : Form
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.Manual;
         TopMost = true;
-        BackColor = Color.FromArgb(36, 71, 101); // navy frame
+        BackColor = DesignTokens.DarkNavy; // navy frame
         Padding = new Padding(2);
 
         _flow = new FlowLayoutPanel

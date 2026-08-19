@@ -1,56 +1,55 @@
 namespace InkjetOperator.Views;
 
-internal sealed class InputDialog : Form
+/// <summary>
+/// Single-field prompt ("Edit Name", "Unlock"). Presentation follows the modal
+/// pattern of the NastoKeyence reference project - an <c>AntdUI.BorderlessForm</c>
+/// with a rounded, shadowed frame and its own navy header standing in for the
+/// system title bar.
+/// <para>
+/// The contract callers rely on is unchanged: construct with title/prompt/default,
+/// call <see cref="Form.ShowDialog(IWin32Window)"/>, check for
+/// <see cref="DialogResult.OK"/>, then read <see cref="Value"/>. Enter accepts and
+/// Escape cancels, because <c>AntdUI.Button</c> implements
+/// <see cref="IButtonControl"/> and so works as the form's accept/cancel button.
+/// </para>
+/// </summary>
+internal sealed partial class InputDialog : AntdUI.BorderlessForm
 {
-    private readonly TextBox _textBox;
+    /// <summary>
+    /// Design-time constructor. The WinForms designer instantiates the form to
+    /// render the surface and can only do that through a parameterless constructor.
+    /// </summary>
+    public InputDialog()
+    {
+        InitializeComponent();
 
-    public string Value => _textBox.Text.Trim();
+        // A borderless form has no system title bar, so the header has to move the
+        // window itself.
+        tlpTitleBar.MouseDown += TitleBar_MouseDown;
+        lblTitle.MouseDown += TitleBar_MouseDown;
+
+        Shown += InputDialog_Shown;
+    }
 
     public InputDialog(string title, string prompt, string defaultValue)
+        : this()
     {
         Text = title;
-        FormBorderStyle = FormBorderStyle.FixedDialog;
-        StartPosition = FormStartPosition.CenterParent;
-        MinimizeBox = false;
-        MaximizeBox = false;
-        Size = new Size(360, 170);
+        lblTitle.Text = title;
+        lblPrompt.Text = prompt;
+        txtValue.Text = defaultValue;
+    }
 
-        var lbl = new Label
-        {
-            Text = prompt,
-            Location = new Point(12, 16),
-            AutoSize = true,
-            Font = new Font("Segoe UI", 10F)
-        };
-        Controls.Add(lbl);
+    /// <summary>The text the operator entered, trimmed.</summary>
+    public string Value => txtValue.Text.Trim();
 
-        _textBox = new TextBox
-        {
-            Text = defaultValue,
-            Location = new Point(12, 44),
-            Size = new Size(320, 28),
-            Font = new Font("Segoe UI", 11F)
-        };
-        Controls.Add(_textBox);
+    private void InputDialog_Shown(object? sender, EventArgs e) => txtValue.Focus();
 
-        var btnOk = new Button
+    private void TitleBar_MouseDown(object? sender, MouseEventArgs e)
+    {
+        if (e.Button == MouseButtons.Left)
         {
-            Text = "OK",
-            DialogResult = DialogResult.OK,
-            Location = new Point(168, 88),
-            Size = new Size(80, 32)
-        };
-        var btnCancel = new Button
-        {
-            Text = "Cancel",
-            DialogResult = DialogResult.Cancel,
-            Location = new Point(252, 88),
-            Size = new Size(80, 32)
-        };
-        Controls.Add(btnOk);
-        Controls.Add(btnCancel);
-
-        AcceptButton = btnOk;
-        CancelButton = btnCancel;
+            DraggableMouseDown();
+        }
     }
 }

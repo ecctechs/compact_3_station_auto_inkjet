@@ -3,6 +3,8 @@ using InkjetOperator.Managers;
 using InkjetOperator.Models;
 using InkjetOperator.Services;
 
+using InkjetOperator.Theme;
+
 namespace InkjetOperator.Views;
 
 public partial class OrderDetailUserControl : UserControl
@@ -168,7 +170,7 @@ public partial class OrderDetailUserControl : UserControl
     private static void SetConnResult(AntdUI.Label lbl, string name, string ip, string port, bool ok)
     {
         var status = ok ? "เชื่อมต่อสำเร็จ" : "ไม่สามารถเชื่อมต่อ";
-        var color = ok ? Color.FromArgb(21, 128, 61) : Color.FromArgb(220, 38, 38);
+        var color = ok ? DesignTokens.SuccessText : DesignTokens.Danger;
         if (string.IsNullOrWhiteSpace(ip)) { color = Color.Gray; status = "ไม่ได้ตั้งค่า"; }
         SetConnLabel(lbl, name, ip, port, status, color);
     }
@@ -217,8 +219,8 @@ public partial class OrderDetailUserControl : UserControl
             ? "MK Section (MK Inkjet) — SWAPPED"
             : "MK Section (MK Inkjet)";
         lblMkSectionTitle.ForeColor = _isSwapped
-            ? Color.FromArgb(212, 136, 6)
-            : Color.FromArgb(36, 71, 101);
+            ? DesignTokens.Warning
+            : DesignTokens.DarkNavy;
 
         var mk1Name = CustomSettingsManager.Read("MK058_NAME", "MK-058");
         var mk2Name = CustomSettingsManager.Read("MK059_NAME", "MK-059");
@@ -245,8 +247,7 @@ public partial class OrderDetailUserControl : UserControl
         var config = _pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
         if (config == null)
         {
-            MessageBox.Show($"ไม่พบ InkjetConfig ordinal {ordinal}",
-                "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            Notify.Warn(this, $"ไม่พบ InkjetConfig ordinal {ordinal}");
             return;
         }
 
@@ -275,9 +276,9 @@ public partial class OrderDetailUserControl : UserControl
             ReadOnly = true,
             ScrollBars = ScrollBars.Vertical,
             Dock = DockStyle.Fill,
-            Font = new Font("Consolas", 13F),
-            BackColor = Color.FromArgb(237, 243, 249),
-            ForeColor = Color.FromArgb(17, 17, 17),
+            Font = DesignTokens.Monospace(13f),
+            BackColor = DesignTokens.SurfaceMuted,
+            ForeColor = DesignTokens.TextPrimary,
             Text = preview,
         };
 
@@ -399,8 +400,8 @@ public partial class OrderDetailUserControl : UserControl
     private static void MarkButtonSent(AntdUI.Button btn)
     {
         btn.Enabled = false;
-        btn.DefaultBack = Color.FromArgb(200, 220, 200);
-        btn.ForeColor = Color.FromArgb(21, 128, 61);
+        btn.DefaultBack = DesignTokens.SuccessSoft;
+        btn.ForeColor = DesignTokens.SuccessText;
         btn.Type = AntdUI.TTypeMini.Default;
         if (btn.Text?.StartsWith('✓') != true)
             btn.Text = "✓ " + btn.Text;
@@ -445,8 +446,7 @@ public partial class OrderDetailUserControl : UserControl
                 var msg = sent == 0 && errors.Count == 0
                     ? "ไม่มีเครื่อง MK ที่ตั้งค่า IP ไว้"
                     : string.Join("\n", errors);
-                MessageBox.Show(msg,
-                    "ส่งไม่สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                Notify.WarnDetail(this, "ส่งไม่สำเร็จ", msg);
                 return;
             }
 
@@ -456,8 +456,7 @@ public partial class OrderDetailUserControl : UserControl
         {
             btnSendMk.Text = originalText;
             btnSendMk.Enabled = true;
-            MessageBox.Show($"เกิดข้อผิดพลาด: {ex.Message}",
-                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            Notify.Error(this, $"เกิดข้อผิดพลาด: {ex.Message}");
         }
     }
 
@@ -514,24 +513,21 @@ public partial class OrderDetailUserControl : UserControl
         var uvRow = _uvData.FirstOrDefault(r => r.Machine == stepName);
         if (uvRow == null)
         {
-            MessageBox.Show($"ยังไม่มีข้อมูล {stepName} ของงานที่เลือก",
-                "ไม่มีข้อมูล", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            Notify.Warn(this, $"ยังไม่มีข้อมูล {stepName} ของงานที่เลือก");
             return;
         }
 
         var cpiPath = UvSettingsManager.GetCpiPath(uvNumber);
         if (cpiPath == null)
         {
-            MessageBox.Show($"ยังไม่ได้ตั้งค่าโฟลเดอร์ UV{uvNumber} หรือไม่พบ CPI.db3",
-                "ตั้งค่าไม่ครบ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            Notify.Warn(this, $"ยังไม่ได้ตั้งค่าโฟลเดอร์ UV{uvNumber} หรือไม่พบ CPI.db3");
             return;
         }
 
         var ip = CustomSettingsManager.Read($"UV00{uvNumber}_IP");
         if (string.IsNullOrWhiteSpace(ip))
         {
-            MessageBox.Show($"ยังไม่ได้ตั้งค่า IP ของ UV{uvNumber}",
-                "ตั้งค่าไม่ครบ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            Notify.Warn(this, $"ยังไม่ได้ตั้งค่า IP ของ UV{uvNumber}");
             return;
         }
         int port = int.TryParse(CustomSettingsManager.Read($"UV00{uvNumber}_PORT"), out var p)
@@ -597,8 +593,7 @@ public partial class OrderDetailUserControl : UserControl
                 + string.Join("\n", done.Select(s => "• " + s))
                 + (pick.IsDefault ? "\n\n⚠ ใช้ default.uvdx เพราะไม่พบโปรแกรมที่ต้องการ" : "");
 
-            MessageBox.Show(summary, $"{uvName} — สำเร็จ",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            Notify.SuccessDetail(this, $"{uvName} — สำเร็จ", summary);
         }
         catch (Exception ex)
         {
@@ -625,14 +620,14 @@ public partial class OrderDetailUserControl : UserControl
         }
         catch
         {
-            MessageBox.Show(
+            Notify.ErrorDetail(
+                null,
+                $"{uvName} — เชื่อมต่อไม่ได้",
                 $"ไม่สามารถเชื่อมต่อ {uvName} ({ip}:{port}) ได้\n\n"
                 + "กรุณาตรวจสอบ:\n"
                 + "• เครื่อง UV เปิดอยู่หรือไม่\n"
                 + "• ซอฟต์แวร์ UV เปิดอยู่หรือไม่\n"
-                + "• IP และ Port ถูกต้องหรือไม่",
-                $"{uvName} — เชื่อมต่อไม่ได้",
-                MessageBoxButtons.OK, MessageBoxIcon.Error);
+                + "• IP และ Port ถูกต้องหรือไม่");
             return false;
         }
     }
@@ -646,8 +641,7 @@ public partial class OrderDetailUserControl : UserControl
             + $"✖ {failReason}\n\n"
             + "ยังไม่ได้สั่งเริ่มพิมพ์ — เครื่องอยู่ในสถานะหยุด";
 
-        MessageBox.Show(msg, $"{uvName} — ไม่สำเร็จ",
-            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        Notify.WarnDetail(null, $"{uvName} — ไม่สำเร็จ", msg);
     }
 
     private void FillJobInfo(ResolvedJobResponse resolved)

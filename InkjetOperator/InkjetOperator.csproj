@@ -6,6 +6,36 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+
+    <!--
+      Rendering configuration (Phase 1). ApplicationConfiguration.Initialize() in
+      Program.cs reads these three properties; they are the only supported way to
+      set them, because AntdUI.Config.Font is [Obsolete] in AntdUI 2.4.3.
+
+      ApplicationHighDpiMode: the app previously declared no DPI awareness at all,
+      so Windows rendered it at 96 DPI and bitmap-stretched the result on every
+      display scaled above 100% - that is what made text and borders look soft.
+      PerMonitorV2 makes it render at the monitor's real DPI instead.
+
+      ApplicationDefaultFont: pins the font that controls without an explicit Font
+      inherit. Segoe UI 9pt is what Control.DefaultFont already resolved to here,
+      so this changes nothing visually - it only stops the default from following
+      the machine's UI language (a th-TH machine resolves a different face).
+    -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationDefaultFont>Segoe UI, 9pt</ApplicationDefaultFont>
+
+    <!--
+      AntdUI-main\ and NastoKeyence\ are reference checkouts that happen to sit
+      inside this project's folder. An SDK-style project globs **/*.cs, so without
+      this both trees are compiled into InkjetOperator (2456 errors: duplicate
+      assembly attributes, unsafe code, missing xunit/DI references). AntdUI itself
+      is consumed through the NuGet package below, not from AntdUI-main\.
+
+      Remove these two entries if the folders are ever moved out of InkjetOperator\.
+    -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);AntdUI-main\**;NastoKeyence\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>

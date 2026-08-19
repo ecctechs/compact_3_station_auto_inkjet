@@ -1,6 +1,8 @@
 using System.Net.Sockets;
 using InkjetOperator.Services;
 
+using InkjetOperator.Theme;
+
 namespace InkjetOperator.Views;
 
 /// <summary>
@@ -11,8 +13,8 @@ namespace InkjetOperator.Views;
 public partial class ClampSettingUserControl : UserControl
 {
     private static readonly Color StatusGray = Color.Gray;
-    private static readonly Color StatusGreen = Color.FromArgb(76, 175, 80);
-    private static readonly Color StatusRed = Color.FromArgb(220, 38, 38);
+    private static readonly Color StatusGreen = DesignTokens.Success;
+    private static readonly Color StatusRed = DesignTokens.Danger;
 
     public ClampSettingUserControl()
     {
@@ -75,7 +77,7 @@ public partial class ClampSettingUserControl : UserControl
         ResetColors();
         _ = CheckStatusAsync();
 
-        MessageBox.Show("บันทึกเรียบร้อย", "Clamp", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        Notify.Success(this, "บันทึกเรียบร้อย");
     }
 
     /// <summary>อ่านค่าจากหน้าจอ พร้อมตรวจว่าที่อยู่ทุกตัวใช้ได้จริงก่อนเอาไปสั่ง PLC</summary>
@@ -164,10 +166,9 @@ public partial class ClampSettingUserControl : UserControl
         string program = txtProgram.Text.Trim();
         if (!TryReadValueMm(out int mm)) return;
 
-        var confirm = MessageBox.Show(
-            $"บันทึก {mm} mm ทับค่าเดิมของ \"{program}\" ในฐานข้อมูล\n\nยืนยันหรือไม่?",
-            "ยืนยัน Upload", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-        if (confirm != DialogResult.Yes) return;
+        if (!Confirm.Ask(this, "ยืนยัน Upload",
+                $"บันทึก {mm} mm ทับค่าเดิมของ \"{program}\" ในฐานข้อมูล\n\nยืนยันหรือไม่?"))
+            return;
 
         var (ok, message) = ClampService.Upload(txtDbPath.Text.Trim(), program, mm);
 
@@ -182,12 +183,11 @@ public partial class ClampSettingUserControl : UserControl
         if (!TryBuildSettings(out var s, out string error)) { Warn(error); return; }
         if (!TryReadValueMm(out int mm)) return;
 
-        var confirm = MessageBox.Show(
-            $"สั่งแคลมป์ไปที่ {mm} mm\n" +
-            $"เขียน {s.AddrTarget} = {ClampService.ToRaw(mm)}\n" +
-            $"แล้วพัลส์ {s.AddrRun}\n\nยืนยันหรือไม่?",
-            "ยืนยันสั่งแคลมป์", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-        if (confirm != DialogResult.Yes) return;
+        if (!Confirm.Ask(this, "ยืนยันสั่งแคลมป์",
+                $"สั่งแคลมป์ไปที่ {mm} mm\n" +
+                $"เขียน {s.AddrTarget} = {ClampService.ToRaw(mm)}\n" +
+                $"แล้วพัลส์ {s.AddrRun}\n\nยืนยันหรือไม่?"))
+            return;
 
         SetBusy(true);
         try
@@ -211,10 +211,9 @@ public partial class ClampSettingUserControl : UserControl
     {
         if (!TryBuildSettings(out var s, out string error)) { Warn(error); return; }
 
-        var confirm = MessageBox.Show(
-            $"ส่งพัลส์รีเซ็ตที่ {s.AddrReset}\n\nยืนยันหรือไม่?",
-            "ยืนยันรีเซ็ต", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-        if (confirm != DialogResult.Yes) return;
+        if (!Confirm.Ask(this, "ยืนยันรีเซ็ต",
+                $"ส่งพัลส์รีเซ็ตที่ {s.AddrReset}\n\nยืนยันหรือไม่?"))
+            return;
 
         SetBusy(true);
         try
@@ -355,5 +354,5 @@ public partial class ClampSettingUserControl : UserControl
     }
 
     private static void Warn(string message) =>
-        MessageBox.Show(message, "Clamp", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        Notify.Warn(null, message);
 }

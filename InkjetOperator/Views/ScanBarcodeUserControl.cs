@@ -183,11 +183,7 @@ public partial class ScanBarcodeUserControl : UserControl
         // Step 2E: บันทึกระยะแคลมป์ (IAI) ของงานนี้ลง backend
         await SyncIaiAsync(api, job.Id, uvItems);
 
-        MessageBox.Show(
-            $"สร้าง Job #{job.Id} สำเร็จ",
-            "สำเร็จ",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Information);
+        Notify.Success(this, $"สร้าง Job #{job.Id} สำเร็จ");
 
         ClearForm();
     }
@@ -207,16 +203,11 @@ public partial class ScanBarcodeUserControl : UserControl
             ? "ยังไม่ได้เลือกไฟล์ mydatabase.db3"
             : $"ไม่พบไฟล์ที่ตั้งไว้:\n{path}";
 
-        var answer = MessageBox.Show(
+        return Confirm.Ask(null, "ยังไม่ได้ตั้งค่า Clamp Database",
             $"{reason}\n\n" +
             "ระยะแคลมป์ (IAI) ของงานนี้จะถูกบันทึกเป็นค่าว่าง\n" +
             "ตั้งค่าได้ที่ Setting → Clamp Setting → Browse\n\n" +
-            "ต้องการลงทะเบียนต่อไปหรือไม่?",
-            "ยังไม่ได้ตั้งค่า Clamp Database",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Warning);
-
-        return answer == DialogResult.Yes;
+            "ต้องการลงทะเบียนต่อไปหรือไม่?");
     }
 
     /// <summary>
@@ -284,8 +275,8 @@ public partial class ScanBarcodeUserControl : UserControl
     }
 
     private static void ShowWarning(string msg) =>
-        MessageBox.Show(msg, "แจ้งเตือน", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        Notify.Warn(null, msg);
 
     private static void ShowError(string msg) =>
-        MessageBox.Show(msg, "ผิดพลาด", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        Notify.Error(null, msg);
 }

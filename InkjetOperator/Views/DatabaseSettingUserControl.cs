@@ -1,6 +1,8 @@
 using Microsoft.Data.Sqlite;
 using InkjetOperator.Services;
 
+using InkjetOperator.Theme;
+
 namespace InkjetOperator.Views;
 
 public partial class DatabaseSettingUserControl : UserControl
@@ -60,7 +62,7 @@ public partial class DatabaseSettingUserControl : UserControl
             else if (ok)
             {
                 lblStatus.Text = "✓  พร้อมใช้งาน";
-                lblStatus.ForeColor = Color.FromArgb(21, 128, 61);
+                lblStatus.ForeColor = DesignTokens.SuccessText;
             }
             else
             {
@@ -68,7 +70,7 @@ public partial class DatabaseSettingUserControl : UserControl
                     lblStatus.Text = "✗  ไม่พบไฟล์";
                 else
                     lblStatus.Text = "✗  ไม่มีตาราง 'inkjet_data'";
-                lblStatus.ForeColor = Color.FromArgb(220, 38, 38);
+                lblStatus.ForeColor = DesignTokens.Danger;
             }
         }
 
@@ -94,12 +96,12 @@ public partial class DatabaseSettingUserControl : UserControl
             else if (ok)
             {
                 lblClampStatus.Text = "✓  พร้อมใช้งาน";
-                lblClampStatus.ForeColor = Color.FromArgb(21, 128, 61);
+                lblClampStatus.ForeColor = DesignTokens.SuccessText;
             }
             else
             {
                 lblClampStatus.Text = exists ? "✗  ไม่มีตาราง 'MainTable'" : "✗  ไม่พบไฟล์";
-                lblClampStatus.ForeColor = Color.FromArgb(220, 38, 38);
+                lblClampStatus.ForeColor = DesignTokens.Danger;
             }
         }
 
@@ -150,22 +152,19 @@ public partial class DatabaseSettingUserControl : UserControl
 
         if (string.IsNullOrWhiteSpace(path))
         {
-            MessageBox.Show("กรุณาเลือกไฟล์ Database",
-                "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            Notify.Warn(this, "กรุณาเลือกไฟล์ Database");
             return;
         }
 
         if (!File.Exists(path))
         {
-            MessageBox.Show($"ไม่พบไฟล์:\n{path}",
-                "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            Notify.Warn(this, $"ไม่พบไฟล์:\n{path}");
             return;
         }
 
         if (!HasInkjetDataTable(path))
         {
-            MessageBox.Show("ไฟล์ Database ไม่มีตาราง 'inkjet_data'",
-                "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            Notify.Warn(this, "ไฟล์ Database ไม่มีตาราง 'inkjet_data'");
             return;
         }
 
@@ -175,15 +174,13 @@ public partial class DatabaseSettingUserControl : UserControl
         {
             if (!File.Exists(clampPath))
             {
-                MessageBox.Show($"ไม่พบไฟล์ Clamp Database:\n{clampPath}",
-                    "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                Notify.Warn(this, $"ไม่พบไฟล์ Clamp Database:\n{clampPath}");
                 return;
             }
 
             if (!HasTable(clampPath, "MainTable"))
             {
-                MessageBox.Show("ไฟล์ Clamp Database ไม่มีตาราง 'MainTable'",
-                    "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                Notify.Warn(this, "ไฟล์ Clamp Database ไม่มีตาราง 'MainTable'");
                 return;
             }
         }
@@ -196,8 +193,7 @@ public partial class DatabaseSettingUserControl : UserControl
         UpdateStatus(path);
         UpdateClampStatus(clampPath);
 
-        MessageBox.Show("บันทึกเรียบร้อย", "Settings",
-            MessageBoxButtons.OK, MessageBoxIcon.Information);
+        Notify.Success(this, "บันทึกเรียบร้อย");
     }
 
     private static bool HasInkjetDataTable(string dbPath) => HasTable(dbPath, "inkjet_data");
