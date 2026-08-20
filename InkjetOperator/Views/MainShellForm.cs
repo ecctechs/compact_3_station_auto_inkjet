@@ -33,19 +33,12 @@ public partial class MainShellForm : AntdUI.Window
         titleBar.SetMaximized(WindowState == FormWindowState.Maximized);
     }
 
-    private void ToggleMaximize()
-    {
-        if (WindowState == FormWindowState.Maximized)
-        {
-            WindowState = FormWindowState.Normal;
-        }
-        else
-        {
-            Max();
-        }
-
-        titleBar.SetMaximized(WindowState == FormWindowState.Maximized);
-    }
+    /// <summary>
+    /// Toggles through AntdUI's own <c>MaxRestore</c>, which keeps its internal
+    /// maximised flag in step and refreshes the window frame afterwards - assigning
+    /// <see cref="Form.WindowState"/> by hand skips both.
+    /// </summary>
+    private void ToggleMaximize() => titleBar.SetMaximized(MaxRestore());
 
     private async void MainShellForm_Load(object? sender, EventArgs e)
     {

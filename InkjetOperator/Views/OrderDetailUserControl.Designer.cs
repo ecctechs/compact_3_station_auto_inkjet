@@ -51,7 +51,7 @@ partial class OrderDetailUserControl
         lblConnMk2 = new AntdUI.Label();
         lblConnUv1 = new AntdUI.Label();
         lblConnUv2 = new AntdUI.Label();
-        pnlBody = new System.Windows.Forms.Panel();
+        pnlBody = new BufferedPanel();
         tlpSections = new System.Windows.Forms.TableLayoutPanel();
         pnlMkSection = new AntdUI.Panel();
         tlpMkSection = new System.Windows.Forms.TableLayoutPanel();
@@ -2274,8 +2274,11 @@ partial class OrderDetailUserControl
         //
         // OrderDetailUserControl
         //
-        AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
-        AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+        // Inherit, not Dpi: this page is hosted inside OrderDetailDialog, which is
+        // itself a Dpi-scaled form. Scaling here as well applied the factor twice -
+        // MinimumSize came out at 2430x1620 instead of 1620x1080 and pushed the page
+        // wider than the window that holds it.
+        AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
         BackColor = System.Drawing.Color.FromArgb(234, 241, 248);
         Controls.Add(tlpDetailRoot);
         MinimumSize = new System.Drawing.Size(1080, 720);
@@ -2348,7 +2351,7 @@ partial class OrderDetailUserControl
     private AntdUI.Label lblConnMk2;
     private AntdUI.Label lblConnUv1;
     private AntdUI.Label lblConnUv2;
-    private System.Windows.Forms.Panel pnlBody;
+    private BufferedPanel pnlBody;
     private System.Windows.Forms.TableLayoutPanel tlpSections;
     private AntdUI.Panel pnlMkSection;
     private System.Windows.Forms.TableLayoutPanel tlpMkSection;

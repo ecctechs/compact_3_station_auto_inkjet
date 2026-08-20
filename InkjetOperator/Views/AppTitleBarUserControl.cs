@@ -48,6 +48,20 @@ public partial class AppTitleBarUserControl : UserControl
         set => lblAppTitle.Text = value;
     }
 
+    /// <summary>
+    /// Hides the minimise button. A popup has nothing sensible to minimise to,
+    /// which is how the previous Order Detail window behaved as well.
+    /// </summary>
+    public bool ShowMinimizeButton
+    {
+        get => btnMinimize.Visible;
+        set
+        {
+            btnMinimize.Visible = value;
+            tlpTitleBarRoot.ColumnStyles[1].Width = value ? 46F : 0F;
+        }
+    }
+
     /// <summary>Swaps the maximise glyph to match the window state.</summary>
     public void SetMaximized(bool maximized) => btnMaximize.Text = maximized ? "❐" : "□";
 

@@ -132,22 +132,11 @@ public partial class OrderListUserControl : UserControl
 
     private void ShowDetailDialog(int jobId, ResolvedJobResponse resolved)
     {
-        using var dlg = new Form
-        {
-            Text = $"Job #{jobId} — Order Detail",
-            Size = new Size(1320, 940),
-            StartPosition = FormStartPosition.CenterParent,
-            MinimizeBox = false,
-            MaximizeBox = true,
-            ShowIcon = false,
-        };
-
-        var detail = new OrderDetailUserControl { Dock = DockStyle.Fill };
-        detail.LoadDetail(resolved, _api);
-        detail.CloseRequested += (_, _) => dlg.Close();
-
-        dlg.Controls.Add(detail);
-        dlg.ShowDialog();
+        using var dlg = new OrderDetailDialog();
+        dlg.TitleText = $"Job #{jobId} — Order Detail";
+        dlg.Text = dlg.TitleText;
+        dlg.LoadDetail(resolved, _api);
+        dlg.ShowDialog(this);
     }
 
 
