@@ -25,7 +25,7 @@ public partial class SettingUserControl : UserControl
 
         bool[] visible = level switch
         {
-            0 => [false, true, true, false, false, true],
+            0 => [false, true, true, false, false, false],
             1 => [true, false, false, true, true, true],
             9 => [false, false, false, true, true, true],   // ทดสอบหน้างาน: PLC / Clamp / UV Test
             _ => [true, true, true, true, true, true],
@@ -39,7 +39,7 @@ public partial class SettingUserControl : UserControl
             {
                 tlpSidebar.SetRow(allButtons[i], row);
                 tlpSidebar.RowStyles[row].SizeType = SizeType.Absolute;
-                tlpSidebar.RowStyles[row].Height = 84F;
+                tlpSidebar.RowStyles[row].Height = 72F;
                 row++;
             }
         }
@@ -50,7 +50,7 @@ public partial class SettingUserControl : UserControl
             tlpSidebar.RowStyles[r].Height = 0F;
         }
 
-        tlpSidebar.Height = row * 84;
+        tlpSidebar.Height = row * 72;
 
         _menuButtons = allButtons.Where((_, i) => visible[i]).ToArray();
         foreach (var btn in _menuButtons)
