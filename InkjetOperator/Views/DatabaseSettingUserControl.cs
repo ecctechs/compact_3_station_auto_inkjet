@@ -32,6 +32,7 @@ public partial class DatabaseSettingUserControl : UserControl
 
     public async Task CheckStatusAsync()
     {
+        btnCheckStatus.Loading = true;
         btnCheckStatus.Enabled = false;
         try
         {
@@ -43,7 +44,11 @@ public partial class DatabaseSettingUserControl : UserControl
                 UpdateClampStatus(clampPath);
             });
         }
-        finally { btnCheckStatus.Enabled = true; }
+        finally
+        {
+            btnCheckStatus.Loading = false;
+            btnCheckStatus.Enabled = true;
+        }
     }
 
     private void UpdateStatus(string path)

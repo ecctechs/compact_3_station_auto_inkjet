@@ -64,6 +64,7 @@ public partial class BackendSettingUserControl : UserControl
             return;
         }
 
+        btnCheckStatus.Loading = true;
         btnCheckStatus.Enabled = false;
         try
         {
@@ -75,7 +76,11 @@ public partial class BackendSettingUserControl : UserControl
         {
             SetStatus(DesignTokens.Danger);
         }
-        finally { btnCheckStatus.Enabled = true; }
+        finally
+        {
+            btnCheckStatus.Loading = false;
+            btnCheckStatus.Enabled = true;
+        }
     }
 
     private void SetStatus(Color color)

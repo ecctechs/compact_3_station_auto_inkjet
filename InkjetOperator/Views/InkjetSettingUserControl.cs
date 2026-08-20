@@ -112,6 +112,7 @@ public partial class InkjetSettingUserControl : UserControl
 
     public async Task CheckAllStatusAsync()
     {
+        btnCheckStatus.Loading = true;
         btnCheckStatus.Enabled = false;
         try
         {
@@ -123,7 +124,11 @@ public partial class InkjetSettingUserControl : UserControl
                 CheckUvPrinterAsync(txtUv2Ip.Text.Trim(), txtUv2Port.Text.Trim(),
                     txtUv2Folder.Text.Trim(), "MK067", lblUv2Dot, lblUv2Status));
         }
-        finally { btnCheckStatus.Enabled = true; }
+        finally
+        {
+            btnCheckStatus.Loading = false;
+            btnCheckStatus.Enabled = true;
+        }
     }
 
     private static async Task CheckMkPrinterAsync(string ip, Label dot)

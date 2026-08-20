@@ -319,8 +319,8 @@ public partial class PlcSettingUserControl : UserControl
 
         if (_rows.Count == 0) return;
 
+        btnReadAll.Loading = true;
         btnReadAll.Enabled = false;
-        btnReadAll.Text = "Reading...";
 
         var addresses = _rows
             .Select(r => int.TryParse(r.AddressStart, out int a) ? a : -1)
@@ -329,8 +329,8 @@ public partial class PlcSettingUserControl : UserControl
 
         if (addresses.Count == 0)
         {
+            btnReadAll.Loading = false;
             btnReadAll.Enabled = true;
-            btnReadAll.Text = "Read All";
             return;
         }
 
@@ -341,16 +341,16 @@ public partial class PlcSettingUserControl : UserControl
         if (qty > 125)
         {
             Warn("ช่วง Address กว้างเกินไป (สูงสุด 125 registers)");
+            btnReadAll.Loading = false;
             btnReadAll.Enabled = true;
-            btnReadAll.Text = "Read All";
             return;
         }
 
         var (ok, values, error) = await ModbusTcpService.ReadHoldingRegistersAsync(ip, port, minAddr, qty);
 
         if (IsDisposed) return;
+        btnReadAll.Loading = false;
         btnReadAll.Enabled = true;
-        btnReadAll.Text = "Read All";
 
         if (!ok)
         {

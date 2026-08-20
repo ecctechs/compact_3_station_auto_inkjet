@@ -30,6 +30,7 @@ public partial class ScanBarcodeUserControl : UserControl
     {
         if (!ValidateForm()) return;
 
+        btnConfirm.Loading = true;
         btnConfirm.Enabled = false;
         try
         {
@@ -37,6 +38,7 @@ public partial class ScanBarcodeUserControl : UserControl
         }
         finally
         {
+            btnConfirm.Loading = false;
             btnConfirm.Enabled = true;
         }
     }

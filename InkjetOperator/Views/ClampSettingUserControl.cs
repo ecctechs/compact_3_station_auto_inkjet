@@ -261,6 +261,7 @@ public partial class ClampSettingUserControl : UserControl
             return;
         }
 
+        btnCheckStatus.Loading = true;
         try
         {
             using var tcp = new TcpClient();
@@ -276,6 +277,10 @@ public partial class ClampSettingUserControl : UserControl
         {
             if (IsDisposed) return;
             SetStatus(StatusRed, $"เชื่อมต่อ {ip}:{port} ไม่ได้");
+        }
+        finally
+        {
+            if (!IsDisposed) btnCheckStatus.Loading = false;
         }
     }
 
@@ -318,11 +323,11 @@ public partial class ClampSettingUserControl : UserControl
 
     private void SetBusy(bool busy)
     {
-        btnApply.Enabled = !busy;
-        btnReset.Enabled = !busy;
-        btnReadStatus.Enabled = !busy;
-        btnLoad.Enabled = !busy;
-        btnUpload.Enabled = !busy;
+        foreach (var b in new[] { btnApply, btnReset, btnReadStatus, btnLoad, btnUpload })
+        {
+            b.Loading = busy;
+            b.Enabled = !busy;
+        }
     }
 
     private void SetStatus(Color color, string text)

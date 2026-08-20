@@ -405,7 +405,10 @@ public partial class UvTestUserControl : UserControl
                      btnCheck, btnLoad, btnStart, btnStop,
                      btnCpiRead, btnCpiWrite, btnFindProgram,
                  })
+        {
+            b.Loading = busy;
             b.Enabled = !busy;
+        }
     }
 
     private void Log(string message)
