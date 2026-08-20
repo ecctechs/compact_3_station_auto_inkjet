@@ -124,34 +124,46 @@ internal static class Notify
 
     // ---- Titled notification, for multi-line outcomes ----
 
+    // Without an explicit font AntdUI falls back to the owning form's, which is the
+    // 9pt application default - far below the 12-15pt the operator pages use, so the
+    // notification came out tiny on the shop-floor display. AntdUI derives the whole
+    // box from these: the panel grows with the text, and the status icon is sized
+    // from the title's line height. Created once and kept, because AntdUI holds the
+    // reference for the life of the notification.
+    private static readonly Font DetailTitleFont = InkjetOperator.Theme.DesignTokens.SectionLabel(18f);
+    private static readonly Font DetailBodyFont = InkjetOperator.Theme.DesignTokens.Body(14f);
+
+    /// <summary>Breathing room inside the panel; AntdUI scales it by the display DPI.</summary>
+    private static readonly Size DetailPadding = new(32, 26);
+
     /// <summary>A finished job or transfer, with a per-machine heading.</summary>
-    public static void SuccessDetail(Control? owner, string title, string text)
-    {
-        if (Resolve(owner) is { } form)
-            AntdUI.Notification.success(
-                form, title, text, AntdUI.TAlignFrom.TR, autoClose: DetailSeconds);
-        else
-            Fallback($"{title}\n\n{text}", MessageBoxIcon.Information);
-    }
+    public static void SuccessDetail(Control? owner, string title, string text) =>
+        Detail(owner, title, text, AntdUI.TType.Success, MessageBoxIcon.Information);
 
     /// <summary>A partial or blocked outcome that lists what did and did not run.</summary>
-    public static void WarnDetail(Control? owner, string title, string text)
-    {
-        if (Resolve(owner) is { } form)
-            AntdUI.Notification.warn(
-                form, title, text, AntdUI.TAlignFrom.TR, autoClose: DetailSeconds);
-        else
-            Fallback($"{title}\n\n{text}", MessageBoxIcon.Warning);
-    }
+    public static void WarnDetail(Control? owner, string title, string text) =>
+        Detail(owner, title, text, AntdUI.TType.Warn, MessageBoxIcon.Warning);
 
     /// <summary>A failure with troubleshooting steps attached.</summary>
-    public static void ErrorDetail(Control? owner, string title, string text)
+    public static void ErrorDetail(Control? owner, string title, string text) =>
+        Detail(owner, title, text, AntdUI.TType.Error, MessageBoxIcon.Error);
+
+    private static void Detail(
+        Control? owner, string title, string text, AntdUI.TType type, MessageBoxIcon fallbackIcon)
     {
-        if (Resolve(owner) is { } form)
-            AntdUI.Notification.error(
-                form, title, text, AntdUI.TAlignFrom.TR, autoClose: DetailSeconds);
-        else
-            Fallback($"{title}\n\n{text}", MessageBoxIcon.Error);
+        if (Resolve(owner) is not { } form)
+        {
+            Fallback($"{title}\n\n{text}", fallbackIcon);
+            return;
+        }
+
+        AntdUI.Notification.open(new AntdUI.Notification.Config(
+            form, title, text, type, AntdUI.TAlignFrom.TR, DetailBodyFont, DetailSeconds)
+        {
+            FontTitle = DetailTitleFont,
+            Padding = DetailPadding,
+            Radius = InkjetOperator.Theme.DesignTokens.Radius,
+        });
     }
 
     // ---- Plumbing ----
