@@ -39,7 +39,7 @@ public partial class SettingUserControl : UserControl
             {
                 tlpSidebar.SetRow(allButtons[i], row);
                 tlpSidebar.RowStyles[row].SizeType = SizeType.Absolute;
-                tlpSidebar.RowStyles[row].Height = 72F;
+                tlpSidebar.RowStyles[row].Height = 96F;
                 row++;
             }
         }
@@ -50,7 +50,7 @@ public partial class SettingUserControl : UserControl
             tlpSidebar.RowStyles[r].Height = 0F;
         }
 
-        tlpSidebar.Height = row * 72;
+        tlpSidebar.Height = row * 96;
 
         _menuButtons = allButtons.Where((_, i) => visible[i]).ToArray();
         foreach (var btn in _menuButtons)

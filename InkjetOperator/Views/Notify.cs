@@ -38,8 +38,12 @@ internal static class Notify
     /// <summary>An action completed - saved, sent, created.</summary>
     public static void Success(Control? owner, string text)
     {
+        System.Media.SystemSounds.Asterisk.Play();
+
         if (Resolve(owner) is { } form)
-            AntdUI.Message.success(form, text, autoClose: SuccessSeconds);
+            AntdUI.Message.success(form, text,
+                font: new Font(form.Font.FontFamily, 16f, FontStyle.Bold),
+                autoClose: SuccessSeconds);
         else
             Fallback(text, MessageBoxIcon.Information);
     }
