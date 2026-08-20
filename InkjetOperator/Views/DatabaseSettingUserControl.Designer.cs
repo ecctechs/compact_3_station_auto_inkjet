@@ -121,11 +121,12 @@ partial class DatabaseSettingUserControl
         btnBrowse.BorderWidth = 2F;
         btnBrowse.Font = new System.Drawing.Font("Segoe UI", 9F);
         btnBrowse.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnBrowse.IconSvg = "FolderOpenFilled";
+        btnBrowse.IconRatio = 1.2F;
         btnBrowse.Name = "btnBrowse";
         btnBrowse.Radius = 6;
-        btnBrowse.Size = new System.Drawing.Size(84, 34);
+        btnBrowse.Size = new System.Drawing.Size(42, 34);
         btnBrowse.TabIndex = 2;
-        btnBrowse.Text = "Browse...";
         btnBrowse.Type = AntdUI.TTypeMini.Default;
         //
         // lblStatus — under the input, aligned with it
@@ -170,11 +171,12 @@ partial class DatabaseSettingUserControl
         btnBrowseClamp.BorderWidth = 2F;
         btnBrowseClamp.Font = new System.Drawing.Font("Segoe UI", 9F);
         btnBrowseClamp.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnBrowseClamp.IconSvg = "FolderOpenFilled";
+        btnBrowseClamp.IconRatio = 1.2F;
         btnBrowseClamp.Name = "btnBrowseClamp";
         btnBrowseClamp.Radius = 6;
-        btnBrowseClamp.Size = new System.Drawing.Size(84, 34);
+        btnBrowseClamp.Size = new System.Drawing.Size(42, 34);
         btnBrowseClamp.TabIndex = 6;
-        btnBrowseClamp.Text = "Browse...";
         btnBrowseClamp.Type = AntdUI.TTypeMini.Default;
         //
         // lblClampStatus
