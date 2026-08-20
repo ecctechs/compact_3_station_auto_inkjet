@@ -123,7 +123,7 @@ public partial class OrderListUserControl : UserControl
         var resolved = await _api.GetResolvedJobAsync(row.Id);
         if (resolved == null)
         {
-            Notify.Warn(this, $"ไม่สามารถโหลด Detail ของ Job #{row.Id} ได้");
+            Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลด Detail ของ Job #{row.Id} ได้");
             return;
         }
 

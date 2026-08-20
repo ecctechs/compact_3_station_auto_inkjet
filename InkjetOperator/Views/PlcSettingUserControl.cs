@@ -109,7 +109,7 @@ public partial class PlcSettingUserControl : UserControl
 
         if (dlg.Value != password)
         {
-            Notify.Warn(this, "รหัสผ่านไม่ถูกต้อง");
+            Notify.WarnModal(this, "แจ้งเตือน", "รหัสผ่านไม่ถูกต้อง");
             return;
         }
 
@@ -427,7 +427,7 @@ public partial class PlcSettingUserControl : UserControl
     }
 
     private static void Warn(string message) =>
-        Notify.Warn(null, message);
+        Notify.WarnModal(null, "แจ้งเตือน", message);
 
     // ── Save / Cancel ──────────────────────────────────────
 
@@ -458,7 +458,7 @@ public partial class PlcSettingUserControl : UserControl
         }
         else
         {
-            Notify.Error(this, "บันทึกไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อ Backend");
+            Notify.ErrorModal(this, "Error", "บันทึกไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อ Backend");
         }
     }
 

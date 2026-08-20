@@ -354,5 +354,5 @@ public partial class ClampSettingUserControl : UserControl
     }
 
     private static void Warn(string message) =>
-        Notify.Warn(null, message);
+        Notify.WarnModal(null, "แจ้งเตือน", message);
 }

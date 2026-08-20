@@ -215,7 +215,7 @@ public partial class EditPatternUserControl : UserControl
         }
         catch (Exception ex)
         {
-            Notify.Error(this, "Save failed: " + ex.Message);
+            Notify.ErrorModal(this, "Error", "Save failed: " + ex.Message);
         }
     }
 

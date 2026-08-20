@@ -71,6 +71,53 @@ internal static class Notify
             Fallback(text, MessageBoxIcon.Error);
     }
 
+    // ---- Centered modal dialog (blocks until OK) ----
+
+    public static void WarnModal(Control? owner, string title, string text)
+    {
+        if (Resolve(owner) is { } form)
+            AntdUI.Modal.open(new AntdUI.Modal.Config(form, title, text)
+            {
+                Icon = AntdUI.TType.Warn,
+                OkText = "OK",
+                CancelText = null,
+                Font = new Font(form.Font.FontFamily, 14f),
+                OkFont = new Font(form.Font.FontFamily, 14f, FontStyle.Bold),
+            });
+        else
+            Fallback($"{title}\n\n{text}", MessageBoxIcon.Warning);
+    }
+
+    public static void ErrorModal(Control? owner, string title, string text)
+    {
+        if (Resolve(owner) is { } form)
+            AntdUI.Modal.open(new AntdUI.Modal.Config(form, title, text)
+            {
+                Icon = AntdUI.TType.Error,
+                OkText = "OK",
+                CancelText = null,
+                Font = new Font(form.Font.FontFamily, 14f),
+                OkFont = new Font(form.Font.FontFamily, 14f, FontStyle.Bold),
+            });
+        else
+            Fallback($"{title}\n\n{text}", MessageBoxIcon.Error);
+    }
+
+    public static void SuccessModal(Control? owner, string title, string text)
+    {
+        if (Resolve(owner) is { } form)
+            AntdUI.Modal.open(new AntdUI.Modal.Config(form, title, text)
+            {
+                Icon = AntdUI.TType.Success,
+                OkText = "OK",
+                CancelText = null,
+                Font = new Font(form.Font.FontFamily, 14f),
+                OkFont = new Font(form.Font.FontFamily, 14f, FontStyle.Bold),
+            });
+        else
+            Fallback($"{title}\n\n{text}", MessageBoxIcon.Information);
+    }
+
     // ---- Titled notification, for multi-line outcomes ----
 
     /// <summary>A finished job or transfer, with a per-machine heading.</summary>

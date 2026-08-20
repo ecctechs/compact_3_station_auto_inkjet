@@ -71,7 +71,7 @@ public partial class InkjetSettingUserControl : UserControl
         var ip059 = txtMk059Ip.Text.Trim();
         if (!string.IsNullOrEmpty(ip058) && !string.IsNullOrEmpty(ip059) && ip058 == ip059)
         {
-            Notify.Warn(this, "MK058 and MK059 IP addresses must not be the same.");
+            Notify.WarnModal(this, "แจ้งเตือน", "MK058 and MK059 IP addresses must not be the same.");
             return;
         }
 
@@ -79,12 +79,12 @@ public partial class InkjetSettingUserControl : UserControl
         var f2 = txtUv2Folder.Text.Trim();
         if (!string.IsNullOrEmpty(f1) && !Directory.Exists(f1))
         {
-            Notify.Warn(this, $"UV1 folder not found:\n{f1}");
+            Notify.WarnModal(this, "แจ้งเตือน", $"UV1 folder not found:\n{f1}");
             return;
         }
         if (!string.IsNullOrEmpty(f2) && !Directory.Exists(f2))
         {
-            Notify.Warn(this, $"UV2 folder not found:\n{f2}");
+            Notify.WarnModal(this, "แจ้งเตือน", $"UV2 folder not found:\n{f2}");
             return;
         }
 
@@ -197,7 +197,7 @@ public partial class InkjetSettingUserControl : UserControl
         var problems = ValidateFolder(dlg.SelectedPath, requiredTable);
         ShowFolderStatus(dlg.SelectedPath, statusLabel, requiredTable);
         if (problems.Count > 0)
-            Notify.Warn(this, string.Join("\n\n", problems));
+            Notify.WarnModal(this, "แจ้งเตือน", string.Join("\n\n", problems));
     }
 
     private static List<string> ValidateFolder(string folder, string requiredTable)

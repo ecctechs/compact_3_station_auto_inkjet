@@ -152,19 +152,19 @@ public partial class DatabaseSettingUserControl : UserControl
 
         if (string.IsNullOrWhiteSpace(path))
         {
-            Notify.Warn(this, "กรุณาเลือกไฟล์ Database");
+            Notify.WarnModal(this, "แจ้งเตือน", "กรุณาเลือกไฟล์ Database");
             return;
         }
 
         if (!File.Exists(path))
         {
-            Notify.Warn(this, $"ไม่พบไฟล์:\n{path}");
+            Notify.WarnModal(this, "แจ้งเตือน", $"ไม่พบไฟล์:\n{path}");
             return;
         }
 
         if (!HasInkjetDataTable(path))
         {
-            Notify.Warn(this, "ไฟล์ Database ไม่มีตาราง 'inkjet_data'");
+            Notify.WarnModal(this, "แจ้งเตือน", "ไฟล์ Database ไม่มีตาราง 'inkjet_data'");
             return;
         }
 
@@ -174,13 +174,13 @@ public partial class DatabaseSettingUserControl : UserControl
         {
             if (!File.Exists(clampPath))
             {
-                Notify.Warn(this, $"ไม่พบไฟล์ Clamp Database:\n{clampPath}");
+                Notify.WarnModal(this, "แจ้งเตือน", $"ไม่พบไฟล์ Clamp Database:\n{clampPath}");
                 return;
             }
 
             if (!HasTable(clampPath, "MainTable"))
             {
-                Notify.Warn(this, "ไฟล์ Clamp Database ไม่มีตาราง 'MainTable'");
+                Notify.WarnModal(this, "แจ้งเตือน", "ไฟล์ Clamp Database ไม่มีตาราง 'MainTable'");
                 return;
             }
         }

@@ -275,8 +275,8 @@ public partial class ScanBarcodeUserControl : UserControl
     }
 
     private static void ShowWarning(string msg) =>
-        Notify.Warn(null, msg);
+        Notify.WarnModal(null, "แจ้งเตือน", msg);
 
     private static void ShowError(string msg) =>
-        Notify.Error(null, msg);
+        Notify.ErrorModal(null, "Error", msg);
 }

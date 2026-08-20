@@ -247,7 +247,7 @@ public partial class OrderDetailUserControl : UserControl
         var config = _pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
         if (config == null)
         {
-            Notify.Warn(this, $"ไม่พบ InkjetConfig ordinal {ordinal}");
+            Notify.WarnModal(this, "แจ้งเตือน", $"ไม่พบ InkjetConfig ordinal {ordinal}");
             return;
         }
 
@@ -456,7 +456,7 @@ public partial class OrderDetailUserControl : UserControl
         {
             btnSendMk.Text = originalText;
             btnSendMk.Enabled = true;
-            Notify.Error(this, $"เกิดข้อผิดพลาด: {ex.Message}");
+            Notify.ErrorModal(this, "Error", $"เกิดข้อผิดพลาด: {ex.Message}");
         }
     }
 
@@ -513,21 +513,21 @@ public partial class OrderDetailUserControl : UserControl
         var uvRow = _uvData.FirstOrDefault(r => r.Machine == stepName);
         if (uvRow == null)
         {
-            Notify.Warn(this, $"ยังไม่มีข้อมูล {stepName} ของงานที่เลือก");
+            Notify.WarnModal(this, "แจ้งเตือน", $"ยังไม่มีข้อมูล {stepName} ของงานที่เลือก");
             return;
         }
 
         var cpiPath = UvSettingsManager.GetCpiPath(uvNumber);
         if (cpiPath == null)
         {
-            Notify.Warn(this, $"ยังไม่ได้ตั้งค่าโฟลเดอร์ UV{uvNumber} หรือไม่พบ CPI.db3");
+            Notify.WarnModal(this, "แจ้งเตือน", $"ยังไม่ได้ตั้งค่าโฟลเดอร์ UV{uvNumber} หรือไม่พบ CPI.db3");
             return;
         }
 
         var ip = CustomSettingsManager.Read($"UV00{uvNumber}_IP");
         if (string.IsNullOrWhiteSpace(ip))
         {
-            Notify.Warn(this, $"ยังไม่ได้ตั้งค่า IP ของ UV{uvNumber}");
+            Notify.WarnModal(this, "แจ้งเตือน", $"ยังไม่ได้ตั้งค่า IP ของ UV{uvNumber}");
             return;
         }
         int port = int.TryParse(CustomSettingsManager.Read($"UV00{uvNumber}_PORT"), out var p)
