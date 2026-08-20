@@ -14,7 +14,6 @@ public partial class DatabaseSettingUserControl : UserControl
 
         btnBrowse.Click += (_, _) => BrowseFile();
         btnBrowseClamp.Click += (_, _) => BrowseClampFile();
-        btnCheckStatus.Click += async (_, _) => await CheckStatusAsync();
         btnSave.Click += BtnSave_Click;
         btnCancel.Click += (_, _) => LoadData();
     }
@@ -30,25 +29,22 @@ public partial class DatabaseSettingUserControl : UserControl
         txtClampPath.BackColor = Color.White;
     }
 
+    /// <summary>
+    /// Re-reads both database paths and refreshes the status labels.
+    /// <para>
+    /// The page no longer has a Check Status button; this stays public because
+    /// <see cref="SettingUserControl"/> calls it when the Setting page opens.
+    /// </para>
+    /// </summary>
     public async Task CheckStatusAsync()
     {
-        btnCheckStatus.Loading = true;
-        btnCheckStatus.Enabled = false;
-        try
+        var path = CustomSettingsManager.Read("DB_PATH");
+        var clampPath = CustomSettingsManager.Read("CLAMP_DB_PATH");
+        await Task.Run(() =>
         {
-            var path = CustomSettingsManager.Read("DB_PATH");
-            var clampPath = CustomSettingsManager.Read("CLAMP_DB_PATH");
-            await Task.Run(() =>
-            {
-                UpdateStatus(path);
-                UpdateClampStatus(clampPath);
-            });
-        }
-        finally
-        {
-            btnCheckStatus.Loading = false;
-            btnCheckStatus.Enabled = true;
-        }
+            UpdateStatus(path);
+            UpdateClampStatus(clampPath);
+        });
     }
 
     private void UpdateStatus(string path)

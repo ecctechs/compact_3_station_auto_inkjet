@@ -28,7 +28,6 @@ partial class DatabaseSettingUserControl
         flpActions = new System.Windows.Forms.FlowLayoutPanel();
         btnSave = new AntdUI.Button();
         btnCancel = new AntdUI.Button();
-        btnCheckStatus = new AntdUI.Button();
 
         tlpRoot.SuspendLayout();
         grpDatabase.SuspendLayout();
@@ -194,7 +193,6 @@ partial class DatabaseSettingUserControl
         flpActions.BackColor = System.Drawing.Color.White;
         flpActions.Controls.Add(btnSave);
         flpActions.Controls.Add(btnCancel);
-        flpActions.Controls.Add(btnCheckStatus);
         flpActions.Dock = System.Windows.Forms.DockStyle.Fill;
         flpActions.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
         flpActions.Margin = new System.Windows.Forms.Padding(0);
@@ -228,20 +226,6 @@ partial class DatabaseSettingUserControl
         btnCancel.Text = "Cancel";
         btnCancel.Type = AntdUI.TTypeMini.Default;
         //
-        // btnCheckStatus
-        //
-        btnCheckStatus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        btnCheckStatus.BorderWidth = 2F;
-        btnCheckStatus.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
-        btnCheckStatus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnCheckStatus.Margin = new System.Windows.Forms.Padding(16, 12, 3, 12);
-        btnCheckStatus.Name = "btnCheckStatus";
-        btnCheckStatus.Radius = 8;
-        btnCheckStatus.Size = new System.Drawing.Size(170, 44);
-        btnCheckStatus.TabIndex = 2;
-        btnCheckStatus.Text = "Check Status";
-        btnCheckStatus.Type = AntdUI.TTypeMini.Default;
-        //
         // DatabaseSettingUserControl
         //
         AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
@@ -273,5 +257,4 @@ partial class DatabaseSettingUserControl
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnSave;
     private AntdUI.Button btnCancel;
-    private AntdUI.Button btnCheckStatus;
 }
