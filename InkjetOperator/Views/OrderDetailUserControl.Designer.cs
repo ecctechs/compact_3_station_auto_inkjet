@@ -210,6 +210,7 @@ partial class OrderDetailUserControl
         btnSendMk = new AntdUI.Button();
         btnSendUv1 = new AntdUI.Button();
         btnSendUv2 = new AntdUI.Button();
+        btnSendToSt1 = new AntdUI.Button();
         btnDetailClose = new AntdUI.Button();
         tlpDetailRoot.SuspendLayout();
         pnlHeaderBar.SuspendLayout();
@@ -2998,6 +2999,7 @@ partial class OrderDetailUserControl
         flpDetailActions.Controls.Add(btnSendMk);
         flpDetailActions.Controls.Add(btnSendUv1);
         flpDetailActions.Controls.Add(btnSendUv2);
+        flpDetailActions.Controls.Add(btnSendToSt1);
         flpDetailActions.Controls.Add(btnDetailClose);
         flpDetailActions.Dock = System.Windows.Forms.DockStyle.Fill;
         flpDetailActions.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
@@ -3050,6 +3052,20 @@ partial class OrderDetailUserControl
         btnSendUv2.TabIndex = 2;
         btnSendUv2.Text = "ส่งหา UV2";
         btnSendUv2.Type = AntdUI.TTypeMini.Primary;
+        //
+        // btnSendToSt1
+        //
+        btnSendToSt1.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
+        btnSendToSt1.ForeColor = System.Drawing.Color.White;
+        btnSendToSt1.Location = new System.Drawing.Point(740, 16);
+        btnSendToSt1.Margin = new System.Windows.Forms.Padding(0, 0, 12, 0);
+        btnSendToSt1.Name = "btnSendToSt1";
+        btnSendToSt1.Radius = 10;
+        btnSendToSt1.Size = new System.Drawing.Size(260, 56);
+        btnSendToSt1.TabIndex = 4;
+        btnSendToSt1.Text = "ส่งไป ST1";
+        btnSendToSt1.Type = AntdUI.TTypeMini.Warn;
+        btnSendToSt1.Visible = false;
         //
         // btnDetailClose
         //
@@ -3260,6 +3276,7 @@ partial class OrderDetailUserControl
     private AntdUI.Button btnSendMk;
     private AntdUI.Button btnSendUv1;
     private AntdUI.Button btnSendUv2;
+    private AntdUI.Button btnSendToSt1;
     private AntdUI.Button btnDetailClose;
     private System.Windows.Forms.TableLayoutPanel tlpUv1Adjust;
     private AntdUI.Label lblIaiAdj1;

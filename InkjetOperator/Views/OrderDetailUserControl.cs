@@ -21,7 +21,7 @@ public partial class OrderDetailUserControl : UserControl
     private ImageHoverPopup? _refPopup;
     private List<UvJobDataDto> _uvData = [];
     private readonly bool _isDevMode;
-    private bool _uv2Only;
+    private bool _transferMode;
     private IaiClampSettingDto? _origIai;
 
     public event EventHandler? CloseRequested;
@@ -41,6 +41,7 @@ public partial class OrderDetailUserControl : UserControl
         btnSendMk.Click += async (_, _) => await SendToMkAsync();
         btnSendUv1.Click += async (_, _) => await SendToUvAsync(1);
         btnSendUv2.Click += async (_, _) => await SendToUvAsync(2);
+        btnSendToSt1.Click += async (_, _) => await SendToSt1Async();
 
         WireIaiAdjustEvents();
         WireRefImageHover();
@@ -99,7 +100,7 @@ public partial class OrderDetailUserControl : UserControl
         new AntdUI.Column("Value", "Value", AntdUI.ColumnAlign.Left),
     ];
 
-    public void SetUv2OnlyMode() => _uv2Only = true;
+    public void SetTransferMode() => _transferMode = true;
 
     public void LoadDetail(ResolvedJobResponse resolved, ApiClient? api = null)
     {
@@ -363,14 +364,13 @@ public partial class OrderDetailUserControl : UserControl
         btnSendUv1.Enabled = false;
         btnSendUv2.Enabled = false;
 
-        if (_uv2Only)
+        if (_transferMode)
         {
-            bool mkDone = _sendSteps.Contains("MK") && _currentStep > _sendSteps.IndexOf("MK");
-            if (_sendSteps.Contains("MK"))
-                MarkButtonSent(btnSendMk);
-            if (_sendSteps.Contains("UV1"))
-                MarkButtonSent(btnSendUv1);
-            btnSendUv2.Enabled = mkDone && _sendSteps.Contains("UV2");
+            btnSendMk.Visible = false;
+            btnSendUv1.Visible = false;
+            btnSendUv2.Visible = false;
+            btnSendToSt1.Visible = true;
+            btnSendToSt1.Enabled = true;
             return;
         }
 
@@ -623,6 +623,39 @@ public partial class OrderDetailUserControl : UserControl
                 btn.Text = originalText;
                 btn.Enabled = true;
             }
+        }
+    }
+
+    private async Task SendToSt1Async()
+    {
+        if (_api == null) return;
+
+        if (!Confirm.Ask(this, "ยืนยันส่ง ST1",
+                $"ส่ง Job #{_jobId} ไป Station 1\n\nยืนยันหรือไม่?"))
+            return;
+
+        btnSendToSt1.Enabled = false;
+        btnSendToSt1.Text = "กำลังส่ง...";
+        try
+        {
+            var (ok, err) = await _api.SendToSt1Async(_jobId);
+            if (ok)
+            {
+                btnSendToSt1.Text = "✓ ส่งแล้ว";
+                Notify.Success(this, $"ส่ง Job #{_jobId} ไป ST1 แล้ว");
+            }
+            else
+            {
+                btnSendToSt1.Text = "ส่งไป ST1";
+                btnSendToSt1.Enabled = true;
+                Notify.ErrorModal(this, "ส่งไม่สำเร็จ", err ?? "Unknown error");
+            }
+        }
+        catch (Exception ex)
+        {
+            btnSendToSt1.Text = "ส่งไป ST1";
+            btnSendToSt1.Enabled = true;
+            Notify.ErrorModal(this, "ส่งไม่สำเร็จ", ex.Message);
         }
     }
 

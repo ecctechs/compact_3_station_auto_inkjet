@@ -26,8 +26,9 @@ public partial class SettingUserControl : UserControl
         bool[] visible = level switch
         {
             0 => [false, true, true, false, false, false],
-            1 => [true, false, false, true, true, true],
-            9 => [false, false, false, true, true, true],   // ทดสอบหน้างาน: PLC / Clamp / UV Test
+            1 => [true, false, false, true, true, false],
+            3 => [false, false, true, false, false, false],  // ST3 — Backend DB only
+            9 => [false, false, false, true, true, true],    // ทดสอบหน้างาน: PLC / Clamp / UV Test
             _ => [true, true, true, true, true, true],
         };
 

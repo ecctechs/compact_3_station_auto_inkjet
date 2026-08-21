@@ -94,8 +94,8 @@ partial class MainShellForm
         tlpMenuBar.Controls.Add(btnInputOrder, 0, 0);
         tlpMenuBar.Controls.Add(btnOrderList, 1, 0);
         tlpMenuBar.Controls.Add(btnEditPattern, 2, 0);
-        tlpMenuBar.Controls.Add(btnSetting, 3, 0);
-        tlpMenuBar.Controls.Add(btnTransfer, 4, 0);
+        tlpMenuBar.Controls.Add(btnTransfer, 3, 0);
+        tlpMenuBar.Controls.Add(btnSetting, 4, 0);
         tlpMenuBar.Controls.Add(picLogo, 6, 0);
         tlpMenuBar.Controls.Add(btnLang, 7, 0);
         tlpMenuBar.Dock = DockStyle.Fill;

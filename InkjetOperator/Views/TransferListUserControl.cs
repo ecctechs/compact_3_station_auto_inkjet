@@ -149,7 +149,7 @@ public partial class TransferListUserControl : UserControl
         using var dlg = new OrderDetailDialog();
         dlg.TitleText = $"Job #{jobId} — Order Detail";
         dlg.Text = dlg.TitleText;
-        dlg.SetUv2OnlyMode();
+        dlg.SetTransferMode();
         dlg.LoadDetail(resolved, _api);
         dlg.ShowDialog(this);
     }
