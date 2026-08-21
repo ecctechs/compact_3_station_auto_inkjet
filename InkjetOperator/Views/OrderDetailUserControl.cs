@@ -21,6 +21,7 @@ public partial class OrderDetailUserControl : UserControl
     private ImageHoverPopup? _refPopup;
     private List<UvJobDataDto> _uvData = [];
     private readonly bool _isDevMode;
+    private IaiClampSettingDto? _origIai;
 
     public event EventHandler? CloseRequested;
 
@@ -40,6 +41,7 @@ public partial class OrderDetailUserControl : UserControl
         btnSendUv1.Click += async (_, _) => await SendToUvAsync(1);
         btnSendUv2.Click += async (_, _) => await SendToUvAsync(2);
 
+        WireIaiAdjustEvents();
         WireRefImageHover();
         Disposed += (_, _) => _refPopup?.Dispose();
     }
@@ -749,7 +751,8 @@ public partial class OrderDetailUserControl : UserControl
         var (iai, _) = await _api.GetIaiByJobAsync(jobId);
         if (IsDisposed) return;
 
-        // ไม่มีข้อมูล (404) → คงค่า "-" ที่ ClearIaiFields ตั้งไว้
+        _origIai = iai;
+
         if (iai == null) return;
 
         txtUv1Iai.Text = Number(iai.Iaip);
@@ -759,6 +762,14 @@ public partial class OrderDetailUserControl : UserControl
         txtUv2Iai.Text = Number(iai.Iai);
         txtUv2IaiZ1.Text = Number(iai.IaiZ1);
         txtUv2IaiZ2.Text = Number(iai.IaiZ2);
+
+        txtIaiAdj1Value.Text = iai.Iaip?.ToString() ?? "";
+        txtIaiAdj2Value.Text = iai.Iai?.ToString() ?? "";
+
+        txtIaiAdj1Z1Value.Text = iai.IaipZ1?.ToString() ?? "";
+        txtIaiAdj1Z2Value.Text = iai.IaipZ2?.ToString() ?? "";
+        txtIaiAdj2Z1Value.Text = iai.IaiZ1?.ToString() ?? "";
+        txtIaiAdj2Z2Value.Text = iai.IaiZ2?.ToString() ?? "";
     }
 
     private void ClearIaiFields()
@@ -769,6 +780,208 @@ public partial class OrderDetailUserControl : UserControl
                      txtUv2Iai, txtUv2IaiZ1, txtUv2IaiZ2,
                  })
             box.Text = Dash;
+
+        txtIaiAdj1Value.Text = "";
+        txtIaiAdj2Value.Text = "";
+        txtIaiAdj1Z1Value.Text = "";
+        txtIaiAdj1Z2Value.Text = "";
+        txtIaiAdj2Z1Value.Text = "";
+        txtIaiAdj2Z2Value.Text = "";
+        _origIai = null;
+    }
+
+    // ── IAI Adjust ─────────────────────────────────────────
+
+    private void WireIaiAdjustEvents()
+    {
+        btnIaiAdj1Minus.Click += (_, _) => AdjustIaiValue(txtIaiAdj1Value, -1);
+        btnIaiAdj1Plus.Click += (_, _) => AdjustIaiValue(txtIaiAdj1Value, +1);
+        btnIaiAdj2Minus.Click += (_, _) => AdjustIaiValue(txtIaiAdj2Value, -1);
+        btnIaiAdj2Plus.Click += (_, _) => AdjustIaiValue(txtIaiAdj2Value, +1);
+
+        btnIaiAdj1Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj1Value);
+        btnIaiAdj2Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj2Value);
+
+        btnIaiAdj1Upload.Click += async (_, _) => await IaiUploadAsync(txtIaiAdj1Value, txtUv1Program, txtUv1Iai, isPlate: true, zone: null);
+        btnIaiAdj2Upload.Click += async (_, _) => await IaiUploadAsync(txtIaiAdj2Value, txtUv2Program, txtUv2Iai, isPlate: false, zone: null);
+
+        btnIaiAdj1Reset.Click += (_, _) =>
+        {
+            txtIaiAdj1Value.Text = _origIai?.Iaip?.ToString() ?? "";
+        };
+        btnIaiAdj2Reset.Click += (_, _) =>
+        {
+            txtIaiAdj2Value.Text = _origIai?.Iai?.ToString() ?? "";
+        };
+
+        // UV1 Z1
+        btnIaiAdj1Z1Minus.Click += (_, _) => AdjustIaiValue(txtIaiAdj1Z1Value, -1);
+        btnIaiAdj1Z1Plus.Click += (_, _) => AdjustIaiValue(txtIaiAdj1Z1Value, +1);
+        btnIaiAdj1Z1Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj1Z1Value);
+        btnIaiAdj1Z1Upload.Click += async (_, _) => await IaiUploadAsync(txtIaiAdj1Z1Value, txtUv1Program, txtUv1IaiZ1, isPlate: true, zone: "Z1");
+        btnIaiAdj1Z1Reset.Click += (_, _) => { txtIaiAdj1Z1Value.Text = _origIai?.IaipZ1?.ToString() ?? ""; };
+
+        // UV1 Z2
+        btnIaiAdj1Z2Minus.Click += (_, _) => AdjustIaiValue(txtIaiAdj1Z2Value, -1);
+        btnIaiAdj1Z2Plus.Click += (_, _) => AdjustIaiValue(txtIaiAdj1Z2Value, +1);
+        btnIaiAdj1Z2Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj1Z2Value);
+        btnIaiAdj1Z2Upload.Click += async (_, _) => await IaiUploadAsync(txtIaiAdj1Z2Value, txtUv1Program, txtUv1IaiZ2, isPlate: true, zone: "Z2");
+        btnIaiAdj1Z2Reset.Click += (_, _) => { txtIaiAdj1Z2Value.Text = _origIai?.IaipZ2?.ToString() ?? ""; };
+
+        // UV2 Z1
+        btnIaiAdj2Z1Minus.Click += (_, _) => AdjustIaiValue(txtIaiAdj2Z1Value, -1);
+        btnIaiAdj2Z1Plus.Click += (_, _) => AdjustIaiValue(txtIaiAdj2Z1Value, +1);
+        btnIaiAdj2Z1Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj2Z1Value);
+        btnIaiAdj2Z1Upload.Click += async (_, _) => await IaiUploadAsync(txtIaiAdj2Z1Value, txtUv2Program, txtUv2IaiZ1, isPlate: false, zone: "Z1");
+        btnIaiAdj2Z1Reset.Click += (_, _) => { txtIaiAdj2Z1Value.Text = _origIai?.IaiZ1?.ToString() ?? ""; };
+
+        // UV2 Z2
+        btnIaiAdj2Z2Minus.Click += (_, _) => AdjustIaiValue(txtIaiAdj2Z2Value, -1);
+        btnIaiAdj2Z2Plus.Click += (_, _) => AdjustIaiValue(txtIaiAdj2Z2Value, +1);
+        btnIaiAdj2Z2Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj2Z2Value);
+        btnIaiAdj2Z2Upload.Click += async (_, _) => await IaiUploadAsync(txtIaiAdj2Z2Value, txtUv2Program, txtUv2IaiZ2, isPlate: false, zone: "Z2");
+        btnIaiAdj2Z2Reset.Click += (_, _) => { txtIaiAdj2Z2Value.Text = _origIai?.IaiZ2?.ToString() ?? ""; };
+    }
+
+    private static void AdjustIaiValue(AntdUI.Input input, int delta)
+    {
+        if (!int.TryParse(input.Text.Trim(), out int current)) current = 0;
+        int next = ClampService.ClampMm(current + delta);
+        input.Text = next.ToString();
+    }
+
+    private async Task IaiSendAsync(AntdUI.Input input)
+    {
+        if (!int.TryParse(input.Text.Trim(), out int mm))
+        {
+            Notify.WarnModal(this, "แจ้งเตือน", "กรุณากรอกค่า IAI เป็นตัวเลข");
+            return;
+        }
+
+        mm = ClampService.ClampMm(mm);
+        var s = ClampSettings.Load();
+
+        if (string.IsNullOrEmpty(s.Ip))
+        {
+            Notify.WarnModal(this, "แจ้งเตือน", "ยังไม่ได้ตั้งค่า Clamp PLC IP ในหน้า Setting");
+            return;
+        }
+
+        if (!Confirm.Ask(this, "ยืนยันสั่งแคลมป์",
+                $"สั่งแคลมป์ไปที่ {mm} mm\n(Raw = {ClampService.ToRaw(mm)})\n\nยืนยันหรือไม่?"))
+            return;
+
+        SetIaiAdjustBusy(true);
+        try
+        {
+            var result = await ClampService.ApplyAsync(s, mm);
+            if (IsDisposed) return;
+
+            if (result.Ok)
+                Notify.Success(this, $"สั่งแคลมป์ {mm} mm สำเร็จ");
+            else
+                Notify.ErrorModal(this, "สั่งแคลมป์ไม่สำเร็จ", result.Log);
+        }
+        finally
+        {
+            if (!IsDisposed) SetIaiAdjustBusy(false);
+        }
+    }
+
+    private async Task IaiUploadAsync(AntdUI.Input input, AntdUI.Input programInput, AntdUI.Input displayInput, bool isPlate, string? zone)
+    {
+        if (!int.TryParse(input.Text.Trim(), out int mm))
+        {
+            Notify.WarnModal(this, "แจ้งเตือน", "กรุณากรอกค่า IAI เป็นตัวเลข");
+            return;
+        }
+
+        string program = programInput.Text.Trim();
+        if (string.IsNullOrEmpty(program) || program == Dash)
+        {
+            Notify.WarnModal(this, "แจ้งเตือน", "ไม่มีชื่อโปรแกรม UV");
+            return;
+        }
+
+        var s = ClampSettings.Load();
+        if (string.IsNullOrEmpty(s.DbPath))
+        {
+            Notify.WarnModal(this, "แจ้งเตือน", "ยังไม่ได้ตั้ง path ของ mydatabase.db3 ในหน้า Setting");
+            return;
+        }
+
+        mm = ClampService.ClampMm(mm);
+        string col = (isPlate ? "IAIP" : "IAI") + (zone ?? "");
+
+        if (!Confirm.Ask(this, "ยืนยัน Upload",
+                $"บันทึก {col} = {mm} mm ให้ \"{program}\"\nไปยัง mydatabase และ Backend\n\nยืนยันหรือไม่?"))
+            return;
+
+        SetIaiAdjustBusy(true);
+        try
+        {
+            var errors = new List<string>();
+
+            var (dbOk, dbMsg) = ClampService.Upload(s.DbPath, program, mm, col);
+            if (!dbOk) errors.Add($"mydatabase: {dbMsg}");
+
+            if (_api != null && _jobId > 0)
+            {
+                var request = new IaiCreateRequest { PrintJobsId = _jobId };
+                if (isPlate)
+                {
+                    request.M1ProgramName = program;
+                    if (zone == null) request.Iaip = mm;
+                    else if (zone == "Z1") request.IaipZ1 = mm;
+                    else if (zone == "Z2") request.IaipZ2 = mm;
+                }
+                else
+                {
+                    request.M2ProgramName = program;
+                    if (zone == null) request.Iai = mm;
+                    else if (zone == "Z1") request.IaiZ1 = mm;
+                    else if (zone == "Z2") request.IaiZ2 = mm;
+                }
+
+                var (apiOk, apiErr) = await _api.CreateIaiAsync(request);
+                if (!apiOk) errors.Add($"Backend: {apiErr}");
+            }
+            else
+            {
+                errors.Add("Backend: ไม่มีการเชื่อมต่อ API หรือยังไม่ได้โหลดงาน");
+            }
+
+            if (errors.Count == 0)
+            {
+                Notify.Success(this, $"บันทึก {col} = {mm} mm ให้ \"{program}\" แล้ว");
+                displayInput.Text = mm.ToString();
+            }
+            else if (dbOk || (_api != null && _jobId > 0))
+                Notify.WarnDetail(this, "Upload บางส่วนไม่สำเร็จ", string.Join("\n", errors));
+            else
+                Notify.ErrorModal(this, "Upload ไม่สำเร็จ", string.Join("\n", errors));
+        }
+        finally
+        {
+            SetIaiAdjustBusy(false);
+        }
+    }
+
+    private void SetIaiAdjustBusy(bool busy)
+    {
+        foreach (var b in new[]
+                 {
+                     btnIaiAdj1Send, btnIaiAdj1Upload, btnIaiAdj1Reset,
+                     btnIaiAdj2Send, btnIaiAdj2Upload, btnIaiAdj2Reset,
+                     btnIaiAdj1Z1Send, btnIaiAdj1Z1Upload, btnIaiAdj1Z1Reset,
+                     btnIaiAdj1Z2Send, btnIaiAdj1Z2Upload, btnIaiAdj1Z2Reset,
+                     btnIaiAdj2Z1Send, btnIaiAdj2Z1Upload, btnIaiAdj2Z1Reset,
+                     btnIaiAdj2Z2Send, btnIaiAdj2Z2Upload, btnIaiAdj2Z2Reset,
+                 })
+        {
+            b.Loading = busy;
+            b.Enabled = !busy;
+        }
     }
 
     private static void FillUv(

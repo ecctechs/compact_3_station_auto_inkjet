@@ -158,6 +158,54 @@ partial class OrderDetailUserControl
         lblUv2ErpMfg = new AntdUI.Label();
         txtUv2ErpMfg = new AntdUI.Input();
         tblUv2Texts = new AntdUI.Table();
+        tlpUv1Adjust = new System.Windows.Forms.TableLayoutPanel();
+        lblIaiAdj1 = new AntdUI.Label();
+        btnIaiAdj1Minus = new AntdUI.Button();
+        txtIaiAdj1Value = new AntdUI.Input();
+        btnIaiAdj1Plus = new AntdUI.Button();
+        btnIaiAdj1Send = new AntdUI.Button();
+        btnIaiAdj1Upload = new AntdUI.Button();
+        btnIaiAdj1Reset = new AntdUI.Button();
+        tlpUv2Adjust = new System.Windows.Forms.TableLayoutPanel();
+        lblIaiAdj2 = new AntdUI.Label();
+        btnIaiAdj2Minus = new AntdUI.Button();
+        txtIaiAdj2Value = new AntdUI.Input();
+        btnIaiAdj2Plus = new AntdUI.Button();
+        btnIaiAdj2Send = new AntdUI.Button();
+        btnIaiAdj2Upload = new AntdUI.Button();
+        btnIaiAdj2Reset = new AntdUI.Button();
+        tlpUv1AdjustZ1 = new System.Windows.Forms.TableLayoutPanel();
+        lblIaiAdj1Z1 = new AntdUI.Label();
+        btnIaiAdj1Z1Minus = new AntdUI.Button();
+        txtIaiAdj1Z1Value = new AntdUI.Input();
+        btnIaiAdj1Z1Plus = new AntdUI.Button();
+        btnIaiAdj1Z1Send = new AntdUI.Button();
+        btnIaiAdj1Z1Upload = new AntdUI.Button();
+        btnIaiAdj1Z1Reset = new AntdUI.Button();
+        tlpUv1AdjustZ2 = new System.Windows.Forms.TableLayoutPanel();
+        lblIaiAdj1Z2 = new AntdUI.Label();
+        btnIaiAdj1Z2Minus = new AntdUI.Button();
+        txtIaiAdj1Z2Value = new AntdUI.Input();
+        btnIaiAdj1Z2Plus = new AntdUI.Button();
+        btnIaiAdj1Z2Send = new AntdUI.Button();
+        btnIaiAdj1Z2Upload = new AntdUI.Button();
+        btnIaiAdj1Z2Reset = new AntdUI.Button();
+        tlpUv2AdjustZ1 = new System.Windows.Forms.TableLayoutPanel();
+        lblIaiAdj2Z1 = new AntdUI.Label();
+        btnIaiAdj2Z1Minus = new AntdUI.Button();
+        txtIaiAdj2Z1Value = new AntdUI.Input();
+        btnIaiAdj2Z1Plus = new AntdUI.Button();
+        btnIaiAdj2Z1Send = new AntdUI.Button();
+        btnIaiAdj2Z1Upload = new AntdUI.Button();
+        btnIaiAdj2Z1Reset = new AntdUI.Button();
+        tlpUv2AdjustZ2 = new System.Windows.Forms.TableLayoutPanel();
+        lblIaiAdj2Z2 = new AntdUI.Label();
+        btnIaiAdj2Z2Minus = new AntdUI.Button();
+        txtIaiAdj2Z2Value = new AntdUI.Input();
+        btnIaiAdj2Z2Plus = new AntdUI.Button();
+        btnIaiAdj2Z2Send = new AntdUI.Button();
+        btnIaiAdj2Z2Upload = new AntdUI.Button();
+        btnIaiAdj2Z2Reset = new AntdUI.Button();
         flpDetailActions = new System.Windows.Forms.FlowLayoutPanel();
         btnSendMk = new AntdUI.Button();
         btnSendUv1 = new AntdUI.Button();
@@ -169,6 +217,12 @@ partial class OrderDetailUserControl
         tlpConnStatus.SuspendLayout();
         pnlBody.SuspendLayout();
         tlpSections.SuspendLayout();
+        tlpUv1Adjust.SuspendLayout();
+        tlpUv2Adjust.SuspendLayout();
+        tlpUv1AdjustZ1.SuspendLayout();
+        tlpUv1AdjustZ2.SuspendLayout();
+        tlpUv2AdjustZ1.SuspendLayout();
+        tlpUv2AdjustZ2.SuspendLayout();
         pnlMkSection.SuspendLayout();
         tlpMkSection.SuspendLayout();
         tlpMkPair.SuspendLayout();
@@ -592,8 +646,8 @@ partial class OrderDetailUserControl
         tlpSections.RowCount = 3;
         tlpSections.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 470F));
         tlpSections.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 110F));
-        tlpSections.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 446F));
-        tlpSections.Size = new System.Drawing.Size(1272, 1026);
+        tlpSections.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 588F));
+        tlpSections.Size = new System.Drawing.Size(1272, 1168);
         tlpSections.TabIndex = 0;
         //
         // pnlMkSection
@@ -1684,13 +1738,19 @@ partial class OrderDetailUserControl
         tlpUv1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpUv1.Controls.Add(tlpUv1Head, 0, 0);
         tlpUv1.Controls.Add(tblUv1Texts, 0, 1);
+        tlpUv1.Controls.Add(tlpUv1Adjust, 0, 2);
+        tlpUv1.Controls.Add(tlpUv1AdjustZ1, 0, 3);
+        tlpUv1.Controls.Add(tlpUv1AdjustZ2, 0, 4);
         tlpUv1.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpUv1.Location = new System.Drawing.Point(12, 12);
         tlpUv1.Name = "tlpUv1";
-        tlpUv1.RowCount = 2;
+        tlpUv1.RowCount = 5;
         tlpUv1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 138F));
         tlpUv1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpUv1.Size = new System.Drawing.Size(592, 344);
+        tlpUv1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpUv1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpUv1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpUv1.Size = new System.Drawing.Size(592, 432);
         tlpUv1.TabIndex = 0;
         //
         // tlpUv1Head
@@ -1953,13 +2013,19 @@ partial class OrderDetailUserControl
         tlpUv2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpUv2.Controls.Add(tlpUv2Head, 0, 0);
         tlpUv2.Controls.Add(tblUv2Texts, 0, 1);
+        tlpUv2.Controls.Add(tlpUv2Adjust, 0, 2);
+        tlpUv2.Controls.Add(tlpUv2AdjustZ1, 0, 3);
+        tlpUv2.Controls.Add(tlpUv2AdjustZ2, 0, 4);
         tlpUv2.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpUv2.Location = new System.Drawing.Point(12, 12);
         tlpUv2.Name = "tlpUv2";
-        tlpUv2.RowCount = 2;
+        tlpUv2.RowCount = 5;
         tlpUv2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 138F));
         tlpUv2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpUv2.Size = new System.Drawing.Size(592, 344);
+        tlpUv2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpUv2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpUv2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpUv2.Size = new System.Drawing.Size(592, 432);
         tlpUv2.TabIndex = 0;
         //
         // tlpUv2Head
@@ -2200,6 +2266,732 @@ partial class OrderDetailUserControl
         tblUv2Texts.Size = new System.Drawing.Size(592, 206);
         tblUv2Texts.TabIndex = 1;
         //
+        // tlpUv1Adjust
+        //
+        tlpUv1Adjust.BackColor = System.Drawing.Color.Transparent;
+        tlpUv1Adjust.ColumnCount = 8;
+        tlpUv1Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+        tlpUv1Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpUv1Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv1Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpUv1Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 12F));
+        tlpUv1Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpUv1Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpUv1Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpUv1Adjust.Controls.Add(lblIaiAdj1, 0, 0);
+        tlpUv1Adjust.Controls.Add(btnIaiAdj1Minus, 1, 0);
+        tlpUv1Adjust.Controls.Add(txtIaiAdj1Value, 2, 0);
+        tlpUv1Adjust.Controls.Add(btnIaiAdj1Plus, 3, 0);
+        tlpUv1Adjust.Controls.Add(btnIaiAdj1Send, 5, 0);
+        tlpUv1Adjust.Controls.Add(btnIaiAdj1Upload, 6, 0);
+        tlpUv1Adjust.Controls.Add(btnIaiAdj1Reset, 7, 0);
+        tlpUv1Adjust.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpUv1Adjust.Margin = new System.Windows.Forms.Padding(0);
+        tlpUv1Adjust.Name = "tlpUv1Adjust";
+        tlpUv1Adjust.RowCount = 1;
+        tlpUv1Adjust.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv1Adjust.Size = new System.Drawing.Size(592, 44);
+        tlpUv1Adjust.TabIndex = 2;
+        //
+        // lblIaiAdj1
+        //
+        lblIaiAdj1.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblIaiAdj1.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
+        lblIaiAdj1.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblIaiAdj1.Name = "lblIaiAdj1";
+        lblIaiAdj1.Size = new System.Drawing.Size(74, 44);
+        lblIaiAdj1.TabIndex = 0;
+        lblIaiAdj1.Text = "IAIP";
+        lblIaiAdj1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // btnIaiAdj1Minus
+        //
+        btnIaiAdj1Minus.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj1Minus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnIaiAdj1Minus.BorderWidth = 2F;
+        btnIaiAdj1Minus.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj1Minus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj1Minus.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj1Minus.Name = "btnIaiAdj1Minus";
+        btnIaiAdj1Minus.Radius = 6;
+        btnIaiAdj1Minus.Size = new System.Drawing.Size(52, 30);
+        btnIaiAdj1Minus.TabIndex = 2;
+        btnIaiAdj1Minus.Text = "-1";
+        btnIaiAdj1Minus.Type = AntdUI.TTypeMini.Default;
+        //
+        // txtIaiAdj1Value
+        //
+        txtIaiAdj1Value.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtIaiAdj1Value.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtIaiAdj1Value.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        txtIaiAdj1Value.Margin = new System.Windows.Forms.Padding(3);
+        txtIaiAdj1Value.Name = "txtIaiAdj1Value";
+        txtIaiAdj1Value.Radius = 8;
+        txtIaiAdj1Value.Size = new System.Drawing.Size(100, 30);
+        txtIaiAdj1Value.TabIndex = 3;
+        txtIaiAdj1Value.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+        //
+        // btnIaiAdj1Plus
+        //
+        btnIaiAdj1Plus.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj1Plus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnIaiAdj1Plus.BorderWidth = 2F;
+        btnIaiAdj1Plus.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj1Plus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj1Plus.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj1Plus.Name = "btnIaiAdj1Plus";
+        btnIaiAdj1Plus.Radius = 6;
+        btnIaiAdj1Plus.Size = new System.Drawing.Size(52, 30);
+        btnIaiAdj1Plus.TabIndex = 4;
+        btnIaiAdj1Plus.Text = "+1";
+        btnIaiAdj1Plus.Type = AntdUI.TTypeMini.Default;
+        //
+        // btnIaiAdj1Send
+        //
+        btnIaiAdj1Send.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj1Send.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj1Send.ForeColor = System.Drawing.Color.White;
+        btnIaiAdj1Send.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj1Send.Name = "btnIaiAdj1Send";
+        btnIaiAdj1Send.Radius = 6;
+        btnIaiAdj1Send.Size = new System.Drawing.Size(80, 30);
+        btnIaiAdj1Send.TabIndex = 5;
+        btnIaiAdj1Send.Text = "Send";
+        btnIaiAdj1Send.Type = AntdUI.TTypeMini.Success;
+        //
+        // btnIaiAdj1Upload
+        //
+        btnIaiAdj1Upload.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj1Upload.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj1Upload.ForeColor = System.Drawing.Color.White;
+        btnIaiAdj1Upload.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj1Upload.Name = "btnIaiAdj1Upload";
+        btnIaiAdj1Upload.Radius = 6;
+        btnIaiAdj1Upload.Size = new System.Drawing.Size(80, 30);
+        btnIaiAdj1Upload.TabIndex = 6;
+        btnIaiAdj1Upload.Text = "Upload";
+        btnIaiAdj1Upload.Type = AntdUI.TTypeMini.Primary;
+        //
+        // btnIaiAdj1Reset
+        //
+        btnIaiAdj1Reset.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj1Reset.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj1Reset.BorderWidth = 2F;
+        btnIaiAdj1Reset.Font = new System.Drawing.Font("Segoe UI", 10F);
+        btnIaiAdj1Reset.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj1Reset.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj1Reset.Name = "btnIaiAdj1Reset";
+        btnIaiAdj1Reset.Radius = 6;
+        btnIaiAdj1Reset.Size = new System.Drawing.Size(80, 30);
+        btnIaiAdj1Reset.TabIndex = 7;
+        btnIaiAdj1Reset.Text = "Reset";
+        btnIaiAdj1Reset.Type = AntdUI.TTypeMini.Default;
+        //
+        // tlpUv2Adjust
+        //
+        tlpUv2Adjust.BackColor = System.Drawing.Color.Transparent;
+        tlpUv2Adjust.ColumnCount = 8;
+        tlpUv2Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+        tlpUv2Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpUv2Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv2Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpUv2Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 12F));
+        tlpUv2Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpUv2Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpUv2Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpUv2Adjust.Controls.Add(lblIaiAdj2, 0, 0);
+        tlpUv2Adjust.Controls.Add(btnIaiAdj2Minus, 1, 0);
+        tlpUv2Adjust.Controls.Add(txtIaiAdj2Value, 2, 0);
+        tlpUv2Adjust.Controls.Add(btnIaiAdj2Plus, 3, 0);
+        tlpUv2Adjust.Controls.Add(btnIaiAdj2Send, 5, 0);
+        tlpUv2Adjust.Controls.Add(btnIaiAdj2Upload, 6, 0);
+        tlpUv2Adjust.Controls.Add(btnIaiAdj2Reset, 7, 0);
+        tlpUv2Adjust.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpUv2Adjust.Margin = new System.Windows.Forms.Padding(0);
+        tlpUv2Adjust.Name = "tlpUv2Adjust";
+        tlpUv2Adjust.RowCount = 1;
+        tlpUv2Adjust.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv2Adjust.Size = new System.Drawing.Size(592, 44);
+        tlpUv2Adjust.TabIndex = 2;
+        //
+        // lblIaiAdj2
+        //
+        lblIaiAdj2.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblIaiAdj2.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
+        lblIaiAdj2.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblIaiAdj2.Name = "lblIaiAdj2";
+        lblIaiAdj2.Size = new System.Drawing.Size(74, 44);
+        lblIaiAdj2.TabIndex = 0;
+        lblIaiAdj2.Text = "IAI";
+        lblIaiAdj2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // btnIaiAdj2Minus
+        //
+        btnIaiAdj2Minus.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj2Minus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnIaiAdj2Minus.BorderWidth = 2F;
+        btnIaiAdj2Minus.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj2Minus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj2Minus.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj2Minus.Name = "btnIaiAdj2Minus";
+        btnIaiAdj2Minus.Radius = 6;
+        btnIaiAdj2Minus.Size = new System.Drawing.Size(52, 30);
+        btnIaiAdj2Minus.TabIndex = 9;
+        btnIaiAdj2Minus.Text = "-1";
+        btnIaiAdj2Minus.Type = AntdUI.TTypeMini.Default;
+        //
+        // txtIaiAdj2Value
+        //
+        txtIaiAdj2Value.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtIaiAdj2Value.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtIaiAdj2Value.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        txtIaiAdj2Value.Margin = new System.Windows.Forms.Padding(3);
+        txtIaiAdj2Value.Name = "txtIaiAdj2Value";
+        txtIaiAdj2Value.Radius = 8;
+        txtIaiAdj2Value.Size = new System.Drawing.Size(100, 30);
+        txtIaiAdj2Value.TabIndex = 10;
+        txtIaiAdj2Value.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+        //
+        // btnIaiAdj2Plus
+        //
+        btnIaiAdj2Plus.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj2Plus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnIaiAdj2Plus.BorderWidth = 2F;
+        btnIaiAdj2Plus.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj2Plus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj2Plus.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj2Plus.Name = "btnIaiAdj2Plus";
+        btnIaiAdj2Plus.Radius = 6;
+        btnIaiAdj2Plus.Size = new System.Drawing.Size(52, 30);
+        btnIaiAdj2Plus.TabIndex = 11;
+        btnIaiAdj2Plus.Text = "+1";
+        btnIaiAdj2Plus.Type = AntdUI.TTypeMini.Default;
+        //
+        // btnIaiAdj2Send
+        //
+        btnIaiAdj2Send.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj2Send.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj2Send.ForeColor = System.Drawing.Color.White;
+        btnIaiAdj2Send.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj2Send.Name = "btnIaiAdj2Send";
+        btnIaiAdj2Send.Radius = 6;
+        btnIaiAdj2Send.Size = new System.Drawing.Size(80, 30);
+        btnIaiAdj2Send.TabIndex = 12;
+        btnIaiAdj2Send.Text = "Send";
+        btnIaiAdj2Send.Type = AntdUI.TTypeMini.Success;
+        //
+        // btnIaiAdj2Upload
+        //
+        btnIaiAdj2Upload.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj2Upload.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj2Upload.ForeColor = System.Drawing.Color.White;
+        btnIaiAdj2Upload.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj2Upload.Name = "btnIaiAdj2Upload";
+        btnIaiAdj2Upload.Radius = 6;
+        btnIaiAdj2Upload.Size = new System.Drawing.Size(80, 30);
+        btnIaiAdj2Upload.TabIndex = 13;
+        btnIaiAdj2Upload.Text = "Upload";
+        btnIaiAdj2Upload.Type = AntdUI.TTypeMini.Primary;
+        //
+        // btnIaiAdj2Reset
+        //
+        btnIaiAdj2Reset.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj2Reset.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj2Reset.BorderWidth = 2F;
+        btnIaiAdj2Reset.Font = new System.Drawing.Font("Segoe UI", 10F);
+        btnIaiAdj2Reset.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj2Reset.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj2Reset.Name = "btnIaiAdj2Reset";
+        btnIaiAdj2Reset.Radius = 6;
+        btnIaiAdj2Reset.Size = new System.Drawing.Size(80, 30);
+        btnIaiAdj2Reset.TabIndex = 14;
+        btnIaiAdj2Reset.Text = "Reset";
+        btnIaiAdj2Reset.Type = AntdUI.TTypeMini.Default;
+        //
+        // tlpUv1AdjustZ1
+        //
+        tlpUv1AdjustZ1.BackColor = System.Drawing.Color.Transparent;
+        tlpUv1AdjustZ1.ColumnCount = 8;
+        tlpUv1AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+        tlpUv1AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpUv1AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv1AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpUv1AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 12F));
+        tlpUv1AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpUv1AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpUv1AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpUv1AdjustZ1.Controls.Add(lblIaiAdj1Z1, 0, 0);
+        tlpUv1AdjustZ1.Controls.Add(btnIaiAdj1Z1Minus, 1, 0);
+        tlpUv1AdjustZ1.Controls.Add(txtIaiAdj1Z1Value, 2, 0);
+        tlpUv1AdjustZ1.Controls.Add(btnIaiAdj1Z1Plus, 3, 0);
+        tlpUv1AdjustZ1.Controls.Add(btnIaiAdj1Z1Send, 5, 0);
+        tlpUv1AdjustZ1.Controls.Add(btnIaiAdj1Z1Upload, 6, 0);
+        tlpUv1AdjustZ1.Controls.Add(btnIaiAdj1Z1Reset, 7, 0);
+        tlpUv1AdjustZ1.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpUv1AdjustZ1.Margin = new System.Windows.Forms.Padding(0);
+        tlpUv1AdjustZ1.Name = "tlpUv1AdjustZ1";
+        tlpUv1AdjustZ1.RowCount = 1;
+        tlpUv1AdjustZ1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv1AdjustZ1.Size = new System.Drawing.Size(592, 44);
+        tlpUv1AdjustZ1.TabIndex = 3;
+        //
+        // lblIaiAdj1Z1
+        //
+        lblIaiAdj1Z1.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblIaiAdj1Z1.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
+        lblIaiAdj1Z1.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblIaiAdj1Z1.Name = "lblIaiAdj1Z1";
+        lblIaiAdj1Z1.Size = new System.Drawing.Size(74, 44);
+        lblIaiAdj1Z1.TabIndex = 0;
+        lblIaiAdj1Z1.Text = "IAIP Z1";
+        lblIaiAdj1Z1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // btnIaiAdj1Z1Minus
+        //
+        btnIaiAdj1Z1Minus.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj1Z1Minus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnIaiAdj1Z1Minus.BorderWidth = 2F;
+        btnIaiAdj1Z1Minus.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj1Z1Minus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj1Z1Minus.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj1Z1Minus.Name = "btnIaiAdj1Z1Minus";
+        btnIaiAdj1Z1Minus.Radius = 6;
+        btnIaiAdj1Z1Minus.Size = new System.Drawing.Size(52, 30);
+        btnIaiAdj1Z1Minus.TabIndex = 2;
+        btnIaiAdj1Z1Minus.Text = "-1";
+        btnIaiAdj1Z1Minus.Type = AntdUI.TTypeMini.Default;
+        //
+        // txtIaiAdj1Z1Value
+        //
+        txtIaiAdj1Z1Value.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtIaiAdj1Z1Value.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtIaiAdj1Z1Value.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        txtIaiAdj1Z1Value.Margin = new System.Windows.Forms.Padding(3);
+        txtIaiAdj1Z1Value.Name = "txtIaiAdj1Z1Value";
+        txtIaiAdj1Z1Value.Radius = 8;
+        txtIaiAdj1Z1Value.Size = new System.Drawing.Size(100, 30);
+        txtIaiAdj1Z1Value.TabIndex = 3;
+        txtIaiAdj1Z1Value.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+        //
+        // btnIaiAdj1Z1Plus
+        //
+        btnIaiAdj1Z1Plus.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj1Z1Plus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnIaiAdj1Z1Plus.BorderWidth = 2F;
+        btnIaiAdj1Z1Plus.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj1Z1Plus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj1Z1Plus.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj1Z1Plus.Name = "btnIaiAdj1Z1Plus";
+        btnIaiAdj1Z1Plus.Radius = 6;
+        btnIaiAdj1Z1Plus.Size = new System.Drawing.Size(52, 30);
+        btnIaiAdj1Z1Plus.TabIndex = 4;
+        btnIaiAdj1Z1Plus.Text = "+1";
+        btnIaiAdj1Z1Plus.Type = AntdUI.TTypeMini.Default;
+        //
+        // btnIaiAdj1Z1Send
+        //
+        btnIaiAdj1Z1Send.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj1Z1Send.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj1Z1Send.ForeColor = System.Drawing.Color.White;
+        btnIaiAdj1Z1Send.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj1Z1Send.Name = "btnIaiAdj1Z1Send";
+        btnIaiAdj1Z1Send.Radius = 6;
+        btnIaiAdj1Z1Send.Size = new System.Drawing.Size(80, 30);
+        btnIaiAdj1Z1Send.TabIndex = 5;
+        btnIaiAdj1Z1Send.Text = "Send";
+        btnIaiAdj1Z1Send.Type = AntdUI.TTypeMini.Success;
+        //
+        // btnIaiAdj1Z1Upload
+        //
+        btnIaiAdj1Z1Upload.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj1Z1Upload.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj1Z1Upload.ForeColor = System.Drawing.Color.White;
+        btnIaiAdj1Z1Upload.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj1Z1Upload.Name = "btnIaiAdj1Z1Upload";
+        btnIaiAdj1Z1Upload.Radius = 6;
+        btnIaiAdj1Z1Upload.Size = new System.Drawing.Size(80, 30);
+        btnIaiAdj1Z1Upload.TabIndex = 6;
+        btnIaiAdj1Z1Upload.Text = "Upload";
+        btnIaiAdj1Z1Upload.Type = AntdUI.TTypeMini.Primary;
+        //
+        // btnIaiAdj1Z1Reset
+        //
+        btnIaiAdj1Z1Reset.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj1Z1Reset.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj1Z1Reset.BorderWidth = 2F;
+        btnIaiAdj1Z1Reset.Font = new System.Drawing.Font("Segoe UI", 10F);
+        btnIaiAdj1Z1Reset.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj1Z1Reset.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj1Z1Reset.Name = "btnIaiAdj1Z1Reset";
+        btnIaiAdj1Z1Reset.Radius = 6;
+        btnIaiAdj1Z1Reset.Size = new System.Drawing.Size(80, 30);
+        btnIaiAdj1Z1Reset.TabIndex = 7;
+        btnIaiAdj1Z1Reset.Text = "Reset";
+        btnIaiAdj1Z1Reset.Type = AntdUI.TTypeMini.Default;
+        //
+        // tlpUv1AdjustZ2
+        //
+        tlpUv1AdjustZ2.BackColor = System.Drawing.Color.Transparent;
+        tlpUv1AdjustZ2.ColumnCount = 8;
+        tlpUv1AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+        tlpUv1AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpUv1AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv1AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpUv1AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 12F));
+        tlpUv1AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpUv1AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpUv1AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpUv1AdjustZ2.Controls.Add(lblIaiAdj1Z2, 0, 0);
+        tlpUv1AdjustZ2.Controls.Add(btnIaiAdj1Z2Minus, 1, 0);
+        tlpUv1AdjustZ2.Controls.Add(txtIaiAdj1Z2Value, 2, 0);
+        tlpUv1AdjustZ2.Controls.Add(btnIaiAdj1Z2Plus, 3, 0);
+        tlpUv1AdjustZ2.Controls.Add(btnIaiAdj1Z2Send, 5, 0);
+        tlpUv1AdjustZ2.Controls.Add(btnIaiAdj1Z2Upload, 6, 0);
+        tlpUv1AdjustZ2.Controls.Add(btnIaiAdj1Z2Reset, 7, 0);
+        tlpUv1AdjustZ2.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpUv1AdjustZ2.Margin = new System.Windows.Forms.Padding(0);
+        tlpUv1AdjustZ2.Name = "tlpUv1AdjustZ2";
+        tlpUv1AdjustZ2.RowCount = 1;
+        tlpUv1AdjustZ2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv1AdjustZ2.Size = new System.Drawing.Size(592, 44);
+        tlpUv1AdjustZ2.TabIndex = 4;
+        //
+        // lblIaiAdj1Z2
+        //
+        lblIaiAdj1Z2.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblIaiAdj1Z2.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
+        lblIaiAdj1Z2.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblIaiAdj1Z2.Name = "lblIaiAdj1Z2";
+        lblIaiAdj1Z2.Size = new System.Drawing.Size(74, 44);
+        lblIaiAdj1Z2.TabIndex = 0;
+        lblIaiAdj1Z2.Text = "IAIP Z2";
+        lblIaiAdj1Z2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // btnIaiAdj1Z2Minus
+        //
+        btnIaiAdj1Z2Minus.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj1Z2Minus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnIaiAdj1Z2Minus.BorderWidth = 2F;
+        btnIaiAdj1Z2Minus.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj1Z2Minus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj1Z2Minus.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj1Z2Minus.Name = "btnIaiAdj1Z2Minus";
+        btnIaiAdj1Z2Minus.Radius = 6;
+        btnIaiAdj1Z2Minus.Size = new System.Drawing.Size(52, 30);
+        btnIaiAdj1Z2Minus.TabIndex = 2;
+        btnIaiAdj1Z2Minus.Text = "-1";
+        btnIaiAdj1Z2Minus.Type = AntdUI.TTypeMini.Default;
+        //
+        // txtIaiAdj1Z2Value
+        //
+        txtIaiAdj1Z2Value.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtIaiAdj1Z2Value.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtIaiAdj1Z2Value.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        txtIaiAdj1Z2Value.Margin = new System.Windows.Forms.Padding(3);
+        txtIaiAdj1Z2Value.Name = "txtIaiAdj1Z2Value";
+        txtIaiAdj1Z2Value.Radius = 8;
+        txtIaiAdj1Z2Value.Size = new System.Drawing.Size(100, 30);
+        txtIaiAdj1Z2Value.TabIndex = 3;
+        txtIaiAdj1Z2Value.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+        //
+        // btnIaiAdj1Z2Plus
+        //
+        btnIaiAdj1Z2Plus.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj1Z2Plus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnIaiAdj1Z2Plus.BorderWidth = 2F;
+        btnIaiAdj1Z2Plus.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj1Z2Plus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj1Z2Plus.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj1Z2Plus.Name = "btnIaiAdj1Z2Plus";
+        btnIaiAdj1Z2Plus.Radius = 6;
+        btnIaiAdj1Z2Plus.Size = new System.Drawing.Size(52, 30);
+        btnIaiAdj1Z2Plus.TabIndex = 4;
+        btnIaiAdj1Z2Plus.Text = "+1";
+        btnIaiAdj1Z2Plus.Type = AntdUI.TTypeMini.Default;
+        //
+        // btnIaiAdj1Z2Send
+        //
+        btnIaiAdj1Z2Send.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj1Z2Send.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj1Z2Send.ForeColor = System.Drawing.Color.White;
+        btnIaiAdj1Z2Send.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj1Z2Send.Name = "btnIaiAdj1Z2Send";
+        btnIaiAdj1Z2Send.Radius = 6;
+        btnIaiAdj1Z2Send.Size = new System.Drawing.Size(80, 30);
+        btnIaiAdj1Z2Send.TabIndex = 5;
+        btnIaiAdj1Z2Send.Text = "Send";
+        btnIaiAdj1Z2Send.Type = AntdUI.TTypeMini.Success;
+        //
+        // btnIaiAdj1Z2Upload
+        //
+        btnIaiAdj1Z2Upload.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj1Z2Upload.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj1Z2Upload.ForeColor = System.Drawing.Color.White;
+        btnIaiAdj1Z2Upload.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj1Z2Upload.Name = "btnIaiAdj1Z2Upload";
+        btnIaiAdj1Z2Upload.Radius = 6;
+        btnIaiAdj1Z2Upload.Size = new System.Drawing.Size(80, 30);
+        btnIaiAdj1Z2Upload.TabIndex = 6;
+        btnIaiAdj1Z2Upload.Text = "Upload";
+        btnIaiAdj1Z2Upload.Type = AntdUI.TTypeMini.Primary;
+        //
+        // btnIaiAdj1Z2Reset
+        //
+        btnIaiAdj1Z2Reset.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj1Z2Reset.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj1Z2Reset.BorderWidth = 2F;
+        btnIaiAdj1Z2Reset.Font = new System.Drawing.Font("Segoe UI", 10F);
+        btnIaiAdj1Z2Reset.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj1Z2Reset.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj1Z2Reset.Name = "btnIaiAdj1Z2Reset";
+        btnIaiAdj1Z2Reset.Radius = 6;
+        btnIaiAdj1Z2Reset.Size = new System.Drawing.Size(80, 30);
+        btnIaiAdj1Z2Reset.TabIndex = 7;
+        btnIaiAdj1Z2Reset.Text = "Reset";
+        btnIaiAdj1Z2Reset.Type = AntdUI.TTypeMini.Default;
+        //
+        // tlpUv2AdjustZ1
+        //
+        tlpUv2AdjustZ1.BackColor = System.Drawing.Color.Transparent;
+        tlpUv2AdjustZ1.ColumnCount = 8;
+        tlpUv2AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+        tlpUv2AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpUv2AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv2AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpUv2AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 12F));
+        tlpUv2AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpUv2AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpUv2AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpUv2AdjustZ1.Controls.Add(lblIaiAdj2Z1, 0, 0);
+        tlpUv2AdjustZ1.Controls.Add(btnIaiAdj2Z1Minus, 1, 0);
+        tlpUv2AdjustZ1.Controls.Add(txtIaiAdj2Z1Value, 2, 0);
+        tlpUv2AdjustZ1.Controls.Add(btnIaiAdj2Z1Plus, 3, 0);
+        tlpUv2AdjustZ1.Controls.Add(btnIaiAdj2Z1Send, 5, 0);
+        tlpUv2AdjustZ1.Controls.Add(btnIaiAdj2Z1Upload, 6, 0);
+        tlpUv2AdjustZ1.Controls.Add(btnIaiAdj2Z1Reset, 7, 0);
+        tlpUv2AdjustZ1.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpUv2AdjustZ1.Margin = new System.Windows.Forms.Padding(0);
+        tlpUv2AdjustZ1.Name = "tlpUv2AdjustZ1";
+        tlpUv2AdjustZ1.RowCount = 1;
+        tlpUv2AdjustZ1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv2AdjustZ1.Size = new System.Drawing.Size(592, 44);
+        tlpUv2AdjustZ1.TabIndex = 3;
+        //
+        // lblIaiAdj2Z1
+        //
+        lblIaiAdj2Z1.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblIaiAdj2Z1.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
+        lblIaiAdj2Z1.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblIaiAdj2Z1.Name = "lblIaiAdj2Z1";
+        lblIaiAdj2Z1.Size = new System.Drawing.Size(74, 44);
+        lblIaiAdj2Z1.TabIndex = 0;
+        lblIaiAdj2Z1.Text = "IAI Z1";
+        lblIaiAdj2Z1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // btnIaiAdj2Z1Minus
+        //
+        btnIaiAdj2Z1Minus.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj2Z1Minus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnIaiAdj2Z1Minus.BorderWidth = 2F;
+        btnIaiAdj2Z1Minus.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj2Z1Minus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj2Z1Minus.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj2Z1Minus.Name = "btnIaiAdj2Z1Minus";
+        btnIaiAdj2Z1Minus.Radius = 6;
+        btnIaiAdj2Z1Minus.Size = new System.Drawing.Size(52, 30);
+        btnIaiAdj2Z1Minus.TabIndex = 2;
+        btnIaiAdj2Z1Minus.Text = "-1";
+        btnIaiAdj2Z1Minus.Type = AntdUI.TTypeMini.Default;
+        //
+        // txtIaiAdj2Z1Value
+        //
+        txtIaiAdj2Z1Value.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtIaiAdj2Z1Value.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtIaiAdj2Z1Value.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        txtIaiAdj2Z1Value.Margin = new System.Windows.Forms.Padding(3);
+        txtIaiAdj2Z1Value.Name = "txtIaiAdj2Z1Value";
+        txtIaiAdj2Z1Value.Radius = 8;
+        txtIaiAdj2Z1Value.Size = new System.Drawing.Size(100, 30);
+        txtIaiAdj2Z1Value.TabIndex = 3;
+        txtIaiAdj2Z1Value.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+        //
+        // btnIaiAdj2Z1Plus
+        //
+        btnIaiAdj2Z1Plus.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj2Z1Plus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnIaiAdj2Z1Plus.BorderWidth = 2F;
+        btnIaiAdj2Z1Plus.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj2Z1Plus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj2Z1Plus.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj2Z1Plus.Name = "btnIaiAdj2Z1Plus";
+        btnIaiAdj2Z1Plus.Radius = 6;
+        btnIaiAdj2Z1Plus.Size = new System.Drawing.Size(52, 30);
+        btnIaiAdj2Z1Plus.TabIndex = 4;
+        btnIaiAdj2Z1Plus.Text = "+1";
+        btnIaiAdj2Z1Plus.Type = AntdUI.TTypeMini.Default;
+        //
+        // btnIaiAdj2Z1Send
+        //
+        btnIaiAdj2Z1Send.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj2Z1Send.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj2Z1Send.ForeColor = System.Drawing.Color.White;
+        btnIaiAdj2Z1Send.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj2Z1Send.Name = "btnIaiAdj2Z1Send";
+        btnIaiAdj2Z1Send.Radius = 6;
+        btnIaiAdj2Z1Send.Size = new System.Drawing.Size(80, 30);
+        btnIaiAdj2Z1Send.TabIndex = 5;
+        btnIaiAdj2Z1Send.Text = "Send";
+        btnIaiAdj2Z1Send.Type = AntdUI.TTypeMini.Success;
+        //
+        // btnIaiAdj2Z1Upload
+        //
+        btnIaiAdj2Z1Upload.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj2Z1Upload.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj2Z1Upload.ForeColor = System.Drawing.Color.White;
+        btnIaiAdj2Z1Upload.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj2Z1Upload.Name = "btnIaiAdj2Z1Upload";
+        btnIaiAdj2Z1Upload.Radius = 6;
+        btnIaiAdj2Z1Upload.Size = new System.Drawing.Size(80, 30);
+        btnIaiAdj2Z1Upload.TabIndex = 6;
+        btnIaiAdj2Z1Upload.Text = "Upload";
+        btnIaiAdj2Z1Upload.Type = AntdUI.TTypeMini.Primary;
+        //
+        // btnIaiAdj2Z1Reset
+        //
+        btnIaiAdj2Z1Reset.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj2Z1Reset.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj2Z1Reset.BorderWidth = 2F;
+        btnIaiAdj2Z1Reset.Font = new System.Drawing.Font("Segoe UI", 10F);
+        btnIaiAdj2Z1Reset.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj2Z1Reset.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj2Z1Reset.Name = "btnIaiAdj2Z1Reset";
+        btnIaiAdj2Z1Reset.Radius = 6;
+        btnIaiAdj2Z1Reset.Size = new System.Drawing.Size(80, 30);
+        btnIaiAdj2Z1Reset.TabIndex = 7;
+        btnIaiAdj2Z1Reset.Text = "Reset";
+        btnIaiAdj2Z1Reset.Type = AntdUI.TTypeMini.Default;
+        //
+        // tlpUv2AdjustZ2
+        //
+        tlpUv2AdjustZ2.BackColor = System.Drawing.Color.Transparent;
+        tlpUv2AdjustZ2.ColumnCount = 8;
+        tlpUv2AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+        tlpUv2AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpUv2AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv2AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpUv2AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 12F));
+        tlpUv2AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpUv2AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpUv2AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
+        tlpUv2AdjustZ2.Controls.Add(lblIaiAdj2Z2, 0, 0);
+        tlpUv2AdjustZ2.Controls.Add(btnIaiAdj2Z2Minus, 1, 0);
+        tlpUv2AdjustZ2.Controls.Add(txtIaiAdj2Z2Value, 2, 0);
+        tlpUv2AdjustZ2.Controls.Add(btnIaiAdj2Z2Plus, 3, 0);
+        tlpUv2AdjustZ2.Controls.Add(btnIaiAdj2Z2Send, 5, 0);
+        tlpUv2AdjustZ2.Controls.Add(btnIaiAdj2Z2Upload, 6, 0);
+        tlpUv2AdjustZ2.Controls.Add(btnIaiAdj2Z2Reset, 7, 0);
+        tlpUv2AdjustZ2.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpUv2AdjustZ2.Margin = new System.Windows.Forms.Padding(0);
+        tlpUv2AdjustZ2.Name = "tlpUv2AdjustZ2";
+        tlpUv2AdjustZ2.RowCount = 1;
+        tlpUv2AdjustZ2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv2AdjustZ2.Size = new System.Drawing.Size(592, 44);
+        tlpUv2AdjustZ2.TabIndex = 4;
+        //
+        // lblIaiAdj2Z2
+        //
+        lblIaiAdj2Z2.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblIaiAdj2Z2.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
+        lblIaiAdj2Z2.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblIaiAdj2Z2.Name = "lblIaiAdj2Z2";
+        lblIaiAdj2Z2.Size = new System.Drawing.Size(74, 44);
+        lblIaiAdj2Z2.TabIndex = 0;
+        lblIaiAdj2Z2.Text = "IAI Z2";
+        lblIaiAdj2Z2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // btnIaiAdj2Z2Minus
+        //
+        btnIaiAdj2Z2Minus.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj2Z2Minus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnIaiAdj2Z2Minus.BorderWidth = 2F;
+        btnIaiAdj2Z2Minus.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj2Z2Minus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj2Z2Minus.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj2Z2Minus.Name = "btnIaiAdj2Z2Minus";
+        btnIaiAdj2Z2Minus.Radius = 6;
+        btnIaiAdj2Z2Minus.Size = new System.Drawing.Size(52, 30);
+        btnIaiAdj2Z2Minus.TabIndex = 2;
+        btnIaiAdj2Z2Minus.Text = "-1";
+        btnIaiAdj2Z2Minus.Type = AntdUI.TTypeMini.Default;
+        //
+        // txtIaiAdj2Z2Value
+        //
+        txtIaiAdj2Z2Value.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtIaiAdj2Z2Value.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtIaiAdj2Z2Value.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        txtIaiAdj2Z2Value.Margin = new System.Windows.Forms.Padding(3);
+        txtIaiAdj2Z2Value.Name = "txtIaiAdj2Z2Value";
+        txtIaiAdj2Z2Value.Radius = 8;
+        txtIaiAdj2Z2Value.Size = new System.Drawing.Size(100, 30);
+        txtIaiAdj2Z2Value.TabIndex = 3;
+        txtIaiAdj2Z2Value.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+        //
+        // btnIaiAdj2Z2Plus
+        //
+        btnIaiAdj2Z2Plus.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj2Z2Plus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnIaiAdj2Z2Plus.BorderWidth = 2F;
+        btnIaiAdj2Z2Plus.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj2Z2Plus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj2Z2Plus.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj2Z2Plus.Name = "btnIaiAdj2Z2Plus";
+        btnIaiAdj2Z2Plus.Radius = 6;
+        btnIaiAdj2Z2Plus.Size = new System.Drawing.Size(52, 30);
+        btnIaiAdj2Z2Plus.TabIndex = 4;
+        btnIaiAdj2Z2Plus.Text = "+1";
+        btnIaiAdj2Z2Plus.Type = AntdUI.TTypeMini.Default;
+        //
+        // btnIaiAdj2Z2Send
+        //
+        btnIaiAdj2Z2Send.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj2Z2Send.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj2Z2Send.ForeColor = System.Drawing.Color.White;
+        btnIaiAdj2Z2Send.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj2Z2Send.Name = "btnIaiAdj2Z2Send";
+        btnIaiAdj2Z2Send.Radius = 6;
+        btnIaiAdj2Z2Send.Size = new System.Drawing.Size(80, 30);
+        btnIaiAdj2Z2Send.TabIndex = 5;
+        btnIaiAdj2Z2Send.Text = "Send";
+        btnIaiAdj2Z2Send.Type = AntdUI.TTypeMini.Success;
+        //
+        // btnIaiAdj2Z2Upload
+        //
+        btnIaiAdj2Z2Upload.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj2Z2Upload.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        btnIaiAdj2Z2Upload.ForeColor = System.Drawing.Color.White;
+        btnIaiAdj2Z2Upload.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj2Z2Upload.Name = "btnIaiAdj2Z2Upload";
+        btnIaiAdj2Z2Upload.Radius = 6;
+        btnIaiAdj2Z2Upload.Size = new System.Drawing.Size(80, 30);
+        btnIaiAdj2Z2Upload.TabIndex = 6;
+        btnIaiAdj2Z2Upload.Text = "Upload";
+        btnIaiAdj2Z2Upload.Type = AntdUI.TTypeMini.Primary;
+        //
+        // btnIaiAdj2Z2Reset
+        //
+        btnIaiAdj2Z2Reset.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        btnIaiAdj2Z2Reset.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj2Z2Reset.BorderWidth = 2F;
+        btnIaiAdj2Z2Reset.Font = new System.Drawing.Font("Segoe UI", 10F);
+        btnIaiAdj2Z2Reset.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnIaiAdj2Z2Reset.Margin = new System.Windows.Forms.Padding(3);
+        btnIaiAdj2Z2Reset.Name = "btnIaiAdj2Z2Reset";
+        btnIaiAdj2Z2Reset.Radius = 6;
+        btnIaiAdj2Z2Reset.Size = new System.Drawing.Size(80, 30);
+        btnIaiAdj2Z2Reset.TabIndex = 7;
+        btnIaiAdj2Z2Reset.Text = "Reset";
+        btnIaiAdj2Z2Reset.Type = AntdUI.TTypeMini.Default;
+        //
         // flpDetailActions
         //
         flpDetailActions.BackColor = System.Drawing.Color.White;
@@ -2321,6 +3113,12 @@ partial class OrderDetailUserControl
         tlpUv2Head.ResumeLayout(false);
         tlpUv2Iai.ResumeLayout(false);
         pnlUv2Chip.ResumeLayout(false);
+        tlpUv1Adjust.ResumeLayout(false);
+        tlpUv2Adjust.ResumeLayout(false);
+        tlpUv1AdjustZ1.ResumeLayout(false);
+        tlpUv1AdjustZ2.ResumeLayout(false);
+        tlpUv2AdjustZ1.ResumeLayout(false);
+        tlpUv2AdjustZ2.ResumeLayout(false);
         flpDetailActions.ResumeLayout(false);
         ResumeLayout(false);
     }
@@ -2463,4 +3261,52 @@ partial class OrderDetailUserControl
     private AntdUI.Button btnSendUv1;
     private AntdUI.Button btnSendUv2;
     private AntdUI.Button btnDetailClose;
+    private System.Windows.Forms.TableLayoutPanel tlpUv1Adjust;
+    private AntdUI.Label lblIaiAdj1;
+    private AntdUI.Button btnIaiAdj1Minus;
+    private AntdUI.Input txtIaiAdj1Value;
+    private AntdUI.Button btnIaiAdj1Plus;
+    private AntdUI.Button btnIaiAdj1Send;
+    private AntdUI.Button btnIaiAdj1Upload;
+    private AntdUI.Button btnIaiAdj1Reset;
+    private System.Windows.Forms.TableLayoutPanel tlpUv2Adjust;
+    private AntdUI.Label lblIaiAdj2;
+    private AntdUI.Button btnIaiAdj2Minus;
+    private AntdUI.Input txtIaiAdj2Value;
+    private AntdUI.Button btnIaiAdj2Plus;
+    private AntdUI.Button btnIaiAdj2Send;
+    private AntdUI.Button btnIaiAdj2Upload;
+    private AntdUI.Button btnIaiAdj2Reset;
+    private System.Windows.Forms.TableLayoutPanel tlpUv1AdjustZ1;
+    private AntdUI.Label lblIaiAdj1Z1;
+    private AntdUI.Button btnIaiAdj1Z1Minus;
+    private AntdUI.Input txtIaiAdj1Z1Value;
+    private AntdUI.Button btnIaiAdj1Z1Plus;
+    private AntdUI.Button btnIaiAdj1Z1Send;
+    private AntdUI.Button btnIaiAdj1Z1Upload;
+    private AntdUI.Button btnIaiAdj1Z1Reset;
+    private System.Windows.Forms.TableLayoutPanel tlpUv1AdjustZ2;
+    private AntdUI.Label lblIaiAdj1Z2;
+    private AntdUI.Button btnIaiAdj1Z2Minus;
+    private AntdUI.Input txtIaiAdj1Z2Value;
+    private AntdUI.Button btnIaiAdj1Z2Plus;
+    private AntdUI.Button btnIaiAdj1Z2Send;
+    private AntdUI.Button btnIaiAdj1Z2Upload;
+    private AntdUI.Button btnIaiAdj1Z2Reset;
+    private System.Windows.Forms.TableLayoutPanel tlpUv2AdjustZ1;
+    private AntdUI.Label lblIaiAdj2Z1;
+    private AntdUI.Button btnIaiAdj2Z1Minus;
+    private AntdUI.Input txtIaiAdj2Z1Value;
+    private AntdUI.Button btnIaiAdj2Z1Plus;
+    private AntdUI.Button btnIaiAdj2Z1Send;
+    private AntdUI.Button btnIaiAdj2Z1Upload;
+    private AntdUI.Button btnIaiAdj2Z1Reset;
+    private System.Windows.Forms.TableLayoutPanel tlpUv2AdjustZ2;
+    private AntdUI.Label lblIaiAdj2Z2;
+    private AntdUI.Button btnIaiAdj2Z2Minus;
+    private AntdUI.Input txtIaiAdj2Z2Value;
+    private AntdUI.Button btnIaiAdj2Z2Plus;
+    private AntdUI.Button btnIaiAdj2Z2Send;
+    private AntdUI.Button btnIaiAdj2Z2Upload;
+    private AntdUI.Button btnIaiAdj2Z2Reset;
 }

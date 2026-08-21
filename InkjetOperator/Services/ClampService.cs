@@ -122,7 +122,7 @@ public static class ClampService
     /// เป็น UPDATE ล้วน ไม่มี INSERT — โปรแกรมที่ยังไม่มีแถวต้องสร้างด้วย "Save as Model" ก่อน
     /// จึงคืนข้อความบอกชัดเมื่อไม่มีแถวถูกแก้ แทนที่จะเงียบเหมือนของเดิม
     /// </summary>
-    public static (bool ok, string message) Upload(string dbPath, string programName, int valueMm)
+    public static (bool ok, string message) Upload(string dbPath, string programName, int valueMm, string? valueColumnOverride = null)
     {
         string program = (programName ?? "").Trim();
         if (program.Length == 0)
@@ -136,7 +136,7 @@ public static class ClampService
 
         bool isPlate = program.StartsWith("P-", StringComparison.OrdinalIgnoreCase);
         string nameColumn = isPlate ? "m1_program_name" : "m2_program_name";
-        string valueColumn = isPlate ? "IAIP" : "IAI";
+        string valueColumn = valueColumnOverride ?? (isPlate ? "IAIP" : "IAI");
         int mm = ClampMm(valueMm);
 
         try

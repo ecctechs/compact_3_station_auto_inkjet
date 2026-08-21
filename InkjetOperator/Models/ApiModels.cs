@@ -146,6 +146,18 @@ public class IaiCreateRequest
 
     [JsonPropertyName("iai")]
     public int? Iai { get; set; }
+
+    [JsonPropertyName("iaip_z1")]
+    public int? IaipZ1 { get; set; }
+
+    [JsonPropertyName("iaip_z2")]
+    public int? IaipZ2 { get; set; }
+
+    [JsonPropertyName("iai_z1")]
+    public int? IaiZ1 { get; set; }
+
+    [JsonPropertyName("iai_z2")]
+    public int? IaiZ2 { get; set; }
 }
 
 public class IaiClampSettingDto

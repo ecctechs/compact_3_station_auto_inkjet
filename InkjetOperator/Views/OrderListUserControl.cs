@@ -157,7 +157,7 @@ public partial class OrderListUserControl : UserControl
             Type = job.Type ?? "",
             Qty = job.Qty?.ToString() ?? "",
             Status = statusText,
-            Op = [new AntdUI.CellButton("detail", "Detail", AntdUI.TTypeMini.Primary) { Radius = 6 }],
+            Op = [new AntdUI.CellButton("detail", "", AntdUI.TTypeMini.Primary) { Radius = 6, IconSvg = "SearchOutlined" }],
         };
 
         if (isProcessing)
