@@ -21,6 +21,7 @@ public partial class OrderDetailUserControl : UserControl
     private ImageHoverPopup? _refPopup;
     private List<UvJobDataDto> _uvData = [];
     private readonly bool _isDevMode;
+    private bool _uv2Only;
     private IaiClampSettingDto? _origIai;
 
     public event EventHandler? CloseRequested;
@@ -97,6 +98,8 @@ public partial class OrderDetailUserControl : UserControl
         new AntdUI.Column("Field", "Field", AntdUI.ColumnAlign.Center) { Width = "90" },
         new AntdUI.Column("Value", "Value", AntdUI.ColumnAlign.Left),
     ];
+
+    public void SetUv2OnlyMode() => _uv2Only = true;
 
     public void LoadDetail(ResolvedJobResponse resolved, ApiClient? api = null)
     {
@@ -359,6 +362,17 @@ public partial class OrderDetailUserControl : UserControl
         btnSendMk.Enabled = false;
         btnSendUv1.Enabled = false;
         btnSendUv2.Enabled = false;
+
+        if (_uv2Only)
+        {
+            bool mkDone = _sendSteps.Contains("MK") && _currentStep > _sendSteps.IndexOf("MK");
+            if (_sendSteps.Contains("MK"))
+                MarkButtonSent(btnSendMk);
+            if (_sendSteps.Contains("UV1"))
+                MarkButtonSent(btnSendUv1);
+            btnSendUv2.Enabled = mkDone && _sendSteps.Contains("UV2");
+            return;
+        }
 
         if (_currentStep < _sendSteps.Count)
         {

@@ -34,6 +34,7 @@ public partial class OrderListUserControl : UserControl
             new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center),
             new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center),
             new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center),
+            new AntdUI.Column("Source", "", AntdUI.ColumnAlign.Center) { Width = "120" },
             new AntdUI.Column("Op", "Detail", AntdUI.ColumnAlign.Center) { Width = "120" },
         };
     }
@@ -149,6 +150,10 @@ public partial class OrderListUserControl : UserControl
         if (isWaiting)
             statusText.Fore = StatusRed;
 
+        var sourceTag = job.StStatus == "1"
+            ? new AntdUI.CellTag[] { new AntdUI.CellTag("จาก ST3", AntdUI.TTypeMini.Success) }
+            : null;
+
         var row = new OrderRow
         {
             Id = job.Id,
@@ -157,6 +162,7 @@ public partial class OrderListUserControl : UserControl
             Type = job.Type ?? "",
             Qty = job.Qty?.ToString() ?? "",
             Status = statusText,
+            Source = sourceTag,
             Op = [new AntdUI.CellButton("detail", "", AntdUI.TTypeMini.Primary) { Radius = 6, IconSvg = "SearchOutlined" }],
         };
 
@@ -175,6 +181,7 @@ internal class OrderRow : AntdUI.NotifyProperty
     public string Type { get; set; } = "";
     public string Qty { get; set; } = "";
     public AntdUI.CellText? Status { get; set; }
+    public AntdUI.CellTag[]? Source { get; set; }
     public AntdUI.CellButton[] Op { get; set; } = [];
     public Color? Back { get; set; }
 }

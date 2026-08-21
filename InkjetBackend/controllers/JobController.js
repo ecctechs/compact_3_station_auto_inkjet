@@ -290,6 +290,54 @@ class JobController {
   }
 
   /**
+   * GET /job/getByMarkingMethod/:method
+   */
+  static async getByMarkingMethod(req, res) {
+    try {
+      const { method } = req.params;
+      const limit = Math.min(parseInt(req.query.limit) || 100, 100);
+
+      const jobs = await PrintJob.findAll({
+        include: [
+          {
+            model: PlanRouting,
+            as: "plan_routing",
+            where: { marking_method: method },
+            attributes: [],
+          },
+        ],
+        order: [["created_at", "DESC"]],
+        limit,
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 200, jobs);
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  /**
+   * PATCH /job/:id/send-to-st1
+   */
+  static async sendToSt1(req, res) {
+    try {
+      const job = await PrintJob.findByPk(req.params.id);
+      if (!job) {
+        return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
+      }
+
+      await job.update({
+        st_status: "1",
+        st1_send_time: new Date(),
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 200, "Sent to ST1");
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  /**
    * DELETE /job/remove/:id — deletes job and all children (CASCADE).
    */
   static async remove(req, res) {
