@@ -53,15 +53,16 @@ public partial class MainShellForm : AntdUI.Window
         var raw = Services.CustomSettingsManager.Read("MENU_LEVEL", "1");
         int.TryParse(raw, out var level);
 
-        var allTabs = new[] { btnInputOrder, btnOrderList, btnEditPattern, btnSetting };
-        var allPages = new Control[] { scanBarcodePage, orderListPage, editPatternPage, settingPage };
+        var allTabs = new[] { btnInputOrder, btnOrderList, btnEditPattern, btnTransfer, btnSetting };
+        var allPages = new Control[] { scanBarcodePage, orderListPage, editPatternPage, transferListPage, settingPage };
 
         bool[] visible = level switch
         {
-            0 => [true, false, false, true],
-            1 => [false, true, true, true],
-            9 => [false, false, false, true],   // โหมดทดสอบหน้างาน — เข้าได้เฉพาะ Setting
-            _ => [true, true, true, true],
+            0 => [true, false, false, false, true],
+            1 => [false, true, true, false, true],
+            3 => [false, true, true, true, true],    // ST3 — includes Transfer
+            9 => [false, false, false, false, true],  // โหมดทดสอบหน้างาน — เข้าได้เฉพาะ Setting
+            _ => [true, true, true, true, true],
         };
 
         for (int i = 0; i < allTabs.Length; i++)
@@ -115,5 +116,11 @@ public partial class MainShellForm : AntdUI.Window
     {
         settingPage.BringToFront();
         SetActiveTab(btnSetting);
+    }
+
+    private void btnTransfer_Click(object sender, EventArgs e)
+    {
+        transferListPage.BringToFront();
+        SetActiveTab(btnTransfer);
     }
 }

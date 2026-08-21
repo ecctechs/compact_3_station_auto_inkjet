@@ -267,6 +267,39 @@ public class ApiClient
         catch { return false; }
     }
 
+    public async Task<(List<PrintJob> jobs, string? error)> GetJobsByMarkingMethodAsync(string markingMethod, int limit = 100)
+    {
+        try
+        {
+            var response = await _http.GetAsync($"/job/getByMarkingMethod/{markingMethod}?limit={limit}");
+            var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+                return (new(), $"[{(int)response.StatusCode}] {body}");
+            var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<List<PrintJob>>>(body, JsonOptions);
+            return (wrapper?.Data ?? new(), null);
+        }
+        catch (Exception ex)
+        {
+            return (new(), ex.Message);
+        }
+    }
+
+    public async Task<(bool ok, string? error)> SendToSt1Async(int jobId)
+    {
+        try
+        {
+            var response = await _http.PatchAsync($"/job/{jobId}/send-to-st1", null);
+            var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+                return (false, $"[{(int)response.StatusCode}] {body}");
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
+    }
+
     public async Task<bool> RetryJobAsync(int jobId)
     {
         try

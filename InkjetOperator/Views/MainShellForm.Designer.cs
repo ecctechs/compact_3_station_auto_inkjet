@@ -42,6 +42,8 @@ partial class MainShellForm
         orderListPage = new OrderListUserControl();
         editPatternPage = new EditPatternUserControl();
         settingPage = new SettingUserControl();
+        transferListPage = new TransferListUserControl();
+        btnTransfer = new AntdUI.Button();
         tlpShellRoot.SuspendLayout();
         tlpMenuBar.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)picLogo).BeginInit();
@@ -80,7 +82,8 @@ partial class MainShellForm
         // tlpMenuBar
         // 
         tlpMenuBar.BackColor = Color.White;
-        tlpMenuBar.ColumnCount = 7;
+        tlpMenuBar.ColumnCount = 8;
+        tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200F));
         tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200F));
         tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200F));
         tlpMenuBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200F));
@@ -92,8 +95,9 @@ partial class MainShellForm
         tlpMenuBar.Controls.Add(btnOrderList, 1, 0);
         tlpMenuBar.Controls.Add(btnEditPattern, 2, 0);
         tlpMenuBar.Controls.Add(btnSetting, 3, 0);
-        tlpMenuBar.Controls.Add(picLogo, 5, 0);
-        tlpMenuBar.Controls.Add(btnLang, 6, 0);
+        tlpMenuBar.Controls.Add(btnTransfer, 4, 0);
+        tlpMenuBar.Controls.Add(picLogo, 6, 0);
+        tlpMenuBar.Controls.Add(btnLang, 7, 0);
         tlpMenuBar.Dock = DockStyle.Fill;
         tlpMenuBar.Location = new Point(0, 0);
         tlpMenuBar.Margin = new Padding(0);
@@ -166,7 +170,23 @@ partial class MainShellForm
         btnSetting.TabIndex = 3;
         btnSetting.Text = "Setting";
         btnSetting.Click += btnSetting_Click;
-        // 
+        //
+        // btnTransfer
+        //
+        btnTransfer.DefaultBack = Color.FromArgb(176, 176, 176);
+        btnTransfer.DefaultBorderColor = Color.FromArgb(36, 71, 101);
+        btnTransfer.Dock = DockStyle.Fill;
+        btnTransfer.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
+        btnTransfer.ForeColor = Color.White;
+        btnTransfer.Location = new Point(803, 3);
+        btnTransfer.Margin = new Padding(3, 3, 3, 3);
+        btnTransfer.Name = "btnTransfer";
+        btnTransfer.Radius = 0;
+        btnTransfer.Size = new Size(195, 67);
+        btnTransfer.TabIndex = 4;
+        btnTransfer.Text = "Transfer ST1";
+        btnTransfer.Click += btnTransfer_Click;
+        //
         // picLogo
         // 
         picLogo.BackColor = Color.Transparent;
@@ -201,6 +221,7 @@ partial class MainShellForm
         pnlContent.Controls.Add(scanBarcodePage);
         pnlContent.Controls.Add(orderListPage);
         pnlContent.Controls.Add(editPatternPage);
+        pnlContent.Controls.Add(transferListPage);
         pnlContent.Controls.Add(settingPage);
         pnlContent.Dock = DockStyle.Fill;
         pnlContent.Location = new Point(0, 72);
@@ -248,7 +269,17 @@ partial class MainShellForm
         settingPage.Name = "settingPage";
         settingPage.Size = new Size(1200, 828);
         settingPage.TabIndex = 3;
-        // 
+        //
+        // transferListPage
+        //
+        transferListPage.Dock = DockStyle.Fill;
+        transferListPage.Location = new Point(0, 0);
+        transferListPage.Margin = new Padding(4, 4, 4, 4);
+        transferListPage.MinimumSize = new Size(820, 680);
+        transferListPage.Name = "transferListPage";
+        transferListPage.Size = new Size(1200, 828);
+        transferListPage.TabIndex = 4;
+        //
         // MainShellForm
         // 
         AutoScaleDimensions = new SizeF(96F, 96F);
@@ -284,4 +315,6 @@ partial class MainShellForm
     private OrderListUserControl orderListPage;
     private EditPatternUserControl editPatternPage;
     private SettingUserControl settingPage;
+    private TransferListUserControl transferListPage;
+    private AntdUI.Button btnTransfer;
 }
