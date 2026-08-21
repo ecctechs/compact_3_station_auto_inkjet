@@ -300,6 +300,24 @@ public class ApiClient
         }
     }
 
+    public async Task<(bool ok, string? error)> UpdateJobStatusAsync(int jobId, string status)
+    {
+        try
+        {
+            var payload = new { status };
+            var response = await _http.PatchAsync($"/job/{jobId}/status",
+                JsonContent.Create(payload, options: JsonOptions));
+            var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+                return (false, $"[{(int)response.StatusCode}] {body}");
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
+    }
+
     public async Task<bool> RetryJobAsync(int jobId)
     {
         try

@@ -165,17 +165,10 @@ partial class OrderListUserControl
         //
         // btnStart
         //
-        btnStart.DefaultBack = System.Drawing.Color.FromArgb(168, 201, 122);
-        btnStart.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
-        btnStart.ForeColor = System.Drawing.Color.White;
-        btnStart.Location = new System.Drawing.Point(0, 0);
-        btnStart.Margin = new System.Windows.Forms.Padding(0);
+        btnStart.Visible = false;
+        btnStart.Size = new System.Drawing.Size(0, 0);
         btnStart.Name = "btnStart";
-        btnStart.Radius = 8;
-        btnStart.Size = new System.Drawing.Size(176, 60);
         btnStart.TabIndex = 0;
-        btnStart.Text = "Start";
-        btnStart.Type = AntdUI.TTypeMini.Default;
         //
         // OrderListUserControl
         //

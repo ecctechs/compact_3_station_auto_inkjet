@@ -348,6 +348,18 @@ public partial class OrderDetailUserControl : UserControl
         {
             _currentStep++;
         }
+
+        // marking "22": MK runs 2 rounds — if round 1 done but MK sent only once, allow MK again
+        if (_sendSteps.Count == 1 && _sendSteps[0] == "MK"
+            && completed.Contains("MK_ROUND1_DONE"))
+        {
+            int mkCount = commands.Count(c => c.Success &&
+                c.Command is "MK" or "MK1" or "MK2");
+            if (mkCount < 2)
+            {
+                _currentStep = 0;
+            }
+        }
     }
 
     private void ApplyStepButtons()
@@ -395,6 +407,8 @@ public partial class OrderDetailUserControl : UserControl
         if (_currentStep >= _sendSteps.Count) return;
         if (_sendSteps[_currentStep] != stepName) return;
 
+        bool isFirstStep = _currentStep == 0;
+
         var btn = GetSendButton(stepName);
         btn.Enabled = false;
         MarkButtonSent(btn);
@@ -404,6 +418,9 @@ public partial class OrderDetailUserControl : UserControl
             GetSendButton(_sendSteps[_currentStep]).Enabled = true;
 
         _ = _api?.SaveSendStepAsync(_jobId, stepName);
+
+        if (isFirstStep)
+            _ = _api?.UpdateJobStatusAsync(_jobId, "Process");
     }
 
     private AntdUI.Button GetSendButton(string step) => step switch
@@ -467,6 +484,13 @@ public partial class OrderDetailUserControl : UserControl
             }
 
             CompleteSendStep("MK");
+
+            var mk1Name = CustomSettingsManager.Read("MK058_NAME", "MK-058");
+            var mk2Name = CustomSettingsManager.Read("MK059_NAME", "MK-059");
+            var names = new List<string>();
+            if (config1 != null && !string.IsNullOrWhiteSpace(mk1Ip)) names.Add(mk1Name);
+            if (config2 != null && !string.IsNullOrWhiteSpace(mk2Ip)) names.Add(mk2Name);
+            Notify.Success(this, $"ส่ง {string.Join(", ", names)} สำเร็จ ({sent} เครื่อง)");
         }
         catch (Exception ex)
         {

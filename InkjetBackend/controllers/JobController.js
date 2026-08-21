@@ -290,6 +290,29 @@ class JobController {
   }
 
   /**
+   * PATCH /job/:id/status
+   */
+  static async updateStatus(req, res) {
+    try {
+      const job = await PrintJob.findByPk(req.params.id);
+      if (!job) {
+        return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
+      }
+
+      const { status } = req.body;
+      if (!status) {
+        return ResponseManager.ErrorResponse(req, res, 400, "status is required");
+      }
+
+      await job.update({ status });
+
+      return ResponseManager.SuccessResponse(req, res, 200, "Status updated");
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  /**
    * GET /job/getByMarkingMethod/:method
    */
   static async getByMarkingMethod(req, res) {
