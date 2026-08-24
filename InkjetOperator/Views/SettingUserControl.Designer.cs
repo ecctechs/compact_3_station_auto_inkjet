@@ -151,7 +151,7 @@ partial class SettingUserControl
         btnPLCSetting.Radius = 0;
         btnPLCSetting.Size = new Size(265, 56);
         btnPLCSetting.TabIndex = 3;
-        btnPLCSetting.Text = "PLC Setting";
+        btnPLCSetting.Text = "PLC MK Setting";
         //
         // btnClampSetting
         //
@@ -164,7 +164,7 @@ partial class SettingUserControl
         btnClampSetting.Radius = 0;
         btnClampSetting.Size = new Size(265, 56);
         btnClampSetting.TabIndex = 4;
-        btnClampSetting.Text = "Clamp Setting";
+        btnClampSetting.Text = "PLC UV Setting";
         //
         // btnUvTest
         //

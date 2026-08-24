@@ -208,7 +208,7 @@ public partial class ScanBarcodeUserControl : UserControl
         return Confirm.Ask(null, "ยังไม่ได้ตั้งค่า Clamp Database",
             $"{reason}\n\n" +
             "ระยะแคลมป์ (IAI) ของงานนี้จะถูกบันทึกเป็นค่าว่าง\n" +
-            "ตั้งค่าได้ที่ Setting → Clamp Setting → Browse\n\n" +
+            "ตั้งค่าได้ที่ Setting → PLC UV Setting → Browse\n\n" +
             "ต้องการลงทะเบียนต่อไปหรือไม่?");
     }
 
