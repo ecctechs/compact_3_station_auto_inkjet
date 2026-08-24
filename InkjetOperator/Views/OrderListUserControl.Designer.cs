@@ -1,4 +1,4 @@
-namespace InkjetOperator.Views;
+﻿namespace InkjetOperator.Views;
 
 partial class OrderListUserControl
 {
@@ -137,11 +137,11 @@ partial class OrderListUserControl
         tblOrders.AutoSizeColumnsMode = AntdUI.ColumnsMode.Fill;
         tblOrders.Bordered = true;
         tblOrders.ColumnBack = System.Drawing.Color.FromArgb(30, 30, 30);
-        tblOrders.ColumnFont = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        tblOrders.ColumnFont = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
         tblOrders.ColumnFore = System.Drawing.Color.White;
         tblOrders.Dock = System.Windows.Forms.DockStyle.Fill;
         tblOrders.EmptyText = "No orders";
-        tblOrders.Font = new System.Drawing.Font("Segoe UI", 13F);
+        tblOrders.Font = new System.Drawing.Font("Segoe UI", 11F);
         tblOrders.Location = new System.Drawing.Point(0, 54);
         tblOrders.Margin = new System.Windows.Forms.Padding(0, 4, 0, 0);
         tblOrders.Name = "tblOrders";

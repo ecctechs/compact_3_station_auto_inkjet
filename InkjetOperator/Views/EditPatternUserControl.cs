@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Reflection;
 using InkjetOperator.Models;
 using InkjetOperator.Services;
@@ -52,8 +52,8 @@ public partial class EditPatternUserControl : UserControl
         {
             new AntdUI.Column("From", "From", AntdUI.ColumnAlign.Center) { Editable = true, Width = "100" },
             new AntdUI.Column("To", "To", AntdUI.ColumnAlign.Center) { Editable = true, Width = "100" },
-            new AntdUI.ColumnSelect("RuleLabel", "Rule") { Editable = true, Width = "160", Items = RuleTypeItems() },
-            new AntdUI.Column("Value", "Value") { Editable = true, Width = "140" },
+            new AntdUI.ColumnSelect("RuleLabel", "Rule", AntdUI.ColumnAlign.Center) { Editable = true, Width = "160", Items = RuleTypeItems() },
+            new AntdUI.Column("Value", "Value", AntdUI.ColumnAlign.Center) { Editable = true, Width = "140" },
             new AntdUI.Column("Op", "Action", AntdUI.ColumnAlign.Center) { Width = "90" },
         };
     }

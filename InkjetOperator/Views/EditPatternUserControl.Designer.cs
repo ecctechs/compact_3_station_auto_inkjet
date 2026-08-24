@@ -1,4 +1,4 @@
-namespace InkjetOperator.Views;
+﻿namespace InkjetOperator.Views;
 
 partial class EditPatternUserControl
 {
@@ -380,9 +380,9 @@ partial class EditPatternUserControl
         //
         tblRules.AutoSizeColumnsMode = AntdUI.ColumnsMode.Fill;
         tblRules.Bordered = true;
-        tblRules.ColumnBack = System.Drawing.Color.FromArgb(240, 245, 251);
+        tblRules.ColumnBack = System.Drawing.Color.FromArgb(30, 30, 30);
         tblRules.ColumnFont = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
-        tblRules.ColumnFore = System.Drawing.Color.FromArgb(36, 71, 101);
+        tblRules.ColumnFore = System.Drawing.Color.White;
         tblRules.Dock = System.Windows.Forms.DockStyle.Fill;
         tblRules.EditMode = AntdUI.TEditMode.Click;
         tblRules.EmptyText = "No transform rules";

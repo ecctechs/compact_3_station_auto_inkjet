@@ -2,55 +2,163 @@ using Microsoft.Data.Sqlite;
 
 namespace InkjetOperator.Services;
 
-/// <summary>ค่าตั้งของ PLC แคลมป์ — อ่านจาก Setting.config</summary>
+/// <summary>ฝั่งวัสดุ — กำหนดว่าใช้คอลัมน์ชื่อโปรแกรมตัวไหนใน MainTable</summary>
+public enum ClampSide
+{
+    /// <summary>Plate — m1_program_name (ชื่อขึ้นต้น "P-") · UV1 / MK063 · ชุด IAI 2</summary>
+    Plate,
+
+    /// <summary>Shim — m2_program_name · UV2 / MK067 · ชุด IAI 1</summary>
+    Shim,
+}
+
+/// <summary>
+/// แกนแคลมป์ 1 ตัว — จากแผนภาพหน้างานมี 6 แกน (Plate/Shim × X/Z1/Z2)
+/// ทุกแกนอยู่บน PLC ตัวเดียวกัน ต่างกันแค่ register
+/// </summary>
+public sealed class ClampAxis
+{
+    /// <summary>คีย์ที่ใช้เก็บใน config เช่น "IAIP", "IAIZ1"</summary>
+    public string Key { get; init; } = "";
+
+    public ClampSide Side { get; init; }
+
+    /// <summary>"X" / "Z1" / "Z2"</summary>
+    public string AxisLabel { get; init; } = "";
+
+    /// <summary>คอลัมน์ค่าใน MainTable</summary>
+    public string Column { get; init; } = "";
+
+    public string AddrTarget { get; set; } = "";
+    public string AddrRun { get; set; } = "";
+    public string AddrReset { get; set; } = "";
+    public string AddrStatus { get; set; } = "";
+
+    /// <summary>ชื่อที่โชว์ให้คน เช่น "Plate X"</summary>
+    public string Display => $"{(Side == ClampSide.Plate ? "Plate" : "Shim")} {AxisLabel}";
+
+    /// <summary>
+    /// พร้อมสั่งงานไหม — ต้องมีทั้ง register ค่าเป้าหมายและพัลส์สั่งวิ่ง
+    /// แผนภาพยังเขียน DXXX/MXXX ไว้ 5 แกน = ยังไม่ได้กำหนด จึงต้องกันไม่ให้ยิงคำสั่ง
+    /// </summary>
+    public bool IsConfigured =>
+        AddrTarget.Trim().Length > 0 && AddrRun.Trim().Length > 0;
+
+    public string NameColumn =>
+        Side == ClampSide.Plate ? "m1_program_name" : "m2_program_name";
+}
+
+/// <summary>ค่าตั้งของ PLC แคลมป์ — PLC ตัวเดียว คุม 6 แกน</summary>
 public sealed class ClampSettings
 {
     public string Ip { get; set; } = "";
     public int Port { get; set; } = 5012;
     public string DbPath { get; set; } = "";
 
-    public string AddrTarget { get; set; } = "D216";
-    public string AddrRun { get; set; } = "M700";
-    public string AddrReset { get; set; } = "M701";
-    public string AddrStatus { get; set; } = "W38";
+    public List<ClampAxis> Axes { get; set; } = [];
 
-    public static ClampSettings Load() => new()
+    public ClampAxis? Find(string key) =>
+        Axes.FirstOrDefault(a => a.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+
+    public IEnumerable<ClampAxis> For(ClampSide side) => Axes.Where(a => a.Side == side);
+
+    /// <summary>
+    /// นิยามแกนทั้งหมดตามแผนภาพ — ค่า address เริ่มต้นใส่เฉพาะแกนที่รู้จริง
+    /// อีก 5 แกนปล่อยว่างจนกว่าจะได้ address จากลูกค้า (ว่าง = ปุ่มถูกปิด)
+    /// </summary>
+    private static readonly (string Key, ClampSide Side, string Axis, string Column)[] Layout =
+    [
+        ("IAIP",   ClampSide.Plate, "X",  "IAIP"),
+        ("IAIPZ1", ClampSide.Plate, "Z1", "IAIPZ1"),
+        ("IAIPZ2", ClampSide.Plate, "Z2", "IAIPZ2"),
+        ("IAI",    ClampSide.Shim,  "X",  "IAI"),
+        ("IAIZ1",  ClampSide.Shim,  "Z1", "IAIZ1"),
+        ("IAIZ2",  ClampSide.Shim,  "Z2", "IAIZ2"),
+    ];
+
+    public static ClampSettings Load()
     {
-        Ip = CustomSettingsManager.Read("CLAMP_PLC_IP", ""),
-        Port = int.TryParse(CustomSettingsManager.Read("CLAMP_PLC_PORT", "5012"), out int p) ? p : 5012,
-        DbPath = CustomSettingsManager.Read("CLAMP_DB_PATH", ""),
-        AddrTarget = CustomSettingsManager.Read("CLAMP_ADDR_TARGET", "D216"),
-        AddrRun = CustomSettingsManager.Read("CLAMP_ADDR_RUN", "M700"),
-        AddrReset = CustomSettingsManager.Read("CLAMP_ADDR_RESET", "M701"),
-        AddrStatus = CustomSettingsManager.Read("CLAMP_ADDR_STATUS", "W38"),
-    };
+        var s = new ClampSettings
+        {
+            Ip = CustomSettingsManager.Read("CLAMP_PLC_IP", ""),
+            Port = int.TryParse(CustomSettingsManager.Read("CLAMP_PLC_PORT", "5012"), out int p) ? p : 5012,
+            DbPath = CustomSettingsManager.Read("CLAMP_DB_PATH", ""),
+        };
+
+        foreach (var (key, side, axis, column) in Layout)
+        {
+            s.Axes.Add(new ClampAxis
+            {
+                Key = key,
+                Side = side,
+                AxisLabel = axis,
+                Column = column,
+                AddrTarget = ReadAddr(key, "TARGET"),
+                AddrRun = ReadAddr(key, "RUN"),
+                AddrReset = ReadAddr(key, "RESET"),
+                AddrStatus = ReadAddr(key, "STATUS"),
+            });
+        }
+
+        return s;
+    }
+
+    /// <summary>
+    /// อ่าน address ของแกน — ถ้ายังไม่มีคีย์ใหม่ ให้ตกไปใช้คีย์เดิมของแกน Shim X
+    /// (เวอร์ชันก่อนรองรับแกนเดียว เก็บไว้ที่ CLAMP_ADDR_TARGET ฯลฯ)
+    /// </summary>
+    private static string ReadAddr(string key, string part)
+    {
+        var value = CustomSettingsManager.Read($"CLAMP_ADDR_{key}_{part}", "");
+        if (value.Length > 0) return value;
+
+        if (!key.Equals("IAI", StringComparison.OrdinalIgnoreCase)) return "";
+
+        var legacy = CustomSettingsManager.Read($"CLAMP_ADDR_{part}", "");
+        if (legacy.Length > 0) return legacy;
+
+        // ค่าที่ระบบเดิมใช้จริง — มีแค่แกนนี้แกนเดียวที่ยืนยันแล้ว
+        return part switch
+        {
+            "TARGET" => "D216",
+            "RUN" => "M700",
+            "RESET" => "M701",
+            "STATUS" => "W38",
+            _ => "",
+        };
+    }
 
     public void Save()
     {
         CustomSettingsManager.Write("CLAMP_PLC_IP", Ip.Trim());
         CustomSettingsManager.Write("CLAMP_PLC_PORT", Port.ToString());
         CustomSettingsManager.Write("CLAMP_DB_PATH", DbPath.Trim());
-        CustomSettingsManager.Write("CLAMP_ADDR_TARGET", AddrTarget.Trim());
-        CustomSettingsManager.Write("CLAMP_ADDR_RUN", AddrRun.Trim());
-        CustomSettingsManager.Write("CLAMP_ADDR_RESET", AddrReset.Trim());
-        CustomSettingsManager.Write("CLAMP_ADDR_STATUS", AddrStatus.Trim());
+
+        foreach (var a in Axes)
+        {
+            CustomSettingsManager.Write($"CLAMP_ADDR_{a.Key}_TARGET", a.AddrTarget.Trim());
+            CustomSettingsManager.Write($"CLAMP_ADDR_{a.Key}_RUN", a.AddrRun.Trim());
+            CustomSettingsManager.Write($"CLAMP_ADDR_{a.Key}_RESET", a.AddrReset.Trim());
+            CustomSettingsManager.Write($"CLAMP_ADDR_{a.Key}_STATUS", a.AddrStatus.Trim());
+        }
     }
 }
 
-/// <summary>ผลการค้นค่าแคลมป์จากฐานข้อมูล</summary>
+/// <summary>ผลการค้นค่าแคลมป์ของแกนหนึ่ง</summary>
 public sealed record ClampLookup(bool Found, int ValueMm, string Column, string Error);
 
-/// <summary>ผลการสั่งแคลมป์</summary>
+/// <summary>ผลการสั่งแคลมป์ของแกนหนึ่ง</summary>
 public sealed record ClampResult(bool Ok, int ValueMm, int RawWritten, int? Status, string Log);
 
 /// <summary>
 /// ควบคุมแคลมป์ผ่าน PLC (MC Protocol)
 ///
-/// ลำดับตรงตามระบบ Node-RED เดิม:
-///   หา IAI จากชื่อโปรแกรม → จำกัดช่วง 0–155 mm → แปลงเป็นค่า raw
-///   → เขียน D216 → พัลส์ M700 (ON 100ms OFF) → อ่าน W38
+/// จากแผนภาพหน้างาน: PLC ตัวเดียว (10.10.100.100:5012) คุม 6 แกน
+///   Plate → IAIP / IAIPZ1 / IAIPZ2   (คู่กับ m1_program_name)
+///   Shim  → IAI  / IAIZ1  / IAIZ2    (คู่กับ m2_program_name)
 ///
-/// ยังไม่ผูกกับหน้า Order — เรียกจากหน้าแคลมป์แยกไปก่อน
+/// ลำดับต่อแกนตรงตาม Node-RED เดิม:
+///   เขียนค่าเป้าหมาย → หน่วง 100ms → พัลส์สั่งวิ่ง (ON 100ms OFF) → อ่านสถานะ
 /// </summary>
 public static class ClampService
 {
@@ -61,27 +169,45 @@ public static class ClampService
     private const int ResetPulseMs = 1000;
     private const int SettleMs = 100;
 
-    // ── อ่านค่าแคลมป์จากฐานข้อมูล ──────────────────────────
+    // ── อ่านค่าจากฐานข้อมูล ────────────────────────────────
 
-    /// <summary>
-    /// หาค่า IAI ของโปรแกรมจากตาราง MainTable
-    /// ชื่อขึ้นต้น "P-" ใช้คู่ m1_program_name / IAIP ที่เหลือใช้ m2_program_name / IAI
-    /// </summary>
-    public static ClampLookup Lookup(string dbPath, string programName)
+    /// <summary>คอลัมน์ที่มีจริงใน MainTable — schema แต่ละเครื่องไม่เท่ากัน (ตัวเก่าไม่มีคอลัมน์ Z)</summary>
+    public static HashSet<string> ReadColumns(string dbPath)
+    {
+        var cols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(dbPath) || !File.Exists(dbPath)) return cols;
+
+        try
+        {
+            using var conn = new SqliteConnection($"Data Source={dbPath};Mode=ReadOnly");
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "PRAGMA table_info(MainTable)";
+            using var r = cmd.ExecuteReader();
+            while (r.Read()) cols.Add(r.GetString(1));
+        }
+        catch { /* คืนเซ็ตว่าง = ถือว่าไม่รู้ schema */ }
+
+        return cols;
+    }
+
+    /// <summary>หาค่าของแกนหนึ่งจาก MainTable</summary>
+    public static ClampLookup Lookup(string dbPath, string programName, ClampAxis axis)
     {
         string program = (programName ?? "").Trim();
         if (program.Length == 0)
-            return new ClampLookup(false, 0, "", "ยังไม่ได้ระบุชื่อโปรแกรม");
+            return new ClampLookup(false, 0, axis.Column, "ยังไม่ได้ระบุชื่อโปรแกรม");
 
         if (string.IsNullOrWhiteSpace(dbPath))
-            return new ClampLookup(false, 0, "", "ยังไม่ได้ตั้ง path ของ mydatabase.db3");
+            return new ClampLookup(false, 0, axis.Column, "ยังไม่ได้ตั้ง path ของ mydatabase.db3");
 
         if (!File.Exists(dbPath))
-            return new ClampLookup(false, 0, "", $"ไม่พบไฟล์ฐานข้อมูล:\n{dbPath}");
+            return new ClampLookup(false, 0, axis.Column, $"ไม่พบไฟล์ฐานข้อมูล:\n{dbPath}");
 
-        bool isPlate = program.StartsWith("P-", StringComparison.OrdinalIgnoreCase);
-        string nameColumn = isPlate ? "m1_program_name" : "m2_program_name";
-        string valueColumn = isPlate ? "IAIP" : "IAI";
+        var columns = ReadColumns(dbPath);
+        if (columns.Count > 0 && !columns.Contains(axis.Column))
+            return new ClampLookup(false, 0, axis.Column,
+                $"ฐานข้อมูลนี้ไม่มีคอลัมน์ {axis.Column}");
 
         try
         {
@@ -90,43 +216,37 @@ public static class ClampService
 
             using var cmd = conn.CreateCommand();
             cmd.CommandText =
-                $"SELECT {valueColumn} FROM MainTable WHERE {nameColumn} = @p LIMIT 1";
+                $"SELECT {axis.Column} FROM MainTable WHERE {axis.NameColumn} = @p LIMIT 1";
             cmd.Parameters.AddWithValue("@p", program);
 
             object? raw = cmd.ExecuteScalar();
-            if (raw is null || raw is DBNull)
-                return new ClampLookup(false, 0, valueColumn,
-                    $"ไม่พบโปรแกรม \"{program}\" ใน MainTable");
+            if (raw is null or DBNull)
+                return new ClampLookup(false, 0, axis.Column,
+                    $"ไม่พบ \"{program}\" ใน {axis.NameColumn}");
 
-            // เก็บเป็น TEXT ในฐานข้อมูล ค่าว่างแปลว่ายังไม่ได้ setup
+            // เก็บเป็น TEXT ค่าว่างแปลว่ายังไม่ได้ setup
             string text = raw.ToString()?.Trim() ?? "";
             if (text.Length == 0)
-                return new ClampLookup(false, 0, valueColumn,
-                    $"โปรแกรม \"{program}\" ยังไม่ได้ setup ({valueColumn} ว่าง)");
+                return new ClampLookup(false, 0, axis.Column, $"{axis.Column} ยังไม่ได้ setup");
 
             if (!double.TryParse(text, out double value))
-                return new ClampLookup(false, 0, valueColumn,
-                    $"{valueColumn} = \"{text}\" ไม่ใช่ตัวเลข");
+                return new ClampLookup(false, 0, axis.Column,
+                    $"{axis.Column} = \"{text}\" ไม่ใช่ตัวเลข");
 
-            return new ClampLookup(true, ClampMm(value), valueColumn, "");
+            return new ClampLookup(true, ClampMm(value), axis.Column, "");
         }
         catch (Exception ex)
         {
-            return new ClampLookup(false, 0, valueColumn, ex.Message);
+            return new ClampLookup(false, 0, axis.Column, ex.Message);
         }
     }
 
-    /// <summary>
-    /// บันทึกระยะที่ปรับแล้วกลับลง MainTable (ปุ่ม Upload ของระบบเดิม)
-    ///
-    /// เป็น UPDATE ล้วน ไม่มี INSERT — โปรแกรมที่ยังไม่มีแถวต้องสร้างด้วย "Save as Model" ก่อน
-    /// จึงคืนข้อความบอกชัดเมื่อไม่มีแถวถูกแก้ แทนที่จะเงียบเหมือนของเดิม
-    /// </summary>
-    public static (bool ok, string message) Upload(string dbPath, string programName, int valueMm, string? valueColumnOverride = null)
+    /// <summary>บันทึกค่าของแกนหนึ่งกลับลง MainTable — UPDATE ล้วน ไม่สร้างแถวใหม่</summary>
+    public static (bool ok, string message) Upload(
+        string dbPath, string programName, ClampAxis axis, int valueMm)
     {
         string program = (programName ?? "").Trim();
-        if (program.Length == 0)
-            return (false, "ยังไม่ได้ระบุชื่อโปรแกรม");
+        if (program.Length == 0) return (false, "ยังไม่ได้ระบุชื่อโปรแกรม");
 
         if (string.IsNullOrWhiteSpace(dbPath))
             return (false, "ยังไม่ได้ตั้ง path ของ mydatabase.db3");
@@ -134,9 +254,10 @@ public static class ClampService
         if (!File.Exists(dbPath))
             return (false, $"ไม่พบไฟล์ฐานข้อมูล:\n{dbPath}");
 
-        bool isPlate = program.StartsWith("P-", StringComparison.OrdinalIgnoreCase);
-        string nameColumn = isPlate ? "m1_program_name" : "m2_program_name";
-        string valueColumn = valueColumnOverride ?? (isPlate ? "IAIP" : "IAI");
+        var columns = ReadColumns(dbPath);
+        if (columns.Count > 0 && !columns.Contains(axis.Column))
+            return (false, $"ฐานข้อมูลนี้ไม่มีคอลัมน์ {axis.Column}");
+
         int mm = ClampMm(valueMm);
 
         try
@@ -146,16 +267,15 @@ public static class ClampService
 
             using var cmd = conn.CreateCommand();
             cmd.CommandText =
-                $"UPDATE MainTable SET {valueColumn} = @v WHERE {nameColumn} = @p";
+                $"UPDATE MainTable SET {axis.Column} = @v WHERE {axis.NameColumn} = @p";
             cmd.Parameters.AddWithValue("@v", mm.ToString());
             cmd.Parameters.AddWithValue("@p", program);
 
             int affected = cmd.ExecuteNonQuery();
 
             return affected > 0
-                ? (true, $"บันทึก {valueColumn} = {mm} ให้ \"{program}\" แล้ว")
-                : (false, $"ไม่พบโปรแกรม \"{program}\" ใน {nameColumn}\n" +
-                          "ต้องสร้างรายการก่อนจึงจะบันทึกได้");
+                ? (true, $"บันทึก {axis.Column} = {mm} ให้ \"{program}\" แล้ว")
+                : (false, $"ไม่พบ \"{program}\" ใน {axis.NameColumn} — ต้องสร้างรายการก่อน");
         }
         catch (Exception ex)
         {
@@ -165,21 +285,16 @@ public static class ClampService
 
     // ── การแปลงค่า ─────────────────────────────────────────
 
-    /// <summary>จำกัดระยะให้อยู่ในช่วงที่แคลมป์รับได้ (0–155 mm)</summary>
     public static int ClampMm(double value) =>
         (int)Math.Max(MinMm, Math.Min(MaxMm, Math.Round(value)));
 
     /// <summary>
-    /// แปลงระยะ mm เป็นค่า raw ที่เขียนลง PLC — ห้ามแก้สูตรเอง ค่านี้กำหนดตำแหน่งแคลมป์จริงบนไลน์
+    /// แปลงระยะ mm เป็นค่า raw ที่เขียนลง PLC — ห้ามแก้สูตรเอง
     ///
     /// ลอกจาก action "send" ของ Clamp UI router (ปุ่ม Sent ที่ operator กดจริง):
     ///     Math.round((149 - (next - 6)) * 100)  ==  (155 - mm) * 100
-    ///     &gt; 14900 → 14900 · &lt; 0 → 100
     ///
-    /// ระวัง: ในระบบเดิมมีสูตรที่สองอยู่ใน function 31 (เส้นทางอัตโนมัติหลังโหลดค่าจาก SQL)
-    /// ใช้ (149 - mm) * 100 และตัดที่ 13500 ซึ่งให้ผลต่างกัน 600 (= 6 mm)
-    /// ที่เลือกตัวนี้เพราะเป็นเส้นทางที่ operator ใช้จริง และช่วงผลลัพธ์ 0–15500
-    /// สอดคล้องกับ input ที่จำกัดไว้ 0–155
+    /// ยังไม่ยืนยันว่าแกน Z ใช้สูตรเดียวกับ X — ถ้าต่างต้องแยกสูตรต่อแกน
     /// </summary>
     public static int ToRaw(int valueMm)
     {
@@ -191,40 +306,64 @@ public static class ClampService
 
     // ── สั่งงาน PLC ────────────────────────────────────────
 
-    /// <summary>เขียนค่าเป้าหมายแล้วพัลส์สั่งวิ่ง จากนั้นอ่านสถานะกลับ</summary>
-    public static async Task<ClampResult> ApplyAsync(ClampSettings s, int valueMm)
+    /// <summary>เขียนค่าเป้าหมายของแกนหนึ่ง แล้วพัลส์สั่งวิ่ง จากนั้นอ่านสถานะกลับ</summary>
+    public static async Task<ClampResult> ApplyAsync(ClampSettings s, ClampAxis axis, int valueMm)
     {
         int mm = ClampMm(valueMm);
         int raw = ToRaw(mm);
-        var log = new List<string>();
+        var log = new List<string> { $"── {axis.Display} ({axis.Column}) ──" };
 
-        var (wOk, wErr) = await McProtocolService.WriteWordAsync(s.Ip, s.Port, s.AddrTarget, raw);
-        log.Add($"เขียน {s.AddrTarget} = {raw} → {(wOk ? "OK" : "❌ " + wErr)}");
+        if (!axis.IsConfigured)
+        {
+            log.Add("❌ ยังไม่ได้กำหนด address ของแกนนี้");
+            return new ClampResult(false, mm, raw, null, string.Join("\n", log));
+        }
+
+        var (wOk, wErr) = await McProtocolService.WriteWordAsync(s.Ip, s.Port, axis.AddrTarget, raw);
+        log.Add($"เขียน {axis.AddrTarget} = {raw} → {(wOk ? "OK" : "❌ " + wErr)}");
         if (!wOk) return new ClampResult(false, mm, raw, null, string.Join("\n", log));
 
-        // Node-RED หน่วง 100ms ตรงนี้ก่อนพัลส์ — ให้ PLC รับค่าเข้า D ก่อนเห็นขอบขาขึ้นของ M
+        // Node-RED หน่วงตรงนี้ก่อนพัลส์ — ให้ PLC รับค่าเข้า D ก่อนเห็นขอบขาขึ้นของ M
         await Task.Delay(SettleMs);
 
-        var (pOk, pErr) = await PulseAsync(s, s.AddrRun, RunPulseMs, log);
+        var (pOk, _) = await PulseAsync(s, axis.AddrRun, RunPulseMs, log);
         if (!pOk) return new ClampResult(false, mm, raw, null, string.Join("\n", log));
 
-        var (rOk, status, rErr) = await McProtocolService.ReadWordAsync(s.Ip, s.Port, s.AddrStatus);
-        log.Add($"อ่าน {s.AddrStatus} → {(rOk ? status.ToString() : "❌ " + rErr)}");
+        int? status = null;
+        if (axis.AddrStatus.Trim().Length > 0)
+        {
+            var (rOk, value, rErr) = await McProtocolService.ReadWordAsync(s.Ip, s.Port, axis.AddrStatus);
+            log.Add($"อ่าน {axis.AddrStatus} → {(rOk ? value.ToString() : "❌ " + rErr)}");
+            if (rOk) status = value;
+        }
 
-        return new ClampResult(true, mm, raw, rOk ? status : null, string.Join("\n", log));
+        return new ClampResult(true, mm, raw, status, string.Join("\n", log));
     }
 
-    /// <summary>พัลส์รีเซ็ต — หน่วงนานกว่าพัลส์สั่งวิ่ง</summary>
-    public static async Task<(bool ok, string log)> ResetAsync(ClampSettings s)
+    /// <summary>พัลส์รีเซ็ตของแกนหนึ่ง — หน่วงนานกว่าพัลส์สั่งวิ่ง</summary>
+    public static async Task<(bool ok, string log)> ResetAsync(ClampSettings s, ClampAxis axis)
     {
-        var log = new List<string>();
-        var (ok, _) = await PulseAsync(s, s.AddrReset, ResetPulseMs, log);
+        var log = new List<string> { $"── {axis.Display} reset ──" };
+
+        if (axis.AddrReset.Trim().Length == 0)
+        {
+            log.Add("❌ ยังไม่ได้กำหนด address รีเซ็ตของแกนนี้");
+            return (false, string.Join("\n", log));
+        }
+
+        var (ok, _) = await PulseAsync(s, axis.AddrReset, ResetPulseMs, log);
         return (ok, string.Join("\n", log));
     }
 
-    /// <summary>อ่านสถานะอย่างเดียว ไม่สั่งอะไร</summary>
-    public static Task<(bool ok, int value, string error)> ReadStatusAsync(ClampSettings s) =>
-        McProtocolService.ReadWordAsync(s.Ip, s.Port, s.AddrStatus);
+    /// <summary>อ่านสถานะของแกนหนึ่ง ไม่สั่งอะไร</summary>
+    public static async Task<(bool ok, int value, string error)> ReadStatusAsync(
+        ClampSettings s, ClampAxis axis)
+    {
+        if (axis.AddrStatus.Trim().Length == 0)
+            return (false, 0, "ยังไม่ได้กำหนด address อ่านสถานะของแกนนี้");
+
+        return await McProtocolService.ReadWordAsync(s.Ip, s.Port, axis.AddrStatus);
+    }
 
     /// <summary>
     /// พัลส์ ON → หน่วง → OFF

@@ -1,4 +1,4 @@
-namespace InkjetOperator.Views;
+﻿namespace InkjetOperator.Views;
 
 partial class PlcSettingUserControl
 {
@@ -32,6 +32,8 @@ partial class PlcSettingUserControl
         btnReadAll = new AntdUI.Button();
         btnAddRow = new AntdUI.Button();
         tblPlcMap = new AntdUI.Table();
+        grpLog = new System.Windows.Forms.GroupBox();
+        txtLog = new System.Windows.Forms.TextBox();
         flpActions = new System.Windows.Forms.FlowLayoutPanel();
         btnSave = new AntdUI.Button();
         btnCancel = new AntdUI.Button();
@@ -42,6 +44,7 @@ partial class PlcSettingUserControl
         grpRegisterMap.SuspendLayout();
         tlpMap.SuspendLayout();
         tlpMapHeader.SuspendLayout();
+        grpLog.SuspendLayout();
         flpActions.SuspendLayout();
         SuspendLayout();
         //
@@ -52,16 +55,18 @@ partial class PlcSettingUserControl
         tlpRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpRoot.Controls.Add(grpConnection, 0, 0);
         tlpRoot.Controls.Add(grpRegisterMap, 0, 1);
-        tlpRoot.Controls.Add(flpActions, 0, 2);
+        tlpRoot.Controls.Add(grpLog, 0, 2);
+        tlpRoot.Controls.Add(flpActions, 0, 3);
         tlpRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpRoot.Location = new System.Drawing.Point(0, 0);
         tlpRoot.Name = "tlpRoot";
         tlpRoot.Padding = new System.Windows.Forms.Padding(16);
-        tlpRoot.RowCount = 3;
+        tlpRoot.RowCount = 4;
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 220F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 220F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 68F));
-        tlpRoot.Size = new System.Drawing.Size(960, 820);
+        tlpRoot.Size = new System.Drawing.Size(960, 1040);
         tlpRoot.TabIndex = 0;
         //
         // grpConnection
@@ -284,9 +289,9 @@ partial class PlcSettingUserControl
         //
         tblPlcMap.AutoSizeColumnsMode = AntdUI.ColumnsMode.Fill;
         tblPlcMap.Bordered = true;
-        tblPlcMap.ColumnBack = System.Drawing.Color.FromArgb(240, 245, 251);
+        tblPlcMap.ColumnBack = System.Drawing.Color.FromArgb(30, 30, 30);
         tblPlcMap.ColumnFont = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
-        tblPlcMap.ColumnFore = System.Drawing.Color.FromArgb(36, 71, 101);
+        tblPlcMap.ColumnFore = System.Drawing.Color.White;
         tblPlcMap.Dock = System.Windows.Forms.DockStyle.Fill;
         tblPlcMap.EditMode = AntdUI.TEditMode.Click;
         tblPlcMap.EmptyText = "No register maps";
@@ -296,6 +301,32 @@ partial class PlcSettingUserControl
         tblPlcMap.Radius = 8;
         tblPlcMap.RowHeight = 46;
         tblPlcMap.TabIndex = 1;
+        //
+        // grpLog
+        //
+        grpLog.Controls.Add(txtLog);
+        grpLog.Dock = System.Windows.Forms.DockStyle.Fill;
+        grpLog.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        grpLog.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        grpLog.Margin = new System.Windows.Forms.Padding(3, 3, 3, 10);
+        grpLog.Name = "grpLog";
+        grpLog.Padding = new System.Windows.Forms.Padding(16, 24, 16, 10);
+        grpLog.TabIndex = 2;
+        grpLog.TabStop = false;
+        grpLog.Text = "ผลการทำงาน";
+        //
+        // txtLog
+        //
+        txtLog.BackColor = System.Drawing.Color.FromArgb(245, 245, 245);
+        txtLog.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+        txtLog.Dock = System.Windows.Forms.DockStyle.Fill;
+        txtLog.Font = new System.Drawing.Font("Consolas", 10.5F);
+        txtLog.Multiline = true;
+        txtLog.Name = "txtLog";
+        txtLog.ReadOnly = true;
+        txtLog.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+        txtLog.TabIndex = 0;
+        txtLog.WordWrap = false;
         //
         // flpActions
         //
@@ -307,7 +338,7 @@ partial class PlcSettingUserControl
         flpActions.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
         flpActions.Margin = new System.Windows.Forms.Padding(0);
         flpActions.Name = "flpActions";
-        flpActions.TabIndex = 2;
+        flpActions.TabIndex = 3;
         flpActions.WrapContents = false;
         //
         // btnSave
@@ -357,13 +388,15 @@ partial class PlcSettingUserControl
         BackColor = System.Drawing.Color.White;
         Controls.Add(tlpRoot);
         Name = "PlcSettingUserControl";
-        Size = new System.Drawing.Size(960, 820);
+        Size = new System.Drawing.Size(960, 1040);
         tlpRoot.ResumeLayout(false);
         grpConnection.ResumeLayout(false);
         tlpConn.ResumeLayout(false);
         grpRegisterMap.ResumeLayout(false);
         tlpMap.ResumeLayout(false);
         tlpMapHeader.ResumeLayout(false);
+        grpLog.ResumeLayout(false);
+        grpLog.PerformLayout();
         flpActions.ResumeLayout(false);
         ResumeLayout(false);
     }
@@ -389,6 +422,8 @@ partial class PlcSettingUserControl
     private AntdUI.Button btnReadAll;
     private AntdUI.Button btnAddRow;
     private AntdUI.Table tblPlcMap;
+    private System.Windows.Forms.GroupBox grpLog;
+    private System.Windows.Forms.TextBox txtLog;
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnSave;
     private AntdUI.Button btnCancel;

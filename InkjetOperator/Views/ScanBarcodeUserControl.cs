@@ -215,7 +215,7 @@ public partial class ScanBarcodeUserControl : UserControl
     /// <summary>
     /// บันทึกระยะแคลมป์ (IAI) ที่งานนี้ใช้ลง backend — 1 job = 1 แถว
     ///
-    /// UV1 = Plate (ชื่อขึ้นต้น "P-") → iaip · UV2 = Shim → iai
+    /// UV1 = Plate (ชื่อขึ้นต้น "P-") → iaip/iaip_z1/iaip_z2 · UV2 = Shim → iai/iai_z1/iai_z2
     /// หาค่าไม่เจอก็ยังส่งขึ้นไป เก็บเป็น null เพื่อบอกว่า "หาแล้วไม่มี"
     /// ต่างจาก "ยังไม่เคยหา" ซึ่งคือไม่มีแถวเลย
     ///
@@ -223,8 +223,8 @@ public partial class ScanBarcodeUserControl : UserControl
     /// </summary>
     private static async Task SyncIaiAsync(ApiClient api, int jobId, List<UvJobItem> uvItems)
     {
-        var clampDbPath = CustomSettingsManager.Read("CLAMP_DB_PATH", "");
-        bool canRead = !string.IsNullOrWhiteSpace(clampDbPath) && File.Exists(clampDbPath);
+        var settings = ClampSettings.Load();
+        bool canRead = !string.IsNullOrWhiteSpace(settings.DbPath) && File.Exists(settings.DbPath);
 
         var request = new IaiCreateRequest { PrintJobsId = jobId };
 
@@ -235,23 +235,29 @@ public partial class ScanBarcodeUserControl : UserControl
 
             // แยกช่องด้วย prefix ของชื่อโปรแกรม กฎเดียวกับ backend และระบบเดิม
             bool isPlate = program.StartsWith("P-", StringComparison.OrdinalIgnoreCase);
+            var side = isPlate ? ClampSide.Plate : ClampSide.Shim;
 
-            // ไม่มี path ก็ยังเก็บชื่อโปรแกรมไว้ ค่าเป็น null
-            int? value = canRead
-                ? ClampService.Lookup(clampDbPath, program) is { Found: true } hit
-                    ? hit.ValueMm
-                    : null
-                : null;
+            if (isPlate) request.M1ProgramName = program;
+            else request.M2ProgramName = program;
 
-            if (isPlate)
+            // เก็บครบทุกแกนของฝั่งนี้ — ไม่มี path หรือหาไม่เจอก็เก็บเป็น null
+            foreach (var axis in settings.For(side))
             {
-                request.M1ProgramName = program;
-                request.Iaip = value;
-            }
-            else
-            {
-                request.M2ProgramName = program;
-                request.Iai = value;
+                int? value = canRead
+                    ? ClampService.Lookup(settings.DbPath, program, axis) is { Found: true } hit
+                        ? hit.ValueMm
+                        : null
+                    : null;
+
+                switch (axis.Key)
+                {
+                    case "IAIP": request.Iaip = value; break;
+                    case "IAIPZ1": request.IaipZ1 = value; break;
+                    case "IAIPZ2": request.IaipZ2 = value; break;
+                    case "IAI": request.Iai = value; break;
+                    case "IAIZ1": request.IaiZ1 = value; break;
+                    case "IAIZ2": request.IaiZ2 = value; break;
+                }
             }
         }
 

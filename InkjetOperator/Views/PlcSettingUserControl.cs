@@ -1,4 +1,4 @@
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using InkjetOperator.Models;
 using InkjetOperator.Services;
 
@@ -47,9 +47,9 @@ public partial class PlcSettingUserControl : UserControl
         {
             new AntdUI.Column("AddressStart", "Addr Start", AntdUI.ColumnAlign.Center) { Editable = true, Width = "90" },
             new AntdUI.Column("AddressStop", "Addr Stop", AntdUI.ColumnAlign.Center) { Editable = true, Width = "90" },
-            new AntdUI.Column("PlcStart", "PLC Start") { Editable = true, Width = "90" },
-            new AntdUI.Column("PlcStop", "PLC Stop") { Editable = true, Width = "90" },
-            new AntdUI.Column("ListName", "List Name") { Editable = true, Width = "150" },
+            new AntdUI.Column("PlcStart", "PLC Start", AntdUI.ColumnAlign.Center) { Editable = true, Width = "90" },
+            new AntdUI.Column("PlcStop", "PLC Stop", AntdUI.ColumnAlign.Center) { Editable = true, Width = "90" },
+            new AntdUI.Column("ListName", "List Name", AntdUI.ColumnAlign.Center) { Editable = true, Width = "150" },
             new AntdUI.Column("DataType", "Data Type", AntdUI.ColumnAlign.Center) { Editable = true, Width = "80" },
             new AntdUI.Column("Bit", "Bit", AntdUI.ColumnAlign.Center) { Editable = true, Width = "60" },
             new AntdUI.Column("Value", "Value", AntdUI.ColumnAlign.Center) { Width = "80" },
@@ -100,6 +100,7 @@ public partial class PlcSettingUserControl : UserControl
         {
             _unlocked = false;
             ApplyLockState();
+            Log("ล็อกแล้ว — แก้ไขตารางไม่ได้");
             return;
         }
 
@@ -115,6 +116,7 @@ public partial class PlcSettingUserControl : UserControl
 
         _unlocked = true;
         ApplyLockState();
+        Log("ปลดล็อกแล้ว — แก้ไขตารางได้");
     }
 
     private void ApplyLockState()
@@ -152,11 +154,15 @@ public partial class PlcSettingUserControl : UserControl
             if (IsDisposed) return;
             bool ok = completed == connectTask && !connectTask.IsFaulted && tcp.Connected;
             SetStatus(ok ? StatusGreen : StatusRed);
+            Log(ok
+                ? $"เชื่อมต่อ {ip}:{port} ได้"
+                : $"เชื่อมต่อ {ip}:{port} ไม่ได้");
         }
-        catch
+        catch (Exception ex)
         {
             if (IsDisposed) return;
             SetStatus(StatusRed);
+            Log($"เชื่อมต่อ {ip}:{port} ไม่ได้ — {ex.Message}");
         }
     }
 
@@ -219,6 +225,7 @@ public partial class PlcSettingUserControl : UserControl
     {
         _rows.Add(new PlcRow { Op = NewRowButtons() });
         RebindTable();
+        Log($"เพิ่มแถวใหม่ (รวม {_rows.Count} แถว) — กด Save เพื่อบันทึก");
     }
 
     private async void TblPlcMap_CellButtonClick(object? sender, AntdUI.TableButtonEventArgs e)
@@ -230,6 +237,7 @@ public partial class PlcSettingUserControl : UserControl
             if (row.IsFixed) return;
             _rows.Remove(row);
             RebindTable();
+            Log($"ลบแถว {row.ListName} — กด Save เพื่อบันทึก");
             return;
         }
 
@@ -252,9 +260,11 @@ public partial class PlcSettingUserControl : UserControl
             {
                 row.Value = values[0].ToString();
                 RebindTable();
+                Log($"Read D{addr} ({row.ListName}) → {values[0]}");
             }
             else
             {
+                Log($"❌ Read D{addr} ล้มเหลว — {error}");
                 Warn($"Read D{addr} ล้มเหลว: {error}");
             }
         }
@@ -269,12 +279,19 @@ public partial class PlcSettingUserControl : UserControl
             var (ok, error) = await ModbusTcpService.WriteSingleRegisterAsync(ip, port, addr, writeVal);
             if (ok)
             {
+                Log($"Write D{addr} ({row.ListName}) = {writeVal}");
+
                 var (rOk, rVal, _) = await ModbusTcpService.ReadHoldingRegistersAsync(ip, port, addr, 1);
-                if (rOk && rVal.Length > 0) row.Value = rVal[0].ToString();
+                if (rOk && rVal.Length > 0)
+                {
+                    row.Value = rVal[0].ToString();
+                    Log($"อ่านกลับ D{addr} → {rVal[0]}");
+                }
                 RebindTable();
             }
             else
             {
+                Log($"❌ Write D{addr} ล้มเหลว — {error}");
                 Warn($"Write D{addr} ล้มเหลว: {error}");
             }
         }
@@ -346,6 +363,7 @@ public partial class PlcSettingUserControl : UserControl
             return;
         }
 
+        Log($"Read All — D{minAddr}-D{maxAddr} ({qty} registers)");
         var (ok, values, error) = await ModbusTcpService.ReadHoldingRegistersAsync(ip, port, minAddr, qty);
 
         if (IsDisposed) return;
@@ -354,6 +372,7 @@ public partial class PlcSettingUserControl : UserControl
 
         if (!ok)
         {
+            Log($"❌ Read All ล้มเหลว — {error}");
             Warn($"อ่านไม่สำเร็จ: {error}");
             return;
         }
@@ -364,7 +383,10 @@ public partial class PlcSettingUserControl : UserControl
             {
                 int idx = addr - minAddr;
                 if (idx >= 0 && idx < values.Length)
+                {
                     row.Value = values[idx].ToString();
+                    Log($"  D{addr} ({row.ListName}) → {values[idx]}");
+                }
             }
         }
 
@@ -429,6 +451,24 @@ public partial class PlcSettingUserControl : UserControl
     private static void Warn(string message) =>
         Notify.WarnModal(null, "แจ้งเตือน", message);
 
+    /// <summary>
+    /// บันทึกทุกคำสั่งที่ยิงออก PLC — หน้างานต้องดูย้อนหลังได้ว่าสั่งอะไรไปบ้าง
+    /// ต้อง marshal เอง เพราะ CheckStatusAsync ถูกเรียกจาก thread อื่นได้
+    /// </summary>
+    private void Log(string message)
+    {
+        if (IsDisposed || string.IsNullOrWhiteSpace(message)) return;
+
+        if (txtLog.InvokeRequired)
+        {
+            txtLog.BeginInvoke(() => Log(message));
+            return;
+        }
+
+        foreach (var line in message.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            txtLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {line.TrimEnd()}{Environment.NewLine}");
+    }
+
     // ── Save / Cancel ──────────────────────────────────────
 
     private async void BtnSave_Click(object? sender, EventArgs e)
@@ -452,12 +492,14 @@ public partial class PlcSettingUserControl : UserControl
 
         if (ok)
         {
+            Log($"บันทึก register map {dtos.Count} แถวเรียบร้อย");
             await LoadTableAsync();
             if (IsDisposed) return;
             Notify.Success(this, "บันทึกเรียบร้อย");
         }
         else
         {
+            Log("❌ บันทึกไม่สำเร็จ — ติดต่อ Backend ไม่ได้");
             Notify.ErrorModal(this, "Error", "บันทึกไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อ Backend");
         }
     }

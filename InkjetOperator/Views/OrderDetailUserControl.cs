@@ -870,8 +870,8 @@ public partial class OrderDetailUserControl : UserControl
         btnIaiAdj2Minus.Click += (_, _) => AdjustIaiValue(txtIaiAdj2Value, -1);
         btnIaiAdj2Plus.Click += (_, _) => AdjustIaiValue(txtIaiAdj2Value, +1);
 
-        btnIaiAdj1Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj1Value);
-        btnIaiAdj2Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj2Value);
+        btnIaiAdj1Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj1Value, isPlate: true, zone: null);
+        btnIaiAdj2Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj2Value, isPlate: false, zone: null);
 
         btnIaiAdj1Upload.Click += async (_, _) => await IaiUploadAsync(txtIaiAdj1Value, txtUv1Program, txtUv1Iai, isPlate: true, zone: null);
         btnIaiAdj2Upload.Click += async (_, _) => await IaiUploadAsync(txtIaiAdj2Value, txtUv2Program, txtUv2Iai, isPlate: false, zone: null);
@@ -888,28 +888,28 @@ public partial class OrderDetailUserControl : UserControl
         // UV1 Z1
         btnIaiAdj1Z1Minus.Click += (_, _) => AdjustIaiValue(txtIaiAdj1Z1Value, -1);
         btnIaiAdj1Z1Plus.Click += (_, _) => AdjustIaiValue(txtIaiAdj1Z1Value, +1);
-        btnIaiAdj1Z1Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj1Z1Value);
+        btnIaiAdj1Z1Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj1Z1Value, isPlate: true, zone: "Z1");
         btnIaiAdj1Z1Upload.Click += async (_, _) => await IaiUploadAsync(txtIaiAdj1Z1Value, txtUv1Program, txtUv1IaiZ1, isPlate: true, zone: "Z1");
         btnIaiAdj1Z1Reset.Click += (_, _) => { txtIaiAdj1Z1Value.Text = _origIai?.IaipZ1?.ToString() ?? ""; };
 
         // UV1 Z2
         btnIaiAdj1Z2Minus.Click += (_, _) => AdjustIaiValue(txtIaiAdj1Z2Value, -1);
         btnIaiAdj1Z2Plus.Click += (_, _) => AdjustIaiValue(txtIaiAdj1Z2Value, +1);
-        btnIaiAdj1Z2Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj1Z2Value);
+        btnIaiAdj1Z2Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj1Z2Value, isPlate: true, zone: "Z2");
         btnIaiAdj1Z2Upload.Click += async (_, _) => await IaiUploadAsync(txtIaiAdj1Z2Value, txtUv1Program, txtUv1IaiZ2, isPlate: true, zone: "Z2");
         btnIaiAdj1Z2Reset.Click += (_, _) => { txtIaiAdj1Z2Value.Text = _origIai?.IaipZ2?.ToString() ?? ""; };
 
         // UV2 Z1
         btnIaiAdj2Z1Minus.Click += (_, _) => AdjustIaiValue(txtIaiAdj2Z1Value, -1);
         btnIaiAdj2Z1Plus.Click += (_, _) => AdjustIaiValue(txtIaiAdj2Z1Value, +1);
-        btnIaiAdj2Z1Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj2Z1Value);
+        btnIaiAdj2Z1Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj2Z1Value, isPlate: false, zone: "Z1");
         btnIaiAdj2Z1Upload.Click += async (_, _) => await IaiUploadAsync(txtIaiAdj2Z1Value, txtUv2Program, txtUv2IaiZ1, isPlate: false, zone: "Z1");
         btnIaiAdj2Z1Reset.Click += (_, _) => { txtIaiAdj2Z1Value.Text = _origIai?.IaiZ1?.ToString() ?? ""; };
 
         // UV2 Z2
         btnIaiAdj2Z2Minus.Click += (_, _) => AdjustIaiValue(txtIaiAdj2Z2Value, -1);
         btnIaiAdj2Z2Plus.Click += (_, _) => AdjustIaiValue(txtIaiAdj2Z2Value, +1);
-        btnIaiAdj2Z2Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj2Z2Value);
+        btnIaiAdj2Z2Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj2Z2Value, isPlate: false, zone: "Z2");
         btnIaiAdj2Z2Upload.Click += async (_, _) => await IaiUploadAsync(txtIaiAdj2Z2Value, txtUv2Program, txtUv2IaiZ2, isPlate: false, zone: "Z2");
         btnIaiAdj2Z2Reset.Click += (_, _) => { txtIaiAdj2Z2Value.Text = _origIai?.IaiZ2?.ToString() ?? ""; };
     }
@@ -921,7 +921,14 @@ public partial class OrderDetailUserControl : UserControl
         input.Text = next.ToString();
     }
 
-    private async Task IaiSendAsync(AntdUI.Input input)
+    /// <summary>
+    /// คีย์ของแกนใน ClampSettings — ตรงกับชื่อคอลัมน์ใน MainTable
+    /// Plate = IAIP / IAIPZ1 / IAIPZ2 · Shim = IAI / IAIZ1 / IAIZ2
+    /// </summary>
+    private static string IaiAxisKey(bool isPlate, string? zone) =>
+        (isPlate ? "IAIP" : "IAI") + (zone ?? "");
+
+    private async Task IaiSendAsync(AntdUI.Input input, bool isPlate, string? zone)
     {
         if (!int.TryParse(input.Text.Trim(), out int mm))
         {
@@ -938,18 +945,29 @@ public partial class OrderDetailUserControl : UserControl
             return;
         }
 
+        var axis = s.Find(IaiAxisKey(isPlate, zone));
+        if (axis == null) return;
+
+        // แผนภาพยังเขียน DXXX/MXXX ไว้ 5 แกน — กันไว้ก่อนยิงคำสั่งผิดแกน
+        if (!axis.IsConfigured)
+        {
+            Notify.WarnModal(this, "แจ้งเตือน",
+                $"แกน {axis.Display} ยังไม่ได้กำหนด address\nตั้งค่าได้ที่ Setting → Clamp Setting");
+            return;
+        }
+
         if (!Confirm.Ask(this, "ยืนยันสั่งแคลมป์",
-                $"สั่งแคลมป์ไปที่ {mm} mm\n(Raw = {ClampService.ToRaw(mm)})\n\nยืนยันหรือไม่?"))
+                $"สั่ง {axis.Display} ไปที่ {mm} mm\n(Raw = {ClampService.ToRaw(mm)})\n\nยืนยันหรือไม่?"))
             return;
 
         SetIaiAdjustBusy(true);
         try
         {
-            var result = await ClampService.ApplyAsync(s, mm);
+            var result = await ClampService.ApplyAsync(s, axis, mm);
             if (IsDisposed) return;
 
             if (result.Ok)
-                Notify.Success(this, $"สั่งแคลมป์ {mm} mm สำเร็จ");
+                Notify.Success(this, $"สั่ง {axis.Display} ไปที่ {mm} mm สำเร็จ");
             else
                 Notify.ErrorModal(this, "สั่งแคลมป์ไม่สำเร็จ", result.Log);
         }
@@ -982,7 +1000,9 @@ public partial class OrderDetailUserControl : UserControl
         }
 
         mm = ClampService.ClampMm(mm);
-        string col = (isPlate ? "IAIP" : "IAI") + (zone ?? "");
+        var axis = s.Find(IaiAxisKey(isPlate, zone));
+        if (axis == null) return;
+        string col = axis.Column;
 
         if (!Confirm.Ask(this, "ยืนยัน Upload",
                 $"บันทึก {col} = {mm} mm ให้ \"{program}\"\nไปยัง mydatabase และ Backend\n\nยืนยันหรือไม่?"))
@@ -993,7 +1013,7 @@ public partial class OrderDetailUserControl : UserControl
         {
             var errors = new List<string>();
 
-            var (dbOk, dbMsg) = ClampService.Upload(s.DbPath, program, mm, col);
+            var (dbOk, dbMsg) = ClampService.Upload(s.DbPath, program, axis, mm);
             if (!dbOk) errors.Add($"mydatabase: {dbMsg}");
 
             if (_api != null && _jobId > 0)

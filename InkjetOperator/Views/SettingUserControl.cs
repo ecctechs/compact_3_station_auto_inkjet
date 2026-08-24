@@ -132,6 +132,11 @@ public partial class SettingUserControl : UserControl
         var page = CreateSubPage(buttonName);
         if (page != null)
         {
+            // จอที่เตี้ยกว่าที่ออกแบบไว้ Dock.Fill จะบีบหน้าลงมา แถวล่างสุด
+            // (ตาราง / ปุ่ม Save) หายไปเลยเพราะไม่มีที่ให้วาด
+            // ล็อกความสูงขั้นต่ำเท่าที่ Designer ออกแบบ แล้วให้ pnlContentArea เลื่อนแทน
+            // ล็อกเฉพาะความสูง — ความกว้างยังยืดหดตามจอได้เหมือนเดิม
+            page.MinimumSize = new Size(0, page.Height);
             page.Dock = DockStyle.Fill;
             _subPages[buttonName] = page;
         }
@@ -155,7 +160,16 @@ public partial class SettingUserControl : UserControl
         EnsureSubPage(buttonName);
         _subPages.TryGetValue(buttonName, out var page);
 
-        if (page != null)
-            pnlContentArea.Controls.Add(page);
+        if (page == null)
+        {
+            pnlContentArea.AutoScrollMinSize = Size.Empty;
+            return;
+        }
+
+        // แต่ละหน้าสูงไม่เท่ากัน ต้องบอกช่วงเลื่อนใหม่ทุกครั้งที่สลับหน้า
+        // ไม่งั้นหน้าเตี้ยจะยังมี scrollbar ค้างจากหน้าก่อนหน้า
+        pnlContentArea.AutoScrollPosition = Point.Empty;
+        pnlContentArea.AutoScrollMinSize = new Size(0, page.MinimumSize.Height);
+        pnlContentArea.Controls.Add(page);
     }
 }

@@ -1,4 +1,4 @@
-namespace InkjetOperator.Views;
+﻿namespace InkjetOperator.Views;
 
 partial class ClampSettingUserControl
 {
@@ -15,42 +15,40 @@ partial class ClampSettingUserControl
     private void InitializeComponent()
     {
         tlpRoot = new System.Windows.Forms.TableLayoutPanel();
+
         grpConnection = new System.Windows.Forms.GroupBox();
         tlpConn = new System.Windows.Forms.TableLayoutPanel();
         lblIpLabel = new System.Windows.Forms.Label();
         txtIp = new AntdUI.Input();
-        btnCheckStatus = new AntdUI.Button();
         lblPortLabel = new System.Windows.Forms.Label();
         txtPort = new AntdUI.Input();
+        btnCheckStatus = new AntdUI.Button();
         lblDbLabel = new System.Windows.Forms.Label();
         txtDbPath = new AntdUI.Input();
         btnBrowse = new AntdUI.Button();
         lblStatus = new System.Windows.Forms.Label();
-        grpAddress = new System.Windows.Forms.GroupBox();
-        tlpAddr = new System.Windows.Forms.TableLayoutPanel();
-        lblTargetLabel = new System.Windows.Forms.Label();
-        txtAddrTarget = new AntdUI.Input();
-        lblRunLabel = new System.Windows.Forms.Label();
-        txtAddrRun = new AntdUI.Input();
-        lblResetLabel = new System.Windows.Forms.Label();
-        txtAddrReset = new AntdUI.Input();
-        lblStatusAddrLabel = new System.Windows.Forms.Label();
-        txtAddrStatus = new AntdUI.Input();
-        grpClamp = new System.Windows.Forms.GroupBox();
-        tlpClamp = new System.Windows.Forms.TableLayoutPanel();
-        lblProgramLabel = new System.Windows.Forms.Label();
-        txtProgram = new AntdUI.Input();
-        btnLoad = new AntdUI.Button();
-        lblMmLabel = new System.Windows.Forms.Label();
-        txtValueMm = new AntdUI.Input();
-        lblRawLabel = new System.Windows.Forms.Label();
-        lblRawValue = new System.Windows.Forms.Label();
-        flpClampActions = new System.Windows.Forms.FlowLayoutPanel();
-        btnApply = new AntdUI.Button();
-        btnReset = new AntdUI.Button();
-        btnReadStatus = new AntdUI.Button();
-        btnUpload = new AntdUI.Button();
+
+        grpProgram = new System.Windows.Forms.GroupBox();
+        tlpProgram = new System.Windows.Forms.TableLayoutPanel();
+        lblPlateLabel = new System.Windows.Forms.Label();
+        txtPlateProgram = new AntdUI.Input();
+        lblShimLabel = new System.Windows.Forms.Label();
+        txtShimProgram = new AntdUI.Input();
+        flpProgramActions = new System.Windows.Forms.FlowLayoutPanel();
+        btnLoadAll = new AntdUI.Button();
+        btnApplyAll = new AntdUI.Button();
+        btnUploadAll = new AntdUI.Button();
+
+        grpAxes = new System.Windows.Forms.GroupBox();
+        tlpAxes = new System.Windows.Forms.TableLayoutPanel();
+        tlpAxesHeader = new System.Windows.Forms.TableLayoutPanel();
+        lblAxesHint = new System.Windows.Forms.Label();
+        btnUnlock = new AntdUI.Button();
+        tblAxes = new AntdUI.Table();
+
+        grpLog = new System.Windows.Forms.GroupBox();
         txtLog = new System.Windows.Forms.TextBox();
+
         flpActions = new System.Windows.Forms.FlowLayoutPanel();
         btnSave = new AntdUI.Button();
         btnCancel = new AntdUI.Button();
@@ -58,11 +56,13 @@ partial class ClampSettingUserControl
         tlpRoot.SuspendLayout();
         grpConnection.SuspendLayout();
         tlpConn.SuspendLayout();
-        grpAddress.SuspendLayout();
-        tlpAddr.SuspendLayout();
-        grpClamp.SuspendLayout();
-        tlpClamp.SuspendLayout();
-        flpClampActions.SuspendLayout();
+        grpProgram.SuspendLayout();
+        tlpProgram.SuspendLayout();
+        flpProgramActions.SuspendLayout();
+        grpAxes.SuspendLayout();
+        tlpAxes.SuspendLayout();
+        tlpAxesHeader.SuspendLayout();
+        grpLog.SuspendLayout();
         flpActions.SuspendLayout();
         SuspendLayout();
         //
@@ -72,19 +72,21 @@ partial class ClampSettingUserControl
         tlpRoot.ColumnCount = 1;
         tlpRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpRoot.Controls.Add(grpConnection, 0, 0);
-        tlpRoot.Controls.Add(grpAddress, 0, 1);
-        tlpRoot.Controls.Add(grpClamp, 0, 2);
-        tlpRoot.Controls.Add(flpActions, 0, 3);
+        tlpRoot.Controls.Add(grpProgram, 0, 1);
+        tlpRoot.Controls.Add(grpAxes, 0, 2);
+        tlpRoot.Controls.Add(grpLog, 0, 3);
+        tlpRoot.Controls.Add(flpActions, 0, 4);
         tlpRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpRoot.Location = new System.Drawing.Point(0, 0);
         tlpRoot.Name = "tlpRoot";
         tlpRoot.Padding = new System.Windows.Forms.Padding(16);
-        tlpRoot.RowCount = 4;
+        tlpRoot.RowCount = 5;
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
-        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 382F));
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 260F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 68F));
-        tlpRoot.Size = new System.Drawing.Size(880, 900);
+        tlpRoot.Size = new System.Drawing.Size(1080, 1112);
         tlpRoot.TabIndex = 0;
         //
         // grpConnection
@@ -97,37 +99,37 @@ partial class ClampSettingUserControl
         grpConnection.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         grpConnection.Margin = new System.Windows.Forms.Padding(3, 3, 3, 10);
         grpConnection.Name = "grpConnection";
-        grpConnection.Padding = new System.Windows.Forms.Padding(16, 24, 16, 8);
+        grpConnection.Padding = new System.Windows.Forms.Padding(16, 24, 16, 10);
         grpConnection.TabIndex = 0;
         grpConnection.TabStop = false;
-        grpConnection.Text = "PLC แคลมป์ (MC Protocol)";
+        grpConnection.Text = "1. PLC แคลมป์ (MC Protocol) — คุมทั้ง 6 แกน";
         //
-        // tlpConn — 4 cols: label(160) | input(fill) | gap(8) | button(110)
+        // tlpConn — label(150) | input(fill) | label(60) | input(110) | button(130)
         //
-        tlpConn.BackColor = System.Drawing.Color.White;
-        tlpConn.ColumnCount = 4;
-        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 160F));
-        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 8F));
-        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 110F));
-        tlpConn.Controls.Add(lblIpLabel, 0, 0);
-        tlpConn.Controls.Add(txtIp, 1, 0);
-        tlpConn.Controls.Add(btnCheckStatus, 3, 0);
-        tlpConn.Controls.Add(lblPortLabel, 0, 1);
-        tlpConn.Controls.Add(txtPort, 1, 1);
-        tlpConn.Controls.Add(lblDbLabel, 0, 2);
-        tlpConn.Controls.Add(txtDbPath, 1, 2);
-        tlpConn.Controls.Add(btnBrowse, 3, 2);
-        tlpConn.Controls.Add(lblStatus, 1, 3);
         tlpConn.AutoSize = true;
         tlpConn.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+        tlpConn.BackColor = System.Drawing.Color.White;
+        tlpConn.ColumnCount = 5;
+        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 150F));
+        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 60F));
+        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 110F));
+        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 130F));
+        tlpConn.Controls.Add(lblIpLabel, 0, 0);
+        tlpConn.Controls.Add(txtIp, 1, 0);
+        tlpConn.Controls.Add(lblPortLabel, 2, 0);
+        tlpConn.Controls.Add(txtPort, 3, 0);
+        tlpConn.Controls.Add(btnCheckStatus, 4, 0);
+        tlpConn.Controls.Add(lblDbLabel, 0, 1);
+        tlpConn.Controls.Add(txtDbPath, 1, 1);
+        tlpConn.Controls.Add(btnBrowse, 4, 1);
+        tlpConn.Controls.Add(lblStatus, 1, 2);
         tlpConn.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpConn.Name = "tlpConn";
-        tlpConn.RowCount = 4;
+        tlpConn.RowCount = 3;
         tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 46F));
         tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 46F));
-        tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 46F));
-        tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+        tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
         tlpConn.TabIndex = 0;
         //
         // lblIpLabel
@@ -152,20 +154,6 @@ partial class ClampSettingUserControl
         txtIp.Radius = 4;
         txtIp.TabIndex = 1;
         //
-        // btnCheckStatus
-        //
-        btnCheckStatus.Anchor = System.Windows.Forms.AnchorStyles.Left;
-        btnCheckStatus.BorderWidth = 2F;
-        btnCheckStatus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        btnCheckStatus.Font = new System.Drawing.Font("Segoe UI", 9F);
-        btnCheckStatus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnCheckStatus.Name = "btnCheckStatus";
-        btnCheckStatus.Radius = 6;
-        btnCheckStatus.Size = new System.Drawing.Size(104, 34);
-        btnCheckStatus.TabIndex = 2;
-        btnCheckStatus.Text = "Check";
-        btnCheckStatus.Type = AntdUI.TTypeMini.Default;
-        //
         // lblPortLabel
         //
         lblPortLabel.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -173,7 +161,7 @@ partial class ClampSettingUserControl
         lblPortLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         lblPortLabel.Name = "lblPortLabel";
         lblPortLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
-        lblPortLabel.TabIndex = 3;
+        lblPortLabel.TabIndex = 2;
         lblPortLabel.Text = "Port :";
         lblPortLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
@@ -186,7 +174,21 @@ partial class ClampSettingUserControl
         txtPort.Name = "txtPort";
         txtPort.PlaceholderText = "5012";
         txtPort.Radius = 4;
-        txtPort.TabIndex = 4;
+        txtPort.TabIndex = 3;
+        //
+        // btnCheckStatus
+        //
+        btnCheckStatus.Anchor = System.Windows.Forms.AnchorStyles.Left;
+        btnCheckStatus.BorderWidth = 2F;
+        btnCheckStatus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnCheckStatus.Font = new System.Drawing.Font("Segoe UI", 10F);
+        btnCheckStatus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnCheckStatus.Name = "btnCheckStatus";
+        btnCheckStatus.Radius = 6;
+        btnCheckStatus.Size = new System.Drawing.Size(124, 36);
+        btnCheckStatus.TabIndex = 4;
+        btnCheckStatus.Text = "เช็คการเชื่อมต่อ";
+        btnCheckStatus.Type = AntdUI.TTypeMini.Default;
         //
         // lblDbLabel
         //
@@ -210,17 +212,18 @@ partial class ClampSettingUserControl
         txtDbPath.Radius = 4;
         txtDbPath.ReadOnly = true;
         txtDbPath.TabIndex = 6;
+        tlpConn.SetColumnSpan(txtDbPath, 3);
         //
         // btnBrowse
         //
         btnBrowse.Anchor = System.Windows.Forms.AnchorStyles.Left;
         btnBrowse.BorderWidth = 2F;
         btnBrowse.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        btnBrowse.Font = new System.Drawing.Font("Segoe UI", 9F);
+        btnBrowse.Font = new System.Drawing.Font("Segoe UI", 10F);
         btnBrowse.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnBrowse.Name = "btnBrowse";
         btnBrowse.Radius = 6;
-        btnBrowse.Size = new System.Drawing.Size(104, 34);
+        btnBrowse.Size = new System.Drawing.Size(124, 36);
         btnBrowse.TabIndex = 7;
         btnBrowse.Text = "Browse...";
         btnBrowse.Type = AntdUI.TTypeMini.Default;
@@ -228,347 +231,257 @@ partial class ClampSettingUserControl
         // lblStatus
         //
         lblStatus.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblStatus.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblStatus.Font = new System.Drawing.Font("Segoe UI", 9.5F);
         lblStatus.ForeColor = System.Drawing.Color.Gray;
         lblStatus.Name = "lblStatus";
-        lblStatus.Padding = new System.Windows.Forms.Padding(4, 4, 0, 0);
+        lblStatus.Padding = new System.Windows.Forms.Padding(4, 2, 0, 0);
         lblStatus.TabIndex = 8;
         lblStatus.Text = "";
-        tlpConn.SetColumnSpan(lblStatus, 3);
+        tlpConn.SetColumnSpan(lblStatus, 4);
         //
-        // grpAddress
+        // grpProgram
         //
-        grpAddress.AutoSize = true;
-        grpAddress.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-        grpAddress.Controls.Add(tlpAddr);
-        grpAddress.Dock = System.Windows.Forms.DockStyle.Fill;
-        grpAddress.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
-        grpAddress.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
-        grpAddress.Margin = new System.Windows.Forms.Padding(3, 3, 3, 10);
-        grpAddress.Name = "grpAddress";
-        grpAddress.Padding = new System.Windows.Forms.Padding(16, 24, 16, 8);
-        grpAddress.TabIndex = 1;
-        grpAddress.TabStop = false;
-        grpAddress.Text = "Register Address";
+        grpProgram.AutoSize = true;
+        grpProgram.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+        grpProgram.Controls.Add(tlpProgram);
+        grpProgram.Dock = System.Windows.Forms.DockStyle.Fill;
+        grpProgram.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        grpProgram.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        grpProgram.Margin = new System.Windows.Forms.Padding(3, 3, 3, 10);
+        grpProgram.Name = "grpProgram";
+        grpProgram.Padding = new System.Windows.Forms.Padding(16, 24, 16, 10);
+        grpProgram.TabIndex = 1;
+        grpProgram.TabStop = false;
+        grpProgram.Text = "2. ชื่อโปรแกรมของแต่ละฝั่ง";
         //
-        // tlpAddr — 4 cols: label | input | label | input
+        // tlpProgram — label(150) | input(fill) | label(150) | input(fill)
         //
-        tlpAddr.BackColor = System.Drawing.Color.White;
-        tlpAddr.ColumnCount = 4;
-        tlpAddr.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 160F));
-        tlpAddr.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-        tlpAddr.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 160F));
-        tlpAddr.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-        tlpAddr.Controls.Add(lblTargetLabel, 0, 0);
-        tlpAddr.Controls.Add(txtAddrTarget, 1, 0);
-        tlpAddr.Controls.Add(lblRunLabel, 2, 0);
-        tlpAddr.Controls.Add(txtAddrRun, 3, 0);
-        tlpAddr.Controls.Add(lblResetLabel, 0, 1);
-        tlpAddr.Controls.Add(txtAddrReset, 1, 1);
-        tlpAddr.Controls.Add(lblStatusAddrLabel, 2, 1);
-        tlpAddr.Controls.Add(txtAddrStatus, 3, 1);
-        tlpAddr.AutoSize = true;
-        tlpAddr.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-        tlpAddr.Dock = System.Windows.Forms.DockStyle.Fill;
-        tlpAddr.Name = "tlpAddr";
-        tlpAddr.RowCount = 2;
-        tlpAddr.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 46F));
-        tlpAddr.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 46F));
-        tlpAddr.TabIndex = 0;
+        tlpProgram.AutoSize = true;
+        tlpProgram.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+        tlpProgram.BackColor = System.Drawing.Color.White;
+        tlpProgram.ColumnCount = 4;
+        tlpProgram.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 150F));
+        tlpProgram.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpProgram.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 150F));
+        tlpProgram.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpProgram.Controls.Add(lblPlateLabel, 0, 0);
+        tlpProgram.Controls.Add(txtPlateProgram, 1, 0);
+        tlpProgram.Controls.Add(lblShimLabel, 2, 0);
+        tlpProgram.Controls.Add(txtShimProgram, 3, 0);
+        tlpProgram.Controls.Add(flpProgramActions, 0, 1);
+        tlpProgram.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpProgram.Name = "tlpProgram";
+        tlpProgram.RowCount = 2;
+        tlpProgram.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 46F));
+        tlpProgram.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
+        tlpProgram.TabIndex = 0;
         //
-        // lblTargetLabel
+        // lblPlateLabel
         //
-        lblTargetLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblTargetLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
-        lblTargetLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-        lblTargetLabel.Name = "lblTargetLabel";
-        lblTargetLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
-        lblTargetLabel.TabIndex = 0;
-        lblTargetLabel.Text = "ค่าเป้าหมาย :";
-        lblTargetLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        lblPlateLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblPlateLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblPlateLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblPlateLabel.Name = "lblPlateLabel";
+        lblPlateLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
+        lblPlateLabel.TabIndex = 0;
+        lblPlateLabel.Text = "Plate (m1) :";
+        lblPlateLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
-        // txtAddrTarget
+        // txtPlateProgram
         //
-        txtAddrTarget.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtAddrTarget.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtAddrTarget.Font = new System.Drawing.Font("Segoe UI", 10F);
-        txtAddrTarget.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
-        txtAddrTarget.Name = "txtAddrTarget";
-        txtAddrTarget.PlaceholderText = "D216";
-        txtAddrTarget.Radius = 4;
-        txtAddrTarget.TabIndex = 1;
+        txtPlateProgram.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtPlateProgram.Dock = System.Windows.Forms.DockStyle.Fill;
+        txtPlateProgram.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtPlateProgram.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
+        txtPlateProgram.Name = "txtPlateProgram";
+        txtPlateProgram.PlaceholderText = "เช่น P-DEX-681";
+        txtPlateProgram.Radius = 4;
+        txtPlateProgram.TabIndex = 1;
         //
-        // lblRunLabel
+        // lblShimLabel
         //
-        lblRunLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblRunLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
-        lblRunLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-        lblRunLabel.Name = "lblRunLabel";
-        lblRunLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
-        lblRunLabel.TabIndex = 2;
-        lblRunLabel.Text = "พัลส์สั่งวิ่ง :";
-        lblRunLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        lblShimLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblShimLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblShimLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblShimLabel.Name = "lblShimLabel";
+        lblShimLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
+        lblShimLabel.TabIndex = 2;
+        lblShimLabel.Text = "Shim (m2) :";
+        lblShimLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
-        // txtAddrRun
+        // txtShimProgram
         //
-        txtAddrRun.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtAddrRun.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtAddrRun.Font = new System.Drawing.Font("Segoe UI", 10F);
-        txtAddrRun.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
-        txtAddrRun.Name = "txtAddrRun";
-        txtAddrRun.PlaceholderText = "M700";
-        txtAddrRun.Radius = 4;
-        txtAddrRun.TabIndex = 3;
+        txtShimProgram.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtShimProgram.Dock = System.Windows.Forms.DockStyle.Fill;
+        txtShimProgram.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtShimProgram.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
+        txtShimProgram.Name = "txtShimProgram";
+        txtShimProgram.PlaceholderText = "เช่น S-DEX-681";
+        txtShimProgram.Radius = 4;
+        txtShimProgram.TabIndex = 3;
         //
-        // lblResetLabel
+        // flpProgramActions
         //
-        lblResetLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblResetLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
-        lblResetLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-        lblResetLabel.Name = "lblResetLabel";
-        lblResetLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
-        lblResetLabel.TabIndex = 4;
-        lblResetLabel.Text = "พัลส์รีเซ็ต :";
-        lblResetLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        flpProgramActions.BackColor = System.Drawing.Color.White;
+        flpProgramActions.Controls.Add(btnLoadAll);
+        flpProgramActions.Controls.Add(btnApplyAll);
+        flpProgramActions.Controls.Add(btnUploadAll);
+        flpProgramActions.Dock = System.Windows.Forms.DockStyle.Fill;
+        flpProgramActions.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
+        flpProgramActions.Margin = new System.Windows.Forms.Padding(0);
+        flpProgramActions.Name = "flpProgramActions";
+        flpProgramActions.TabIndex = 4;
+        flpProgramActions.WrapContents = false;
+        tlpProgram.SetColumnSpan(flpProgramActions, 4);
         //
-        // txtAddrReset
+        // btnLoadAll
         //
-        txtAddrReset.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtAddrReset.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtAddrReset.Font = new System.Drawing.Font("Segoe UI", 10F);
-        txtAddrReset.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
-        txtAddrReset.Name = "txtAddrReset";
-        txtAddrReset.PlaceholderText = "M701";
-        txtAddrReset.Radius = 4;
-        txtAddrReset.TabIndex = 5;
+        btnLoadAll.BorderWidth = 2F;
+        btnLoadAll.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnLoadAll.Font = new System.Drawing.Font("Segoe UI", 11F);
+        btnLoadAll.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnLoadAll.Margin = new System.Windows.Forms.Padding(0, 8, 12, 8);
+        btnLoadAll.Name = "btnLoadAll";
+        btnLoadAll.Radius = 6;
+        btnLoadAll.Size = new System.Drawing.Size(190, 42);
+        btnLoadAll.TabIndex = 0;
+        btnLoadAll.Text = "Load ทั้ง 6 แกน";
+        btnLoadAll.Type = AntdUI.TTypeMini.Default;
         //
-        // lblStatusAddrLabel
+        // btnApplyAll
         //
-        lblStatusAddrLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblStatusAddrLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
-        lblStatusAddrLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-        lblStatusAddrLabel.Name = "lblStatusAddrLabel";
-        lblStatusAddrLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
-        lblStatusAddrLabel.TabIndex = 6;
-        lblStatusAddrLabel.Text = "อ่านสถานะ :";
-        lblStatusAddrLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        btnApplyAll.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        btnApplyAll.ForeColor = System.Drawing.Color.White;
+        btnApplyAll.Margin = new System.Windows.Forms.Padding(0, 8, 12, 8);
+        btnApplyAll.Name = "btnApplyAll";
+        btnApplyAll.Radius = 6;
+        btnApplyAll.Size = new System.Drawing.Size(210, 42);
+        btnApplyAll.TabIndex = 1;
+        btnApplyAll.Text = "สั่งทุกแกนที่พร้อม";
+        btnApplyAll.Type = AntdUI.TTypeMini.Primary;
         //
-        // txtAddrStatus
+        // btnUploadAll
         //
-        txtAddrStatus.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtAddrStatus.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtAddrStatus.Font = new System.Drawing.Font("Segoe UI", 10F);
-        txtAddrStatus.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
-        txtAddrStatus.Name = "txtAddrStatus";
-        txtAddrStatus.PlaceholderText = "W38 (ฐานสิบหก)";
-        txtAddrStatus.Radius = 4;
-        txtAddrStatus.TabIndex = 7;
+        btnUploadAll.BorderWidth = 2F;
+        btnUploadAll.DefaultBorderColor = System.Drawing.Color.FromArgb(76, 175, 80);
+        btnUploadAll.Font = new System.Drawing.Font("Segoe UI", 11F);
+        btnUploadAll.ForeColor = System.Drawing.Color.FromArgb(56, 130, 60);
+        btnUploadAll.Margin = new System.Windows.Forms.Padding(0, 8, 3, 8);
+        btnUploadAll.Name = "btnUploadAll";
+        btnUploadAll.Radius = 6;
+        btnUploadAll.Size = new System.Drawing.Size(190, 42);
+        btnUploadAll.TabIndex = 2;
+        btnUploadAll.Text = "Upload ทั้งหมด";
+        btnUploadAll.Type = AntdUI.TTypeMini.Default;
         //
-        // grpClamp
+        // grpAxes
         //
-        grpClamp.Controls.Add(tlpClamp);
-        grpClamp.Dock = System.Windows.Forms.DockStyle.Fill;
-        grpClamp.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
-        grpClamp.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
-        grpClamp.Margin = new System.Windows.Forms.Padding(3, 3, 3, 10);
-        grpClamp.MinimumSize = new System.Drawing.Size(0, 340);
-        grpClamp.Name = "grpClamp";
-        grpClamp.Padding = new System.Windows.Forms.Padding(16, 24, 16, 8);
-        grpClamp.TabIndex = 2;
-        grpClamp.TabStop = false;
-        grpClamp.Text = "ควบคุมแคลมป์";
+        grpAxes.Controls.Add(tlpAxes);
+        grpAxes.Dock = System.Windows.Forms.DockStyle.Fill;
+        grpAxes.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        grpAxes.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        grpAxes.Margin = new System.Windows.Forms.Padding(3, 3, 3, 10);
+        grpAxes.Name = "grpAxes";
+        grpAxes.Padding = new System.Windows.Forms.Padding(16, 24, 16, 10);
+        grpAxes.TabIndex = 2;
+        grpAxes.TabStop = false;
+        grpAxes.Text = "3. แกนแคลมป์ (Plate / Shim × X, Z1, Z2)";
         //
-        // tlpClamp — 4 cols: label(160) | input(fill) | gap(8) | button(110)
+        // tlpAxes
         //
-        tlpClamp.BackColor = System.Drawing.Color.White;
-        tlpClamp.ColumnCount = 4;
-        tlpClamp.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 160F));
-        tlpClamp.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpClamp.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 8F));
-        tlpClamp.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 110F));
-        tlpClamp.Controls.Add(lblProgramLabel, 0, 0);
-        tlpClamp.Controls.Add(txtProgram, 1, 0);
-        tlpClamp.Controls.Add(btnLoad, 3, 0);
-        tlpClamp.Controls.Add(lblMmLabel, 0, 1);
-        tlpClamp.Controls.Add(txtValueMm, 1, 1);
-        tlpClamp.Controls.Add(lblRawLabel, 0, 2);
-        tlpClamp.Controls.Add(lblRawValue, 1, 2);
-        tlpClamp.Controls.Add(flpClampActions, 1, 3);
-        tlpClamp.Controls.Add(txtLog, 0, 4);
-        tlpClamp.Dock = System.Windows.Forms.DockStyle.Fill;
-        tlpClamp.Name = "tlpClamp";
-        tlpClamp.RowCount = 5;
-        tlpClamp.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 46F));
-        tlpClamp.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 46F));
-        tlpClamp.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 34F));
-        tlpClamp.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 52F));
-        tlpClamp.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpClamp.TabIndex = 0;
+        tlpAxes.BackColor = System.Drawing.Color.White;
+        tlpAxes.ColumnCount = 1;
+        tlpAxes.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpAxes.Controls.Add(tlpAxesHeader, 0, 0);
+        tlpAxes.Controls.Add(tblAxes, 0, 1);
+        tlpAxes.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpAxes.Margin = new System.Windows.Forms.Padding(0);
+        tlpAxes.Name = "tlpAxes";
+        tlpAxes.RowCount = 2;
+        tlpAxes.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 52F));
+        tlpAxes.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpAxes.TabIndex = 0;
         //
-        // lblProgramLabel
+        // tlpAxesHeader
         //
-        lblProgramLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblProgramLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
-        lblProgramLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-        lblProgramLabel.Name = "lblProgramLabel";
-        lblProgramLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
-        lblProgramLabel.TabIndex = 0;
-        lblProgramLabel.Text = "Program Name :";
-        lblProgramLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        tlpAxesHeader.BackColor = System.Drawing.Color.White;
+        tlpAxesHeader.ColumnCount = 2;
+        tlpAxesHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpAxesHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
+        tlpAxesHeader.Controls.Add(lblAxesHint, 0, 0);
+        tlpAxesHeader.Controls.Add(btnUnlock, 1, 0);
+        tlpAxesHeader.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpAxesHeader.Margin = new System.Windows.Forms.Padding(0);
+        tlpAxesHeader.Name = "tlpAxesHeader";
+        tlpAxesHeader.RowCount = 1;
+        tlpAxesHeader.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpAxesHeader.TabIndex = 0;
         //
-        // txtProgram
+        // lblAxesHint
         //
-        txtProgram.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtProgram.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtProgram.Font = new System.Drawing.Font("Segoe UI", 10F);
-        txtProgram.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
-        txtProgram.Name = "txtProgram";
-        txtProgram.PlaceholderText = "เช่น S-DEX-1624-1  (ขึ้นต้น P- จะใช้ IAIP)";
-        txtProgram.Radius = 4;
-        txtProgram.TabIndex = 1;
+        lblAxesHint.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblAxesHint.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblAxesHint.ForeColor = System.Drawing.Color.FromArgb(120, 120, 120);
+        lblAxesHint.Name = "lblAxesHint";
+        lblAxesHint.TabIndex = 0;
+        lblAxesHint.Text = "ค่า (mm) แก้ได้ตลอด · ช่อง address ต้องปลดล็อกก่อน";
+        lblAxesHint.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
         //
-        // btnLoad
+        // btnUnlock
         //
-        btnLoad.Anchor = System.Windows.Forms.AnchorStyles.Left;
-        btnLoad.BorderWidth = 2F;
-        btnLoad.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        btnLoad.Font = new System.Drawing.Font("Segoe UI", 9F);
-        btnLoad.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnLoad.Name = "btnLoad";
-        btnLoad.Radius = 6;
-        btnLoad.Size = new System.Drawing.Size(104, 34);
-        btnLoad.TabIndex = 2;
-        btnLoad.Text = "Load SQL";
-        btnLoad.Type = AntdUI.TTypeMini.Default;
+        btnUnlock.Anchor = System.Windows.Forms.AnchorStyles.Right;
+        btnUnlock.BorderWidth = 2F;
+        btnUnlock.DefaultBorderColor = System.Drawing.Color.FromArgb(220, 160, 40);
+        btnUnlock.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        btnUnlock.ForeColor = System.Drawing.Color.FromArgb(140, 90, 10);
+        btnUnlock.Name = "btnUnlock";
+        btnUnlock.Radius = 8;
+        btnUnlock.Size = new System.Drawing.Size(134, 42);
+        btnUnlock.TabIndex = 1;
+        btnUnlock.Text = "🔒 Unlock";
+        btnUnlock.Type = AntdUI.TTypeMini.Default;
         //
-        // lblMmLabel
+        // tblAxes
         //
-        lblMmLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblMmLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
-        lblMmLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-        lblMmLabel.Name = "lblMmLabel";
-        lblMmLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
-        lblMmLabel.TabIndex = 3;
-        lblMmLabel.Text = "ระยะแคลมป์ (0-155) :";
-        lblMmLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        tblAxes.AutoSizeColumnsMode = AntdUI.ColumnsMode.Fill;
+        tblAxes.Bordered = true;
+        tblAxes.ColumnBack = System.Drawing.Color.FromArgb(30, 30, 30);
+        tblAxes.ColumnFont = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        tblAxes.ColumnFore = System.Drawing.Color.White;
+        tblAxes.Dock = System.Windows.Forms.DockStyle.Fill;
+        tblAxes.EditMode = AntdUI.TEditMode.Click;
+        tblAxes.EmptyText = "ไม่มีข้อมูลแกน";
+        tblAxes.Font = new System.Drawing.Font("Segoe UI", 11F);
+        tblAxes.Name = "tblAxes";
+        tblAxes.Radius = 8;
+        tblAxes.RowHeight = 46;
+        tblAxes.TabIndex = 1;
         //
-        // txtValueMm
+        // grpLog
         //
-        txtValueMm.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtValueMm.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtValueMm.Font = new System.Drawing.Font("Segoe UI", 10F);
-        txtValueMm.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
-        txtValueMm.Name = "txtValueMm";
-        txtValueMm.PlaceholderText = "mm";
-        txtValueMm.Radius = 4;
-        txtValueMm.TabIndex = 4;
-        //
-        // lblRawLabel
-        //
-        lblRawLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblRawLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
-        lblRawLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-        lblRawLabel.Name = "lblRawLabel";
-        lblRawLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
-        lblRawLabel.TabIndex = 5;
-        lblRawLabel.Text = "ค่าที่จะเขียน :";
-        lblRawLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-        //
-        // lblRawValue
-        //
-        lblRawValue.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblRawValue.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
-        lblRawValue.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        lblRawValue.Name = "lblRawValue";
-        lblRawValue.Padding = new System.Windows.Forms.Padding(4, 0, 0, 0);
-        lblRawValue.TabIndex = 6;
-        lblRawValue.Text = "-";
-        lblRawValue.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-        tlpClamp.SetColumnSpan(lblRawValue, 3);
-        //
-        // flpClampActions
-        //
-        flpClampActions.BackColor = System.Drawing.Color.White;
-        flpClampActions.Controls.Add(btnApply);
-        flpClampActions.Controls.Add(btnUpload);
-        flpClampActions.Controls.Add(btnReset);
-        flpClampActions.Controls.Add(btnReadStatus);
-        flpClampActions.Dock = System.Windows.Forms.DockStyle.Fill;
-        flpClampActions.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
-        flpClampActions.Margin = new System.Windows.Forms.Padding(0);
-        flpClampActions.Name = "flpClampActions";
-        flpClampActions.TabIndex = 7;
-        flpClampActions.WrapContents = false;
-        tlpClamp.SetColumnSpan(flpClampActions, 3);
-        //
-        // btnApply
-        //
-        btnApply.BackColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        btnApply.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
-        btnApply.ForeColor = System.Drawing.Color.White;
-        btnApply.Margin = new System.Windows.Forms.Padding(3, 8, 12, 8);
-        btnApply.Name = "btnApply";
-        btnApply.Radius = 6;
-        btnApply.Size = new System.Drawing.Size(150, 36);
-        btnApply.TabIndex = 0;
-        btnApply.Text = "สั่งแคลมป์";
-        btnApply.Type = AntdUI.TTypeMini.Primary;
-        //
-        // btnReset
-        //
-        btnReset.BorderWidth = 2F;
-        btnReset.DefaultBorderColor = System.Drawing.Color.FromArgb(220, 38, 38);
-        btnReset.Font = new System.Drawing.Font("Segoe UI", 11F);
-        btnReset.ForeColor = System.Drawing.Color.FromArgb(220, 38, 38);
-        btnReset.Margin = new System.Windows.Forms.Padding(3, 8, 12, 8);
-        btnReset.Name = "btnReset";
-        btnReset.Radius = 6;
-        btnReset.Size = new System.Drawing.Size(120, 36);
-        btnReset.TabIndex = 1;
-        btnReset.Text = "Reset";
-        btnReset.Type = AntdUI.TTypeMini.Default;
-        //
-        // btnReadStatus
-        //
-        btnReadStatus.BorderWidth = 2F;
-        btnReadStatus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        btnReadStatus.Font = new System.Drawing.Font("Segoe UI", 11F);
-        btnReadStatus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnReadStatus.Margin = new System.Windows.Forms.Padding(3, 8, 3, 8);
-        btnReadStatus.Name = "btnReadStatus";
-        btnReadStatus.Radius = 6;
-        btnReadStatus.Size = new System.Drawing.Size(140, 36);
-        btnReadStatus.TabIndex = 2;
-        btnReadStatus.Text = "อ่านสถานะ";
-        btnReadStatus.Type = AntdUI.TTypeMini.Default;
-        //
-        // btnUpload
-        //
-        btnUpload.BorderWidth = 2F;
-        btnUpload.DefaultBorderColor = System.Drawing.Color.FromArgb(76, 175, 80);
-        btnUpload.Font = new System.Drawing.Font("Segoe UI", 11F);
-        btnUpload.ForeColor = System.Drawing.Color.FromArgb(56, 130, 60);
-        btnUpload.Margin = new System.Windows.Forms.Padding(3, 8, 12, 8);
-        btnUpload.Name = "btnUpload";
-        btnUpload.Radius = 6;
-        btnUpload.Size = new System.Drawing.Size(150, 36);
-        btnUpload.TabIndex = 1;
-        btnUpload.Text = "Upload ลง SQL";
-        btnUpload.Type = AntdUI.TTypeMini.Default;
+        grpLog.Controls.Add(txtLog);
+        grpLog.Dock = System.Windows.Forms.DockStyle.Fill;
+        grpLog.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        grpLog.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        grpLog.Margin = new System.Windows.Forms.Padding(3, 3, 3, 10);
+        grpLog.Name = "grpLog";
+        grpLog.Padding = new System.Windows.Forms.Padding(16, 24, 16, 10);
+        grpLog.TabIndex = 3;
+        grpLog.TabStop = false;
+        grpLog.Text = "ผลการทำงาน";
         //
         // txtLog
         //
         txtLog.BackColor = System.Drawing.Color.FromArgb(245, 245, 245);
         txtLog.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
         txtLog.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtLog.Font = new System.Drawing.Font("Consolas", 9.5F);
-        txtLog.Margin = new System.Windows.Forms.Padding(3, 6, 3, 3);
+        txtLog.Font = new System.Drawing.Font("Consolas", 10.5F);
         txtLog.Multiline = true;
         txtLog.Name = "txtLog";
         txtLog.ReadOnly = true;
-        txtLog.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-        txtLog.TabIndex = 8;
-        tlpClamp.SetColumnSpan(txtLog, 4);
+        txtLog.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+        txtLog.TabIndex = 0;
+        txtLog.WordWrap = false;
         //
         // flpActions
         //
@@ -579,12 +492,11 @@ partial class ClampSettingUserControl
         flpActions.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
         flpActions.Margin = new System.Windows.Forms.Padding(0);
         flpActions.Name = "flpActions";
-        flpActions.TabIndex = 3;
+        flpActions.TabIndex = 4;
         flpActions.WrapContents = false;
         //
         // btnSave
         //
-        btnSave.BackColor = System.Drawing.Color.FromArgb(91, 155, 213);
         btnSave.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
         btnSave.ForeColor = System.Drawing.Color.White;
         btnSave.Margin = new System.Windows.Forms.Padding(3, 12, 3, 12);
@@ -611,24 +523,26 @@ partial class ClampSettingUserControl
         //
         // ClampSettingUserControl
         //
-        AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-        AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+        AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+        AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
         BackColor = System.Drawing.Color.White;
         Controls.Add(tlpRoot);
         Name = "ClampSettingUserControl";
-        Size = new System.Drawing.Size(880, 900);
+        Size = new System.Drawing.Size(1080, 1112);
 
         tlpRoot.ResumeLayout(false);
         grpConnection.ResumeLayout(false);
         tlpConn.ResumeLayout(false);
         tlpConn.PerformLayout();
-        grpAddress.ResumeLayout(false);
-        tlpAddr.ResumeLayout(false);
-        tlpAddr.PerformLayout();
-        grpClamp.ResumeLayout(false);
-        tlpClamp.ResumeLayout(false);
-        tlpClamp.PerformLayout();
-        flpClampActions.ResumeLayout(false);
+        grpProgram.ResumeLayout(false);
+        tlpProgram.ResumeLayout(false);
+        tlpProgram.PerformLayout();
+        flpProgramActions.ResumeLayout(false);
+        grpAxes.ResumeLayout(false);
+        tlpAxes.ResumeLayout(false);
+        tlpAxesHeader.ResumeLayout(false);
+        grpLog.ResumeLayout(false);
+        grpLog.PerformLayout();
         flpActions.ResumeLayout(false);
         ResumeLayout(false);
     }
@@ -636,42 +550,40 @@ partial class ClampSettingUserControl
     #endregion
 
     private System.Windows.Forms.TableLayoutPanel tlpRoot;
+
     private System.Windows.Forms.GroupBox grpConnection;
     private System.Windows.Forms.TableLayoutPanel tlpConn;
     private System.Windows.Forms.Label lblIpLabel;
     private AntdUI.Input txtIp;
-    private AntdUI.Button btnCheckStatus;
     private System.Windows.Forms.Label lblPortLabel;
     private AntdUI.Input txtPort;
+    private AntdUI.Button btnCheckStatus;
     private System.Windows.Forms.Label lblDbLabel;
     private AntdUI.Input txtDbPath;
     private AntdUI.Button btnBrowse;
     private System.Windows.Forms.Label lblStatus;
-    private System.Windows.Forms.GroupBox grpAddress;
-    private System.Windows.Forms.TableLayoutPanel tlpAddr;
-    private System.Windows.Forms.Label lblTargetLabel;
-    private AntdUI.Input txtAddrTarget;
-    private System.Windows.Forms.Label lblRunLabel;
-    private AntdUI.Input txtAddrRun;
-    private System.Windows.Forms.Label lblResetLabel;
-    private AntdUI.Input txtAddrReset;
-    private System.Windows.Forms.Label lblStatusAddrLabel;
-    private AntdUI.Input txtAddrStatus;
-    private System.Windows.Forms.GroupBox grpClamp;
-    private System.Windows.Forms.TableLayoutPanel tlpClamp;
-    private System.Windows.Forms.Label lblProgramLabel;
-    private AntdUI.Input txtProgram;
-    private AntdUI.Button btnLoad;
-    private System.Windows.Forms.Label lblMmLabel;
-    private AntdUI.Input txtValueMm;
-    private System.Windows.Forms.Label lblRawLabel;
-    private System.Windows.Forms.Label lblRawValue;
-    private System.Windows.Forms.FlowLayoutPanel flpClampActions;
-    private AntdUI.Button btnApply;
-    private AntdUI.Button btnReset;
-    private AntdUI.Button btnReadStatus;
-    private AntdUI.Button btnUpload;
+
+    private System.Windows.Forms.GroupBox grpProgram;
+    private System.Windows.Forms.TableLayoutPanel tlpProgram;
+    private System.Windows.Forms.Label lblPlateLabel;
+    private AntdUI.Input txtPlateProgram;
+    private System.Windows.Forms.Label lblShimLabel;
+    private AntdUI.Input txtShimProgram;
+    private System.Windows.Forms.FlowLayoutPanel flpProgramActions;
+    private AntdUI.Button btnLoadAll;
+    private AntdUI.Button btnApplyAll;
+    private AntdUI.Button btnUploadAll;
+
+    private System.Windows.Forms.GroupBox grpAxes;
+    private System.Windows.Forms.TableLayoutPanel tlpAxes;
+    private System.Windows.Forms.TableLayoutPanel tlpAxesHeader;
+    private System.Windows.Forms.Label lblAxesHint;
+    private AntdUI.Button btnUnlock;
+    private AntdUI.Table tblAxes;
+
+    private System.Windows.Forms.GroupBox grpLog;
     private System.Windows.Forms.TextBox txtLog;
+
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnSave;
     private AntdUI.Button btnCancel;

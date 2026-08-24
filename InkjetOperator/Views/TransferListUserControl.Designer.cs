@@ -1,4 +1,4 @@
-namespace InkjetOperator.Views;
+﻿namespace InkjetOperator.Views;
 
 partial class TransferListUserControl
 {
@@ -132,11 +132,11 @@ partial class TransferListUserControl
         tblTransfer.AutoSizeColumnsMode = AntdUI.ColumnsMode.Fill;
         tblTransfer.Bordered = true;
         tblTransfer.ColumnBack = System.Drawing.Color.FromArgb(30, 30, 30);
-        tblTransfer.ColumnFont = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        tblTransfer.ColumnFont = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
         tblTransfer.ColumnFore = System.Drawing.Color.White;
         tblTransfer.Dock = System.Windows.Forms.DockStyle.Fill;
         tblTransfer.EmptyText = "No orders";
-        tblTransfer.Font = new System.Drawing.Font("Segoe UI", 13F);
+        tblTransfer.Font = new System.Drawing.Font("Segoe UI", 11F);
         tblTransfer.Location = new System.Drawing.Point(0, 54);
         tblTransfer.Margin = new System.Windows.Forms.Padding(0, 4, 0, 0);
         tblTransfer.Name = "tblTransfer";

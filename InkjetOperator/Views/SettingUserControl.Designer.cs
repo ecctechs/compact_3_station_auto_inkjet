@@ -37,7 +37,7 @@ partial class SettingUserControl
         btnClampSetting = new AntdUI.Button();
         btnUvTest = new AntdUI.Button();
         pnlContent = new AntdUI.Panel();
-        pnlContentArea = new Panel();
+        pnlContentArea = new BufferedPanel();
         tlpSettingRoot.SuspendLayout();
         pnlSidebar.SuspendLayout();
         tlpSidebar.SuspendLayout();
@@ -196,7 +196,7 @@ partial class SettingUserControl
         // 
         // pnlContentArea
         // 
-        pnlContentArea.AutoScroll = false;
+        pnlContentArea.AutoScroll = true;
         pnlContentArea.BackColor = Color.White;
         pnlContentArea.Dock = DockStyle.Fill;
         pnlContentArea.Location = new Point(10, 10);
@@ -233,5 +233,5 @@ partial class SettingUserControl
     private AntdUI.Button btnClampSetting;
     private AntdUI.Button btnUvTest;
     private AntdUI.Panel pnlContent;
-    private System.Windows.Forms.Panel pnlContentArea;
+    private BufferedPanel pnlContentArea;
 }
