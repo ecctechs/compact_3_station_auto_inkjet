@@ -103,11 +103,16 @@ public partial class ClampSettingUserControl : UserControl
         UpdateDbStatus();
     }
 
+    /// <summary>
+    /// ชุดสีเดียวกับตาราง Register Map ในหน้า PLC Setting —
+    /// อ่านอย่างเดียว = Default (ขาว) · สั่งงานเครื่อง = Primary (น้ำเงิน)
+    /// เรียงให้ปุ่มที่ปลอดภัยอยู่ซ้าย เหมือน [Read] [Write] ของหน้านั้น
+    /// </summary>
     private static AntdUI.CellButton[] NewButtons() =>
     [
-        new AntdUI.CellButton("apply", "สั่ง", AntdUI.TTypeMini.Primary) { Radius = 6 },
-        new AntdUI.CellButton("reset", "Reset", AntdUI.TTypeMini.Error) { Radius = 6 },
         new AntdUI.CellButton("read", "อ่าน", AntdUI.TTypeMini.Default) { Radius = 6 },
+        new AntdUI.CellButton("apply", "สั่ง", AntdUI.TTypeMini.Primary) { Radius = 6 },
+        new AntdUI.CellButton("reset", "Reset", AntdUI.TTypeMini.Primary) { Radius = 6 },
     ];
 
     private void RebindTable()
