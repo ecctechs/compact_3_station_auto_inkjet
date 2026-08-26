@@ -69,6 +69,15 @@ public class PrintJob
     [JsonPropertyName("st_status")]
     public string? StStatus { get; set; }
 
+    // เวลาเป็น UTC ตามที่ backend ส่งมา แปลงเป็นเวลาไทยตอนแสดงผล
+    // created_at = เวลารับงาน · updated_at = เวลาแก้ล่าสุด ใช้เป็นเวลาจบงานเมื่อสถานะเป็น Success
+
+    [JsonPropertyName("created_at")]
+    public DateTime? CreatedAt { get; set; }
+
+    [JsonPropertyName("updated_at")]
+    public DateTime? UpdatedAt { get; set; }
+
     // สองตัวล่างมาเฉพาะจาก /job/getAll — endpoint อื่นส่งเป็น null
     // หน้า Order List ใช้ตรวจว่างานส่งครบยัง โดยไม่ต้องยิง getResolved ทีละแถว
 

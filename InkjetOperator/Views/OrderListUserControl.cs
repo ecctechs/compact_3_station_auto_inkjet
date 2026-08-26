@@ -20,6 +20,7 @@ public partial class OrderListUserControl : UserControl
     private System.Windows.Forms.Timer? _pollTimer;
     private bool _showHistory;
     private List<PrintJob> _allJobs = new();
+    private string _lastSignature = "";
 
     public OrderListUserControl()
     {
@@ -30,13 +31,17 @@ public partial class OrderListUserControl : UserControl
 
     private void ConfigureColumns()
     {
+        // SortOrder = ให้ AntdUI จัดเรียงคอลัมน์นั้นเองเมื่อคลิกหัวตาราง
+        // คอลัมน์ Source / Op ไม่ใส่ เพราะเป็นแท็กกับปุ่ม เรียงแล้วไม่มีความหมาย
         tblOrders.Columns = new AntdUI.ColumnCollection
         {
-            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center),
-            new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center),
-            new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center),
-            new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center),
-            new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center),
+            new AntdUI.Column("Start", "Start", AntdUI.ColumnAlign.Center) { Width = "130", SortOrder = true },
+            new AntdUI.Column("End", "End", AntdUI.ColumnAlign.Center) { Width = "130", SortOrder = true },
+            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center) { SortOrder = true },
+            new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center) { SortOrder = true },
+            new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center) { SortOrder = true },
+            new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { SortOrder = true },
+            new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { SortOrder = true },
             new AntdUI.Column("Source", "", AntdUI.ColumnAlign.Center) { Width = "120" },
             new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "220" },
         };
@@ -47,6 +52,14 @@ public partial class OrderListUserControl : UserControl
         btnTabList.Click += (_, _) => SwitchTab(false);
         btnTabHistory.Click += (_, _) => SwitchTab(true);
         tblOrders.CellButtonClick += TblOrders_CellButtonClick;
+
+        // AntdUI เรียงด้วยการเทียบ "ข้อความในเซลล์" ซึ่งทำให้ 26/08 มาหลัง 02/09
+        // จึงดักเทียบเองเฉพาะค่าที่เป็นวันเวลา ที่เหลือปล่อยเป็นการเทียบแบบรู้ตัวเลข
+        tblOrders.CustomSort += CompareCellText;
+
+        // เปลี่ยนช่วงวันที่ = ต้องดึงใหม่ ไม่ใช่กรองของที่โหลดไว้ — งานเก่ายังไม่ได้อยู่ในมือ
+        dtpHistoryRange.ValueChanged += async (_, _) => await RefreshDataAsync(force: true);
+        btnClearDate.Click += (_, _) => dtpHistoryRange.Value = null;
 
         Load += OnLoad;
         Disposed += OnDisposed;
@@ -72,12 +85,19 @@ public partial class OrderListUserControl : UserControl
         _pollTimer.Start();
     }
 
-    private async Task RefreshDataAsync()
+    private async Task RefreshDataAsync(bool force = false)
     {
         if (_api == null) return;
         try
         {
-            var (jobs, error) = await _api.GetAllJobsAsync(100);
+            DateTime? fromUtc = null, toUtc = null;
+            if (_showHistory && TryGetDateRange(out var from, out var to))
+            {
+                fromUtc = ToUtcFromThai(from);
+                toUtc = ToUtcFromThai(to);
+            }
+
+            var (jobs, error) = await _api.GetAllJobsAsync(100, fromUtc, toUtc);
             if (IsDisposed) return;
             if (error != null)
             {
@@ -85,6 +105,13 @@ public partial class OrderListUserControl : UserControl
                 return;
             }
             _allJobs = jobs;
+
+            // ผูก DataSource ใหม่ทีไร ตารางจะรีเซ็ตทั้งลำดับที่เรียงไว้และตำแหน่ง scroll
+            // รอบ poll ที่ข้อมูลไม่เปลี่ยนจึงไม่ต้องผูกใหม่ ไม่งั้นทุก 5 วิจะกระตุกทีนึง
+            var signature = BuildSignature(jobs);
+            if (!force && signature == _lastSignature) return;
+
+            _lastSignature = signature;
             RebindTable();
         }
         catch (Exception ex)
@@ -94,12 +121,40 @@ public partial class OrderListUserControl : UserControl
         }
     }
 
+    /// <summary>ย่อทุกอย่างที่ตารางวาดให้เหลือข้อความเดียว ไว้เทียบว่ารอบนี้มีอะไรเปลี่ยนไหม</summary>
+    private static string BuildSignature(List<PrintJob> jobs)
+    {
+        var sb = new System.Text.StringBuilder(jobs.Count * 48);
+        foreach (var j in jobs)
+        {
+            sb.Append(j.Id).Append('|')
+              .Append(j.Status).Append('|')
+              .Append(j.OrderNo).Append('|')
+              .Append(j.CustomerName).Append('|')
+              .Append(j.Type).Append('|')
+              .Append(j.Qty).Append('|')
+              .Append(j.StStatus).Append('|')
+              .Append(j.CreatedAt?.Ticks).Append('|')
+              .Append(j.UpdatedAt?.Ticks).Append('|')
+              .Append(j.PlanRouting?.MarkingMethod).Append('|')
+              .Append(j.Commands?.Count(c => c.Success) ?? 0).Append(';');
+        }
+        return sb.ToString();
+    }
+
     private void SwitchTab(bool showHistory)
     {
         _showHistory = showHistory;
 
         ButtonStyles.SetSelected(btnTabList, !showHistory);
         ButtonStyles.SetSelected(btnTabHistory, showHistory);
+
+        // ตัวกรองวันที่มีเฉพาะแท็บ History — ออกจากแท็บแล้วล้างค่าทิ้ง
+        // ไม่งั้นกลับเข้ามาใหม่จะเห็นรายการหายไปโดยไม่รู้ว่าโดนกรองอยู่
+        lblDateFilter.Visible = showHistory;
+        dtpHistoryRange.Visible = showHistory;
+        btnClearDate.Visible = showHistory;
+        if (!showHistory) dtpHistoryRange.Value = null;
 
         RebindTable();
     }
@@ -111,12 +166,51 @@ public partial class OrderListUserControl : UserControl
             .Where(j => statuses.Contains(j.Status, StringComparer.OrdinalIgnoreCase))
             .ToList();
 
+        bool dateFiltered = _showHistory && TryGetDateRange(out _, out _);
+
         var rows = filtered.Select(j => ToRow(j, _showHistory)).ToList();
         tblOrders.EmptyText = _allJobs.Count == 0
             ? "No orders"
-            : $"No orders (total {_allJobs.Count}, filter: {string.Join("/", statuses.Select(DisplayStatusText))})";
+            : dateFiltered && rows.Count == 0
+                ? "ไม่มีงานในช่วงวันที่ที่เลือก"
+                : $"No orders (total {_allJobs.Count}, filter: {string.Join("/", statuses.Select(DisplayStatusText))})";
         tblOrders.DataSource = null;
         tblOrders.DataSource = rows;
+        ReapplySort();
+    }
+
+    /// <summary>
+    /// ตั้ง DataSource ใหม่ทีไร AntdUI ล้างลำดับที่เรียงไว้ทุกที (แต่ลูกศรบนหัวตารางยังค้าง)
+    /// เรียงกลับตามคอลัมน์เดิม ไม่งั้นหัวตารางกับข้อมูลจะไม่ตรงกัน
+    /// </summary>
+    private void ReapplySort()
+    {
+        if (tblOrders.Columns == null) return;
+
+        foreach (var column in tblOrders.Columns)
+        {
+            if (column.SortMode == AntdUI.SortMode.NONE) continue;
+            tblOrders.Sort(column);
+            return;
+        }
+    }
+
+    /// <summary>ช่วงวันที่ที่เลือก ขยายเป็นทั้งวันตามเวลาไทย (00:00 ถึง 23:59:59)</summary>
+    private bool TryGetDateRange(out DateTime from, out DateTime to)
+    {
+        from = default;
+        to = default;
+
+        var value = dtpHistoryRange.Value;
+        if (value == null || value.Length < 2) return false;
+
+        var a = value[0].Date;
+        var b = value[1].Date;
+        if (b < a) (a, b) = (b, a);
+
+        from = a;
+        to = b.AddDays(1).AddTicks(-1);
+        return true;
     }
 
     private async void TblOrders_CellButtonClick(object? sender, AntdUI.TableButtonEventArgs e)
@@ -278,6 +372,109 @@ public partial class OrderListUserControl : UserControl
     }
 
 
+    // ── เวลา ───────────────────────────────────────────────
+
+    /// <summary>
+    /// รูปแบบเวลาในตาราง — สั้นพอให้อยู่ในคอลัมน์เดียว และใช้แกะกลับตอนเรียง
+    /// ปีเป็น ค.ศ. 2 หลัก ตรงกับปฏิทินของตัวกรองวันที่ ไม่ใช่ปี พ.ศ.
+    /// </summary>
+    private const string TimeFormat = "dd/MM/yy HH:mm";
+
+    private const string Dash = "-";
+
+    /// <summary>
+    /// เครื่องหน้างานอาจตั้ง time zone ไว้ไม่ตรง จึงยึดเวลาไทยตายตัว ไม่ใช้เวลาเครื่อง
+    /// ชื่อโซนบน Windows กับ Linux คนละแบบ ถ้าหาไม่เจอทั้งคู่ค่อยใช้ UTC+7 ตรง ๆ
+    /// </summary>
+    private static readonly TimeZoneInfo ThaiTimeZone = ResolveThaiTimeZone();
+
+    private static TimeZoneInfo ResolveThaiTimeZone()
+    {
+        foreach (var id in new[] { "SE Asia Standard Time", "Asia/Bangkok" })
+        {
+            try { return TimeZoneInfo.FindSystemTimeZoneById(id); }
+            catch (TimeZoneNotFoundException) { }
+            catch (InvalidTimeZoneException) { }
+        }
+        return TimeZoneInfo.CreateCustomTimeZone("ICT", TimeSpan.FromHours(7), "ICT", "ICT");
+    }
+
+    /// <summary>เวลาไทย → UTC สำหรับส่งเป็นเงื่อนไขให้ backend</summary>
+    private static DateTime ToUtcFromThai(DateTime thai) =>
+        TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(thai, DateTimeKind.Unspecified), ThaiTimeZone);
+
+    /// <summary>UTC ที่ backend ส่งมา → เวลาไทย</summary>
+    private static DateTime? ToThaiTime(DateTime? utc)
+    {
+        if (utc == null) return null;
+
+        var value = utc.Value;
+        if (value.Kind == DateTimeKind.Unspecified)
+            value = DateTime.SpecifyKind(value, DateTimeKind.Utc);
+
+        return TimeZoneInfo.ConvertTimeFromUtc(value.ToUniversalTime(), ThaiTimeZone);
+    }
+
+    /// <summary>
+    /// ใช้ InvariantCulture เสมอ — เครื่องหน้างานตั้งเป็น th-TH ซึ่งจะให้ปี พ.ศ.
+    /// ทำให้คอลัมน์ยาวขึ้นและแกะกลับตอนเรียงไม่ได้
+    /// </summary>
+    private static string FormatThaiTime(DateTime? utc) =>
+        ToThaiTime(utc) is { } t
+            ? t.ToString(TimeFormat, System.Globalization.CultureInfo.InvariantCulture)
+            : Dash;
+
+    /// <summary>
+    /// ตัวเทียบของ AntdUI ได้มาแค่ข้อความในเซลล์ ถ้าทั้งคู่เป็นเวลาก็เทียบเป็นเวลา
+    /// นอกนั้นส่งต่อให้การเทียบแบบรู้ตัวเลข (เพื่อให้ Qty 9 มาก่อน 10)
+    /// </summary>
+    private static int CompareCellText(string x, string y)
+    {
+        if (TryParseCellTime(x, out var tx) && TryParseCellTime(y, out var ty))
+            return tx.CompareTo(ty);
+
+        return CompareNatural(x, y);
+    }
+
+    private static bool TryParseCellTime(string? text, out DateTime value) =>
+        DateTime.TryParseExact(
+            (text ?? "").Trim(), TimeFormat,
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None, out value);
+
+    /// <summary>เทียบข้อความโดยอ่านกลุ่มตัวเลขเป็นจำนวน ไม่ใช่ทีละตัวอักษร</summary>
+    private static int CompareNatural(string? a, string? b)
+    {
+        string x = a ?? "", y = b ?? "";
+        int i = 0, j = 0;
+
+        while (i < x.Length && j < y.Length)
+        {
+            if (char.IsDigit(x[i]) && char.IsDigit(y[j]))
+            {
+                int si = i, sj = j;
+                while (i < x.Length && char.IsDigit(x[i])) i++;
+                while (j < y.Length && char.IsDigit(y[j])) j++;
+
+                var nx = x.Substring(si, i - si).TrimStart('0');
+                var ny = y.Substring(sj, j - sj).TrimStart('0');
+
+                if (nx.Length != ny.Length) return nx.Length - ny.Length;
+                int digits = string.CompareOrdinal(nx, ny);
+                if (digits != 0) return digits;
+            }
+            else
+            {
+                int ch = char.ToUpperInvariant(x[i]).CompareTo(char.ToUpperInvariant(y[j]));
+                if (ch != 0) return ch;
+                i++;
+                j++;
+            }
+        }
+
+        return (x.Length - i) - (y.Length - j);
+    }
+
     private static OrderRow ToRow(PrintJob job, bool isHistory)
     {
         var (statusLabel, statusColor) = DisplayStatus(job.Status);
@@ -299,9 +496,14 @@ public partial class OrderListUserControl : UserControl
         }
         buttons.Add(new AntdUI.CellButton("detail", "", AntdUI.TTypeMini.Primary) { Radius = 6, IconSvg = "SearchOutlined" });
 
+        // End มีความหมายเฉพาะงานที่จบแล้ว — งานที่ยังวิ่งอยู่ updated_at คือเวลาแก้ล่าสุด ไม่ใช่เวลาจบ
+        bool finished = string.Equals(job.Status, "Success", StringComparison.OrdinalIgnoreCase);
+
         return new OrderRow
         {
             Id = job.Id,
+            Start = FormatThaiTime(job.CreatedAt),
+            End = finished ? FormatThaiTime(job.UpdatedAt) : Dash,
             OrderNo = job.OrderNo ?? "",
             Customer = job.CustomerName ?? "",
             Type = job.Type ?? "",
@@ -316,6 +518,8 @@ public partial class OrderListUserControl : UserControl
 internal class OrderRow : AntdUI.NotifyProperty
 {
     public int Id { get; set; }
+    public string Start { get; set; } = "";
+    public string End { get; set; } = "";
     public string OrderNo { get; set; } = "";
     public string Customer { get; set; } = "";
     public string Type { get; set; } = "";

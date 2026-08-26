@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const ResponseManager = require("../middleware/ResponseManager");
 const { PrintJob, PrintJobCommand } = require("../model/jobModel");
 const {
@@ -51,11 +52,23 @@ class JobController {
 
   static async getAll(req, res) {
     try {
-      const { status, page, limit } = req.query;
+      const { status, page, limit, from, to } = req.query;
       const where = {};
 
       if (status) {
         where.status = status;
+      }
+
+      // ตัวกรองวันที่ของหน้า History — ส่งมาเป็น ISO (UTC) ที่ฝั่ง client
+      // ขยายเป็นทั้งวันตามเวลาไทยไว้แล้ว ที่นี่จึงกรองตรง ๆ ไม่ตีความเพิ่ม
+      const fromAt = from ? new Date(from) : null;
+      const toAt = to ? new Date(to) : null;
+      if (fromAt && !isNaN(fromAt) && toAt && !isNaN(toAt)) {
+        where.created_at = { [Op.between]: [fromAt, toAt] };
+      } else if (fromAt && !isNaN(fromAt)) {
+        where.created_at = { [Op.gte]: fromAt };
+      } else if (toAt && !isNaN(toAt)) {
+        where.created_at = { [Op.lte]: toAt };
       }
 
       const offset = (page - 1) * limit;

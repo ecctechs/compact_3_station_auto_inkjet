@@ -152,11 +152,21 @@ public class ApiClient
         }
     }
 
-    public async Task<(List<PrintJob> jobs, string? error)> GetAllJobsAsync(int limit = 100)
+    /// <summary>
+    /// <paramref name="fromUtc"/> / <paramref name="toUtc"/> ใช้กรอง created_at ที่ฝั่ง backend
+    /// ต้องกรองที่นั่น ไม่ใช่กรองในหน้าจอ เพราะ endpoint คืนมาแค่ limit แถวล่าสุด
+    /// งานเก่ากว่านั้นจะไม่ถูกส่งมาให้กรองตั้งแต่แรก
+    /// </summary>
+    public async Task<(List<PrintJob> jobs, string? error)> GetAllJobsAsync(
+        int limit = 100, DateTime? fromUtc = null, DateTime? toUtc = null)
     {
         try
         {
-            var response = await _http.GetAsync($"/job/getAll?page=1&limit={limit}");
+            var url = $"/job/getAll?page=1&limit={limit}";
+            if (fromUtc.HasValue) url += $"&from={Uri.EscapeDataString(fromUtc.Value.ToString("o"))}";
+            if (toUtc.HasValue) url += $"&to={Uri.EscapeDataString(toUtc.Value.ToString("o"))}";
+
+            var response = await _http.GetAsync(url);
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
                 return (new(), $"[{(int)response.StatusCode}] {body}");

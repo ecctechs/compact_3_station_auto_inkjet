@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using InkjetOperator.Services;
 
 namespace InkjetOperator;
@@ -16,6 +16,7 @@ static class Program
         // has to happen before ConfigureAntdUi() touches the library.
         ApplicationConfiguration.Initialize();
 
+        UseGregorianYears();
         ConfigureAntdUi();
 
         // Load local transform patterns (patterns.xml next to the exe).
@@ -24,6 +25,30 @@ static class Program
         PatternStore.SeedDefaults(patternsPath);
 
         Application.Run(new Views.MainShellForm());
+    }
+
+    /// <summary>
+    /// Keep Thai names but count years the western way.
+    /// <para>
+    /// .NET pairs th-TH with <see cref="ThaiBuddhistCalendar"/>, so a plain
+    /// <c>DateTime.ToString("dd/MM/yyyy")</c> on these machines prints 2569 rather
+    /// than 2026. The backend, the barcodes and the Order List columns all carry
+    /// AD years, so one BE year showing up inside a date picker reads as a
+    /// different date entirely. Swapping just the calendar keeps Thai month and day
+    /// names everywhere they are used.
+    /// </para>
+    /// </summary>
+    private static void UseGregorianYears()
+    {
+        var culture = (CultureInfo)CultureInfo.CurrentCulture.Clone();
+        if (culture.DateTimeFormat.Calendar is GregorianCalendar) return;
+
+        var gregorian = culture.OptionalCalendars.OfType<GregorianCalendar>().FirstOrDefault();
+        if (gregorian == null) return;
+
+        culture.DateTimeFormat.Calendar = gregorian;
+        CultureInfo.DefaultThreadCurrentCulture = culture;
+        CultureInfo.CurrentCulture = culture;
     }
 
     /// <summary>
@@ -41,6 +66,11 @@ static class Program
     {
         // Build the icon table first - see InitAntdUiIconDb() for why.
         InitAntdUiIconDb();
+
+        // AntdUI ships Chinese strings by default - the calendar popup and the
+        // table filter would otherwise render as Chinese. Has to be set before the
+        // first control is built, because the pickers read it when they are created.
+        AntdUI.Localization.Provider = new Theme.ThaiLocalization();
 
         AntdUI.Config.Animation = true;
 

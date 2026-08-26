@@ -33,6 +33,9 @@ partial class OrderListUserControl
         flpTabs = new System.Windows.Forms.FlowLayoutPanel();
         btnTabList = new AntdUI.Button();
         btnTabHistory = new AntdUI.Button();
+        lblDateFilter = new System.Windows.Forms.Label();
+        dtpHistoryRange = new AntdUI.DatePickerRange();
+        btnClearDate = new AntdUI.Button();
         tblOrders = new AntdUI.Table();
         flpActions = new System.Windows.Forms.FlowLayoutPanel();
         btnStart = new AntdUI.Button();
@@ -95,6 +98,9 @@ partial class OrderListUserControl
         flpTabs.BackColor = System.Drawing.Color.White;
         flpTabs.Controls.Add(btnTabList);
         flpTabs.Controls.Add(btnTabHistory);
+        flpTabs.Controls.Add(lblDateFilter);
+        flpTabs.Controls.Add(dtpHistoryRange);
+        flpTabs.Controls.Add(btnClearDate);
         flpTabs.Dock = System.Windows.Forms.DockStyle.Fill;
         flpTabs.Location = new System.Drawing.Point(0, 0);
         flpTabs.Margin = new System.Windows.Forms.Padding(0);
@@ -131,6 +137,49 @@ partial class OrderListUserControl
         btnTabHistory.TabIndex = 1;
         btnTabHistory.Text = "History";
         btnTabHistory.Type = AntdUI.TTypeMini.Default;
+        //
+        // lblDateFilter
+        //
+        lblDateFilter.Anchor = System.Windows.Forms.AnchorStyles.Left;
+        lblDateFilter.AutoSize = true;
+        lblDateFilter.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblDateFilter.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblDateFilter.Margin = new System.Windows.Forms.Padding(20, 3, 4, 3);
+        lblDateFilter.Name = "lblDateFilter";
+        lblDateFilter.Size = new System.Drawing.Size(70, 36);
+        lblDateFilter.TabIndex = 2;
+        lblDateFilter.Text = "ช่วงวันที่ :";
+        lblDateFilter.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        lblDateFilter.Visible = false;
+        //
+        // dtpHistoryRange
+        //
+        dtpHistoryRange.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        dtpHistoryRange.Font = new System.Drawing.Font("Segoe UI", 10F);
+        dtpHistoryRange.Format = "dd/MM/yyyy";
+        dtpHistoryRange.Margin = new System.Windows.Forms.Padding(3);
+        dtpHistoryRange.Name = "dtpHistoryRange";
+        dtpHistoryRange.PlaceholderStart = "จากวันที่";
+        dtpHistoryRange.PlaceholderEnd = "ถึงวันที่";
+        dtpHistoryRange.Radius = 6;
+        dtpHistoryRange.Size = new System.Drawing.Size(250, 36);
+        dtpHistoryRange.TabIndex = 3;
+        dtpHistoryRange.Visible = false;
+        //
+        // btnClearDate
+        //
+        btnClearDate.DefaultBorderColor = System.Drawing.Color.FromArgb(180, 180, 180);
+        btnClearDate.BorderWidth = 1F;
+        btnClearDate.Font = new System.Drawing.Font("Segoe UI", 10F);
+        btnClearDate.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        btnClearDate.Margin = new System.Windows.Forms.Padding(3);
+        btnClearDate.Name = "btnClearDate";
+        btnClearDate.Radius = 6;
+        btnClearDate.Size = new System.Drawing.Size(70, 36);
+        btnClearDate.TabIndex = 4;
+        btnClearDate.Text = "ล้าง";
+        btnClearDate.Type = AntdUI.TTypeMini.Default;
+        btnClearDate.Visible = false;
         //
         // tblOrders
         //
@@ -195,6 +244,9 @@ partial class OrderListUserControl
     private System.Windows.Forms.FlowLayoutPanel flpTabs;
     private AntdUI.Button btnTabList;
     private AntdUI.Button btnTabHistory;
+    private System.Windows.Forms.Label lblDateFilter;
+    private AntdUI.DatePickerRange dtpHistoryRange;
+    private AntdUI.Button btnClearDate;
     private AntdUI.Table tblOrders;
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnStart;
