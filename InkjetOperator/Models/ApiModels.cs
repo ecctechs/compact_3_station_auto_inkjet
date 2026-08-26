@@ -68,6 +68,15 @@ public class PrintJob
 
     [JsonPropertyName("st_status")]
     public string? StStatus { get; set; }
+
+    // สองตัวล่างมาเฉพาะจาก /job/getAll — endpoint อื่นส่งเป็น null
+    // หน้า Order List ใช้ตรวจว่างานส่งครบยัง โดยไม่ต้องยิง getResolved ทีละแถว
+
+    [JsonPropertyName("commands")]
+    public List<CommandResult>? Commands { get; set; }
+
+    [JsonPropertyName("plan_routing")]
+    public PlanRoutingDto? PlanRouting { get; set; }
 }
 
 // --- Request DTOs ---

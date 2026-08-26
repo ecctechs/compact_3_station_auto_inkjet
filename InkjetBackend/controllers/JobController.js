@@ -59,11 +59,19 @@ class JobController {
       }
 
       const offset = (page - 1) * limit;
+
+      // commands + plan_routing มาด้วยเลย เพราะหน้า Order List ต้องรู้ว่างานส่งครบยัง
+      // จึงจะระบายสีปุ่มจบงานได้ — ถ้าไม่ include ต้องยิง getResolved ทีละแถวทุกรอบ poll
       const { count, rows } = await PrintJob.findAndCountAll({
         where,
+        include: [
+          { model: PrintJobCommand, as: "commands" },
+          { model: PlanRouting, as: "plan_routing" },
+        ],
         order: [["created_at", "DESC"]],
         offset,
         limit,
+        distinct: true,
       });
 
       return ResponseManager.SuccessResponse(req, res, 200, {

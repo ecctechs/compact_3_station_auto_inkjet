@@ -1,4 +1,4 @@
-using InkjetOperator.Models;
+﻿using InkjetOperator.Models;
 using InkjetOperator.Services;
 
 using InkjetOperator.Theme;
@@ -7,8 +7,11 @@ namespace InkjetOperator.Views;
 
 public partial class OrderListUserControl : UserControl
 {
-    private static readonly Color RowGreen = DesignTokens.RowSuccess;
+    // สถานะมี 3 แบบเท่านั้น: Waiting แดง · Working ส้ม · Finished เขียว
+    // ค่าที่ backend เก็บยังเป็น Waiting / Process / Success เหมือนเดิม แปลงตอนแสดงผล
     private static readonly Color StatusRed = DesignTokens.Danger;
+    private static readonly Color StatusOrange = DesignTokens.Warning;
+    private static readonly Color StatusGreen = DesignTokens.SuccessText;
 
     private static readonly string[] ActiveStatuses = ["Waiting", "Process"];
     private static readonly string[] HistoryStatuses = ["Success"];
@@ -111,7 +114,7 @@ public partial class OrderListUserControl : UserControl
         var rows = filtered.Select(j => ToRow(j, _showHistory)).ToList();
         tblOrders.EmptyText = _allJobs.Count == 0
             ? "No orders"
-            : $"No orders (total {_allJobs.Count}, filter: {string.Join("/", statuses)})";
+            : $"No orders (total {_allJobs.Count}, filter: {string.Join("/", statuses.Select(DisplayStatusText))})";
         tblOrders.DataSource = null;
         tblOrders.DataSource = rows;
     }
@@ -141,6 +144,7 @@ public partial class OrderListUserControl : UserControl
     {
         if (_api == null) return;
 
+        // อ่านสดก่อนตัดสินใจ — ตารางอาจค้างได้ถึง 5 วิตามรอบ poll
         var resolved = await _api.GetResolvedJobAsync(jobId);
         if (resolved == null)
         {
@@ -148,58 +152,47 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        var markingMethod = resolved.PlanRouting?.MarkingMethod ?? "";
-        var steps = GetRequiredSteps(markingMethod);
-        var completedCmds = resolved.Commands
-            .Where(c => c.Success)
-            .Select(c => c.Command)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var steps = CheckSteps(resolved.PlanRouting?.MarkingMethod, resolved.Commands);
 
-        bool isTwoRoundMk = markingMethod == "22";
-
-        if (isTwoRoundMk)
+        // MK วิ่ง 2 รอบ: "จบรอบแรก" เป็นขั้นตอนกลางทาง ไม่ใช่การจบงาน
+        // ถ้าเคยจบรอบแรกไปแล้วไม่ต้องถามซ้ำ ให้ตกไปใช้ทางยืนยันด้วยมือแทน
+        if (steps.IsTwoRoundMk && steps.MkCount == 1 && !steps.Round1Done)
         {
-            int mkCount = resolved.Commands.Count(c => c.Success &&
-                c.Command is "MK" or "MK1" or "MK2");
-
-            if (mkCount < 1)
-            {
-                Notify.WarnModal(this, "ยังกดไม่ครบ", "ยังไม่ได้ส่ง MK — กรุณาส่ง MK ก่อนจบงาน");
+            if (!Confirm.Ask(this, "จบงานรอบ 1",
+                    $"Job #{jobId} — MK วิ่ง 2 รอบ\n\nส่ง MK ไปแล้ว {steps.MkCount} รอบ\nจบรอบแรกเพื่อกดส่ง MK อีกรอบ?"))
                 return;
-            }
 
-            if (mkCount < 2)
-            {
-                if (!Confirm.Ask(this, "จบงานรอบ 1",
-                        $"Job #{jobId} — MK วิ่ง 2 รอบ\n\nส่ง MK ไปแล้ว {mkCount} รอบ\nจบรอบแรกเพื่อกดส่ง MK อีกรอบ?"))
-                    return;
-
-                await _api.SaveSendStepAsync(jobId, "MK_ROUND1_DONE");
-                Notify.Success(this, $"Job #{jobId} จบรอบแรก — กดส่ง MK ได้อีกรอบ");
-                await RefreshDataAsync();
-                return;
-            }
-        }
-        else
-        {
-            var missing = steps.Where(s => !completedCmds.Contains(s)).ToList();
-            if (missing.Count > 0)
-            {
-                var list = string.Join(", ", missing);
-                Notify.WarnModal(this, "ยังกดไม่ครบ",
-                    $"Job #{jobId} ยังส่งไม่ครบ\n\nยังขาด: {list}\n\nกรุณาส่งให้ครบก่อนจบงาน");
-                return;
-            }
-        }
-
-        if (!Confirm.Ask(this, "ยืนยันจบงาน",
-                $"จบงาน Job #{jobId}\n\nยืนยันหรือไม่?"))
+            await _api.SaveSendStepAsync(jobId, "MK_ROUND1_DONE");
+            Notify.Success(this, $"Job #{jobId} จบรอบแรก — กดส่ง MK ได้อีกรอบ");
+            await RefreshDataAsync();
             return;
+        }
+
+        // งานยังไม่ครบก็จบได้ ถ้าผู้ใช้ยืนยันเอง — บันทึกไว้ว่าเป็นการจบด้วยมือ
+        bool manual = !steps.Complete;
+        if (manual)
+        {
+            var list = string.Join(", ", steps.Missing);
+            if (!Confirm.Ask(this, "งานยังส่งไม่ครบ",
+                    $"Job #{jobId} ยังส่งไม่ครบ\n\nยังขาด: {list}\n\n" +
+                    "ยืนยันจบงานทั้งที่ยังส่งไม่ครบหรือไม่?"))
+                return;
+        }
+        else if (!Confirm.Ask(this, "ยืนยันจบงาน",
+                     $"จบงาน Job #{jobId}\n\nยืนยันหรือไม่?"))
+        {
+            return;
+        }
+
+        if (manual)
+            await _api.SaveSendStepAsync(jobId, "MANUAL_COMPLETE");
 
         var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Success");
         if (ok)
         {
-            Notify.Success(this, $"Job #{jobId} จบงานแล้ว");
+            Notify.Success(this, manual
+                ? $"Job #{jobId} จบงานแล้ว (ยืนยันด้วยมือ)"
+                : $"Job #{jobId} จบงานแล้ว");
             await RefreshDataAsync();
         }
         else
@@ -207,6 +200,55 @@ public partial class OrderListUserControl : UserControl
             Notify.ErrorModal(this, "จบงานไม่สำเร็จ", err ?? "ไม่สามารถบันทึกสถานะจบงานได้");
         }
     }
+
+    // ── ตรวจความครบของงาน ──────────────────────────────────
+
+    /// <summary>ผลตรวจว่างานส่งครบทุกขั้นตอนแล้วหรือยัง</summary>
+    private readonly record struct StepStatus(
+        bool Complete, List<string> Missing, bool IsTwoRoundMk, int MkCount, bool Round1Done);
+
+    /// <summary>
+    /// ใช้ร่วมกันทั้งตอนระบายสีปุ่มและตอนกดจบงาน เพื่อไม่ให้สองที่ตัดสินคนละแบบ
+    /// marking_method "22" คือ MK วิ่ง 2 รอบ ครบต่อเมื่อส่ง MK สำเร็จครบ 2 ครั้ง
+    /// </summary>
+    private static StepStatus CheckSteps(string? markingMethod, List<CommandResult>? commands)
+    {
+        var method = markingMethod ?? "";
+        var done = (commands ?? new List<CommandResult>()).Where(c => c.Success).ToList();
+
+        if (method == "22")
+        {
+            int mkCount = done.Count(c => c.Command is "MK" or "MK1" or "MK2");
+            bool round1 = done.Any(c =>
+                string.Equals(c.Command, "MK_ROUND1_DONE", StringComparison.OrdinalIgnoreCase));
+
+            var missing = mkCount >= 2
+                ? new List<string>()
+                : new List<string> { $"MK รอบ {mkCount + 1}" };
+
+            return new StepStatus(mkCount >= 2, missing, true, mkCount, round1);
+        }
+
+        var sent = done.Select(c => c.Command).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var need = GetRequiredSteps(method).Where(x => !sent.Contains(x)).ToList();
+        return new StepStatus(need.Count == 0, need, false, 0, false);
+    }
+
+    /// <summary>Waiting / Process / Success ของ backend → ชื่อกับสีที่หน้าจอใช้</summary>
+    private static (string Text, Color Color) DisplayStatus(string? status)
+    {
+        if (string.Equals(status, "Process", StringComparison.OrdinalIgnoreCase))
+            return ("Working", StatusOrange);
+        if (string.Equals(status, "Success", StringComparison.OrdinalIgnoreCase))
+            return ("Finished", StatusGreen);
+        if (string.Equals(status, "Waiting", StringComparison.OrdinalIgnoreCase))
+            return ("Waiting", StatusRed);
+
+        // สถานะนอกเหนือจาก 3 แบบถูกกรองออกไปแล้ว โชว์ค่าดิบไว้กันงงถ้าหลุดมา
+        return (status ?? "", StatusRed);
+    }
+
+    private static string DisplayStatusText(string status) => DisplayStatus(status).Text;
 
     private static List<string> GetRequiredSteps(string markingMethod)
     {
@@ -238,12 +280,8 @@ public partial class OrderListUserControl : UserControl
 
     private static OrderRow ToRow(PrintJob job, bool isHistory)
     {
-        var isProcessing = string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase);
-        var isWaiting = string.Equals(job.Status, "Waiting", StringComparison.OrdinalIgnoreCase);
-
-        var statusText = new AntdUI.CellText(job.Status ?? "");
-        if (isWaiting)
-            statusText.Fore = StatusRed;
+        var (statusLabel, statusColor) = DisplayStatus(job.Status);
+        var statusText = new AntdUI.CellText(statusLabel) { Fore = statusColor };
 
         var sourceTag = job.StStatus == "1"
             ? new AntdUI.CellTag[] { new AntdUI.CellTag("จาก ST3", AntdUI.TTypeMini.Success) }
@@ -251,10 +289,17 @@ public partial class OrderListUserControl : UserControl
 
         var buttons = new List<AntdUI.CellButton>();
         if (!isHistory)
-            buttons.Add(new AntdUI.CellButton("complete", "จบงาน", AntdUI.TTypeMini.Success) { Radius = 6 });
+        {
+            // เขียว = ส่งครบแล้วจบได้เลย · ส้ม = ยังไม่ครบ กดได้แต่จะเตือนก่อน
+            // commands / plan_routing มาจาก /job/getAll ที่ include ไว้ให้แล้ว
+            var steps = CheckSteps(job.PlanRouting?.MarkingMethod, job.Commands);
+            buttons.Add(new AntdUI.CellButton("complete", "จบงาน",
+                steps.Complete ? AntdUI.TTypeMini.Success : AntdUI.TTypeMini.Warn)
+            { Radius = 6 });
+        }
         buttons.Add(new AntdUI.CellButton("detail", "", AntdUI.TTypeMini.Primary) { Radius = 6, IconSvg = "SearchOutlined" });
 
-        var row = new OrderRow
+        return new OrderRow
         {
             Id = job.Id,
             OrderNo = job.OrderNo ?? "",
@@ -265,11 +310,6 @@ public partial class OrderListUserControl : UserControl
             Source = sourceTag,
             Op = buttons.ToArray(),
         };
-
-        if (isProcessing)
-            row.Back = RowGreen;
-
-        return row;
     }
 }
 
