@@ -62,18 +62,18 @@ partial class PlcSettingUserControl
         tlpRoot.Name = "tlpRoot";
         tlpRoot.Padding = new System.Windows.Forms.Padding(16);
         tlpRoot.RowCount = 4;
-        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 220F));
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 253F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 220F));
-        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 68F));
-        tlpRoot.Size = new System.Drawing.Size(960, 1040);
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 253F));
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 78F));
+        tlpRoot.Size = new System.Drawing.Size(1104, 1196);
         tlpRoot.TabIndex = 0;
         //
         // grpConnection
         //
         grpConnection.Controls.Add(tlpConn);
         grpConnection.Dock = System.Windows.Forms.DockStyle.Fill;
-        grpConnection.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        grpConnection.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
         grpConnection.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         grpConnection.Name = "grpConnection";
         grpConnection.Padding = new System.Windows.Forms.Padding(16, 24, 16, 8);
@@ -85,12 +85,12 @@ partial class PlcSettingUserControl
         //
         tlpConn.BackColor = System.Drawing.Color.White;
         tlpConn.ColumnCount = 6;
-        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 36F));
-        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
-        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
+        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 41F));
+        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 161F));
+        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 115F));
         tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 90F));
+        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 23F));
+        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 103F));
         tlpConn.Controls.Add(lblPlcStatus, 0, 0);
         tlpConn.Controls.Add(lblPlcBadge, 1, 0);
         tlpConn.Controls.Add(btnPlcName, 2, 0);
@@ -101,16 +101,16 @@ partial class PlcSettingUserControl
         tlpConn.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpConn.Name = "tlpConn";
         tlpConn.RowCount = 4;
-        tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
-        tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
-        tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 57F));
+        tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 57F));
+        tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 57F));
         tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpConn.TabIndex = 0;
         //
         // lblPlcStatus
         //
         lblPlcStatus.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblPlcStatus.Font = new System.Drawing.Font("Segoe UI", 20F);
+        lblPlcStatus.Font = new System.Drawing.Font("Segoe UI", 23F);
         lblPlcStatus.ForeColor = System.Drawing.Color.Gray;
         lblPlcStatus.Name = "lblPlcStatus";
         lblPlcStatus.TabIndex = 0;
@@ -121,10 +121,10 @@ partial class PlcSettingUserControl
         //
         lblPlcBadge.Anchor = System.Windows.Forms.AnchorStyles.Left;
         lblPlcBadge.BackColor = System.Drawing.Color.FromArgb(33, 33, 33);
-        lblPlcBadge.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        lblPlcBadge.Font = new System.Drawing.Font("Segoe UI", 11.5F, System.Drawing.FontStyle.Bold);
         lblPlcBadge.ForeColor = System.Drawing.Color.White;
         lblPlcBadge.Name = "lblPlcBadge";
-        lblPlcBadge.Size = new System.Drawing.Size(120, 34);
+        lblPlcBadge.Size = new System.Drawing.Size(138, 39);
         lblPlcBadge.TabIndex = 1;
         lblPlcBadge.Text = "PLC-001";
         lblPlcBadge.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -134,11 +134,11 @@ partial class PlcSettingUserControl
         btnPlcName.Anchor = System.Windows.Forms.AnchorStyles.Left;
         btnPlcName.BorderWidth = 2F;
         btnPlcName.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnPlcName.Font = new System.Drawing.Font("Segoe UI", 9F);
+        btnPlcName.Font = new System.Drawing.Font("Segoe UI", 10.5F);
         btnPlcName.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnPlcName.Name = "btnPlcName";
         btnPlcName.Radius = 6;
-        btnPlcName.Size = new System.Drawing.Size(80, 34);
+        btnPlcName.Size = new System.Drawing.Size(92, 39);
         btnPlcName.TabIndex = 2;
         btnPlcName.Text = "Rename";
         btnPlcName.Type = AntdUI.TTypeMini.Default;
@@ -146,7 +146,7 @@ partial class PlcSettingUserControl
         // lblIpLabel
         //
         lblIpLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblIpLabel.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblIpLabel.Font = new System.Drawing.Font("Segoe UI", 11.5F);
         lblIpLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         lblIpLabel.Name = "lblIpLabel";
         tlpConn.SetColumnSpan(lblIpLabel, 2);
@@ -159,7 +159,7 @@ partial class PlcSettingUserControl
         //
         txtPlc001Ip.Dock = System.Windows.Forms.DockStyle.Fill;
         txtPlc001Ip.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtPlc001Ip.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtPlc001Ip.Font = new System.Drawing.Font("Segoe UI", 11.5F);
         txtPlc001Ip.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtPlc001Ip.Name = "txtPlc001Ip";
         txtPlc001Ip.PlaceholderText = "e.g. 192.168.1.10";
@@ -170,7 +170,7 @@ partial class PlcSettingUserControl
         // lblPortLabel
         //
         lblPortLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblPortLabel.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblPortLabel.Font = new System.Drawing.Font("Segoe UI", 11.5F);
         lblPortLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         lblPortLabel.Name = "lblPortLabel";
         tlpConn.SetColumnSpan(lblPortLabel, 2);
@@ -183,7 +183,7 @@ partial class PlcSettingUserControl
         //
         txtPlc001Port.Dock = System.Windows.Forms.DockStyle.Fill;
         txtPlc001Port.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtPlc001Port.Font = new System.Drawing.Font("Segoe UI", 10F);
+        txtPlc001Port.Font = new System.Drawing.Font("Segoe UI", 11.5F);
         txtPlc001Port.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtPlc001Port.Name = "txtPlc001Port";
         txtPlc001Port.PlaceholderText = "502";
@@ -194,7 +194,7 @@ partial class PlcSettingUserControl
         //
         grpRegisterMap.Controls.Add(tlpMap);
         grpRegisterMap.Dock = System.Windows.Forms.DockStyle.Fill;
-        grpRegisterMap.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        grpRegisterMap.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
         grpRegisterMap.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         grpRegisterMap.Name = "grpRegisterMap";
         grpRegisterMap.Padding = new System.Windows.Forms.Padding(16, 24, 16, 8);
@@ -212,7 +212,7 @@ partial class PlcSettingUserControl
         tlpMap.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpMap.Name = "tlpMap";
         tlpMap.RowCount = 2;
-        tlpMap.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 52F));
+        tlpMap.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 60F));
         tlpMap.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpMap.TabIndex = 0;
         //
@@ -221,9 +221,9 @@ partial class PlcSettingUserControl
         tlpMapHeader.BackColor = System.Drawing.Color.White;
         tlpMapHeader.ColumnCount = 4;
         tlpMapHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpMapHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
-        tlpMapHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
-        tlpMapHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
+        tlpMapHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 161F));
+        tlpMapHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 161F));
+        tlpMapHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 161F));
         tlpMapHeader.Controls.Add(lblMapHint, 0, 0);
         tlpMapHeader.Controls.Add(btnUnlock, 1, 0);
         tlpMapHeader.Controls.Add(btnReadAll, 2, 0);
@@ -238,7 +238,7 @@ partial class PlcSettingUserControl
         // lblMapHint
         //
         lblMapHint.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblMapHint.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblMapHint.Font = new System.Drawing.Font("Segoe UI", 11.5F);
         lblMapHint.ForeColor = System.Drawing.Color.FromArgb(120, 120, 120);
         lblMapHint.Name = "lblMapHint";
         lblMapHint.TabIndex = 0;
@@ -250,11 +250,11 @@ partial class PlcSettingUserControl
         btnUnlock.Anchor = System.Windows.Forms.AnchorStyles.Right;
         btnUnlock.DefaultBorderColor = System.Drawing.Color.FromArgb(220, 160, 40);
         btnUnlock.BorderWidth = 2F;
-        btnUnlock.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        btnUnlock.Font = new System.Drawing.Font("Segoe UI", 12.5F, System.Drawing.FontStyle.Bold);
         btnUnlock.ForeColor = System.Drawing.Color.FromArgb(140, 90, 10);
         btnUnlock.Name = "btnUnlock";
         btnUnlock.Radius = 8;
-        btnUnlock.Size = new System.Drawing.Size(134, 42);
+        btnUnlock.Size = new System.Drawing.Size(154, 48);
         btnUnlock.TabIndex = 3;
         btnUnlock.Text = "🔒 Unlock";
         btnUnlock.Type = AntdUI.TTypeMini.Default;
@@ -264,11 +264,11 @@ partial class PlcSettingUserControl
         btnReadAll.Anchor = System.Windows.Forms.AnchorStyles.Right;
         btnReadAll.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         btnReadAll.BorderWidth = 2F;
-        btnReadAll.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        btnReadAll.Font = new System.Drawing.Font("Segoe UI", 12.5F, System.Drawing.FontStyle.Bold);
         btnReadAll.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnReadAll.Name = "btnReadAll";
         btnReadAll.Radius = 8;
-        btnReadAll.Size = new System.Drawing.Size(134, 42);
+        btnReadAll.Size = new System.Drawing.Size(154, 48);
         btnReadAll.TabIndex = 2;
         btnReadAll.Text = "Read All";
         btnReadAll.Type = AntdUI.TTypeMini.Default;
@@ -276,11 +276,11 @@ partial class PlcSettingUserControl
         // btnAddRow
         //
         btnAddRow.Anchor = System.Windows.Forms.AnchorStyles.Right;
-        btnAddRow.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        btnAddRow.Font = new System.Drawing.Font("Segoe UI", 12.5F, System.Drawing.FontStyle.Bold);
         btnAddRow.ForeColor = System.Drawing.Color.White;
         btnAddRow.Name = "btnAddRow";
         btnAddRow.Radius = 8;
-        btnAddRow.Size = new System.Drawing.Size(134, 42);
+        btnAddRow.Size = new System.Drawing.Size(154, 48);
         btnAddRow.TabIndex = 1;
         btnAddRow.Text = "+ Add Row";
         btnAddRow.Type = AntdUI.TTypeMini.Primary;
@@ -290,23 +290,23 @@ partial class PlcSettingUserControl
         tblPlcMap.AutoSizeColumnsMode = AntdUI.ColumnsMode.Fill;
         tblPlcMap.Bordered = true;
         tblPlcMap.ColumnBack = System.Drawing.Color.FromArgb(30, 30, 30);
-        tblPlcMap.ColumnFont = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        tblPlcMap.ColumnFont = new System.Drawing.Font("Segoe UI", 12.5F, System.Drawing.FontStyle.Bold);
         tblPlcMap.ColumnFore = System.Drawing.Color.White;
         tblPlcMap.Dock = System.Windows.Forms.DockStyle.Fill;
         tblPlcMap.EditMode = AntdUI.TEditMode.Click;
         tblPlcMap.EmptyText = "No register maps";
-        tblPlcMap.Font = new System.Drawing.Font("Segoe UI", 11F);
+        tblPlcMap.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         tblPlcMap.Margin = new System.Windows.Forms.Padding(0);
         tblPlcMap.Name = "tblPlcMap";
         tblPlcMap.Radius = 8;
-        tblPlcMap.RowHeight = 46;
+        tblPlcMap.RowHeight = 53;
         tblPlcMap.TabIndex = 1;
         //
         // grpLog
         //
         grpLog.Controls.Add(txtLog);
         grpLog.Dock = System.Windows.Forms.DockStyle.Fill;
-        grpLog.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        grpLog.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
         grpLog.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         grpLog.Margin = new System.Windows.Forms.Padding(3, 3, 3, 10);
         grpLog.Name = "grpLog";
@@ -320,7 +320,7 @@ partial class PlcSettingUserControl
         txtLog.BackColor = System.Drawing.Color.FromArgb(245, 245, 245);
         txtLog.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
         txtLog.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtLog.Font = new System.Drawing.Font("Consolas", 10.5F);
+        txtLog.Font = new System.Drawing.Font("Consolas", 12F);
         txtLog.Multiline = true;
         txtLog.Name = "txtLog";
         txtLog.ReadOnly = true;
@@ -343,12 +343,12 @@ partial class PlcSettingUserControl
         //
         // btnSave
         //
-        btnSave.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        btnSave.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         btnSave.ForeColor = System.Drawing.Color.White;
         btnSave.Margin = new System.Windows.Forms.Padding(3, 12, 3, 12);
         btnSave.Name = "btnSave";
         btnSave.Radius = 8;
-        btnSave.Size = new System.Drawing.Size(154, 44);
+        btnSave.Size = new System.Drawing.Size(177, 51);
         btnSave.TabIndex = 0;
         btnSave.Text = "Save";
         btnSave.Type = AntdUI.TTypeMini.Primary;
@@ -357,12 +357,12 @@ partial class PlcSettingUserControl
         //
         btnCancel.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnCancel.BorderWidth = 2F;
-        btnCancel.Font = new System.Drawing.Font("Segoe UI", 12F);
+        btnCancel.Font = new System.Drawing.Font("Segoe UI", 14F);
         btnCancel.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnCancel.Margin = new System.Windows.Forms.Padding(3, 12, 3, 12);
         btnCancel.Name = "btnCancel";
         btnCancel.Radius = 8;
-        btnCancel.Size = new System.Drawing.Size(154, 44);
+        btnCancel.Size = new System.Drawing.Size(177, 51);
         btnCancel.TabIndex = 1;
         btnCancel.Text = "Cancel";
         btnCancel.Type = AntdUI.TTypeMini.Default;
@@ -371,12 +371,12 @@ partial class PlcSettingUserControl
         //
         btnCheckStatus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         btnCheckStatus.BorderWidth = 2F;
-        btnCheckStatus.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        btnCheckStatus.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         btnCheckStatus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnCheckStatus.Margin = new System.Windows.Forms.Padding(16, 12, 3, 12);
         btnCheckStatus.Name = "btnCheckStatus";
         btnCheckStatus.Radius = 8;
-        btnCheckStatus.Size = new System.Drawing.Size(170, 44);
+        btnCheckStatus.Size = new System.Drawing.Size(195, 51);
         btnCheckStatus.TabIndex = 2;
         btnCheckStatus.Text = "Check Status";
         btnCheckStatus.Type = AntdUI.TTypeMini.Default;

@@ -28,8 +28,8 @@ public partial class TransferListUserControl : UserControl
             new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center),
             new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center),
             new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center),
-            new AntdUI.Column("StStatus", "สถานะ", AntdUI.ColumnAlign.Center) { Width = "140" },
-            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "180" },
+            new AntdUI.Column("StStatus", "สถานะ", AntdUI.ColumnAlign.Center) { Width = "161" },
+            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "207" },
         };
     }
 

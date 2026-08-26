@@ -40,9 +40,9 @@ partial class AppTitleBarUserControl
         tlpTitleBarRoot.BackColor = System.Drawing.Color.FromArgb(36, 71, 101);
         tlpTitleBarRoot.ColumnCount = 4;
         tlpTitleBarRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpTitleBarRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 46F));
-        tlpTitleBarRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 46F));
-        tlpTitleBarRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 46F));
+        tlpTitleBarRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 53F));
+        tlpTitleBarRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 53F));
+        tlpTitleBarRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 53F));
         tlpTitleBarRoot.Controls.Add(lblAppTitle, 0, 0);
         tlpTitleBarRoot.Controls.Add(btnMinimize, 1, 0);
         tlpTitleBarRoot.Controls.Add(btnMaximize, 2, 0);
@@ -54,19 +54,19 @@ partial class AppTitleBarUserControl
         tlpTitleBarRoot.Padding = new System.Windows.Forms.Padding(14, 0, 0, 0);
         tlpTitleBarRoot.RowCount = 1;
         tlpTitleBarRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpTitleBarRoot.Size = new System.Drawing.Size(1200, 40);
+        tlpTitleBarRoot.Size = new System.Drawing.Size(1380, 46);
         tlpTitleBarRoot.TabIndex = 0;
         //
         // lblAppTitle
         //
         lblAppTitle.BackColor = System.Drawing.Color.Transparent;
         lblAppTitle.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblAppTitle.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblAppTitle.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         lblAppTitle.ForeColor = System.Drawing.Color.White;
         lblAppTitle.Location = new System.Drawing.Point(17, 0);
         lblAppTitle.Margin = new System.Windows.Forms.Padding(3, 0, 8, 0);
         lblAppTitle.Name = "lblAppTitle";
-        lblAppTitle.Size = new System.Drawing.Size(1040, 40);
+        lblAppTitle.Size = new System.Drawing.Size(1196, 46);
         lblAppTitle.TabIndex = 0;
         lblAppTitle.Text = "Compact Inkjet";
         lblAppTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -79,12 +79,12 @@ partial class AppTitleBarUserControl
         btnMinimize.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(91, 155, 213);
         btnMinimize.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(91, 155, 213);
         btnMinimize.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-        btnMinimize.Font = new System.Drawing.Font("Segoe UI", 10F);
+        btnMinimize.Font = new System.Drawing.Font("Segoe UI", 11.5F);
         btnMinimize.ForeColor = System.Drawing.Color.White;
         btnMinimize.Location = new System.Drawing.Point(1062, 0);
         btnMinimize.Margin = new System.Windows.Forms.Padding(0);
         btnMinimize.Name = "btnMinimize";
-        btnMinimize.Size = new System.Drawing.Size(46, 40);
+        btnMinimize.Size = new System.Drawing.Size(53, 46);
         btnMinimize.TabIndex = 1;
         btnMinimize.TabStop = false;
         btnMinimize.Text = "─";
@@ -98,12 +98,12 @@ partial class AppTitleBarUserControl
         btnMaximize.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(91, 155, 213);
         btnMaximize.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(91, 155, 213);
         btnMaximize.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-        btnMaximize.Font = new System.Drawing.Font("Segoe UI", 10F);
+        btnMaximize.Font = new System.Drawing.Font("Segoe UI", 11.5F);
         btnMaximize.ForeColor = System.Drawing.Color.White;
         btnMaximize.Location = new System.Drawing.Point(1108, 0);
         btnMaximize.Margin = new System.Windows.Forms.Padding(0);
         btnMaximize.Name = "btnMaximize";
-        btnMaximize.Size = new System.Drawing.Size(46, 40);
+        btnMaximize.Size = new System.Drawing.Size(53, 46);
         btnMaximize.TabIndex = 2;
         btnMaximize.TabStop = false;
         btnMaximize.Text = "□";
@@ -117,12 +117,12 @@ partial class AppTitleBarUserControl
         btnClose.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(220, 38, 38);
         btnClose.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(220, 38, 38);
         btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-        btnClose.Font = new System.Drawing.Font("Segoe UI", 10F);
+        btnClose.Font = new System.Drawing.Font("Segoe UI", 11.5F);
         btnClose.ForeColor = System.Drawing.Color.White;
         btnClose.Location = new System.Drawing.Point(1154, 0);
         btnClose.Margin = new System.Windows.Forms.Padding(0);
         btnClose.Name = "btnClose";
-        btnClose.Size = new System.Drawing.Size(46, 40);
+        btnClose.Size = new System.Drawing.Size(53, 46);
         btnClose.TabIndex = 3;
         btnClose.TabStop = false;
         btnClose.Text = "✕";

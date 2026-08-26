@@ -44,9 +44,9 @@ partial class OrderDetailDialog
         tlpDialogRoot.Margin = new System.Windows.Forms.Padding(0);
         tlpDialogRoot.Name = "tlpDialogRoot";
         tlpDialogRoot.RowCount = 2;
-        tlpDialogRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
+        tlpDialogRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 46F));
         tlpDialogRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpDialogRoot.Size = new System.Drawing.Size(1400, 1000);
+        tlpDialogRoot.Size = new System.Drawing.Size(1610, 1150);
         tlpDialogRoot.TabIndex = 0;
         //
         // titleBar
@@ -56,7 +56,7 @@ partial class OrderDetailDialog
         titleBar.Margin = new System.Windows.Forms.Padding(0);
         titleBar.Name = "titleBar";
         titleBar.ShowMinimizeButton = false;
-        titleBar.Size = new System.Drawing.Size(1400, 40);
+        titleBar.Size = new System.Drawing.Size(1610, 46);
         titleBar.TabIndex = 0;
         titleBar.TitleText = "Order Detail";
         //
@@ -66,7 +66,7 @@ partial class OrderDetailDialog
         detailPage.Location = new System.Drawing.Point(0, 40);
         detailPage.Margin = new System.Windows.Forms.Padding(0);
         detailPage.Name = "detailPage";
-        detailPage.Size = new System.Drawing.Size(1400, 960);
+        detailPage.Size = new System.Drawing.Size(1610, 1104);
         detailPage.TabIndex = 1;
         //
         // OrderDetailDialog
