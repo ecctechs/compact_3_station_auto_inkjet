@@ -54,9 +54,9 @@ partial class InputDialog
         tlpDialogRoot.Margin = new System.Windows.Forms.Padding(0);
         tlpDialogRoot.Name = "tlpDialogRoot";
         tlpDialogRoot.RowCount = 2;
-        tlpDialogRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 60F));
+        tlpDialogRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 52F));
         tlpDialogRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpDialogRoot.Size = new System.Drawing.Size(506, 267);
+        tlpDialogRoot.Size = new System.Drawing.Size(440, 232);
         tlpDialogRoot.TabIndex = 0;
         //
         // tlpTitleBar
@@ -64,7 +64,7 @@ partial class InputDialog
         tlpTitleBar.BackColor = System.Drawing.Color.FromArgb(36, 71, 101);
         tlpTitleBar.ColumnCount = 2;
         tlpTitleBar.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpTitleBar.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 55F));
+        tlpTitleBar.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 48F));
         tlpTitleBar.Controls.Add(lblTitle, 0, 0);
         tlpTitleBar.Controls.Add(btnTitleClose, 1, 0);
         tlpTitleBar.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -74,19 +74,19 @@ partial class InputDialog
         tlpTitleBar.Padding = new System.Windows.Forms.Padding(16, 0, 0, 0);
         tlpTitleBar.RowCount = 1;
         tlpTitleBar.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpTitleBar.Size = new System.Drawing.Size(506, 60);
+        tlpTitleBar.Size = new System.Drawing.Size(440, 52);
         tlpTitleBar.TabIndex = 0;
         //
         // lblTitle
         //
         lblTitle.BackColor = System.Drawing.Color.Transparent;
         lblTitle.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblTitle.Font = new System.Drawing.Font("Segoe UI", 16F);
+        lblTitle.Font = new System.Drawing.Font("Segoe UI", 14F);
         lblTitle.ForeColor = System.Drawing.Color.White;
         lblTitle.Location = new System.Drawing.Point(19, 0);
         lblTitle.Margin = new System.Windows.Forms.Padding(3, 0, 8, 0);
         lblTitle.Name = "lblTitle";
-        lblTitle.Size = new System.Drawing.Size(438, 60);
+        lblTitle.Size = new System.Drawing.Size(381, 52);
         lblTitle.TabIndex = 0;
         lblTitle.Text = "Title";
         lblTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -100,12 +100,12 @@ partial class InputDialog
         btnTitleClose.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(220, 38, 38);
         btnTitleClose.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(220, 38, 38);
         btnTitleClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-        btnTitleClose.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        btnTitleClose.Font = new System.Drawing.Font("Segoe UI", 11F);
         btnTitleClose.ForeColor = System.Drawing.Color.White;
         btnTitleClose.Location = new System.Drawing.Point(392, 0);
         btnTitleClose.Margin = new System.Windows.Forms.Padding(0);
         btnTitleClose.Name = "btnTitleClose";
-        btnTitleClose.Size = new System.Drawing.Size(55, 60);
+        btnTitleClose.Size = new System.Drawing.Size(48, 52);
         btnTitleClose.TabIndex = 1;
         btnTitleClose.TabStop = false;
         btnTitleClose.Text = "✕";
@@ -125,21 +125,21 @@ partial class InputDialog
         tlpBody.Name = "tlpBody";
         tlpBody.Padding = new System.Windows.Forms.Padding(24, 20, 24, 20);
         tlpBody.RowCount = 3;
-        tlpBody.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
-        tlpBody.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
+        tlpBody.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 26F));
+        tlpBody.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 54F));
         tlpBody.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpBody.Size = new System.Drawing.Size(506, 207);
+        tlpBody.Size = new System.Drawing.Size(440, 180);
         tlpBody.TabIndex = 1;
         //
         // lblPrompt
         //
         lblPrompt.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblPrompt.Font = new System.Drawing.Font("Segoe UI", 14F);
+        lblPrompt.Font = new System.Drawing.Font("Segoe UI", 12F);
         lblPrompt.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         lblPrompt.Location = new System.Drawing.Point(27, 20);
         lblPrompt.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
         lblPrompt.Name = "lblPrompt";
-        lblPrompt.Size = new System.Drawing.Size(444, 30);
+        lblPrompt.Size = new System.Drawing.Size(386, 26);
         lblPrompt.TabIndex = 0;
         lblPrompt.Text = "Prompt";
         lblPrompt.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -149,13 +149,13 @@ partial class InputDialog
         txtValue.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtValue.BorderWidth = 1.5F;
         txtValue.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtValue.Font = new System.Drawing.Font("Segoe UI", 14F);
+        txtValue.Font = new System.Drawing.Font("Segoe UI", 12F);
         txtValue.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         txtValue.Location = new System.Drawing.Point(27, 54);
         txtValue.Margin = new System.Windows.Forms.Padding(3, 8, 3, 0);
         txtValue.Name = "txtValue";
         txtValue.Radius = 8;
-        txtValue.Size = new System.Drawing.Size(444, 53);
+        txtValue.Size = new System.Drawing.Size(386, 46);
         txtValue.TabIndex = 0;
         //
         // flpActions
@@ -167,7 +167,7 @@ partial class InputDialog
         flpActions.Location = new System.Drawing.Point(27, 116);
         flpActions.Margin = new System.Windows.Forms.Padding(3, 16, 3, 0);
         flpActions.Name = "flpActions";
-        flpActions.Size = new System.Drawing.Size(444, 51);
+        flpActions.Size = new System.Drawing.Size(386, 44);
         flpActions.TabIndex = 1;
         flpActions.WrapContents = false;
         //
@@ -177,13 +177,13 @@ partial class InputDialog
         btnCancel.DefaultBack = System.Drawing.Color.White;
         btnCancel.DefaultBorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
         btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-        btnCancel.Font = new System.Drawing.Font("Segoe UI", 14F);
+        btnCancel.Font = new System.Drawing.Font("Segoe UI", 12F);
         btnCancel.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         btnCancel.Location = new System.Drawing.Point(266, 0);
         btnCancel.Margin = new System.Windows.Forms.Padding(0);
         btnCancel.Name = "btnCancel";
         btnCancel.Radius = 8;
-        btnCancel.Size = new System.Drawing.Size(138, 51);
+        btnCancel.Size = new System.Drawing.Size(120, 44);
         btnCancel.TabIndex = 2;
         btnCancel.Text = "Cancel";
         //
@@ -191,13 +191,13 @@ partial class InputDialog
         //
         btnOk.DefaultBack = System.Drawing.Color.FromArgb(91, 155, 213);
         btnOk.DialogResult = System.Windows.Forms.DialogResult.OK;
-        btnOk.Font = new System.Drawing.Font("Segoe UI", 14F);
+        btnOk.Font = new System.Drawing.Font("Segoe UI", 12F);
         btnOk.ForeColor = System.Drawing.Color.White;
         btnOk.Location = new System.Drawing.Point(134, 0);
         btnOk.Margin = new System.Windows.Forms.Padding(0, 0, 12, 0);
         btnOk.Name = "btnOk";
         btnOk.Radius = 8;
-        btnOk.Size = new System.Drawing.Size(138, 51);
+        btnOk.Size = new System.Drawing.Size(120, 44);
         btnOk.TabIndex = 1;
         btnOk.Text = "OK";
         btnOk.Type = AntdUI.TTypeMini.Primary;

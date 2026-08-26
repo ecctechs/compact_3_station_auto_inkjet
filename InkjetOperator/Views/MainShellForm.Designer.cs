@@ -112,7 +112,7 @@ partial class MainShellForm
         btnInputOrder.DefaultBack = Color.FromArgb(91, 155, 213);
         btnInputOrder.DefaultBorderColor = Color.FromArgb(36, 71, 101);
         btnInputOrder.Dock = DockStyle.Fill;
-        btnInputOrder.Font = new Font("Segoe UI", 17F, FontStyle.Bold);
+        btnInputOrder.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
         btnInputOrder.ForeColor = Color.White;
         btnInputOrder.Location = new Point(3, 3);
         btnInputOrder.Margin = new Padding(3, 3, 3, 3);
@@ -128,7 +128,7 @@ partial class MainShellForm
         btnOrderList.DefaultBack = Color.FromArgb(176, 176, 176);
         btnOrderList.DefaultBorderColor = Color.FromArgb(36, 71, 101);
         btnOrderList.Dock = DockStyle.Fill;
-        btnOrderList.Font = new Font("Segoe UI", 17F, FontStyle.Bold);
+        btnOrderList.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
         btnOrderList.ForeColor = Color.White;
         btnOrderList.Location = new Point(203, 3);
         btnOrderList.Margin = new Padding(3, 3, 3, 3);
@@ -144,7 +144,7 @@ partial class MainShellForm
         btnEditPattern.DefaultBack = Color.FromArgb(176, 176, 176);
         btnEditPattern.DefaultBorderColor = Color.FromArgb(36, 71, 101);
         btnEditPattern.Dock = DockStyle.Fill;
-        btnEditPattern.Font = new Font("Segoe UI", 17F, FontStyle.Bold);
+        btnEditPattern.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
         btnEditPattern.ForeColor = Color.White;
         btnEditPattern.Location = new Point(403, 3);
         btnEditPattern.Margin = new Padding(3, 3, 3, 3);
@@ -160,7 +160,7 @@ partial class MainShellForm
         btnSetting.DefaultBack = Color.FromArgb(176, 176, 176);
         btnSetting.DefaultBorderColor = Color.FromArgb(36, 71, 101);
         btnSetting.Dock = DockStyle.Fill;
-        btnSetting.Font = new Font("Segoe UI", 17F, FontStyle.Bold);
+        btnSetting.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
         btnSetting.ForeColor = Color.White;
         btnSetting.Location = new Point(603, 3);
         btnSetting.Margin = new Padding(3, 3, 3, 3);
@@ -176,7 +176,7 @@ partial class MainShellForm
         btnTransfer.DefaultBack = Color.FromArgb(176, 176, 176);
         btnTransfer.DefaultBorderColor = Color.FromArgb(36, 71, 101);
         btnTransfer.Dock = DockStyle.Fill;
-        btnTransfer.Font = new Font("Segoe UI", 17F, FontStyle.Bold);
+        btnTransfer.Font = new Font("Segoe UI", 15F, FontStyle.Bold);
         btnTransfer.ForeColor = Color.White;
         btnTransfer.Location = new Point(803, 3);
         btnTransfer.Margin = new Padding(3, 3, 3, 3);
@@ -205,7 +205,7 @@ partial class MainShellForm
         btnLang.DefaultBack = Color.FromArgb(26, 26, 26);
         btnLang.DefaultBorderColor = Color.FromArgb(26, 26, 26);
         btnLang.Dock = DockStyle.Fill;
-        btnLang.Font = new Font("Segoe UI", 12.5F, FontStyle.Bold);
+        btnLang.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
         btnLang.ForeColor = Color.White;
         btnLang.Location = new Point(1123, 14);
         btnLang.Margin = new Padding(3, 14, 12, 14);

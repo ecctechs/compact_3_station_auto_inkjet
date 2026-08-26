@@ -24,7 +24,7 @@
     -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
-    <ApplicationDefaultFont>Segoe UI, 10.5pt</ApplicationDefaultFont>
+    <ApplicationDefaultFont>Segoe UI, 9pt</ApplicationDefaultFont>
 
     <!--
       AntdUI-main\ and NastoKeyence\ are reference checkouts that happen to sit

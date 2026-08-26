@@ -21,7 +21,7 @@ namespace InkjetOperator.Theme;
 public static class ButtonStyles
 {
     /// <summary>Primary action - filled background, white text (Save, Send, Search).</summary>
-    public static void Primary(AntdUI.Button button, Color? back = null, float fontSize = 17f)
+    public static void Primary(AntdUI.Button button, Color? back = null, float fontSize = 15f)
     {
         ArgumentNullException.ThrowIfNull(button);
 
@@ -40,7 +40,7 @@ public static class ButtonStyles
     /// <param name="fore">Text colour; defaults to the border colour when that
     /// border is a deliberate accent, otherwise to the primary text colour.</param>
     public static void Outline(
-        AntdUI.Button button, Color? border = null, Color? fore = null, float fontSize = 14f)
+        AntdUI.Button button, Color? border = null, Color? fore = null, float fontSize = 12f)
     {
         ArgumentNullException.ThrowIfNull(button);
 

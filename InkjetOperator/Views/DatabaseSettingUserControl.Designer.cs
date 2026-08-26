@@ -48,15 +48,15 @@ partial class DatabaseSettingUserControl
         tlpRoot.Padding = new System.Windows.Forms.Padding(16);
         tlpRoot.RowCount = 2;
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 78F));
-        tlpRoot.Size = new System.Drawing.Size(897, 920);
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 68F));
+        tlpRoot.Size = new System.Drawing.Size(780, 800);
         tlpRoot.TabIndex = 0;
         //
         // grpDatabase
         //
         grpDatabase.Controls.Add(tlpForm);
         grpDatabase.Dock = System.Windows.Forms.DockStyle.Fill;
-        grpDatabase.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
+        grpDatabase.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         grpDatabase.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         grpDatabase.Name = "grpDatabase";
         grpDatabase.Padding = new System.Windows.Forms.Padding(16, 24, 16, 8);
@@ -68,10 +68,10 @@ partial class DatabaseSettingUserControl
         //
         tlpForm.BackColor = System.Drawing.Color.White;
         tlpForm.ColumnCount = 4;
-        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 218F));
+        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 190F));
         tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 9F));
-        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 103F));
+        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 8F));
+        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 90F));
         tlpForm.Controls.Add(lblDbPathLabel, 0, 0);
         tlpForm.Controls.Add(txtDbPath, 1, 0);
         tlpForm.Controls.Add(btnBrowse, 3, 0);
@@ -83,17 +83,17 @@ partial class DatabaseSettingUserControl
         tlpForm.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpForm.Name = "tlpForm";
         tlpForm.RowCount = 5;
-        tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 57F));
-        tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 37F));
-        tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 57F));
-        tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 37F));
+        tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
+        tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
         tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpForm.TabIndex = 0;
         //
         // lblDbPathLabel
         //
         lblDbPathLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblDbPathLabel.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        lblDbPathLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
         lblDbPathLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         lblDbPathLabel.Name = "lblDbPathLabel";
         lblDbPathLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
@@ -105,7 +105,7 @@ partial class DatabaseSettingUserControl
         //
         txtDbPath.Dock = System.Windows.Forms.DockStyle.Fill;
         txtDbPath.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtDbPath.Font = new System.Drawing.Font("Segoe UI", 11.5F);
+        txtDbPath.Font = new System.Drawing.Font("Segoe UI", 10F);
         txtDbPath.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtDbPath.Name = "txtDbPath";
         txtDbPath.PlaceholderText = "Select PrintData.db3 file...";
@@ -118,20 +118,20 @@ partial class DatabaseSettingUserControl
         btnBrowse.Anchor = System.Windows.Forms.AnchorStyles.Left;
         btnBrowse.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         btnBrowse.BorderWidth = 2F;
-        btnBrowse.Font = new System.Drawing.Font("Segoe UI", 10.5F);
+        btnBrowse.Font = new System.Drawing.Font("Segoe UI", 9F);
         btnBrowse.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnBrowse.IconSvg = "FolderOpenFilled";
         btnBrowse.IconRatio = 1.2F;
         btnBrowse.Name = "btnBrowse";
         btnBrowse.Radius = 6;
-        btnBrowse.Size = new System.Drawing.Size(48, 39);
+        btnBrowse.Size = new System.Drawing.Size(42, 34);
         btnBrowse.TabIndex = 2;
         btnBrowse.Type = AntdUI.TTypeMini.Default;
         //
         // lblStatus — under the input, aligned with it
         //
         lblStatus.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblStatus.Font = new System.Drawing.Font("Segoe UI", 11.5F);
+        lblStatus.Font = new System.Drawing.Font("Segoe UI", 10F);
         lblStatus.ForeColor = System.Drawing.Color.Gray;
         lblStatus.Name = "lblStatus";
         tlpForm.SetColumnSpan(lblStatus, 3);
@@ -143,7 +143,7 @@ partial class DatabaseSettingUserControl
         // lblClampPathLabel
         //
         lblClampPathLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblClampPathLabel.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        lblClampPathLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
         lblClampPathLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         lblClampPathLabel.Name = "lblClampPathLabel";
         lblClampPathLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
@@ -155,7 +155,7 @@ partial class DatabaseSettingUserControl
         //
         txtClampPath.Dock = System.Windows.Forms.DockStyle.Fill;
         txtClampPath.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtClampPath.Font = new System.Drawing.Font("Segoe UI", 11.5F);
+        txtClampPath.Font = new System.Drawing.Font("Segoe UI", 10F);
         txtClampPath.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtClampPath.Name = "txtClampPath";
         txtClampPath.PlaceholderText = "Select mydatabase.db3 file...";
@@ -168,20 +168,20 @@ partial class DatabaseSettingUserControl
         btnBrowseClamp.Anchor = System.Windows.Forms.AnchorStyles.Left;
         btnBrowseClamp.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         btnBrowseClamp.BorderWidth = 2F;
-        btnBrowseClamp.Font = new System.Drawing.Font("Segoe UI", 10.5F);
+        btnBrowseClamp.Font = new System.Drawing.Font("Segoe UI", 9F);
         btnBrowseClamp.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnBrowseClamp.IconSvg = "FolderOpenFilled";
         btnBrowseClamp.IconRatio = 1.2F;
         btnBrowseClamp.Name = "btnBrowseClamp";
         btnBrowseClamp.Radius = 6;
-        btnBrowseClamp.Size = new System.Drawing.Size(48, 39);
+        btnBrowseClamp.Size = new System.Drawing.Size(42, 34);
         btnBrowseClamp.TabIndex = 6;
         btnBrowseClamp.Type = AntdUI.TTypeMini.Default;
         //
         // lblClampStatus
         //
         lblClampStatus.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblClampStatus.Font = new System.Drawing.Font("Segoe UI", 11.5F);
+        lblClampStatus.Font = new System.Drawing.Font("Segoe UI", 10F);
         lblClampStatus.ForeColor = System.Drawing.Color.Gray;
         lblClampStatus.Name = "lblClampStatus";
         lblClampStatus.Padding = new System.Windows.Forms.Padding(4, 4, 0, 0);
@@ -202,12 +202,12 @@ partial class DatabaseSettingUserControl
         //
         // btnSave
         //
-        btnSave.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        btnSave.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
         btnSave.ForeColor = System.Drawing.Color.White;
         btnSave.Margin = new System.Windows.Forms.Padding(3, 12, 3, 12);
         btnSave.Name = "btnSave";
         btnSave.Radius = 8;
-        btnSave.Size = new System.Drawing.Size(177, 51);
+        btnSave.Size = new System.Drawing.Size(154, 44);
         btnSave.TabIndex = 0;
         btnSave.Text = "Save";
         btnSave.Type = AntdUI.TTypeMini.Primary;
@@ -216,12 +216,12 @@ partial class DatabaseSettingUserControl
         //
         btnCancel.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnCancel.BorderWidth = 2F;
-        btnCancel.Font = new System.Drawing.Font("Segoe UI", 14F);
+        btnCancel.Font = new System.Drawing.Font("Segoe UI", 12F);
         btnCancel.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnCancel.Margin = new System.Windows.Forms.Padding(3, 12, 3, 12);
         btnCancel.Name = "btnCancel";
         btnCancel.Radius = 8;
-        btnCancel.Size = new System.Drawing.Size(177, 51);
+        btnCancel.Size = new System.Drawing.Size(154, 44);
         btnCancel.TabIndex = 1;
         btnCancel.Text = "Cancel";
         btnCancel.Type = AntdUI.TTypeMini.Default;

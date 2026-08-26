@@ -35,15 +35,15 @@ public partial class OrderListUserControl : UserControl
         // คอลัมน์ Source / Op ไม่ใส่ เพราะเป็นแท็กกับปุ่ม เรียงแล้วไม่มีความหมาย
         tblOrders.Columns = new AntdUI.ColumnCollection
         {
-            new AntdUI.Column("Start", "Start", AntdUI.ColumnAlign.Center) { Width = "150", SortOrder = true },
-            new AntdUI.Column("End", "End", AntdUI.ColumnAlign.Center) { Width = "150", SortOrder = true },
+            new AntdUI.Column("Start", "Start", AntdUI.ColumnAlign.Center) { Width = "130", SortOrder = true },
+            new AntdUI.Column("End", "End", AntdUI.ColumnAlign.Center) { Width = "130", SortOrder = true },
             new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center) { SortOrder = true },
             new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center) { SortOrder = true },
             new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center) { SortOrder = true },
             new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { SortOrder = true },
             new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { SortOrder = true },
-            new AntdUI.Column("Source", "", AntdUI.ColumnAlign.Center) { Width = "140" },
-            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "250" },
+            new AntdUI.Column("Source", "", AntdUI.ColumnAlign.Center) { Width = "120" },
+            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "220" },
         };
     }
 

@@ -28,10 +28,6 @@ namespace InkjetOperator.Theme;
 /// </summary>
 public static class DesignTokens
 {
-    // ขนาดฟอนต์และความสูงของ control ทั้งไฟล์ถูกขยาย 15% พร้อมกับ .Designer.cs
-    // ทุกหน้า เพื่อให้อ่านง่ายขึ้นหน้างาน — ตัวเลข "จำนวนการใช้งาน" ในคอมเมนต์
-    // ด้านล่างนับไว้ตั้งแต่ก่อนขยาย ใช้ดูสัดส่วนได้ แต่ค่าที่เขียนไว้คือค่าปัจจุบัน
-
     // ---- Brand ----
 
     /// <summary>#5B9BD5 - page background, input borders, active tab (83 uses).</summary>
@@ -120,34 +116,34 @@ public static class DesignTokens
     public const string FallbackFontFamily = "Microsoft Sans Serif";
 
     /// <summary>Page title - 28pt bold, as on the ScanBarcode reference page.</summary>
-    public static Font Heading(float size = 32f) => Create(size, FontStyle.Bold);
+    public static Font Heading(float size = 28f) => Create(size, FontStyle.Bold);
 
     /// <summary>Card / section title.</summary>
-    public static Font Subheading(float size = 23f) => Create(size, FontStyle.Bold);
+    public static Font Subheading(float size = 20f) => Create(size, FontStyle.Bold);
 
     /// <summary>Group label above a set of fields.</summary>
-    public static Font SectionLabel(float size = 16f) => Create(size, FontStyle.Bold);
+    public static Font SectionLabel(float size = 14f) => Create(size, FontStyle.Bold);
 
     /// <summary>Field labels and values on the main workflow pages.</summary>
-    public static Font Body(float size = 14f) => Create(size, FontStyle.Regular);
+    public static Font Body(float size = 12f) => Create(size, FontStyle.Regular);
 
     /// <summary>
-    /// Body text on the dense settings pages - the second scale of the type ramp,
-    /// not a mistake. Was 10pt before the screens were scaled up by 15%.
+    /// Body text on the dense settings pages. 10pt is the single most common size
+    /// in the project (96 uses) - it is a second scale, not a mistake.
     /// </summary>
-    public static Font BodySmall(float size = 11.5f) => Create(size, FontStyle.Regular);
+    public static Font BodySmall(float size = 10f) => Create(size, FontStyle.Regular);
 
     /// <summary>Text inside an input control.</summary>
-    public static Font Input(float size = 14f) => Create(size, FontStyle.Regular);
+    public static Font Input(float size = 12f) => Create(size, FontStyle.Regular);
 
     /// <summary>Primary action buttons.</summary>
-    public static Font ButtonFont(float size = 17f) => Create(size, FontStyle.Regular);
+    public static Font ButtonFont(float size = 15f) => Create(size, FontStyle.Regular);
 
     /// <summary>Secondary notes and units.</summary>
-    public static Font Caption(float size = 10.5f) => Create(size, FontStyle.Regular);
+    public static Font Caption(float size = 9f) => Create(size, FontStyle.Regular);
 
     /// <summary>Log output and payload previews.</summary>
-    public static Font Monospace(float size = 12f) =>
+    public static Font Monospace(float size = 10.5f) =>
         Create(size, FontStyle.Regular, MonospaceFontFamily);
 
     /// <summary>
@@ -189,19 +185,19 @@ public static class DesignTokens
     public const int RadiusPanel = 12;
 
     /// <summary>Height of an input on the settings pages (28 uses).</summary>
-    public const int InputHeight = 39;
+    public const int InputHeight = 34;
 
     /// <summary>Height of an input on the operator-facing pages.</summary>
-    public const int InputHeightLarge = 53;
+    public const int InputHeightLarge = 46;
 
     /// <summary>Standard action button height (16 uses).</summary>
-    public const int ButtonHeight = 51;
+    public const int ButtonHeight = 44;
 
     /// <summary>Inline / row-level button height (16 uses).</summary>
-    public const int ButtonHeightSmall = 39;
+    public const int ButtonHeightSmall = 34;
 
     /// <summary>Full-width confirm button, as on the ScanBarcode reference page.</summary>
-    public const int ButtonHeightLarge = 71;
+    public const int ButtonHeightLarge = 62;
 
     /// <summary>Border thickness of an outlined button (34 of 35 uses).</summary>
     public const float ButtonBorderWidth = 2F;

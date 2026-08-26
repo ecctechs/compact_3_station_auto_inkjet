@@ -86,17 +86,17 @@ public partial class OrderDetailUserControl : UserControl
 
     private static AntdUI.ColumnCollection BuildBlockColumns() =>
     [
-        new AntdUI.Column("Block", "Block", AntdUI.ColumnAlign.Center) { Width = "80" },
+        new AntdUI.Column("Block", "Block", AntdUI.ColumnAlign.Center) { Width = "70" },
         new AntdUI.Column("BlockText", "Text", AntdUI.ColumnAlign.Left),
-        new AntdUI.Column("X", "X", AntdUI.ColumnAlign.Center) { Width = "69" },
-        new AntdUI.Column("Y", "Y", AntdUI.ColumnAlign.Center) { Width = "69" },
-        new AntdUI.Column("Size", "Size", AntdUI.ColumnAlign.Center) { Width = "69" },
-        new AntdUI.Column("Scale", "Scale", AntdUI.ColumnAlign.Center) { Width = "69" },
+        new AntdUI.Column("X", "X", AntdUI.ColumnAlign.Center) { Width = "60" },
+        new AntdUI.Column("Y", "Y", AntdUI.ColumnAlign.Center) { Width = "60" },
+        new AntdUI.Column("Size", "Size", AntdUI.ColumnAlign.Center) { Width = "60" },
+        new AntdUI.Column("Scale", "Scale", AntdUI.ColumnAlign.Center) { Width = "60" },
     ];
 
     private static AntdUI.ColumnCollection BuildUvColumns() =>
     [
-        new AntdUI.Column("Field", "Field", AntdUI.ColumnAlign.Center) { Width = "103" },
+        new AntdUI.Column("Field", "Field", AntdUI.ColumnAlign.Center) { Width = "90" },
         new AntdUI.Column("Value", "Value", AntdUI.ColumnAlign.Left),
     ];
 
@@ -282,7 +282,7 @@ public partial class OrderDetailUserControl : UserControl
             ReadOnly = true,
             ScrollBars = ScrollBars.Vertical,
             Dock = DockStyle.Fill,
-            Font = DesignTokens.Monospace(15f),
+            Font = DesignTokens.Monospace(13f),
             BackColor = DesignTokens.SurfaceMuted,
             ForeColor = DesignTokens.TextPrimary,
             Text = preview,

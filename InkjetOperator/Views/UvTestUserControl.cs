@@ -184,7 +184,7 @@ public partial class UvTestUserControl : UserControl
         var list = new ListBox
         {
             Dock = DockStyle.Fill,
-            Font = DesignTokens.Body(12.5f),
+            Font = DesignTokens.Body(11f),
             IntegralHeight = false,
         };
         list.Items.AddRange(items.ToArray());

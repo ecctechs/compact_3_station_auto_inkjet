@@ -88,7 +88,7 @@ public static class UvProgramResolver
         var list = new ListBox
         {
             Dock = DockStyle.Fill,
-            Font = DesignTokens.Body(14f),
+            Font = DesignTokens.Body(12f),
             IntegralHeight = false,
         };
         foreach (var v in variants) list.Items.Add(v + ".uvdx");

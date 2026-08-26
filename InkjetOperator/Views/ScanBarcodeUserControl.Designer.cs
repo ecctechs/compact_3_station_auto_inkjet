@@ -77,18 +77,18 @@ partial class ScanBarcodeUserControl
         tlpScanBarcodeRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 21F));
         tlpScanBarcodeRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 46F));
         tlpScanBarcodeRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 18F));
-        tlpScanBarcodeRoot.Size = new System.Drawing.Size(1265, 989);
+        tlpScanBarcodeRoot.Size = new System.Drawing.Size(1100, 860);
         tlpScanBarcodeRoot.TabIndex = 0;
         //
         // lblScanBarcodeTitle
         //
         lblScanBarcodeTitle.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblScanBarcodeTitle.Font = new System.Drawing.Font("Segoe UI", 32F, System.Drawing.FontStyle.Bold);
+        lblScanBarcodeTitle.Font = new System.Drawing.Font("Segoe UI", 28F, System.Drawing.FontStyle.Bold);
         lblScanBarcodeTitle.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         lblScanBarcodeTitle.Location = new System.Drawing.Point(43, 43);
         lblScanBarcodeTitle.Margin = new System.Windows.Forms.Padding(0, 4, 0, 8);
         lblScanBarcodeTitle.Name = "lblScanBarcodeTitle";
-        lblScanBarcodeTitle.Size = new System.Drawing.Size(1166, 121);
+        lblScanBarcodeTitle.Size = new System.Drawing.Size(1014, 105);
         lblScanBarcodeTitle.TabIndex = 0;
         lblScanBarcodeTitle.Text = "Scan Barcode";
         lblScanBarcodeTitle.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -105,7 +105,7 @@ partial class ScanBarcodeUserControl
         tlpBarcodeCenter.Name = "tlpBarcodeCenter";
         tlpBarcodeCenter.RowCount = 1;
         tlpBarcodeCenter.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpBarcodeCenter.Size = new System.Drawing.Size(1173, 182);
+        tlpBarcodeCenter.Size = new System.Drawing.Size(1020, 158);
         tlpBarcodeCenter.TabIndex = 1;
         //
         // pnlBarcodeContainer
@@ -119,7 +119,7 @@ partial class ScanBarcodeUserControl
         pnlBarcodeContainer.Name = "pnlBarcodeContainer";
         pnlBarcodeContainer.Padding = new System.Windows.Forms.Padding(18);
         pnlBarcodeContainer.Radius = 24;
-        pnlBarcodeContainer.Size = new System.Drawing.Size(391, 182);
+        pnlBarcodeContainer.Size = new System.Drawing.Size(340, 158);
         pnlBarcodeContainer.TabIndex = 0;
         //
         // picBarcode
@@ -129,7 +129,7 @@ partial class ScanBarcodeUserControl
         picBarcode.Image = (System.Drawing.Image)resources.GetObject("picBarcode.Image");
         picBarcode.Location = new System.Drawing.Point(18, 18);
         picBarcode.Name = "picBarcode";
-        picBarcode.Size = new System.Drawing.Size(350, 140);
+        picBarcode.Size = new System.Drawing.Size(304, 122);
         picBarcode.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
         picBarcode.TabIndex = 0;
         picBarcode.TabStop = false;
@@ -148,7 +148,7 @@ partial class ScanBarcodeUserControl
         tlpOrderCenter.Name = "tlpOrderCenter";
         tlpOrderCenter.RowCount = 1;
         tlpOrderCenter.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpOrderCenter.Size = new System.Drawing.Size(1173, 437);
+        tlpOrderCenter.Size = new System.Drawing.Size(1020, 380);
         tlpOrderCenter.TabIndex = 2;
         //
         // pnlOrderInformation
@@ -163,7 +163,7 @@ partial class ScanBarcodeUserControl
         pnlOrderInformation.Name = "pnlOrderInformation";
         pnlOrderInformation.Padding = new System.Windows.Forms.Padding(32);
         pnlOrderInformation.Radius = 22;
-        pnlOrderInformation.Size = new System.Drawing.Size(814, 430);
+        pnlOrderInformation.Size = new System.Drawing.Size(708, 374);
         pnlOrderInformation.TabIndex = 0;
         //
         // tlpOrderInformation
@@ -191,18 +191,18 @@ partial class ScanBarcodeUserControl
         tlpOrderInformation.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
         tlpOrderInformation.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
         tlpOrderInformation.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
-        tlpOrderInformation.Size = new System.Drawing.Size(741, 356);
+        tlpOrderInformation.Size = new System.Drawing.Size(644, 310);
         tlpOrderInformation.TabIndex = 0;
         //
         // lblBarcode
         //
         lblBarcode.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblBarcode.Font = new System.Drawing.Font("Segoe UI", 14F);
+        lblBarcode.Font = new System.Drawing.Font("Segoe UI", 12F);
         lblBarcode.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         lblBarcode.Location = new System.Drawing.Point(3, 0);
         lblBarcode.Margin = new System.Windows.Forms.Padding(3, 0, 20, 0);
         lblBarcode.Name = "lblBarcode";
-        lblBarcode.Size = new System.Drawing.Size(181, 71);
+        lblBarcode.Size = new System.Drawing.Size(157, 62);
         lblBarcode.TabIndex = 0;
         lblBarcode.Text = "Barcode :";
         lblBarcode.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -210,12 +210,12 @@ partial class ScanBarcodeUserControl
         // lblOrderNo
         //
         lblOrderNo.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblOrderNo.Font = new System.Drawing.Font("Segoe UI", 14F);
+        lblOrderNo.Font = new System.Drawing.Font("Segoe UI", 12F);
         lblOrderNo.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         lblOrderNo.Location = new System.Drawing.Point(3, 62);
         lblOrderNo.Margin = new System.Windows.Forms.Padding(3, 0, 20, 0);
         lblOrderNo.Name = "lblOrderNo";
-        lblOrderNo.Size = new System.Drawing.Size(181, 71);
+        lblOrderNo.Size = new System.Drawing.Size(157, 62);
         lblOrderNo.TabIndex = 1;
         lblOrderNo.Text = "Order No :";
         lblOrderNo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -223,12 +223,12 @@ partial class ScanBarcodeUserControl
         // lblCustomerName
         //
         lblCustomerName.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblCustomerName.Font = new System.Drawing.Font("Segoe UI", 14F);
+        lblCustomerName.Font = new System.Drawing.Font("Segoe UI", 12F);
         lblCustomerName.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         lblCustomerName.Location = new System.Drawing.Point(3, 124);
         lblCustomerName.Margin = new System.Windows.Forms.Padding(3, 0, 20, 0);
         lblCustomerName.Name = "lblCustomerName";
-        lblCustomerName.Size = new System.Drawing.Size(181, 71);
+        lblCustomerName.Size = new System.Drawing.Size(157, 62);
         lblCustomerName.TabIndex = 2;
         lblCustomerName.Text = "Customer Name :";
         lblCustomerName.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -236,12 +236,12 @@ partial class ScanBarcodeUserControl
         // lblType
         //
         lblType.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblType.Font = new System.Drawing.Font("Segoe UI", 14F);
+        lblType.Font = new System.Drawing.Font("Segoe UI", 12F);
         lblType.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         lblType.Location = new System.Drawing.Point(3, 186);
         lblType.Margin = new System.Windows.Forms.Padding(3, 0, 20, 0);
         lblType.Name = "lblType";
-        lblType.Size = new System.Drawing.Size(181, 71);
+        lblType.Size = new System.Drawing.Size(157, 62);
         lblType.TabIndex = 3;
         lblType.Text = "Type :";
         lblType.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -249,12 +249,12 @@ partial class ScanBarcodeUserControl
         // lblQty
         //
         lblQty.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblQty.Font = new System.Drawing.Font("Segoe UI", 14F);
+        lblQty.Font = new System.Drawing.Font("Segoe UI", 12F);
         lblQty.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         lblQty.Location = new System.Drawing.Point(3, 248);
         lblQty.Margin = new System.Windows.Forms.Padding(3, 0, 20, 0);
         lblQty.Name = "lblQty";
-        lblQty.Size = new System.Drawing.Size(181, 71);
+        lblQty.Size = new System.Drawing.Size(157, 62);
         lblQty.TabIndex = 4;
         lblQty.Text = "Qty :";
         lblQty.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -263,61 +263,61 @@ partial class ScanBarcodeUserControl
         //
         txtBarcode.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
         txtBarcode.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtBarcode.Font = new System.Drawing.Font("Segoe UI", 14F);
+        txtBarcode.Font = new System.Drawing.Font("Segoe UI", 12F);
         txtBarcode.Location = new System.Drawing.Point(183, 8);
         txtBarcode.Margin = new System.Windows.Forms.Padding(3, 8, 3, 8);
         txtBarcode.Name = "txtBarcode";
         txtBarcode.PlaceholderText = "Scan or type barcode...";
         txtBarcode.Radius = 8;
-        txtBarcode.Size = new System.Drawing.Size(527, 53);
+        txtBarcode.Size = new System.Drawing.Size(458, 46);
         txtBarcode.TabIndex = 5;
         //
         // txtOrderNo
         //
         txtOrderNo.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
         txtOrderNo.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtOrderNo.Font = new System.Drawing.Font("Segoe UI", 14F);
+        txtOrderNo.Font = new System.Drawing.Font("Segoe UI", 12F);
         txtOrderNo.Location = new System.Drawing.Point(183, 70);
         txtOrderNo.Margin = new System.Windows.Forms.Padding(3, 8, 3, 8);
         txtOrderNo.Name = "txtOrderNo";
         txtOrderNo.Radius = 8;
-        txtOrderNo.Size = new System.Drawing.Size(527, 53);
+        txtOrderNo.Size = new System.Drawing.Size(458, 46);
         txtOrderNo.TabIndex = 6;
         //
         // txtCustomerName
         //
         txtCustomerName.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
         txtCustomerName.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtCustomerName.Font = new System.Drawing.Font("Segoe UI", 14F);
+        txtCustomerName.Font = new System.Drawing.Font("Segoe UI", 12F);
         txtCustomerName.Location = new System.Drawing.Point(183, 132);
         txtCustomerName.Margin = new System.Windows.Forms.Padding(3, 8, 3, 8);
         txtCustomerName.Name = "txtCustomerName";
         txtCustomerName.Radius = 8;
-        txtCustomerName.Size = new System.Drawing.Size(527, 53);
+        txtCustomerName.Size = new System.Drawing.Size(458, 46);
         txtCustomerName.TabIndex = 7;
         //
         // txtType
         //
         txtType.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
         txtType.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtType.Font = new System.Drawing.Font("Segoe UI", 14F);
+        txtType.Font = new System.Drawing.Font("Segoe UI", 12F);
         txtType.Location = new System.Drawing.Point(183, 194);
         txtType.Margin = new System.Windows.Forms.Padding(3, 8, 3, 8);
         txtType.Name = "txtType";
         txtType.Radius = 8;
-        txtType.Size = new System.Drawing.Size(527, 53);
+        txtType.Size = new System.Drawing.Size(458, 46);
         txtType.TabIndex = 8;
         //
         // txtQty
         //
         txtQty.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
         txtQty.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtQty.Font = new System.Drawing.Font("Segoe UI", 14F);
+        txtQty.Font = new System.Drawing.Font("Segoe UI", 12F);
         txtQty.Location = new System.Drawing.Point(183, 256);
         txtQty.Margin = new System.Windows.Forms.Padding(3, 8, 3, 8);
         txtQty.Name = "txtQty";
         txtQty.Radius = 8;
-        txtQty.Size = new System.Drawing.Size(527, 53);
+        txtQty.Size = new System.Drawing.Size(458, 46);
         txtQty.TabIndex = 9;
         //
         // flpActions
@@ -332,32 +332,32 @@ partial class ScanBarcodeUserControl
         flpActions.Location = new System.Drawing.Point(305, 731);
         flpActions.Margin = new System.Windows.Forms.Padding(0);
         flpActions.Name = "flpActions";
-        flpActions.Size = new System.Drawing.Size(564, 71);
+        flpActions.Size = new System.Drawing.Size(490, 62);
         flpActions.TabIndex = 3;
         flpActions.WrapContents = false;
         //
         // btnConfirm
         //
-        btnConfirm.Font = new System.Drawing.Font("Segoe UI", 17F);
+        btnConfirm.Font = new System.Drawing.Font("Segoe UI", 15F);
         btnConfirm.ForeColor = System.Drawing.Color.White;
         btnConfirm.Location = new System.Drawing.Point(0, 0);
         btnConfirm.Margin = new System.Windows.Forms.Padding(0, 0, 35, 0);
         btnConfirm.Name = "btnConfirm";
         btnConfirm.Radius = 12;
-        btnConfirm.Size = new System.Drawing.Size(230, 71);
+        btnConfirm.Size = new System.Drawing.Size(200, 62);
         btnConfirm.TabIndex = 0;
         btnConfirm.Text = "OK";
         btnConfirm.Type = AntdUI.TTypeMini.Success;
         //
         // btnCancel
         //
-        btnCancel.Font = new System.Drawing.Font("Segoe UI", 17F);
+        btnCancel.Font = new System.Drawing.Font("Segoe UI", 15F);
         btnCancel.ForeColor = System.Drawing.Color.White;
         btnCancel.Location = new System.Drawing.Point(255, 0);
         btnCancel.Margin = new System.Windows.Forms.Padding(35, 0, 0, 0);
         btnCancel.Name = "btnCancel";
         btnCancel.Radius = 12;
-        btnCancel.Size = new System.Drawing.Size(230, 71);
+        btnCancel.Size = new System.Drawing.Size(200, 62);
         btnCancel.TabIndex = 1;
         btnCancel.Text = "Cancel";
         btnCancel.Type = AntdUI.TTypeMini.Error;

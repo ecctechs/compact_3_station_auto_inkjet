@@ -104,7 +104,7 @@ partial class SettingUserControl
         // btnDatabaseSetting
         // 
         btnDatabaseSetting.Dock = DockStyle.Fill;
-        btnDatabaseSetting.Font = new Font("Segoe UI", 14F);
+        btnDatabaseSetting.Font = new Font("Segoe UI", 12F);
         btnDatabaseSetting.ForeColor = Color.FromArgb(51, 51, 51);
         btnDatabaseSetting.Location = new Point(0, 0);
         btnDatabaseSetting.Margin = new Padding(0);
@@ -117,7 +117,7 @@ partial class SettingUserControl
         // btnDbPathSetting
         //
         btnDbPathSetting.Dock = DockStyle.Fill;
-        btnDbPathSetting.Font = new Font("Segoe UI", 14F);
+        btnDbPathSetting.Font = new Font("Segoe UI", 12F);
         btnDbPathSetting.ForeColor = Color.FromArgb(51, 51, 51);
         btnDbPathSetting.Location = new Point(0, 56);
         btnDbPathSetting.Margin = new Padding(0);
@@ -130,7 +130,7 @@ partial class SettingUserControl
         // btnDB3Setting
         // 
         btnDB3Setting.Dock = DockStyle.Fill;
-        btnDB3Setting.Font = new Font("Segoe UI", 14F);
+        btnDB3Setting.Font = new Font("Segoe UI", 12F);
         btnDB3Setting.ForeColor = Color.FromArgb(51, 51, 51);
         btnDB3Setting.Location = new Point(0, 112);
         btnDB3Setting.Margin = new Padding(0);
@@ -143,7 +143,7 @@ partial class SettingUserControl
         // btnPLCSetting
         // 
         btnPLCSetting.Dock = DockStyle.Fill;
-        btnPLCSetting.Font = new Font("Segoe UI", 14F);
+        btnPLCSetting.Font = new Font("Segoe UI", 12F);
         btnPLCSetting.ForeColor = Color.FromArgb(51, 51, 51);
         btnPLCSetting.Location = new Point(0, 168);
         btnPLCSetting.Margin = new Padding(0);
@@ -156,7 +156,7 @@ partial class SettingUserControl
         // btnClampSetting
         //
         btnClampSetting.Dock = DockStyle.Fill;
-        btnClampSetting.Font = new Font("Segoe UI", 14F);
+        btnClampSetting.Font = new Font("Segoe UI", 12F);
         btnClampSetting.ForeColor = Color.FromArgb(51, 51, 51);
         btnClampSetting.Location = new Point(0, 224);
         btnClampSetting.Margin = new Padding(0);
@@ -169,7 +169,7 @@ partial class SettingUserControl
         // btnUvTest
         //
         btnUvTest.Dock = DockStyle.Fill;
-        btnUvTest.Font = new Font("Segoe UI", 14F);
+        btnUvTest.Font = new Font("Segoe UI", 12F);
         btnUvTest.ForeColor = Color.FromArgb(51, 51, 51);
         btnUvTest.Location = new Point(0, 280);
         btnUvTest.Margin = new Padding(0);
