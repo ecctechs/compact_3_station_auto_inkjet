@@ -257,7 +257,7 @@ public partial class InkjetSettingUserControl : UserControl
     private void EditMkName(string key, Label badge)
     {
         var current = CustomSettingsManager.Read(key, key.Replace("_NAME", ""));
-        using var dlg = new InputDialog("Edit Name", "Display name:", current);
+        using var dlg = new InputDialog("Rename", "Display name:", current);
         if (dlg.ShowDialog(this) != DialogResult.OK) return;
         CustomSettingsManager.Write(key, dlg.Value);
         badge.Text = dlg.Value;
@@ -266,7 +266,7 @@ public partial class InkjetSettingUserControl : UserControl
     private void EditUvName(string key, Label badge)
     {
         var current = UvSettingsManager.Read(key, badge.Text);
-        using var dlg = new InputDialog("Edit Name", "Display name:", current);
+        using var dlg = new InputDialog("Rename", "Display name:", current);
         if (dlg.ShowDialog(this) != DialogResult.OK) return;
         UvSettingsManager.Write(key, dlg.Value);
         badge.Text = dlg.Value;

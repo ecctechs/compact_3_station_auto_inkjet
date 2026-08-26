@@ -138,9 +138,9 @@ partial class PlcSettingUserControl
         btnPlcName.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnPlcName.Name = "btnPlcName";
         btnPlcName.Radius = 6;
-        btnPlcName.Size = new System.Drawing.Size(50, 34);
+        btnPlcName.Size = new System.Drawing.Size(80, 34);
         btnPlcName.TabIndex = 2;
-        btnPlcName.Text = "Edit";
+        btnPlcName.Text = "Rename";
         btnPlcName.Type = AntdUI.TTypeMini.Default;
         //
         // lblIpLabel

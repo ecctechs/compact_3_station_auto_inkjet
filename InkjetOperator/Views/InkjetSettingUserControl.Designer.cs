@@ -173,9 +173,9 @@ partial class InkjetSettingUserControl
         btnMk058Name.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnMk058Name.Name = "btnMk058Name";
         btnMk058Name.Radius = 6;
-        btnMk058Name.Size = new System.Drawing.Size(50, 34);
+        btnMk058Name.Size = new System.Drawing.Size(80, 34);
         btnMk058Name.TabIndex = 2;
-        btnMk058Name.Text = "Edit";
+        btnMk058Name.Text = "Rename";
         btnMk058Name.Type = AntdUI.TTypeMini.Default;
         //
         // lblMk058IpLabel
@@ -233,9 +233,9 @@ partial class InkjetSettingUserControl
         btnMk059Name.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnMk059Name.Name = "btnMk059Name";
         btnMk059Name.Radius = 6;
-        btnMk059Name.Size = new System.Drawing.Size(50, 34);
+        btnMk059Name.Size = new System.Drawing.Size(80, 34);
         btnMk059Name.TabIndex = 7;
-        btnMk059Name.Text = "Edit";
+        btnMk059Name.Text = "Rename";
         btnMk059Name.Type = AntdUI.TTypeMini.Default;
         //
         // lblMk059IpLabel
@@ -367,9 +367,9 @@ partial class InkjetSettingUserControl
         btnUv1Edit.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnUv1Edit.Name = "btnUv1Edit";
         btnUv1Edit.Radius = 6;
-        btnUv1Edit.Size = new System.Drawing.Size(50, 34);
+        btnUv1Edit.Size = new System.Drawing.Size(80, 34);
         btnUv1Edit.TabIndex = 3;
-        btnUv1Edit.Text = "Edit";
+        btnUv1Edit.Text = "Rename";
         btnUv1Edit.Type = AntdUI.TTypeMini.Default;
         //
         // lblUv1IpLabel
@@ -508,9 +508,9 @@ partial class InkjetSettingUserControl
         btnUv2Edit.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnUv2Edit.Name = "btnUv2Edit";
         btnUv2Edit.Radius = 6;
-        btnUv2Edit.Size = new System.Drawing.Size(50, 34);
+        btnUv2Edit.Size = new System.Drawing.Size(80, 34);
         btnUv2Edit.TabIndex = 15;
-        btnUv2Edit.Text = "Edit";
+        btnUv2Edit.Text = "Rename";
         btnUv2Edit.Type = AntdUI.TTypeMini.Default;
         //
         // lblUv2IpLabel

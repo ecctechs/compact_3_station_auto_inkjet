@@ -1,4 +1,4 @@
-namespace InkjetOperator.Views;
+﻿namespace InkjetOperator.Views;
 
 partial class BackendSettingUserControl
 {
@@ -23,8 +23,6 @@ partial class BackendSettingUserControl
         btnPcName = new AntdUI.Button();
         lblPcIpLabel = new System.Windows.Forms.Label();
         txtPcIp = new AntdUI.Input();
-        lblApiUrlLabel = new System.Windows.Forms.Label();
-        lblApiUrlValue = new System.Windows.Forms.Label();
 
         flpActions = new System.Windows.Forms.FlowLayoutPanel();
         btnSave = new AntdUI.Button();
@@ -82,14 +80,11 @@ partial class BackendSettingUserControl
         tlpDevice.Controls.Add(btnPcName, 2, 0);
         tlpDevice.Controls.Add(lblPcIpLabel, 1, 1);
         tlpDevice.Controls.Add(txtPcIp, 3, 1);
-        tlpDevice.Controls.Add(lblApiUrlLabel, 1, 2);
-        tlpDevice.Controls.Add(lblApiUrlValue, 3, 2);
         tlpDevice.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpDevice.Name = "tlpDevice";
-        tlpDevice.RowCount = 4;
+        tlpDevice.RowCount = 3;
         tlpDevice.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
         tlpDevice.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
-        tlpDevice.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
         tlpDevice.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpDevice.TabIndex = 0;
         //
@@ -124,9 +119,9 @@ partial class BackendSettingUserControl
         btnPcName.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnPcName.Name = "btnPcName";
         btnPcName.Radius = 6;
-        btnPcName.Size = new System.Drawing.Size(50, 34);
+        btnPcName.Size = new System.Drawing.Size(80, 34);
         btnPcName.TabIndex = 2;
-        btnPcName.Text = "Edit";
+        btnPcName.Text = "Rename";
         btnPcName.Type = AntdUI.TTypeMini.Default;
         //
         // lblPcIpLabel — spans col1+col2
@@ -152,29 +147,6 @@ partial class BackendSettingUserControl
         txtPcIp.Radius = 4;
         tlpDevice.SetColumnSpan(txtPcIp, 3);
         txtPcIp.TabIndex = 4;
-        //
-        // lblApiUrlLabel — spans col1+col2
-        //
-        lblApiUrlLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblApiUrlLabel.Font = new System.Drawing.Font("Segoe UI", 9F);
-        lblApiUrlLabel.ForeColor = System.Drawing.Color.FromArgb(120, 120, 120);
-        lblApiUrlLabel.Name = "lblApiUrlLabel";
-        tlpDevice.SetColumnSpan(lblApiUrlLabel, 2);
-        lblApiUrlLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
-        lblApiUrlLabel.TabIndex = 5;
-        lblApiUrlLabel.Text = "API URL :";
-        lblApiUrlLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-        //
-        // lblApiUrlValue — spans col3+col4+col5
-        //
-        lblApiUrlValue.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblApiUrlValue.Font = new System.Drawing.Font("Segoe UI", 9F);
-        lblApiUrlValue.ForeColor = System.Drawing.Color.FromArgb(120, 120, 120);
-        lblApiUrlValue.Name = "lblApiUrlValue";
-        tlpDevice.SetColumnSpan(lblApiUrlValue, 3);
-        lblApiUrlValue.TabIndex = 6;
-        lblApiUrlValue.Text = "http://127.0.0.1:3000";
-        lblApiUrlValue.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
         //
         // flpActions
         //
@@ -254,8 +226,6 @@ partial class BackendSettingUserControl
     private AntdUI.Button btnPcName;
     private System.Windows.Forms.Label lblPcIpLabel;
     private AntdUI.Input txtPcIp;
-    private System.Windows.Forms.Label lblApiUrlLabel;
-    private System.Windows.Forms.Label lblApiUrlValue;
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnSave;
     private AntdUI.Button btnCancel;

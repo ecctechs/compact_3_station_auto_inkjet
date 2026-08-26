@@ -1,4 +1,4 @@
-using InkjetOperator.Services;
+﻿using InkjetOperator.Services;
 
 using InkjetOperator.Theme;
 
@@ -13,11 +13,7 @@ public partial class BackendSettingUserControl : UserControl
         InitializeComponent();
         LoadSettings();
 
-        txtPcIp.TextChanged += (_, _) =>
-        {
-            MarkDirty(txtPcIp);
-            lblApiUrlValue.Text = BuildApiUrl(txtPcIp.Text.Trim());
-        };
+        txtPcIp.TextChanged += (_, _) => MarkDirty(txtPcIp);
         btnPcName.Click += (_, _) => EditName();
         btnCheckStatus.Click += async (_, _) => await CheckStatusAsync();
         btnSave.Click += BtnSave_Click;
@@ -28,7 +24,6 @@ public partial class BackendSettingUserControl : UserControl
     {
         _savedPcIp = CustomSettingsManager.Read("PC_IP", "127.0.0.1");
         txtPcIp.Text = _savedPcIp;
-        lblApiUrlValue.Text = BuildApiUrl(_savedPcIp);
 
         var name = CustomSettingsManager.Read("PC2IP_NAME", "PC");
         lblPcBadge.Text = name;
@@ -49,7 +44,7 @@ public partial class BackendSettingUserControl : UserControl
     private void EditName()
     {
         var current = CustomSettingsManager.Read("PC2IP_NAME", "PC");
-        using var dlg = new InputDialog("Edit Name", "Display name:", current);
+        using var dlg = new InputDialog("Rename", "Display name:", current);
         if (dlg.ShowDialog(this) != DialogResult.OK) return;
         CustomSettingsManager.Write("PC2IP_NAME", dlg.Value);
         lblPcBadge.Text = dlg.Value;
@@ -90,9 +85,6 @@ public partial class BackendSettingUserControl : UserControl
         else
             lblPcStatus.ForeColor = color;
     }
-
-    private static string BuildApiUrl(string ip) =>
-        string.IsNullOrWhiteSpace(ip) ? "" : $"http://{ip}:3000";
 
     private void MarkDirty(AntdUI.Input input) =>
         input.BackColor = Color.LightYellow;

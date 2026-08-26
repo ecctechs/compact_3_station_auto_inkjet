@@ -64,11 +64,11 @@ partial class DatabaseSettingUserControl
         grpDatabase.TabStop = false;
         grpDatabase.Text = "Database";
         //
-        // tlpForm — 4 cols: label(150) | input(fill) | gap(8) | browse(90)
+        // tlpForm — 4 cols: label(190) | input(fill) | gap(8) | browse(90)
         //
         tlpForm.BackColor = System.Drawing.Color.White;
         tlpForm.ColumnCount = 4;
-        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 150F));
+        tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 190F));
         tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 8F));
         tlpForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 90F));
@@ -98,7 +98,7 @@ partial class DatabaseSettingUserControl
         lblDbPathLabel.Name = "lblDbPathLabel";
         lblDbPathLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblDbPathLabel.TabIndex = 0;
-        lblDbPathLabel.Text = "Database Path :";
+        lblDbPathLabel.Text = "Printing Database Path :";
         lblDbPathLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtDbPath
@@ -148,7 +148,7 @@ partial class DatabaseSettingUserControl
         lblClampPathLabel.Name = "lblClampPathLabel";
         lblClampPathLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblClampPathLabel.TabIndex = 4;
-        lblClampPathLabel.Text = "Clamp Database :";
+        lblClampPathLabel.Text = "Clamp Database Path :";
         lblClampPathLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtClampPath

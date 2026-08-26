@@ -78,7 +78,7 @@ public partial class PlcSettingUserControl : UserControl
     private void EditName()
     {
         var current = CustomSettingsManager.Read("PLC_NAME", "PLC-001");
-        using var dlg = new InputDialog("Edit Name", "Display name:", current);
+        using var dlg = new InputDialog("Rename", "Display name:", current);
         if (dlg.ShowDialog(this) != DialogResult.OK) return;
         CustomSettingsManager.Write("PLC_NAME", dlg.Value);
         lblPlcBadge.Text = dlg.Value;
