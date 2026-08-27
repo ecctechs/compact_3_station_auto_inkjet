@@ -483,45 +483,45 @@ public partial class OrderDetailUserControl : UserControl
         {
             var mk1Ip = CustomSettingsManager.Read("MK058_COM");
             var mk2Ip = CustomSettingsManager.Read("MK059_COM");
+            var mk1Name = CustomSettingsManager.Read("MK058_NAME", "MK-058");
+            var mk2Name = CustomSettingsManager.Read("MK059_NAME", "MK-059");
             var config1 = _pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == 1);
             var config2 = _pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == 2);
 
-            var errors = new List<string>();
+            // เก็บผลแยกทีละเครื่อง — เครื่องหนึ่งสำเร็จอีกเครื่องพลาดเป็นเรื่องปกติ
+            // สรุปรวมเป็นบรรทัดเดียวจะไม่รู้ว่าเครื่องไหนไม่ผ่าน
+            var lines = new List<Notify.ResultLine>();
             int sent = 0;
 
             if (config1 != null && !string.IsNullOrWhiteSpace(mk1Ip))
             {
                 var err = await SendToOneMkAsync(mk1Ip, config1, "MK1");
-                if (err != null) errors.Add(err);
-                else sent++;
+                if (err == null) { sent++; lines.Add(Notify.Ok($"{mk1Name} — ส่งสำเร็จ")); }
+                else lines.Add(Notify.Bad($"{mk1Name} — {err}"));
             }
 
             if (config2 != null && !string.IsNullOrWhiteSpace(mk2Ip))
             {
                 var err = await SendToOneMkAsync(mk2Ip, config2, "MK2");
-                if (err != null) errors.Add(err);
-                else sent++;
+                if (err == null) { sent++; lines.Add(Notify.Ok($"{mk2Name} — ส่งสำเร็จ")); }
+                else lines.Add(Notify.Bad($"{mk2Name} — {err}"));
             }
 
-            if (errors.Count > 0 || sent == 0)
+            if (lines.Count == 0)
+                lines.Add(Notify.Careful("ไม่มีเครื่อง MK ที่ตั้งค่า IP ไว้"));
+
+            bool allOk = sent > 0 && sent == lines.Count;
+
+            if (!allOk)
             {
                 btnSendMk.Text = originalText;
                 btnSendMk.Enabled = true;
-                var msg = sent == 0 && errors.Count == 0
-                    ? "ไม่มีเครื่อง MK ที่ตั้งค่า IP ไว้"
-                    : string.Join("\n", errors);
-                Notify.WarnDetail(this, "ส่งไม่สำเร็จ", msg);
+                Notify.Result(this, "ผลการส่ง MK", lines);
                 return;
             }
 
             CompleteSendStep("MK");
-
-            var mk1Name = CustomSettingsManager.Read("MK058_NAME", "MK-058");
-            var mk2Name = CustomSettingsManager.Read("MK059_NAME", "MK-059");
-            var names = new List<string>();
-            if (config1 != null && !string.IsNullOrWhiteSpace(mk1Ip)) names.Add(mk1Name);
-            if (config2 != null && !string.IsNullOrWhiteSpace(mk2Ip)) names.Add(mk2Name);
-            Notify.Success(this, $"ส่ง {string.Join(", ", names)} สำเร็จ ({sent} เครื่อง)");
+            Notify.Result(this, "ผลการส่ง MK", lines);
         }
         catch (Exception ex)
         {

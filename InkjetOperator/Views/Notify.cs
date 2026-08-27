@@ -1,4 +1,4 @@
-namespace InkjetOperator.Views;
+﻿namespace InkjetOperator.Views;
 
 /// <summary>
 /// In-window feedback for the operator, following the pattern the NastoKeyence
@@ -148,6 +148,11 @@ internal static class Notify
     public static void ErrorDetail(Control? owner, string title, string text) =>
         Detail(owner, title, text, AntdUI.TType.Error, MessageBoxIcon.Error);
 
+    /// <summary>
+    /// เดิมเด้งเป็น notification ที่มุมขวาบน ซึ่งอยู่คนละที่กับกล่องยืนยัน/กล่องเตือน
+    /// ทำให้ผู้ใช้ต้องคอยมองสองที่ และข้อความหายเองก่อนอ่านทัน
+    /// ตอนนี้รวมมาที่กล่องกลางจอเหมือนกล่องอื่นทั้งหมด ต้องกดรับทราบก่อนถึงจะปิด
+    /// </summary>
     private static void Detail(
         Control? owner, string title, string text, AntdUI.TType type, MessageBoxIcon fallbackIcon)
     {
@@ -157,14 +162,76 @@ internal static class Notify
             return;
         }
 
-        AntdUI.Notification.open(new AntdUI.Notification.Config(
-            form, title, text, type, AntdUI.TAlignFrom.TR, DetailBodyFont, DetailSeconds)
+        AntdUI.Modal.open(new AntdUI.Modal.Config(form, title, text)
         {
-            FontTitle = DetailTitleFont,
-            Padding = DetailPadding,
-            Radius = InkjetOperator.Theme.DesignTokens.Radius,
+            Icon = type,
+            OkText = "OK",
+            CancelText = null,
+            Font = DetailBodyFont,
+            OkFont = new Font(form.Font.FontFamily, 14f, FontStyle.Bold),
         });
     }
+
+    // ---- ผลหลายบรรทัดในกล่องเดียว ----
+
+    /// <summary>ระดับของผลลัพธ์หนึ่งบรรทัด</summary>
+    public enum ResultKind { Success, Warn, Error, Info }
+
+    /// <summary>ผลลัพธ์หนึ่งบรรทัด เช่น "MK-058 ส่งสำเร็จ"</summary>
+    public readonly record struct ResultLine(ResultKind Kind, string Text);
+
+    public static ResultLine Ok(string text) => new(ResultKind.Success, text);
+    public static ResultLine Bad(string text) => new(ResultKind.Error, text);
+    public static ResultLine Careful(string text) => new(ResultKind.Warn, text);
+    public static ResultLine Note(string text) => new(ResultKind.Info, text);
+
+    /// <summary>
+    /// รวมผลหลายรายการไว้ในกล่องเดียว แต่ละบรรทัดมีไอคอนบอกระดับของตัวเอง
+    ///
+    /// ใช้ตอนที่งานเดียวแตะหลายเครื่อง เช่นส่ง MK สองเครื่องแล้วสำเร็จหนึ่งพลาดหนึ่ง
+    /// ถ้าแยกเป็นสองกล่องผู้ใช้จะเห็นทีละอันแล้วสรุปภาพรวมไม่ออก
+    ///
+    /// ไอคอนของทั้งกล่องใช้ระดับที่แย่ที่สุดในรายการ เพื่อให้เหลือบตาเดียวรู้ว่าต้องสนใจไหม
+    /// </summary>
+    public static void Result(Control? owner, string title, IEnumerable<ResultLine> lines)
+    {
+        var list = lines.ToList();
+        if (list.Count == 0) return;
+
+        var body = string.Join(Environment.NewLine,
+            list.Select(l => $"{Mark(l.Kind)}  {l.Text}"));
+
+        var worst = list.Any(l => l.Kind == ResultKind.Error) ? AntdUI.TType.Error
+            : list.Any(l => l.Kind == ResultKind.Warn) ? AntdUI.TType.Warn
+            : list.Any(l => l.Kind == ResultKind.Success) ? AntdUI.TType.Success
+            : AntdUI.TType.Info;
+
+        if (Resolve(owner) is not { } form)
+        {
+            Fallback($"{title}\n\n{body}", worst == AntdUI.TType.Error
+                ? MessageBoxIcon.Error
+                : worst == AntdUI.TType.Warn ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
+            return;
+        }
+
+        AntdUI.Modal.open(new AntdUI.Modal.Config(form, title, body)
+        {
+            Icon = worst,
+            OkText = "OK",
+            CancelText = null,
+            Font = DetailBodyFont,
+            OkFont = new Font(form.Font.FontFamily, 14f, FontStyle.Bold),
+        });
+    }
+
+    /// <summary>ไอคอนหน้าบรรทัด — ใช้ตัวอักษรเพื่อให้เข้าชุดกับ log ของหน้าส่งงานที่ใช้อยู่แล้ว</summary>
+    private static string Mark(ResultKind kind) => kind switch
+    {
+        ResultKind.Success => "✔",
+        ResultKind.Warn => "⚠",
+        ResultKind.Error => "✖",
+        _ => "•",
+    };
 
     // ---- Plumbing ----
 
