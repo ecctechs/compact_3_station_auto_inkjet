@@ -1,4 +1,4 @@
-namespace InkjetOperator.Views;
+﻿namespace InkjetOperator.Views;
 
 /// <summary>
 /// Single-field prompt ("Edit Name", "Unlock"). Presentation follows the modal
@@ -22,6 +22,7 @@ internal sealed partial class InputDialog : AntdUI.BorderlessForm
     public InputDialog()
     {
         InitializeComponent();
+        Services.LanguageService.Apply(this);
 
         // A borderless form has no system title bar, so the header has to move the
         // window itself.

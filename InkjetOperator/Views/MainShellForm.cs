@@ -31,6 +31,27 @@ public partial class MainShellForm : AntdUI.Window
 
         Resize += (_, _) => titleBar.SetMaximized(WindowState == FormWindowState.Maximized);
         titleBar.SetMaximized(WindowState == FormWindowState.Maximized);
+
+        btnLang.Click += (_, _) => ToggleLanguage();
+        ApplyLanguage();
+    }
+
+    /// <summary>
+    /// สลับภาษาทั้งหน้าต่าง — หน้าที่สร้างทีหลัง (หน้าย่อยของ Setting, dialog)
+    /// จะแปลตัวเองตอนถูกสร้าง จึงไม่ต้องตามไปไล่ที่นี่
+    /// </summary>
+    private void ToggleLanguage()
+    {
+        Services.LanguageService.Toggle();
+        ApplyLanguage();
+    }
+
+    private void ApplyLanguage()
+    {
+        Services.LanguageService.Apply(this);
+
+        // ปุ่มบอก "ภาษาที่ใช้อยู่ตอนนี้" กดเพื่อสลับไปอีกภาษา
+        btnLang.Text = Services.LanguageService.IsThai ? "ไทย" : "EN";
     }
 
     /// <summary>

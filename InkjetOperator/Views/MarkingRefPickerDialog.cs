@@ -1,4 +1,4 @@
-using InkjetOperator.Services;
+﻿using InkjetOperator.Services;
 
 namespace InkjetOperator.Views;
 
@@ -25,6 +25,7 @@ internal sealed partial class MarkingRefPickerDialog : Form
     public MarkingRefPickerDialog()
     {
         InitializeComponent();
+        Services.LanguageService.Apply(this);
 
         lstOptions.SelectedIndexChanged += (_, _) => ShowImagesForSelection();
         lstOptions.DoubleClick += (_, _) => AcceptIfSelected();

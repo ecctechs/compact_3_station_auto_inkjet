@@ -17,6 +17,7 @@ static class Program
         ApplicationConfiguration.Initialize();
 
         UseGregorianYears();
+        Services.LanguageService.Init();
         ConfigureAntdUi();
 
         // Load local transform patterns (patterns.xml next to the exe).

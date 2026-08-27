@@ -1,4 +1,4 @@
-using InkjetOperator.Models;
+﻿using InkjetOperator.Models;
 using InkjetOperator.Services;
 
 namespace InkjetOperator.Views;
@@ -27,6 +27,7 @@ internal sealed partial class OrderDetailDialog : AntdUI.BorderlessForm
     public OrderDetailDialog()
     {
         InitializeComponent();
+        Services.LanguageService.Apply(this);
 
         // A borderless form has no system chrome, so the header drives the window.
         titleBar.MaximizeRequested += (_, _) => ToggleMaximize();

@@ -138,6 +138,7 @@ public partial class SettingUserControl : UserControl
             // ล็อกเฉพาะความสูง — ความกว้างยังยืดหดตามจอได้เหมือนเดิม
             page.MinimumSize = new Size(0, page.Height);
             page.Dock = DockStyle.Fill;
+            LanguageService.Apply(page);
             _subPages[buttonName] = page;
         }
     }
