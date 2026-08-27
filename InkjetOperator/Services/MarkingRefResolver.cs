@@ -1,4 +1,4 @@
-namespace InkjetOperator.Services;
+﻿namespace InkjetOperator.Services;
 
 /// <summary>ชื่อโปรแกรมของเครื่อง UV หนึ่งเครื่อง เท่าที่รู้ ณ ตอนนั้น</summary>
 /// <param name="Program">ชื่อที่จะเอาไปหารูป — null = ยังไม่รู้</param>
@@ -11,18 +11,25 @@ public sealed record UvProgramInfo(string? Program, bool Confirmed);
 /// <summary>รูปอ้างอิงของด้านหนึ่ง (Plate หรือ Shim) ของงาน</summary>
 /// <param name="Side">ชื่อด้าน — "Plate" หรือ "Shim"</param>
 /// <param name="Machine">ชื่อเครื่องที่จะแสดงบนป้าย</param>
+/// <param name="Step">ขั้นตอนที่ต้องกดส่งเพื่อทำด้านนี้ — "MK" / "UV1" / "UV2"</param>
 /// <param name="LookupName">ชื่อที่ใช้ค้นรูป — null = ประกอบชื่อไม่ได้</param>
 /// <param name="Images">path ของรูปที่พบ เรียงตามชื่อไฟล์</param>
 /// <param name="Pending">
 /// true = ฝั่ง UV ที่ยังไม่ได้เลือกรุ่นย่อย และมีให้เลือกมากกว่า 1 แบบ
 /// กรณีนี้ห้ามหยิบรูปใบใดใบหนึ่งมาโชว์ เพราะจะดูเหมือนระบบเลือกไว้แล้ว
 /// </param>
+/// <param name="NearMiss">
+/// จำนวนไฟล์ที่ขึ้นต้นด้วยชื่อเดียวกันแต่ไม่ตรงเป๊ะ นับเฉพาะตอนที่หาแบบตรงเป๊ะไม่เจอ
+/// ใช้บอกว่า "ไฟล์มีอยู่แต่ตั้งชื่อไม่ตรง" ซึ่งต่างจาก "ไม่มีรูปเลย"
+/// </param>
 public sealed record MarkingRefSide(
     string Side,
     string Machine,
+    string Step,
     string? LookupName,
     List<string> Images,
-    bool Pending);
+    bool Pending,
+    int NearMiss);
 
 /// <summary>
 /// รวมกฎว่างานหนึ่งต้องโชว์รูปของด้านไหน และรูปนั้นมาจากชื่ออะไร
@@ -63,13 +70,16 @@ public static class MarkingRefResolver
         if (machine == MarkingMachine.None) return;
 
         string label;
+        string step;
         string? lookup;
         bool confirmed = true;
+        bool exactOnly = true;
 
         switch (machine)
         {
             case MarkingMachine.Mk:
                 label = MkMachineLabel;
+                step = "MK";
                 // ไม่มี ERP ก็ประกอบชื่อไม่ได้ — ยังต้องโชว์ช่องไว้ให้เห็นว่าด้านนี้มีงาน
                 var erp = (erpMfg ?? "").Trim();
                 lookup = erp.Length == 0 ? null : erpPrefix + erp;
@@ -77,26 +87,41 @@ public static class MarkingRefResolver
 
             case MarkingMachine.Uv1:
                 label = UvSettingsManager.Read("UV1_NAME", "UV-001");
+                step = "UV1";
                 lookup = Clean(uv1?.Program);
                 confirmed = uv1?.Confirmed ?? false;
+                // ยังไม่ยืนยันรุ่น ต้องกวาดรุ่นย่อยทั้งหมดมานับว่ามีให้เลือกกี่แบบ
+                exactOnly = confirmed;
                 break;
 
             default:
                 label = UvSettingsManager.Read("UV2_NAME", "UV-002");
+                step = "UV2";
                 lookup = Clean(uv2?.Program);
                 confirmed = uv2?.Confirmed ?? false;
+                exactOnly = confirmed;
                 break;
         }
 
-        var images = lookup == null
-            ? new List<string>()
-            : MarkingRefImageService.FindImages(lookup);
+        var images = new List<string>();
+        int nearMiss = 0;
+
+        if (lookup != null)
+        {
+            images = exactOnly
+                ? MarkingRefImageService.FindImagesExact(lookup)
+                : MarkingRefImageService.FindImages(lookup);
+
+            // ตรงเป๊ะไม่เจอ แต่มีไฟล์ชื่อใกล้เคียง = ตั้งชื่อไฟล์ผิด ไม่ใช่ไม่มีรูป
+            if (exactOnly && images.Count == 0)
+                nearMiss = MarkingRefImageService.FindImages(lookup).Count;
+        }
 
         // ยังไม่ได้เลือกรุ่นและมีให้เลือกหลายแบบ = ยังตอบไม่ได้ว่าจะพิมพ์ใบไหน
         // มีใบเดียวก็ไม่มีอะไรให้เลือก โชว์ได้เลย
         bool pending = !confirmed && images.Count > 1;
 
-        sides.Add(new MarkingRefSide(side, label, lookup, images, pending));
+        sides.Add(new MarkingRefSide(side, label, step, lookup, images, pending, nearMiss));
     }
 
     private static string? Clean(string? name)

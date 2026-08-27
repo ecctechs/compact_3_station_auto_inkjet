@@ -81,7 +81,7 @@ public static class UvProgramResolver
     private static string? PromptVariant(List<string> variants, IWin32Window? owner)
     {
         var options = variants
-            .Select(v => new MarkingRefOption(v, v + ".uvdx", MarkingRefImageService.FindImages(v)))
+            .Select(v => new MarkingRefOption(v, v + ".uvdx", MarkingRefImageService.FindImagesExact(v)))
             .ToList();
 
         return MarkingRefPickerDialog.Pick(

@@ -60,7 +60,18 @@ public static class MarkingRefImageService
     /// or starts with "{programName}-". Extension-agnostic, case-insensitive,
     /// sorted by name. Returns empty on missing folder / unreachable share.
     /// </summary>
-    public static List<string> FindImages(string? programName)
+    public static List<string> FindImages(string? programName) => Search(programName, true);
+
+    /// <summary>
+    /// เอาเฉพาะไฟล์ที่ชื่อตรงเป๊ะ ไม่กินไฟล์ที่ขึ้นต้นเหมือนกัน
+    ///
+    /// ใช้ตอนที่ "-1" "-2" หมายถึงคนละรุ่นย่อย เช่นในหน้าจอเลือกโปรแกรม UV
+    /// ถ้าใช้ <see cref="FindImages"/> ที่นั่น เลือก P-DPX-666 แล้วจะเห็นรูปของ
+    /// P-DPX-666-1 ติดมาด้วย ทั้งที่เป็นคนละโปรแกรม
+    /// </summary>
+    public static List<string> FindImagesExact(string? programName) => Search(programName, false);
+
+    private static List<string> Search(string? programName, bool includeSuffixed)
     {
         var result = new List<string>();
         if (string.IsNullOrWhiteSpace(programName)) return result;
@@ -77,11 +88,10 @@ public static class MarkingRefImageService
                     continue;
 
                 string stem = Path.GetFileNameWithoutExtension(file);
-                if (stem.Equals(name, StringComparison.OrdinalIgnoreCase) ||
-                    stem.StartsWith(name + "-", StringComparison.OrdinalIgnoreCase))
-                {
-                    result.Add(file);
-                }
+                bool match = stem.Equals(name, StringComparison.OrdinalIgnoreCase) ||
+                    (includeSuffixed && stem.StartsWith(name + "-", StringComparison.OrdinalIgnoreCase));
+
+                if (match) result.Add(file);
             }
         }
         catch

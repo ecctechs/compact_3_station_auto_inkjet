@@ -609,12 +609,38 @@ public partial class OrderListUserControl : UserControl
         var sides = await BuildSidesAsync(job);
         if (IsDisposed) return;
 
+        // แผงนี้บอกว่า "ส่งอะไรเข้าเครื่องไปแล้ว" ไม่ใช่ "งานนี้ต้องทำอะไรบ้าง"
+        // method 12 กดส่ง MK อย่างเดียวต้องเห็นแค่ด้านของ MK จนกว่าจะกดส่ง UV2
+        sides = OnlySent(sides, job.Commands);
+
         ApplySide(Find(sides, "Plate"), picProcPlate, lblProcPlateCaption);
         ApplySide(Find(sides, "Shim"), picProcShim, lblProcShimCaption);
     }
 
     private static MarkingRefSide? Find(List<MarkingRefSide> sides, string side) =>
         sides.FirstOrDefault(s => s.Side == side);
+
+    /// <summary>
+    /// กรองเหลือเฉพาะด้านที่ step ของมันถูกกดส่งสำเร็จไปแล้ว
+    ///
+    /// ข้อจำกัด: marking 22 ที่ MK ทำทั้งสองด้านมี command "MK" อันเดียว
+    /// ระบบแยกไม่ออกว่ารอบแรกทำด้านไหน จึงขึ้นทั้งสองด้านพร้อมกัน
+    /// </summary>
+    private static List<MarkingRefSide> OnlySent(
+        List<MarkingRefSide> sides, List<CommandResult>? commands)
+    {
+        var sent = (commands ?? new List<CommandResult>())
+            .Where(c => c.Success)
+            .Select(c => c.Command)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        // ของเก่าบางงานบันทึกเป็น MK1 / MK2 แทน MK
+        bool mkSent = sent.Contains("MK") || sent.Contains("MK1") || sent.Contains("MK2");
+
+        return sides
+            .Where(s => s.Step == "MK" ? mkSent : sent.Contains(s.Step))
+            .ToList();
+    }
 
     /// <summary>
     /// ฝั่ง MK ใช้ erp_mfg ที่ติดมากับ /job/getAll อยู่แล้ว
@@ -701,7 +727,9 @@ public partial class OrderListUserControl : UserControl
         {
             var reason = side.LookupName == null
                 ? "ไม่มี ERP MFG"
-                : MarkingRefImageService.DescribeEmpty(MarkingRefImageService.CheckFolder());
+                : side.NearMiss > 0
+                    ? $"ไม่พบรูปชื่อ {side.LookupName} (มี {side.NearMiss} ไฟล์ชื่อใกล้เคียง)"
+                    : MarkingRefImageService.DescribeEmpty(MarkingRefImageService.CheckFolder());
             caption.Text = $"{side.Side} · {side.Machine} · {reason}";
             return;
         }

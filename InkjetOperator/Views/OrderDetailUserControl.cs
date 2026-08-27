@@ -71,7 +71,14 @@ public partial class OrderDetailUserControl : UserControl
         var name = box.Text.Trim();
         if (name.Length == 0 || name == Dash) return;
 
-        var paths = MarkingRefImageService.FindImages(name);
+        // ช่อง ERP ของ MK: "-1" "-2" คือคนละงาน จึงต้องตรงเป๊ะ
+        // ช่อง program ของ UV: ยังไม่รู้ว่าจะเลือกรุ่นไหน ให้ดูรวมทุกรุ่นไปก่อน
+        bool isErpField = ReferenceEquals(box, txtMkPlateErp) || ReferenceEquals(box, txtMkShimErp);
+
+        var paths = isErpField
+            ? MarkingRefImageService.FindImagesExact(name)
+            : MarkingRefImageService.FindImages(name);
+
         if (paths.Count == 0) return;
 
         _refPopup ??= new ImageHoverPopup();
@@ -131,7 +138,7 @@ public partial class OrderDetailUserControl : UserControl
         ApplyStepButtons();
         FillMkSection(_pattern);
         FillConveyor(_pattern);
-        FillUvSection(resolved.UvJobData);
+        FillUvSection(resolved.UvJobData, resolved.Commands);
         ClearIaiFields();
         _ = LoadIaiAsync(resolved.Job.Id);
         _ = CheckConnectionsAsync();
@@ -658,6 +665,10 @@ public partial class OrderDetailUserControl : UserControl
                 is_default = pick.IsDefault,
             });
 
+            // ช่อง Program ยังเป็นชื่อฐานอยู่ ถ้าไม่อัปเดตหน้าจอจะบอกคนละตัวกับที่เครื่องพิมพ์
+            // และ hover ดูรูปจะได้รูปของรุ่นที่พิมพ์จริงด้วย
+            (uvNumber == 1 ? txtUv1Program : txtUv2Program).Text = programFile;
+
             var summary = $"ส่ง {uvName} สำเร็จ\n\n"
                 + string.Join("\n", done.Select(s => "• " + s))
                 + (pick.IsDefault ? "\n\n⚠ ใช้ default.uvdx เพราะไม่พบโปรแกรมที่ต้องการ" : "");
@@ -828,15 +839,35 @@ public partial class OrderDetailUserControl : UserControl
         txtConveyor3.Text = Number(speeds?.Speed3);
     }
 
-    private void FillUvSection(List<UvJobDataDto> uvRows)
+    private void FillUvSection(List<UvJobDataDto> uvRows, List<CommandResult> commands)
     {
         var uv1 = uvRows.FirstOrDefault(r => r.Machine == "UV1");
         var uv2 = uvRows.FirstOrDefault(r => r.Machine == "UV2");
 
         txtUvQtyShared.Text = (uv1?.Qty ?? uv2?.Qty)?.ToString() ?? Dash;
 
-        FillUv(uv1, txtUv1Program, txtUv1ErpMfg, tblUv1Texts);
-        FillUv(uv2, txtUv2Program, txtUv2ErpMfg, tblUv2Texts);
+        FillUv(uv1, txtUv1Program, txtUv1ErpMfg, tblUv1Texts, SentProgram(commands, "UV1"));
+        FillUv(uv2, txtUv2Program, txtUv2ErpMfg, tblUv2Texts, SentProgram(commands, "UV2"));
+    }
+
+    /// <summary>
+    /// รุ่นย่อยที่ส่งเข้าเครื่องไปแล้วจริง อ่านจาก payload ของ command
+    ///
+    /// ค่าใน uv_job_data เป็นชื่อฐานที่ระบบต้นทางสั่งมา (เช่น P-DPX-666)
+    /// แต่ที่พิมพ์จริงอาจเป็นรุ่นย่อย (P-DPX-666-1) หน้าจอต้องบอกตัวที่พิมพ์จริง
+    /// ไม่งั้นหน้าจอกับเครื่องพูดไม่ตรงกัน — ส่วนค่าที่สั่งมายังอยู่ครบใน payload
+    /// </summary>
+    private static string? SentProgram(List<CommandResult> commands, string machine)
+    {
+        var sent = commands
+            .LastOrDefault(c => c.Success &&
+                string.Equals(c.Command, machine, StringComparison.OrdinalIgnoreCase));
+
+        if (sent?.Payload == null) return null;
+        if (!sent.Payload.TryGetValue("program", out var value)) return null;
+
+        var program = value?.ToString()?.Trim();
+        return string.IsNullOrEmpty(program) ? null : program;
     }
 
     /// <summary>
@@ -1107,9 +1138,10 @@ public partial class OrderDetailUserControl : UserControl
     private static void FillUv(
         UvJobDataDto? uv,
         AntdUI.Input program, AntdUI.Input erpMfg,
-        AntdUI.Table table)
+        AntdUI.Table table, string? sentProgram = null)
     {
-        program.Text = OrDash(uv?.ProgramName);
+        // ส่งไปแล้วให้โชว์รุ่นที่พิมพ์จริง ยังไม่ส่งก็โชว์ชื่อฐานตามข้อมูลงาน
+        program.Text = sentProgram ?? OrDash(uv?.ProgramName);
         erpMfg.Text = OrDash(uv?.ErpMfg);
 
         var values = new[] { uv?.Text1, uv?.Text2, uv?.Text3, uv?.Text4, uv?.Text5 };
