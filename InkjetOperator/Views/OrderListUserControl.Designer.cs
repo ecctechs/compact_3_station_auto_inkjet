@@ -37,12 +37,36 @@ partial class OrderListUserControl
         dtpHistoryRange = new AntdUI.DatePickerRange();
         btnClearDate = new AntdUI.Button();
         tblOrders = new AntdUI.Table();
+        tlpBottom = new System.Windows.Forms.TableLayoutPanel();
+        pnlPreview = new AntdUI.Panel();
+        tlpPreview = new System.Windows.Forms.TableLayoutPanel();
+        lblPreviewTitle = new System.Windows.Forms.Label();
+        tlpPreviewSlots = new System.Windows.Forms.TableLayoutPanel();
+        lblPrevPlateCaption = new System.Windows.Forms.Label();
+        lblPrevShimCaption = new System.Windows.Forms.Label();
+        picPrevPlate = new System.Windows.Forms.PictureBox();
+        picPrevShim = new System.Windows.Forms.PictureBox();
+        pnlProcessing = new AntdUI.Panel();
+        tlpProcessing = new System.Windows.Forms.TableLayoutPanel();
+        lblProcessingTitle = new System.Windows.Forms.Label();
+        tlpProcessingSlots = new System.Windows.Forms.TableLayoutPanel();
+        lblProcPlateCaption = new System.Windows.Forms.Label();
+        lblProcShimCaption = new System.Windows.Forms.Label();
+        picProcPlate = new System.Windows.Forms.PictureBox();
+        picProcShim = new System.Windows.Forms.PictureBox();
         flpActions = new System.Windows.Forms.FlowLayoutPanel();
         btnStart = new AntdUI.Button();
         tlpOrderListRoot.SuspendLayout();
         pnlTableContainer.SuspendLayout();
         tlpTableInner.SuspendLayout();
         flpTabs.SuspendLayout();
+        tlpBottom.SuspendLayout();
+        pnlPreview.SuspendLayout();
+        tlpPreview.SuspendLayout();
+        tlpPreviewSlots.SuspendLayout();
+        pnlProcessing.SuspendLayout();
+        tlpProcessing.SuspendLayout();
+        tlpProcessingSlots.SuspendLayout();
         flpActions.SuspendLayout();
         SuspendLayout();
         //
@@ -52,14 +76,14 @@ partial class OrderListUserControl
         tlpOrderListRoot.ColumnCount = 1;
         tlpOrderListRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpOrderListRoot.Controls.Add(pnlTableContainer, 0, 0);
-        tlpOrderListRoot.Controls.Add(flpActions, 0, 1);
+        tlpOrderListRoot.Controls.Add(tlpBottom, 0, 1);
         tlpOrderListRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpOrderListRoot.Location = new System.Drawing.Point(0, 0);
         tlpOrderListRoot.Name = "tlpOrderListRoot";
         tlpOrderListRoot.Padding = new System.Windows.Forms.Padding(32);
         tlpOrderListRoot.RowCount = 2;
         tlpOrderListRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpOrderListRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+        tlpOrderListRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 250F));
         tlpOrderListRoot.Size = new System.Drawing.Size(1100, 860);
         tlpOrderListRoot.TabIndex = 0;
         //
@@ -199,14 +223,247 @@ partial class OrderListUserControl
         tblOrders.Size = new System.Drawing.Size(1026, 648);
         tblOrders.TabIndex = 1;
         //
+        // tlpBottom - Preview | Start | Processing
+        //
+        tlpBottom.BackColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        tlpBottom.ColumnCount = 3;
+        tlpBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 200F));
+        tlpBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpBottom.Controls.Add(pnlPreview, 0, 0);
+        tlpBottom.Controls.Add(flpActions, 1, 0);
+        tlpBottom.Controls.Add(pnlProcessing, 2, 0);
+        tlpBottom.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpBottom.Margin = new System.Windows.Forms.Padding(0, 10, 0, 0);
+        tlpBottom.Name = "tlpBottom";
+        tlpBottom.RowCount = 1;
+        tlpBottom.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpBottom.Size = new System.Drawing.Size(1036, 240);
+        tlpBottom.TabIndex = 1;
+        //
+        // pnlPreview
+        //
+        pnlPreview.Back = System.Drawing.Color.White;
+        pnlPreview.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlPreview.BorderWidth = 2F;
+        pnlPreview.Controls.Add(tlpPreview);
+        pnlPreview.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlPreview.Margin = new System.Windows.Forms.Padding(0, 0, 6, 0);
+        pnlPreview.Name = "pnlPreview";
+        pnlPreview.Padding = new System.Windows.Forms.Padding(8);
+        pnlPreview.Radius = 12;
+        pnlPreview.Size = new System.Drawing.Size(412, 240);
+        pnlPreview.TabIndex = 0;
+        //
+        // tlpPreview
+        //
+        tlpPreview.BackColor = System.Drawing.Color.White;
+        tlpPreview.ColumnCount = 1;
+        tlpPreview.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpPreview.Controls.Add(lblPreviewTitle, 0, 0);
+        tlpPreview.Controls.Add(tlpPreviewSlots, 0, 1);
+        tlpPreview.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpPreview.Margin = new System.Windows.Forms.Padding(0);
+        tlpPreview.Name = "tlpPreview";
+        tlpPreview.RowCount = 2;
+        tlpPreview.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
+        tlpPreview.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpPreview.Size = new System.Drawing.Size(396, 224);
+        tlpPreview.TabIndex = 0;
+        //
+        // lblPreviewTitle
+        //
+        lblPreviewTitle.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblPreviewTitle.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        lblPreviewTitle.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblPreviewTitle.Name = "lblPreviewTitle";
+        lblPreviewTitle.Size = new System.Drawing.Size(390, 28);
+        lblPreviewTitle.TabIndex = 0;
+        lblPreviewTitle.Text = "Preview";
+        lblPreviewTitle.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+        //
+        // tlpPreviewSlots - Plate | Shim
+        //
+        tlpPreviewSlots.BackColor = System.Drawing.Color.White;
+        tlpPreviewSlots.ColumnCount = 2;
+        tlpPreviewSlots.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpPreviewSlots.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpPreviewSlots.Controls.Add(lblPrevPlateCaption, 0, 0);
+        tlpPreviewSlots.Controls.Add(lblPrevShimCaption, 1, 0);
+        tlpPreviewSlots.Controls.Add(picPrevPlate, 0, 1);
+        tlpPreviewSlots.Controls.Add(picPrevShim, 1, 1);
+        tlpPreviewSlots.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpPreviewSlots.Margin = new System.Windows.Forms.Padding(0);
+        tlpPreviewSlots.Name = "tlpPreviewSlots";
+        tlpPreviewSlots.RowCount = 2;
+        tlpPreviewSlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 34F));
+        tlpPreviewSlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpPreviewSlots.Size = new System.Drawing.Size(396, 196);
+        tlpPreviewSlots.TabIndex = 1;
+        //
+        // lblPrevPlateCaption
+        //
+        lblPrevPlateCaption.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblPrevPlateCaption.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblPrevPlateCaption.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblPrevPlateCaption.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblPrevPlateCaption.Name = "lblPrevPlateCaption";
+        lblPrevPlateCaption.Size = new System.Drawing.Size(192, 34);
+        lblPrevPlateCaption.TabIndex = 0;
+        lblPrevPlateCaption.Text = "";
+        lblPrevPlateCaption.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+        //
+        // lblPrevShimCaption
+        //
+        lblPrevShimCaption.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblPrevShimCaption.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblPrevShimCaption.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblPrevShimCaption.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblPrevShimCaption.Name = "lblPrevShimCaption";
+        lblPrevShimCaption.Size = new System.Drawing.Size(192, 34);
+        lblPrevShimCaption.TabIndex = 1;
+        lblPrevShimCaption.Text = "";
+        lblPrevShimCaption.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+        //
+        // picPrevPlate
+        //
+        picPrevPlate.BackColor = System.Drawing.Color.FromArgb(245, 249, 253);
+        picPrevPlate.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+        picPrevPlate.Dock = System.Windows.Forms.DockStyle.Fill;
+        picPrevPlate.Margin = new System.Windows.Forms.Padding(3, 0, 3, 3);
+        picPrevPlate.Name = "picPrevPlate";
+        picPrevPlate.Size = new System.Drawing.Size(192, 159);
+        picPrevPlate.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+        picPrevPlate.TabIndex = 2;
+        picPrevPlate.TabStop = false;
+        //
+        // picPrevShim
+        //
+        picPrevShim.BackColor = System.Drawing.Color.FromArgb(245, 249, 253);
+        picPrevShim.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+        picPrevShim.Dock = System.Windows.Forms.DockStyle.Fill;
+        picPrevShim.Margin = new System.Windows.Forms.Padding(3, 0, 3, 3);
+        picPrevShim.Name = "picPrevShim";
+        picPrevShim.Size = new System.Drawing.Size(192, 159);
+        picPrevShim.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+        picPrevShim.TabIndex = 3;
+        picPrevShim.TabStop = false;
+        //
+        // pnlProcessing
+        //
+        pnlProcessing.Back = System.Drawing.Color.White;
+        pnlProcessing.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlProcessing.BorderWidth = 2F;
+        pnlProcessing.Controls.Add(tlpProcessing);
+        pnlProcessing.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlProcessing.Margin = new System.Windows.Forms.Padding(6, 0, 0, 0);
+        pnlProcessing.Name = "pnlProcessing";
+        pnlProcessing.Padding = new System.Windows.Forms.Padding(8);
+        pnlProcessing.Radius = 12;
+        pnlProcessing.Size = new System.Drawing.Size(412, 240);
+        pnlProcessing.TabIndex = 0;
+        //
+        // tlpProcessing
+        //
+        tlpProcessing.BackColor = System.Drawing.Color.White;
+        tlpProcessing.ColumnCount = 1;
+        tlpProcessing.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpProcessing.Controls.Add(lblProcessingTitle, 0, 0);
+        tlpProcessing.Controls.Add(tlpProcessingSlots, 0, 1);
+        tlpProcessing.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpProcessing.Margin = new System.Windows.Forms.Padding(0);
+        tlpProcessing.Name = "tlpProcessing";
+        tlpProcessing.RowCount = 2;
+        tlpProcessing.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
+        tlpProcessing.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpProcessing.Size = new System.Drawing.Size(396, 224);
+        tlpProcessing.TabIndex = 0;
+        //
+        // lblProcessingTitle
+        //
+        lblProcessingTitle.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblProcessingTitle.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        lblProcessingTitle.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblProcessingTitle.Name = "lblProcessingTitle";
+        lblProcessingTitle.Size = new System.Drawing.Size(390, 28);
+        lblProcessingTitle.TabIndex = 0;
+        lblProcessingTitle.Text = "Processing";
+        lblProcessingTitle.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+        //
+        // tlpProcessingSlots - Plate | Shim
+        //
+        tlpProcessingSlots.BackColor = System.Drawing.Color.White;
+        tlpProcessingSlots.ColumnCount = 2;
+        tlpProcessingSlots.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpProcessingSlots.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpProcessingSlots.Controls.Add(lblProcPlateCaption, 0, 0);
+        tlpProcessingSlots.Controls.Add(lblProcShimCaption, 1, 0);
+        tlpProcessingSlots.Controls.Add(picProcPlate, 0, 1);
+        tlpProcessingSlots.Controls.Add(picProcShim, 1, 1);
+        tlpProcessingSlots.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpProcessingSlots.Margin = new System.Windows.Forms.Padding(0);
+        tlpProcessingSlots.Name = "tlpProcessingSlots";
+        tlpProcessingSlots.RowCount = 2;
+        tlpProcessingSlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 34F));
+        tlpProcessingSlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpProcessingSlots.Size = new System.Drawing.Size(396, 196);
+        tlpProcessingSlots.TabIndex = 1;
+        //
+        // lblProcPlateCaption
+        //
+        lblProcPlateCaption.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblProcPlateCaption.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblProcPlateCaption.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblProcPlateCaption.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblProcPlateCaption.Name = "lblProcPlateCaption";
+        lblProcPlateCaption.Size = new System.Drawing.Size(192, 34);
+        lblProcPlateCaption.TabIndex = 0;
+        lblProcPlateCaption.Text = "";
+        lblProcPlateCaption.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+        //
+        // lblProcShimCaption
+        //
+        lblProcShimCaption.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblProcShimCaption.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblProcShimCaption.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblProcShimCaption.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblProcShimCaption.Name = "lblProcShimCaption";
+        lblProcShimCaption.Size = new System.Drawing.Size(192, 34);
+        lblProcShimCaption.TabIndex = 1;
+        lblProcShimCaption.Text = "";
+        lblProcShimCaption.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+        //
+        // picProcPlate
+        //
+        picProcPlate.BackColor = System.Drawing.Color.FromArgb(245, 249, 253);
+        picProcPlate.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+        picProcPlate.Dock = System.Windows.Forms.DockStyle.Fill;
+        picProcPlate.Margin = new System.Windows.Forms.Padding(3, 0, 3, 3);
+        picProcPlate.Name = "picProcPlate";
+        picProcPlate.Size = new System.Drawing.Size(192, 159);
+        picProcPlate.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+        picProcPlate.TabIndex = 2;
+        picProcPlate.TabStop = false;
+        //
+        // picProcShim
+        //
+        picProcShim.BackColor = System.Drawing.Color.FromArgb(245, 249, 253);
+        picProcShim.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+        picProcShim.Dock = System.Windows.Forms.DockStyle.Fill;
+        picProcShim.Margin = new System.Windows.Forms.Padding(3, 0, 3, 3);
+        picProcShim.Name = "picProcShim";
+        picProcShim.Size = new System.Drawing.Size(192, 159);
+        picProcShim.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+        picProcShim.TabIndex = 3;
+        picProcShim.TabStop = false;
+        //
         // flpActions
         //
         flpActions.Anchor = System.Windows.Forms.AnchorStyles.None;
         flpActions.AutoSize = true;
         flpActions.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-        flpActions.BackColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        flpActions.BackColor = System.Drawing.Color.Transparent;
         flpActions.Controls.Add(btnStart);
-        flpActions.Location = new System.Drawing.Point(462, 760);
         flpActions.Margin = new System.Windows.Forms.Padding(0);
         flpActions.Name = "flpActions";
         flpActions.Size = new System.Drawing.Size(176, 60);
@@ -232,6 +489,13 @@ partial class OrderListUserControl
         pnlTableContainer.ResumeLayout(false);
         tlpTableInner.ResumeLayout(false);
         flpTabs.ResumeLayout(false);
+        tlpBottom.ResumeLayout(false);
+        pnlPreview.ResumeLayout(false);
+        tlpPreview.ResumeLayout(false);
+        tlpPreviewSlots.ResumeLayout(false);
+        pnlProcessing.ResumeLayout(false);
+        tlpProcessing.ResumeLayout(false);
+        tlpProcessingSlots.ResumeLayout(false);
         flpActions.ResumeLayout(false);
         ResumeLayout(false);
     }
@@ -248,6 +512,23 @@ partial class OrderListUserControl
     private AntdUI.DatePickerRange dtpHistoryRange;
     private AntdUI.Button btnClearDate;
     private AntdUI.Table tblOrders;
+    private System.Windows.Forms.TableLayoutPanel tlpBottom;
+    private AntdUI.Panel pnlPreview;
+    private System.Windows.Forms.TableLayoutPanel tlpPreview;
+    private System.Windows.Forms.Label lblPreviewTitle;
+    private System.Windows.Forms.TableLayoutPanel tlpPreviewSlots;
+    private System.Windows.Forms.Label lblPrevPlateCaption;
+    private System.Windows.Forms.Label lblPrevShimCaption;
+    private System.Windows.Forms.PictureBox picPrevPlate;
+    private System.Windows.Forms.PictureBox picPrevShim;
+    private AntdUI.Panel pnlProcessing;
+    private System.Windows.Forms.TableLayoutPanel tlpProcessing;
+    private System.Windows.Forms.Label lblProcessingTitle;
+    private System.Windows.Forms.TableLayoutPanel tlpProcessingSlots;
+    private System.Windows.Forms.Label lblProcPlateCaption;
+    private System.Windows.Forms.Label lblProcShimCaption;
+    private System.Windows.Forms.PictureBox picProcPlate;
+    private System.Windows.Forms.PictureBox picProcShim;
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnStart;
 }

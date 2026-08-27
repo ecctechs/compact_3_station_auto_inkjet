@@ -259,12 +259,15 @@ class JobController {
         return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
       }
 
-      const { command, ordinal, success, sent_at } = req.body;
+      const { command, ordinal, success, sent_at, payload } = req.body;
 
+      // payload เก็บรายละเอียดของ step นั้น เช่นรุ่นย่อย .uvdx ที่เลือกจริง
+      // คอลัมน์เป็น JSONB อยู่แล้ว เดิมรับมาแล้วทิ้ง ทำให้ย้อนดูไม่ได้ว่าพิมพ์ด้วยรุ่นไหน
       const created = await PrintJobCommand.create({
         job_id: job.id,
         command,
         ordinal: ordinal || null,
+        payload: payload ?? null,
         success: success ?? true,
         sent_at: sent_at || new Date(),
       });

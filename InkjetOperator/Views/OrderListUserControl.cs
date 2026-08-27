@@ -61,6 +61,8 @@ public partial class OrderListUserControl : UserControl
         dtpHistoryRange.ValueChanged += async (_, _) => await RefreshDataAsync(force: true);
         btnClearDate.Click += (_, _) => dtpHistoryRange.Value = null;
 
+        WirePanels();
+
         Load += OnLoad;
         Disposed += OnDisposed;
     }
@@ -76,6 +78,7 @@ public partial class OrderListUserControl : UserControl
     {
         _pollTimer?.Stop();
         _pollTimer?.Dispose();
+        DisposePanelImages();
     }
 
     private void StartPolling()
@@ -113,6 +116,7 @@ public partial class OrderListUserControl : UserControl
 
             _lastSignature = signature;
             RebindTable();
+            await UpdateProcessingAsync();
         }
         catch (Exception ex)
         {
@@ -156,7 +160,16 @@ public partial class OrderListUserControl : UserControl
         btnClearDate.Visible = showHistory;
         if (!showHistory) dtpHistoryRange.Value = null;
 
+        // ออกจากแท็บแล้วการเลือกเดิมไม่มีความหมาย ล้างทั้งไฮไลต์และรูป
+        _selectedJobId = null;
+        ClearSlot(picPrevPlate, lblPrevPlateCaption);
+        ClearSlot(picPrevShim, lblPrevShimCaption);
+
+        // แผงขวามีเฉพาะแท็บ List
+        pnlProcessing.Visible = !showHistory;
+
         RebindTable();
+        _ = UpdateProcessingAsync();
     }
 
     private void RebindTable()
@@ -177,6 +190,7 @@ public partial class OrderListUserControl : UserControl
         tblOrders.DataSource = null;
         tblOrders.DataSource = rows;
         ReapplySort();
+        RestoreSelection();
     }
 
     /// <summary>
@@ -344,23 +358,12 @@ public partial class OrderListUserControl : UserControl
 
     private static string DisplayStatusText(string status) => DisplayStatus(status).Text;
 
-    private static List<string> GetRequiredSteps(string markingMethod)
-    {
-        char a = '0', b = '0';
-        if (markingMethod is { Length: >= 2 })
-        {
-            a = markingMethod[0];
-            b = markingMethod[1];
-        }
-        if (a == '3') a = '1';
-        if (b == '3') b = '1';
-
-        var steps = new List<string>();
-        if (a == '2' || b == '2') steps.Add("MK");
-        if (b == '1') steps.Add("UV1");
-        if (a == '1') steps.Add("UV2");
-        return steps;
-    }
+    /// <summary>
+    /// กฎอยู่ที่ <see cref="MarkingMethodService"/> ที่เดียว หน้า Order Detail ใช้ตัวเดียวกัน
+    /// เดิมที่นี่ไม่รู้จักรหัส 21 ทำให้งาน 21 ถูกมองว่ายังต้องส่ง MK ทั้งที่กดส่งไม่ได้
+    /// </summary>
+    private static List<string> GetRequiredSteps(string markingMethod) =>
+        MarkingMethodService.Resolve(markingMethod).Steps;
 
     private void ShowDetailDialog(int jobId, ResolvedJobResponse resolved)
     {
@@ -512,6 +515,261 @@ public partial class OrderListUserControl : UserControl
             Source = sourceTag,
             Op = buttons.ToArray(),
         };
+    }
+
+    // ── แผง Preview / Processing ───────────────────────────
+
+    /// <summary>job ที่ผู้ใช้กดเลือกในตาราง — แผงซ้ายผูกกับตัวนี้</summary>
+    private int? _selectedJobId;
+
+    /// <summary>job ที่แผงขวากำลังแสดง กับเวลาแก้ล่าสุดของมัน ไว้กันโหลดซ้ำทุกรอบ poll</summary>
+    private int? _processingJobId;
+    private long _processingStamp;
+
+    private void WirePanels()
+    {
+        tblOrders.CellClick += TblOrders_CellClick;
+
+        picPrevPlate.Click += (_, _) => OpenSidePicker(picPrevPlate, lblPrevPlateCaption);
+        picPrevShim.Click += (_, _) => OpenSidePicker(picPrevShim, lblPrevShimCaption);
+        picProcPlate.Click += (_, _) => OpenSidePicker(picProcPlate, lblProcPlateCaption);
+        picProcShim.Click += (_, _) => OpenSidePicker(picProcShim, lblProcShimCaption);
+
+        ClearSlot(picPrevPlate, lblPrevPlateCaption);
+        ClearSlot(picPrevShim, lblPrevShimCaption);
+        ClearSlot(picProcPlate, lblProcPlateCaption);
+        ClearSlot(picProcShim, lblProcShimCaption);
+    }
+
+    /// <summary>
+    /// คลิกแถวไหนก็แสดงรูปของงานนั้นในแผงซ้าย
+    /// ข้ามคอลัมน์ Op เพราะเป็นปุ่ม — ปล่อยให้ CellButtonClick จัดการไปตามเดิม
+    /// </summary>
+    private async void TblOrders_CellClick(object? sender, AntdUI.TableClickEventArgs e)
+    {
+        if (e.RowType != AntdUI.RowType.None) return;
+        if (e.Column?.Key == "Op") return;
+        if (e.Record is not OrderRow row) return;
+        if (_selectedJobId == row.Id) return;
+
+        _selectedJobId = row.Id;
+        await UpdatePreviewAsync();
+    }
+
+    /// <summary>แผงซ้าย — รูปของงานที่เลือกอยู่</summary>
+    private async Task UpdatePreviewAsync()
+    {
+        var job = _selectedJobId is int id
+            ? _allJobs.FirstOrDefault(j => j.Id == id)
+            : null;
+
+        if (job == null)
+        {
+            ClearSlot(picPrevPlate, lblPrevPlateCaption);
+            ClearSlot(picPrevShim, lblPrevShimCaption);
+            return;
+        }
+
+        var sides = await BuildSidesAsync(job);
+        if (IsDisposed) return;
+
+        ApplySide(Find(sides, "Plate"), picPrevPlate, lblPrevPlateCaption);
+        ApplySide(Find(sides, "Shim"), picPrevShim, lblPrevShimCaption);
+    }
+
+    /// <summary>
+    /// แผงขวา — งานที่กำลังผลิตอยู่จริง ไม่เกี่ยวกับแถวที่เลือก
+    /// เกณฑ์คือ status = Process ถ้ามีหลายงานเอาอันที่แก้ล่าสุด
+    /// โหลดใหม่เฉพาะตอนเปลี่ยนตัวหรือ updated_at ขยับ ไม่ใช่ทุกรอบ poll
+    /// </summary>
+    private async Task UpdateProcessingAsync()
+    {
+        var job = _showHistory
+            ? null
+            : _allJobs
+                .Where(j => string.Equals(j.Status, "Process", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(j => j.UpdatedAt ?? DateTime.MinValue)
+                .FirstOrDefault();
+
+        if (job == null)
+        {
+            _processingJobId = null;
+            _processingStamp = 0;
+            ClearSlot(picProcPlate, lblProcPlateCaption);
+            ClearSlot(picProcShim, lblProcShimCaption);
+            return;
+        }
+
+        long stamp = job.UpdatedAt?.Ticks ?? 0;
+        if (_processingJobId == job.Id && _processingStamp == stamp) return;
+
+        _processingJobId = job.Id;
+        _processingStamp = stamp;
+
+        var sides = await BuildSidesAsync(job);
+        if (IsDisposed) return;
+
+        ApplySide(Find(sides, "Plate"), picProcPlate, lblProcPlateCaption);
+        ApplySide(Find(sides, "Shim"), picProcShim, lblProcShimCaption);
+    }
+
+    private static MarkingRefSide? Find(List<MarkingRefSide> sides, string side) =>
+        sides.FirstOrDefault(s => s.Side == side);
+
+    /// <summary>
+    /// ฝั่ง MK ใช้ erp_mfg ที่ติดมากับ /job/getAll อยู่แล้ว
+    /// ฝั่ง UV ต้องรู้ชื่อโปรแกรมซึ่งอยู่ใน uv_job_data จึงต้องยิง getResolved
+    /// เรียกเฉพาะงานที่ใช้ UV จริง และเฉพาะตอนที่งานเปลี่ยนเท่านั้น
+    /// </summary>
+    private async Task<List<MarkingRefSide>> BuildSidesAsync(PrintJob job)
+    {
+        var method = job.PlanRouting?.MarkingMethod;
+        var plan = MarkingMethodService.Resolve(method);
+
+        string? uv1 = null, uv2 = null;
+        bool needsUv = plan.Plate == MarkingMachine.Uv1 || plan.Shim == MarkingMachine.Uv2;
+
+        if (needsUv && _api != null)
+        {
+            var resolved = await _api.GetResolvedJobAsync(job.Id);
+            if (resolved != null)
+            {
+                uv1 = PickUvProgram(resolved, "UV1");
+                uv2 = PickUvProgram(resolved, "UV2");
+            }
+        }
+
+        return MarkingRefResolver.Resolve(method, job.PlanRouting?.ErpMfg, uv1, uv2);
+    }
+
+    /// <summary>
+    /// ส่งไปแล้วให้ใช้รุ่นย่อยที่เลือกจริง (เก็บไว้ใน payload ของ command)
+    /// ยังไม่ได้ส่งก็ใช้ชื่อโปรแกรมฐานไปก่อน จะได้เห็นรูปคร่าว ๆ ก่อนพิมพ์
+    /// </summary>
+    private static string? PickUvProgram(ResolvedJobResponse resolved, string machine)
+    {
+        var sent = resolved.Commands
+            .LastOrDefault(c => c.Success &&
+                string.Equals(c.Command, machine, StringComparison.OrdinalIgnoreCase));
+
+        if (sent?.Payload != null && sent.Payload.TryGetValue("program", out var value))
+        {
+            var chosen = value?.ToString()?.Trim();
+            if (!string.IsNullOrEmpty(chosen)) return chosen;
+        }
+
+        return resolved.UvJobData
+            .FirstOrDefault(u => string.Equals(u.Machine, machine, StringComparison.OrdinalIgnoreCase))
+            ?.ProgramName;
+    }
+
+    // ── ช่องรูปหนึ่งช่อง ───────────────────────────────────
+
+    private static void ClearSlot(PictureBox box, Label caption)
+    {
+        box.Image?.Dispose();
+        box.Image = null;
+        box.Tag = null;
+        box.Visible = false;
+        caption.Text = "";
+        caption.Visible = false;
+    }
+
+    /// <summary>
+    /// ด้านที่ marking method ไม่ได้ใช้ → ซ่อนทั้งช่อง
+    /// ด้านที่ใช้แต่ไม่มีรูป → ยังโชว์ป้ายไว้ พร้อมบอกสาเหตุ ไม่ปล่อยว่างเปล่า
+    /// </summary>
+    private static void ApplySide(MarkingRefSide? side, PictureBox box, Label caption)
+    {
+        box.Image?.Dispose();
+        box.Image = null;
+
+        if (side == null)
+        {
+            ClearSlot(box, caption);
+            return;
+        }
+
+        box.Tag = side;
+        box.Visible = true;
+        caption.Visible = true;
+
+        var path = side.Images.FirstOrDefault();
+        if (path == null)
+        {
+            var reason = side.LookupName == null
+                ? "ไม่มี ERP MFG"
+                : MarkingRefImageService.DescribeEmpty(MarkingRefImageService.CheckFolder());
+            caption.Text = $"{side.Side} · {side.Machine} · {reason}";
+            return;
+        }
+
+        box.Image = MarkingRefImageService.LoadImageNoLock(path);
+        if (box.Image == null)
+        {
+            caption.Text = $"{side.Side} · {side.Machine} · เปิดไฟล์รูปไม่ได้";
+            return;
+        }
+
+        var more = side.Images.Count > 1 ? $"  (+{side.Images.Count - 1})" : "";
+        caption.Text = $"{side.Side} · {side.Machine} · {Path.GetFileName(path)}{more}";
+    }
+
+    /// <summary>
+    /// คลิกรูปเพื่อดูใหญ่และเลือกใบอื่นของด้านเดียวกัน
+    /// ฝั่งนี้เลือกแล้วเปลี่ยนแค่รูปที่ดู ไม่กระทบงานที่พิมพ์ ข้อความจึงต้องบอกให้ชัด
+    /// </summary>
+    private void OpenSidePicker(PictureBox box, Label caption)
+    {
+        if (box.Tag is not MarkingRefSide side || side.Images.Count == 0) return;
+
+        var options = side.Images
+            .Select(path => new MarkingRefOption(path, Path.GetFileName(path), new List<string> { path }))
+            .ToList();
+
+        var chosen = MarkingRefPickerDialog.Pick(
+            this,
+            "เลือกรูปอ้างอิง",
+            $"{side.Side} · {side.Machine} — เลือกรูปที่จะดู (ไม่มีผลกับงานที่พิมพ์)",
+            options);
+
+        if (chosen == null) return;
+
+        var reordered = new List<string> { chosen };
+        reordered.AddRange(side.Images.Where(path => path != chosen));
+        ApplySide(side with { Images = reordered }, box, caption);
+    }
+
+    /// <summary>
+    /// ผูก DataSource ใหม่ทีไร AntdUI ล้าง selection ทิ้งเสมอ ต้องเลือกกลับให้เอง
+    /// ไม่งั้นไฮไลต์กับรูปจะหายทุกครั้งที่มีงานไหนก็ตามเปลี่ยนสถานะ
+    /// งานที่หลุดจากลิสต์แล้วจริง ๆ ค่อยล้างทั้งไฮไลต์และรูปพร้อมกัน
+    /// </summary>
+    private void RestoreSelection()
+    {
+        if (_selectedJobId is not int id) return;
+
+        var display = tblOrders.SortList();
+        int index = Array.FindIndex(display, r => r is OrderRow row && row.Id == id);
+
+        if (index < 0)
+        {
+            _selectedJobId = null;
+            ClearSlot(picPrevPlate, lblPrevPlateCaption);
+            ClearSlot(picPrevShim, lblPrevShimCaption);
+            return;
+        }
+
+        if (tblOrders.SelectedIndex != index) tblOrders.SelectedIndex = index;
+    }
+
+    private void DisposePanelImages()
+    {
+        foreach (var box in new[] { picPrevPlate, picPrevShim, picProcPlate, picProcShim })
+        {
+            box.Image?.Dispose();
+            box.Image = null;
+        }
     }
 }
 

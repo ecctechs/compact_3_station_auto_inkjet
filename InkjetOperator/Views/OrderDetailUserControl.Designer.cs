@@ -56,6 +56,11 @@ partial class OrderDetailUserControl
         pnlMkSection = new AntdUI.Panel();
         tlpMkSection = new System.Windows.Forms.TableLayoutPanel();
         lblMkSectionTitle = new AntdUI.Label();
+        tlpMkErp = new System.Windows.Forms.TableLayoutPanel();
+        lblMkPlateErp = new System.Windows.Forms.Label();
+        txtMkPlateErp = new AntdUI.Input();
+        lblMkShimErp = new System.Windows.Forms.Label();
+        txtMkShimErp = new AntdUI.Input();
         tlpMkPair = new System.Windows.Forms.TableLayoutPanel();
         pnlMk1 = new AntdUI.Panel();
         tlpMk1 = new System.Windows.Forms.TableLayoutPanel();
@@ -645,7 +650,7 @@ partial class OrderDetailUserControl
         tlpSections.Margin = new System.Windows.Forms.Padding(0);
         tlpSections.Name = "tlpSections";
         tlpSections.RowCount = 3;
-        tlpSections.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 470F));
+        tlpSections.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 514F));
         tlpSections.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 110F));
         tlpSections.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 588F));
         tlpSections.Size = new System.Drawing.Size(1272, 1168);
@@ -672,12 +677,14 @@ partial class OrderDetailUserControl
         tlpMkSection.ColumnCount = 1;
         tlpMkSection.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpMkSection.Controls.Add(lblMkSectionTitle, 0, 0);
-        tlpMkSection.Controls.Add(tlpMkPair, 0, 1);
+        tlpMkSection.Controls.Add(tlpMkErp, 0, 1);
+        tlpMkSection.Controls.Add(tlpMkPair, 0, 2);
         tlpMkSection.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpMkSection.Location = new System.Drawing.Point(14, 14);
         tlpMkSection.Name = "tlpMkSection";
-        tlpMkSection.RowCount = 2;
+        tlpMkSection.RowCount = 3;
         tlpMkSection.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
+        tlpMkSection.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
         tlpMkSection.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpMkSection.Size = new System.Drawing.Size(1244, 432);
         tlpMkSection.TabIndex = 0;
@@ -695,6 +702,78 @@ partial class OrderDetailUserControl
         lblMkSectionTitle.Text = "MK Section (MK Inkjet)";
         lblMkSectionTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
         //
+        // tlpMkErp - 4 cols: label(150) | value(fill) | label(150) | value(fill)
+        //   ชื่อรูปอ้างอิงฝั่ง MK ประกอบจาก plan_routing.erp_mfg
+        //   โชว์ทั้งสองด้านเสมอ ด้านที่ marking method ไม่ได้ใช้จะเป็นขีด
+        //
+        tlpMkErp.BackColor = System.Drawing.Color.White;
+        tlpMkErp.ColumnCount = 4;
+        tlpMkErp.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 150F));
+        tlpMkErp.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpMkErp.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 150F));
+        tlpMkErp.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+        tlpMkErp.Controls.Add(lblMkPlateErp, 0, 0);
+        tlpMkErp.Controls.Add(txtMkPlateErp, 1, 0);
+        tlpMkErp.Controls.Add(lblMkShimErp, 2, 0);
+        tlpMkErp.Controls.Add(txtMkShimErp, 3, 0);
+        tlpMkErp.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpMkErp.Margin = new System.Windows.Forms.Padding(0, 0, 0, 4);
+        tlpMkErp.Name = "tlpMkErp";
+        tlpMkErp.RowCount = 1;
+        tlpMkErp.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMkErp.Size = new System.Drawing.Size(1244, 40);
+        tlpMkErp.TabIndex = 1;
+        //
+        // lblMkPlateErp
+        //
+        lblMkPlateErp.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMkPlateErp.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblMkPlateErp.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMkPlateErp.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMkPlateErp.Name = "lblMkPlateErp";
+        lblMkPlateErp.Size = new System.Drawing.Size(144, 40);
+        lblMkPlateErp.TabIndex = 0;
+        lblMkPlateErp.Text = "Plate ERP MFG :";
+        lblMkPlateErp.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        //
+        // txtMkPlateErp
+        //
+        txtMkPlateErp.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMkPlateErp.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMkPlateErp.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMkPlateErp.Font = new System.Drawing.Font("Segoe UI", 11F);
+        txtMkPlateErp.Margin = new System.Windows.Forms.Padding(3, 4, 12, 4);
+        txtMkPlateErp.Name = "txtMkPlateErp";
+        txtMkPlateErp.Radius = 8;
+        txtMkPlateErp.ReadOnly = true;
+        txtMkPlateErp.Size = new System.Drawing.Size(320, 32);
+        txtMkPlateErp.TabIndex = 1;
+        //
+        // lblMkShimErp
+        //
+        lblMkShimErp.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMkShimErp.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblMkShimErp.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMkShimErp.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMkShimErp.Name = "lblMkShimErp";
+        lblMkShimErp.Size = new System.Drawing.Size(144, 40);
+        lblMkShimErp.TabIndex = 2;
+        lblMkShimErp.Text = "Shim ERP MFG :";
+        lblMkShimErp.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        //
+        // txtMkShimErp
+        //
+        txtMkShimErp.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMkShimErp.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMkShimErp.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMkShimErp.Font = new System.Drawing.Font("Segoe UI", 11F);
+        txtMkShimErp.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+        txtMkShimErp.Name = "txtMkShimErp";
+        txtMkShimErp.Radius = 8;
+        txtMkShimErp.ReadOnly = true;
+        txtMkShimErp.Size = new System.Drawing.Size(320, 32);
+        txtMkShimErp.TabIndex = 3;
+        //
         // tlpMkPair
         //
         tlpMkPair.BackColor = System.Drawing.Color.White;
@@ -704,7 +783,7 @@ partial class OrderDetailUserControl
         tlpMkPair.Controls.Add(pnlMk1, 0, 0);
         tlpMkPair.Controls.Add(pnlMk2, 1, 0);
         tlpMkPair.Dock = System.Windows.Forms.DockStyle.Fill;
-        tlpMkPair.Location = new System.Drawing.Point(0, 36);
+        tlpMkPair.Location = new System.Drawing.Point(0, 80);
         tlpMkPair.Margin = new System.Windows.Forms.Padding(0);
         tlpMkPair.Name = "tlpMkPair";
         tlpMkPair.RowCount = 1;
@@ -3170,6 +3249,11 @@ partial class OrderDetailUserControl
     private AntdUI.Panel pnlMkSection;
     private System.Windows.Forms.TableLayoutPanel tlpMkSection;
     private AntdUI.Label lblMkSectionTitle;
+    private System.Windows.Forms.TableLayoutPanel tlpMkErp;
+    private System.Windows.Forms.Label lblMkPlateErp;
+    private AntdUI.Input txtMkPlateErp;
+    private System.Windows.Forms.Label lblMkShimErp;
+    private AntdUI.Input txtMkShimErp;
     private System.Windows.Forms.TableLayoutPanel tlpMkPair;
     private AntdUI.Panel pnlMk1;
     private System.Windows.Forms.TableLayoutPanel tlpMk1;

@@ -1,4 +1,4 @@
-using InkjetOperator.Theme;
+using InkjetOperator.Views;
 
 namespace InkjetOperator.Services;
 
@@ -72,51 +72,22 @@ public static class UvProgramResolver
         return result == DialogResult.Yes;
     }
 
+    /// <summary>
+    /// ให้ผู้ใช้เลือกรุ่นย่อยพร้อมเห็นรูปของแต่ละรุ่น
+    ///
+    /// ฝั่งนี้เลือกแล้ว "เปลี่ยนสิ่งที่พิมพ์จริง" ข้อความจึงต้องสื่อแบบนั้น
+    /// ต่างจากฝั่ง MK ที่เลือกแล้วเปลี่ยนแค่รูปที่ดู
+    /// </summary>
     private static string? PromptVariant(List<string> variants, IWin32Window? owner)
     {
-        using var dlg = new Form
-        {
-            Text = "เลือกรุ่นย่อย",
-            Size = new Size(420, 340),
-            StartPosition = FormStartPosition.CenterParent,
-            FormBorderStyle = FormBorderStyle.FixedDialog,
-            MinimizeBox = false,
-            MaximizeBox = false,
-            ShowIcon = false,
-        };
+        var options = variants
+            .Select(v => new MarkingRefOption(v, v + ".uvdx", MarkingRefImageService.FindImages(v)))
+            .ToList();
 
-        var list = new ListBox
-        {
-            Dock = DockStyle.Fill,
-            Font = DesignTokens.Body(12f),
-            IntegralHeight = false,
-        };
-        foreach (var v in variants) list.Items.Add(v + ".uvdx");
-        list.SelectedIndex = 0;
-
-        var bar = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Bottom,
-            FlowDirection = FlowDirection.RightToLeft,
-            Height = 56,
-            Padding = new Padding(10),
-        };
-        var ok = new Button { Text = "ตกลง", DialogResult = DialogResult.OK, Size = new Size(100, 36) };
-        var cancel = new Button { Text = "ยกเลิก", DialogResult = DialogResult.Cancel, Size = new Size(100, 36) };
-        bar.Controls.Add(ok);
-        bar.Controls.Add(cancel);
-
-        list.DoubleClick += (_, _) => { dlg.DialogResult = DialogResult.OK; dlg.Close(); };
-
-        dlg.Controls.Add(list);
-        dlg.Controls.Add(bar);
-        dlg.AcceptButton = ok;
-        dlg.CancelButton = cancel;
-
-        var answer = owner == null ? dlg.ShowDialog() : dlg.ShowDialog(owner);
-        if (answer != DialogResult.OK) return null;
-
-        int i = list.SelectedIndex;
-        return i >= 0 && i < variants.Count ? variants[i] : null;
+        return MarkingRefPickerDialog.Pick(
+            owner,
+            "เลือกโปรแกรมที่จะพิมพ์",
+            "โปรแกรมนี้มีหลายรุ่นย่อยในเครื่อง — เลือกรุ่นที่จะโหลดเข้าเครื่องเพื่อพิมพ์จริง",
+            options);
     }
 }

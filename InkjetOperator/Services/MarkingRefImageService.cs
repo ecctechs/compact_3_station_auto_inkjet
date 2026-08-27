@@ -16,6 +16,46 @@ public static class MarkingRefImageService
     public static string FolderPath => CustomSettingsManager.Read("MARKING_REF_FOLDER", "");
 
     /// <summary>
+    /// สภาพของโฟลเดอร์รูป — ใช้แยกให้ผู้ใช้เห็นว่า "งานนี้ไม่มีรูป" ต่างจาก
+    /// "ยังไม่ได้ตั้งค่า" และ "ต่อ share ไม่ได้" ซึ่งเดิมเงียบเหมือนกันหมด
+    /// </summary>
+    public enum FolderState
+    {
+        /// <summary>ยังไม่ได้ตั้ง path ในหน้า Setting</summary>
+        NotConfigured,
+
+        /// <summary>ตั้งไว้แล้วแต่เข้าไม่ถึง — share ล่ม ไม่มีสิทธิ์ หรือ path ผิด</summary>
+        Unreachable,
+
+        /// <summary>เข้าถึงได้ปกติ</summary>
+        Ok,
+    }
+
+    /// <summary>ตรวจโฟลเดอร์รูปหนึ่งครั้ง เพื่อเลือกข้อความที่จะบอกผู้ใช้</summary>
+    public static FolderState CheckFolder()
+    {
+        var folder = FolderPath;
+        if (string.IsNullOrWhiteSpace(folder)) return FolderState.NotConfigured;
+
+        try
+        {
+            return Directory.Exists(folder) ? FolderState.Ok : FolderState.Unreachable;
+        }
+        catch
+        {
+            return FolderState.Unreachable;
+        }
+    }
+
+    /// <summary>ข้อความอธิบายสาเหตุที่ไม่มีรูป ให้ทุกหน้าพูดเหมือนกัน</summary>
+    public static string DescribeEmpty(FolderState state) => state switch
+    {
+        FolderState.NotConfigured => "ยังไม่ได้ตั้งโฟลเดอร์รูปอ้างอิง (Setting → Inkjet Setting)",
+        FolderState.Unreachable => "เข้าโฟลเดอร์รูปอ้างอิงไม่ได้ — ตรวจการเชื่อมต่อ share",
+        _ => "ไม่มีรูปอ้างอิง",
+    };
+
+    /// <summary>
     /// Files whose name (without extension) equals <paramref name="programName"/>
     /// or starts with "{programName}-". Extension-agnostic, case-insensitive,
     /// sorted by name. Returns empty on missing folder / unreachable share.

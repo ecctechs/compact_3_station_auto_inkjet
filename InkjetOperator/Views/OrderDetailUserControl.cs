@@ -50,9 +50,14 @@ public partial class OrderDetailUserControl : UserControl
 
     // ── Marking reference image (hover preview) ──────────────
 
+    /// <summary>
+    /// ฝั่ง MK หารูปจากช่อง ERP MFG ไม่ใช่ช่องชื่อโปรแกรมอีกแล้ว
+    /// (ชื่อโปรแกรมยังอยู่บนจอเพราะเป็นข้อมูลที่ส่งเข้าเครื่องจริง แค่ไม่ใช้หารูป)
+    /// ฝั่ง UV ยังใช้ช่องชื่อโปรแกรมเหมือนเดิม
+    /// </summary>
     private void WireRefImageHover()
     {
-        foreach (var box in new[] { txtMk1Program, txtMk2Program, txtUv1Program, txtUv2Program })
+        foreach (var box in new[] { txtMkPlateErp, txtMkShimErp, txtUv1Program, txtUv2Program })
         {
             box.MouseEnter += ProgramField_MouseEnter;
             box.MouseLeave += ProgramField_MouseLeave;
@@ -63,7 +68,10 @@ public partial class OrderDetailUserControl : UserControl
     {
         if (sender is not AntdUI.Input box) return;
 
-        var paths = MarkingRefImageService.FindImages(box.Text);
+        var name = box.Text.Trim();
+        if (name.Length == 0 || name == Dash) return;
+
+        var paths = MarkingRefImageService.FindImages(name);
         if (paths.Count == 0) return;
 
         _refPopup ??= new ImageHoverPopup();
@@ -118,6 +126,7 @@ public partial class OrderDetailUserControl : UserControl
         FillMkChipLabels();
         FillUvChipLabels();
         ApplyMarkingMethodButtons(resolved.PlanRouting?.MarkingMethod);
+        FillMkErpFields(resolved.PlanRouting?.MarkingMethod, resolved.PlanRouting?.ErpMfg);
         RestoreCompletedSteps(resolved.Commands);
         ApplyStepButtons();
         FillMkSection(_pattern);
@@ -292,21 +301,15 @@ public partial class OrderDetailUserControl : UserControl
         dlg.ShowDialog();
     }
 
+    /// <summary>
+    /// กฎการแปล marking_method อยู่ที่ <see cref="MarkingMethodService"/> ที่เดียว
+    /// หน้า Order List ใช้ตัวเดียวกัน ห้ามตีความซ้ำที่นี่
+    /// </summary>
     private void ApplyMarkingMethodButtons(string? markingMethod)
     {
-        char a = '0', b = '0';
-        if (markingMethod is { Length: >= 2 })
-        {
-            a = markingMethod[0]; // Shim digit
-            b = markingMethod[1]; // Plate digit
-        }
+        var plan = MarkingMethodService.Resolve(markingMethod);
 
-        // '3' behaves the same as '1' (UV).
-        if (a == '3') a = '1';
-        if (b == '3') b = '1';
-
-        // "No case": Shim=Inkjet(2) + Plate=UV(1) — e.g. 21 — does not exist per spec.
-        if (a == '2' && b == '1')
+        if (plan.NoCase)
         {
             _sendSteps = [];
             _currentStep = 0;
@@ -315,24 +318,41 @@ public partial class OrderDetailUserControl : UserControl
             return;
         }
 
-        bool needMk = a == '2' || b == '2';
-        bool needUv1 = b == '1';
-        bool needUv2 = a == '1';
-
-        _sendSteps = [];
-        if (needMk) _sendSteps.Add("MK");
-        if (needUv1) _sendSteps.Add("UV1");
-        if (needUv2) _sendSteps.Add("UV2");
+        _sendSteps = new List<string>(plan.Steps);
         _currentStep = 0;
 
-        // Show which machine marks the Plate / Shim.
-        // marking_method = [Shim][Plate]: 0=None, 1=UV (Plate→UV1, Shim→UV2), 2=Inkjet(MK).
-        string plate = b switch { '1' => "UV1", '2' => "MK", _ => "None" };
-        string shim = a switch { '1' => "UV2", '2' => "MK", _ => "None" };
-        string twoRound = (a == '2' && b == '2') ? "   (MK วิ่ง 2 รอบ)" : "";
-        lblMarkingFlow.Text = $"Plate - {plate}{Environment.NewLine}Shim - {shim}{twoRound}";
+        string twoRound = plan.IsTwoRoundMk ? "   (MK วิ่ง 2 รอบ)" : "";
+        lblMarkingFlow.Text =
+            $"Plate - {MachineLabel(plan.Plate)}{Environment.NewLine}Shim - {MachineLabel(plan.Shim)}{twoRound}";
 
         ApplyStepButtons();
+    }
+
+    private static string MachineLabel(MarkingMachine machine) => machine switch
+    {
+        MarkingMachine.Mk => "MK",
+        MarkingMachine.Uv1 => "UV1",
+        MarkingMachine.Uv2 => "UV2",
+        _ => "None",
+    };
+
+    /// <summary>
+    /// ชื่อรูปอ้างอิงฝั่ง MK ประกอบจาก erp_mfg — โชว์ทั้งสองด้านเสมอ
+    /// ด้านที่ไม่ได้ทำโดย MK หรือไม่มี erp_mfg จะเป็นขีด และ hover แล้วไม่ขึ้นอะไร
+    /// </summary>
+    private void FillMkErpFields(string? markingMethod, string? erpMfg)
+    {
+        var plan = MarkingMethodService.Resolve(markingMethod);
+        txtMkPlateErp.Text = ErpRefName(plan.Plate, erpMfg, "P-");
+        txtMkShimErp.Text = ErpRefName(plan.Shim, erpMfg, "S-");
+    }
+
+    private static string ErpRefName(MarkingMachine machine, string? erpMfg, string prefix)
+    {
+        if (machine != MarkingMachine.Mk) return Dash;
+
+        var erp = (erpMfg ?? "").Trim();
+        return erp.Length == 0 ? Dash : prefix + erp;
     }
 
     private void RestoreCompletedSteps(List<CommandResult> commands)
@@ -396,11 +416,15 @@ public partial class OrderDetailUserControl : UserControl
             MarkButtonSent(GetSendButton(_sendSteps[i]));
     }
 
-    private void CompleteSendStep(string stepName)
+    /// <summary>
+    /// <paramref name="detail"/> เก็บลง payload ของ command — ฝั่ง UV ใช้บันทึกว่า
+    /// พิมพ์ด้วยรุ่นย่อยไหนจริง ไม่งั้นย้อนดูทีหลังไม่รู้ว่าเป็น ABC-1 หรือ ABC-2
+    /// </summary>
+    private void CompleteSendStep(string stepName, object? detail = null)
     {
         if (_isDevMode)
         {
-            _ = _api?.SaveSendStepAsync(_jobId, stepName);
+            _ = _api?.SaveSendStepAsync(_jobId, stepName, detail);
             return;
         }
 
@@ -417,7 +441,7 @@ public partial class OrderDetailUserControl : UserControl
         if (_currentStep < _sendSteps.Count)
             GetSendButton(_sendSteps[_currentStep]).Enabled = true;
 
-        _ = _api?.SaveSendStepAsync(_jobId, stepName);
+        _ = _api?.SaveSendStepAsync(_jobId, stepName, detail);
 
         if (isFirstStep)
             _ = _api?.UpdateJobStatusAsync(_jobId, "Process");
@@ -627,7 +651,12 @@ public partial class OrderDetailUserControl : UserControl
             done.Add($"โหลดโปรแกรม {programFile}.uvdx");
             done.Add("สั่งเริ่มพิมพ์");
 
-            CompleteSendStep(stepName);
+            CompleteSendStep(stepName, new
+            {
+                requested = uvRow.ProgramName ?? "",
+                program = programFile,
+                is_default = pick.IsDefault,
+            });
 
             var summary = $"ส่ง {uvName} สำเร็จ\n\n"
                 + string.Join("\n", done.Select(s => "• " + s))

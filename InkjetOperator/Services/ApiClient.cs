@@ -261,17 +261,23 @@ public class ApiClient
         }
     }
 
-    public async Task<bool> SaveSendStepAsync(int jobId, string stepName)
+    /// <summary>
+    /// บันทึกว่า step นี้ส่งสำเร็จแล้ว
+    /// <paramref name="detail"/> เก็บลงคอลัมน์ payload (JSONB) ไว้ย้อนดูภายหลัง
+    /// เช่นรุ่นย่อย .uvdx ที่เลือกจริง — ไม่ส่งมาก็เก็บเป็น null เหมือนเดิม
+    /// </summary>
+    public async Task<bool> SaveSendStepAsync(int jobId, string stepName, object? detail = null)
     {
         try
         {
-            var payload = new
+            var body = new
             {
                 command = stepName,
                 success = true,
                 sent_at = DateTime.UtcNow.ToString("o"),
+                payload = detail,
             };
-            var response = await _http.PostAsJsonAsync($"/job/addCommand/{jobId}", payload, JsonOptions);
+            var response = await _http.PostAsJsonAsync($"/job/addCommand/{jobId}", body, JsonOptions);
             return response.IsSuccessStatusCode;
         }
         catch { return false; }
