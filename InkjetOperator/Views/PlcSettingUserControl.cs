@@ -45,16 +45,16 @@ public partial class PlcSettingUserControl : UserControl
     {
         tblPlcMap.Columns = new AntdUI.ColumnCollection
         {
-            new AntdUI.Column("AddressStart", "Addr Start", AntdUI.ColumnAlign.Center) { Editable = true, Width = "90" },
-            new AntdUI.Column("AddressStop", "Addr Stop", AntdUI.ColumnAlign.Center) { Editable = true, Width = "90" },
-            new AntdUI.Column("PlcStart", "PLC Start", AntdUI.ColumnAlign.Center) { Editable = true, Width = "90" },
-            new AntdUI.Column("PlcStop", "PLC Stop", AntdUI.ColumnAlign.Center) { Editable = true, Width = "90" },
-            new AntdUI.Column("ListName", "List Name", AntdUI.ColumnAlign.Center) { Editable = true, Width = "150" },
-            new AntdUI.Column("DataType", "Data Type", AntdUI.ColumnAlign.Center) { Editable = true, Width = "80" },
-            new AntdUI.Column("Bit", "Bit", AntdUI.ColumnAlign.Center) { Editable = true, Width = "60" },
-            new AntdUI.Column("Value", "Value", AntdUI.ColumnAlign.Center) { Width = "80" },
-            new AntdUI.Column("WriteValue", "Write", AntdUI.ColumnAlign.Center) { Editable = true, Width = "80" },
-            new AntdUI.Column("Op", "Action", AntdUI.ColumnAlign.Center) { Width = "200" },
+            new AntdUI.Column("AddressStart", "Addr Start", AntdUI.ColumnAlign.Center) { Editable = true, Width = "9%" },
+            new AntdUI.Column("AddressStop", "Addr Stop", AntdUI.ColumnAlign.Center) { Editable = true, Width = "9%" },
+            new AntdUI.Column("PlcStart", "PLC Start", AntdUI.ColumnAlign.Center) { Editable = true, Width = "9%" },
+            new AntdUI.Column("PlcStop", "PLC Stop", AntdUI.ColumnAlign.Center) { Editable = true, Width = "9%" },
+            new AntdUI.Column("ListName", "List Name", AntdUI.ColumnAlign.Center) { Editable = true, Width = "18%" },
+            new AntdUI.Column("DataType", "Data Type", AntdUI.ColumnAlign.Center) { Editable = true, Width = "9%" },
+            new AntdUI.Column("Bit", "Bit", AntdUI.ColumnAlign.Center) { Editable = true, Width = "6%" },
+            new AntdUI.Column("Value", "Value", AntdUI.ColumnAlign.Center) { Width = "8%" },
+            new AntdUI.Column("WriteValue", "Write", AntdUI.ColumnAlign.Center) { Editable = true, Width = "8%" },
+            new AntdUI.Column("Op", "Action", AntdUI.ColumnAlign.Center) { Width = "15%" },
         };
     }
 

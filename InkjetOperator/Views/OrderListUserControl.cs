@@ -33,17 +33,21 @@ public partial class OrderListUserControl : UserControl
     {
         // SortOrder = ให้ AntdUI จัดเรียงคอลัมน์นั้นเองเมื่อคลิกหัวตาราง
         // คอลัมน์ Source / Op ไม่ใส่ เพราะเป็นแท็กกับปุ่ม เรียงแล้วไม่มีความหมาย
+        //
+        // ความกว้างเป็น % ของตาราง รวมกันพอดี 100 — ทุกคอลัมน์แบ่งพื้นที่ตามสัดส่วน
+        // ไม่มีช่องว่างเหลือ และไม่ขยับตอนสลับภาษาเพราะไม่ได้วัดจากข้อความหัวตาราง
+        // (ถ้าไม่กำหนด Width เลย AntdUI จะวัดจากหัวตารางให้ ซึ่งเปลี่ยนตามภาษา)
         tblOrders.Columns = new AntdUI.ColumnCollection
         {
-            new AntdUI.Column("Start", "Start", AntdUI.ColumnAlign.Center) { Width = "130", SortOrder = true },
-            new AntdUI.Column("End", "End", AntdUI.ColumnAlign.Center) { Width = "130", SortOrder = true },
-            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center) { SortOrder = true },
-            new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center) { SortOrder = true },
-            new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center) { SortOrder = true },
-            new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { SortOrder = true },
-            new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { SortOrder = true },
-            new AntdUI.Column("Source", "", AntdUI.ColumnAlign.Center) { Width = "120" },
-            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "220" },
+            new AntdUI.Column("Start", "Start", AntdUI.ColumnAlign.Center) { Width = "10%", SortOrder = true },
+            new AntdUI.Column("End", "End", AntdUI.ColumnAlign.Center) { Width = "10%", SortOrder = true },
+            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center) { Width = "14%", SortOrder = true },
+            new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center) { Width = "20%", SortOrder = true },
+            new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true },
+            new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true },
+            new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { Width = "11%", SortOrder = true },
+            new AntdUI.Column("Source", "", AntdUI.ColumnAlign.Center) { Width = "6%" },
+            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "13%" },
         };
     }
 

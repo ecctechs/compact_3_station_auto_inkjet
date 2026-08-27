@@ -1,4 +1,4 @@
-using InkjetOperator.Models;
+﻿using InkjetOperator.Models;
 using InkjetOperator.Services;
 using InkjetOperator.Theme;
 
@@ -24,12 +24,15 @@ public partial class TransferListUserControl : UserControl
     {
         tblTransfer.Columns = new AntdUI.ColumnCollection
         {
-            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center),
-            new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center),
-            new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center),
-            new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center),
-            new AntdUI.Column("StStatus", "สถานะ", AntdUI.ColumnAlign.Center) { Width = "140" },
-            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "180" },
+            // ทุกคอลัมน์กำหนดความกว้างเป็นพิกเซลตายตัว ยกเว้น 1 คอลัมน์ที่ตั้ง "fill"
+            // ไว้กินที่ที่เหลือ — ได้ทั้งคอลัมน์ไม่ขยับตอนสลับภาษา และไม่มีช่องว่างค้าง
+            // (ถ้าไม่กำหนด AntdUI จะวัดจากข้อความหัวตาราง ซึ่งเปลี่ยนตามภาษา)
+            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center) { Width = "20%" },
+            new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center) { Width = "30%" },
+            new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center) { Width = "10%" },
+            new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { Width = "10%" },
+            new AntdUI.Column("StStatus", "สถานะ", AntdUI.ColumnAlign.Center) { Width = "15%" },
+            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "15%" },
         };
     }
 

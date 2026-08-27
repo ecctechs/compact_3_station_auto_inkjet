@@ -50,11 +50,11 @@ public partial class EditPatternUserControl : UserControl
     {
         tblRules.Columns = new AntdUI.ColumnCollection
         {
-            new AntdUI.Column("From", "From", AntdUI.ColumnAlign.Center) { Editable = true, Width = "100" },
-            new AntdUI.Column("To", "To", AntdUI.ColumnAlign.Center) { Editable = true, Width = "100" },
-            new AntdUI.ColumnSelect("RuleLabel", "Rule", AntdUI.ColumnAlign.Center) { Editable = true, Width = "160", Items = RuleTypeItems() },
-            new AntdUI.Column("Value", "Value", AntdUI.ColumnAlign.Center) { Editable = true, Width = "140" },
-            new AntdUI.Column("Op", "Action", AntdUI.ColumnAlign.Center) { Width = "90" },
+            new AntdUI.Column("From", "From", AntdUI.ColumnAlign.Center) { Editable = true, Width = "18%" },
+            new AntdUI.Column("To", "To", AntdUI.ColumnAlign.Center) { Editable = true, Width = "18%" },
+            new AntdUI.ColumnSelect("RuleLabel", "Rule", AntdUI.ColumnAlign.Center) { Editable = true, Width = "26%", Items = RuleTypeItems() },
+            new AntdUI.Column("Value", "Value", AntdUI.ColumnAlign.Center) { Editable = true, Width = "22%" },
+            new AntdUI.Column("Op", "Action", AntdUI.ColumnAlign.Center) { Width = "16%" },
         };
     }
 

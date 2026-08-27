@@ -101,18 +101,18 @@ public partial class OrderDetailUserControl : UserControl
 
     private static AntdUI.ColumnCollection BuildBlockColumns() =>
     [
-        new AntdUI.Column("Block", "Block", AntdUI.ColumnAlign.Center) { Width = "70" },
-        new AntdUI.Column("BlockText", "Text", AntdUI.ColumnAlign.Left),
-        new AntdUI.Column("X", "X", AntdUI.ColumnAlign.Center) { Width = "60" },
-        new AntdUI.Column("Y", "Y", AntdUI.ColumnAlign.Center) { Width = "60" },
-        new AntdUI.Column("Size", "Size", AntdUI.ColumnAlign.Center) { Width = "60" },
-        new AntdUI.Column("Scale", "Scale", AntdUI.ColumnAlign.Center) { Width = "60" },
+        new AntdUI.Column("Block", "Block", AntdUI.ColumnAlign.Center) { Width = "16%" },
+        new AntdUI.Column("BlockText", "Text", AntdUI.ColumnAlign.Left) { Width = "36%" },
+        new AntdUI.Column("X", "X", AntdUI.ColumnAlign.Center) { Width = "12%" },
+        new AntdUI.Column("Y", "Y", AntdUI.ColumnAlign.Center) { Width = "12%" },
+        new AntdUI.Column("Size", "Size", AntdUI.ColumnAlign.Center) { Width = "12%" },
+        new AntdUI.Column("Scale", "Scale", AntdUI.ColumnAlign.Center) { Width = "12%" },
     ];
 
     private static AntdUI.ColumnCollection BuildUvColumns() =>
     [
-        new AntdUI.Column("Field", "Field", AntdUI.ColumnAlign.Center) { Width = "90" },
-        new AntdUI.Column("Value", "Value", AntdUI.ColumnAlign.Left),
+        new AntdUI.Column("Field", "Field", AntdUI.ColumnAlign.Center) { Width = "30%" },
+        new AntdUI.Column("Value", "Value", AntdUI.ColumnAlign.Left) { Width = "70%" },
     ];
 
     public void SetTransferMode() => _transferMode = true;
