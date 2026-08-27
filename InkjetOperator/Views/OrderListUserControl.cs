@@ -626,7 +626,7 @@ public partial class OrderListUserControl : UserControl
         var method = job.PlanRouting?.MarkingMethod;
         var plan = MarkingMethodService.Resolve(method);
 
-        string? uv1 = null, uv2 = null;
+        UvProgramInfo? uv1 = null, uv2 = null;
         bool needsUv = plan.Plate == MarkingMachine.Uv1 || plan.Shim == MarkingMachine.Uv2;
 
         if (needsUv && _api != null)
@@ -643,10 +643,10 @@ public partial class OrderListUserControl : UserControl
     }
 
     /// <summary>
-    /// ส่งไปแล้วให้ใช้รุ่นย่อยที่เลือกจริง (เก็บไว้ใน payload ของ command)
-    /// ยังไม่ได้ส่งก็ใช้ชื่อโปรแกรมฐานไปก่อน จะได้เห็นรูปคร่าว ๆ ก่อนพิมพ์
+    /// ส่งไปแล้ว → ใช้รุ่นย่อยที่เลือกจริง (เก็บใน payload ของ command) ถือว่ายืนยันแล้ว
+    /// ยังไม่ได้ส่ง → ได้แค่ชื่อฐานจากข้อมูลงาน ยังตอบไม่ได้ว่าจะพิมพ์รุ่นไหน
     /// </summary>
-    private static string? PickUvProgram(ResolvedJobResponse resolved, string machine)
+    private static UvProgramInfo PickUvProgram(ResolvedJobResponse resolved, string machine)
     {
         var sent = resolved.Commands
             .LastOrDefault(c => c.Success &&
@@ -655,12 +655,14 @@ public partial class OrderListUserControl : UserControl
         if (sent?.Payload != null && sent.Payload.TryGetValue("program", out var value))
         {
             var chosen = value?.ToString()?.Trim();
-            if (!string.IsNullOrEmpty(chosen)) return chosen;
+            if (!string.IsNullOrEmpty(chosen)) return new UvProgramInfo(chosen, true);
         }
 
-        return resolved.UvJobData
+        var baseName = resolved.UvJobData
             .FirstOrDefault(u => string.Equals(u.Machine, machine, StringComparison.OrdinalIgnoreCase))
             ?.ProgramName;
+
+        return new UvProgramInfo(baseName, false);
     }
 
     // ── ช่องรูปหนึ่งช่อง ───────────────────────────────────
@@ -704,6 +706,14 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
+        // ยังไม่ได้เลือกรุ่นย่อย — หยิบใบไหนมาโชว์ก็ดูเหมือนระบบเลือกไว้ให้แล้ว
+        // ปล่อยกรอบว่างไว้แล้วบอกตรง ๆ ว่ามีให้เลือกกี่แบบ (กดที่กรอบดูตัวอย่างได้)
+        if (side.Pending)
+        {
+            caption.Text = $"{side.Side} · {side.Machine} · ยังไม่ได้เลือกรุ่น ({side.Images.Count} แบบ)";
+            return;
+        }
+
         box.Image = MarkingRefImageService.LoadImageNoLock(path);
         if (box.Image == null)
         {
@@ -737,7 +747,10 @@ public partial class OrderListUserControl : UserControl
 
         var reordered = new List<string> { chosen };
         reordered.AddRange(side.Images.Where(path => path != chosen));
-        ApplySide(side with { Images = reordered }, box, caption);
+        ApplySide(side with { Images = reordered, Pending = false }, box, caption);
+
+        // เปิดดูเองตอนที่ยังไม่ได้เลือกรุ่น ต้องไม่ให้เข้าใจว่านี่คือรุ่นที่จะพิมพ์
+        if (side.Pending) caption.Text += "  (ตัวอย่าง)";
     }
 
     /// <summary>
