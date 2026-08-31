@@ -64,6 +64,34 @@ internal sealed partial class MarkingRefPickerDialog : Form
         return result == DialogResult.OK ? dlg.SelectedKey : null;
     }
 
+    /// <summary>
+    /// เปิดดูรูปอย่างเดียว ไม่มีอะไรให้เลือก
+    ///
+    /// ใช้ตอนกดชื่อรูปอ้างอิงในหน้า Order Detail — ชื่อถูกกำหนดมาจาก erp_mfg แล้ว
+    /// ผู้ใช้แค่อยากเห็นว่ารูปหน้าตายังไง ไม่ได้กำลังตัดสินใจอะไร
+    /// </summary>
+    public static void View(
+        IWin32Window? owner, string title, string prompt, List<string> images)
+    {
+        using var dlg = new MarkingRefPickerDialog();
+        dlg.Text = title;
+        dlg.lblPrompt.Text = prompt;
+        dlg.SetViewOnly();
+        dlg.SetOptions([new MarkingRefOption("", "", images)]);
+
+        if (owner == null) dlg.ShowDialog();
+        else dlg.ShowDialog(owner);
+    }
+
+    /// <summary>ยุบคอลัมน์รายการทิ้ง เหลือรูปเต็มกรอบกับปุ่มปิดปุ่มเดียว</summary>
+    private void SetViewOnly()
+    {
+        lstOptions.Visible = false;
+        tlpContent.ColumnStyles[0].Width = 0F;
+        btnCancel.Visible = false;
+        btnOk.Text = "ปิด";
+    }
+
     private void SetOptions(List<MarkingRefOption> options)
     {
         _options = options;

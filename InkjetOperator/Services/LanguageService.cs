@@ -130,8 +130,6 @@ public static class LanguageService
         ["UV Section"] = "โซน UV",
         ["Program Name"] = "ชื่อโปรแกรม",
         ["Program No."] = "เลขโปรแกรม",
-        ["Plate ERP MFG:"] = "ERP MFG เพลต:",
-        ["Shim ERP MFG:"] = "ERP MFG ชิม:",
         ["Width"] = "กว้าง",
         ["Height"] = "สูง",
         ["Position"] = "ตำแหน่ง",

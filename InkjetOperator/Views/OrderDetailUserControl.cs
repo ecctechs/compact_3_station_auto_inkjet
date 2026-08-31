@@ -43,6 +43,9 @@ public partial class OrderDetailUserControl : UserControl
         btnSendUv2.Click += async (_, _) => await SendToUvAsync(2);
         btnSendToSt1.Click += async (_, _) => await SendToSt1Async();
 
+        btnFlowPlate.Click += (_, _) => OpenFlowRefImages(btnFlowPlate);
+        btnFlowShim.Click += (_, _) => OpenFlowRefImages(btnFlowShim);
+
         WireIaiAdjustEvents();
         WireRefImageHover();
         Disposed += (_, _) => _refPopup?.Dispose();
@@ -51,13 +54,14 @@ public partial class OrderDetailUserControl : UserControl
     // ── Marking reference image (hover preview) ──────────────
 
     /// <summary>
-    /// ฝั่ง MK หารูปจากช่อง ERP MFG ไม่ใช่ช่องชื่อโปรแกรมอีกแล้ว
-    /// (ชื่อโปรแกรมยังอยู่บนจอเพราะเป็นข้อมูลที่ส่งเข้าเครื่องจริง แค่ไม่ใช้หารูป)
-    /// ฝั่ง UV ยังใช้ช่องชื่อโปรแกรมเหมือนเดิม
+    /// เหลือเฉพาะช่องชื่อโปรแกรมของ UV
+    ///
+    /// ฝั่ง MK ย้ายไปอยู่บนบรรทัด marking method แล้ว และเปลี่ยนเป็นกดคลิก
+    /// ไม่ใช่ hover — hover ไม่มีอะไรบอกว่ามีรูปให้ดู
     /// </summary>
     private void WireRefImageHover()
     {
-        foreach (var box in new[] { txtMkPlateErp, txtMkShimErp, txtUv1Program, txtUv2Program })
+        foreach (var box in new[] { txtUv1Program, txtUv2Program })
         {
             box.MouseEnter += ProgramField_MouseEnter;
             box.MouseLeave += ProgramField_MouseLeave;
@@ -71,14 +75,8 @@ public partial class OrderDetailUserControl : UserControl
         var name = box.Text.Trim();
         if (name.Length == 0 || name == Dash) return;
 
-        // ช่อง ERP ของ MK: "-1" "-2" คือคนละงาน จึงต้องตรงเป๊ะ
-        // ช่อง program ของ UV: ยังไม่รู้ว่าจะเลือกรุ่นไหน ให้ดูรวมทุกรุ่นไปก่อน
-        bool isErpField = ReferenceEquals(box, txtMkPlateErp) || ReferenceEquals(box, txtMkShimErp);
-
-        var paths = isErpField
-            ? MarkingRefImageService.FindImagesExact(name)
-            : MarkingRefImageService.FindImages(name);
-
+        // ยังไม่รู้ว่าจะเลือกรุ่นย่อยไหน ให้ดูรวมทุกรุ่นไปก่อน
+        var paths = MarkingRefImageService.FindImages(name);
         if (paths.Count == 0) return;
 
         _refPopup ??= new ImageHoverPopup();
@@ -132,8 +130,7 @@ public partial class OrderDetailUserControl : UserControl
         FillJobInfo(resolved);
         FillMkChipLabels();
         FillUvChipLabels();
-        ApplyMarkingMethodButtons(resolved.PlanRouting?.MarkingMethod);
-        FillMkErpFields(resolved.PlanRouting?.MarkingMethod, resolved.PlanRouting?.ErpMfg);
+        ApplyMarkingMethodButtons(resolved.PlanRouting?.MarkingMethod, resolved.PlanRouting?.ErpMfg);
         RestoreCompletedSteps(resolved.Commands);
         ApplyStepButtons();
         FillMkSection(_pattern);
@@ -312,7 +309,7 @@ public partial class OrderDetailUserControl : UserControl
     /// กฎการแปล marking_method อยู่ที่ <see cref="MarkingMethodService"/> ที่เดียว
     /// หน้า Order List ใช้ตัวเดียวกัน ห้ามตีความซ้ำที่นี่
     /// </summary>
-    private void ApplyMarkingMethodButtons(string? markingMethod)
+    private void ApplyMarkingMethodButtons(string? markingMethod, string? erpMfg)
     {
         var plan = MarkingMethodService.Resolve(markingMethod);
 
@@ -320,7 +317,8 @@ public partial class OrderDetailUserControl : UserControl
         {
             _sendSteps = [];
             _currentStep = 0;
-            lblMarkingFlow.Text = "ไม่มีเคสนี้";
+            ApplyFlowRow(btnFlowPlate, "Plate", MarkingMachine.None, null, "   ไม่มีเคสนี้");
+            ApplyFlowRow(btnFlowShim, "Shim", MarkingMachine.None, null, "   ไม่มีเคสนี้");
             ApplyStepButtons();
             return;
         }
@@ -329,10 +327,57 @@ public partial class OrderDetailUserControl : UserControl
         _currentStep = 0;
 
         string twoRound = plan.IsTwoRoundMk ? "   (MK วิ่ง 2 รอบ)" : "";
-        lblMarkingFlow.Text =
-            $"Plate - {MachineLabel(plan.Plate)}{Environment.NewLine}Shim - {MachineLabel(plan.Shim)}{twoRound}";
+        ApplyFlowRow(btnFlowPlate, "Plate", plan.Plate, ErpRefName(plan.Plate, erpMfg, "P-"), twoRound);
+        ApplyFlowRow(btnFlowShim, "Shim", plan.Shim, ErpRefName(plan.Shim, erpMfg, "S-"), twoRound);
 
         ApplyStepButtons();
+    }
+
+    /// <summary>
+    /// หนึ่งบรรทัดของ marking method — "Plate - MK - (P-ABC123)"
+    ///
+    /// ชื่อรูปอ้างอิงฝั่ง MK เคยเป็นช่องกรอกแยกอยู่ใน MK Section แล้วต้อง
+    /// เอาเมาส์ไปจ่อถึงจะเห็นรูป ตอนนี้ต่อท้ายบรรทัดที่บอกอยู่แล้วว่าด้านนี้ใครมาร์ก
+    /// และมีไอคอนรูปกำกับว่ากดได้ — บรรทัดที่ไม่มีรูปจะไม่มีไอคอนและกดไม่ได้
+    /// </summary>
+    private static void ApplyFlowRow(
+        AntdUI.Button row, string side, MarkingMachine machine, string? refName, string suffix)
+    {
+        bool hasRef = refName != null && refName != Dash;
+
+        row.Text = $"{side} - {MachineLabel(machine)}"
+            + (hasRef ? $" - ({refName})" : "")
+            + suffix;
+
+        // Tag พาชื่อรูปไปให้ตัวจัดการคลิก บรรทัดไหนไม่มีรูปก็ไม่มี Tag
+        row.Tag = hasRef ? refName : null;
+
+        // บรรทัดที่กดไม่ได้ถอดกรอบกับพื้นออกให้เหลือเป็นข้อความเปล่า ๆ ไม่ใช้ Enabled
+        // เพราะปุ่มที่ถูก disable จะจางลงทั้งบรรทัด ทั้งที่ "Plate - UV1" เป็นข้อมูล
+        // ที่ต้องอ่านออกเท่า ๆ กับบรรทัดที่กดได้
+        row.IconSvg = hasRef ? "PictureOutlined" : null;
+        row.BorderWidth = hasRef ? 1F : 0F;
+        row.DefaultBack = hasRef ? System.Drawing.Color.FromArgb(237, 243, 249) : Color.Transparent;
+        row.Cursor = hasRef ? Cursors.Hand : Cursors.Default;
+    }
+
+    /// <summary>
+    /// ชื่อรูปฝั่ง MK ลงท้าย "-1" "-2" คือคนละงาน ไม่ใช่รุ่นย่อยของงานเดียวกัน
+    /// จึงค้นแบบตรงเป๊ะ ต่างจากฝั่ง UV ที่ยังไม่รู้ว่าจะเลือกรุ่นไหน
+    /// </summary>
+    private void OpenFlowRefImages(AntdUI.Button row)
+    {
+        if (row.Tag is not string name || name.Length == 0) return;
+
+        var paths = MarkingRefImageService.FindImagesExact(name);
+        if (paths.Count == 0)
+        {
+            Notify.WarnModal(this, "รูปอ้างอิง",
+                MarkingRefImageService.DescribeEmpty(MarkingRefImageService.CheckFolder()));
+            return;
+        }
+
+        MarkingRefPickerDialog.View(this, $"รูปอ้างอิง — {name}", name, paths);
     }
 
     private static string MachineLabel(MarkingMachine machine) => machine switch
@@ -342,17 +387,6 @@ public partial class OrderDetailUserControl : UserControl
         MarkingMachine.Uv2 => "UV2",
         _ => "None",
     };
-
-    /// <summary>
-    /// ชื่อรูปอ้างอิงฝั่ง MK ประกอบจาก erp_mfg — โชว์ทั้งสองด้านเสมอ
-    /// ด้านที่ไม่ได้ทำโดย MK หรือไม่มี erp_mfg จะเป็นขีด และ hover แล้วไม่ขึ้นอะไร
-    /// </summary>
-    private void FillMkErpFields(string? markingMethod, string? erpMfg)
-    {
-        var plan = MarkingMethodService.Resolve(markingMethod);
-        txtMkPlateErp.Text = ErpRefName(plan.Plate, erpMfg, "P-");
-        txtMkShimErp.Text = ErpRefName(plan.Shim, erpMfg, "S-");
-    }
 
     private static string ErpRefName(MarkingMachine machine, string? erpMfg, string prefix)
     {
