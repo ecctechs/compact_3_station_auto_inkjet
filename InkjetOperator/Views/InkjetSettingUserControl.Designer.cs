@@ -187,7 +187,7 @@ partial class InkjetSettingUserControl
         tlpMk.SetColumnSpan(lblMk058IpLabel, 2);
         lblMk058IpLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
         lblMk058IpLabel.TabIndex = 3;
-        lblMk058IpLabel.Text = "IP Address :";
+        lblMk058IpLabel.Text = "IP Address:";
         lblMk058IpLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtMk058Ip — spans cols 3-5 (no port for MK)
@@ -243,7 +243,7 @@ partial class InkjetSettingUserControl
         tlpMk.SetColumnSpan(lblMk059IpLabel, 2);
         lblMk059IpLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
         lblMk059IpLabel.TabIndex = 8;
-        lblMk059IpLabel.Text = "IP Address :";
+        lblMk059IpLabel.Text = "IP Address:";
         lblMk059IpLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtMk059Ip — spans cols 3-5
@@ -277,7 +277,7 @@ partial class InkjetSettingUserControl
         tlpUv.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 125F));
         tlpUv.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpUv.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 25F));
-        tlpUv.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 112F));
+        tlpUv.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 70F));
         tlpUv.Controls.Add(lblUv1Header, 0, 0);
         tlpUv.Controls.Add(lblUv1Dot, 0, 1);
         tlpUv.Controls.Add(lblUv1Badge, 1, 1);
@@ -373,7 +373,7 @@ partial class InkjetSettingUserControl
         tlpUv.SetColumnSpan(lblUv1IpLabel, 2);
         lblUv1IpLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
         lblUv1IpLabel.TabIndex = 4;
-        lblUv1IpLabel.Text = "IP Address :";
+        lblUv1IpLabel.Text = "IP Address:";
         lblUv1IpLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtUv1Ip
@@ -413,7 +413,7 @@ partial class InkjetSettingUserControl
         tlpUv.SetColumnSpan(lblUv1FolderLabel, 2);
         lblUv1FolderLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
         lblUv1FolderLabel.TabIndex = 8;
-        lblUv1FolderLabel.Text = "UV Software Folder :";
+        lblUv1FolderLabel.Text = "UV Software Folder:";
         lblUv1FolderLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtUv1Folder
@@ -437,10 +437,11 @@ partial class InkjetSettingUserControl
         btnUv1Browse.Font = new System.Drawing.Font("Segoe UI", 11F);
         btnUv1Browse.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnUv1Browse.Name = "btnUv1Browse";
+        btnUv1Browse.IconSvg = "FolderOpenFilled";
+        btnUv1Browse.IconRatio = 1.2F;
         btnUv1Browse.Radius = 6;
-        btnUv1Browse.Size = new System.Drawing.Size(105, 42);
+        btnUv1Browse.Size = new System.Drawing.Size(52, 42);
         btnUv1Browse.TabIndex = 10;
-        btnUv1Browse.Text = "Browse...";
         btnUv1Browse.Type = AntdUI.TTypeMini.Default;
         //
         // lblUv1Status
@@ -510,7 +511,7 @@ partial class InkjetSettingUserControl
         tlpUv.SetColumnSpan(lblUv2IpLabel, 2);
         lblUv2IpLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
         lblUv2IpLabel.TabIndex = 16;
-        lblUv2IpLabel.Text = "IP Address :";
+        lblUv2IpLabel.Text = "IP Address:";
         lblUv2IpLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtUv2Ip
@@ -550,7 +551,7 @@ partial class InkjetSettingUserControl
         tlpUv.SetColumnSpan(lblUv2FolderLabel, 2);
         lblUv2FolderLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
         lblUv2FolderLabel.TabIndex = 20;
-        lblUv2FolderLabel.Text = "UV Software Folder :";
+        lblUv2FolderLabel.Text = "UV Software Folder:";
         lblUv2FolderLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtUv2Folder
@@ -574,10 +575,11 @@ partial class InkjetSettingUserControl
         btnUv2Browse.Font = new System.Drawing.Font("Segoe UI", 11F);
         btnUv2Browse.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnUv2Browse.Name = "btnUv2Browse";
+        btnUv2Browse.IconSvg = "FolderOpenFilled";
+        btnUv2Browse.IconRatio = 1.2F;
         btnUv2Browse.Radius = 6;
-        btnUv2Browse.Size = new System.Drawing.Size(105, 42);
+        btnUv2Browse.Size = new System.Drawing.Size(52, 42);
         btnUv2Browse.TabIndex = 22;
-        btnUv2Browse.Text = "Browse...";
         btnUv2Browse.Type = AntdUI.TTypeMini.Default;
         //
         // lblUv2Status
@@ -610,7 +612,7 @@ partial class InkjetSettingUserControl
         tlpMarkingRef.ColumnCount = 3;
         tlpMarkingRef.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 112F));
         tlpMarkingRef.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpMarkingRef.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 150F));
+        tlpMarkingRef.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 70F));
         tlpMarkingRef.Controls.Add(lblMarkingRefLabel, 0, 0);
         tlpMarkingRef.Controls.Add(txtMarkingRefFolder, 1, 0);
         tlpMarkingRef.Controls.Add(btnMarkingRefBrowse, 2, 0);
@@ -628,7 +630,7 @@ partial class InkjetSettingUserControl
         lblMarkingRefLabel.Name = "lblMarkingRefLabel";
         lblMarkingRefLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
         lblMarkingRefLabel.TabIndex = 0;
-        lblMarkingRefLabel.Text = "Folder :";
+        lblMarkingRefLabel.Text = "Folder:";
         lblMarkingRefLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtMarkingRefFolder
@@ -651,10 +653,11 @@ partial class InkjetSettingUserControl
         btnMarkingRefBrowse.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         btnMarkingRefBrowse.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnMarkingRefBrowse.Name = "btnMarkingRefBrowse";
+        btnMarkingRefBrowse.IconSvg = "FolderOpenFilled";
+        btnMarkingRefBrowse.IconRatio = 1.2F;
         btnMarkingRefBrowse.Radius = 6;
-        btnMarkingRefBrowse.Size = new System.Drawing.Size(138, 55);
+        btnMarkingRefBrowse.Size = new System.Drawing.Size(52, 42);
         btnMarkingRefBrowse.TabIndex = 2;
-        btnMarkingRefBrowse.Text = "Browse";
         btnMarkingRefBrowse.Type = AntdUI.TTypeMini.Default;
         // =================================================================
         // flpActions

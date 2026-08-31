@@ -172,7 +172,7 @@ partial class OrderListUserControl
         lblDateFilter.Name = "lblDateFilter";
         lblDateFilter.Size = new System.Drawing.Size(88, 45);
         lblDateFilter.TabIndex = 2;
-        lblDateFilter.Text = "ช่วงวันที่ :";
+        lblDateFilter.Text = "ช่วงวันที่:";
         lblDateFilter.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
         lblDateFilter.Visible = false;
         //

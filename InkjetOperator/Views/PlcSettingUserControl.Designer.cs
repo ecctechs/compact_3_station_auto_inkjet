@@ -152,7 +152,7 @@ partial class PlcSettingUserControl
         tlpConn.SetColumnSpan(lblIpLabel, 2);
         lblIpLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
         lblIpLabel.TabIndex = 3;
-        lblIpLabel.Text = "IP Address :";
+        lblIpLabel.Text = "IP Address:";
         lblIpLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtPlc001Ip
@@ -172,7 +172,7 @@ partial class PlcSettingUserControl
         tlpConn.SetColumnSpan(lblPortLabel, 2);
         lblPortLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
         lblPortLabel.TabIndex = 5;
-        lblPortLabel.Text = "Port :";
+        lblPortLabel.Text = "Port:";
         lblPortLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtPlc001Port

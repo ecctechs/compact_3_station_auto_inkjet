@@ -733,7 +733,7 @@ partial class OrderDetailUserControl
         lblMkPlateErp.Name = "lblMkPlateErp";
         lblMkPlateErp.Size = new System.Drawing.Size(180, 50);
         lblMkPlateErp.TabIndex = 0;
-        lblMkPlateErp.Text = "Plate ERP MFG :";
+        lblMkPlateErp.Text = "Plate ERP MFG:";
         lblMkPlateErp.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtMkPlateErp
@@ -758,7 +758,7 @@ partial class OrderDetailUserControl
         lblMkShimErp.Name = "lblMkShimErp";
         lblMkShimErp.Size = new System.Drawing.Size(180, 50);
         lblMkShimErp.TabIndex = 2;
-        lblMkShimErp.Text = "Shim ERP MFG :";
+        lblMkShimErp.Text = "Shim ERP MFG:";
         lblMkShimErp.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtMkShimErp

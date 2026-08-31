@@ -204,7 +204,7 @@ partial class ScanBarcodeUserControl
         lblBarcode.Name = "lblBarcode";
         lblBarcode.Size = new Size(208, 75);
         lblBarcode.TabIndex = 0;
-        lblBarcode.Text = "Barcode :";
+        lblBarcode.Text = "Barcode:";
         // 
         // lblOrderNo
         // 
@@ -217,7 +217,7 @@ partial class ScanBarcodeUserControl
         lblOrderNo.Name = "lblOrderNo";
         lblOrderNo.Size = new Size(208, 75);
         lblOrderNo.TabIndex = 1;
-        lblOrderNo.Text = "Order No :";
+        lblOrderNo.Text = "Order No:";
         // 
         // lblCustomerName
         // 
@@ -230,7 +230,7 @@ partial class ScanBarcodeUserControl
         lblCustomerName.Name = "lblCustomerName";
         lblCustomerName.Size = new Size(208, 75);
         lblCustomerName.TabIndex = 2;
-        lblCustomerName.Text = "Customer Name :";
+        lblCustomerName.Text = "Customer Name:";
         // 
         // lblType
         // 
@@ -243,7 +243,7 @@ partial class ScanBarcodeUserControl
         lblType.Name = "lblType";
         lblType.Size = new Size(208, 75);
         lblType.TabIndex = 3;
-        lblType.Text = "Type :";
+        lblType.Text = "Type:";
         // 
         // lblQty
         // 
@@ -256,7 +256,7 @@ partial class ScanBarcodeUserControl
         lblQty.Name = "lblQty";
         lblQty.Size = new Size(208, 79);
         lblQty.TabIndex = 4;
-        lblQty.Text = "Qty :";
+        lblQty.Text = "Qty:";
         // 
         // txtBarcode
         // 

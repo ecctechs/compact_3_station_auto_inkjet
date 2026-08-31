@@ -247,7 +247,7 @@ partial class EditPatternUserControl
         lblRuleName.Name = "lblRuleName";
         lblRuleName.Size = new System.Drawing.Size(155, 70);
         lblRuleName.TabIndex = 0;
-        lblRuleName.Text = "Rule Name :";
+        lblRuleName.Text = "Rule Name:";
         lblRuleName.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
         //
         // lblDescription
@@ -259,7 +259,7 @@ partial class EditPatternUserControl
         lblDescription.Name = "lblDescription";
         lblDescription.Size = new System.Drawing.Size(155, 70);
         lblDescription.TabIndex = 1;
-        lblDescription.Text = "Description :";
+        lblDescription.Text = "Description:";
         lblDescription.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
         //
         // lblLotTest
@@ -271,7 +271,7 @@ partial class EditPatternUserControl
         lblLotTest.Name = "lblLotTest";
         lblLotTest.Size = new System.Drawing.Size(155, 70);
         lblLotTest.TabIndex = 2;
-        lblLotTest.Text = "Lot Test :";
+        lblLotTest.Text = "Lot Test:";
         lblLotTest.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
         //
         // lblBlockText
@@ -283,7 +283,7 @@ partial class EditPatternUserControl
         lblBlockText.Name = "lblBlockText";
         lblBlockText.Size = new System.Drawing.Size(155, 70);
         lblBlockText.TabIndex = 3;
-        lblBlockText.Text = "Block Text :";
+        lblBlockText.Text = "Block Text:";
         lblBlockText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
         //
         // txtPatternName
@@ -422,7 +422,7 @@ partial class EditPatternUserControl
         lblPreviewCaption.Name = "lblPreviewCaption";
         lblPreviewCaption.Size = new System.Drawing.Size(122, 75);
         lblPreviewCaption.TabIndex = 0;
-        lblPreviewCaption.Text = "Preview :";
+        lblPreviewCaption.Text = "Preview:";
         lblPreviewCaption.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
         //
         // lblPreview

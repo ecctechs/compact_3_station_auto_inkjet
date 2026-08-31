@@ -125,7 +125,7 @@ partial class UvTestUserControl
         tlpMachine.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpMachine.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 88F));
         tlpMachine.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 138F));
-        tlpMachine.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 162F));
+        tlpMachine.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 70F));
         tlpMachine.Controls.Add(flpPick, 0, 0);
         tlpMachine.Controls.Add(lblIpLabel, 0, 1);
         tlpMachine.Controls.Add(txtIp, 1, 1);
@@ -190,7 +190,7 @@ partial class UvTestUserControl
         lblIpLabel.Name = "lblIpLabel";
         lblIpLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblIpLabel.TabIndex = 1;
-        lblIpLabel.Text = "IP :";
+        lblIpLabel.Text = "IP:";
         lblIpLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtIp
@@ -208,7 +208,7 @@ partial class UvTestUserControl
         lblPortLabel.Name = "lblPortLabel";
         lblPortLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblPortLabel.TabIndex = 3;
-        lblPortLabel.Text = "Port :";
+        lblPortLabel.Text = "Port:";
         lblPortLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtPort
@@ -244,7 +244,7 @@ partial class UvTestUserControl
         lblFolderLabel.Name = "lblFolderLabel";
         lblFolderLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblFolderLabel.TabIndex = 6;
-        lblFolderLabel.Text = "โฟลเดอร์ UV :";
+        lblFolderLabel.Text = "โฟลเดอร์ UV:";
         lblFolderLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtFolder
@@ -268,10 +268,11 @@ partial class UvTestUserControl
         btnBrowseFolder.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         btnBrowseFolder.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnBrowseFolder.Name = "btnBrowseFolder";
+        btnBrowseFolder.IconSvg = "FolderOpenFilled";
+        btnBrowseFolder.IconRatio = 1.2F;
         btnBrowseFolder.Radius = 6;
-        btnBrowseFolder.Size = new System.Drawing.Size(155, 45);
+        btnBrowseFolder.Size = new System.Drawing.Size(52, 42);
         btnBrowseFolder.TabIndex = 8;
-        btnBrowseFolder.Text = "Browse...";
         btnBrowseFolder.Type = AntdUI.TTypeMini.Default;
         //
         // lblPathStatus
@@ -328,7 +329,7 @@ partial class UvTestUserControl
         lblProgramLabel.Name = "lblProgramLabel";
         lblProgramLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblProgramLabel.TabIndex = 0;
-        lblProgramLabel.Text = "Program :";
+        lblProgramLabel.Text = "Program:";
         lblProgramLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtProgram
@@ -469,7 +470,7 @@ partial class UvTestUserControl
         lblTableLabel.Name = "lblTableLabel";
         lblTableLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblTableLabel.TabIndex = 0;
-        lblTableLabel.Text = "ตาราง :";
+        lblTableLabel.Text = "ตาราง:";
         lblTableLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtTable
@@ -491,7 +492,7 @@ partial class UvTestUserControl
         lblLotLabel.Name = "lblLotLabel";
         lblLotLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblLotLabel.TabIndex = 2;
-        lblLotLabel.Text = "Lot :";
+        lblLotLabel.Text = "Lot:";
         lblLotLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtLot
@@ -512,7 +513,7 @@ partial class UvTestUserControl
         lblNameLabel.Name = "lblNameLabel";
         lblNameLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblNameLabel.TabIndex = 4;
-        lblNameLabel.Text = "Name :";
+        lblNameLabel.Text = "Name:";
         lblNameLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtName
@@ -533,7 +534,7 @@ partial class UvTestUserControl
         lblText1Label.Name = "lblText1Label";
         lblText1Label.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblText1Label.TabIndex = 6;
-        lblText1Label.Text = "Text 1 :";
+        lblText1Label.Text = "Text 1:";
         lblText1Label.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtText1
@@ -555,7 +556,7 @@ partial class UvTestUserControl
         lblText2Label.Name = "lblText2Label";
         lblText2Label.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblText2Label.TabIndex = 8;
-        lblText2Label.Text = "Text 2 :";
+        lblText2Label.Text = "Text 2:";
         lblText2Label.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtText2
@@ -577,7 +578,7 @@ partial class UvTestUserControl
         lblText3Label.Name = "lblText3Label";
         lblText3Label.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblText3Label.TabIndex = 10;
-        lblText3Label.Text = "Text 3 :";
+        lblText3Label.Text = "Text 3:";
         lblText3Label.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtText3
@@ -599,7 +600,7 @@ partial class UvTestUserControl
         lblText4Label.Name = "lblText4Label";
         lblText4Label.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblText4Label.TabIndex = 12;
-        lblText4Label.Text = "Text 4 :";
+        lblText4Label.Text = "Text 4:";
         lblText4Label.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtText4
@@ -621,7 +622,7 @@ partial class UvTestUserControl
         lblText5Label.Name = "lblText5Label";
         lblText5Label.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblText5Label.TabIndex = 14;
-        lblText5Label.Text = "Text 5 :";
+        lblText5Label.Text = "Text 5:";
         lblText5Label.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtText5

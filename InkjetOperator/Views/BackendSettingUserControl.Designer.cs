@@ -134,7 +134,7 @@ partial class BackendSettingUserControl
         tlpDevice.SetColumnSpan(lblPcIpLabel, 2);
         lblPcIpLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
         lblPcIpLabel.TabIndex = 3;
-        lblPcIpLabel.Text = "IP Address :";
+        lblPcIpLabel.Text = "IP Address:";
         lblPcIpLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtPcIp — spans col3+col4+col5

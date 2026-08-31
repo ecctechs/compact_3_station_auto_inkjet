@@ -114,7 +114,7 @@ partial class ClampSettingUserControl
         tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 75F));
         tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 138F));
-        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 162F));
+        tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 70F));
         tlpConn.Controls.Add(lblIpLabel, 0, 0);
         tlpConn.Controls.Add(txtIp, 1, 0);
         tlpConn.Controls.Add(lblPortLabel, 2, 0);
@@ -140,7 +140,7 @@ partial class ClampSettingUserControl
         lblIpLabel.Name = "lblIpLabel";
         lblIpLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblIpLabel.TabIndex = 0;
-        lblIpLabel.Text = "PLC IP :";
+        lblIpLabel.Text = "PLC IP:";
         lblIpLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtIp
@@ -158,7 +158,7 @@ partial class ClampSettingUserControl
         lblPortLabel.Name = "lblPortLabel";
         lblPortLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblPortLabel.TabIndex = 2;
-        lblPortLabel.Text = "Port :";
+        lblPortLabel.Text = "Port:";
         lblPortLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtPort
@@ -194,7 +194,7 @@ partial class ClampSettingUserControl
         lblDbLabel.Name = "lblDbLabel";
         lblDbLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblDbLabel.TabIndex = 5;
-        lblDbLabel.Text = "mydatabase.db3 :";
+        lblDbLabel.Text = "mydatabase.db3:";
         lblDbLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtDbPath
@@ -218,10 +218,11 @@ partial class ClampSettingUserControl
         btnBrowse.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         btnBrowse.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnBrowse.Name = "btnBrowse";
+        btnBrowse.IconSvg = "FolderOpenFilled";
+        btnBrowse.IconRatio = 1.2F;
         btnBrowse.Radius = 6;
-        btnBrowse.Size = new System.Drawing.Size(155, 45);
+        btnBrowse.Size = new System.Drawing.Size(52, 42);
         btnBrowse.TabIndex = 7;
-        btnBrowse.Text = "Browse...";
         btnBrowse.Type = AntdUI.TTypeMini.Default;
         //
         // lblStatus
@@ -280,7 +281,7 @@ partial class ClampSettingUserControl
         lblPlateLabel.Name = "lblPlateLabel";
         lblPlateLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblPlateLabel.TabIndex = 0;
-        lblPlateLabel.Text = "Plate (m1) :";
+        lblPlateLabel.Text = "Plate (m1):";
         lblPlateLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtPlateProgram
@@ -302,7 +303,7 @@ partial class ClampSettingUserControl
         lblShimLabel.Name = "lblShimLabel";
         lblShimLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblShimLabel.TabIndex = 2;
-        lblShimLabel.Text = "Shim (m2) :";
+        lblShimLabel.Text = "Shim (m2):";
         lblShimLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtShimProgram
