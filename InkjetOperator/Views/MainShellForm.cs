@@ -72,6 +72,9 @@ public partial class MainShellForm : AntdUI.Window
             await settingPage.CheckAllStatusAsync();
     }
 
+    /// <summary>Position of Edit Pattern in the tab / page / visibility arrays.</summary>
+    private const int EditPatternTab = 2;
+
     private void ApplyMenuLevel()
     {
         var raw = Services.CustomSettingsManager.Read("MENU_LEVEL", "1");
@@ -88,6 +91,11 @@ public partial class MainShellForm : AntdUI.Window
             9 => [false, false, false, false, true],   // โหมดทดสอบหน้างาน — เข้าได้เฉพาะ Setting
             _ => [true, true, true, true, true],
         };
+
+        // Edit Pattern is hidden at every menu level. Kept as one override rather
+        // than edited into each arm above, so the page comes back by deleting this
+        // line - the tab, the page and the per-level table are all still intact.
+        visible[EditPatternTab] = false;
 
         for (int i = 0; i < allTabs.Length; i++)
         {

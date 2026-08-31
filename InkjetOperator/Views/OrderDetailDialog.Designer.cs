@@ -55,6 +55,7 @@ partial class OrderDetailDialog
         titleBar.Location = new System.Drawing.Point(0, 0);
         titleBar.Margin = new System.Windows.Forms.Padding(0);
         titleBar.Name = "titleBar";
+        titleBar.ShowCloseButton = false;
         titleBar.ShowMinimizeButton = false;
         titleBar.Size = new System.Drawing.Size(1750, 50);
         titleBar.TabIndex = 0;

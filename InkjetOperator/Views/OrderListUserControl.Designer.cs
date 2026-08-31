@@ -213,6 +213,7 @@ partial class OrderListUserControl
         tblOrders.ColumnFont = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         tblOrders.ColumnFore = System.Drawing.Color.White;
         tblOrders.Dock = System.Windows.Forms.DockStyle.Fill;
+        tblOrders.EmptyHeader = true;
         tblOrders.EmptyText = "No orders";
         tblOrders.Font = new System.Drawing.Font("Segoe UI", 14F);
         tblOrders.Location = new System.Drawing.Point(0, 54);

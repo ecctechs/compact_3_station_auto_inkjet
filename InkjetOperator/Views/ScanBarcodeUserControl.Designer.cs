@@ -70,25 +70,26 @@ partial class ScanBarcodeUserControl
         tlpScanBarcodeRoot.Controls.Add(flpActions, 0, 3);
         tlpScanBarcodeRoot.Dock = DockStyle.Fill;
         tlpScanBarcodeRoot.Location = new Point(0, 0);
+        tlpScanBarcodeRoot.Margin = new Padding(4, 4, 4, 4);
         tlpScanBarcodeRoot.Name = "tlpScanBarcodeRoot";
-        tlpScanBarcodeRoot.Padding = new Padding(40);
+        tlpScanBarcodeRoot.Padding = new Padding(60, 60, 60, 60);
         tlpScanBarcodeRoot.RowCount = 4;
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 12F));
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 28F));
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 44F));
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 16F));
-        tlpScanBarcodeRoot.Size = new Size(1375, 1075);
+        tlpScanBarcodeRoot.Size = new Size(2062, 1612);
         tlpScanBarcodeRoot.TabIndex = 0;
         // 
         // lblScanBarcodeTitle
         // 
         lblScanBarcodeTitle.Dock = DockStyle.Fill;
-        lblScanBarcodeTitle.Font = new Font("Segoe UI", 35F, FontStyle.Bold);
+        lblScanBarcodeTitle.Font = new Font("Segoe UI", 52.5F, FontStyle.Bold);
         lblScanBarcodeTitle.ForeColor = Color.FromArgb(17, 17, 17);
-        lblScanBarcodeTitle.Location = new Point(40, 44);
-        lblScanBarcodeTitle.Margin = new Padding(0, 4, 0, 0);
+        lblScanBarcodeTitle.Location = new Point(60, 66);
+        lblScanBarcodeTitle.Margin = new Padding(0, 6, 0, 0);
         lblScanBarcodeTitle.Name = "lblScanBarcodeTitle";
-        lblScanBarcodeTitle.Size = new Size(1295, 137);
+        lblScanBarcodeTitle.Size = new Size(1942, 173);
         lblScanBarcodeTitle.TabIndex = 0;
         lblScanBarcodeTitle.Text = "Scan Barcode";
         lblScanBarcodeTitle.TextAlign = ContentAlignment.MiddleCenter;
@@ -100,12 +101,12 @@ partial class ScanBarcodeUserControl
         tlpBarcodeCenter.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         tlpBarcodeCenter.Controls.Add(pnlBarcodeContainer, 0, 0);
         tlpBarcodeCenter.Dock = DockStyle.Fill;
-        tlpBarcodeCenter.Location = new Point(40, 189);
+        tlpBarcodeCenter.Location = new Point(60, 239);
         tlpBarcodeCenter.Margin = new Padding(0);
         tlpBarcodeCenter.Name = "tlpBarcodeCenter";
         tlpBarcodeCenter.RowCount = 1;
         tlpBarcodeCenter.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        tlpBarcodeCenter.Size = new Size(1295, 208);
+        tlpBarcodeCenter.Size = new Size(1942, 417);
         tlpBarcodeCenter.TabIndex = 1;
         // 
         // pnlBarcodeContainer
@@ -115,11 +116,12 @@ partial class ScanBarcodeUserControl
         pnlBarcodeContainer.BorderColor = Color.White;
         pnlBarcodeContainer.BorderWidth = 3F;
         pnlBarcodeContainer.Controls.Add(picBarcode);
-        pnlBarcodeContainer.Location = new Point(435, 5);
+        pnlBarcodeContainer.Location = new Point(551, 73);
+        pnlBarcodeContainer.Margin = new Padding(4, 4, 4, 4);
         pnlBarcodeContainer.Name = "pnlBarcodeContainer";
-        pnlBarcodeContainer.Padding = new Padding(16);
+        pnlBarcodeContainer.Padding = new Padding(24, 24, 24, 24);
         pnlBarcodeContainer.Radius = 24;
-        pnlBarcodeContainer.Size = new Size(560, 180);
+        pnlBarcodeContainer.Size = new Size(840, 270);
         pnlBarcodeContainer.TabIndex = 0;
         // 
         // picBarcode
@@ -127,9 +129,10 @@ partial class ScanBarcodeUserControl
         picBarcode.BackColor = Color.Transparent;
         picBarcode.Dock = DockStyle.Fill;
         picBarcode.Image = (Image)resources.GetObject("picBarcode.Image");
-        picBarcode.Location = new Point(21, 21);
+        picBarcode.Location = new Point(29, 29);
+        picBarcode.Margin = new Padding(4, 4, 4, 4);
         picBarcode.Name = "picBarcode";
-        picBarcode.Size = new Size(383, 156);
+        picBarcode.Size = new Size(782, 212);
         picBarcode.SizeMode = PictureBoxSizeMode.Zoom;
         picBarcode.TabIndex = 0;
         picBarcode.TabStop = false;
@@ -143,12 +146,12 @@ partial class ScanBarcodeUserControl
         tlpOrderCenter.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 22F));
         tlpOrderCenter.Controls.Add(pnlOrderInformation, 1, 0);
         tlpOrderCenter.Dock = DockStyle.Fill;
-        tlpOrderCenter.Location = new Point(40, 397);
+        tlpOrderCenter.Location = new Point(60, 656);
         tlpOrderCenter.Margin = new Padding(0);
         tlpOrderCenter.Name = "tlpOrderCenter";
         tlpOrderCenter.RowCount = 1;
         tlpOrderCenter.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        tlpOrderCenter.Size = new Size(1295, 457);
+        tlpOrderCenter.Size = new Size(1942, 656);
         tlpOrderCenter.TabIndex = 2;
         // 
         // pnlOrderInformation
@@ -158,11 +161,12 @@ partial class ScanBarcodeUserControl
         pnlOrderInformation.BorderWidth = 4F;
         pnlOrderInformation.Controls.Add(tlpOrderInformation);
         pnlOrderInformation.Dock = DockStyle.Fill;
-        pnlOrderInformation.Location = new Point(197, 3);
+        pnlOrderInformation.Location = new Point(431, 4);
+        pnlOrderInformation.Margin = new Padding(4, 4, 4, 4);
         pnlOrderInformation.Name = "pnlOrderInformation";
-        pnlOrderInformation.Padding = new Padding(32);
+        pnlOrderInformation.Padding = new Padding(48, 48, 48, 48);
         pnlOrderInformation.Radius = 22;
-        pnlOrderInformation.Size = new Size(900, 451);
+        pnlOrderInformation.Size = new Size(1079, 648);
         pnlOrderInformation.TabIndex = 0;
         // 
         // tlpOrderInformation
@@ -182,7 +186,8 @@ partial class ScanBarcodeUserControl
         tlpOrderInformation.Controls.Add(txtType, 1, 3);
         tlpOrderInformation.Controls.Add(txtQty, 1, 4);
         tlpOrderInformation.Dock = DockStyle.Fill;
-        tlpOrderInformation.Location = new Point(36, 36);
+        tlpOrderInformation.Location = new Point(54, 54);
+        tlpOrderInformation.Margin = new Padding(4, 4, 4, 4);
         tlpOrderInformation.Name = "tlpOrderInformation";
         tlpOrderInformation.RowCount = 5;
         tlpOrderInformation.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
@@ -190,133 +195,133 @@ partial class ScanBarcodeUserControl
         tlpOrderInformation.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
         tlpOrderInformation.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
         tlpOrderInformation.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
-        tlpOrderInformation.Size = new Size(828, 379);
+        tlpOrderInformation.Size = new Size(971, 540);
         tlpOrderInformation.TabIndex = 0;
         // 
         // lblBarcode
         // 
         lblBarcode.Dock = DockStyle.Fill;
-        lblBarcode.Font = new Font("Segoe UI", 15F);
+        lblBarcode.Font = new Font("Segoe UI", 22.5F);
         lblBarcode.ForeColor = Color.FromArgb(17, 17, 17);
-        lblBarcode.Location = new Point(3, 0);
-        lblBarcode.Margin = new Padding(3, 0, 20, 0);
-        lblBarcode.TextAlign = ContentAlignment.MiddleRight;
+        lblBarcode.Location = new Point(4, 0);
+        lblBarcode.Margin = new Padding(4, 0, 30, 0);
         lblBarcode.Name = "lblBarcode";
-        lblBarcode.Size = new Size(208, 75);
+        lblBarcode.Size = new Size(179, 108);
         lblBarcode.TabIndex = 0;
         lblBarcode.Text = "Barcode:";
+        lblBarcode.TextAlign = ContentAlignment.MiddleRight;
         // 
         // lblOrderNo
         // 
         lblOrderNo.Dock = DockStyle.Fill;
-        lblOrderNo.Font = new Font("Segoe UI", 15F);
+        lblOrderNo.Font = new Font("Segoe UI", 22.5F);
         lblOrderNo.ForeColor = Color.FromArgb(17, 17, 17);
-        lblOrderNo.Location = new Point(3, 75);
-        lblOrderNo.Margin = new Padding(3, 0, 20, 0);
-        lblOrderNo.TextAlign = ContentAlignment.MiddleRight;
+        lblOrderNo.Location = new Point(4, 108);
+        lblOrderNo.Margin = new Padding(4, 0, 30, 0);
         lblOrderNo.Name = "lblOrderNo";
-        lblOrderNo.Size = new Size(208, 75);
+        lblOrderNo.Size = new Size(179, 108);
         lblOrderNo.TabIndex = 1;
         lblOrderNo.Text = "Order No:";
+        lblOrderNo.TextAlign = ContentAlignment.MiddleRight;
         // 
         // lblCustomerName
         // 
         lblCustomerName.Dock = DockStyle.Fill;
-        lblCustomerName.Font = new Font("Segoe UI", 15F);
+        lblCustomerName.Font = new Font("Segoe UI", 22.5F);
         lblCustomerName.ForeColor = Color.FromArgb(17, 17, 17);
-        lblCustomerName.Location = new Point(3, 150);
-        lblCustomerName.Margin = new Padding(3, 0, 20, 0);
-        lblCustomerName.TextAlign = ContentAlignment.MiddleRight;
+        lblCustomerName.Location = new Point(4, 216);
+        lblCustomerName.Margin = new Padding(4, 0, 30, 0);
         lblCustomerName.Name = "lblCustomerName";
-        lblCustomerName.Size = new Size(208, 75);
+        lblCustomerName.Size = new Size(179, 108);
         lblCustomerName.TabIndex = 2;
         lblCustomerName.Text = "Customer Name:";
+        lblCustomerName.TextAlign = ContentAlignment.MiddleRight;
         // 
         // lblType
         // 
         lblType.Dock = DockStyle.Fill;
-        lblType.Font = new Font("Segoe UI", 15F);
+        lblType.Font = new Font("Segoe UI", 22.5F);
         lblType.ForeColor = Color.FromArgb(17, 17, 17);
-        lblType.Location = new Point(3, 225);
-        lblType.Margin = new Padding(3, 0, 20, 0);
-        lblType.TextAlign = ContentAlignment.MiddleRight;
+        lblType.Location = new Point(4, 324);
+        lblType.Margin = new Padding(4, 0, 30, 0);
         lblType.Name = "lblType";
-        lblType.Size = new Size(208, 75);
+        lblType.Size = new Size(179, 108);
         lblType.TabIndex = 3;
         lblType.Text = "Type:";
+        lblType.TextAlign = ContentAlignment.MiddleRight;
         // 
         // lblQty
         // 
         lblQty.Dock = DockStyle.Fill;
-        lblQty.Font = new Font("Segoe UI", 15F);
+        lblQty.Font = new Font("Segoe UI", 22.5F);
         lblQty.ForeColor = Color.FromArgb(17, 17, 17);
-        lblQty.Location = new Point(3, 300);
-        lblQty.Margin = new Padding(3, 0, 20, 0);
-        lblQty.TextAlign = ContentAlignment.MiddleRight;
+        lblQty.Location = new Point(4, 432);
+        lblQty.Margin = new Padding(4, 0, 30, 0);
         lblQty.Name = "lblQty";
-        lblQty.Size = new Size(208, 79);
+        lblQty.Size = new Size(179, 108);
         lblQty.TabIndex = 4;
         lblQty.Text = "Qty:";
+        lblQty.TextAlign = ContentAlignment.MiddleRight;
         // 
         // txtBarcode
         // 
         txtBarcode.Anchor = AnchorStyles.Left | AnchorStyles.Right;
         txtBarcode.BorderColor = Color.FromArgb(91, 155, 213);
-        txtBarcode.Font = new Font("Segoe UI", 15F);
-        txtBarcode.Location = new Point(234, 8);
-        txtBarcode.Margin = new Padding(3, 8, 3, 8);
+        txtBarcode.Font = new Font("Segoe UI", 22.5F);
+        txtBarcode.Location = new Point(217, 13);
+        txtBarcode.Margin = new Padding(4, 12, 4, 12);
         txtBarcode.Name = "txtBarcode";
         txtBarcode.PlaceholderText = "Scan or type barcode...";
         txtBarcode.Radius = 8;
-        txtBarcode.Size = new Size(591, 58);
+        txtBarcode.Size = new Size(750, 82);
         txtBarcode.TabIndex = 5;
         // 
         // txtOrderNo
         // 
         txtOrderNo.Anchor = AnchorStyles.Left | AnchorStyles.Right;
         txtOrderNo.BorderColor = Color.FromArgb(91, 155, 213);
-        txtOrderNo.Font = new Font("Segoe UI", 15F);
-        txtOrderNo.Location = new Point(234, 83);
-        txtOrderNo.Margin = new Padding(3, 8, 3, 8);
+        txtOrderNo.Font = new Font("Segoe UI", 22.5F);
+        txtOrderNo.Location = new Point(217, 121);
+        txtOrderNo.Margin = new Padding(4, 12, 4, 12);
         txtOrderNo.Name = "txtOrderNo";
         txtOrderNo.Radius = 8;
-        txtOrderNo.Size = new Size(591, 58);
+        txtOrderNo.Size = new Size(750, 82);
         txtOrderNo.TabIndex = 6;
         // 
         // txtCustomerName
         // 
         txtCustomerName.Anchor = AnchorStyles.Left | AnchorStyles.Right;
         txtCustomerName.BorderColor = Color.FromArgb(91, 155, 213);
-        txtCustomerName.Font = new Font("Segoe UI", 15F);
-        txtCustomerName.Location = new Point(234, 158);
-        txtCustomerName.Margin = new Padding(3, 8, 3, 8);
+        txtCustomerName.Font = new Font("Segoe UI", 22.5F);
+        txtCustomerName.Location = new Point(217, 229);
+        txtCustomerName.Margin = new Padding(4, 12, 4, 12);
         txtCustomerName.Name = "txtCustomerName";
         txtCustomerName.Radius = 8;
-        txtCustomerName.Size = new Size(591, 58);
+        txtCustomerName.Size = new Size(750, 82);
         txtCustomerName.TabIndex = 7;
         // 
         // txtType
         // 
         txtType.Anchor = AnchorStyles.Left | AnchorStyles.Right;
         txtType.BorderColor = Color.FromArgb(91, 155, 213);
-        txtType.Font = new Font("Segoe UI", 15F);
-        txtType.Location = new Point(234, 233);
-        txtType.Margin = new Padding(3, 8, 3, 8);
+        txtType.Font = new Font("Segoe UI", 22.5F);
+        txtType.Location = new Point(217, 337);
+        txtType.Margin = new Padding(4, 12, 4, 12);
         txtType.Name = "txtType";
         txtType.Radius = 8;
-        txtType.Size = new Size(591, 58);
+        txtType.Size = new Size(750, 82);
         txtType.TabIndex = 8;
         // 
         // txtQty
         // 
         txtQty.Anchor = AnchorStyles.Left | AnchorStyles.Right;
         txtQty.BorderColor = Color.FromArgb(91, 155, 213);
-        txtQty.Font = new Font("Segoe UI", 15F);
-        txtQty.Location = new Point(234, 310);
-        txtQty.Margin = new Padding(3, 8, 3, 8);
+        txtQty.Font = new Font("Segoe UI", 22.5F);
+        txtQty.Location = new Point(217, 444);
+        txtQty.Margin = new Padding(4, 12, 4, 12);
         txtQty.Name = "txtQty";
         txtQty.Radius = 8;
-        txtQty.Size = new Size(591, 58);
+        txtQty.Size = new Size(750, 84);
         txtQty.TabIndex = 9;
         // 
         // flpActions
@@ -327,47 +332,49 @@ partial class ScanBarcodeUserControl
         flpActions.BackColor = Color.FromArgb(91, 155, 213);
         flpActions.Controls.Add(btnConfirm);
         flpActions.Controls.Add(btnCancel);
-        flpActions.Location = new Point(402, 905);
+        flpActions.Location = new Point(604, 1373);
         flpActions.Margin = new Padding(0);
         flpActions.Name = "flpActions";
-        flpActions.Size = new Size(570, 78);
+        flpActions.Size = new Size(854, 117);
         flpActions.TabIndex = 3;
         flpActions.WrapContents = false;
         // 
         // btnConfirm
         // 
-        btnConfirm.Font = new Font("Segoe UI", 19F);
+        btnConfirm.Font = new Font("Segoe UI", 28.5F);
         btnConfirm.ForeColor = Color.White;
         btnConfirm.Location = new Point(0, 0);
-        btnConfirm.Margin = new Padding(0, 0, 35, 0);
+        btnConfirm.Margin = new Padding(0, 0, 52, 0);
         btnConfirm.Name = "btnConfirm";
         btnConfirm.Radius = 12;
-        btnConfirm.Size = new Size(250, 78);
+        btnConfirm.Size = new Size(375, 117);
         btnConfirm.TabIndex = 0;
         btnConfirm.Text = "OK";
         btnConfirm.Type = AntdUI.TTypeMini.Success;
         // 
         // btnCancel
         // 
-        btnCancel.Font = new Font("Segoe UI", 19F);
+        btnCancel.Font = new Font("Segoe UI", 28.5F);
         btnCancel.ForeColor = Color.White;
-        btnCancel.Location = new Point(320, 0);
-        btnCancel.Margin = new Padding(35, 0, 0, 0);
+        btnCancel.Location = new Point(479, 0);
+        btnCancel.Margin = new Padding(52, 0, 0, 0);
         btnCancel.Name = "btnCancel";
         btnCancel.Radius = 12;
-        btnCancel.Size = new Size(250, 78);
+        btnCancel.Size = new Size(375, 117);
         btnCancel.TabIndex = 1;
         btnCancel.Text = "Cancel";
         btnCancel.Type = AntdUI.TTypeMini.Error;
         // 
         // ScanBarcodeUserControl
         // 
-        AutoScaleDimensions = new SizeF(96F, 96F);
+        AutoScaleDimensions = new SizeF(144F, 144F);
         AutoScaleMode = AutoScaleMode.Dpi;
         Controls.Add(tlpScanBarcodeRoot);
-        MinimumSize = new Size(820, 680);
+        Font = new Font("Segoe UI", 13.5F);
+        Margin = new Padding(4, 4, 4, 4);
+        MinimumSize = new Size(1230, 1020);
         Name = "ScanBarcodeUserControl";
-        Size = new Size(1375, 1075);
+        Size = new Size(2062, 1612);
         tlpScanBarcodeRoot.ResumeLayout(false);
         tlpScanBarcodeRoot.PerformLayout();
         tlpBarcodeCenter.ResumeLayout(false);

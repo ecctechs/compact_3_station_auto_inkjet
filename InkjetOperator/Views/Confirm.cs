@@ -45,6 +45,9 @@ internal static class Confirm
         config.OkText = ConfirmText;
         config.CancelText = CancelText;
 
-        return AntdUI.Modal.open(config) == DialogResult.OK;
+        // Left to AntdUI's defaults this came out as a 416px box with 38px buttons
+        // in the form's 9pt font, which read as cramped on the 1920x1080 panel PC.
+        // Notify.Sized keeps it the same size as every other dialog in the app.
+        return AntdUI.Modal.open(Notify.Sized(config)) == DialogResult.OK;
     }
 }

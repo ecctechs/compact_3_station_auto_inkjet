@@ -49,6 +49,17 @@ public partial class OrderListUserControl : UserControl
             new AntdUI.Column("Source", "", AntdUI.ColumnAlign.Center) { Width = "6%" },
             new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "13%" },
         };
+
+        // AntdUI sizes the header sort arrows at 60% of the header text height, which
+        // with this 14pt bold font comes out large enough to crowd the title. Pin a
+        // smaller size that is still easy to read across the room.
+        //
+        // Note: AntdUI always reserves space on the right of a sortable header for the
+        // arrow, and it derives that space from the text height rather than from
+        // SortOrderSize. The title is therefore centred inside what is left of the
+        // cell, not inside the whole column. That cannot be changed from outside the
+        // library - a smaller arrow is as close as this gets.
+        tblOrders.SortOrderSize = 12;
     }
 
     private void SetupEvents()

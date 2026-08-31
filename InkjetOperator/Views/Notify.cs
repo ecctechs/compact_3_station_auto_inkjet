@@ -80,14 +80,12 @@ internal static class Notify
     public static void WarnModal(Control? owner, string title, string text)
     {
         if (Resolve(owner) is { } form)
-            AntdUI.Modal.open(new AntdUI.Modal.Config(form, title, text)
+            AntdUI.Modal.open(Sized(new AntdUI.Modal.Config(form, title, text)
             {
                 Icon = AntdUI.TType.Warn,
                 OkText = "OK",
                 CancelText = null,
-                Font = new Font(form.Font.FontFamily, 14f),
-                OkFont = new Font(form.Font.FontFamily, 14f, FontStyle.Bold),
-            });
+            }));
         else
             Fallback($"{title}\n\n{text}", MessageBoxIcon.Warning);
     }
@@ -95,14 +93,12 @@ internal static class Notify
     public static void ErrorModal(Control? owner, string title, string text)
     {
         if (Resolve(owner) is { } form)
-            AntdUI.Modal.open(new AntdUI.Modal.Config(form, title, text)
+            AntdUI.Modal.open(Sized(new AntdUI.Modal.Config(form, title, text)
             {
                 Icon = AntdUI.TType.Error,
                 OkText = "OK",
                 CancelText = null,
-                Font = new Font(form.Font.FontFamily, 14f),
-                OkFont = new Font(form.Font.FontFamily, 14f, FontStyle.Bold),
-            });
+            }));
         else
             Fallback($"{title}\n\n{text}", MessageBoxIcon.Error);
     }
@@ -110,31 +106,61 @@ internal static class Notify
     public static void SuccessModal(Control? owner, string title, string text)
     {
         if (Resolve(owner) is { } form)
-            AntdUI.Modal.open(new AntdUI.Modal.Config(form, title, text)
+            AntdUI.Modal.open(Sized(new AntdUI.Modal.Config(form, title, text)
             {
                 Icon = AntdUI.TType.Success,
                 OkText = "OK",
                 CancelText = null,
-                Font = new Font(form.Font.FontFamily, 14f),
-                OkFont = new Font(form.Font.FontFamily, 14f, FontStyle.Bold),
-            });
+            }));
         else
             Fallback($"{title}\n\n{text}", MessageBoxIcon.Information);
     }
 
+    // ---- Shared modal proportions ----
+
+    // AntdUI's modal defaults are drawn for a desktop app at 100% scaling: a 416px
+    // box with 38px buttons, and no font at all - so it falls back to the owning
+    // form's 9pt application default. On the 1920x1080 panel PC that left the
+    // Yes/No pair small and pinched against the edge of a box narrower than the
+    // text inside it.
+    //
+    // Every modal in the app is sized through Sized() so they stay one family. Font
+    // does most of the work: AntdUI derives the title from it (Font x 1.14, bold)
+    // and sizes the status icon from the title's line height. Width, padding and
+    // BtnHeight are design units - AntdUI multiplies each by the display DPI.
+    private const int ModalWidth = 560;
+    private const int ModalButtonHeight = 54;
+    private const int ModalButtonWidth = 120;
+    private static readonly Size ModalPadding = new(32, 28);
+    private static readonly Font ModalBodyFont = InkjetOperator.Theme.DesignTokens.Body(16.5f);
+    private static readonly Font ModalButtonFont = InkjetOperator.Theme.DesignTokens.SectionLabel(16.5f);
+
+    /// <summary>Applies the shared modal proportions. Shared with <see cref="Confirm"/>.</summary>
+    internal static AntdUI.Modal.Config Sized(AntdUI.Modal.Config config)
+    {
+        config.Width = ModalWidth;
+        config.BtnHeight = ModalButtonHeight;
+        config.Padding = ModalPadding;
+        config.Font = ModalBodyFont;
+        config.OkFont = ModalButtonFont;
+        config.CancelFont = ModalButtonFont;
+
+        // AntdUI sizes the buttons to their own caption, so a Yes/No pair came out
+        // lopsided and both far narrower than the touch target this panel needs.
+        // Fix a common width instead. AntdUI applies the font after this callback,
+        // and AutoSize is off by then, so the width set here is the one that sticks.
+        config.OnButtonStyle = (_, button) =>
+        {
+            button.AutoSizeMode = AntdUI.TAutoSize.None;
+            button.Width = (int)Math.Round(ModalButtonWidth * AntdUI.Config.Dpi);
+            button.Margin = new Padding((int)Math.Round(6 * AntdUI.Config.Dpi), 0, 0, 0);
+        };
+
+        return config;
+    }
+
     // ---- Titled notification, for multi-line outcomes ----
 
-    // Without an explicit font AntdUI falls back to the owning form's, which is the
-    // 9pt application default - far below the 12-15pt the operator pages use, so the
-    // notification came out tiny on the shop-floor display. AntdUI derives the whole
-    // box from these: the panel grows with the text, and the status icon is sized
-    // from the title's line height. Created once and kept, because AntdUI holds the
-    // reference for the life of the notification.
-    private static readonly Font DetailTitleFont = InkjetOperator.Theme.DesignTokens.SectionLabel(22.5f);
-    private static readonly Font DetailBodyFont = InkjetOperator.Theme.DesignTokens.Body(17.5f);
-
-    /// <summary>Breathing room inside the panel; AntdUI scales it by the display DPI.</summary>
-    private static readonly Size DetailPadding = new(32, 26);
 
     /// <summary>A finished job or transfer, with a per-machine heading.</summary>
     public static void SuccessDetail(Control? owner, string title, string text) =>
@@ -162,14 +188,12 @@ internal static class Notify
             return;
         }
 
-        AntdUI.Modal.open(new AntdUI.Modal.Config(form, title, text)
+        AntdUI.Modal.open(Sized(new AntdUI.Modal.Config(form, title, text)
         {
             Icon = type,
             OkText = "OK",
             CancelText = null,
-            Font = DetailBodyFont,
-            OkFont = new Font(form.Font.FontFamily, 14f, FontStyle.Bold),
-        });
+        }));
     }
 
     // ---- ผลหลายบรรทัดในกล่องเดียว ----
@@ -214,14 +238,12 @@ internal static class Notify
             return;
         }
 
-        AntdUI.Modal.open(new AntdUI.Modal.Config(form, title, body)
+        AntdUI.Modal.open(Sized(new AntdUI.Modal.Config(form, title, body)
         {
             Icon = worst,
             OkText = "OK",
             CancelText = null,
-            Font = DetailBodyFont,
-            OkFont = new Font(form.Font.FontFamily, 14f, FontStyle.Bold),
-        });
+        }));
     }
 
     /// <summary>ไอคอนหน้าบรรทัด — ใช้ตัวอักษรเพื่อให้เข้าชุดกับ log ของหน้าส่งงานที่ใช้อยู่แล้ว</summary>

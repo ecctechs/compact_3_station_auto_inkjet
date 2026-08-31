@@ -62,6 +62,20 @@ public partial class AppTitleBarUserControl : UserControl
         }
     }
 
+    /// <summary>
+    /// Hides the close button, for a window that is dismissed from inside its own
+    /// content instead - the Order Detail popup closes through its own ปิด button.
+    /// </summary>
+    public bool ShowCloseButton
+    {
+        get => btnClose.Visible;
+        set
+        {
+            btnClose.Visible = value;
+            tlpTitleBarRoot.ColumnStyles[3].Width = value ? 58F : 0F;
+        }
+    }
+
     /// <summary>Swaps the maximise glyph to match the window state.</summary>
     public void SetMaximized(bool maximized) => btnMaximize.Text = maximized ? "❐" : "□";
 

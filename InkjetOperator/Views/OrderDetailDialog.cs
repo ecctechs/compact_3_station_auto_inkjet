@@ -14,30 +14,31 @@ namespace InkjetOperator.Views;
 /// system title bar.
 /// </para>
 /// <para>
-/// It opens wide enough to show a detail section across its full width, but stays a
-/// centred popup rather than filling the screen; the body scrolls for the rest.
+/// It opens maximised. The page is laid out 1750x1250 at 100% scaling, which is
+/// already wider and taller than a 1920x1080 panel at 125% - anything smaller than
+/// the full working area only adds scrolling without showing more.
+/// </para>
+/// <para>
+/// The title bar carries no window buttons at all: minimise and maximise were
+/// already off, and the close cross is off too because the page has its own ปิด
+/// button. One way out, in the place the operator is already looking.
 /// </para>
 /// </summary>
 internal sealed partial class OrderDetailDialog : AntdUI.BorderlessForm
 {
-    /// <summary>Fraction of the working area the popup may occupy.</summary>
-    private const double MaxWidthRatio = 0.92;
-    private const double MaxHeightRatio = 0.86;
-
     public OrderDetailDialog()
     {
         InitializeComponent();
         Services.LanguageService.Apply(this);
 
-        // A borderless form has no system chrome, so the header drives the window.
-        titleBar.MaximizeRequested += (_, _) => ToggleMaximize();
-        titleBar.CloseRequested += (_, _) => Close();
-        titleBar.DragRequested += (_, _) => DraggableMouseDown();
-
-        // Same contract as before: the page can ask to be dismissed.
+        // The page can ask to be dismissed - this is the only way out now that the
+        // title bar has no close cross.
         detailPage.CloseRequested += (_, _) => Close();
 
-        Resize += (_, _) => titleBar.SetMaximized(WindowState == FormWindowState.Maximized);
+        // Neither MaximizeRequested (double-click on the bar) nor DragRequested is
+        // handled. Both restore a maximised BorderlessForm to its Normal size, which
+        // for this page is 1750x1250 - larger than the panel, and with no maximise
+        // button left to undo it. The bar is a heading here, not a window control.
     }
 
     /// <summary>Heading shown in the title bar.</summary>
@@ -73,36 +74,20 @@ internal sealed partial class OrderDetailDialog : AntdUI.BorderlessForm
     }
 
     /// <summary>
-    /// Sizes the popup to the content width and centres it, clamped so it still fits
-    /// on a smaller shop-floor panel. Deliberately not maximised.
+    /// Fills the working area.
+    /// <para>
+    /// Maximises through AntdUI's own <c>MaxRestore</c> rather than assigning
+    /// <see cref="Form.WindowState"/>. <c>BorderlessForm</c> keeps a private
+    /// <c>isMax</c> flag beside the window state and guards its own sizing with it;
+    /// setting WindowState by hand leaves that flag out of step and the rounded
+    /// frame draws wrong.
+    /// </para>
     /// </summary>
     protected override void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
-
-        var area = Screen.FromControl(this).WorkingArea;
-        var width = Math.Min(Width, (int)(area.Width * MaxWidthRatio));
-        var height = Math.Min(Height, (int)(area.Height * MaxHeightRatio));
-
-        Bounds = new Rectangle(
-            area.X + (area.Width - width) / 2,
-            area.Y + (area.Height - height) / 2,
-            width,
-            height);
+        MaxRestore();
     }
-
-    /// <summary>
-    /// Toggles through AntdUI's own <c>MaxRestore</c> rather than assigning
-    /// <see cref="Form.WindowState"/> by hand.
-    /// <para>
-    /// <c>BorderlessForm</c> tracks a private <c>isMax</c> flag alongside the window
-    /// state and guards <c>Max()</c> with it. Restoring by setting WindowState
-    /// directly left that flag set, so the next <c>Max()</c> returned immediately and
-    /// the window could not be maximised a second time. <c>MaxRestore</c> keeps the
-    /// flag in step and refreshes the frame.
-    /// </para>
-    /// </summary>
-    private void ToggleMaximize() => titleBar.SetMaximized(MaxRestore());
 
     private static void SuspendTree(Control control)
     {

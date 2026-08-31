@@ -91,6 +91,17 @@ static class Program
         // display scaling instead of showing uneven stems.
         AntdUI.Config.TextRenderingHighQuality = true;
 
+        // AntdUI draws the header sort arrows with TextQuaternary while a column is
+        // unsorted and with Primary while it is sorted. Both defaults are dark, and
+        // every table in this app uses a near-black header, so the arrows were only
+        // legible under the pale hover background - which read as "the marker
+        // disappears when the mouse leaves". Scope brighter colours to Table so the
+        // state is readable at rest: light grey = not sorted, white = sorting by this
+        // column. TextQuaternary also tints text in disabled table rows, which this
+        // app does not use.
+        AntdUI.Style.Set(AntdUI.Colour.TextQuaternary, System.Drawing.Color.FromArgb(150, 150, 150), nameof(AntdUI.Table));
+        AntdUI.Style.Set(AntdUI.Colour.Primary, System.Drawing.Color.White, nameof(AntdUI.Table));
+
         AntdUI.Config.Mode = AntdUI.TMode.Light;
     }
 
