@@ -153,6 +153,18 @@ public class MkCompactAdapter : IInkjetAdapter
         return MakeResult("text_block", f1Response);
     }
 
+    // ── ทิศทางการพิมพ์ (ปุ่ม ABC) ──────────────────────────
+
+    // ค่าที่เก็บใน inkjet_config.direction มาจากไฟล์ตั้งต้นชุดเดียวกับโปรแกรมเดิม
+    // (PySocketClient) ซึ่งใช้ 1 = ปกติ · 2 = กลับหัว ส่วน 0 กับ 3 เป็นค่าที่
+    // คำสั่ง FM รับ ตัวอ่านจึงรับทั้งสองชุด เพราะข้อมูลที่มีอยู่ยังไม่ได้ยืนยัน
+    // ว่าถูกบันทึกด้วยชุดไหน แต่ตอนส่งออกจะเป็น 0/3 เสมอตามที่เครื่องรู้จัก
+    public const int DirectionNormal = 1;
+    public const int DirectionFlipped = 2;
+
+    /// <summary>ค่าไหนที่แปลว่ากลับหัว — 2 (ไฟล์ตั้งต้น) หรือ 3 (คำสั่ง FM)</summary>
+    public static bool IsFlipped(int? direction) => direction == 2 || direction == 3;
+
     /// <summary>
     /// Send FM (program/message configuration).
     /// From rs232_connector.py send_config() lines 74-83:
@@ -165,7 +177,7 @@ public class MkCompactAdapter : IInkjetAdapter
         // Normalize like Python: unicodedata.normalize('NFKD', ch)
         string normalizedName = progName.Normalize(NormalizationForm.FormKD);
 
-        string direction = (config.Direction ?? 0).ToString();
+        string direction = IsFlipped(config.Direction) ? "3" : "0";
         string delay = (config.TriggerDelay ?? 0).ToString();
         string height = (config.Height ?? 100).ToString();
         string width = (config.Width ?? 200).ToString();

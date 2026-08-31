@@ -36,8 +36,8 @@ public partial class OrderDetailUserControl : UserControl
 
         btnDetailClose.Click += (_, _) => CloseRequested?.Invoke(this, EventArgs.Empty);
         btnMkSwap.Click += (_, _) => SwapMkData();
-        btnMk1Abc.Click += (_, _) => ShowAbcDialog(1);
-        btnMk2Abc.Click += (_, _) => ShowAbcDialog(2);
+        picMk1Abc.Click += (_, _) => ToggleAbc(1, picMk1Abc);
+        picMk2Abc.Click += (_, _) => ToggleAbc(2, picMk2Abc);
         btnSendMk.Click += async (_, _) => await SendToMkAsync();
         btnSendUv1.Click += async (_, _) => await SendToUvAsync(1);
         btnSendUv2.Click += async (_, _) => await SendToUvAsync(2);
@@ -259,7 +259,17 @@ public partial class OrderDetailUserControl : UserControl
             .OrderBy(s => s.Ordinal).ToList();
     }
 
-    private void ShowAbcDialog(int ordinal)
+    // ── ABC = พิมพ์กลับหัว ─────────────────────────────────
+
+    /// <summary>
+    /// สลับทิศทางการพิมพ์ของเครื่อง MK ตัวนั้น ระหว่างปกติกับกลับหัว 180 องศา
+    ///
+    /// เขียนลง InkjetConfig ที่ถืออยู่ในหน้านี้ ตอนกดส่ง MK ค่าจะถูกใส่ไปในคำสั่ง
+    /// FM เอง ไม่ได้บันทึกกลับ backend — กดแล้วมีผลกับการส่งรอบนี้เท่านั้น เปิด
+    /// Order Detail ใหม่จะกลับไปใช้ค่าที่เก็บไว้ในดาต้าเบส เหมือนโปรแกรมเดิมที่
+    /// อ่านมุมจากบนจอตอนกดส่ง ไม่ได้เขียนกลับลงไฟล์ตั้งต้น
+    /// </summary>
+    private void ToggleAbc(int ordinal, PictureBox box)
     {
         if (_pattern == null) return;
 
@@ -270,39 +280,37 @@ public partial class OrderDetailUserControl : UserControl
             return;
         }
 
-        var lines = config.TextBlocks
-            .OrderBy(b => b.BlockNumber)
-            .Select(b => $"[Block {b.BlockNumber}]  {b.Text ?? Dash}")
-            .ToList();
+        config.Direction = MkCompactAdapter.IsFlipped(config.Direction)
+            ? MkCompactAdapter.DirectionNormal
+            : MkCompactAdapter.DirectionFlipped;
 
-        var preview = lines.Count == 0
-            ? "(No text blocks)"
-            : string.Join(Environment.NewLine, lines);
+        ApplyAbc(box, config.Direction);
+    }
 
-        using var dlg = new Form
-        {
-            Text = $"MK-{ordinal} — Text Preview",
-            Size = new Size(480, 320),
-            StartPosition = FormStartPosition.CenterParent,
-            MinimizeBox = false,
-            MaximizeBox = false,
-            ShowIcon = false,
-        };
+    /// <summary>
+    /// วาดคำว่า ABC หัวตั้งหรือหัวกลับลงในกรอบ เหมือน canvas ของโปรแกรมเดิม
+    ///
+    /// ตัวอักษรที่พลิกจริงอ่านออกทันทีจากอีกฝั่งของเครื่อง ต่างจากการเปลี่ยนแค่สี
+    /// ปุ่ม ซึ่งสำคัญเพราะพิมพ์กลับหัวผิดคืองานเสียทั้งล็อต
+    ///
+    /// วาดเป็น SVG แล้วให้ AntdUI แปลงเป็นบิตแมป WinForms หมุนข้อความบนคอนโทรล
+    /// เองไม่ได้ถ้าไม่เขียนโค้ดวาดทับ ซึ่งกฎของโปรเจคนี้ห้ามไว้
+    /// </summary>
+    private static void ApplyAbc(PictureBox box, int? direction)
+    {
+        // หมุนรอบจุดกึ่งกลางของตัวอักษร (y=20) ไม่ใช่รอบเส้นฐาน (y=29)
+        // ไม่งั้นหัวตั้งกับหัวกลับจะลอยอยู่คนละระดับในกรอบ
+        string rotate = MkCompactAdapter.IsFlipped(direction)
+            ? " transform='rotate(180 50 20)'"
+            : "";
 
-        var txt = new TextBox
-        {
-            Multiline = true,
-            ReadOnly = true,
-            ScrollBars = ScrollBars.Vertical,
-            Dock = DockStyle.Fill,
-            Font = DesignTokens.Monospace(16f),
-            BackColor = DesignTokens.SurfaceMuted,
-            ForeColor = DesignTokens.TextPrimary,
-            Text = preview,
-        };
+        string svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40'>"
+            + $"<text x='50' y='29' font-family='Segoe UI, Arial' font-size='26' "
+            + $"font-weight='bold' text-anchor='middle' fill='#000000'{rotate}>ABC</text></svg>";
 
-        dlg.Controls.Add(txt);
-        dlg.ShowDialog();
+        var previous = box.Image;
+        box.Image = AntdUI.SvgExtend.SvgToBmp(svg, 240, 96, DesignTokens.DarkNavy);
+        previous?.Dispose();
     }
 
     /// <summary>
@@ -574,14 +582,17 @@ public partial class OrderDetailUserControl : UserControl
             var fw = await adapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
             if (!fw.Success) return $"{label}: เปลี่ยนโปรแกรมไม่สำเร็จ";
 
-            var fm = await adapter.SendConfigAsync(config);
-            if (!fm.Success) return $"{label}: ส่ง Config ไม่สำเร็จ";
-
             foreach (var block in config.TextBlocks.OrderBy(b => b.BlockNumber))
             {
                 var fb = await adapter.SendTextBlockAsync(block, block.BlockNumber);
                 if (!fb.Success) return $"{label}: ส่ง Block {block.BlockNumber} ไม่สำเร็จ";
             }
+
+            // FM ต้องมาหลัง FS/F1 ตามสเปกของเครื่อง (FW -> FS/F1 -> FM)
+            // เดิมส่ง FM ก่อน Block ทิศทางที่ตั้งไว้จึงถูก Block ที่ตามมาเขียนทับ
+            // ปุ่ม ABC เลยกดแล้วเครื่องพิมพ์หัวตั้งเหมือนเดิม
+            var fm = await adapter.SendConfigAsync(config);
+            if (!fm.Success) return $"{label}: ส่ง Config ไม่สำเร็จ";
 
             var sq = await adapter.ResumeAsync();
             if (!sq.Success) return $"{label}: Resume ไม่สำเร็จ";
@@ -817,6 +828,9 @@ public partial class OrderDetailUserControl : UserControl
             servos.FirstOrDefault(s => s.Ordinal == 2),
             txtMk2Program, txtMk2ProgramNo, txtMk2Width, txtMk2Height,
             txtMk2Trigger, txtMk2PosAct, txtMk2Delay, tblMk2Blocks);
+
+        ApplyAbc(picMk1Abc, configs.FirstOrDefault(c => c.Ordinal == 1)?.Direction);
+        ApplyAbc(picMk2Abc, configs.FirstOrDefault(c => c.Ordinal == 2)?.Direction);
     }
 
     private void FillMk(
