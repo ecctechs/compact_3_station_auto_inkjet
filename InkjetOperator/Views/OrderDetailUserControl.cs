@@ -380,13 +380,8 @@ public partial class OrderDetailUserControl : UserControl
         MarkingRefPickerDialog.View(this, $"รูปอ้างอิง — {name}", name, paths);
     }
 
-    private static string MachineLabel(MarkingMachine machine) => machine switch
-    {
-        MarkingMachine.Mk => "MK",
-        MarkingMachine.Uv1 => "UV1",
-        MarkingMachine.Uv2 => "UV2",
-        _ => "None",
-    };
+    private static string MachineLabel(MarkingMachine machine) =>
+        MarkingMethodService.Label(machine);
 
     private static string ErpRefName(MarkingMachine machine, string? erpMfg, string prefix)
     {

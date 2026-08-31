@@ -126,6 +126,9 @@ public static class LanguageService
         // ── หน้ารายละเอียดงาน ──
         ["Job Information"] = "ข้อมูลงาน",
         ["Marking Method"] = "รูปแบบการมาร์ก",
+        ["Method"] = "วิธีมาร์ก",
+        ["Plate"] = "เพลต",
+        ["Shim"] = "ชิม",
         ["MK Section (MK Inkjet)"] = "โซน MK (MK Inkjet)",
         ["UV Section"] = "โซน UV",
         ["Program Name"] = "ชื่อโปรแกรม",

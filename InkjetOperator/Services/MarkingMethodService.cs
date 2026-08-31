@@ -79,4 +79,16 @@ public static class MarkingMethodService
 
         return new MarkingPlan(false, plate, shim, steps, shimDigit == '2' && plateDigit == '2');
     }
+
+    /// <summary>
+    /// ชื่อเครื่องที่แสดงบนจอ — อยู่ที่นี่เพราะทั้ง Order List และ Order Detail
+    /// ต้องเรียกด้านเดียวกันว่าชื่อเดียวกัน หน้าไหนอยากให้ None เป็นขีดก็แปลงเอง
+    /// </summary>
+    public static string Label(MarkingMachine machine) => machine switch
+    {
+        MarkingMachine.Mk => "MK",
+        MarkingMachine.Uv1 => "UV1",
+        MarkingMachine.Uv2 => "UV2",
+        _ => "None",
+    };
 }

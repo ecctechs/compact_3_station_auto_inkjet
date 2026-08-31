@@ -41,12 +41,15 @@ public partial class OrderListUserControl : UserControl
         {
             new AntdUI.Column("Start", "Start", AntdUI.ColumnAlign.Center) { Width = "10%", SortOrder = true },
             new AntdUI.Column("End", "End", AntdUI.ColumnAlign.Center) { Width = "10%", SortOrder = true },
-            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center) { Width = "14%", SortOrder = true },
-            new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center) { Width = "20%", SortOrder = true },
-            new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true },
-            new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true },
-            new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { Width = "11%", SortOrder = true },
-            new AntdUI.Column("Source", "", AntdUI.ColumnAlign.Center) { Width = "6%" },
+            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center) { Width = "12%", SortOrder = true },
+            new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center) { Width = "11%", SortOrder = true },
+            new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center) { Width = "5%", SortOrder = true },
+            new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { Width = "5%", SortOrder = true },
+            new AntdUI.Column("Method", "Method", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true },
+            new AntdUI.Column("Plate", "Plate", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true },
+            new AntdUI.Column("Shim", "Shim", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true },
+            new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true },
+            new AntdUI.Column("Source", "", AntdUI.ColumnAlign.Center) { Width = "5%" },
             new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "13%" },
         };
 
@@ -492,8 +495,28 @@ public partial class OrderListUserControl : UserControl
         return (x.Length - i) - (y.Length - j);
     }
 
+    /// <summary>
+    /// เลข marking_method ดิบ เช่น "12" "02" "22" — ไม่แปลเป็นชื่อเครื่อง
+    /// เพราะหน้านี้ใช้ไล่เทียบกับใบสั่งงาน ซึ่งเขียนเป็นตัวเลขเหมือนกัน
+    /// ความหมายของแต่ละหลักดูได้ที่ Order Detail บรรทัด Plate / Shim
+    /// </summary>
+    private static string Method(string? markingMethod)
+    {
+        var value = (markingMethod ?? "").Trim();
+        return value.Length == 0 ? Dash : value;
+    }
+
+    /// <summary>
+    /// เครื่องที่มาร์กด้านนั้น ในตารางใช้ขีดแทน "None" ให้เข้าชุดกับคอลัมน์ End
+    /// ที่ใช้ขีดแทนช่องว่างอยู่แล้ว
+    /// </summary>
+    private static string MachineCell(MarkingMachine machine) =>
+        machine == MarkingMachine.None ? Dash : MarkingMethodService.Label(machine);
+
     private static OrderRow ToRow(PrintJob job, bool isHistory)
     {
+        var plan = MarkingMethodService.Resolve(job.PlanRouting?.MarkingMethod);
+
         var (statusLabel, statusColor) = DisplayStatus(job.Status);
         var statusText = new AntdUI.CellText(statusLabel) { Fore = statusColor };
 
@@ -525,6 +548,9 @@ public partial class OrderListUserControl : UserControl
             Customer = job.CustomerName ?? "",
             Type = job.Type ?? "",
             Qty = job.Qty?.ToString() ?? "",
+            Method = Method(job.PlanRouting?.MarkingMethod),
+            Plate = plan.NoCase ? Dash : MachineCell(plan.Plate),
+            Shim = plan.NoCase ? Dash : MachineCell(plan.Shim),
             Status = statusText,
             Source = sourceTag,
             Op = buttons.ToArray(),
@@ -869,6 +895,9 @@ internal class OrderRow : AntdUI.NotifyProperty
     public string Customer { get; set; } = "";
     public string Type { get; set; } = "";
     public string Qty { get; set; } = "";
+    public string Method { get; set; } = "";
+    public string Plate { get; set; } = "";
+    public string Shim { get; set; } = "";
     public AntdUI.CellText? Status { get; set; }
     public AntdUI.CellTag[]? Source { get; set; }
     public AntdUI.CellButton[] Op { get; set; } = [];
