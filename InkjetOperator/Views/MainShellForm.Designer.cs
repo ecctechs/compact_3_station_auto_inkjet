@@ -102,6 +102,7 @@ partial class MainShellForm
         tlpMenuBar.Dock = DockStyle.Fill;
         tlpMenuBar.Location = new Point(0, 40);
         tlpMenuBar.Margin = new Padding(0);
+        tlpMenuBar.Padding = new Padding(0);
         tlpMenuBar.Name = "tlpMenuBar";
         tlpMenuBar.RowCount = 1;
         tlpMenuBar.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
@@ -117,6 +118,7 @@ partial class MainShellForm
         btnInputOrder.ForeColor = Color.White;
         btnInputOrder.Location = new Point(3, 3);
         btnInputOrder.Name = "btnInputOrder";
+        btnInputOrder.Margin = new Padding(0);
         btnInputOrder.Radius = 0;
         btnInputOrder.Size = new Size(194, 66);
         btnInputOrder.TabIndex = 0;
@@ -132,6 +134,7 @@ partial class MainShellForm
         btnOrderList.ForeColor = Color.White;
         btnOrderList.Location = new Point(203, 3);
         btnOrderList.Name = "btnOrderList";
+        btnOrderList.Margin = new Padding(0);
         btnOrderList.Radius = 0;
         btnOrderList.Size = new Size(194, 66);
         btnOrderList.TabIndex = 1;
@@ -147,6 +150,7 @@ partial class MainShellForm
         btnEditPattern.ForeColor = Color.White;
         btnEditPattern.Location = new Point(403, 3);
         btnEditPattern.Name = "btnEditPattern";
+        btnEditPattern.Margin = new Padding(0);
         btnEditPattern.Radius = 0;
         btnEditPattern.Size = new Size(194, 66);
         btnEditPattern.TabIndex = 2;
@@ -162,6 +166,7 @@ partial class MainShellForm
         btnTransfer.ForeColor = Color.White;
         btnTransfer.Location = new Point(603, 3);
         btnTransfer.Name = "btnTransfer";
+        btnTransfer.Margin = new Padding(0);
         btnTransfer.Radius = 0;
         btnTransfer.Size = new Size(194, 66);
         btnTransfer.TabIndex = 4;
@@ -177,6 +182,7 @@ partial class MainShellForm
         btnSetting.ForeColor = Color.White;
         btnSetting.Location = new Point(803, 3);
         btnSetting.Name = "btnSetting";
+        btnSetting.Margin = new Padding(0);
         btnSetting.Radius = 0;
         btnSetting.Size = new Size(194, 66);
         btnSetting.TabIndex = 3;

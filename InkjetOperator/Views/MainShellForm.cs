@@ -95,7 +95,8 @@ public partial class MainShellForm : AntdUI.Window
             allPages[i].Visible = visible[i];
             tlpMenuBar.ColumnStyles[i].SizeType = visible[i]
                 ? System.Windows.Forms.SizeType.Absolute : System.Windows.Forms.SizeType.Absolute;
-            tlpMenuBar.ColumnStyles[i].Width = visible[i] ? 300F : 0F;
+            // แท็บชิดกันเป็นแถบเดียว กว้างพอดีข้อความที่ 17pt ไม่เว้นร่อง
+            tlpMenuBar.ColumnStyles[i].Width = visible[i] ? 250F : 0F;
         }
 
         _visibleTabs = allTabs.Where((_, i) => visible[i]).ToArray();
