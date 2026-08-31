@@ -22,15 +22,10 @@ public partial class MainShellForm : AntdUI.Window
         ApplyMenuLevel();
         Load += MainShellForm_Load;
 
-        // AntdUI.Window draws no system chrome, so titleBar is what closes,
-        // minimises, maximises and moves the window now.
-        titleBar.MinimizeRequested += (_, _) => Min();
-        titleBar.MaximizeRequested += (_, _) => ToggleMaximize();
+        // จอหน้างานเป็น Full HD และใช้เต็มจอตลอด — ปุ่มย่อ/ย่อจอถูกถอดออกจากแถบหัว
+        // เหลือแค่ปิด และดักไว้ไม่ให้อะไรมาคืนขนาดหน้าต่างได้ (เช่น Win+Down)
         titleBar.CloseRequested += (_, _) => Close();
-        titleBar.DragRequested += (_, _) => DraggableMouseDown();
-
-        Resize += (_, _) => titleBar.SetMaximized(WindowState == FormWindowState.Maximized);
-        titleBar.SetMaximized(WindowState == FormWindowState.Maximized);
+        Resize += (_, _) => StayMaximized();
 
         btnLang.Click += (_, _) => ToggleLanguage();
         ApplyLanguage();
@@ -55,11 +50,14 @@ public partial class MainShellForm : AntdUI.Window
     }
 
     /// <summary>
-    /// Toggles through AntdUI's own <c>MaxRestore</c>, which keeps its internal
-    /// maximised flag in step and refreshes the window frame afterwards - assigning
-    /// <see cref="Form.WindowState"/> by hand skips both.
+    /// หน้าต่างต้องเต็มจอเสมอ ถ้ามีอะไรทำให้คืนขนาดก็ดันกลับไปเต็มจอทันที
+    /// ใช้ <c>MaxRestore</c> ของ AntdUI เพราะการเซ็ต <see cref="Form.WindowState"/>
+    /// ตรง ๆ ไม่ได้อัปเดตธงภายในของไลบรารีและกรอบหน้าต่างจะเพี้ยน
     /// </summary>
-    private void ToggleMaximize() => titleBar.SetMaximized(MaxRestore());
+    private void StayMaximized()
+    {
+        if (WindowState != FormWindowState.Maximized) MaxRestore();
+    }
 
     private async void MainShellForm_Load(object? sender, EventArgs e)
     {

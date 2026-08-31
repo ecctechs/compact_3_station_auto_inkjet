@@ -58,7 +58,7 @@ partial class MainShellForm
         titleBar.Margin = new Padding(0);
         titleBar.Name = "titleBar";
         titleBar.ShowMinimizeButton = true;
-        titleBar.Size = new Size(1194, 40);
+        titleBar.Size = new Size(1920, 40);
         titleBar.TabIndex = 0;
         titleBar.TitleText = "Compact Inkjet";
         // 
@@ -105,7 +105,7 @@ partial class MainShellForm
         tlpMenuBar.Name = "tlpMenuBar";
         tlpMenuBar.RowCount = 1;
         tlpMenuBar.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        tlpMenuBar.Size = new Size(1194, 72);
+        tlpMenuBar.Size = new Size(1920, 72);
         tlpMenuBar.TabIndex = 0;
         // 
         // btnInputOrder
@@ -223,7 +223,7 @@ partial class MainShellForm
         pnlContent.Location = new Point(0, 112);
         pnlContent.Margin = new Padding(0);
         pnlContent.Name = "pnlContent";
-        pnlContent.Size = new Size(1194, 627);
+        pnlContent.Size = new Size(1920, 920);
         pnlContent.TabIndex = 1;
         // 
         // scanBarcodePage
@@ -233,7 +233,7 @@ partial class MainShellForm
         scanBarcodePage.Margin = new Padding(4);
         scanBarcodePage.MinimumSize = new Size(820, 680);
         scanBarcodePage.Name = "scanBarcodePage";
-        scanBarcodePage.Size = new Size(1194, 680);
+        scanBarcodePage.Size = new Size(1920, 920);
         scanBarcodePage.TabIndex = 0;
         // 
         // orderListPage
@@ -243,7 +243,7 @@ partial class MainShellForm
         orderListPage.Margin = new Padding(4);
         orderListPage.MinimumSize = new Size(820, 680);
         orderListPage.Name = "orderListPage";
-        orderListPage.Size = new Size(1194, 680);
+        orderListPage.Size = new Size(1920, 920);
         orderListPage.TabIndex = 1;
         // 
         // editPatternPage
@@ -253,7 +253,7 @@ partial class MainShellForm
         editPatternPage.Margin = new Padding(4);
         editPatternPage.MinimumSize = new Size(820, 680);
         editPatternPage.Name = "editPatternPage";
-        editPatternPage.Size = new Size(1194, 680);
+        editPatternPage.Size = new Size(1920, 920);
         editPatternPage.TabIndex = 2;
         // 
         // transferListPage
@@ -263,7 +263,7 @@ partial class MainShellForm
         transferListPage.Margin = new Padding(4);
         transferListPage.MinimumSize = new Size(820, 680);
         transferListPage.Name = "transferListPage";
-        transferListPage.Size = new Size(1194, 680);
+        transferListPage.Size = new Size(1920, 920);
         transferListPage.TabIndex = 4;
         // 
         // settingPage
@@ -273,17 +273,17 @@ partial class MainShellForm
         settingPage.Margin = new Padding(4);
         settingPage.MinimumSize = new Size(820, 680);
         settingPage.Name = "settingPage";
-        settingPage.Size = new Size(1194, 680);
+        settingPage.Size = new Size(1920, 920);
         settingPage.TabIndex = 3;
         // 
         // MainShellForm
         // 
         AutoScaleDimensions = new SizeF(96F, 96F);
         AutoScaleMode = AutoScaleMode.Dpi;
-        ClientSize = new Size(1194, 739);
+        ClientSize = new Size(1920, 1032);
         Controls.Add(tlpShellRoot);
         Font = new Font("Segoe UI", 6F);
-        MinimumSize = new Size(931, 696);
+        MinimumSize = new Size(1280, 800);
         Name = "MainShellForm";
         StartPosition = FormStartPosition.CenterScreen;
         Text = "Compact Inkjet";
