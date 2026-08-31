@@ -22,7 +22,7 @@ partial class BackendSettingUserControl
         lblPcBadge = new System.Windows.Forms.Label();
         btnPcName = new AntdUI.Button();
         lblPcIpLabel = new System.Windows.Forms.Label();
-        txtPcIp = new AntdUI.Input();
+        txtPcIp = new IpAddressInput();
 
         flpActions = new System.Windows.Forms.FlowLayoutPanel();
         btnSave = new AntdUI.Button();
@@ -139,12 +139,8 @@ partial class BackendSettingUserControl
         // txtPcIp — spans col3+col4+col5
         //
         txtPcIp.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtPcIp.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtPcIp.Font = new System.Drawing.Font("Segoe UI", 10F);
         txtPcIp.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtPcIp.Name = "txtPcIp";
-        txtPcIp.PlaceholderText = "e.g. 127.0.0.1";
-        txtPcIp.Radius = 4;
         tlpDevice.SetColumnSpan(txtPcIp, 3);
         txtPcIp.TabIndex = 4;
         //
@@ -225,7 +221,7 @@ partial class BackendSettingUserControl
     private System.Windows.Forms.Label lblPcBadge;
     private AntdUI.Button btnPcName;
     private System.Windows.Forms.Label lblPcIpLabel;
-    private AntdUI.Input txtPcIp;
+    private IpAddressInput txtPcIp;
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnSave;
     private AntdUI.Button btnCancel;

@@ -21,7 +21,7 @@ partial class PlcSettingUserControl
         lblPlcBadge = new System.Windows.Forms.Label();
         btnPlcName = new AntdUI.Button();
         lblIpLabel = new System.Windows.Forms.Label();
-        txtPlc001Ip = new AntdUI.Input();
+        txtPlc001Ip = new IpAddressInput();
         lblPortLabel = new System.Windows.Forms.Label();
         txtPlc001Port = new AntdUI.Input();
         grpRegisterMap = new System.Windows.Forms.GroupBox();
@@ -158,12 +158,8 @@ partial class PlcSettingUserControl
         // txtPlc001Ip
         //
         txtPlc001Ip.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtPlc001Ip.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtPlc001Ip.Font = new System.Drawing.Font("Segoe UI", 10F);
         txtPlc001Ip.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtPlc001Ip.Name = "txtPlc001Ip";
-        txtPlc001Ip.PlaceholderText = "e.g. 192.168.1.10";
-        txtPlc001Ip.Radius = 4;
         tlpConn.SetColumnSpan(txtPlc001Ip, 3);
         txtPlc001Ip.TabIndex = 4;
         //
@@ -410,7 +406,7 @@ partial class PlcSettingUserControl
     private System.Windows.Forms.Label lblPlcBadge;
     private AntdUI.Button btnPlcName;
     private System.Windows.Forms.Label lblIpLabel;
-    private AntdUI.Input txtPlc001Ip;
+    private IpAddressInput txtPlc001Ip;
     private System.Windows.Forms.Label lblPortLabel;
     private AntdUI.Input txtPlc001Port;
     private AntdUI.Button btnCheckStatus;

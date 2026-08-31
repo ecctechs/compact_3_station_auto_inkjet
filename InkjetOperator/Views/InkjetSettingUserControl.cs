@@ -291,7 +291,8 @@ public partial class InkjetSettingUserControl : UserControl
         MarkDirty(txtMarkingRefFolder);
     }
 
-    private void MarkDirty(AntdUI.Input input) => input.BackColor = Color.LightYellow;
+    // รับเป็น Control เพราะช่อง IP เปลี่ยนไปใช้ IpAddressInput ที่ไม่ใช่ AntdUI.Input
+    private void MarkDirty(Control input) => input.BackColor = Color.LightYellow;
 
     private void ResetColors()
     {

@@ -19,7 +19,7 @@ partial class ClampSettingUserControl
         grpConnection = new System.Windows.Forms.GroupBox();
         tlpConn = new System.Windows.Forms.TableLayoutPanel();
         lblIpLabel = new System.Windows.Forms.Label();
-        txtIp = new AntdUI.Input();
+        txtIp = new IpAddressInput();
         lblPortLabel = new System.Windows.Forms.Label();
         txtPort = new AntdUI.Input();
         btnCheckStatus = new AntdUI.Button();
@@ -145,13 +145,9 @@ partial class ClampSettingUserControl
         //
         // txtIp
         //
-        txtIp.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtIp.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtIp.Font = new System.Drawing.Font("Segoe UI", 10F);
         txtIp.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtIp.Name = "txtIp";
-        txtIp.PlaceholderText = "10.10.100.100";
-        txtIp.Radius = 4;
         txtIp.TabIndex = 1;
         //
         // lblPortLabel
@@ -554,7 +550,7 @@ partial class ClampSettingUserControl
     private System.Windows.Forms.GroupBox grpConnection;
     private System.Windows.Forms.TableLayoutPanel tlpConn;
     private System.Windows.Forms.Label lblIpLabel;
-    private AntdUI.Input txtIp;
+    private IpAddressInput txtIp;
     private System.Windows.Forms.Label lblPortLabel;
     private AntdUI.Input txtPort;
     private AntdUI.Button btnCheckStatus;

@@ -22,12 +22,12 @@ partial class InkjetSettingUserControl
         lblMk058Badge = new System.Windows.Forms.Label();
         btnMk058Name = new AntdUI.Button();
         lblMk058IpLabel = new System.Windows.Forms.Label();
-        txtMk058Ip = new AntdUI.Input();
+        txtMk058Ip = new IpAddressInput();
         lblMk059Status = new System.Windows.Forms.Label();
         lblMk059Badge = new System.Windows.Forms.Label();
         btnMk059Name = new AntdUI.Button();
         lblMk059IpLabel = new System.Windows.Forms.Label();
-        txtMk059Ip = new AntdUI.Input();
+        txtMk059Ip = new IpAddressInput();
 
         grpUv = new System.Windows.Forms.GroupBox();
         tlpUv = new System.Windows.Forms.TableLayoutPanel();
@@ -36,7 +36,7 @@ partial class InkjetSettingUserControl
         lblUv1Badge = new System.Windows.Forms.Label();
         btnUv1Edit = new AntdUI.Button();
         lblUv1IpLabel = new System.Windows.Forms.Label();
-        txtUv1Ip = new AntdUI.Input();
+        txtUv1Ip = new IpAddressInput();
         lblUv1Colon = new System.Windows.Forms.Label();
         txtUv1Port = new AntdUI.Input();
         lblUv1FolderLabel = new System.Windows.Forms.Label();
@@ -48,7 +48,7 @@ partial class InkjetSettingUserControl
         lblUv2Badge = new System.Windows.Forms.Label();
         btnUv2Edit = new AntdUI.Button();
         lblUv2IpLabel = new System.Windows.Forms.Label();
-        txtUv2Ip = new AntdUI.Input();
+        txtUv2Ip = new IpAddressInput();
         lblUv2Colon = new System.Windows.Forms.Label();
         txtUv2Port = new AntdUI.Input();
         lblUv2FolderLabel = new System.Windows.Forms.Label();
@@ -193,12 +193,8 @@ partial class InkjetSettingUserControl
         // txtMk058Ip — spans cols 3-5 (no port for MK)
         //
         txtMk058Ip.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtMk058Ip.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtMk058Ip.Font = new System.Drawing.Font("Segoe UI", 10F);
         txtMk058Ip.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtMk058Ip.Name = "txtMk058Ip";
-        txtMk058Ip.PlaceholderText = "e.g. 192.168.3.77";
-        txtMk058Ip.Radius = 4;
         tlpMk.SetColumnSpan(txtMk058Ip, 3);
         txtMk058Ip.TabIndex = 4;
         //
@@ -253,12 +249,8 @@ partial class InkjetSettingUserControl
         // txtMk059Ip — spans cols 3-5
         //
         txtMk059Ip.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtMk059Ip.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtMk059Ip.Font = new System.Drawing.Font("Segoe UI", 10F);
         txtMk059Ip.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtMk059Ip.Name = "txtMk059Ip";
-        txtMk059Ip.PlaceholderText = "e.g. 192.168.3.78";
-        txtMk059Ip.Radius = 4;
         tlpMk.SetColumnSpan(txtMk059Ip, 3);
         txtMk059Ip.TabIndex = 9;
 
@@ -387,12 +379,8 @@ partial class InkjetSettingUserControl
         // txtUv1Ip
         //
         txtUv1Ip.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtUv1Ip.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtUv1Ip.Font = new System.Drawing.Font("Segoe UI", 10F);
         txtUv1Ip.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtUv1Ip.Name = "txtUv1Ip";
-        txtUv1Ip.PlaceholderText = "e.g. 192.168.3.100";
-        txtUv1Ip.Radius = 4;
         txtUv1Ip.TabIndex = 5;
         //
         // lblUv1Colon
@@ -528,12 +516,8 @@ partial class InkjetSettingUserControl
         // txtUv2Ip
         //
         txtUv2Ip.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtUv2Ip.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtUv2Ip.Font = new System.Drawing.Font("Segoe UI", 10F);
         txtUv2Ip.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtUv2Ip.Name = "txtUv2Ip";
-        txtUv2Ip.PlaceholderText = "e.g. 192.168.3.101";
-        txtUv2Ip.Radius = 4;
         txtUv2Ip.TabIndex = 17;
         //
         // lblUv2Colon
@@ -755,12 +739,12 @@ partial class InkjetSettingUserControl
     private System.Windows.Forms.Label lblMk058Badge;
     private AntdUI.Button btnMk058Name;
     private System.Windows.Forms.Label lblMk058IpLabel;
-    private AntdUI.Input txtMk058Ip;
+    private IpAddressInput txtMk058Ip;
     private System.Windows.Forms.Label lblMk059Status;
     private System.Windows.Forms.Label lblMk059Badge;
     private AntdUI.Button btnMk059Name;
     private System.Windows.Forms.Label lblMk059IpLabel;
-    private AntdUI.Input txtMk059Ip;
+    private IpAddressInput txtMk059Ip;
 
     private System.Windows.Forms.GroupBox grpUv;
     private System.Windows.Forms.TableLayoutPanel tlpUv;
@@ -769,7 +753,7 @@ partial class InkjetSettingUserControl
     private System.Windows.Forms.Label lblUv1Badge;
     private AntdUI.Button btnUv1Edit;
     private System.Windows.Forms.Label lblUv1IpLabel;
-    private AntdUI.Input txtUv1Ip;
+    private IpAddressInput txtUv1Ip;
     private System.Windows.Forms.Label lblUv1Colon;
     private AntdUI.Input txtUv1Port;
     private System.Windows.Forms.Label lblUv1FolderLabel;
@@ -781,7 +765,7 @@ partial class InkjetSettingUserControl
     private System.Windows.Forms.Label lblUv2Badge;
     private AntdUI.Button btnUv2Edit;
     private System.Windows.Forms.Label lblUv2IpLabel;
-    private AntdUI.Input txtUv2Ip;
+    private IpAddressInput txtUv2Ip;
     private System.Windows.Forms.Label lblUv2Colon;
     private AntdUI.Input txtUv2Port;
     private System.Windows.Forms.Label lblUv2FolderLabel;

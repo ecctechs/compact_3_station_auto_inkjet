@@ -22,7 +22,7 @@ partial class UvTestUserControl
         btnUv1 = new AntdUI.Button();
         btnUv2 = new AntdUI.Button();
         lblIpLabel = new System.Windows.Forms.Label();
-        txtIp = new AntdUI.Input();
+        txtIp = new IpAddressInput();
         lblPortLabel = new System.Windows.Forms.Label();
         txtPort = new AntdUI.Input();
         btnCheck = new AntdUI.Button();
@@ -195,13 +195,9 @@ partial class UvTestUserControl
         //
         // txtIp
         //
-        txtIp.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtIp.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtIp.Font = new System.Drawing.Font("Segoe UI", 10F);
         txtIp.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtIp.Name = "txtIp";
-        txtIp.PlaceholderText = "192.168.0.10";
-        txtIp.Radius = 4;
         txtIp.TabIndex = 2;
         //
         // lblPortLabel
@@ -741,7 +737,7 @@ partial class UvTestUserControl
     private AntdUI.Button btnUv1;
     private AntdUI.Button btnUv2;
     private System.Windows.Forms.Label lblIpLabel;
-    private AntdUI.Input txtIp;
+    private IpAddressInput txtIp;
     private System.Windows.Forms.Label lblPortLabel;
     private AntdUI.Input txtPort;
     private AntdUI.Button btnCheck;
