@@ -130,8 +130,8 @@ internal static class Notify
     // box from these: the panel grows with the text, and the status icon is sized
     // from the title's line height. Created once and kept, because AntdUI holds the
     // reference for the life of the notification.
-    private static readonly Font DetailTitleFont = InkjetOperator.Theme.DesignTokens.SectionLabel(18f);
-    private static readonly Font DetailBodyFont = InkjetOperator.Theme.DesignTokens.Body(14f);
+    private static readonly Font DetailTitleFont = InkjetOperator.Theme.DesignTokens.SectionLabel(22.5f);
+    private static readonly Font DetailBodyFont = InkjetOperator.Theme.DesignTokens.Body(17.5f);
 
     /// <summary>Breathing room inside the panel; AntdUI scales it by the display DPI.</summary>
     private static readonly Size DetailPadding = new(32, 26);

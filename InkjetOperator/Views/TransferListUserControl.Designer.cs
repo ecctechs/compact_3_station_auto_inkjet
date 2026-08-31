@@ -52,7 +52,7 @@ partial class TransferListUserControl
         tlpTransferRoot.Padding = new System.Windows.Forms.Padding(32);
         tlpTransferRoot.RowCount = 1;
         tlpTransferRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpTransferRoot.Size = new System.Drawing.Size(1100, 860);
+        tlpTransferRoot.Size = new System.Drawing.Size(1375, 1075);
         tlpTransferRoot.TabIndex = 0;
         //
         // pnlTransferContainer
@@ -66,7 +66,7 @@ partial class TransferListUserControl
         pnlTransferContainer.Name = "pnlTransferContainer";
         pnlTransferContainer.Padding = new System.Windows.Forms.Padding(2);
         pnlTransferContainer.Radius = 12;
-        pnlTransferContainer.Size = new System.Drawing.Size(1030, 790);
+        pnlTransferContainer.Size = new System.Drawing.Size(1288, 988);
         pnlTransferContainer.TabIndex = 0;
         //
         // tlpTransferInner
@@ -80,9 +80,9 @@ partial class TransferListUserControl
         tlpTransferInner.Location = new System.Drawing.Point(2, 2);
         tlpTransferInner.Name = "tlpTransferInner";
         tlpTransferInner.RowCount = 2;
-        tlpTransferInner.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpTransferInner.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpTransferInner.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpTransferInner.Size = new System.Drawing.Size(1026, 786);
+        tlpTransferInner.Size = new System.Drawing.Size(1282, 982);
         tlpTransferInner.TabIndex = 0;
         //
         // flpTabs
@@ -95,19 +95,19 @@ partial class TransferListUserControl
         flpTabs.Margin = new System.Windows.Forms.Padding(0);
         flpTabs.Name = "flpTabs";
         flpTabs.Padding = new System.Windows.Forms.Padding(6, 6, 0, 0);
-        flpTabs.Size = new System.Drawing.Size(1026, 50);
+        flpTabs.Size = new System.Drawing.Size(1282, 62);
         flpTabs.TabIndex = 0;
         flpTabs.WrapContents = false;
         //
         // btnTabPending
         //
-        btnTabPending.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        btnTabPending.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         btnTabPending.ForeColor = System.Drawing.Color.White;
         btnTabPending.Location = new System.Drawing.Point(9, 9);
         btnTabPending.Margin = new System.Windows.Forms.Padding(3);
         btnTabPending.Name = "btnTabPending";
         btnTabPending.Radius = 6;
-        btnTabPending.Size = new System.Drawing.Size(110, 36);
+        btnTabPending.Size = new System.Drawing.Size(138, 45);
         btnTabPending.TabIndex = 0;
         btnTabPending.Text = "รอส่ง";
         btnTabPending.Type = AntdUI.TTypeMini.Primary;
@@ -116,13 +116,13 @@ partial class TransferListUserControl
         //
         btnTabSent.DefaultBorderColor = System.Drawing.Color.FromArgb(180, 180, 180);
         btnTabSent.BorderWidth = 1F;
-        btnTabSent.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        btnTabSent.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         btnTabSent.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         btnTabSent.Location = new System.Drawing.Point(125, 9);
         btnTabSent.Margin = new System.Windows.Forms.Padding(3);
         btnTabSent.Name = "btnTabSent";
         btnTabSent.Radius = 6;
-        btnTabSent.Size = new System.Drawing.Size(110, 36);
+        btnTabSent.Size = new System.Drawing.Size(138, 45);
         btnTabSent.TabIndex = 1;
         btnTabSent.Text = "ส่งแล้ว";
         btnTabSent.Type = AntdUI.TTypeMini.Default;
@@ -132,17 +132,17 @@ partial class TransferListUserControl
         tblTransfer.AutoSizeColumnsMode = AntdUI.ColumnsMode.Fill;
         tblTransfer.Bordered = true;
         tblTransfer.ColumnBack = System.Drawing.Color.FromArgb(30, 30, 30);
-        tblTransfer.ColumnFont = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        tblTransfer.ColumnFont = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         tblTransfer.ColumnFore = System.Drawing.Color.White;
         tblTransfer.Dock = System.Windows.Forms.DockStyle.Fill;
         tblTransfer.EmptyText = "No orders";
-        tblTransfer.Font = new System.Drawing.Font("Segoe UI", 11F);
+        tblTransfer.Font = new System.Drawing.Font("Segoe UI", 14F);
         tblTransfer.Location = new System.Drawing.Point(0, 54);
         tblTransfer.Margin = new System.Windows.Forms.Padding(0, 4, 0, 0);
         tblTransfer.Name = "tblTransfer";
         tblTransfer.Radius = 0;
-        tblTransfer.RowHeight = 68;
-        tblTransfer.Size = new System.Drawing.Size(1026, 732);
+        tblTransfer.RowHeight = 85;
+        tblTransfer.Size = new System.Drawing.Size(1282, 915);
         tblTransfer.TabIndex = 1;
         //
         // TransferListUserControl

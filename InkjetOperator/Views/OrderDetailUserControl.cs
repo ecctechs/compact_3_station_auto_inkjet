@@ -298,7 +298,7 @@ public partial class OrderDetailUserControl : UserControl
             ReadOnly = true,
             ScrollBars = ScrollBars.Vertical,
             Dock = DockStyle.Fill,
-            Font = DesignTokens.Monospace(13f),
+            Font = DesignTokens.Monospace(16f),
             BackColor = DesignTokens.SurfaceMuted,
             ForeColor = DesignTokens.TextPrimary,
             Text = preview,

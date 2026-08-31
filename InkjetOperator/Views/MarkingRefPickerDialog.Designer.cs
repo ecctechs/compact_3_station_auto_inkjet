@@ -44,20 +44,20 @@ partial class MarkingRefPickerDialog
         tlpRoot.Name = "tlpRoot";
         tlpRoot.Padding = new System.Windows.Forms.Padding(16, 12, 16, 8);
         tlpRoot.RowCount = 3;
-        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 34F));
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 56F));
-        tlpRoot.Size = new System.Drawing.Size(900, 560);
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 70F));
+        tlpRoot.Size = new System.Drawing.Size(1125, 700);
         tlpRoot.TabIndex = 0;
         //
         // lblPrompt
         //
         lblPrompt.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblPrompt.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblPrompt.Font = new System.Drawing.Font("Segoe UI", 14F);
         lblPrompt.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         lblPrompt.Margin = new System.Windows.Forms.Padding(3, 0, 3, 4);
         lblPrompt.Name = "lblPrompt";
-        lblPrompt.Size = new System.Drawing.Size(862, 30);
+        lblPrompt.Size = new System.Drawing.Size(1078, 38);
         lblPrompt.TabIndex = 0;
         lblPrompt.Text = "";
         lblPrompt.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -66,7 +66,7 @@ partial class MarkingRefPickerDialog
         //
         tlpContent.BackColor = System.Drawing.Color.White;
         tlpContent.ColumnCount = 2;
-        tlpContent.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 280F));
+        tlpContent.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 350F));
         tlpContent.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpContent.Controls.Add(lstOptions, 0, 0);
         tlpContent.Controls.Add(pnlImages, 1, 0);
@@ -75,18 +75,18 @@ partial class MarkingRefPickerDialog
         tlpContent.Name = "tlpContent";
         tlpContent.RowCount = 1;
         tlpContent.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpContent.Size = new System.Drawing.Size(868, 450);
+        tlpContent.Size = new System.Drawing.Size(1085, 562);
         tlpContent.TabIndex = 1;
         //
         // lstOptions
         //
         lstOptions.Dock = System.Windows.Forms.DockStyle.Fill;
-        lstOptions.Font = new System.Drawing.Font("Segoe UI", 12F);
+        lstOptions.Font = new System.Drawing.Font("Segoe UI", 15F);
         lstOptions.IntegralHeight = false;
         lstOptions.ItemHeight = 26;
         lstOptions.Margin = new System.Windows.Forms.Padding(0, 0, 10, 0);
         lstOptions.Name = "lstOptions";
-        lstOptions.Size = new System.Drawing.Size(270, 450);
+        lstOptions.Size = new System.Drawing.Size(338, 562);
         lstOptions.TabIndex = 0;
         //
         // pnlImages
@@ -99,7 +99,7 @@ partial class MarkingRefPickerDialog
         pnlImages.Dock = System.Windows.Forms.DockStyle.Fill;
         pnlImages.Margin = new System.Windows.Forms.Padding(0);
         pnlImages.Name = "pnlImages";
-        pnlImages.Size = new System.Drawing.Size(588, 450);
+        pnlImages.Size = new System.Drawing.Size(735, 562);
         pnlImages.TabIndex = 1;
         //
         // flpImages
@@ -112,17 +112,17 @@ partial class MarkingRefPickerDialog
         flpImages.Margin = new System.Windows.Forms.Padding(0);
         flpImages.Name = "flpImages";
         flpImages.Padding = new System.Windows.Forms.Padding(8);
-        flpImages.Size = new System.Drawing.Size(560, 420);
+        flpImages.Size = new System.Drawing.Size(700, 525);
         flpImages.TabIndex = 0;
         flpImages.WrapContents = false;
         //
         // lblEmpty
         //
         lblEmpty.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblEmpty.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblEmpty.Font = new System.Drawing.Font("Segoe UI", 14F);
         lblEmpty.ForeColor = System.Drawing.Color.Gray;
         lblEmpty.Name = "lblEmpty";
-        lblEmpty.Size = new System.Drawing.Size(586, 448);
+        lblEmpty.Size = new System.Drawing.Size(732, 560);
         lblEmpty.TabIndex = 1;
         lblEmpty.Text = "";
         lblEmpty.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -138,18 +138,18 @@ partial class MarkingRefPickerDialog
         flpButtons.Margin = new System.Windows.Forms.Padding(0);
         flpButtons.Name = "flpButtons";
         flpButtons.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-        flpButtons.Size = new System.Drawing.Size(868, 56);
+        flpButtons.Size = new System.Drawing.Size(1085, 70);
         flpButtons.TabIndex = 2;
         flpButtons.WrapContents = false;
         //
         // btnOk
         //
-        btnOk.Font = new System.Drawing.Font("Segoe UI", 12F);
+        btnOk.Font = new System.Drawing.Font("Segoe UI", 15F);
         btnOk.ForeColor = System.Drawing.Color.White;
         btnOk.Margin = new System.Windows.Forms.Padding(3);
         btnOk.Name = "btnOk";
         btnOk.Radius = 8;
-        btnOk.Size = new System.Drawing.Size(120, 38);
+        btnOk.Size = new System.Drawing.Size(150, 48);
         btnOk.TabIndex = 0;
         btnOk.Text = "ตกลง";
         btnOk.Type = AntdUI.TTypeMini.Primary;
@@ -158,12 +158,12 @@ partial class MarkingRefPickerDialog
         //
         btnCancel.BorderWidth = 2F;
         btnCancel.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnCancel.Font = new System.Drawing.Font("Segoe UI", 12F);
+        btnCancel.Font = new System.Drawing.Font("Segoe UI", 15F);
         btnCancel.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnCancel.Margin = new System.Windows.Forms.Padding(3);
         btnCancel.Name = "btnCancel";
         btnCancel.Radius = 8;
-        btnCancel.Size = new System.Drawing.Size(120, 38);
+        btnCancel.Size = new System.Drawing.Size(150, 48);
         btnCancel.TabIndex = 1;
         btnCancel.Text = "ยกเลิก";
         btnCancel.Type = AntdUI.TTypeMini.Default;

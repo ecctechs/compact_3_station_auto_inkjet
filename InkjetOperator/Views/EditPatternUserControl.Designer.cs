@@ -70,7 +70,7 @@ partial class EditPatternUserControl
         //
         tlpEditPatternRoot.BackColor = System.Drawing.Color.FromArgb(91, 155, 213);
         tlpEditPatternRoot.ColumnCount = 2;
-        tlpEditPatternRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 320F));
+        tlpEditPatternRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 400F));
         tlpEditPatternRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpEditPatternRoot.Controls.Add(pnlRulesList, 0, 0);
         tlpEditPatternRoot.Controls.Add(pnlRuleDetail, 1, 0);
@@ -80,7 +80,7 @@ partial class EditPatternUserControl
         tlpEditPatternRoot.Padding = new System.Windows.Forms.Padding(32);
         tlpEditPatternRoot.RowCount = 1;
         tlpEditPatternRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpEditPatternRoot.Size = new System.Drawing.Size(1200, 780);
+        tlpEditPatternRoot.Size = new System.Drawing.Size(1500, 975);
         tlpEditPatternRoot.TabIndex = 0;
         //
         // pnlRulesList
@@ -95,7 +95,7 @@ partial class EditPatternUserControl
         pnlRulesList.Name = "pnlRulesList";
         pnlRulesList.Padding = new System.Windows.Forms.Padding(16);
         pnlRulesList.Radius = 16;
-        pnlRulesList.Size = new System.Drawing.Size(266, 710);
+        pnlRulesList.Size = new System.Drawing.Size(332, 888);
         pnlRulesList.TabIndex = 0;
         //
         // tlpRulesList
@@ -111,11 +111,11 @@ partial class EditPatternUserControl
         tlpRulesList.Location = new System.Drawing.Point(16, 16);
         tlpRulesList.Name = "tlpRulesList";
         tlpRulesList.RowCount = 4;
-        tlpRulesList.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 52F));
-        tlpRulesList.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 34F));
+        tlpRulesList.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 65F));
+        tlpRulesList.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
         tlpRulesList.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpRulesList.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 52F));
-        tlpRulesList.Size = new System.Drawing.Size(234, 678);
+        tlpRulesList.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 65F));
+        tlpRulesList.Size = new System.Drawing.Size(292, 848);
         tlpRulesList.TabIndex = 0;
         //
         // btnNewPattern
@@ -123,13 +123,13 @@ partial class EditPatternUserControl
         btnNewPattern.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         btnNewPattern.BorderWidth = 2F;
         btnNewPattern.Dock = System.Windows.Forms.DockStyle.Fill;
-        btnNewPattern.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        btnNewPattern.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
         btnNewPattern.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnNewPattern.Location = new System.Drawing.Point(3, 3);
         btnNewPattern.Margin = new System.Windows.Forms.Padding(3, 3, 3, 6);
         btnNewPattern.Name = "btnNewPattern";
         btnNewPattern.Radius = 8;
-        btnNewPattern.Size = new System.Drawing.Size(228, 43);
+        btnNewPattern.Size = new System.Drawing.Size(285, 54);
         btnNewPattern.TabIndex = 0;
         btnNewPattern.Text = "+ New Rule";
         btnNewPattern.Type = AntdUI.TTypeMini.Default;
@@ -137,11 +137,11 @@ partial class EditPatternUserControl
         // lblRulesHeader
         //
         lblRulesHeader.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblRulesHeader.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        lblRulesHeader.Font = new System.Drawing.Font("Segoe UI", 12.5F, System.Drawing.FontStyle.Bold);
         lblRulesHeader.ForeColor = System.Drawing.Color.FromArgb(120, 120, 120);
         lblRulesHeader.Location = new System.Drawing.Point(3, 55);
         lblRulesHeader.Name = "lblRulesHeader";
-        lblRulesHeader.Size = new System.Drawing.Size(228, 28);
+        lblRulesHeader.Size = new System.Drawing.Size(285, 35);
         lblRulesHeader.TabIndex = 1;
         lblRulesHeader.Text = "RULES";
         lblRulesHeader.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -150,13 +150,13 @@ partial class EditPatternUserControl
         //
         lstPatterns.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
         lstPatterns.Dock = System.Windows.Forms.DockStyle.Fill;
-        lstPatterns.Font = new System.Drawing.Font("Segoe UI", 12F);
+        lstPatterns.Font = new System.Drawing.Font("Segoe UI", 15F);
         lstPatterns.FormattingEnabled = true;
         lstPatterns.IntegralHeight = false;
         lstPatterns.ItemHeight = 28;
         lstPatterns.Location = new System.Drawing.Point(3, 89);
         lstPatterns.Name = "lstPatterns";
-        lstPatterns.Size = new System.Drawing.Size(228, 528);
+        lstPatterns.Size = new System.Drawing.Size(285, 660);
         lstPatterns.TabIndex = 2;
         //
         // btnDeletePattern
@@ -164,13 +164,13 @@ partial class EditPatternUserControl
         btnDeletePattern.DefaultBorderColor = System.Drawing.Color.FromArgb(180, 180, 180);
         btnDeletePattern.BorderWidth = 2F;
         btnDeletePattern.Dock = System.Windows.Forms.DockStyle.Fill;
-        btnDeletePattern.Font = new System.Drawing.Font("Segoe UI", 12F);
+        btnDeletePattern.Font = new System.Drawing.Font("Segoe UI", 15F);
         btnDeletePattern.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         btnDeletePattern.Location = new System.Drawing.Point(3, 629);
         btnDeletePattern.Margin = new System.Windows.Forms.Padding(3, 6, 3, 3);
         btnDeletePattern.Name = "btnDeletePattern";
         btnDeletePattern.Radius = 8;
-        btnDeletePattern.Size = new System.Drawing.Size(228, 43);
+        btnDeletePattern.Size = new System.Drawing.Size(285, 54);
         btnDeletePattern.TabIndex = 3;
         btnDeletePattern.Text = "Delete";
         btnDeletePattern.Type = AntdUI.TTypeMini.Default;
@@ -187,7 +187,7 @@ partial class EditPatternUserControl
         pnlRuleDetail.Name = "pnlRuleDetail";
         pnlRuleDetail.Padding = new System.Windows.Forms.Padding(24);
         pnlRuleDetail.Radius = 16;
-        pnlRuleDetail.Size = new System.Drawing.Size(842, 710);
+        pnlRuleDetail.Size = new System.Drawing.Size(1052, 888);
         pnlRuleDetail.TabIndex = 1;
         //
         // tlpRuleDetail
@@ -204,19 +204,19 @@ partial class EditPatternUserControl
         tlpRuleDetail.Location = new System.Drawing.Point(24, 24);
         tlpRuleDetail.Name = "tlpRuleDetail";
         tlpRuleDetail.RowCount = 5;
-        tlpRuleDetail.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 224F));
-        tlpRuleDetail.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 56F));
+        tlpRuleDetail.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 280F));
+        tlpRuleDetail.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 70F));
         tlpRuleDetail.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpRuleDetail.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 60F));
-        tlpRuleDetail.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 68F));
-        tlpRuleDetail.Size = new System.Drawing.Size(794, 662);
+        tlpRuleDetail.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 75F));
+        tlpRuleDetail.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 85F));
+        tlpRuleDetail.Size = new System.Drawing.Size(992, 828);
         tlpRuleDetail.TabIndex = 0;
         //
         // tlpRuleForm
         //
         tlpRuleForm.BackColor = System.Drawing.Color.White;
         tlpRuleForm.ColumnCount = 2;
-        tlpRuleForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 130F));
+        tlpRuleForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 162F));
         tlpRuleForm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpRuleForm.Controls.Add(lblRuleName, 0, 0);
         tlpRuleForm.Controls.Add(lblDescription, 0, 1);
@@ -235,17 +235,17 @@ partial class EditPatternUserControl
         tlpRuleForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 25F));
         tlpRuleForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 25F));
         tlpRuleForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 25F));
-        tlpRuleForm.Size = new System.Drawing.Size(794, 224);
+        tlpRuleForm.Size = new System.Drawing.Size(992, 280);
         tlpRuleForm.TabIndex = 0;
         //
         // lblRuleName
         //
         lblRuleName.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblRuleName.Font = new System.Drawing.Font("Segoe UI", 12F);
+        lblRuleName.Font = new System.Drawing.Font("Segoe UI", 15F);
         lblRuleName.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         lblRuleName.Location = new System.Drawing.Point(3, 0);
         lblRuleName.Name = "lblRuleName";
-        lblRuleName.Size = new System.Drawing.Size(124, 56);
+        lblRuleName.Size = new System.Drawing.Size(155, 70);
         lblRuleName.TabIndex = 0;
         lblRuleName.Text = "Rule Name :";
         lblRuleName.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -253,11 +253,11 @@ partial class EditPatternUserControl
         // lblDescription
         //
         lblDescription.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblDescription.Font = new System.Drawing.Font("Segoe UI", 12F);
+        lblDescription.Font = new System.Drawing.Font("Segoe UI", 15F);
         lblDescription.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         lblDescription.Location = new System.Drawing.Point(3, 56);
         lblDescription.Name = "lblDescription";
-        lblDescription.Size = new System.Drawing.Size(124, 56);
+        lblDescription.Size = new System.Drawing.Size(155, 70);
         lblDescription.TabIndex = 1;
         lblDescription.Text = "Description :";
         lblDescription.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -265,11 +265,11 @@ partial class EditPatternUserControl
         // lblLotTest
         //
         lblLotTest.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblLotTest.Font = new System.Drawing.Font("Segoe UI", 12F);
+        lblLotTest.Font = new System.Drawing.Font("Segoe UI", 15F);
         lblLotTest.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         lblLotTest.Location = new System.Drawing.Point(3, 112);
         lblLotTest.Name = "lblLotTest";
-        lblLotTest.Size = new System.Drawing.Size(124, 56);
+        lblLotTest.Size = new System.Drawing.Size(155, 70);
         lblLotTest.TabIndex = 2;
         lblLotTest.Text = "Lot Test :";
         lblLotTest.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -277,11 +277,11 @@ partial class EditPatternUserControl
         // lblBlockText
         //
         lblBlockText.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblBlockText.Font = new System.Drawing.Font("Segoe UI", 12F);
+        lblBlockText.Font = new System.Drawing.Font("Segoe UI", 15F);
         lblBlockText.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         lblBlockText.Location = new System.Drawing.Point(3, 168);
         lblBlockText.Name = "lblBlockText";
-        lblBlockText.Size = new System.Drawing.Size(124, 56);
+        lblBlockText.Size = new System.Drawing.Size(155, 70);
         lblBlockText.TabIndex = 3;
         lblBlockText.Text = "Block Text :";
         lblBlockText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -290,48 +290,48 @@ partial class EditPatternUserControl
         //
         txtPatternName.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
         txtPatternName.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtPatternName.Font = new System.Drawing.Font("Segoe UI", 12F);
+        txtPatternName.Font = new System.Drawing.Font("Segoe UI", 15F);
         txtPatternName.Location = new System.Drawing.Point(133, 8);
         txtPatternName.Margin = new System.Windows.Forms.Padding(3, 8, 3, 8);
         txtPatternName.Name = "txtPatternName";
         txtPatternName.Radius = 6;
-        txtPatternName.Size = new System.Drawing.Size(658, 40);
+        txtPatternName.Size = new System.Drawing.Size(822, 50);
         txtPatternName.TabIndex = 4;
         //
         // txtDescription
         //
         txtDescription.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
         txtDescription.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtDescription.Font = new System.Drawing.Font("Segoe UI", 12F);
+        txtDescription.Font = new System.Drawing.Font("Segoe UI", 15F);
         txtDescription.Location = new System.Drawing.Point(133, 64);
         txtDescription.Margin = new System.Windows.Forms.Padding(3, 8, 3, 8);
         txtDescription.Name = "txtDescription";
         txtDescription.Radius = 6;
-        txtDescription.Size = new System.Drawing.Size(658, 40);
+        txtDescription.Size = new System.Drawing.Size(822, 50);
         txtDescription.TabIndex = 5;
         //
         // txtLotTest
         //
         txtLotTest.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
         txtLotTest.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtLotTest.Font = new System.Drawing.Font("Segoe UI", 12F);
+        txtLotTest.Font = new System.Drawing.Font("Segoe UI", 15F);
         txtLotTest.Location = new System.Drawing.Point(133, 120);
         txtLotTest.Margin = new System.Windows.Forms.Padding(3, 8, 3, 8);
         txtLotTest.Name = "txtLotTest";
         txtLotTest.Radius = 6;
-        txtLotTest.Size = new System.Drawing.Size(658, 40);
+        txtLotTest.Size = new System.Drawing.Size(822, 50);
         txtLotTest.TabIndex = 6;
         //
         // txtBlockText
         //
         txtBlockText.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
         txtBlockText.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtBlockText.Font = new System.Drawing.Font("Segoe UI", 12F);
+        txtBlockText.Font = new System.Drawing.Font("Segoe UI", 15F);
         txtBlockText.Location = new System.Drawing.Point(133, 176);
         txtBlockText.Margin = new System.Windows.Forms.Padding(3, 8, 3, 8);
         txtBlockText.Name = "txtBlockText";
         txtBlockText.Radius = 6;
-        txtBlockText.Size = new System.Drawing.Size(658, 40);
+        txtBlockText.Size = new System.Drawing.Size(822, 50);
         txtBlockText.TabIndex = 7;
         //
         // tlpTransformHeader
@@ -339,7 +339,7 @@ partial class EditPatternUserControl
         tlpTransformHeader.BackColor = System.Drawing.Color.White;
         tlpTransformHeader.ColumnCount = 2;
         tlpTransformHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpTransformHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 150F));
+        tlpTransformHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 188F));
         tlpTransformHeader.Controls.Add(lblTransformTitle, 0, 0);
         tlpTransformHeader.Controls.Add(btnAddRule, 1, 0);
         tlpTransformHeader.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -348,17 +348,17 @@ partial class EditPatternUserControl
         tlpTransformHeader.Name = "tlpTransformHeader";
         tlpTransformHeader.RowCount = 1;
         tlpTransformHeader.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpTransformHeader.Size = new System.Drawing.Size(794, 56);
+        tlpTransformHeader.Size = new System.Drawing.Size(992, 70);
         tlpTransformHeader.TabIndex = 1;
         //
         // lblTransformTitle
         //
         lblTransformTitle.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblTransformTitle.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        lblTransformTitle.Font = new System.Drawing.Font("Segoe UI", 17.5F, System.Drawing.FontStyle.Bold);
         lblTransformTitle.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         lblTransformTitle.Location = new System.Drawing.Point(3, 0);
         lblTransformTitle.Name = "lblTransformTitle";
-        lblTransformTitle.Size = new System.Drawing.Size(638, 56);
+        lblTransformTitle.Size = new System.Drawing.Size(798, 70);
         lblTransformTitle.TabIndex = 0;
         lblTransformTitle.Text = "Transform Rules";
         lblTransformTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -366,12 +366,12 @@ partial class EditPatternUserControl
         // btnAddRule
         //
         btnAddRule.Anchor = System.Windows.Forms.AnchorStyles.Right;
-        btnAddRule.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        btnAddRule.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
         btnAddRule.ForeColor = System.Drawing.Color.White;
         btnAddRule.Location = new System.Drawing.Point(647, 6);
         btnAddRule.Name = "btnAddRule";
         btnAddRule.Radius = 8;
-        btnAddRule.Size = new System.Drawing.Size(144, 44);
+        btnAddRule.Size = new System.Drawing.Size(180, 55);
         btnAddRule.TabIndex = 1;
         btnAddRule.Text = "+ Add Rule";
         btnAddRule.Type = AntdUI.TTypeMini.Primary;
@@ -381,25 +381,25 @@ partial class EditPatternUserControl
         tblRules.AutoSizeColumnsMode = AntdUI.ColumnsMode.Fill;
         tblRules.Bordered = true;
         tblRules.ColumnBack = System.Drawing.Color.FromArgb(30, 30, 30);
-        tblRules.ColumnFont = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        tblRules.ColumnFont = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         tblRules.ColumnFore = System.Drawing.Color.White;
         tblRules.Dock = System.Windows.Forms.DockStyle.Fill;
         tblRules.EditMode = AntdUI.TEditMode.Click;
         tblRules.EmptyText = "No transform rules";
-        tblRules.Font = new System.Drawing.Font("Segoe UI", 11F);
+        tblRules.Font = new System.Drawing.Font("Segoe UI", 14F);
         tblRules.Location = new System.Drawing.Point(0, 284);
         tblRules.Margin = new System.Windows.Forms.Padding(0, 4, 0, 4);
         tblRules.Name = "tblRules";
         tblRules.Radius = 8;
-        tblRules.RowHeight = 46;
-        tblRules.Size = new System.Drawing.Size(794, 246);
+        tblRules.RowHeight = 58;
+        tblRules.Size = new System.Drawing.Size(992, 308);
         tblRules.TabIndex = 2;
         //
         // tlpPreview
         //
         tlpPreview.BackColor = System.Drawing.Color.FromArgb(240, 245, 251);
         tlpPreview.ColumnCount = 2;
-        tlpPreview.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 110F));
+        tlpPreview.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 138F));
         tlpPreview.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpPreview.Controls.Add(lblPreviewCaption, 0, 0);
         tlpPreview.Controls.Add(lblPreview, 1, 0);
@@ -409,18 +409,18 @@ partial class EditPatternUserControl
         tlpPreview.Name = "tlpPreview";
         tlpPreview.RowCount = 1;
         tlpPreview.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpPreview.Size = new System.Drawing.Size(794, 60);
+        tlpPreview.Size = new System.Drawing.Size(992, 75);
         tlpPreview.TabIndex = 3;
         //
         // lblPreviewCaption
         //
         lblPreviewCaption.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblPreviewCaption.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        lblPreviewCaption.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
         lblPreviewCaption.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         lblPreviewCaption.Location = new System.Drawing.Point(12, 0);
         lblPreviewCaption.Margin = new System.Windows.Forms.Padding(12, 0, 0, 0);
         lblPreviewCaption.Name = "lblPreviewCaption";
-        lblPreviewCaption.Size = new System.Drawing.Size(98, 60);
+        lblPreviewCaption.Size = new System.Drawing.Size(122, 75);
         lblPreviewCaption.TabIndex = 0;
         lblPreviewCaption.Text = "Preview :";
         lblPreviewCaption.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -428,11 +428,11 @@ partial class EditPatternUserControl
         // lblPreview
         //
         lblPreview.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblPreview.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
+        lblPreview.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
         lblPreview.ForeColor = System.Drawing.Color.FromArgb(21, 87, 36);
         lblPreview.Location = new System.Drawing.Point(113, 0);
         lblPreview.Name = "lblPreview";
-        lblPreview.Size = new System.Drawing.Size(678, 60);
+        lblPreview.Size = new System.Drawing.Size(848, 75);
         lblPreview.TabIndex = 1;
         lblPreview.Text = "";
         lblPreview.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -447,32 +447,32 @@ partial class EditPatternUserControl
         flpDetailActions.Location = new System.Drawing.Point(0, 594);
         flpDetailActions.Margin = new System.Windows.Forms.Padding(0);
         flpDetailActions.Name = "flpDetailActions";
-        flpDetailActions.Size = new System.Drawing.Size(794, 68);
+        flpDetailActions.Size = new System.Drawing.Size(992, 85);
         flpDetailActions.TabIndex = 4;
         flpDetailActions.WrapContents = false;
         //
         // btnSaveRule
         //
-        btnSaveRule.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        btnSaveRule.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
         btnSaveRule.ForeColor = System.Drawing.Color.White;
         btnSaveRule.Location = new System.Drawing.Point(634, 12);
         btnSaveRule.Margin = new System.Windows.Forms.Padding(3, 12, 3, 12);
         btnSaveRule.Name = "btnSaveRule";
         btnSaveRule.Radius = 8;
-        btnSaveRule.Size = new System.Drawing.Size(154, 44);
+        btnSaveRule.Size = new System.Drawing.Size(192, 55);
         btnSaveRule.TabIndex = 0;
         btnSaveRule.Text = "Save Rule";
         btnSaveRule.Type = AntdUI.TTypeMini.Primary;
         //
         // btnCancel
         //
-        btnCancel.Font = new System.Drawing.Font("Segoe UI", 12F);
+        btnCancel.Font = new System.Drawing.Font("Segoe UI", 15F);
         btnCancel.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnCancel.Location = new System.Drawing.Point(474, 12);
         btnCancel.Margin = new System.Windows.Forms.Padding(3, 12, 3, 12);
         btnCancel.Name = "btnCancel";
         btnCancel.Radius = 8;
-        btnCancel.Size = new System.Drawing.Size(154, 44);
+        btnCancel.Size = new System.Drawing.Size(192, 55);
         btnCancel.TabIndex = 1;
         btnCancel.Text = "Cancel";
         btnCancel.Type = AntdUI.TTypeMini.Default;

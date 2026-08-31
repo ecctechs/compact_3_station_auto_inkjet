@@ -83,8 +83,8 @@ partial class OrderListUserControl
         tlpOrderListRoot.Padding = new System.Windows.Forms.Padding(32);
         tlpOrderListRoot.RowCount = 2;
         tlpOrderListRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpOrderListRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 250F));
-        tlpOrderListRoot.Size = new System.Drawing.Size(1100, 860);
+        tlpOrderListRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 312F));
+        tlpOrderListRoot.Size = new System.Drawing.Size(1375, 1075);
         tlpOrderListRoot.TabIndex = 0;
         //
         // pnlTableContainer
@@ -98,7 +98,7 @@ partial class OrderListUserControl
         pnlTableContainer.Name = "pnlTableContainer";
         pnlTableContainer.Padding = new System.Windows.Forms.Padding(2);
         pnlTableContainer.Radius = 12;
-        pnlTableContainer.Size = new System.Drawing.Size(1030, 706);
+        pnlTableContainer.Size = new System.Drawing.Size(1288, 882);
         pnlTableContainer.TabIndex = 0;
         //
         // tlpTableInner
@@ -112,9 +112,9 @@ partial class OrderListUserControl
         tlpTableInner.Location = new System.Drawing.Point(2, 2);
         tlpTableInner.Name = "tlpTableInner";
         tlpTableInner.RowCount = 2;
-        tlpTableInner.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpTableInner.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpTableInner.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpTableInner.Size = new System.Drawing.Size(1026, 702);
+        tlpTableInner.Size = new System.Drawing.Size(1282, 878);
         tlpTableInner.TabIndex = 0;
         //
         // flpTabs
@@ -130,19 +130,19 @@ partial class OrderListUserControl
         flpTabs.Margin = new System.Windows.Forms.Padding(0);
         flpTabs.Name = "flpTabs";
         flpTabs.Padding = new System.Windows.Forms.Padding(6, 6, 0, 0);
-        flpTabs.Size = new System.Drawing.Size(1026, 50);
+        flpTabs.Size = new System.Drawing.Size(1282, 62);
         flpTabs.TabIndex = 0;
         flpTabs.WrapContents = false;
         //
         // btnTabList
         //
-        btnTabList.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        btnTabList.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         btnTabList.ForeColor = System.Drawing.Color.White;
         btnTabList.Location = new System.Drawing.Point(9, 9);
         btnTabList.Margin = new System.Windows.Forms.Padding(3);
         btnTabList.Name = "btnTabList";
         btnTabList.Radius = 6;
-        btnTabList.Size = new System.Drawing.Size(110, 36);
+        btnTabList.Size = new System.Drawing.Size(138, 45);
         btnTabList.TabIndex = 0;
         btnTabList.Text = "List";
         btnTabList.Type = AntdUI.TTypeMini.Primary;
@@ -151,13 +151,13 @@ partial class OrderListUserControl
         //
         btnTabHistory.DefaultBorderColor = System.Drawing.Color.FromArgb(180, 180, 180);
         btnTabHistory.BorderWidth = 1F;
-        btnTabHistory.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        btnTabHistory.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         btnTabHistory.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         btnTabHistory.Location = new System.Drawing.Point(125, 9);
         btnTabHistory.Margin = new System.Windows.Forms.Padding(3);
         btnTabHistory.Name = "btnTabHistory";
         btnTabHistory.Radius = 6;
-        btnTabHistory.Size = new System.Drawing.Size(110, 36);
+        btnTabHistory.Size = new System.Drawing.Size(138, 45);
         btnTabHistory.TabIndex = 1;
         btnTabHistory.Text = "History";
         btnTabHistory.Type = AntdUI.TTypeMini.Default;
@@ -166,11 +166,11 @@ partial class OrderListUserControl
         //
         lblDateFilter.Anchor = System.Windows.Forms.AnchorStyles.Left;
         lblDateFilter.AutoSize = true;
-        lblDateFilter.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblDateFilter.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         lblDateFilter.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         lblDateFilter.Margin = new System.Windows.Forms.Padding(20, 3, 4, 3);
         lblDateFilter.Name = "lblDateFilter";
-        lblDateFilter.Size = new System.Drawing.Size(70, 36);
+        lblDateFilter.Size = new System.Drawing.Size(88, 45);
         lblDateFilter.TabIndex = 2;
         lblDateFilter.Text = "ช่วงวันที่ :";
         lblDateFilter.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -179,14 +179,14 @@ partial class OrderListUserControl
         // dtpHistoryRange
         //
         dtpHistoryRange.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        dtpHistoryRange.Font = new System.Drawing.Font("Segoe UI", 10F);
+        dtpHistoryRange.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         dtpHistoryRange.Format = "dd/MM/yyyy";
         dtpHistoryRange.Margin = new System.Windows.Forms.Padding(3);
         dtpHistoryRange.Name = "dtpHistoryRange";
         dtpHistoryRange.PlaceholderStart = "จากวันที่";
         dtpHistoryRange.PlaceholderEnd = "ถึงวันที่";
         dtpHistoryRange.Radius = 6;
-        dtpHistoryRange.Size = new System.Drawing.Size(250, 36);
+        dtpHistoryRange.Size = new System.Drawing.Size(312, 45);
         dtpHistoryRange.TabIndex = 3;
         dtpHistoryRange.Visible = false;
         //
@@ -194,12 +194,12 @@ partial class OrderListUserControl
         //
         btnClearDate.DefaultBorderColor = System.Drawing.Color.FromArgb(180, 180, 180);
         btnClearDate.BorderWidth = 1F;
-        btnClearDate.Font = new System.Drawing.Font("Segoe UI", 10F);
+        btnClearDate.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         btnClearDate.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         btnClearDate.Margin = new System.Windows.Forms.Padding(3);
         btnClearDate.Name = "btnClearDate";
         btnClearDate.Radius = 6;
-        btnClearDate.Size = new System.Drawing.Size(70, 36);
+        btnClearDate.Size = new System.Drawing.Size(88, 45);
         btnClearDate.TabIndex = 4;
         btnClearDate.Text = "ล้าง";
         btnClearDate.Type = AntdUI.TTypeMini.Default;
@@ -210,17 +210,17 @@ partial class OrderListUserControl
         tblOrders.AutoSizeColumnsMode = AntdUI.ColumnsMode.Fill;
         tblOrders.Bordered = true;
         tblOrders.ColumnBack = System.Drawing.Color.FromArgb(30, 30, 30);
-        tblOrders.ColumnFont = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+        tblOrders.ColumnFont = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         tblOrders.ColumnFore = System.Drawing.Color.White;
         tblOrders.Dock = System.Windows.Forms.DockStyle.Fill;
         tblOrders.EmptyText = "No orders";
-        tblOrders.Font = new System.Drawing.Font("Segoe UI", 11F);
+        tblOrders.Font = new System.Drawing.Font("Segoe UI", 14F);
         tblOrders.Location = new System.Drawing.Point(0, 54);
         tblOrders.Margin = new System.Windows.Forms.Padding(0, 4, 0, 0);
         tblOrders.Name = "tblOrders";
         tblOrders.Radius = 0;
-        tblOrders.RowHeight = 68;
-        tblOrders.Size = new System.Drawing.Size(1026, 648);
+        tblOrders.RowHeight = 85;
+        tblOrders.Size = new System.Drawing.Size(1282, 810);
         tblOrders.TabIndex = 1;
         //
         // tlpBottom - Preview | Start | Processing
@@ -228,7 +228,7 @@ partial class OrderListUserControl
         tlpBottom.BackColor = System.Drawing.Color.FromArgb(91, 155, 213);
         tlpBottom.ColumnCount = 3;
         tlpBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-        tlpBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 200F));
+        tlpBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 250F));
         tlpBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
         tlpBottom.Controls.Add(pnlPreview, 0, 0);
         tlpBottom.Controls.Add(flpActions, 1, 0);
@@ -238,7 +238,7 @@ partial class OrderListUserControl
         tlpBottom.Name = "tlpBottom";
         tlpBottom.RowCount = 1;
         tlpBottom.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpBottom.Size = new System.Drawing.Size(1036, 240);
+        tlpBottom.Size = new System.Drawing.Size(1295, 300);
         tlpBottom.TabIndex = 1;
         //
         // pnlPreview
@@ -252,7 +252,7 @@ partial class OrderListUserControl
         pnlPreview.Name = "pnlPreview";
         pnlPreview.Padding = new System.Windows.Forms.Padding(8);
         pnlPreview.Radius = 12;
-        pnlPreview.Size = new System.Drawing.Size(412, 240);
+        pnlPreview.Size = new System.Drawing.Size(515, 300);
         pnlPreview.TabIndex = 0;
         //
         // tlpPreview
@@ -266,18 +266,18 @@ partial class OrderListUserControl
         tlpPreview.Margin = new System.Windows.Forms.Padding(0);
         tlpPreview.Name = "tlpPreview";
         tlpPreview.RowCount = 2;
-        tlpPreview.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
+        tlpPreview.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
         tlpPreview.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpPreview.Size = new System.Drawing.Size(396, 224);
+        tlpPreview.Size = new System.Drawing.Size(495, 280);
         tlpPreview.TabIndex = 0;
         //
         // lblPreviewTitle
         //
         lblPreviewTitle.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblPreviewTitle.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        lblPreviewTitle.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
         lblPreviewTitle.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         lblPreviewTitle.Name = "lblPreviewTitle";
-        lblPreviewTitle.Size = new System.Drawing.Size(390, 28);
+        lblPreviewTitle.Size = new System.Drawing.Size(488, 35);
         lblPreviewTitle.TabIndex = 0;
         lblPreviewTitle.Text = "Preview";
         lblPreviewTitle.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -296,19 +296,19 @@ partial class OrderListUserControl
         tlpPreviewSlots.Margin = new System.Windows.Forms.Padding(0);
         tlpPreviewSlots.Name = "tlpPreviewSlots";
         tlpPreviewSlots.RowCount = 2;
-        tlpPreviewSlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 34F));
+        tlpPreviewSlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
         tlpPreviewSlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpPreviewSlots.Size = new System.Drawing.Size(396, 196);
+        tlpPreviewSlots.Size = new System.Drawing.Size(495, 245);
         tlpPreviewSlots.TabIndex = 1;
         //
         // lblPrevPlateCaption
         //
         lblPrevPlateCaption.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblPrevPlateCaption.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblPrevPlateCaption.Font = new System.Drawing.Font("Segoe UI", 11F);
         lblPrevPlateCaption.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         lblPrevPlateCaption.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
         lblPrevPlateCaption.Name = "lblPrevPlateCaption";
-        lblPrevPlateCaption.Size = new System.Drawing.Size(192, 34);
+        lblPrevPlateCaption.Size = new System.Drawing.Size(240, 42);
         lblPrevPlateCaption.TabIndex = 0;
         lblPrevPlateCaption.Text = "";
         lblPrevPlateCaption.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -316,11 +316,11 @@ partial class OrderListUserControl
         // lblPrevShimCaption
         //
         lblPrevShimCaption.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblPrevShimCaption.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblPrevShimCaption.Font = new System.Drawing.Font("Segoe UI", 11F);
         lblPrevShimCaption.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         lblPrevShimCaption.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
         lblPrevShimCaption.Name = "lblPrevShimCaption";
-        lblPrevShimCaption.Size = new System.Drawing.Size(192, 34);
+        lblPrevShimCaption.Size = new System.Drawing.Size(240, 42);
         lblPrevShimCaption.TabIndex = 1;
         lblPrevShimCaption.Text = "";
         lblPrevShimCaption.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -332,7 +332,7 @@ partial class OrderListUserControl
         picPrevPlate.Dock = System.Windows.Forms.DockStyle.Fill;
         picPrevPlate.Margin = new System.Windows.Forms.Padding(3, 0, 3, 3);
         picPrevPlate.Name = "picPrevPlate";
-        picPrevPlate.Size = new System.Drawing.Size(192, 159);
+        picPrevPlate.Size = new System.Drawing.Size(240, 199);
         picPrevPlate.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
         picPrevPlate.TabIndex = 2;
         picPrevPlate.TabStop = false;
@@ -344,7 +344,7 @@ partial class OrderListUserControl
         picPrevShim.Dock = System.Windows.Forms.DockStyle.Fill;
         picPrevShim.Margin = new System.Windows.Forms.Padding(3, 0, 3, 3);
         picPrevShim.Name = "picPrevShim";
-        picPrevShim.Size = new System.Drawing.Size(192, 159);
+        picPrevShim.Size = new System.Drawing.Size(240, 199);
         picPrevShim.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
         picPrevShim.TabIndex = 3;
         picPrevShim.TabStop = false;
@@ -360,7 +360,7 @@ partial class OrderListUserControl
         pnlProcessing.Name = "pnlProcessing";
         pnlProcessing.Padding = new System.Windows.Forms.Padding(8);
         pnlProcessing.Radius = 12;
-        pnlProcessing.Size = new System.Drawing.Size(412, 240);
+        pnlProcessing.Size = new System.Drawing.Size(515, 300);
         pnlProcessing.TabIndex = 0;
         //
         // tlpProcessing
@@ -374,18 +374,18 @@ partial class OrderListUserControl
         tlpProcessing.Margin = new System.Windows.Forms.Padding(0);
         tlpProcessing.Name = "tlpProcessing";
         tlpProcessing.RowCount = 2;
-        tlpProcessing.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
+        tlpProcessing.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
         tlpProcessing.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpProcessing.Size = new System.Drawing.Size(396, 224);
+        tlpProcessing.Size = new System.Drawing.Size(495, 280);
         tlpProcessing.TabIndex = 0;
         //
         // lblProcessingTitle
         //
         lblProcessingTitle.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblProcessingTitle.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        lblProcessingTitle.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
         lblProcessingTitle.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         lblProcessingTitle.Name = "lblProcessingTitle";
-        lblProcessingTitle.Size = new System.Drawing.Size(390, 28);
+        lblProcessingTitle.Size = new System.Drawing.Size(488, 35);
         lblProcessingTitle.TabIndex = 0;
         lblProcessingTitle.Text = "Processing";
         lblProcessingTitle.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -404,19 +404,19 @@ partial class OrderListUserControl
         tlpProcessingSlots.Margin = new System.Windows.Forms.Padding(0);
         tlpProcessingSlots.Name = "tlpProcessingSlots";
         tlpProcessingSlots.RowCount = 2;
-        tlpProcessingSlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 34F));
+        tlpProcessingSlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
         tlpProcessingSlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpProcessingSlots.Size = new System.Drawing.Size(396, 196);
+        tlpProcessingSlots.Size = new System.Drawing.Size(495, 245);
         tlpProcessingSlots.TabIndex = 1;
         //
         // lblProcPlateCaption
         //
         lblProcPlateCaption.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblProcPlateCaption.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblProcPlateCaption.Font = new System.Drawing.Font("Segoe UI", 11F);
         lblProcPlateCaption.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         lblProcPlateCaption.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
         lblProcPlateCaption.Name = "lblProcPlateCaption";
-        lblProcPlateCaption.Size = new System.Drawing.Size(192, 34);
+        lblProcPlateCaption.Size = new System.Drawing.Size(240, 42);
         lblProcPlateCaption.TabIndex = 0;
         lblProcPlateCaption.Text = "";
         lblProcPlateCaption.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -424,11 +424,11 @@ partial class OrderListUserControl
         // lblProcShimCaption
         //
         lblProcShimCaption.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblProcShimCaption.Font = new System.Drawing.Font("Segoe UI", 9F);
+        lblProcShimCaption.Font = new System.Drawing.Font("Segoe UI", 11F);
         lblProcShimCaption.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         lblProcShimCaption.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
         lblProcShimCaption.Name = "lblProcShimCaption";
-        lblProcShimCaption.Size = new System.Drawing.Size(192, 34);
+        lblProcShimCaption.Size = new System.Drawing.Size(240, 42);
         lblProcShimCaption.TabIndex = 1;
         lblProcShimCaption.Text = "";
         lblProcShimCaption.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -440,7 +440,7 @@ partial class OrderListUserControl
         picProcPlate.Dock = System.Windows.Forms.DockStyle.Fill;
         picProcPlate.Margin = new System.Windows.Forms.Padding(3, 0, 3, 3);
         picProcPlate.Name = "picProcPlate";
-        picProcPlate.Size = new System.Drawing.Size(192, 159);
+        picProcPlate.Size = new System.Drawing.Size(240, 199);
         picProcPlate.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
         picProcPlate.TabIndex = 2;
         picProcPlate.TabStop = false;
@@ -452,7 +452,7 @@ partial class OrderListUserControl
         picProcShim.Dock = System.Windows.Forms.DockStyle.Fill;
         picProcShim.Margin = new System.Windows.Forms.Padding(3, 0, 3, 3);
         picProcShim.Name = "picProcShim";
-        picProcShim.Size = new System.Drawing.Size(192, 159);
+        picProcShim.Size = new System.Drawing.Size(240, 199);
         picProcShim.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
         picProcShim.TabIndex = 3;
         picProcShim.TabStop = false;
@@ -466,7 +466,7 @@ partial class OrderListUserControl
         flpActions.Controls.Add(btnStart);
         flpActions.Margin = new System.Windows.Forms.Padding(0);
         flpActions.Name = "flpActions";
-        flpActions.Size = new System.Drawing.Size(176, 60);
+        flpActions.Size = new System.Drawing.Size(220, 75);
         flpActions.TabIndex = 1;
         //
         // btnStart

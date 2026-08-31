@@ -48,15 +48,15 @@ partial class BackendSettingUserControl
         tlpRoot.Padding = new System.Windows.Forms.Padding(16);
         tlpRoot.RowCount = 2;
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 68F));
-        tlpRoot.Size = new System.Drawing.Size(780, 800);
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 85F));
+        tlpRoot.Size = new System.Drawing.Size(975, 1000);
         tlpRoot.TabIndex = 0;
         //
         // grpBackend
         //
         grpBackend.Controls.Add(tlpDevice);
         grpBackend.Dock = System.Windows.Forms.DockStyle.Fill;
-        grpBackend.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        grpBackend.Font = new System.Drawing.Font("Segoe UI", 17.5F, System.Drawing.FontStyle.Bold);
         grpBackend.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         grpBackend.Name = "grpBackend";
         grpBackend.Padding = new System.Windows.Forms.Padding(16, 24, 16, 8);
@@ -69,12 +69,12 @@ partial class BackendSettingUserControl
         //
         tlpDevice.BackColor = System.Drawing.Color.White;
         tlpDevice.ColumnCount = 6;
-        tlpDevice.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 36F));
-        tlpDevice.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
-        tlpDevice.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
+        tlpDevice.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 45F));
+        tlpDevice.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 175F));
+        tlpDevice.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 125F));
         tlpDevice.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpDevice.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-        tlpDevice.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 90F));
+        tlpDevice.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 25F));
+        tlpDevice.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 112F));
         tlpDevice.Controls.Add(lblPcStatus, 0, 0);
         tlpDevice.Controls.Add(lblPcBadge, 1, 0);
         tlpDevice.Controls.Add(btnPcName, 2, 0);
@@ -83,15 +83,15 @@ partial class BackendSettingUserControl
         tlpDevice.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpDevice.Name = "tlpDevice";
         tlpDevice.RowCount = 3;
-        tlpDevice.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
-        tlpDevice.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+        tlpDevice.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
+        tlpDevice.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpDevice.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpDevice.TabIndex = 0;
         //
         // lblPcStatus
         //
         lblPcStatus.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblPcStatus.Font = new System.Drawing.Font("Segoe UI", 20F);
+        lblPcStatus.Font = new System.Drawing.Font("Segoe UI", 25F);
         lblPcStatus.ForeColor = System.Drawing.Color.Gray;
         lblPcStatus.Name = "lblPcStatus";
         lblPcStatus.TabIndex = 0;
@@ -102,10 +102,10 @@ partial class BackendSettingUserControl
         //
         lblPcBadge.Anchor = System.Windows.Forms.AnchorStyles.Left;
         lblPcBadge.BackColor = System.Drawing.Color.FromArgb(33, 33, 33);
-        lblPcBadge.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        lblPcBadge.Font = new System.Drawing.Font("Segoe UI", 12.5F, System.Drawing.FontStyle.Bold);
         lblPcBadge.ForeColor = System.Drawing.Color.White;
         lblPcBadge.Name = "lblPcBadge";
-        lblPcBadge.Size = new System.Drawing.Size(120, 34);
+        lblPcBadge.Size = new System.Drawing.Size(150, 42);
         lblPcBadge.TabIndex = 1;
         lblPcBadge.Text = "PC";
         lblPcBadge.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -115,11 +115,11 @@ partial class BackendSettingUserControl
         btnPcName.Anchor = System.Windows.Forms.AnchorStyles.Left;
         btnPcName.BorderWidth = 2F;
         btnPcName.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnPcName.Font = new System.Drawing.Font("Segoe UI", 9F);
+        btnPcName.Font = new System.Drawing.Font("Segoe UI", 11F);
         btnPcName.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnPcName.Name = "btnPcName";
         btnPcName.Radius = 6;
-        btnPcName.Size = new System.Drawing.Size(80, 34);
+        btnPcName.Size = new System.Drawing.Size(100, 42);
         btnPcName.TabIndex = 2;
         btnPcName.Text = "Rename";
         btnPcName.Type = AntdUI.TTypeMini.Default;
@@ -127,7 +127,7 @@ partial class BackendSettingUserControl
         // lblPcIpLabel — spans col1+col2
         //
         lblPcIpLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblPcIpLabel.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblPcIpLabel.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         lblPcIpLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
         lblPcIpLabel.Name = "lblPcIpLabel";
         tlpDevice.SetColumnSpan(lblPcIpLabel, 2);
@@ -159,12 +159,12 @@ partial class BackendSettingUserControl
         //
         // btnSave
         //
-        btnSave.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        btnSave.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
         btnSave.ForeColor = System.Drawing.Color.White;
         btnSave.Margin = new System.Windows.Forms.Padding(3, 12, 3, 12);
         btnSave.Name = "btnSave";
         btnSave.Radius = 8;
-        btnSave.Size = new System.Drawing.Size(154, 44);
+        btnSave.Size = new System.Drawing.Size(192, 55);
         btnSave.TabIndex = 0;
         btnSave.Text = "Save";
         btnSave.Type = AntdUI.TTypeMini.Primary;
@@ -173,12 +173,12 @@ partial class BackendSettingUserControl
         //
         btnCancel.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnCancel.BorderWidth = 2F;
-        btnCancel.Font = new System.Drawing.Font("Segoe UI", 12F);
+        btnCancel.Font = new System.Drawing.Font("Segoe UI", 15F);
         btnCancel.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnCancel.Margin = new System.Windows.Forms.Padding(3, 12, 3, 12);
         btnCancel.Name = "btnCancel";
         btnCancel.Radius = 8;
-        btnCancel.Size = new System.Drawing.Size(154, 44);
+        btnCancel.Size = new System.Drawing.Size(192, 55);
         btnCancel.TabIndex = 1;
         btnCancel.Text = "Cancel";
         btnCancel.Type = AntdUI.TTypeMini.Default;
@@ -187,12 +187,12 @@ partial class BackendSettingUserControl
         //
         btnCheckStatus.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         btnCheckStatus.BorderWidth = 2F;
-        btnCheckStatus.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        btnCheckStatus.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
         btnCheckStatus.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnCheckStatus.Margin = new System.Windows.Forms.Padding(16, 12, 3, 12);
         btnCheckStatus.Name = "btnCheckStatus";
         btnCheckStatus.Radius = 8;
-        btnCheckStatus.Size = new System.Drawing.Size(170, 44);
+        btnCheckStatus.Size = new System.Drawing.Size(212, 55);
         btnCheckStatus.TabIndex = 2;
         btnCheckStatus.Text = "Check Status";
         btnCheckStatus.Type = AntdUI.TTypeMini.Default;

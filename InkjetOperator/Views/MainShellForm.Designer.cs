@@ -1,4 +1,4 @@
-namespace InkjetOperator.Views;
+﻿namespace InkjetOperator.Views;
 
 partial class MainShellForm
 {
@@ -75,7 +75,7 @@ partial class MainShellForm
         tlpShellRoot.Name = "tlpShellRoot";
         tlpShellRoot.RowCount = 3;
         tlpShellRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
-        tlpShellRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 72F));
+        tlpShellRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 64F));
         tlpShellRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         tlpShellRoot.Size = new Size(1194, 739);
         tlpShellRoot.TabIndex = 0;
@@ -105,7 +105,7 @@ partial class MainShellForm
         tlpMenuBar.Name = "tlpMenuBar";
         tlpMenuBar.RowCount = 1;
         tlpMenuBar.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        tlpMenuBar.Size = new Size(1920, 72);
+        tlpMenuBar.Size = new Size(1920, 64);
         tlpMenuBar.TabIndex = 0;
         // 
         // btnInputOrder
@@ -113,7 +113,7 @@ partial class MainShellForm
         btnInputOrder.DefaultBack = Color.FromArgb(91, 155, 213);
         btnInputOrder.DefaultBorderColor = Color.FromArgb(36, 71, 101);
         btnInputOrder.Dock = DockStyle.Fill;
-        btnInputOrder.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        btnInputOrder.Font = new Font("Segoe UI", 17F, FontStyle.Bold);
         btnInputOrder.ForeColor = Color.White;
         btnInputOrder.Location = new Point(3, 3);
         btnInputOrder.Name = "btnInputOrder";
@@ -128,7 +128,7 @@ partial class MainShellForm
         btnOrderList.DefaultBack = Color.FromArgb(176, 176, 176);
         btnOrderList.DefaultBorderColor = Color.FromArgb(36, 71, 101);
         btnOrderList.Dock = DockStyle.Fill;
-        btnOrderList.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        btnOrderList.Font = new Font("Segoe UI", 17F, FontStyle.Bold);
         btnOrderList.ForeColor = Color.White;
         btnOrderList.Location = new Point(203, 3);
         btnOrderList.Name = "btnOrderList";
@@ -143,7 +143,7 @@ partial class MainShellForm
         btnEditPattern.DefaultBack = Color.FromArgb(176, 176, 176);
         btnEditPattern.DefaultBorderColor = Color.FromArgb(36, 71, 101);
         btnEditPattern.Dock = DockStyle.Fill;
-        btnEditPattern.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        btnEditPattern.Font = new Font("Segoe UI", 17F, FontStyle.Bold);
         btnEditPattern.ForeColor = Color.White;
         btnEditPattern.Location = new Point(403, 3);
         btnEditPattern.Name = "btnEditPattern";
@@ -158,7 +158,7 @@ partial class MainShellForm
         btnTransfer.DefaultBack = Color.FromArgb(176, 176, 176);
         btnTransfer.DefaultBorderColor = Color.FromArgb(36, 71, 101);
         btnTransfer.Dock = DockStyle.Fill;
-        btnTransfer.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        btnTransfer.Font = new Font("Segoe UI", 17F, FontStyle.Bold);
         btnTransfer.ForeColor = Color.White;
         btnTransfer.Location = new Point(603, 3);
         btnTransfer.Name = "btnTransfer";
@@ -173,7 +173,7 @@ partial class MainShellForm
         btnSetting.DefaultBack = Color.FromArgb(176, 176, 176);
         btnSetting.DefaultBorderColor = Color.FromArgb(36, 71, 101);
         btnSetting.Dock = DockStyle.Fill;
-        btnSetting.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        btnSetting.Font = new Font("Segoe UI", 17F, FontStyle.Bold);
         btnSetting.ForeColor = Color.White;
         btnSetting.Location = new Point(803, 3);
         btnSetting.Name = "btnSetting";
@@ -191,7 +191,7 @@ partial class MainShellForm
         picLogo.Location = new Point(957, 8);
         picLogo.Margin = new Padding(3, 8, 3, 8);
         picLogo.Name = "picLogo";
-        picLogo.Size = new Size(154, 56);
+        picLogo.Size = new Size(140, 46);
         picLogo.SizeMode = PictureBoxSizeMode.Zoom;
         picLogo.TabIndex = 4;
         picLogo.TabStop = false;
@@ -201,13 +201,13 @@ partial class MainShellForm
         btnLang.DefaultBack = Color.FromArgb(26, 26, 26);
         btnLang.DefaultBorderColor = Color.FromArgb(26, 26, 26);
         btnLang.Dock = DockStyle.Fill;
-        btnLang.Font = new Font("Segoe UI", 7.33333349F, FontStyle.Bold);
+        btnLang.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
         btnLang.ForeColor = Color.White;
         btnLang.Location = new Point(1117, 14);
         btnLang.Margin = new Padding(3, 14, 12, 14);
         btnLang.Name = "btnLang";
         btnLang.Radius = 4;
-        btnLang.Size = new Size(65, 44);
+        btnLang.Size = new Size(72, 40);
         btnLang.TabIndex = 5;
         btnLang.Text = "EN";
         // 
@@ -223,7 +223,7 @@ partial class MainShellForm
         pnlContent.Location = new Point(0, 112);
         pnlContent.Margin = new Padding(0);
         pnlContent.Name = "pnlContent";
-        pnlContent.Size = new Size(1920, 920);
+        pnlContent.Size = new Size(1920, 928);
         pnlContent.TabIndex = 1;
         // 
         // scanBarcodePage
@@ -233,7 +233,7 @@ partial class MainShellForm
         scanBarcodePage.Margin = new Padding(4);
         scanBarcodePage.MinimumSize = new Size(820, 680);
         scanBarcodePage.Name = "scanBarcodePage";
-        scanBarcodePage.Size = new Size(1920, 920);
+        scanBarcodePage.Size = new Size(1920, 928);
         scanBarcodePage.TabIndex = 0;
         // 
         // orderListPage
@@ -243,7 +243,7 @@ partial class MainShellForm
         orderListPage.Margin = new Padding(4);
         orderListPage.MinimumSize = new Size(820, 680);
         orderListPage.Name = "orderListPage";
-        orderListPage.Size = new Size(1920, 920);
+        orderListPage.Size = new Size(1920, 928);
         orderListPage.TabIndex = 1;
         // 
         // editPatternPage
@@ -253,7 +253,7 @@ partial class MainShellForm
         editPatternPage.Margin = new Padding(4);
         editPatternPage.MinimumSize = new Size(820, 680);
         editPatternPage.Name = "editPatternPage";
-        editPatternPage.Size = new Size(1920, 920);
+        editPatternPage.Size = new Size(1920, 928);
         editPatternPage.TabIndex = 2;
         // 
         // transferListPage
@@ -263,7 +263,7 @@ partial class MainShellForm
         transferListPage.Margin = new Padding(4);
         transferListPage.MinimumSize = new Size(820, 680);
         transferListPage.Name = "transferListPage";
-        transferListPage.Size = new Size(1920, 920);
+        transferListPage.Size = new Size(1920, 928);
         transferListPage.TabIndex = 4;
         // 
         // settingPage
@@ -273,7 +273,7 @@ partial class MainShellForm
         settingPage.Margin = new Padding(4);
         settingPage.MinimumSize = new Size(820, 680);
         settingPage.Name = "settingPage";
-        settingPage.Size = new Size(1920, 920);
+        settingPage.Size = new Size(1920, 928);
         settingPage.TabIndex = 3;
         // 
         // MainShellForm
@@ -282,7 +282,7 @@ partial class MainShellForm
         AutoScaleMode = AutoScaleMode.Dpi;
         ClientSize = new Size(1920, 1032);
         Controls.Add(tlpShellRoot);
-        Font = new Font("Segoe UI", 6F);
+        Font = new Font("Segoe UI", 7.5F);
         MinimumSize = new Size(1280, 800);
         Name = "MainShellForm";
         StartPosition = FormStartPosition.CenterScreen;
