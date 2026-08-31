@@ -74,6 +74,7 @@ public partial class OrderListUserControl : UserControl
         // AntdUI เรียงด้วยการเทียบ "ข้อความในเซลล์" ซึ่งทำให้ 26/08 มาหลัง 02/09
         // จึงดักเทียบเองเฉพาะค่าที่เป็นวันเวลา ที่เหลือปล่อยเป็นการเทียบแบบรู้ตัวเลข
         tblOrders.CustomSort += CompareCellText;
+        tblOrders.SetRowStyle += TblOrders_SetRowStyle;
 
         // เปลี่ยนช่วงวันที่ = ต้องดึงใหม่ ไม่ใช่กรองของที่โหลดไว้ — งานเก่ายังไม่ได้อยู่ในมือ
         dtpHistoryRange.ValueChanged += async (_, _) => await RefreshDataAsync(force: true);
@@ -360,6 +361,20 @@ public partial class OrderListUserControl : UserControl
     }
 
     /// <summary>Waiting / Process / Success ของ backend → ชื่อกับสีที่หน้าจอใช้</summary>
+    /// <summary>
+    /// พื้นหลังของแถว — งานที่กำลังเดินอยู่ (Working) ระบายเขียวอ่อนให้สะดุดตา
+    /// จากระยะไกล
+    ///
+    /// คืนเฉพาะ BackColor ไม่แตะ ForeColor เพราะถ้าใส่ ForeColor มา AntdUI จะเอา
+    /// สีนั้นทาทับทุกเซลล์ในแถว แล้วสีของคอลัมน์ Status ที่บอกสถานะด้วยสีจะหายไป
+    /// </summary>
+    private static AntdUI.Table.CellStyleInfo? TblOrders_SetRowStyle(
+        object sender, AntdUI.TableSetRowStyleEventArgs e)
+    {
+        if (e.Record is not OrderRow row || row.Back is not Color back) return null;
+        return new AntdUI.Table.CellStyleInfo { BackColor = back };
+    }
+
     private static (string Text, Color Color) DisplayStatus(string? status)
     {
         if (string.Equals(status, "Process", StringComparison.OrdinalIgnoreCase))
@@ -554,6 +569,9 @@ public partial class OrderListUserControl : UserControl
             Status = statusText,
             Source = sourceTag,
             Op = buttons.ToArray(),
+            Back = string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase)
+                ? DesignTokens.RowSuccess
+                : null,
         };
     }
 
