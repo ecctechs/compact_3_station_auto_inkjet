@@ -40,7 +40,7 @@ partial class AppTitleBarUserControl
         tlpTitleBarRoot.BackColor = System.Drawing.Color.FromArgb(36, 71, 101);
         tlpTitleBarRoot.ColumnCount = 4;
         tlpTitleBarRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpTitleBarRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 0F));
+        tlpTitleBarRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 46F));
         tlpTitleBarRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 0F));
         tlpTitleBarRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 58F));
         tlpTitleBarRoot.Controls.Add(lblAppTitle, 0, 0);
@@ -88,7 +88,6 @@ partial class AppTitleBarUserControl
         btnMinimize.TabIndex = 1;
         btnMinimize.TabStop = false;
         btnMinimize.Text = "─";
-        btnMinimize.Visible = false;
         btnMinimize.UseVisualStyleBackColor = false;
         //
         // btnMaximize

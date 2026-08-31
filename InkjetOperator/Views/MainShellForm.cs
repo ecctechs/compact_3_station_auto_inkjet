@@ -22,8 +22,10 @@ public partial class MainShellForm : AntdUI.Window
         ApplyMenuLevel();
         Load += MainShellForm_Load;
 
-        // จอหน้างานเป็น Full HD และใช้เต็มจอตลอด — ปุ่มย่อ/ย่อจอถูกถอดออกจากแถบหัว
-        // เหลือแค่ปิด และดักไว้ไม่ให้อะไรมาคืนขนาดหน้าต่างได้ (เช่น Win+Down)
+        // จอหน้างานเป็น Full HD และใช้เต็มจอตลอด
+        // พับหน้าจอลงแถบงานได้ตามปกติ แต่ย่อให้เล็กกว่าเต็มจอไม่ได้ เพราะเลย์เอาต์
+        // ออกแบบไว้ที่ 1920x1080 — ถ้ามีอะไรคืนขนาด (เช่น Win+Down) จะดันกลับเต็มจอ
+        titleBar.MinimizeRequested += (_, _) => Min();
         titleBar.CloseRequested += (_, _) => Close();
         Resize += (_, _) => StayMaximized();
 
@@ -50,13 +52,16 @@ public partial class MainShellForm : AntdUI.Window
     }
 
     /// <summary>
-    /// หน้าต่างต้องเต็มจอเสมอ ถ้ามีอะไรทำให้คืนขนาดก็ดันกลับไปเต็มจอทันที
+    /// หน้าต่างต้องเต็มจอเสมอตอนแสดงผล ถ้าถูกคืนขนาดก็ดันกลับไปเต็มจอทันที
+    /// แต่ตอนพับลงแถบงานต้องปล่อยไว้ ไม่งั้นผู้ใช้พับหน้าจอไม่ได้
     /// ใช้ <c>MaxRestore</c> ของ AntdUI เพราะการเซ็ต <see cref="Form.WindowState"/>
     /// ตรง ๆ ไม่ได้อัปเดตธงภายในของไลบรารีและกรอบหน้าต่างจะเพี้ยน
     /// </summary>
     private void StayMaximized()
     {
-        if (WindowState != FormWindowState.Maximized) MaxRestore();
+        // เช็ค Normal อย่างเดียว — ถ้าเช็ค "ไม่ใช่ Maximized" ตอนผู้ใช้กดพับหน้าจอ
+        // หน้าต่างจะเด้งกลับขึ้นมาทันทีจนพับไม่ได้
+        if (WindowState == FormWindowState.Normal) MaxRestore();
     }
 
     private async void MainShellForm_Load(object? sender, EventArgs e)
