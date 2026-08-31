@@ -41,15 +41,16 @@ partial class DatabaseSettingUserControl
         tlpRoot.ColumnCount = 1;
         tlpRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpRoot.Controls.Add(grpDatabase, 0, 0);
-        tlpRoot.Controls.Add(flpActions, 0, 1);
+        tlpRoot.Controls.Add(flpActions, 0, 2);
         tlpRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpRoot.Location = new System.Drawing.Point(0, 0);
         tlpRoot.Name = "tlpRoot";
         tlpRoot.Padding = new System.Windows.Forms.Padding(16);
-        tlpRoot.RowCount = 2;
+        tlpRoot.RowCount = 3;
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 285F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 85F));
-        tlpRoot.Size = new System.Drawing.Size(975, 1000);
+        tlpRoot.Size = new System.Drawing.Size(975, 585);
         tlpRoot.TabIndex = 0;
         //
         // grpDatabase
@@ -59,7 +60,7 @@ partial class DatabaseSettingUserControl
         grpDatabase.Font = new System.Drawing.Font("Segoe UI", 17.5F, System.Drawing.FontStyle.Bold);
         grpDatabase.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         grpDatabase.Name = "grpDatabase";
-        grpDatabase.Padding = new System.Windows.Forms.Padding(16, 24, 16, 8);
+        grpDatabase.Padding = new System.Windows.Forms.Padding(16, 24, 16, 24);
         grpDatabase.TabIndex = 0;
         grpDatabase.TabStop = false;
         grpDatabase.Text = "Database";
@@ -233,7 +234,7 @@ partial class DatabaseSettingUserControl
         BackColor = System.Drawing.Color.White;
         Controls.Add(tlpRoot);
         Name = "DatabaseSettingUserControl";
-        Size = new System.Drawing.Size(780, 800);
+        Size = new System.Drawing.Size(975, 585);
         tlpRoot.ResumeLayout(false);
         grpDatabase.ResumeLayout(false);
         tlpForm.ResumeLayout(false);

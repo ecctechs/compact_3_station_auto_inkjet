@@ -152,7 +152,7 @@ partial class TransferListUserControl
         Controls.Add(tlpTransferRoot);
         MinimumSize = new System.Drawing.Size(820, 680);
         Name = "TransferListUserControl";
-        Size = new System.Drawing.Size(1100, 860);
+        Size = new System.Drawing.Size(1375, 1075);
         tlpTransferRoot.ResumeLayout(false);
         pnlTransferContainer.ResumeLayout(false);
         tlpTransferInner.ResumeLayout(false);

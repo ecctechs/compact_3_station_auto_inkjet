@@ -3170,7 +3170,7 @@ partial class OrderDetailUserControl
         Controls.Add(tlpDetailRoot);
         MinimumSize = new System.Drawing.Size(1080, 720);
         Name = "OrderDetailUserControl";
-        Size = new System.Drawing.Size(1320, 900);
+        Size = new System.Drawing.Size(1650, 1125);
         tlpDetailRoot.ResumeLayout(false);
         pnlHeaderBar.ResumeLayout(false);
         tlpJobFields.ResumeLayout(false);

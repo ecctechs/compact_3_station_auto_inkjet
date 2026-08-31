@@ -483,7 +483,7 @@ partial class OrderListUserControl
         Controls.Add(tlpOrderListRoot);
         MinimumSize = new System.Drawing.Size(820, 680);
         Name = "OrderListUserControl";
-        Size = new System.Drawing.Size(1100, 860);
+        Size = new System.Drawing.Size(1375, 1075);
         tlpOrderListRoot.ResumeLayout(false);
         tlpOrderListRoot.PerformLayout();
         pnlTableContainer.ResumeLayout(false);

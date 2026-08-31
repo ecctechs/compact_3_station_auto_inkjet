@@ -62,11 +62,11 @@ partial class PlcSettingUserControl
         tlpRoot.Name = "tlpRoot";
         tlpRoot.Padding = new System.Windows.Forms.Padding(16);
         tlpRoot.RowCount = 4;
-        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 275F));
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 291F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 275F));
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 291F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 85F));
-        tlpRoot.Size = new System.Drawing.Size(1200, 1300);
+        tlpRoot.Size = new System.Drawing.Size(1200, 1332);
         tlpRoot.TabIndex = 0;
         //
         // grpConnection
@@ -76,7 +76,7 @@ partial class PlcSettingUserControl
         grpConnection.Font = new System.Drawing.Font("Segoe UI", 17.5F, System.Drawing.FontStyle.Bold);
         grpConnection.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         grpConnection.Name = "grpConnection";
-        grpConnection.Padding = new System.Windows.Forms.Padding(16, 24, 16, 8);
+        grpConnection.Padding = new System.Windows.Forms.Padding(16, 24, 16, 24);
         grpConnection.TabIndex = 0;
         grpConnection.TabStop = false;
         grpConnection.Text = "PLC Connection";
@@ -193,7 +193,7 @@ partial class PlcSettingUserControl
         grpRegisterMap.Font = new System.Drawing.Font("Segoe UI", 17.5F, System.Drawing.FontStyle.Bold);
         grpRegisterMap.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         grpRegisterMap.Name = "grpRegisterMap";
-        grpRegisterMap.Padding = new System.Windows.Forms.Padding(16, 24, 16, 8);
+        grpRegisterMap.Padding = new System.Windows.Forms.Padding(16, 24, 16, 24);
         grpRegisterMap.TabIndex = 1;
         grpRegisterMap.TabStop = false;
         grpRegisterMap.Text = "Register Map";
@@ -384,7 +384,7 @@ partial class PlcSettingUserControl
         BackColor = System.Drawing.Color.White;
         Controls.Add(tlpRoot);
         Name = "PlcSettingUserControl";
-        Size = new System.Drawing.Size(960, 1040);
+        Size = new System.Drawing.Size(1200, 1332);
         tlpRoot.ResumeLayout(false);
         grpConnection.ResumeLayout(false);
         tlpConn.ResumeLayout(false);

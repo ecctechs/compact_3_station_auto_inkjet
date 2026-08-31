@@ -136,7 +136,7 @@ partial class AppTitleBarUserControl
         BackColor = System.Drawing.Color.FromArgb(36, 71, 101);
         Controls.Add(tlpTitleBarRoot);
         Name = "AppTitleBarUserControl";
-        Size = new System.Drawing.Size(1200, 40);
+        Size = new System.Drawing.Size(1920, 40);
         tlpTitleBarRoot.ResumeLayout(false);
         ResumeLayout(false);
     }

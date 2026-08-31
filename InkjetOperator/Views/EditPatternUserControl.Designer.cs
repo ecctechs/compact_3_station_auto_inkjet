@@ -484,7 +484,7 @@ partial class EditPatternUserControl
         Controls.Add(tlpEditPatternRoot);
         MinimumSize = new System.Drawing.Size(940, 620);
         Name = "EditPatternUserControl";
-        Size = new System.Drawing.Size(1200, 780);
+        Size = new System.Drawing.Size(1500, 975);
         tlpEditPatternRoot.ResumeLayout(false);
         pnlRulesList.ResumeLayout(false);
         tlpRulesList.ResumeLayout(false);

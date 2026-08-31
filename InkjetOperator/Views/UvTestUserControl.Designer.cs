@@ -707,7 +707,7 @@ partial class UvTestUserControl
         BackColor = System.Drawing.Color.White;
         Controls.Add(tlpRoot);
         Name = "UvTestUserControl";
-        Size = new System.Drawing.Size(980, 1170);
+        Size = new System.Drawing.Size(1225, 1462);
 
         tlpRoot.ResumeLayout(false);
         grpMachine.ResumeLayout(false);

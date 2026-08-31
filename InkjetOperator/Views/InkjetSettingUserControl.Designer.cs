@@ -91,11 +91,11 @@ partial class InkjetSettingUserControl
         tlpRoot.Name = "tlpRoot";
         tlpRoot.Padding = new System.Windows.Forms.Padding(16);
         tlpRoot.RowCount = 4;
-        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 288F));
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 304F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 148F));
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 164F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 85F));
-        tlpRoot.Size = new System.Drawing.Size(975, 1125);
+        tlpRoot.Size = new System.Drawing.Size(975, 1175);
         tlpRoot.TabIndex = 0;
 
         // =================================================================
@@ -108,7 +108,7 @@ partial class InkjetSettingUserControl
         grpInkjet.Font = new System.Drawing.Font("Segoe UI", 17.5F, System.Drawing.FontStyle.Bold);
         grpInkjet.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         grpInkjet.Name = "grpInkjet";
-        grpInkjet.Padding = new System.Windows.Forms.Padding(16, 24, 16, 8);
+        grpInkjet.Padding = new System.Windows.Forms.Padding(16, 24, 16, 24);
         grpInkjet.TabIndex = 0;
         grpInkjet.TabStop = false;
         grpInkjet.Text = "MK Inkjet Printer";
@@ -263,7 +263,7 @@ partial class InkjetSettingUserControl
         grpUv.Font = new System.Drawing.Font("Segoe UI", 17.5F, System.Drawing.FontStyle.Bold);
         grpUv.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
         grpUv.Name = "grpUv";
-        grpUv.Padding = new System.Windows.Forms.Padding(16, 24, 16, 8);
+        grpUv.Padding = new System.Windows.Forms.Padding(16, 24, 16, 24);
         grpUv.TabIndex = 1;
         grpUv.TabStop = false;
         grpUv.Text = "UV Printer";
@@ -717,7 +717,7 @@ partial class InkjetSettingUserControl
         BackColor = System.Drawing.Color.White;
         Controls.Add(tlpRoot);
         Name = "InkjetSettingUserControl";
-        Size = new System.Drawing.Size(780, 900);
+        Size = new System.Drawing.Size(975, 1175);
         tlpRoot.ResumeLayout(false);
         grpInkjet.ResumeLayout(false);
         tlpMk.ResumeLayout(false);

@@ -66,7 +66,7 @@ partial class InputOrderUserControl
         Controls.Add(tlpInputOrderRoot);
         MinimumSize = new System.Drawing.Size(820, 680);
         Name = "InputOrderUserControl";
-        Size = new System.Drawing.Size(1100, 860);
+        Size = new System.Drawing.Size(1375, 1075);
         tlpInputOrderRoot.ResumeLayout(false);
         ResumeLayout(false);
     }

@@ -524,7 +524,7 @@ partial class ClampSettingUserControl
         BackColor = System.Drawing.Color.White;
         Controls.Add(tlpRoot);
         Name = "ClampSettingUserControl";
-        Size = new System.Drawing.Size(1080, 1112);
+        Size = new System.Drawing.Size(1350, 1390);
 
         tlpRoot.ResumeLayout(false);
         grpConnection.ResumeLayout(false);
