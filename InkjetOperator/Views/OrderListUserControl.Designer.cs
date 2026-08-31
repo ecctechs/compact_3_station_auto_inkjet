@@ -94,7 +94,8 @@ partial class OrderListUserControl
         pnlTableContainer.BorderWidth = 2F;
         pnlTableContainer.Controls.Add(tlpTableInner);
         pnlTableContainer.Dock = System.Windows.Forms.DockStyle.Fill;
-        pnlTableContainer.Location = new System.Drawing.Point(35, 35);
+        pnlTableContainer.Location = new System.Drawing.Point(32, 32);
+        pnlTableContainer.Margin = new System.Windows.Forms.Padding(0, 0, 0, 13);
         pnlTableContainer.Name = "pnlTableContainer";
         pnlTableContainer.Padding = new System.Windows.Forms.Padding(2);
         pnlTableContainer.Radius = 12;
@@ -224,18 +225,21 @@ partial class OrderListUserControl
         tblOrders.Size = new System.Drawing.Size(1282, 810);
         tblOrders.TabIndex = 1;
         //
-        // tlpBottom - Preview | Start | Processing
+        // tlpBottom - Preview | gutter | Processing
+        //   ขอบซ้ายขวาตรงกับ pnlTableContainer และช่องไฟตรงกลางเท่ากับช่องไฟ
+        //   ระหว่างตารางกับแผงล่าง (13) คอลัมน์กลางยังเก็บ flpActions/btnStart
+        //   ที่ซ่อนอยู่ไว้เหมือนเดิม
         //
         tlpBottom.BackColor = System.Drawing.Color.FromArgb(91, 155, 213);
         tlpBottom.ColumnCount = 3;
         tlpBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-        tlpBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 250F));
+        tlpBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 13F));
         tlpBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
         tlpBottom.Controls.Add(pnlPreview, 0, 0);
         tlpBottom.Controls.Add(flpActions, 1, 0);
         tlpBottom.Controls.Add(pnlProcessing, 2, 0);
         tlpBottom.Dock = System.Windows.Forms.DockStyle.Fill;
-        tlpBottom.Margin = new System.Windows.Forms.Padding(0, 10, 0, 0);
+        tlpBottom.Margin = new System.Windows.Forms.Padding(0);
         tlpBottom.Name = "tlpBottom";
         tlpBottom.RowCount = 1;
         tlpBottom.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
@@ -249,7 +253,7 @@ partial class OrderListUserControl
         pnlPreview.BorderWidth = 2F;
         pnlPreview.Controls.Add(tlpPreview);
         pnlPreview.Dock = System.Windows.Forms.DockStyle.Fill;
-        pnlPreview.Margin = new System.Windows.Forms.Padding(0, 0, 6, 0);
+        pnlPreview.Margin = new System.Windows.Forms.Padding(0);
         pnlPreview.Name = "pnlPreview";
         pnlPreview.Padding = new System.Windows.Forms.Padding(8);
         pnlPreview.Radius = 12;
@@ -357,7 +361,7 @@ partial class OrderListUserControl
         pnlProcessing.BorderWidth = 2F;
         pnlProcessing.Controls.Add(tlpProcessing);
         pnlProcessing.Dock = System.Windows.Forms.DockStyle.Fill;
-        pnlProcessing.Margin = new System.Windows.Forms.Padding(6, 0, 0, 0);
+        pnlProcessing.Margin = new System.Windows.Forms.Padding(0);
         pnlProcessing.Name = "pnlProcessing";
         pnlProcessing.Padding = new System.Windows.Forms.Padding(8);
         pnlProcessing.Radius = 12;
