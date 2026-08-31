@@ -177,8 +177,7 @@ public partial class OrderListUserControl : UserControl
 
         // ออกจากแท็บแล้วการเลือกเดิมไม่มีความหมาย ล้างทั้งไฮไลต์และรูป
         _selectedJobId = null;
-        ClearSlot(picPrevPlate, lblPrevPlateCaption);
-        ClearSlot(picPrevShim, lblPrevShimCaption);
+        ShowPreviewSides(null, null);
 
         // แผงขวามีเฉพาะแท็บ List
         pnlProcessing.Visible = !showHistory;
@@ -550,10 +549,8 @@ public partial class OrderListUserControl : UserControl
         picProcPlate.Click += (_, _) => OpenSidePicker(picProcPlate, lblProcPlateCaption);
         picProcShim.Click += (_, _) => OpenSidePicker(picProcShim, lblProcShimCaption);
 
-        ClearSlot(picPrevPlate, lblPrevPlateCaption);
-        ClearSlot(picPrevShim, lblPrevShimCaption);
-        ClearSlot(picProcPlate, lblProcPlateCaption);
-        ClearSlot(picProcShim, lblProcShimCaption);
+        ShowPreviewSides(null, null);
+        ShowProcessingSides(null, null);
     }
 
     /// <summary>
@@ -580,16 +577,14 @@ public partial class OrderListUserControl : UserControl
 
         if (job == null)
         {
-            ClearSlot(picPrevPlate, lblPrevPlateCaption);
-            ClearSlot(picPrevShim, lblPrevShimCaption);
+            ShowPreviewSides(null, null);
             return;
         }
 
         var sides = await BuildSidesAsync(job);
         if (IsDisposed) return;
 
-        ApplySide(Find(sides, "Plate"), picPrevPlate, lblPrevPlateCaption);
-        ApplySide(Find(sides, "Shim"), picPrevShim, lblPrevShimCaption);
+        ShowPreviewSides(Find(sides, "Plate"), Find(sides, "Shim"));
     }
 
     /// <summary>
@@ -610,8 +605,7 @@ public partial class OrderListUserControl : UserControl
         {
             _processingJobId = null;
             _processingStamp = 0;
-            ClearSlot(picProcPlate, lblProcPlateCaption);
-            ClearSlot(picProcShim, lblProcShimCaption);
+            ShowProcessingSides(null, null);
             return;
         }
 
@@ -628,8 +622,7 @@ public partial class OrderListUserControl : UserControl
         // method 12 กดส่ง MK อย่างเดียวต้องเห็นแค่ด้านของ MK จนกว่าจะกดส่ง UV2
         sides = OnlySent(sides, job.Commands);
 
-        ApplySide(Find(sides, "Plate"), picProcPlate, lblProcPlateCaption);
-        ApplySide(Find(sides, "Shim"), picProcShim, lblProcShimCaption);
+        ShowProcessingSides(Find(sides, "Plate"), Find(sides, "Shim"));
     }
 
     private static MarkingRefSide? Find(List<MarkingRefSide> sides, string side) =>
@@ -704,6 +697,45 @@ public partial class OrderListUserControl : UserControl
             ?.ProgramName;
 
         return new UvProgramInfo(baseName, false);
+    }
+
+    // ── แผงรูปทั้งแผง ──────────────────────────────────────
+
+    private void ShowPreviewSides(MarkingRefSide? plate, MarkingRefSide? shim)
+    {
+        ApplySide(plate, picPrevPlate, lblPrevPlateCaption);
+        ApplySide(shim, picPrevShim, lblPrevShimCaption);
+        BalanceSlots(tlpPreviewSlots, picPrevPlate, picPrevShim);
+    }
+
+    private void ShowProcessingSides(MarkingRefSide? plate, MarkingRefSide? shim)
+    {
+        ApplySide(plate, picProcPlate, lblProcPlateCaption);
+        ApplySide(shim, picProcShim, lblProcShimCaption);
+        BalanceSlots(tlpProcessingSlots, picProcPlate, picProcShim);
+    }
+
+    /// <summary>
+    /// สองช่องแบ่งกรอบคนละครึ่งตายตัว พองานใช้ด้านเดียว (เช่น method 02 มีแต่ Plate)
+    /// รูปเลยไปเกาะครึ่งซ้าย เหลือครึ่งขวาว่าง ดูเหมือนวางผิดที่มากกว่าจะดูตั้งใจ
+    ///
+    /// ยุบคอลัมน์ที่ไม่ได้ใช้เหลือ 0 ด้านที่เหลือจะกินเต็มกรอบ และ PictureBox โหมด
+    /// Zoom จัดรูปไว้กลางกรอบให้เอง โดยไม่ยืดรูปผิดสัดส่วน
+    /// </summary>
+    private static void BalanceSlots(TableLayoutPanel slots, PictureBox left, PictureBox right)
+    {
+        bool hasLeft = left.Visible, hasRight = right.Visible;
+
+        // ไม่เหลือด้านไหนเลยก็คืนเป็นครึ่งต่อครึ่ง กรอบว่างจะได้ไม่เพี้ยน
+        if (hasLeft == hasRight)
+        {
+            slots.ColumnStyles[0].Width = 50F;
+            slots.ColumnStyles[1].Width = 50F;
+            return;
+        }
+
+        slots.ColumnStyles[0].Width = hasLeft ? 100F : 0F;
+        slots.ColumnStyles[1].Width = hasRight ? 100F : 0F;
     }
 
     // ── ช่องรูปหนึ่งช่อง ───────────────────────────────────
@@ -811,8 +843,7 @@ public partial class OrderListUserControl : UserControl
         if (index < 0)
         {
             _selectedJobId = null;
-            ClearSlot(picPrevPlate, lblPrevPlateCaption);
-            ClearSlot(picPrevShim, lblPrevShimCaption);
+            ShowPreviewSides(null, null);
             return;
         }
 
