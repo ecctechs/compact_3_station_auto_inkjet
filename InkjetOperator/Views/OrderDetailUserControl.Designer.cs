@@ -213,6 +213,7 @@ partial class OrderDetailUserControl
         btnSendUv1 = new AntdUI.Button();
         btnSendUv2 = new AntdUI.Button();
         btnSendToSt1 = new AntdUI.Button();
+        btnTestPlc = new AntdUI.Button();
         btnDetailClose = new AntdUI.Button();
         tlpDetailRoot.SuspendLayout();
         pnlHeaderBar.SuspendLayout();
@@ -3046,6 +3047,7 @@ partial class OrderDetailUserControl
         flpDetailActions.Controls.Add(btnSendUv1);
         flpDetailActions.Controls.Add(btnSendUv2);
         flpDetailActions.Controls.Add(btnSendToSt1);
+        flpDetailActions.Controls.Add(btnTestPlc);
         flpDetailActions.Controls.Add(btnDetailClose);
         flpDetailActions.Dock = System.Windows.Forms.DockStyle.Fill;
         flpDetailActions.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
@@ -3112,6 +3114,20 @@ partial class OrderDetailUserControl
         btnSendToSt1.Text = "ส่งไป ST1";
         btnSendToSt1.Type = AntdUI.TTypeMini.Warn;
         btnSendToSt1.Visible = false;
+        //
+        // btnTestPlc - ปุ่มแยกสำหรับทดสอบส่งค่าเข้า PLC ยังไม่รวมกับปุ่มส่ง MK
+        //
+        btnTestPlc.BorderWidth = 2F;
+        btnTestPlc.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnTestPlc.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
+        btnTestPlc.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnTestPlc.Margin = new System.Windows.Forms.Padding(0, 0, 12, 0);
+        btnTestPlc.Name = "btnTestPlc";
+        btnTestPlc.Radius = 10;
+        btnTestPlc.Size = new System.Drawing.Size(260, 70);
+        btnTestPlc.TabIndex = 4;
+        btnTestPlc.Text = "ทดสอบส่ง PLC";
+        btnTestPlc.Type = AntdUI.TTypeMini.Default;
         //
         // btnDetailClose
         //
@@ -3327,6 +3343,7 @@ partial class OrderDetailUserControl
     private AntdUI.Button btnSendUv1;
     private AntdUI.Button btnSendUv2;
     private AntdUI.Button btnSendToSt1;
+    private AntdUI.Button btnTestPlc;
     private AntdUI.Button btnDetailClose;
     private System.Windows.Forms.TableLayoutPanel tlpUv1Adjust;
     private AntdUI.Label lblIaiAdj1;

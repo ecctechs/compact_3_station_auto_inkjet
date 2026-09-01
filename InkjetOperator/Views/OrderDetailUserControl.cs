@@ -42,6 +42,7 @@ public partial class OrderDetailUserControl : UserControl
         btnSendUv1.Click += async (_, _) => await SendToUvAsync(1);
         btnSendUv2.Click += async (_, _) => await SendToUvAsync(2);
         btnSendToSt1.Click += async (_, _) => await SendToSt1Async();
+        btnTestPlc.Click += async (_, _) => await TestPlcAsync();
 
         btnFlowPlate.Click += (_, _) => OpenFlowRefImages(btnFlowPlate);
         btnFlowShim.Click += (_, _) => OpenFlowRefImages(btnFlowShim);
@@ -125,6 +126,10 @@ public partial class OrderDetailUserControl : UserControl
         _uvData = resolved.UvJobData;
 
         lblHeaderTitle.Text = $"Job Information — Job #{resolved.Job.Id}";
+
+        // โชว์ address ที่ค่าแต่ละช่องจะถูกส่งไป ดึงจากตาราง register map ของ
+        // หน้า PLC Setting ไม่ได้ให้รอ เพราะแค่ป้ายกำกับ ไม่ควรหน่วงการเปิดหน้า
+        _ = ShowPlcAddressesAsync();
 
         SortPatternByOrdinal();
         FillJobInfo(resolved);
@@ -537,6 +542,7 @@ public partial class OrderDetailUserControl : UserControl
 
             bool allOk = sent > 0 && sent == lines.Count;
 
+
             if (!allOk)
             {
                 btnSendMk.Text = originalText;
@@ -714,6 +720,123 @@ public partial class OrderDetailUserControl : UserControl
             {
                 btn.Text = originalText;
                 btn.Enabled = true;
+            }
+        }
+    }
+
+    // ── PLC ────────────────────────────────────────────────
+
+    /// <summary>ข้อความเดิมของป้ายกำกับ ก่อนต่อท้ายด้วย address</summary>
+    private readonly Dictionary<AntdUI.Label, string> _plcLabelText = new();
+
+    /// <summary>
+    /// ต่อท้ายป้ายกำกับด้วย address ที่ค่านั้นจะถูกส่งไป เช่น "Delay (mm.)  →  D2"
+    ///
+    /// address มาจากตาราง register map ในหน้า PLC Setting ที่เดียว ช่องไหนยังไม่ได้
+    /// map จะขึ้นว่า ยังไม่ได้ map เพื่อให้เห็นตั้งแต่เปิดหน้า ไม่ต้องรอกดส่งแล้วค่อยรู้
+    /// </summary>
+    private async Task ShowPlcAddressesAsync()
+    {
+        var plan = await PlcOrderService.BuildPlanAsync(_api, _pattern);
+        if (IsDisposed) return;
+
+        var mk1 = CustomSettingsManager.Read("MK058_NAME", "MK-058");
+        var mk2 = CustomSettingsManager.Read("MK059_NAME", "MK-059");
+
+        TagAddress(lblMk1Trigger, plan, $"{mk1} Trigger");
+        TagAddress(lblMk1PosAct, plan, $"{mk1} PostAct");
+        TagAddress(lblMk1Delay, plan, $"{mk1} Delay");
+        TagAddress(lblMk2Trigger, plan, $"{mk2} Trigger");
+        TagAddress(lblMk2PosAct, plan, $"{mk2} PostAct");
+        TagAddress(lblMk2Delay, plan, $"{mk2} Delay");
+        TagAddress(lblConveyor1, plan, "Conveyor Speed 1");
+        TagAddress(lblConveyor2, plan, "Conveyor Speed 2");
+        TagAddress(lblConveyor3, plan, "Conveyor Speed 3");
+    }
+
+    private void TagAddress(AntdUI.Label label, List<PlcOrderService.PlcField> plan, string listName)
+    {
+        // เก็บข้อความเดิมไว้ครั้งแรก ไม่งั้นเปิดหน้าซ้ำ address จะต่อพอกกันไปเรื่อย ๆ
+        if (!_plcLabelText.TryGetValue(label, out var baseText))
+        {
+            baseText = label.Text ?? "";
+            _plcLabelText[label] = baseText;
+        }
+
+        var field = plan.FirstOrDefault(f => f.ListName == listName);
+        var address = field?.Address;
+
+        label.Text = address == null
+            ? $"{baseText}  ·  ยังไม่ได้ map"
+            : $"{baseText}  ·  D{address}";
+    }
+
+    /// <summary>
+    /// ทดสอบส่งค่าเข้า PLC — แยกจากปุ่มส่ง MK เพื่อให้ลองค่าได้โดยไม่แตะเครื่องพิมพ์
+    ///
+    /// สรุปให้ดูก่อนทุกครั้งว่าจะเขียนอะไรลง register ไหน เพราะเขียนผิดตำแหน่ง
+    /// หมายถึงไปทับค่าอื่นใน PLC ซึ่งย้อนกลับเองไม่ได้
+    /// </summary>
+    private async Task TestPlcAsync()
+    {
+        var plan = await PlcOrderService.BuildPlanAsync(_api, _pattern);
+        if (IsDisposed) return;
+
+        if (plan.Count == 0)
+        {
+            Notify.WarnModal(this, "ทดสอบส่ง PLC", "ยังไม่มีข้อมูลงานให้ส่ง");
+            return;
+        }
+
+        var ready = plan.Where(f => f.Address != null).ToList();
+        var missing = plan.Where(f => f.Address == null).ToList();
+
+        if (ready.Count == 0)
+        {
+            Notify.WarnModal(this, "ทดสอบส่ง PLC",
+                "ไม่มีค่าไหน map address ไว้เลย — ตั้งค่าที่ตาราง register map ในหน้า PLC Setting ก่อน");
+            return;
+        }
+
+        var summary = string.Join(Environment.NewLine,
+            ready.Select(f => $"D{f.Address}   {f.Label}   =  {f.Value}"));
+
+        if (missing.Count > 0)
+        {
+            summary += Environment.NewLine + Environment.NewLine
+                + "ข้ามเพราะยังไม่ได้ map: "
+                + string.Join(", ", missing.Select(f => f.ListName));
+        }
+
+        var ip = CustomSettingsManager.Read("PLC_IP", "").Trim();
+        var port = CustomSettingsManager.Read("PLC_PORT", "502");
+        var target = ip.Length == 0 ? "(ยังไม่ได้ตั้ง IP)" : $"{ip}:{port}";
+
+        if (!Confirm.Ask(this, "ยืนยันส่งค่าเข้า PLC",
+                $"PLC {target}" + Environment.NewLine + Environment.NewLine + summary
+                + Environment.NewLine + Environment.NewLine + "ยืนยันส่งหรือไม่?"))
+            return;
+
+        btnTestPlc.Enabled = false;
+        var originalText = btnTestPlc.Text;
+        btnTestPlc.Text = "กำลังส่ง...";
+        try
+        {
+            var lines = (await PlcOrderService.SendAsync(plan))
+                .Select(b => b.Error == null
+                    ? Notify.Ok($"{b.Name} — ส่งสำเร็จ")
+                    : Notify.Bad($"{b.Name} — {b.Error}"))
+                .ToList();
+
+            if (IsDisposed) return;
+            Notify.Result(this, "ผลการส่ง PLC", lines);
+        }
+        finally
+        {
+            if (!IsDisposed)
+            {
+                btnTestPlc.Text = originalText;
+                btnTestPlc.Enabled = true;
             }
         }
     }

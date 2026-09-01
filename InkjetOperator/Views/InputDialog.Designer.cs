@@ -56,7 +56,7 @@ partial class InputDialog
         tlpDialogRoot.RowCount = 2;
         tlpDialogRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 65F));
         tlpDialogRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpDialogRoot.Size = new System.Drawing.Size(550, 290);
+        tlpDialogRoot.Size = new System.Drawing.Size(550, 350);
         tlpDialogRoot.TabIndex = 0;
         //
         // tlpTitleBar
@@ -120,7 +120,7 @@ partial class InputDialog
         tlpBody.Controls.Add(txtValue, 0, 1);
         tlpBody.Controls.Add(flpActions, 0, 2);
         tlpBody.Dock = System.Windows.Forms.DockStyle.Fill;
-        tlpBody.Location = new System.Drawing.Point(0, 52);
+        tlpBody.Location = new System.Drawing.Point(0, 65);
         tlpBody.Margin = new System.Windows.Forms.Padding(0);
         tlpBody.Name = "tlpBody";
         tlpBody.Padding = new System.Windows.Forms.Padding(24, 20, 24, 20);
@@ -128,7 +128,7 @@ partial class InputDialog
         tlpBody.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
         tlpBody.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 68F));
         tlpBody.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpBody.Size = new System.Drawing.Size(550, 225);
+        tlpBody.Size = new System.Drawing.Size(550, 285);
         tlpBody.TabIndex = 1;
         //
         // lblPrompt
@@ -211,7 +211,7 @@ partial class InputDialog
         BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
         BorderWidth = 1;
         CancelButton = btnCancel;
-        ClientSize = new System.Drawing.Size(440, 232);
+        ClientSize = new System.Drawing.Size(440, 280);
         Controls.Add(tlpDialogRoot);
         MaximizeBox = false;
         MinimizeBox = false;

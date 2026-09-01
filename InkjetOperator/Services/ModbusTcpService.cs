@@ -89,6 +89,47 @@ public static class ModbusTcpService
         }
     }
 
+    /// <summary>
+    /// เขียนหลาย register ติดกันในคำสั่งเดียว (FC 16)
+    ///
+    /// ค่าที่ส่งให้ PLC ของสายนี้เป็นชุด เช่น servo ของเครื่องหนึ่งคือ 4 ตัวเรียงกัน
+    /// ถ้าเขียนทีละตัวด้วย FC 6 PLC จะเห็นค่าครึ่ง ๆ กลาง ๆ ระหว่างทาง
+    /// </summary>
+    public static async Task<(bool ok, string error)> WriteMultipleRegistersAsync(
+        string ip, int port, int startAddress, IReadOnlyList<int> values)
+    {
+        if (values.Count == 0 || values.Count > 123)
+            return (false, "จำนวน register ต้องอยู่ระหว่าง 1-123");
+
+        try
+        {
+            using var tcp = new TcpClient();
+            await tcp.ConnectAsync(ip, port).WaitAsync(TimeSpan.FromMilliseconds(TimeoutMs));
+            var stream = tcp.GetStream();
+
+            var txId = ++_transactionId;
+            var request = BuildWriteMultipleRequest(txId, startAddress, values);
+            await stream.WriteAsync(request);
+            await stream.FlushAsync();
+
+            var response = new byte[12];
+            await ReadExactAsync(stream, response, 12);
+
+            var fc = response[7];
+            if ((fc & 0x80) != 0)
+            {
+                var errorCode = response[8];
+                return (false, $"Modbus error: FC=0x{fc:X2} code=0x{errorCode:X2}");
+            }
+
+            return (true, "");
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
+    }
+
     private static byte[] BuildReadRequest(ushort txId, int startAddress, int quantity)
     {
         // FC 0x03 = Read Holding Registers
@@ -117,6 +158,40 @@ public static class ModbusTcpService
             (byte)(address >> 8), (byte)(address & 0xFF),
             (byte)(value >> 8), (byte)(value & 0xFF),
         ];
+    }
+
+    private static byte[] BuildWriteMultipleRequest(
+        ushort txId, int startAddress, IReadOnlyList<int> values)
+    {
+        // FC 0x10 = Write Multiple Registers
+        byte count = (byte)values.Count;
+        byte byteCount = (byte)(count * 2);
+        int length = 7 + byteCount;   // unit + fc + addr + qty + bytecount + data
+
+        var request = new byte[6 + length];
+        request[0] = (byte)(txId >> 8);
+        request[1] = (byte)(txId & 0xFF);
+        request[2] = 0x00;
+        request[3] = 0x00;
+        request[4] = (byte)(length >> 8);
+        request[5] = (byte)(length & 0xFF);
+        request[6] = UnitId;
+        request[7] = 0x10;
+        request[8] = (byte)(startAddress >> 8);
+        request[9] = (byte)(startAddress & 0xFF);
+        request[10] = 0x00;
+        request[11] = count;
+        request[12] = byteCount;
+
+        for (int i = 0; i < values.Count; i++)
+        {
+            // ค่าลบส่งเป็น two's complement 16 บิต ให้ตรงกับที่ฝั่งอ่านตีความเป็น short
+            ushort value = (ushort)(short)values[i];
+            request[13 + i * 2] = (byte)(value >> 8);
+            request[14 + i * 2] = (byte)(value & 0xFF);
+        }
+
+        return request;
     }
 
     private static async Task ReadExactAsync(NetworkStream stream, byte[] buffer, int count)
