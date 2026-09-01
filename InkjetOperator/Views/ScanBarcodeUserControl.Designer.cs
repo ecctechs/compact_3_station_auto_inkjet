@@ -173,8 +173,8 @@ partial class ScanBarcodeUserControl
         // 
         tlpOrderInformation.BackColor = Color.White;
         tlpOrderInformation.ColumnCount = 2;
-        tlpOrderInformation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 22F));
-        tlpOrderInformation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 78F));
+        tlpOrderInformation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 28F));
+        tlpOrderInformation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 72F));
         tlpOrderInformation.Controls.Add(lblBarcode, 0, 0);
         tlpOrderInformation.Controls.Add(lblOrderNo, 0, 1);
         tlpOrderInformation.Controls.Add(lblCustomerName, 0, 2);
@@ -201,7 +201,7 @@ partial class ScanBarcodeUserControl
         // lblBarcode
         // 
         lblBarcode.Dock = DockStyle.Fill;
-        lblBarcode.Font = new Font("Segoe UI", 22.5F);
+        lblBarcode.Font = new Font("Segoe UI", 18F);
         lblBarcode.ForeColor = Color.FromArgb(17, 17, 17);
         lblBarcode.Location = new Point(4, 0);
         lblBarcode.Margin = new Padding(4, 0, 30, 0);
@@ -214,7 +214,7 @@ partial class ScanBarcodeUserControl
         // lblOrderNo
         // 
         lblOrderNo.Dock = DockStyle.Fill;
-        lblOrderNo.Font = new Font("Segoe UI", 22.5F);
+        lblOrderNo.Font = new Font("Segoe UI", 18F);
         lblOrderNo.ForeColor = Color.FromArgb(17, 17, 17);
         lblOrderNo.Location = new Point(4, 108);
         lblOrderNo.Margin = new Padding(4, 0, 30, 0);
@@ -227,7 +227,7 @@ partial class ScanBarcodeUserControl
         // lblCustomerName
         // 
         lblCustomerName.Dock = DockStyle.Fill;
-        lblCustomerName.Font = new Font("Segoe UI", 22.5F);
+        lblCustomerName.Font = new Font("Segoe UI", 18F);
         lblCustomerName.ForeColor = Color.FromArgb(17, 17, 17);
         lblCustomerName.Location = new Point(4, 216);
         lblCustomerName.Margin = new Padding(4, 0, 30, 0);
@@ -240,7 +240,7 @@ partial class ScanBarcodeUserControl
         // lblType
         // 
         lblType.Dock = DockStyle.Fill;
-        lblType.Font = new Font("Segoe UI", 22.5F);
+        lblType.Font = new Font("Segoe UI", 18F);
         lblType.ForeColor = Color.FromArgb(17, 17, 17);
         lblType.Location = new Point(4, 324);
         lblType.Margin = new Padding(4, 0, 30, 0);
@@ -253,7 +253,7 @@ partial class ScanBarcodeUserControl
         // lblQty
         // 
         lblQty.Dock = DockStyle.Fill;
-        lblQty.Font = new Font("Segoe UI", 22.5F);
+        lblQty.Font = new Font("Segoe UI", 18F);
         lblQty.ForeColor = Color.FromArgb(17, 17, 17);
         lblQty.Location = new Point(4, 432);
         lblQty.Margin = new Padding(4, 0, 30, 0);
@@ -265,11 +265,11 @@ partial class ScanBarcodeUserControl
         // 
         // txtBarcode
         // 
-        txtBarcode.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        txtBarcode.Dock = DockStyle.Fill;
         txtBarcode.BorderColor = Color.FromArgb(91, 155, 213);
-        txtBarcode.Font = new Font("Segoe UI", 22.5F);
+        txtBarcode.Font = new Font("Segoe UI", 18F);
         txtBarcode.Location = new Point(217, 13);
-        txtBarcode.Margin = new Padding(4, 12, 4, 12);
+        txtBarcode.Margin = new Padding(4, 14, 4, 14);
         txtBarcode.Name = "txtBarcode";
         txtBarcode.PlaceholderText = "Scan or type barcode...";
         txtBarcode.Radius = 8;
@@ -278,11 +278,11 @@ partial class ScanBarcodeUserControl
         // 
         // txtOrderNo
         // 
-        txtOrderNo.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        txtOrderNo.Dock = DockStyle.Fill;
         txtOrderNo.BorderColor = Color.FromArgb(91, 155, 213);
-        txtOrderNo.Font = new Font("Segoe UI", 22.5F);
+        txtOrderNo.Font = new Font("Segoe UI", 18F);
         txtOrderNo.Location = new Point(217, 121);
-        txtOrderNo.Margin = new Padding(4, 12, 4, 12);
+        txtOrderNo.Margin = new Padding(4, 14, 4, 14);
         txtOrderNo.Name = "txtOrderNo";
         txtOrderNo.Radius = 8;
         txtOrderNo.Size = new Size(750, 82);
@@ -290,11 +290,11 @@ partial class ScanBarcodeUserControl
         // 
         // txtCustomerName
         // 
-        txtCustomerName.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        txtCustomerName.Dock = DockStyle.Fill;
         txtCustomerName.BorderColor = Color.FromArgb(91, 155, 213);
-        txtCustomerName.Font = new Font("Segoe UI", 22.5F);
+        txtCustomerName.Font = new Font("Segoe UI", 18F);
         txtCustomerName.Location = new Point(217, 229);
-        txtCustomerName.Margin = new Padding(4, 12, 4, 12);
+        txtCustomerName.Margin = new Padding(4, 14, 4, 14);
         txtCustomerName.Name = "txtCustomerName";
         txtCustomerName.Radius = 8;
         txtCustomerName.Size = new Size(750, 82);
@@ -302,11 +302,11 @@ partial class ScanBarcodeUserControl
         // 
         // txtType
         // 
-        txtType.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        txtType.Dock = DockStyle.Fill;
         txtType.BorderColor = Color.FromArgb(91, 155, 213);
-        txtType.Font = new Font("Segoe UI", 22.5F);
+        txtType.Font = new Font("Segoe UI", 18F);
         txtType.Location = new Point(217, 337);
-        txtType.Margin = new Padding(4, 12, 4, 12);
+        txtType.Margin = new Padding(4, 14, 4, 14);
         txtType.Name = "txtType";
         txtType.Radius = 8;
         txtType.Size = new Size(750, 82);
@@ -314,11 +314,11 @@ partial class ScanBarcodeUserControl
         // 
         // txtQty
         // 
-        txtQty.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        txtQty.Dock = DockStyle.Fill;
         txtQty.BorderColor = Color.FromArgb(91, 155, 213);
-        txtQty.Font = new Font("Segoe UI", 22.5F);
+        txtQty.Font = new Font("Segoe UI", 18F);
         txtQty.Location = new Point(217, 444);
-        txtQty.Margin = new Padding(4, 12, 4, 12);
+        txtQty.Margin = new Padding(4, 14, 4, 14);
         txtQty.Name = "txtQty";
         txtQty.Radius = 8;
         txtQty.Size = new Size(750, 84);
