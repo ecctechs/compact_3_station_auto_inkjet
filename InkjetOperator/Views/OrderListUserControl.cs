@@ -7,12 +7,6 @@ namespace InkjetOperator.Views;
 
 public partial class OrderListUserControl : UserControl
 {
-    // สถานะมี 3 แบบเท่านั้น: Waiting แดง · Working ส้ม · Finished เขียว
-    // ค่าที่ backend เก็บยังเป็น Waiting / Process / Success เหมือนเดิม แปลงตอนแสดงผล
-    private static readonly Color StatusRed = DesignTokens.Danger;
-    private static readonly Color StatusOrange = DesignTokens.Warning;
-    private static readonly Color StatusGreen = DesignTokens.SuccessText;
-
     private static readonly string[] ActiveStatuses = ["Waiting", "Process"];
     private static readonly string[] HistoryStatuses = ["Success"];
 
@@ -204,7 +198,7 @@ public partial class OrderListUserControl : UserControl
             ? "No orders"
             : dateFiltered && rows.Count == 0
                 ? "ไม่มีงานในช่วงวันที่ที่เลือก"
-                : $"No orders (total {_allJobs.Count}, filter: {string.Join("/", statuses.Select(DisplayStatusText))})";
+                : $"No orders (total {_allJobs.Count}, filter: {string.Join("/", statuses.Select(JobStatusDisplay.Text))})";
         tblOrders.DataSource = null;
         tblOrders.DataSource = rows;
         ReapplySort();
@@ -360,7 +354,6 @@ public partial class OrderListUserControl : UserControl
         return new StepStatus(need.Count == 0, need, false, 0, false);
     }
 
-    /// <summary>Waiting / Process / Success ของ backend → ชื่อกับสีที่หน้าจอใช้</summary>
     /// <summary>
     /// พื้นหลังของแถว — งานที่กำลังเดินอยู่ (Working) ระบายเขียวอ่อนให้สะดุดตา
     /// จากระยะไกล
@@ -374,21 +367,6 @@ public partial class OrderListUserControl : UserControl
         if (e.Record is not OrderRow row || row.Back is not Color back) return null;
         return new AntdUI.Table.CellStyleInfo { BackColor = back };
     }
-
-    private static (string Text, Color Color) DisplayStatus(string? status)
-    {
-        if (string.Equals(status, "Process", StringComparison.OrdinalIgnoreCase))
-            return ("Working", StatusOrange);
-        if (string.Equals(status, "Success", StringComparison.OrdinalIgnoreCase))
-            return ("Finished", StatusGreen);
-        if (string.Equals(status, "Waiting", StringComparison.OrdinalIgnoreCase))
-            return ("Waiting", StatusRed);
-
-        // สถานะนอกเหนือจาก 3 แบบถูกกรองออกไปแล้ว โชว์ค่าดิบไว้กันงงถ้าหลุดมา
-        return (status ?? "", StatusRed);
-    }
-
-    private static string DisplayStatusText(string status) => DisplayStatus(status).Text;
 
     /// <summary>
     /// กฎอยู่ที่ <see cref="MarkingMethodService"/> ที่เดียว หน้า Order Detail ใช้ตัวเดียวกัน
@@ -532,7 +510,7 @@ public partial class OrderListUserControl : UserControl
     {
         var plan = MarkingMethodService.Resolve(job.PlanRouting?.MarkingMethod);
 
-        var (statusLabel, statusColor) = DisplayStatus(job.Status);
+        var (statusLabel, statusColor) = JobStatusDisplay.Resolve(job.Status);
         var statusText = new AntdUI.CellText(statusLabel) { Fore = statusColor };
 
         var sourceTag = job.StStatus == "1"

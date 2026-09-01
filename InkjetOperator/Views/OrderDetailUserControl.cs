@@ -806,7 +806,12 @@ public partial class OrderDetailUserControl : UserControl
         txtJobCustomer.Text = OrDash(job.CustomerName);
         txtJobType.Text = OrDash(job.Type);
         txtJobQty.Text = job.Qty?.ToString() ?? Dash;
-        txtJobStatus.Text = OrDash(job.Status);
+        // ทั้งคำและสีมาจาก JobStatusDisplay ที่เดียวกับคอลัมน์ Status ในตาราง
+        // Order List — backend เก็บเป็น Process / Success แต่บนจอเรียก Working /
+        // Finished ทั้งสองหน้า ไม่งั้นงานเดียวกันดูสองหน้าแล้วเหมือนคนละสถานะ
+        var jobStatus = Theme.JobStatusDisplay.Resolve(job.Status);
+        txtJobStatus.Text = OrDash(jobStatus.Text);
+        txtJobStatus.ForeColor = jobStatus.Fore;
 
         var marking = resolved.PlanRouting?.MarkingMethod;
         txtMarkingMethod.Text = string.IsNullOrWhiteSpace(marking) ? "ไม่ระบุ" : marking;
