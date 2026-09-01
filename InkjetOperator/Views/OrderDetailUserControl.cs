@@ -48,6 +48,7 @@ public partial class OrderDetailUserControl : UserControl
         btnFlowShim.Click += (_, _) => OpenFlowRefImages(btnFlowShim);
 
         WireIaiAdjustEvents();
+        ShowClampAddresses();
         WireRefImageHover();
         Disposed += (_, _) => _refPopup?.Dispose();
     }
@@ -1133,6 +1134,50 @@ public partial class OrderDetailUserControl : UserControl
         btnIaiAdj2Z2Reset.Click += (_, _) => { txtIaiAdj2Z2Value.Text = _origIai?.IaiZ2?.ToString() ?? ""; };
     }
 
+    /// <summary>
+    /// ต่อท้ายป้ายของแต่ละแกนด้วย address ที่คำสั่งจะเขียนลงไป เช่น "IAIP · D100"
+    ///
+    /// address มาจากหน้า Clamp Setting ที่เดียว ตัวเดียวกับที่ ClampService ใช้ยิงจริง
+    /// แกนไหนยังไม่ได้ตั้งจะขึ้นว่ายังไม่ได้ตั้ง — กดปุ่ม Send ของแกนนั้นก็จะโดนกันไว้
+    /// ให้เห็นตั้งแต่เปิดหน้า ไม่ต้องรอกดแล้วค่อยรู้
+    ///
+    /// โชว์เฉพาะ address ปลายทาง (TARGET) ที่ค่าจะไปอยู่ ส่วน RUN เป็นบิตสั่งให้แกน
+    /// วิ่ง ไม่ใช่ที่เก็บค่า จึงไม่เอามารก
+    /// </summary>
+    private void ShowClampAddresses()
+    {
+        var settings = ClampSettings.Load();
+
+        TagClamp(lblIaiAdj1, settings, "IAIP");
+        TagClamp(lblIaiAdj1Z1, settings, "IAIPZ1");
+        TagClamp(lblIaiAdj1Z2, settings, "IAIPZ2");
+        TagClamp(lblIaiAdj2, settings, "IAI");
+        TagClamp(lblIaiAdj2Z1, settings, "IAIZ1");
+        TagClamp(lblIaiAdj2Z2, settings, "IAIZ2");
+    }
+
+    private void TagClamp(AntdUI.Label label, ClampSettings settings, string axisKey)
+    {
+        if (!_plcLabelText.TryGetValue(label, out var baseText))
+        {
+            baseText = label.Text ?? "";
+            _plcLabelText[label] = baseText;
+        }
+
+        var axis = settings.Find(axisKey);
+        var target = axis?.AddrTarget.Trim() ?? "";
+        var run = axis?.AddrRun.Trim() ?? "";
+
+        // แยกให้ชัดว่า 'ยังไม่ได้ตั้งเลย' กับ 'ตั้ง Target แล้วแต่ยังไม่มี Run'
+        // คนละเรื่องกัน — อย่างหลังเห็น address บนจอแล้วแต่ยังสั่งไม่ได้
+        // เพราะไม่มีบิตสั่งวิ่ง ถ้าเขียนรวมเป็น 'ยังไม่ได้ตั้ง' จะงงว่าใส่ไปแล้วทำไมไม่ขึ้น
+        label.Text = target.Length == 0
+            ? $"{baseText}  ·  ยังไม่ได้ตั้ง"
+            : run.Length == 0
+                ? $"{baseText}  ·  {target} (ยังไม่มี Run)"
+                : $"{baseText}  ·  {target}";
+    }
+
     private static void AdjustIaiValue(AntdUI.Input input, int delta)
     {
         if (!int.TryParse(input.Text.Trim(), out int current)) current = 0;
@@ -1167,16 +1212,24 @@ public partial class OrderDetailUserControl : UserControl
         var axis = s.Find(IaiAxisKey(isPlate, zone));
         if (axis == null) return;
 
-        // แผนภาพยังเขียน DXXX/MXXX ไว้ 5 แกน — กันไว้ก่อนยิงคำสั่งผิดแกน
+        // ปุ่ม Send ต้องมีทั้ง Target (ที่เก็บค่า) และ Run (บิตสั่งวิ่ง) ขาดอย่างใด
+        // อย่างหนึ่งก็สั่งไม่ได้ — บอกให้ตรงว่าขาดอันไหน จะได้ไม่ต้องเดาว่าใส่ตรงไหนแล้ว
         if (!axis.IsConfigured)
         {
+            var missing = axis.AddrTarget.Trim().Length == 0
+                ? (axis.AddrRun.Trim().Length == 0 ? "Target (D) และ Run (M)" : "Target (D)")
+                : "Run (M)";
+
             Notify.WarnModal(this, "แจ้งเตือน",
-                $"แกน {axis.Display} ยังไม่ได้กำหนด address\nตั้งค่าได้ที่ Setting → Clamp Setting");
+                $"แกน {axis.Display} ยังขาด {missing}\nตั้งค่าได้ที่ Setting -> Clamp Setting");
             return;
         }
 
+        // บอกให้ครบว่าค่าจะไปลงที่ address ไหน สั่งผิดแกนคือชิ้นงานเสีย
         if (!Confirm.Ask(this, "ยืนยันสั่งแคลมป์",
-                $"สั่ง {axis.Display} ไปที่ {mm} mm\n(Raw = {ClampService.ToRaw(mm)})\n\nยืนยันหรือไม่?"))
+                $"สั่ง {axis.Display} ไปที่ {mm} mm\n\n"
+                + $"-> {axis.AddrTarget} = {ClampService.ToRaw(mm)}\n"
+                + $"-> {axis.AddrRun} (pulse)\n\nยืนยันหรือไม่?"))
             return;
 
         SetIaiAdjustBusy(true);

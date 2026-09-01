@@ -681,6 +681,8 @@ partial class OrderDetailUserControl
         //
         // tlpSections
         //
+        tlpSections.AutoSize = true;
+        tlpSections.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
         tlpSections.BackColor = System.Drawing.Color.FromArgb(234, 241, 248);
         tlpSections.ColumnCount = 1;
         tlpSections.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
@@ -695,7 +697,7 @@ partial class OrderDetailUserControl
         tlpSections.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 642F));
         tlpSections.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 138F));
         tlpSections.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 735F));
-        tlpSections.Size = new System.Drawing.Size(1590, 1460);
+        tlpSections.Size = new System.Drawing.Size(1590, 1515);
         tlpSections.TabIndex = 0;
         //
         // pnlMkSection
@@ -2318,7 +2320,7 @@ partial class OrderDetailUserControl
         //
         tlpUv1Adjust.BackColor = System.Drawing.Color.Transparent;
         tlpUv1Adjust.ColumnCount = 8;
-        tlpUv1Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
+        tlpUv1Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 190F));
         tlpUv1Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpUv1Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpUv1Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 62F));
@@ -2347,7 +2349,7 @@ partial class OrderDetailUserControl
         lblIaiAdj1.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Bold);
         lblIaiAdj1.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         lblIaiAdj1.Name = "lblIaiAdj1";
-        lblIaiAdj1.Size = new System.Drawing.Size(92, 55);
+        lblIaiAdj1.Size = new System.Drawing.Size(182, 55);
         lblIaiAdj1.TabIndex = 0;
         lblIaiAdj1.Text = "IAIP";
         lblIaiAdj1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2439,7 +2441,7 @@ partial class OrderDetailUserControl
         //
         tlpUv2Adjust.BackColor = System.Drawing.Color.Transparent;
         tlpUv2Adjust.ColumnCount = 8;
-        tlpUv2Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
+        tlpUv2Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 190F));
         tlpUv2Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpUv2Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpUv2Adjust.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 62F));
@@ -2468,7 +2470,7 @@ partial class OrderDetailUserControl
         lblIaiAdj2.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Bold);
         lblIaiAdj2.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         lblIaiAdj2.Name = "lblIaiAdj2";
-        lblIaiAdj2.Size = new System.Drawing.Size(92, 55);
+        lblIaiAdj2.Size = new System.Drawing.Size(182, 55);
         lblIaiAdj2.TabIndex = 0;
         lblIaiAdj2.Text = "IAI";
         lblIaiAdj2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2560,7 +2562,7 @@ partial class OrderDetailUserControl
         //
         tlpUv1AdjustZ1.BackColor = System.Drawing.Color.Transparent;
         tlpUv1AdjustZ1.ColumnCount = 8;
-        tlpUv1AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
+        tlpUv1AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 190F));
         tlpUv1AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpUv1AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpUv1AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 62F));
@@ -2589,7 +2591,7 @@ partial class OrderDetailUserControl
         lblIaiAdj1Z1.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Bold);
         lblIaiAdj1Z1.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         lblIaiAdj1Z1.Name = "lblIaiAdj1Z1";
-        lblIaiAdj1Z1.Size = new System.Drawing.Size(92, 55);
+        lblIaiAdj1Z1.Size = new System.Drawing.Size(182, 55);
         lblIaiAdj1Z1.TabIndex = 0;
         lblIaiAdj1Z1.Text = "IAIP Z1";
         lblIaiAdj1Z1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2681,7 +2683,7 @@ partial class OrderDetailUserControl
         //
         tlpUv1AdjustZ2.BackColor = System.Drawing.Color.Transparent;
         tlpUv1AdjustZ2.ColumnCount = 8;
-        tlpUv1AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
+        tlpUv1AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 190F));
         tlpUv1AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpUv1AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpUv1AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 62F));
@@ -2710,7 +2712,7 @@ partial class OrderDetailUserControl
         lblIaiAdj1Z2.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Bold);
         lblIaiAdj1Z2.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         lblIaiAdj1Z2.Name = "lblIaiAdj1Z2";
-        lblIaiAdj1Z2.Size = new System.Drawing.Size(92, 55);
+        lblIaiAdj1Z2.Size = new System.Drawing.Size(182, 55);
         lblIaiAdj1Z2.TabIndex = 0;
         lblIaiAdj1Z2.Text = "IAIP Z2";
         lblIaiAdj1Z2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2802,7 +2804,7 @@ partial class OrderDetailUserControl
         //
         tlpUv2AdjustZ1.BackColor = System.Drawing.Color.Transparent;
         tlpUv2AdjustZ1.ColumnCount = 8;
-        tlpUv2AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
+        tlpUv2AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 190F));
         tlpUv2AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpUv2AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpUv2AdjustZ1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 62F));
@@ -2831,7 +2833,7 @@ partial class OrderDetailUserControl
         lblIaiAdj2Z1.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Bold);
         lblIaiAdj2Z1.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         lblIaiAdj2Z1.Name = "lblIaiAdj2Z1";
-        lblIaiAdj2Z1.Size = new System.Drawing.Size(92, 55);
+        lblIaiAdj2Z1.Size = new System.Drawing.Size(182, 55);
         lblIaiAdj2Z1.TabIndex = 0;
         lblIaiAdj2Z1.Text = "IAI Z1";
         lblIaiAdj2Z1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2923,7 +2925,7 @@ partial class OrderDetailUserControl
         //
         tlpUv2AdjustZ2.BackColor = System.Drawing.Color.Transparent;
         tlpUv2AdjustZ2.ColumnCount = 8;
-        tlpUv2AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
+        tlpUv2AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 190F));
         tlpUv2AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpUv2AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpUv2AdjustZ2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 62F));
@@ -2952,7 +2954,7 @@ partial class OrderDetailUserControl
         lblIaiAdj2Z2.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Bold);
         lblIaiAdj2Z2.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         lblIaiAdj2Z2.Name = "lblIaiAdj2Z2";
-        lblIaiAdj2Z2.Size = new System.Drawing.Size(92, 55);
+        lblIaiAdj2Z2.Size = new System.Drawing.Size(182, 55);
         lblIaiAdj2Z2.TabIndex = 0;
         lblIaiAdj2Z2.Text = "IAI Z2";
         lblIaiAdj2Z2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
