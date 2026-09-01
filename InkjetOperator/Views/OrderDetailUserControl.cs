@@ -334,9 +334,8 @@ public partial class OrderDetailUserControl : UserControl
         _sendSteps = new List<string>(plan.Steps);
         _currentStep = 0;
 
-        string twoRound = plan.IsTwoRoundMk ? "   (MK วิ่ง 2 รอบ)" : "";
-        ApplyFlowRow(btnFlowPlate, "Plate", plan.Plate, ErpRefName(plan.Plate, erpMfg, "P-"), twoRound);
-        ApplyFlowRow(btnFlowShim, "Shim", plan.Shim, ErpRefName(plan.Shim, erpMfg, "S-"), twoRound);
+        ApplyFlowRow(btnFlowPlate, "Plate", plan.Plate, ErpRefName(plan.Plate, erpMfg, "P-"), "");
+        ApplyFlowRow(btnFlowShim, "Shim", plan.Shim, ErpRefName(plan.Shim, erpMfg, "S-"), "");
 
         ApplyStepButtons();
     }
@@ -413,17 +412,6 @@ public partial class OrderDetailUserControl : UserControl
             _currentStep++;
         }
 
-        // marking "22": MK runs 2 rounds — if round 1 done but MK sent only once, allow MK again
-        if (_sendSteps.Count == 1 && _sendSteps[0] == "MK"
-            && completed.Contains("MK_ROUND1_DONE"))
-        {
-            int mkCount = commands.Count(c => c.Success &&
-                c.Command is "MK" or "MK1" or "MK2");
-            if (mkCount < 2)
-            {
-                _currentStep = 0;
-            }
-        }
     }
 
     private void ApplyStepButtons()

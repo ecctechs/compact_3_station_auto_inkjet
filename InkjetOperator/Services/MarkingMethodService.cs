@@ -21,13 +21,11 @@ public enum MarkingMachine
 /// <param name="Plate">ด้าน Plate ทำโดยเครื่องไหน</param>
 /// <param name="Shim">ด้าน Shim ทำโดยเครื่องไหน</param>
 /// <param name="Steps">ขั้นตอนที่ต้องส่ง เรียงตามลำดับที่ต้องกด</param>
-/// <param name="IsTwoRoundMk">true = รหัส 22 ที่ MK ต้องวิ่ง 2 รอบ</param>
 public sealed record MarkingPlan(
     bool NoCase,
     MarkingMachine Plate,
     MarkingMachine Shim,
-    List<string> Steps,
-    bool IsTwoRoundMk);
+    List<string> Steps);
 
 /// <summary>
 /// แปล marking_method ให้เป็นแผนการทำงานของ 1 งาน
@@ -57,7 +55,7 @@ public static class MarkingMethodService
 
         // Shim=MK + Plate=UV ไม่มีอยู่จริงตามสเปกของสายการผลิต
         if (shimDigit == '2' && plateDigit == '1')
-            return new MarkingPlan(true, MarkingMachine.None, MarkingMachine.None, [], false);
+            return new MarkingPlan(true, MarkingMachine.None, MarkingMachine.None, []);
 
         var steps = new List<string>();
         if (shimDigit == '2' || plateDigit == '2') steps.Add("MK");
@@ -77,7 +75,7 @@ public static class MarkingMethodService
             _ => MarkingMachine.None,
         };
 
-        return new MarkingPlan(false, plate, shim, steps, shimDigit == '2' && plateDigit == '2');
+        return new MarkingPlan(false, plate, shim, steps);
     }
 
     /// <summary>

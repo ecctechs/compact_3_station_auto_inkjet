@@ -275,20 +275,6 @@ public partial class OrderListUserControl : UserControl
 
         var steps = CheckSteps(resolved.PlanRouting?.MarkingMethod, resolved.Commands);
 
-        // MK วิ่ง 2 รอบ: "จบรอบแรก" เป็นขั้นตอนกลางทาง ไม่ใช่การจบงาน
-        // ถ้าเคยจบรอบแรกไปแล้วไม่ต้องถามซ้ำ ให้ตกไปใช้ทางยืนยันด้วยมือแทน
-        if (steps.IsTwoRoundMk && steps.MkCount == 1 && !steps.Round1Done)
-        {
-            if (!Confirm.Ask(this, "จบงานรอบ 1",
-                    $"Job #{jobId} — MK วิ่ง 2 รอบ\n\nส่ง MK ไปแล้ว {steps.MkCount} รอบ\nจบรอบแรกเพื่อกดส่ง MK อีกรอบ?"))
-                return;
-
-            await _api.SaveSendStepAsync(jobId, "MK_ROUND1_DONE");
-            Notify.Success(this, $"Job #{jobId} จบรอบแรก — กดส่ง MK ได้อีกรอบ");
-            await RefreshDataAsync();
-            return;
-        }
-
         // งานยังไม่ครบก็จบได้ ถ้าผู้ใช้ยืนยันเอง — บันทึกไว้ว่าเป็นการจบด้วยมือ
         bool manual = !steps.Complete;
         if (manual)
@@ -325,34 +311,23 @@ public partial class OrderListUserControl : UserControl
     // ── ตรวจความครบของงาน ──────────────────────────────────
 
     /// <summary>ผลตรวจว่างานส่งครบทุกขั้นตอนแล้วหรือยัง</summary>
-    private readonly record struct StepStatus(
-        bool Complete, List<string> Missing, bool IsTwoRoundMk, int MkCount, bool Round1Done);
+    private readonly record struct StepStatus(bool Complete, List<string> Missing);
 
     /// <summary>
     /// ใช้ร่วมกันทั้งตอนระบายสีปุ่มและตอนกดจบงาน เพื่อไม่ให้สองที่ตัดสินคนละแบบ
-    /// marking_method "22" คือ MK วิ่ง 2 รอบ ครบต่อเมื่อส่ง MK สำเร็จครบ 2 ครั้ง
+    ///
+    /// รหัส "22" เคยถูกดักเป็นกรณีพิเศษว่าต้องส่ง MK สำเร็จ 2 ครั้งถึงจะครบ
+    /// ตอนนี้เลิกแล้ว ส่ง MK ครั้งเดียวก็จบงานได้ เหมือนรหัสอื่นที่ใช้ MK อย่างเดียว
     /// </summary>
     private static StepStatus CheckSteps(string? markingMethod, List<CommandResult>? commands)
     {
-        var method = markingMethod ?? "";
-        var done = (commands ?? new List<CommandResult>()).Where(c => c.Success).ToList();
+        var sent = (commands ?? new List<CommandResult>())
+            .Where(c => c.Success)
+            .Select(c => c.Command)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        if (method == "22")
-        {
-            int mkCount = done.Count(c => c.Command is "MK" or "MK1" or "MK2");
-            bool round1 = done.Any(c =>
-                string.Equals(c.Command, "MK_ROUND1_DONE", StringComparison.OrdinalIgnoreCase));
-
-            var missing = mkCount >= 2
-                ? new List<string>()
-                : new List<string> { $"MK รอบ {mkCount + 1}" };
-
-            return new StepStatus(mkCount >= 2, missing, true, mkCount, round1);
-        }
-
-        var sent = done.Select(c => c.Command).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var need = GetRequiredSteps(method).Where(x => !sent.Contains(x)).ToList();
-        return new StepStatus(need.Count == 0, need, false, 0, false);
+        var need = GetRequiredSteps(markingMethod ?? "").Where(x => !sent.Contains(x)).ToList();
+        return new StepStatus(need.Count == 0, need);
     }
 
     /// <summary>
