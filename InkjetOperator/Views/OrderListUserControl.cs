@@ -33,18 +33,19 @@ public partial class OrderListUserControl : UserControl
         // (ถ้าไม่กำหนด Width เลย AntdUI จะวัดจากหัวตารางให้ ซึ่งเปลี่ยนตามภาษา)
         tblOrders.Columns = new AntdUI.ColumnCollection
         {
-            new AntdUI.Column("Start", "Start", AntdUI.ColumnAlign.Center) { Width = "10%", SortOrder = true },
-            new AntdUI.Column("End", "End", AntdUI.ColumnAlign.Center) { Width = "10%", SortOrder = true },
-            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center) { Width = "12%", SortOrder = true },
-            new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center) { Width = "11%", SortOrder = true },
+            new AntdUI.Column("Start", "Start", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true },
+            new AntdUI.Column("End", "End", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true },
+            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center) { Width = "11%", SortOrder = true },
+            new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center) { Width = "10%", SortOrder = true },
             new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center) { Width = "5%", SortOrder = true },
             new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { Width = "5%", SortOrder = true },
             new AntdUI.Column("Method", "Method", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true },
             new AntdUI.Column("Plate", "Plate", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true },
             new AntdUI.Column("Shim", "Shim", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true },
-            new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true },
+            new AntdUI.Column("Station", "Station", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true },
+            new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true },
             new AntdUI.Column("Source", "", AntdUI.ColumnAlign.Center) { Width = "5%" },
-            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "13%" },
+            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "12%" },
         };
 
         // AntdUI sizes the header sort arrows at 60% of the header text height, which
@@ -506,6 +507,16 @@ public partial class OrderListUserControl : UserControl
     private static string MachineCell(MarkingMachine machine) =>
         machine == MarkingMachine.None ? Dash : MarkingMethodService.Label(machine);
 
+    /// <summary>
+    /// สถานีล่าสุดที่กดส่งสำเร็จ — ยังไม่เคยส่งเป็นขีด เข้าชุดกับคอลัมน์ End
+    /// งานที่จบแล้วยังค้างอยู่ที่สถานีสุดท้ายของมัน ไม่ได้ล้างทิ้ง
+    /// </summary>
+    private static string OrDashStation(int? station)
+    {
+        var label = JobStationService.Label(station);
+        return label.Length == 0 ? Dash : label;
+    }
+
     private static OrderRow ToRow(PrintJob job, bool isHistory)
     {
         var plan = MarkingMethodService.Resolve(job.PlanRouting?.MarkingMethod);
@@ -544,6 +555,7 @@ public partial class OrderListUserControl : UserControl
             Method = Method(job.PlanRouting?.MarkingMethod),
             Plate = plan.NoCase ? Dash : MachineCell(plan.Plate),
             Shim = plan.NoCase ? Dash : MachineCell(plan.Shim),
+            Station = OrDashStation(JobStationService.Current(job.Commands)),
             Status = statusText,
             Source = sourceTag,
             Op = buttons.ToArray(),
@@ -894,6 +906,7 @@ internal class OrderRow : AntdUI.NotifyProperty
     public string Method { get; set; } = "";
     public string Plate { get; set; } = "";
     public string Shim { get; set; } = "";
+    public string Station { get; set; } = "";
     public AntdUI.CellText? Status { get; set; }
     public AntdUI.CellTag[]? Source { get; set; }
     public AntdUI.CellButton[] Op { get; set; } = [];

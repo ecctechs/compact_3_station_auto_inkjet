@@ -129,6 +129,7 @@ public static class LanguageService
         ["Method"] = "วิธีมาร์ก",
         ["Plate"] = "เพลต",
         ["Shim"] = "ชิม",
+        ["Station"] = "สถานี",
         ["MK Section (MK Inkjet)"] = "โซน MK (MK Inkjet)",
         ["UV Section"] = "โซน UV",
         ["Program Name"] = "ชื่อโปรแกรม",
