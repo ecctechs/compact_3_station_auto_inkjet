@@ -3130,6 +3130,9 @@ partial class OrderDetailUserControl
         btnTestPlc.TabIndex = 4;
         btnTestPlc.Text = "ทดสอบส่ง PLC";
         btnTestPlc.Type = AntdUI.TTypeMini.Default;
+        // ซ่อนไว้ก่อน — ยังไม่ได้ตั้ง IP ของ PLC และยังไม่ได้ทดสอบกับเครื่องจริง
+        // เอากลับมาด้วยการลบบรรทัดนี้ โค้ดที่อยู่เบื้องหลังยังอยู่ครบ
+        btnTestPlc.Visible = false;
         //
         // btnDetailClose
         //
