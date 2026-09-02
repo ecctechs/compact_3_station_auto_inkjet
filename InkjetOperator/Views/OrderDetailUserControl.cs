@@ -434,6 +434,14 @@ public partial class OrderDetailUserControl : UserControl
         btnSendUv1.Enabled = false;
         btnSendUv2.Enabled = false;
 
+        // งานขั้นตอนเดียว (00 01 10 02 20 22) สั่งจากปุ่มเริ่มงานในหน้า Order List
+        // ได้ครบวงจรแล้ว จึงไม่ต้องมีปุ่มส่งมือให้กดซ้ำ ส่วนงานสองขั้นตอน
+        // (11 12 32) ยังต้องกดส่งขั้นที่สองเอง จนกว่า push button จะใช้งานได้
+        bool manualSend = _sendSteps.Count > 1;
+        btnSendMk.Visible = manualSend;
+        btnSendUv1.Visible = manualSend;
+        btnSendUv2.Visible = manualSend;
+
         if (_transferMode)
         {
             btnSendMk.Visible = false;

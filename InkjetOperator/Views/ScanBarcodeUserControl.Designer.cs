@@ -206,7 +206,7 @@ partial class ScanBarcodeUserControl
         lblBarcode.Location = new Point(4, 0);
         lblBarcode.Margin = new Padding(4, 0, 30, 0);
         lblBarcode.Name = "lblBarcode";
-        lblBarcode.Size = new Size(179, 108);
+        lblBarcode.Size = new Size(237, 108);
         lblBarcode.TabIndex = 0;
         lblBarcode.Text = "Barcode:";
         lblBarcode.TextAlign = ContentAlignment.MiddleRight;
@@ -219,7 +219,7 @@ partial class ScanBarcodeUserControl
         lblOrderNo.Location = new Point(4, 108);
         lblOrderNo.Margin = new Padding(4, 0, 30, 0);
         lblOrderNo.Name = "lblOrderNo";
-        lblOrderNo.Size = new Size(179, 108);
+        lblOrderNo.Size = new Size(237, 108);
         lblOrderNo.TabIndex = 1;
         lblOrderNo.Text = "Order No:";
         lblOrderNo.TextAlign = ContentAlignment.MiddleRight;
@@ -232,7 +232,7 @@ partial class ScanBarcodeUserControl
         lblCustomerName.Location = new Point(4, 216);
         lblCustomerName.Margin = new Padding(4, 0, 30, 0);
         lblCustomerName.Name = "lblCustomerName";
-        lblCustomerName.Size = new Size(179, 108);
+        lblCustomerName.Size = new Size(237, 108);
         lblCustomerName.TabIndex = 2;
         lblCustomerName.Text = "Customer Name:";
         lblCustomerName.TextAlign = ContentAlignment.MiddleRight;
@@ -245,7 +245,7 @@ partial class ScanBarcodeUserControl
         lblType.Location = new Point(4, 324);
         lblType.Margin = new Padding(4, 0, 30, 0);
         lblType.Name = "lblType";
-        lblType.Size = new Size(179, 108);
+        lblType.Size = new Size(237, 108);
         lblType.TabIndex = 3;
         lblType.Text = "Type:";
         lblType.TextAlign = ContentAlignment.MiddleRight;
@@ -258,70 +258,70 @@ partial class ScanBarcodeUserControl
         lblQty.Location = new Point(4, 432);
         lblQty.Margin = new Padding(4, 0, 30, 0);
         lblQty.Name = "lblQty";
-        lblQty.Size = new Size(179, 108);
+        lblQty.Size = new Size(237, 108);
         lblQty.TabIndex = 4;
         lblQty.Text = "Qty:";
         lblQty.TextAlign = ContentAlignment.MiddleRight;
         // 
         // txtBarcode
         // 
-        txtBarcode.Dock = DockStyle.Fill;
         txtBarcode.BorderColor = Color.FromArgb(91, 155, 213);
+        txtBarcode.Dock = DockStyle.Fill;
         txtBarcode.Font = new Font("Segoe UI", 18F);
-        txtBarcode.Location = new Point(217, 13);
+        txtBarcode.Location = new Point(275, 14);
         txtBarcode.Margin = new Padding(4, 14, 4, 14);
         txtBarcode.Name = "txtBarcode";
         txtBarcode.PlaceholderText = "Scan or type barcode...";
         txtBarcode.Radius = 8;
-        txtBarcode.Size = new Size(750, 82);
+        txtBarcode.Size = new Size(692, 80);
         txtBarcode.TabIndex = 5;
         // 
         // txtOrderNo
         // 
-        txtOrderNo.Dock = DockStyle.Fill;
         txtOrderNo.BorderColor = Color.FromArgb(91, 155, 213);
+        txtOrderNo.Dock = DockStyle.Fill;
         txtOrderNo.Font = new Font("Segoe UI", 18F);
-        txtOrderNo.Location = new Point(217, 121);
+        txtOrderNo.Location = new Point(275, 122);
         txtOrderNo.Margin = new Padding(4, 14, 4, 14);
         txtOrderNo.Name = "txtOrderNo";
         txtOrderNo.Radius = 8;
-        txtOrderNo.Size = new Size(750, 82);
+        txtOrderNo.Size = new Size(692, 80);
         txtOrderNo.TabIndex = 6;
         // 
         // txtCustomerName
         // 
-        txtCustomerName.Dock = DockStyle.Fill;
         txtCustomerName.BorderColor = Color.FromArgb(91, 155, 213);
+        txtCustomerName.Dock = DockStyle.Fill;
         txtCustomerName.Font = new Font("Segoe UI", 18F);
-        txtCustomerName.Location = new Point(217, 229);
+        txtCustomerName.Location = new Point(275, 230);
         txtCustomerName.Margin = new Padding(4, 14, 4, 14);
         txtCustomerName.Name = "txtCustomerName";
         txtCustomerName.Radius = 8;
-        txtCustomerName.Size = new Size(750, 82);
+        txtCustomerName.Size = new Size(692, 80);
         txtCustomerName.TabIndex = 7;
         // 
         // txtType
         // 
-        txtType.Dock = DockStyle.Fill;
         txtType.BorderColor = Color.FromArgb(91, 155, 213);
+        txtType.Dock = DockStyle.Fill;
         txtType.Font = new Font("Segoe UI", 18F);
-        txtType.Location = new Point(217, 337);
+        txtType.Location = new Point(275, 338);
         txtType.Margin = new Padding(4, 14, 4, 14);
         txtType.Name = "txtType";
         txtType.Radius = 8;
-        txtType.Size = new Size(750, 82);
+        txtType.Size = new Size(692, 80);
         txtType.TabIndex = 8;
         // 
         // txtQty
         // 
-        txtQty.Dock = DockStyle.Fill;
         txtQty.BorderColor = Color.FromArgb(91, 155, 213);
+        txtQty.Dock = DockStyle.Fill;
         txtQty.Font = new Font("Segoe UI", 18F);
-        txtQty.Location = new Point(217, 444);
+        txtQty.Location = new Point(275, 446);
         txtQty.Margin = new Padding(4, 14, 4, 14);
         txtQty.Name = "txtQty";
         txtQty.Radius = 8;
-        txtQty.Size = new Size(750, 84);
+        txtQty.Size = new Size(692, 80);
         txtQty.TabIndex = 9;
         // 
         // flpActions

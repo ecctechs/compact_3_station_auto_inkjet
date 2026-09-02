@@ -105,6 +105,10 @@ public partial class OrderListUserControl : UserControl
     private async Task RefreshDataAsync(bool force = false)
     {
         if (_api == null) return;
+
+        // ระหว่างส่งงานห้ามผูก DataSource ใหม่ ไม่งั้นแถวขยับใต้มือผู้ใช้
+        // และกล่องเลือกรุ่นย่อยของ UV อาจถูกวาดทับ
+        if (_sending) return;
         try
         {
             DateTime? fromUtc = null, toUtc = null;
@@ -185,11 +189,28 @@ public partial class OrderListUserControl : UserControl
         _ = UpdateProcessingAsync();
     }
 
+    /// <summary>
+    /// ลำดับตั้งต้นของตาราง 2 ชั้น — ชั้นแรกสถานะ ชั้นสองเวลารับงานใหม่สุดขึ้นก่อน
+    ///
+    /// งานที่เดินอยู่ต้องอยู่บนสุดเสมอ เพราะเป็นงานที่ผู้ใช้ต้องแตะ ส่วนงานที่รอ
+    /// อยู่ล่าง — ตารางยาวแค่ไหนก็ไม่ต้องเลื่อนหา
+    ///
+    /// AntdUI เรียงได้ทีละคอลัมน์ ทำ 2 ชั้นในตัวมันไม่ได้ จึงเรียงลิสต์เองก่อน
+    /// ส่งเข้าตาราง ถ้าผู้ใช้กดหัวคอลัมน์ การเรียงนั้นจะทับลำดับนี้ทั้งหมด
+    /// (กดซ้ำจนลูกศรกลับเป็นเทาก็ได้ลำดับนี้คืน)
+    /// </summary>
+    private static int StatusRank(PrintJob job) =>
+        string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase) ? 0
+        : string.Equals(job.Status, "Waiting", StringComparison.OrdinalIgnoreCase) ? 1
+        : 2;
+
     private void RebindTable()
     {
         var statuses = _showHistory ? HistoryStatuses : ActiveStatuses;
         var filtered = _allJobs
             .Where(j => statuses.Contains(j.Status, StringComparer.OrdinalIgnoreCase))
+            .OrderBy(StatusRank)
+            .ThenByDescending(j => j.CreatedAt ?? DateTime.MinValue)
             .ToList();
 
         bool dateFiltered = _showHistory && TryGetDateRange(out _, out _);
@@ -255,10 +276,175 @@ public partial class OrderListUserControl : UserControl
             }
             ShowDetailDialog(row.Id, resolved);
         }
+        else if (e.Btn?.Id == "start")
+        {
+            await StartJobAsync(row.Id);
+        }
         else if (e.Btn?.Id == "complete")
         {
             await CompleteJobAsync(row.Id);
         }
+    }
+
+    // ── เริ่มงาน ────────────────────────────────────────────
+
+    /// <summary>กำลังส่งงานอยู่ — กันทั้งการกดซ้ำและการรีเฟรชตารางทับ</summary>
+    private bool _sending;
+
+    /// <summary>
+    /// งานที่กดเริ่มได้ = ยังไม่ได้เริ่ม และมีขั้นตอนให้ส่งจริง
+    /// <para>
+    /// รหัส "00" ไม่มีขั้นตอนเลย ส่วน "21" เป็นรหัสที่ไม่มีอยู่จริง สองอันนี้
+    /// กดเริ่มไม่ได้ ให้ตกไปใช้ปุ่มจบงานแทน
+    /// </para>
+    /// </summary>
+    private static bool CanStart(PrintJob job)
+    {
+        if (!string.Equals(job.Status, "Waiting", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var plan = MarkingMethodService.Resolve(job.PlanRouting?.MarkingMethod);
+        return !plan.NoCase && plan.Steps.Count > 0;
+    }
+
+    /// <summary>
+    /// เริ่มงาน: ส่งเข้าสถานีแรกตาม marking method แล้วเปลี่ยนสถานะเป็น Working
+    /// <para>
+    /// หนึ่งสถานีรับงานได้ทีละงาน ตรงกับความจริงหน้างานที่ชิ้นงานอยู่ที่เครื่อง
+    /// ได้ทีละชิ้น ถ้าสถานีแรกไม่ว่างจะไม่ยอมให้เริ่ม
+    /// </para>
+    /// </summary>
+    private async Task StartJobAsync(int jobId)
+    {
+        if (_api == null || _sending) return;
+
+        // อ่านสดก่อนตัดสินใจ — ตารางอาจค้างได้ถึง 5 วิตามรอบ poll
+        var resolved = await _api.GetResolvedJobAsync(jobId);
+        if (resolved == null)
+        {
+            Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลดข้อมูล Job #{jobId} ได้");
+            return;
+        }
+
+        var plan = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod);
+        if (plan.NoCase || plan.Steps.Count == 0)
+        {
+            Notify.WarnModal(this, "แจ้งเตือน",
+                $"Job #{jobId} ไม่มีขั้นตอนให้ส่ง (marking {Method(resolved.PlanRouting?.MarkingMethod)})");
+            return;
+        }
+
+        var step = plan.Steps[0];
+        int station = JobStationService.StationOf(step) ?? 0;
+
+        if (StationOwner(station, jobId) is int busyJob)
+        {
+            Notify.WarnModal(this, "สถานีไม่ว่าง",
+                $"ST{station} มีงาน #{busyJob} อยู่\n\nต้องจบงานนั้นก่อนถึงจะเริ่มงานนี้ได้");
+            return;
+        }
+
+        var rest = string.Join(" -> ", plan.Steps.Skip(1));
+        var next = plan.Steps.Count > 1 ? $"\n\nขั้นตอนถัดไป: {rest}" : "";
+
+        if (!Confirm.Ask(this, "ยืนยันเริ่มงาน",
+                $"Job #{jobId} — marking {Method(resolved.PlanRouting?.MarkingMethod)}\n\n"
+                + $"ส่งไป {step} (ST{station}){next}\n\nยืนยันหรือไม่?"))
+            return;
+
+        _sending = true;
+        try
+        {
+            var lines = await SendFirstStepAsync(jobId, step, resolved);
+            if (IsDisposed) return;
+
+            if (lines.Count > 0)
+                Notify.Result(this, $"เริ่มงาน Job #{jobId}", lines);
+        }
+        finally
+        {
+            _sending = false;
+        }
+
+        if (!IsDisposed) await RefreshDataAsync(force: true);
+    }
+
+    /// <summary>
+    /// ส่งขั้นตอนแรกเข้าเครื่อง แล้วบันทึกลงประวัติถ้าสำเร็จ
+    /// <para>
+    /// เปลี่ยนสถานะเป็น Process ก่อนส่ง เพื่อให้แถวขึ้นสีและกันคนอื่นเริ่มงานซ้ำ
+    /// ระหว่างที่เครื่องกำลังรับข้อมูลอยู่
+    /// </para>
+    /// <para>
+    /// คืนรายการว่างเมื่อผู้ใช้กดยกเลิกที่กล่องเลือกรุ่นย่อย — ไม่ต้องรายงานอะไร
+    /// แต่สถานะที่ตั้งไปแล้วจะถูกคืนกลับเป็น Waiting
+    /// </para>
+    /// </summary>
+    private async Task<List<Notify.ResultLine>> SendFirstStepAsync(
+        int jobId, string step, ResolvedJobResponse resolved)
+    {
+        await _api!.UpdateJobStatusAsync(jobId, "Process");
+
+        if (step == "MK")
+        {
+            var mk = await JobSendService.SendMkAsync(resolved.Pattern);
+            var lines = mk.Machines
+                .Select(m => m.Ok
+                    ? Notify.Ok($"{m.Name} — ส่งสำเร็จ")
+                    : Notify.Bad($"{m.Name} — {m.Error}"))
+                .ToList();
+
+            if (lines.Count == 0)
+                lines.Add(Notify.Careful("ไม่มีเครื่อง MK ที่ตั้งค่า IP ไว้"));
+
+            if (mk.Status == SendStatus.Ok)
+                await _api.SaveSendStepAsync(jobId, "MK");
+            else
+                await _api.UpdateJobStatusAsync(jobId, "Waiting");
+
+            return lines;
+        }
+
+        int uvNumber = step == "UV1" ? 1 : 2;
+        var uv = await JobSendService.SendUvAsync(this, uvNumber, resolved.UvJobData);
+
+        if (uv.Status == SendStatus.Ok)
+        {
+            await _api.SaveSendStepAsync(jobId, step, new
+            {
+                requested = resolved.UvJobData.FirstOrDefault(r => r.Machine == step)?.ProgramName ?? "",
+                program = uv.ProgramFile,
+                is_default = uv.UsedDefault,
+            });
+
+            return [Notify.Ok($"{uv.MachineName} — ส่งสำเร็จ ({uv.ProgramFile}.uvdx)")];
+        }
+
+        await _api.UpdateJobStatusAsync(jobId, "Waiting");
+
+        return uv.Status switch
+        {
+            // ยกเลิกที่กล่องเลือกรุ่นย่อย ไม่ใช่ความผิดพลาด ไม่ต้องขึ้นกล่องสรุป
+            SendStatus.Cancelled => [],
+            SendStatus.Unreachable =>
+                [Notify.Bad($"{uv.MachineName} — เชื่อมต่อไม่ได้ ({uv.Ip}:{uv.Port})")],
+            _ => [Notify.Bad($"{uv.MachineName} — {uv.FailReason}")],
+        };
+    }
+
+    /// <summary>งานที่จองสถานีนี้อยู่ — null = ว่าง</summary>
+    private int? StationOwner(int station, int exceptJobId)
+    {
+        if (station == 0) return null;
+
+        foreach (var job in _allJobs)
+        {
+            if (job.Id == exceptJobId) continue;
+            if (!string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase)) continue;
+            if (JobStationService.Current(job.Commands) == station) return job.Id;
+        }
+
+        return null;
     }
 
     private async Task CompleteJobAsync(int jobId)
@@ -506,12 +692,22 @@ public partial class OrderListUserControl : UserControl
         var buttons = new List<AntdUI.CellButton>();
         if (!isHistory)
         {
-            // เขียว = ส่งครบแล้วจบได้เลย · ส้ม = ยังไม่ครบ กดได้แต่จะเตือนก่อน
-            // commands / plan_routing มาจาก /job/getAll ที่ include ไว้ให้แล้ว
-            var steps = CheckSteps(job.PlanRouting?.MarkingMethod, job.Commands);
-            buttons.Add(new AntdUI.CellButton("complete", "จบงาน",
-                steps.Complete ? AntdUI.TTypeMini.Success : AntdUI.TTypeMini.Warn)
-            { Radius = 6 });
+            // คอลัมน์ปุ่มกว้าง 12% ยัดสามปุ่มไม่ลง จึงสลับปุ่มตามสถานะแทน
+            // งานที่ยังไม่เริ่ม = เริ่มงาน · งานที่เดินอยู่ = จบงาน
+            if (CanStart(job))
+            {
+                buttons.Add(new AntdUI.CellButton("start", "เริ่มงาน", AntdUI.TTypeMini.Primary)
+                { Radius = 6 });
+            }
+            else
+            {
+                // เขียว = ส่งครบแล้วจบได้เลย · ส้ม = ยังไม่ครบ กดได้แต่จะเตือนก่อน
+                // commands / plan_routing มาจาก /job/getAll ที่ include ไว้ให้แล้ว
+                var steps = CheckSteps(job.PlanRouting?.MarkingMethod, job.Commands);
+                buttons.Add(new AntdUI.CellButton("complete", "จบงาน",
+                    steps.Complete ? AntdUI.TTypeMini.Success : AntdUI.TTypeMini.Warn)
+                { Radius = 6 });
+            }
         }
         buttons.Add(new AntdUI.CellButton("detail", "", AntdUI.TTypeMini.Primary) { Radius = 6, IconSvg = "SearchOutlined" });
 
