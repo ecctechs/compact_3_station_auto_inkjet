@@ -39,3 +39,6 @@ Desktop.ini
 *.swp
 *.swo
 *~
+
+# ผลลัพธ์จาก build-installer.bat — ไฟล์ติดตั้งกับ log ไม่ต้องเก็บใน git
+dist/

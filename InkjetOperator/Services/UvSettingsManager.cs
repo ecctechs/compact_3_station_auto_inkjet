@@ -4,8 +4,7 @@ namespace InkjetOperator.Services;
 
 public static class UvSettingsManager
 {
-    private static readonly string _path =
-        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "uv.config");
+    private static readonly string _path = AppSettingsFile.Resolve("uv.config");
 
     public static string Read(string key, string defaultValue = "")
     {
@@ -21,14 +20,14 @@ public static class UvSettingsManager
         catch { return defaultValue; }
     }
 
-    public static void Write(string key, string value)
+    public static bool Write(string key, string value)
     {
         try
         {
             EnsureFile();
             var doc = XDocument.Load(_path);
             var settings = doc.Root?.Element("appSettings");
-            if (settings == null) return;
+            if (settings == null) return false;
 
             var el = settings.Elements("add")
                 .FirstOrDefault(e => e.Attribute("key")?.Value == key);
@@ -41,8 +40,13 @@ public static class UvSettingsManager
                     new XAttribute("value", value)));
 
             doc.Save(_path);
+            return true;
         }
-        catch { /* ignore */ }
+        catch (Exception ex)
+        {
+            CustomSettingsManager.ReportWriteError(ex.Message);
+            return false;
+        }
     }
 
     private static void EnsureFile()

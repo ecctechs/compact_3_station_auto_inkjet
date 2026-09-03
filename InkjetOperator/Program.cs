@@ -25,7 +25,29 @@ static class Program
         PatternStore.Load(patternsPath);
         PatternStore.SeedDefaults(patternsPath);
 
+        WarnIfSettingsReadOnly();
+
         Application.Run(new Views.MainShellForm());
+    }
+
+    /// <summary>
+    /// เตือนตั้งแต่เปิดโปรแกรมถ้าบันทึกค่าไม่ได้
+    /// <para>
+    /// เดิมปัญหานี้เงียบสนิท — ผู้ใช้กด Save ในหน้า Setting แล้วเห็นว่าสำเร็จ
+    /// แต่ค่าหายหมดตอนเปิดใหม่ กว่าจะรู้ว่าเป็นเรื่องสิทธิ์เขียนไฟล์ก็เสียเวลาไปมาก
+    /// </para>
+    /// </summary>
+    private static void WarnIfSettingsReadOnly()
+    {
+        var problem = Services.AppSettingsFile.CheckWritable();
+        if (problem == null) return;
+
+        MessageBox.Show(
+            $"บันทึกการตั้งค่าไม่ได้ที่\n{Services.AppSettingsFile.Folder}\n\n"
+            + $"สาเหตุ: {problem}\n\n"
+            + "ใช้งานโปรแกรมต่อได้ แต่ค่าที่ตั้งในหน้า Setting จะไม่ถูกบันทึก\n"
+            + "แจ้งผู้ดูแลให้เปิดสิทธิ์เขียนโฟลเดอร์นี้",
+            "ตั้งค่าไม่ได้", MessageBoxButtons.OK, MessageBoxIcon.Warning);
     }
 
     /// <summary>
