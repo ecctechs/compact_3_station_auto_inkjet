@@ -20,6 +20,8 @@ public static class UvProgramResolver
 {
     public const string DefaultProgram = "default";
 
+    private const string UvdxExtension = ".uvdx";
+
     /// <summary>
     /// เจอ 1 ไฟล์ → ใช้เลย · เจอหลายไฟล์ → ให้เลือก · ไม่เจอ → default
     /// ไม่รู้จักโฟลเดอร์ document → ส่งชื่อที่ได้มาตรงๆ ให้เครื่องตัดสินเอง
@@ -29,7 +31,13 @@ public static class UvProgramResolver
         var baseName = (programName ?? "").Trim();
         if (baseName.Length == 0) return new UvProgramPick(null, false);
 
-        baseName = Path.GetFileNameWithoutExtension(baseName);
+        // ชื่อโปรแกรมมีจุดอยู่ในตัวได้ เช่น "AKBONO.Lot664" — ห้ามใช้
+        // GetFileNameWithoutExtension เพราะมันมองว่า ".Lot664" เป็นนามสกุลแล้วตัดทิ้ง
+        // เหลือ "AKBONO" ซึ่งไปหาไฟล์ไม่เจอแล้วตกไปใช้ default.uvdx
+        //
+        // ตัดเฉพาะ ".uvdx" ท้ายชื่อ เผื่อค่าที่เก็บมาติดนามสกุลมาด้วย
+        if (baseName.EndsWith(UvdxExtension, StringComparison.OrdinalIgnoreCase))
+            baseName = baseName[..^UvdxExtension.Length];
         if (docFolder == null) return new UvProgramPick(baseName, false);
 
         List<string> candidates;
