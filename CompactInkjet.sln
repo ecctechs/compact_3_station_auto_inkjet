@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InkjetOperator", "InkjetOperator\InkjetOperator.csproj", "{1088FC8B-2763-404F-AEA2-10EBB7ED214D}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "CompactDemo", "CompactDemo\CompactDemo.vdproj", "{B7AE272A-1E00-4F9D-AF2F-6524C13B9575}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,12 @@ Global
 		{1088FC8B-2763-404F-AEA2-10EBB7ED214D}.Release|x64.Build.0 = Release|Any CPU
 		{1088FC8B-2763-404F-AEA2-10EBB7ED214D}.Release|x86.ActiveCfg = Release|Any CPU
 		{1088FC8B-2763-404F-AEA2-10EBB7ED214D}.Release|x86.Build.0 = Release|Any CPU
+		{B7AE272A-1E00-4F9D-AF2F-6524C13B9575}.Debug|Any CPU.ActiveCfg = Debug
+		{B7AE272A-1E00-4F9D-AF2F-6524C13B9575}.Debug|x64.ActiveCfg = Debug
+		{B7AE272A-1E00-4F9D-AF2F-6524C13B9575}.Debug|x86.ActiveCfg = Debug
+		{B7AE272A-1E00-4F9D-AF2F-6524C13B9575}.Release|Any CPU.ActiveCfg = Release
+		{B7AE272A-1E00-4F9D-AF2F-6524C13B9575}.Release|x64.ActiveCfg = Release
+		{B7AE272A-1E00-4F9D-AF2F-6524C13B9575}.Release|x86.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

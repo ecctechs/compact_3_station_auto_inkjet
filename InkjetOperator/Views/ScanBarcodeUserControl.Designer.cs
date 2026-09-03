@@ -173,8 +173,8 @@ partial class ScanBarcodeUserControl
         // 
         tlpOrderInformation.BackColor = Color.White;
         tlpOrderInformation.ColumnCount = 2;
-        tlpOrderInformation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 28F));
-        tlpOrderInformation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 72F));
+        tlpOrderInformation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 23F));
+        tlpOrderInformation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 77F));
         tlpOrderInformation.Controls.Add(lblBarcode, 0, 0);
         tlpOrderInformation.Controls.Add(lblOrderNo, 0, 1);
         tlpOrderInformation.Controls.Add(lblCustomerName, 0, 2);
@@ -271,7 +271,6 @@ partial class ScanBarcodeUserControl
         txtBarcode.Location = new Point(275, 14);
         txtBarcode.Margin = new Padding(4, 14, 4, 14);
         txtBarcode.Name = "txtBarcode";
-        txtBarcode.PlaceholderText = "Scan or type barcode...";
         txtBarcode.Radius = 8;
         txtBarcode.Size = new Size(692, 80);
         txtBarcode.TabIndex = 5;

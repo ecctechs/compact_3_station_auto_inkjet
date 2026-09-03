@@ -219,6 +219,12 @@ partial class MainShellForm
         // 
         // pnlContent
         // 
+        // แต่ละหน้ากำหนด MinimumSize ของตัวเองไว้แล้ว แต่เดิมไม่มีผลเพราะที่วาง
+        // ไม่ได้เปิดการเลื่อน พอหน้าต่างเตี้ยลง (เช่นคีย์บอร์ดสัมผัสเด้งขึ้นมาบน
+        // Panel PC) ทุกอย่างถูกบีบจนช่องกรอกแบนติดกัน
+        //
+        // เปิด AutoScroll แล้วหน้าจะหยุดหดที่ MinimumSize และขึ้นแถบเลื่อนแทน
+        pnlContent.AutoScroll = true;
         pnlContent.BackColor = Color.FromArgb(91, 155, 213);
         pnlContent.Controls.Add(scanBarcodePage);
         pnlContent.Controls.Add(orderListPage);
