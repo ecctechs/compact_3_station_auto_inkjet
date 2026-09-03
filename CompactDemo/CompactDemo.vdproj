@@ -660,7 +660,7 @@
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\win\\lib\\net8.0\\System.IO.Ports.dll"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\win\\lib\\net8.0\\System.IO.Ports.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_A78978ECF51041819E5BC74A4BF20BC6"
@@ -742,7 +742,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_17C0C065FF6047CCA85F35E6194D9652"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\linux-mips64\\native\\libe_sqlite3.so"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\linux-mips64\\native\\libe_sqlite3.so"
             "TargetName" = "8:libe_sqlite3.so"
             "Tag" = "8:"
             "Folder" = "8:_2E069A90781848DC8E257568DC7F8E96"
@@ -773,7 +773,7 @@
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\SQLitePCLRaw.core.dll"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\SQLitePCLRaw.core.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_99FE1913DDBB4999B389F8991F9177F4"
@@ -793,7 +793,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_1B6CA500848B48499EEA85B741ED18C4"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\InkjetOperator.runtimeconfig.json"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\InkjetOperator.runtimeconfig.json"
             "TargetName" = "8:InkjetOperator.runtimeconfig.json"
             "Tag" = "8:"
             "Folder" = "8:_99FE1913DDBB4999B389F8991F9177F4"
@@ -813,7 +813,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_24E6B2167E7A42A081E0805EF4617BED"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\linux-arm64\\native\\libe_sqlite3.so"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\linux-arm64\\native\\libe_sqlite3.so"
             "TargetName" = "8:libe_sqlite3.so"
             "Tag" = "8:"
             "Folder" = "8:_809C7EC489C249D5BD193FCAAD3F09DE"
@@ -833,7 +833,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_278B2BE2663B46A6B2D0FEA64C194790"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\maccatalyst-arm64\\native\\libe_sqlite3.dylib"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\maccatalyst-arm64\\native\\libe_sqlite3.dylib"
             "TargetName" = "8:libe_sqlite3.dylib"
             "Tag" = "8:"
             "Folder" = "8:_52FBEEFDD31049BBBCD0F7D1601CA76B"
@@ -853,7 +853,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_27D7247B38734314800F6D78C29BB872"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\linux-ppc64le\\native\\libe_sqlite3.so"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\linux-ppc64le\\native\\libe_sqlite3.so"
             "TargetName" = "8:libe_sqlite3.so"
             "Tag" = "8:"
             "Folder" = "8:_B2DFC0A2F5814A7BAFCF68396587FD36"
@@ -966,7 +966,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_3A3A24468F334DCEB8C652EFFBB0430A"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\linux-arm64\\native\\libSystem.IO.Ports.Native.so"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\linux-arm64\\native\\libSystem.IO.Ports.Native.so"
             "TargetName" = "8:libSystem.IO.Ports.Native.so"
             "Tag" = "8:"
             "Folder" = "8:_809C7EC489C249D5BD193FCAAD3F09DE"
@@ -1090,7 +1090,7 @@
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\AntdUI.dll"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\AntdUI.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_99FE1913DDBB4999B389F8991F9177F4"
@@ -1121,7 +1121,7 @@
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\SQLitePCLRaw.batteries_v2.dll"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\SQLitePCLRaw.batteries_v2.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_99FE1913DDBB4999B389F8991F9177F4"
@@ -1141,7 +1141,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_4128BC03628E4E31A451C7EC1C8E0A3F"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\win-arm\\native\\e_sqlite3.dll"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\win-arm\\native\\e_sqlite3.dll"
             "TargetName" = "8:e_sqlite3.dll"
             "Tag" = "8:"
             "Folder" = "8:_F98710FA92AD41FAA60E90987182C5D3"
@@ -1161,7 +1161,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_43A940B31F254FA2A1603EFF17A5D0E3"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\osx-arm64\\native\\libSystem.IO.Ports.Native.dylib"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\osx-arm64\\native\\libSystem.IO.Ports.Native.dylib"
             "TargetName" = "8:libSystem.IO.Ports.Native.dylib"
             "Tag" = "8:"
             "Folder" = "8:_8C709A1A323148A798811606270F7105"
@@ -1181,7 +1181,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_4485E78E9B444DE3B82D5D9D6220BD8B"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\browser-wasm\\nativeassets\\net8.0\\e_sqlite3.a"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\browser-wasm\\nativeassets\\net8.0\\e_sqlite3.a"
             "TargetName" = "8:e_sqlite3.a"
             "Tag" = "8:"
             "Folder" = "8:_02164D1B10FF41AEA4E1E7AE083391C9"
@@ -1201,7 +1201,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_4566864C51534A46BDEC672C4C353837"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\osx-x64\\native\\libe_sqlite3.dylib"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\osx-x64\\native\\libe_sqlite3.dylib"
             "TargetName" = "8:libe_sqlite3.dylib"
             "Tag" = "8:"
             "Folder" = "8:_C56530E18FD94C449399DC5C01AD635A"
@@ -1221,7 +1221,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_463DA198DD464317ABC6D97FB5081125"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\win-x86\\native\\e_sqlite3.dll"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\win-x86\\native\\e_sqlite3.dll"
             "TargetName" = "8:e_sqlite3.dll"
             "Tag" = "8:"
             "Folder" = "8:_1419114364634FB6BB9D5FDF8927C681"
@@ -1365,7 +1365,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6C6C7D61E96E401C958C11DCC31BE586"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\linux-x64\\native\\libe_sqlite3.so"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\linux-x64\\native\\libe_sqlite3.so"
             "TargetName" = "8:libe_sqlite3.so"
             "Tag" = "8:"
             "Folder" = "8:_D1B1AEE3EEFA44859041A2DFA5BA1B25"
@@ -1385,7 +1385,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_70B8EE0264FF4DB2B3C1B18E2DD1069F"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\linux-musl-x64\\native\\libe_sqlite3.so"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\linux-musl-x64\\native\\libe_sqlite3.so"
             "TargetName" = "8:libe_sqlite3.so"
             "Tag" = "8:"
             "Folder" = "8:_03FDD029E78449B48308D618B613DA6D"
@@ -1416,7 +1416,7 @@
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\InkjetOperator.dll"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\InkjetOperator.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_99FE1913DDBB4999B389F8991F9177F4"
@@ -1478,7 +1478,7 @@
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\System.IO.Ports.dll"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\System.IO.Ports.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_99FE1913DDBB4999B389F8991F9177F4"
@@ -1498,7 +1498,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_7FF35D8F842C45CA91FCFAFAA2852655"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\InkjetOperator.pdb"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\InkjetOperator.pdb"
             "TargetName" = "8:InkjetOperator.pdb"
             "Tag" = "8:"
             "Folder" = "8:_99FE1913DDBB4999B389F8991F9177F4"
@@ -1518,7 +1518,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_87F0C758DF2F4A1D9501F74BDB2A2417"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\maccatalyst-x64\\native\\libe_sqlite3.dylib"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\maccatalyst-x64\\native\\libe_sqlite3.dylib"
             "TargetName" = "8:libe_sqlite3.dylib"
             "Tag" = "8:"
             "Folder" = "8:_96F861F55E624D7687EAED6D971A6E0E"
@@ -1538,7 +1538,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_8BEA7041117D485999DEFE579650C91F"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\patterns.xml"
+            "SourcePath" = "8:..\\CompactDemo\\DefaultConfig\\patterns.xml"
             "TargetName" = "8:patterns.xml"
             "Tag" = "8:"
             "Folder" = "8:_99FE1913DDBB4999B389F8991F9177F4"
@@ -1558,7 +1558,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_8C7E4DA0C8CF421A9A44BB1766DBD3CC"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\linux-musl-arm\\native\\libe_sqlite3.so"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\linux-musl-arm\\native\\libe_sqlite3.so"
             "TargetName" = "8:libe_sqlite3.so"
             "Tag" = "8:"
             "Folder" = "8:_79BB090973E44F598BE827E654BF9BC5"
@@ -1640,7 +1640,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_9443B04DC516400BA227162797239F4A"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\win-x64\\native\\e_sqlite3.dll"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\win-x64\\native\\e_sqlite3.dll"
             "TargetName" = "8:e_sqlite3.dll"
             "Tag" = "8:"
             "Folder" = "8:_E9C92F789F03411F94D57A104ED9F991"
@@ -1702,7 +1702,7 @@
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\SQLitePCLRaw.provider.e_sqlite3.dll"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\SQLitePCLRaw.provider.e_sqlite3.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_99FE1913DDBB4999B389F8991F9177F4"
@@ -1753,7 +1753,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_9BF4C8323AEA41958517849863DC766C"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\linux-x86\\native\\libe_sqlite3.so"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\linux-x86\\native\\libe_sqlite3.so"
             "TargetName" = "8:libe_sqlite3.so"
             "Tag" = "8:"
             "Folder" = "8:_32914F2940A64D2AB990EE1B739D0220"
@@ -1804,7 +1804,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_A1989C47998C4C8FB057A21CC431C458"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\InkjetOperator.exe"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\InkjetOperator.exe"
             "TargetName" = "8:InkjetOperator.exe"
             "Tag" = "8:"
             "Folder" = "8:_99FE1913DDBB4999B389F8991F9177F4"
@@ -1824,7 +1824,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_A360BD60132645A3B182A5E62E3BFC61"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\win-arm64\\native\\e_sqlite3.dll"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\win-arm64\\native\\e_sqlite3.dll"
             "TargetName" = "8:e_sqlite3.dll"
             "Tag" = "8:"
             "Folder" = "8:_D9EDA93722B0489EA964D58C185F4CE7"
@@ -1844,7 +1844,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_AACEB19B8D31446998490441F81C171B"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\osx-arm64\\native\\libe_sqlite3.dylib"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\osx-arm64\\native\\libe_sqlite3.dylib"
             "TargetName" = "8:libe_sqlite3.dylib"
             "Tag" = "8:"
             "Folder" = "8:_8C709A1A323148A798811606270F7105"
@@ -1895,7 +1895,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_B1F1F3E9C75F4DE984F07A6B41813A3F"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\linux-s390x\\native\\libe_sqlite3.so"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\linux-s390x\\native\\libe_sqlite3.so"
             "TargetName" = "8:libe_sqlite3.so"
             "Tag" = "8:"
             "Folder" = "8:_0D1983B78C144D52857E30CB4DB9999F"
@@ -1915,7 +1915,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_B7E52411105E4A29A59DFC21D8813CDE"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\linux-arm\\native\\libe_sqlite3.so"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\linux-arm\\native\\libe_sqlite3.so"
             "TargetName" = "8:libe_sqlite3.so"
             "Tag" = "8:"
             "Folder" = "8:_59DA5113FB794784A3A9155745E53CBB"
@@ -1966,7 +1966,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_BED537F8EBEE43E9A6AE0054B63B4694"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\linux-x64\\native\\libSystem.IO.Ports.Native.so"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\linux-x64\\native\\libSystem.IO.Ports.Native.so"
             "TargetName" = "8:libSystem.IO.Ports.Native.so"
             "Tag" = "8:"
             "Folder" = "8:_D1B1AEE3EEFA44859041A2DFA5BA1B25"
@@ -1997,7 +1997,7 @@
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\Microsoft.Data.Sqlite.dll"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\Microsoft.Data.Sqlite.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_99FE1913DDBB4999B389F8991F9177F4"
@@ -2048,7 +2048,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D148619EFC314B0796F1BAAAB0B938E2"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\linux-musl-arm64\\native\\libe_sqlite3.so"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\linux-musl-arm64\\native\\libe_sqlite3.so"
             "TargetName" = "8:libe_sqlite3.so"
             "Tag" = "8:"
             "Folder" = "8:_39B7978B8C9A45B5AFCF17AB8C42B490"
@@ -2068,7 +2068,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D4EDE498225A4569A0AF79589D9FB645"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\InkjetOperator.deps.json"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\InkjetOperator.deps.json"
             "TargetName" = "8:InkjetOperator.deps.json"
             "Tag" = "8:"
             "Folder" = "8:_99FE1913DDBB4999B389F8991F9177F4"
@@ -2088,7 +2088,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D5BDF7BFFB1A43A9965F0ADFA9701867"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\osx-x64\\native\\libSystem.IO.Ports.Native.dylib"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\osx-x64\\native\\libSystem.IO.Ports.Native.dylib"
             "TargetName" = "8:libSystem.IO.Ports.Native.dylib"
             "Tag" = "8:"
             "Folder" = "8:_C56530E18FD94C449399DC5C01AD635A"
@@ -2108,7 +2108,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D7E33D126B90455DA103BD02749FF1D6"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\uv.config"
+            "SourcePath" = "8:..\\CompactDemo\\DefaultConfig\\uv.config"
             "TargetName" = "8:uv.config"
             "Tag" = "8:"
             "Folder" = "8:_99FE1913DDBB4999B389F8991F9177F4"
@@ -2128,7 +2128,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_DD6A075D556A410DB1FF9CE664CC87C9"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\linux-armel\\native\\libe_sqlite3.so"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\linux-armel\\native\\libe_sqlite3.so"
             "TargetName" = "8:libe_sqlite3.so"
             "Tag" = "8:"
             "Folder" = "8:_692690C739894CE79FBD8A9CE09F45AF"
@@ -2148,7 +2148,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_E21F7F15E5F94AF1ADD9A6A62E7AA2E3"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\linux-arm\\native\\libSystem.IO.Ports.Native.so"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\linux-arm\\native\\libSystem.IO.Ports.Native.so"
             "TargetName" = "8:libSystem.IO.Ports.Native.so"
             "Tag" = "8:"
             "Folder" = "8:_59DA5113FB794784A3A9155745E53CBB"
@@ -2168,7 +2168,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_E4ACCFFB4F3E4981848E60D497D8D50D"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\Setting.config"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\Setting.config"
             "TargetName" = "8:Setting.config"
             "Tag" = "8:"
             "Folder" = "8:_99FE1913DDBB4999B389F8991F9177F4"
@@ -2199,7 +2199,7 @@
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Debug\\net8.0-windows\\runtimes\\unix\\lib\\net8.0\\System.IO.Ports.dll"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\runtimes\\unix\\lib\\net8.0\\System.IO.Ports.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_3525B1C599C34AF2B687870B7C951A30"
@@ -2801,15 +2801,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:CompactDemo"
-        "ProductCode" = "8:{A2E6859D-F821-46B4-82B0-42A12D9E9796}"
-        "PackageCode" = "8:{0B516936-9454-440E-A257-91E09472FB53}"
+        "ProductCode" = "8:{DD6EE762-CD36-49D8-B545-E2CF81B91336}"
+        "PackageCode" = "8:{ABC30787-3E60-420E-8AF5-9C19DE256E55}"
         "UpgradeCode" = "8:{1B44D53F-6812-450A-9FB8-85584B4CB5B5}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:1.0.3"
+        "ProductVersion" = "8:1.0.5"
         "Manufacturer" = "8:ECCxCOMPACT"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"

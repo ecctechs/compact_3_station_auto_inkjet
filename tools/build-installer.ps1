@@ -1,4 +1,4 @@
-# สร้างไฟล์ติดตั้งจากโค้ดล่าสุด แล้วเก็บไว้ที่ dist\
+﻿# สร้างไฟล์ติดตั้งจากโค้ดล่าสุด แล้วเก็บไว้ที่ dist\
 #
 # ทำ 4 อย่างให้อัตโนมัติ
 #   1. เพิ่มเลขเวอร์ชันขึ้น 1
@@ -68,6 +68,8 @@ $text = $text -replace '"RemovePreviousVersions" = "11:FALSE"', '"RemovePrevious
 Set-Content $vdproj -Value $text -Encoding UTF8 -NoNewline
 Write-Host "      $old  ->  $new" -ForegroundColor Green
 
+$start = Get-Date
+
 # ── build ───────────────────────────────────────────────
 Step 3 'building Release (this takes a few minutes, please wait)'
 
@@ -97,6 +99,12 @@ while (-not (Test-Path $msi) -and $waited -lt 30) {
     $waited++
 }
 if (-not (Test-Path $msi)) { Fail "build succeeded but $msi is missing" }
+
+# ตัวติดตั้งเก็บไว้ที่เดิม ถ้า build ไม่ได้สร้างใหม่ ไฟล์เก่าจะยังอยู่ แล้วจะถูก
+# copy ออกไปเหมือนสำเร็จ เอาไปติดตั้งแล้วจะได้โค้ดเก่าโดยไม่รู้ตัว
+if ((Get-Item $msi).LastWriteTime -lt $start) {
+    Fail "$msi is stale - the build did not produce a new installer"
+}
 
 $out = Join-Path $dist "CompactDemo-$new.msi"
 Copy-Item $msi $out -Force
