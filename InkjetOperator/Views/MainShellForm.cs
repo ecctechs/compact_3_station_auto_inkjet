@@ -57,6 +57,16 @@ public partial class MainShellForm : AntdUI.Window
     /// ใช้ <c>MaxRestore</c> ของ AntdUI เพราะการเซ็ต <see cref="Form.WindowState"/>
     /// ตรง ๆ ไม่ได้อัปเดตธงภายในของไลบรารีและกรอบหน้าต่างจะเพี้ยน
     /// </summary>
+    /// <summary>
+    /// ขยายเต็มจอต้องได้ขนาดจอเต็ม ไม่ใช่แค่พื้นที่ทำงาน
+    /// เหตุผลอยู่ที่ <see cref="FullScreenMaximize"/>
+    /// </summary>
+    protected override void WndProc(ref Message m)
+    {
+        FullScreenMaximize.Handle(ref m);
+        base.WndProc(ref m);
+    }
+
     private void StayMaximized()
     {
         // เช็ค Normal อย่างเดียว — ถ้าเช็ค "ไม่ใช่ Maximized" ตอนผู้ใช้กดพับหน้าจอ

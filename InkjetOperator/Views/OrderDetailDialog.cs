@@ -74,6 +74,16 @@ internal sealed partial class OrderDetailDialog : AntdUI.BorderlessForm
     }
 
     /// <summary>
+    /// ขยายเต็มจอต้องได้ขนาดจอเต็ม ไม่ใช่แค่พื้นที่ทำงาน
+    /// เหตุผลอยู่ที่ <see cref="FullScreenMaximize"/>
+    /// </summary>
+    protected override void WndProc(ref Message m)
+    {
+        FullScreenMaximize.Handle(ref m);
+        base.WndProc(ref m);
+    }
+
+    /// <summary>
     /// Fills the working area.
     /// <para>
     /// Maximises through AntdUI's own <c>MaxRestore</c> rather than assigning
