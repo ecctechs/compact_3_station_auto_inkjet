@@ -63,7 +63,7 @@ public partial class MainShellForm : AntdUI.Window
     /// </summary>
     protected override void WndProc(ref Message m)
     {
-        FullScreenMaximize.Handle(ref m);
+        FullScreenMaximize.Handle(this, ref m);
         base.WndProc(ref m);
     }
 

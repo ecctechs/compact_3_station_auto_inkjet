@@ -79,7 +79,7 @@ internal sealed partial class OrderDetailDialog : AntdUI.BorderlessForm
     /// </summary>
     protected override void WndProc(ref Message m)
     {
-        FullScreenMaximize.Handle(ref m);
+        FullScreenMaximize.Handle(this, ref m);
         base.WndProc(ref m);
     }
 
