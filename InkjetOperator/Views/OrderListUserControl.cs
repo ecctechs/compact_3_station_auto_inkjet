@@ -709,7 +709,7 @@ public partial class OrderListUserControl : UserControl
                 { Radius = 6 });
             }
         }
-        buttons.Add(new AntdUI.CellButton("detail", "", AntdUI.TTypeMini.Primary) { Radius = 6, IconSvg = "SearchOutlined" });
+        buttons.Add(new AntdUI.CellButton("detail", "", AntdUI.TTypeMini.Default) { Radius = 6, IconSvg = "SearchOutlined" });
 
         // End มีความหมายเฉพาะงานที่จบแล้ว — งานที่ยังวิ่งอยู่ updated_at คือเวลาแก้ล่าสุด ไม่ใช่เวลาจบ
         bool finished = string.Equals(job.Status, "Success", StringComparison.OrdinalIgnoreCase);

@@ -56,7 +56,7 @@ partial class SettingUserControl
         tlpSettingRoot.Location = new Point(0, 0);
         tlpSettingRoot.Margin = new Padding(3);
         tlpSettingRoot.Name = "tlpSettingRoot";
-        tlpSettingRoot.Padding = new Padding(32);
+        tlpSettingRoot.Padding = new Padding(16);
         tlpSettingRoot.RowCount = 1;
         tlpSettingRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         tlpSettingRoot.Size = new Size(1100, 860);
@@ -70,7 +70,7 @@ partial class SettingUserControl
         pnlSidebar.Controls.Add(tlpSidebar);
         pnlSidebar.Dock = DockStyle.Fill;
         pnlSidebar.Location = new Point(35, 35);
-        pnlSidebar.Margin = new Padding(3, 3, 8, 3);
+        pnlSidebar.Margin = new Padding(0, 0, 8, 0);
         pnlSidebar.Name = "pnlSidebar";
         pnlSidebar.Radius = 12;
         pnlSidebar.Size = new Size(269, 791);
@@ -187,7 +187,7 @@ partial class SettingUserControl
         pnlContent.Controls.Add(pnlContentArea);
         pnlContent.Dock = DockStyle.Fill;
         pnlContent.Location = new Point(315, 35);
-        pnlContent.Margin = new Padding(3);
+        pnlContent.Margin = new Padding(0);
         pnlContent.Name = "pnlContent";
         pnlContent.Padding = new Padding(8);
         pnlContent.Radius = 12;

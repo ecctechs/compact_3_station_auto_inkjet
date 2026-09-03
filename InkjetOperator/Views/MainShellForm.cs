@@ -29,6 +29,11 @@ public partial class MainShellForm : AntdUI.Window
         titleBar.CloseRequested += (_, _) => Close();
         Resize += (_, _) => StayMaximized();
 
+        // แถบหัวเป็นของเราเอง ไม่ได้ใช้กรอบของ Windows ไอคอนตรงนี้จึงไม่ได้โผล่
+        // ที่มุมหน้าต่าง แต่ไปโผล่ที่แถบงานกับหน้า Alt-Tab
+        // ดึงจากไอคอนของ .exe เองแทนการฝังไฟล์ซ้ำอีกชุด
+        try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
+
         btnLang.Click += (_, _) => ToggleLanguage();
         ApplyLanguage();
     }
@@ -76,6 +81,10 @@ public partial class MainShellForm : AntdUI.Window
 
     private async void MainShellForm_Load(object? sender, EventArgs e)
     {
+        // หน้า Scan Barcode เป็นหน้าแรกของสถานีบาร์โค้ด วางเคอร์เซอร์ให้ตั้งแต่เปิด
+        // โปรแกรม พนักงานจะได้ยิงสแกนเนอร์ได้เลยโดยไม่ต้องแตะจอก่อน
+        if (scanBarcodePage.Visible) scanBarcodePage.FocusBarcode();
+
         var raw = Services.CustomSettingsManager.Read("MENU_LEVEL", "1");
         int.TryParse(raw, out var level);
         if (level <= 1 || level == 9)
@@ -141,6 +150,7 @@ public partial class MainShellForm : AntdUI.Window
     {
         scanBarcodePage.BringToFront();
         SetActiveTab(btnInputOrder);
+        scanBarcodePage.FocusBarcode();
     }
 
     private void btnOrderList_Click(object sender, EventArgs e)

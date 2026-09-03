@@ -49,7 +49,7 @@ partial class TransferListUserControl
         tlpTransferRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpTransferRoot.Location = new System.Drawing.Point(0, 0);
         tlpTransferRoot.Name = "tlpTransferRoot";
-        tlpTransferRoot.Padding = new System.Windows.Forms.Padding(32);
+        tlpTransferRoot.Padding = new System.Windows.Forms.Padding(16);
         tlpTransferRoot.RowCount = 1;
         tlpTransferRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpTransferRoot.Size = new System.Drawing.Size(1375, 1075);
@@ -63,6 +63,7 @@ partial class TransferListUserControl
         pnlTransferContainer.Controls.Add(tlpTransferInner);
         pnlTransferContainer.Dock = System.Windows.Forms.DockStyle.Fill;
         pnlTransferContainer.Location = new System.Drawing.Point(35, 35);
+        pnlTransferContainer.Margin = new System.Windows.Forms.Padding(0);
         pnlTransferContainer.Name = "pnlTransferContainer";
         pnlTransferContainer.Padding = new System.Windows.Forms.Padding(2);
         pnlTransferContainer.Radius = 12;

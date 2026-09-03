@@ -31,7 +31,7 @@ public partial class TransferListUserControl : UserControl
             new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center) { Width = "30%" },
             new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center) { Width = "10%" },
             new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { Width = "10%" },
-            new AntdUI.Column("StStatus", "สถานะ", AntdUI.ColumnAlign.Center) { Width = "15%" },
+            new AntdUI.Column("StStatus", "Status", AntdUI.ColumnAlign.Center) { Width = "15%" },
             new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "15%" },
         };
     }
@@ -166,7 +166,7 @@ public partial class TransferListUserControl : UserControl
         var buttons = new List<AntdUI.CellButton>();
         if (!isSent)
             buttons.Add(new AntdUI.CellButton("send", "ส่ง ST1", AntdUI.TTypeMini.Success) { Radius = 6 });
-        buttons.Add(new AntdUI.CellButton("detail", "", AntdUI.TTypeMini.Primary) { Radius = 6, IconSvg = "SearchOutlined" });
+        buttons.Add(new AntdUI.CellButton("detail", "", AntdUI.TTypeMini.Default) { Radius = 6, IconSvg = "SearchOutlined" });
 
         return new TransferRow
         {

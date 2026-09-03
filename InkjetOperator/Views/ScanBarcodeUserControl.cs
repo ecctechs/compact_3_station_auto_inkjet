@@ -15,6 +15,27 @@ public partial class ScanBarcodeUserControl : UserControl
         btnCancel.Click += BtnCancel_Click;
     }
 
+    /// <summary>
+    /// วางเคอร์เซอร์ไว้ที่ช่องบาร์โค้ด เพื่อให้ยิงสแกนเนอร์ได้เลยโดยไม่ต้องคลิกก่อน
+    /// <para>
+    /// สแกนเนอร์แบบ keyboard wedge พิมพ์ตัวอักษรลงช่องที่กำลังโฟกัสอยู่ ถ้าไม่มี
+    /// ช่องไหนโฟกัส บาร์โค้ดจะหายไปเฉย ๆ หรือไปโผล่ผิดช่อง
+    /// </para>
+    /// <para>
+    /// เลื่อนไปทำทีหลังด้วย BeginInvoke เพราะตอนที่หน้าถูกเรียกให้แสดง คอนโทรล
+    /// อาจยังไม่พร้อมรับโฟกัส สั่งตรง ๆ ตอนนั้นจะไม่มีผล
+    /// </para>
+    /// </summary>
+    public void FocusBarcode()
+    {
+        if (!IsHandleCreated) return;
+        BeginInvoke(() =>
+        {
+            if (IsDisposed || !txtBarcode.Visible) return;
+            txtBarcode.Focus();
+        });
+    }
+
     private (ApiClient api, SqliteDataService sqlite) GetServices()
     {
         var pcIp = CustomSettingsManager.Read("PC_IP", "127.0.0.1");

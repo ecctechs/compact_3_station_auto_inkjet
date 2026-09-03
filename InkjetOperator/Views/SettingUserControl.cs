@@ -171,6 +171,9 @@ public partial class SettingUserControl : UserControl
         // ไม่งั้นหน้าเตี้ยจะยังมี scrollbar ค้างจากหน้าก่อนหน้า
         pnlContentArea.AutoScrollPosition = Point.Empty;
         pnlContentArea.AutoScrollMinSize = new Size(0, page.MinimumSize.Height);
+        // แปลทุกครั้งที่แสดง ไม่ใช่แค่ตอนสร้าง — หน้าที่ถูกสร้างไว้ก่อนสลับภาษา
+        // จะถูกถอดออกจาก control tree ตอนสลับหน้า ทำให้ตอนสลับภาษาแปลไม่ถึง
+        LanguageService.Apply(page);
         pnlContentArea.Controls.Add(page);
     }
 }

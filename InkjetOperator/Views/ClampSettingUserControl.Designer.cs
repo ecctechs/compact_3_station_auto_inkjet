@@ -447,8 +447,9 @@ partial class ClampSettingUserControl
         tblAxes.ColumnFore = System.Drawing.Color.White;
         tblAxes.Dock = System.Windows.Forms.DockStyle.Fill;
         tblAxes.EditMode = AntdUI.TEditMode.Click;
-        tblAxes.EmptyText = "ไม่มีข้อมูลแกน";
+        tblAxes.EmptyText = "No axis data";
         tblAxes.Font = new System.Drawing.Font("Segoe UI", 14F);
+        tblAxes.Margin = new System.Windows.Forms.Padding(0);
         tblAxes.Name = "tblAxes";
         tblAxes.Radius = 8;
         tblAxes.RowHeight = 58;

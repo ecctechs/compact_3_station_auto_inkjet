@@ -80,7 +80,7 @@ partial class OrderListUserControl
         tlpOrderListRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpOrderListRoot.Location = new System.Drawing.Point(0, 0);
         tlpOrderListRoot.Name = "tlpOrderListRoot";
-        tlpOrderListRoot.Padding = new System.Windows.Forms.Padding(32);
+        tlpOrderListRoot.Padding = new System.Windows.Forms.Padding(16);
         tlpOrderListRoot.RowCount = 2;
         tlpOrderListRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpOrderListRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 312F));

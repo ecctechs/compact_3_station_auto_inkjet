@@ -26,6 +26,10 @@
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ApplicationDefaultFont>Segoe UI, 9pt</ApplicationDefaultFont>
 
+    <!-- ไอคอนของ .exe — ไฟล์เดียวเก็บหลายขนาดไว้ 16 ถึง 256 เพราะ Windows
+         หยิบไปใช้คนละขนาดตามที่ ทั้งแถบงาน มุมหน้าต่าง Alt-Tab และในโฟลเดอร์ -->
+    <ApplicationIcon>Resources\app.ico</ApplicationIcon>
+
     <!--
       AntdUI-main\ and NastoKeyence\ are reference checkouts that happen to sit
       inside this project's folder. An SDK-style project globs **/*.cs, so without

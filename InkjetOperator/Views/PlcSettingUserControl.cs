@@ -232,6 +232,14 @@ public partial class PlcSettingUserControl : UserControl
     {
         if (e.Record is not PlcRow row) return;
 
+        // ล็อกอยู่ให้อ่านได้อย่างเดียว การเขียนค่าลง PLC หรือลบแถวต้องปลดล็อกก่อน
+        // เพราะเขียนผิด register เดียวก็กระทบเครื่องจักรที่กำลังเดินอยู่
+        if (!_unlocked && e.Btn?.Id != "read")
+        {
+            Warn("ล็อกอยู่ — กด Unlock ก่อนจึงจะส่งค่าไปที่ PLC ได้");
+            return;
+        }
+
         if (e.Btn?.Id == "del")
         {
             if (row.IsFixed) return;

@@ -77,7 +77,7 @@ partial class EditPatternUserControl
         tlpEditPatternRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpEditPatternRoot.Location = new System.Drawing.Point(0, 0);
         tlpEditPatternRoot.Name = "tlpEditPatternRoot";
-        tlpEditPatternRoot.Padding = new System.Windows.Forms.Padding(32);
+        tlpEditPatternRoot.Padding = new System.Windows.Forms.Padding(16);
         tlpEditPatternRoot.RowCount = 1;
         tlpEditPatternRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpEditPatternRoot.Size = new System.Drawing.Size(1500, 975);
@@ -91,7 +91,7 @@ partial class EditPatternUserControl
         pnlRulesList.Controls.Add(tlpRulesList);
         pnlRulesList.Dock = System.Windows.Forms.DockStyle.Fill;
         pnlRulesList.Location = new System.Drawing.Point(35, 35);
-        pnlRulesList.Margin = new System.Windows.Forms.Padding(3, 3, 19, 3);
+        pnlRulesList.Margin = new System.Windows.Forms.Padding(0, 0, 16, 0);
         pnlRulesList.Name = "pnlRulesList";
         pnlRulesList.Padding = new System.Windows.Forms.Padding(16);
         pnlRulesList.Radius = 16;
@@ -183,7 +183,7 @@ partial class EditPatternUserControl
         pnlRuleDetail.Controls.Add(tlpRuleDetail);
         pnlRuleDetail.Dock = System.Windows.Forms.DockStyle.Fill;
         pnlRuleDetail.Location = new System.Drawing.Point(323, 35);
-        pnlRuleDetail.Margin = new System.Windows.Forms.Padding(3);
+        pnlRuleDetail.Margin = new System.Windows.Forms.Padding(0);
         pnlRuleDetail.Name = "pnlRuleDetail";
         pnlRuleDetail.Padding = new System.Windows.Forms.Padding(24);
         pnlRuleDetail.Radius = 16;

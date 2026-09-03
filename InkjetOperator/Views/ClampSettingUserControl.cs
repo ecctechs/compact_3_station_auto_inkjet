@@ -43,15 +43,15 @@ public partial class ClampSettingUserControl : UserControl
     {
         tblAxes.Columns =
         [
-            new AntdUI.Column("Axis", "แกน", AntdUI.ColumnAlign.Center) { Width = "110" },
-            new AntdUI.Column("Column", "คอลัมน์ DB", AntdUI.ColumnAlign.Center) { Width = "100" },
-            new AntdUI.Column("ValueMm", "ค่า (mm)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "90" },
-            new AntdUI.Column("AddrTarget", "Target (D)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "100" },
-            new AntdUI.Column("AddrRun", "Run (M)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "100" },
-            new AntdUI.Column("AddrReset", "Reset (M)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "100" },
-            new AntdUI.Column("AddrStatus", "Status", AntdUI.ColumnAlign.Center) { Editable = true, Width = "90" },
-            new AntdUI.Column("Raw", "ค่าที่เขียน", AntdUI.ColumnAlign.Center) { Width = "100" },
-            new AntdUI.Column("Op", "คำสั่ง", AntdUI.ColumnAlign.Center) { Width = "230" },
+            new AntdUI.Column("Axis", "Axis", AntdUI.ColumnAlign.Center) { Width = "11%" },
+            new AntdUI.Column("Column", "DB Column", AntdUI.ColumnAlign.Center) { Width = "10%" },
+            new AntdUI.Column("ValueMm", "Value (mm)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "9%" },
+            new AntdUI.Column("AddrTarget", "Target (D)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "10%" },
+            new AntdUI.Column("AddrRun", "Run (M)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "10%" },
+            new AntdUI.Column("AddrReset", "Reset (M)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "10%" },
+            new AntdUI.Column("AddrStatus", "Status", AntdUI.ColumnAlign.Center) { Editable = true, Width = "9%" },
+            new AntdUI.Column("Raw", "Raw", AntdUI.ColumnAlign.Center) { Width = "9%" },
+            new AntdUI.Column("Op", "Action", AntdUI.ColumnAlign.Center) { Width = "22%" },
         ];
     }
 
@@ -110,9 +110,9 @@ public partial class ClampSettingUserControl : UserControl
     /// </summary>
     private static AntdUI.CellButton[] NewButtons() =>
     [
-        new AntdUI.CellButton("read", "อ่าน", AntdUI.TTypeMini.Default) { Radius = 6 },
-        new AntdUI.CellButton("apply", "สั่ง", AntdUI.TTypeMini.Primary) { Radius = 6 },
-        new AntdUI.CellButton("reset", "Reset", AntdUI.TTypeMini.Primary) { Radius = 6 },
+        new AntdUI.CellButton("read", "Read", AntdUI.TTypeMini.Default) { Radius = 6 },
+        new AntdUI.CellButton("apply", "Write", AntdUI.TTypeMini.Primary) { Radius = 6 },
+        new AntdUI.CellButton("reset", "Reset", AntdUI.TTypeMini.Warn) { Radius = 6 },
     ];
 
     private void RebindTable()
@@ -517,6 +517,14 @@ public partial class ClampSettingUserControl : UserControl
 
     private async void TblAxes_CellButtonClick(object? sender, AntdUI.TableButtonEventArgs e)
     {
+        // ล็อกอยู่ให้อ่านได้อย่างเดียว สั่งแกนวิ่งหรือรีเซ็ตต้องปลดล็อกก่อน
+        if (!_unlocked && e.Btn?.Id != "read")
+        {
+            Notify.WarnModal(this, "ล็อกอยู่",
+                "กด Unlock ก่อนจึงจะสั่งงานแคลมป์ได้");
+            return;
+        }
+
         if (e.Record is not AxisRow row) return;
 
         // "อ่าน" ไม่ทำให้เครื่องขยับ จึงใช้ได้ตอนล็อก ส่วน "สั่ง"/"Reset" ต้องปลดล็อกก่อน

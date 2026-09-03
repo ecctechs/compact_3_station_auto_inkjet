@@ -72,7 +72,7 @@ partial class ScanBarcodeUserControl
         tlpScanBarcodeRoot.Location = new Point(0, 0);
         tlpScanBarcodeRoot.Margin = new Padding(4, 4, 4, 4);
         tlpScanBarcodeRoot.Name = "tlpScanBarcodeRoot";
-        tlpScanBarcodeRoot.Padding = new Padding(60, 60, 60, 60);
+        tlpScanBarcodeRoot.Padding = new Padding(24, 24, 24, 24);
         tlpScanBarcodeRoot.RowCount = 4;
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 12F));
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 28F));
