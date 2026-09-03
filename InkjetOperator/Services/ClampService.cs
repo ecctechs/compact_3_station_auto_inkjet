@@ -179,7 +179,7 @@ public static class ClampService
 
         try
         {
-            using var conn = new SqliteConnection($"Data Source={dbPath};Mode=ReadOnly");
+            using var conn = new SqliteConnection(SqlitePath.ReadOnly(dbPath));
             conn.Open();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = "PRAGMA table_info(MainTable)";
@@ -211,7 +211,7 @@ public static class ClampService
 
         try
         {
-            using var conn = new SqliteConnection($"Data Source={dbPath};Mode=ReadOnly");
+            using var conn = new SqliteConnection(SqlitePath.ReadOnly(dbPath));
             conn.Open();
 
             using var cmd = conn.CreateCommand();
@@ -262,7 +262,7 @@ public static class ClampService
 
         try
         {
-            using var conn = new SqliteConnection($"Data Source={dbPath}");
+            using var conn = new SqliteConnection(SqlitePath.ReadWrite(dbPath));
             conn.Open();
 
             using var cmd = conn.CreateCommand();

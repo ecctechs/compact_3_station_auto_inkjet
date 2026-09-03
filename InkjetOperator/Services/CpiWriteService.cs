@@ -10,12 +10,7 @@ public static class CpiWriteService
     {
         try
         {
-            var connPath = dbPath.StartsWith(@"\\")
-                ? dbPath.Replace(@"\", "/")
-                : dbPath;
-
-            var connStr = $"Data Source={connPath};Mode=ReadWrite";
-            await using var conn = new SqliteConnection(connStr);
+            await using var conn = new SqliteConnection(SqlitePath.ReadWrite(dbPath));
             await conn.OpenAsync();
 
             await using var pragma = conn.CreateCommand();
@@ -76,9 +71,7 @@ public static class CpiWriteService
     {
         try
         {
-            var connPath = dbPath.StartsWith(@"\\") ? dbPath.Replace(@"\", "/") : dbPath;
-
-            await using var conn = new SqliteConnection($"Data Source={connPath};Mode=ReadOnly");
+            await using var conn = new SqliteConnection(SqlitePath.ReadOnly(dbPath));
             await conn.OpenAsync();
 
             var cols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

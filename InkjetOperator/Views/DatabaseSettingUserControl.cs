@@ -203,7 +203,7 @@ public partial class DatabaseSettingUserControl : UserControl
     {
         try
         {
-            using var conn = new SqliteConnection($"Data Source={dbPath};Mode=ReadOnly");
+            using var conn = new SqliteConnection(SqlitePath.ReadOnly(dbPath));
             conn.Open();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name=@t";

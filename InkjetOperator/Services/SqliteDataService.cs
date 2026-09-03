@@ -206,7 +206,7 @@ public class SqliteDataService
 
     private SqliteConnection Open()
     {
-        var conn = new SqliteConnection($"Data Source={_dbPath};Mode=ReadOnly");
+        var conn = new SqliteConnection(SqlitePath.ReadOnly(_dbPath));
         conn.Open();
         return conn;
     }
