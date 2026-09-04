@@ -33,30 +33,43 @@ public partial class OrderListUserControl : UserControl
         // (ถ้าไม่กำหนด Width เลย AntdUI จะวัดจากหัวตารางให้ ซึ่งเปลี่ยนตามภาษา)
         tblOrders.Columns = new AntdUI.ColumnCollection
         {
-            new AntdUI.Column("Start", "Start", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true },
-            new AntdUI.Column("End", "End", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true },
-            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center) { Width = "11%", SortOrder = true },
-            new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center) { Width = "10%", SortOrder = true },
-            new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center) { Width = "5%", SortOrder = true },
-            new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { Width = "5%", SortOrder = true },
-            new AntdUI.Column("Method", "Method", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true },
-            new AntdUI.Column("Plate", "Plate", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true },
-            new AntdUI.Column("Shim", "Shim", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true },
-            new AntdUI.Column("Station", "Station", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true },
-            new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true },
+            new AntdUI.Column("Start", "Start", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("End", "End", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center) { Width = "11%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center) { Width = "10%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center) { Width = "5%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { Width = "5%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Method", "Method", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Plate", "Plate", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Shim", "Shim", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Station", "Station", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Source", "", AntdUI.ColumnAlign.Center) { Width = "5%" },
             new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "12%" },
         };
 
-        // AntdUI sizes the header sort arrows at 60% of the header text height, which
-        // with this 14pt bold font comes out large enough to crowd the title. Pin a
-        // smaller size that is still easy to read across the room.
+        // ColBreak above is what centres the titles, and it is not obvious why.
         //
-        // Note: AntdUI always reserves space on the right of a sortable header for the
-        // arrow, and it derives that space from the text height rather than from
-        // SortOrderSize. The title is therefore centred inside what is left of the
-        // cell, not inside the whole column. That cannot be changed from outside the
-        // library - a smaller arrow is as close as this gets.
+        // A sortable header normally reserves a strip on its right for the sort arrow
+        // (SFWidth, derived from the text height - SortOrderSize does not change it),
+        // and AntdUI centres the title inside what is left of the cell rather than
+        // inside the whole cell. Every title therefore sat about half an arrow-width
+        // left of centre.
+        //
+        // With ColBreak set AND a percentage Width, AntdUI measures the header against
+        // the column width and returns early, leaving SFWidth at 0 - so the title is
+        // centred across the full cell while the arrow is still drawn. The trade-off is
+        // that a title too wide for its column now wraps (mid-word) instead of forcing
+        // the column wider. "Method" is the first to go: measured on this table it
+        // wraps once the table falls below roughly 1600px at 100% scaling (1.6x that
+        // at 150%). Full screen on the panel PC leaves about 8% of headroom, so widen
+        // Method/Station before shrinking any column.
+        //
+        // Both parts are required: dropping either ColBreak or the % Width brings the
+        // off-centre title back.
+
+        // Sort arrows default to 60% of the header text height, which at 14pt bold
+        // crowds the title. Pin a smaller size that is still easy to read across the room.
         tblOrders.SortOrderSize = 12;
     }
 
