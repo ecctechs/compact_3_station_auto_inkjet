@@ -31,21 +31,27 @@ public partial class OrderListUserControl : UserControl
         // ความกว้างเป็น % ของตาราง รวมกันพอดี 100 — ทุกคอลัมน์แบ่งพื้นที่ตามสัดส่วน
         // ไม่มีช่องว่างเหลือ และไม่ขยับตอนสลับภาษาเพราะไม่ได้วัดจากข้อความหัวตาราง
         // (ถ้าไม่กำหนด Width เลย AntdUI จะวัดจากหัวตารางให้ ซึ่งเปลี่ยนตามภาษา)
+        //
+        // ตัวเลข % เกลี่ยจากระยะห่างระหว่างข้อความหัวตารางกับลูกศร sort ที่ชิดขวา
+        // ให้ทุกคอลัมน์ห่างพอ ๆ กัน ไม่ใช่บีบจนลูกศรติดตัวหนังสือบางคอลัมน์
+        // ทุกคอลัมน์ยังกว้างกว่าข้อมูลที่ยาวที่สุดของตัวเอง — Start/End ถูกล็อกด้วย
+        // ความยาวของวันเวลา ("27/08/26 12:04" = 123px + ขอบ 24px) ต่ำกว่า 9% ไม่ได้
+        // เกลี่ยใหม่เมื่อไหร่ต้องเช็คสองอย่างนี้พร้อมกัน ทั้งข้อมูลล้นและระยะลูกศร
         tblOrders.Columns = new AntdUI.ColumnCollection
         {
             new AntdUI.Column("Start", "Start", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("End", "End", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center) { Width = "11%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center) { Width = "10%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center) { Width = "5%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { Width = "5%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("Method", "Method", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Method", "Method", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Plate", "Plate", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Shim", "Shim", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("Station", "Station", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("Source", "", AntdUI.ColumnAlign.Center) { Width = "5%" },
-            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "12%" },
+            new AntdUI.Column("Station", "Station", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Source", "", AntdUI.ColumnAlign.Center) { Width = "6%" },
+            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "9%" },
         };
 
         // ColBreak above is what centres the titles, and it is not obvious why.
@@ -60,10 +66,11 @@ public partial class OrderListUserControl : UserControl
         // the column width and returns early, leaving SFWidth at 0 - so the title is
         // centred across the full cell while the arrow is still drawn. The trade-off is
         // that a title too wide for its column now wraps (mid-word) instead of forcing
-        // the column wider. "Method" is the first to go: measured on this table it
-        // wraps once the table falls below roughly 1600px at 100% scaling (1.6x that
-        // at 150%). Full screen on the panel PC leaves about 8% of headroom, so widen
-        // Method/Station before shrinking any column.
+        // the column wider. "Order No." is the first to go, once the table falls below
+        // roughly 1260px at 100% scaling (1.6x that at 150%) - full screen on the panel
+        // PC is about 1660px, so there is room to spare. Any column narrowed from here
+        // has to be checked against that: needed width = title width + 24px, divided by
+        // the column's share.
         //
         // Both parts are required: dropping either ColBreak or the % Width brings the
         // off-centre title back.
