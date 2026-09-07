@@ -157,7 +157,11 @@ public partial class OrderDetailUserControl : UserControl
             if (chosen != null) _chosenUvProgram[machine] = chosen;
         }
 
-        lblHeaderTitle.Text = $"Job Information — Job #{resolved.Job.Id}";
+        // วันที่รับงานต่อท้ายเลข job — เลข order เดียวกันวิ่งซ้ำได้หลายวัน
+        // เปิดดูงานเก่าจึงต้องบอกได้ทันทีว่ากำลังดูของวันไหน
+        var jobDate = ThaiTime.Text(resolved.Job.CreatedAt, ThaiTime.DateFormat, "");
+        lblHeaderTitle.Text = $"Job Information — Job #{resolved.Job.Id}"
+            + (jobDate.Length == 0 ? "" : $"  ·  {jobDate}");
 
         // โชว์ address ที่ค่าแต่ละช่องจะถูกส่งไป ดึงจากตาราง register map ของ
         // หน้า PLC Setting ไม่ได้ให้รอ เพราะแค่ป้ายกำกับ ไม่ควรหน่วงการเปิดหน้า

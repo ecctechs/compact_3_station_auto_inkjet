@@ -377,6 +377,51 @@ public partial class OrderListUserControl : UserControl
         {
             await CancelJobAsync(row.Id, row.OrderNo);
         }
+        else if (e.Btn?.Id == "restore")
+        {
+            await RestoreJobAsync(row.Id, row.OrderNo);
+        }
+    }
+
+    /// <summary>งานที่ถูกยกเลิก — แยกจากงานที่จบแล้ว ทั้งที่อยู่แท็บ History เหมือนกัน</summary>
+    private static bool IsCancelled(PrintJob job) =>
+        string.Equals(job.Status, "Cancel", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// เอางานที่ยกเลิกไว้กลับมาพิมพ์ใหม่ — สถานะกลับเป็น Waiting งานจึงกลับไป
+    /// อยู่ในแท็บ List ให้กดเริ่มงานได้ตามปกติ
+    ///
+    /// ไม่ได้สร้าง job ใหม่โดยตั้งใจ — เลข job, pattern, ข้อมูล UV และระยะแคลมป์
+    /// ยังเป็นชุดเดิมทั้งหมด ไม่ต้องสแกนบาร์โค้ดซ้ำ และประวัติการส่งของรอบก่อน
+    /// ยังอยู่ครบใน print_job_commands ให้ย้อนดูได้ว่าเคยพิมพ์อะไรไปแล้วบ้าง
+    /// </summary>
+    private async Task RestoreJobAsync(int jobId, string orderNo)
+    {
+        if (_api == null) return;
+
+        var order = string.IsNullOrWhiteSpace(orderNo) ? "" : $" ({orderNo})";
+        if (!Confirm.Ask(this, "ยืนยันนำกลับมาพิมพ์ใหม่",
+                $"Job #{jobId}{order}\n\n"
+                + "งานจะกลับไปอยู่ในรายการงาน รอกดเริ่มงานอีกครั้ง\n\n"
+                + "ยืนยันหรือไม่?"))
+            return;
+
+        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Waiting");
+        if (IsDisposed) return;
+
+        if (!ok)
+        {
+            Notify.ErrorModal(this, "นำกลับมาไม่สำเร็จ", err ?? "ไม่สามารถเปลี่ยนสถานะได้");
+            return;
+        }
+
+        // ล้างคำขอ/ข้อความผิดพลาดที่ค้างจากรอบก่อน ไม่งั้น ST1 อาจหยิบธงเก่าไปส่งทันที
+        // ที่งานกลับมาเป็น Waiting ทั้งที่ยังไม่มีใครกดเริ่มงานรอบใหม่
+        await _api.SetRemoteStartAsync(jobId, requested: false);
+        if (IsDisposed) return;
+
+        Notify.Success(this, $"Job #{jobId} กลับไปอยู่ในรายการงานแล้ว");
+        await RefreshDataAsync(force: true);
     }
 
     // ── ยกเลิกงาน ──────────────────────────────────────────
@@ -402,15 +447,19 @@ public partial class OrderListUserControl : UserControl
         var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Cancel");
         if (IsDisposed) return;
 
-        if (ok)
-        {
-            Notify.Success(this, $"ยกเลิก Job #{jobId} แล้ว");
-            await RefreshDataAsync(force: true);
-        }
-        else
+        if (!ok)
         {
             Notify.ErrorModal(this, "ยกเลิกงานไม่สำเร็จ", err ?? "ไม่สามารถบันทึกสถานะยกเลิกได้");
+            return;
         }
+
+        // ยกเลิกตอนที่ ST3 ฝากคำขอค้างไว้ ธงต้องหายไปด้วย ไม่งั้นมันจะค้างอยู่กับงาน
+        // ข้ามไปถึงตอนที่งานถูกนำกลับมาพิมพ์ใหม่
+        await _api.SetRemoteStartAsync(jobId, requested: false);
+        if (IsDisposed) return;
+
+        Notify.Success(this, $"ยกเลิก Job #{jobId} แล้ว");
+        await RefreshDataAsync(force: true);
     }
 
     // ── เริ่มงาน ────────────────────────────────────────────
@@ -731,6 +780,14 @@ public partial class OrderListUserControl : UserControl
         var resolved = await _api!.GetResolvedJobAsync(jobId);
         if (resolved == null) return;   // อ่านไม่ได้ = คงธงไว้ให้รอบหน้าลองใหม่
 
+        // งานต้องยังเดินอยู่จริงถึงจะส่งได้ — ระหว่างที่คำขอรออยู่ อาจมีคนกดยกเลิกงาน
+        // หรือจบงานไปแล้ว ถ้าไม่ดักตรงนี้ ธงที่ค้างจะสั่งพิมพ์งานที่ถูกยกเลิกไปแล้ว
+        if (!string.Equals(resolved.Job.Status, "Process", StringComparison.OrdinalIgnoreCase))
+        {
+            await _api.SetRemoteStartAsync(jobId, requested: false);
+            return;
+        }
+
         var plan = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod);
         var step = plan.Steps.FirstOrDefault();
 
@@ -938,55 +995,16 @@ public partial class OrderListUserControl : UserControl
 
     // ── เวลา ───────────────────────────────────────────────
 
-    /// <summary>
-    /// รูปแบบเวลาในตาราง — สั้นพอให้อยู่ในคอลัมน์เดียว และใช้แกะกลับตอนเรียง
-    /// ปีเป็น ค.ศ. 2 หลัก ตรงกับปฏิทินของตัวกรองวันที่ ไม่ใช่ปี พ.ศ.
-    /// </summary>
-    private const string TimeFormat = "dd/MM/yy HH:mm";
+    // การแปลงเวลาไทยทั้งหมดอยู่ที่ ThaiTime — หน้านี้กับหัวหน้า Order Detail
+    // ต้องบอกวันเดียวกันของงานเดียวกัน จึงต้องใช้ตัวแปลงตัวเดียวกัน
+    private const string TimeFormat = ThaiTime.Format;
 
     private const string Dash = "-";
 
-    /// <summary>
-    /// เครื่องหน้างานอาจตั้ง time zone ไว้ไม่ตรง จึงยึดเวลาไทยตายตัว ไม่ใช้เวลาเครื่อง
-    /// ชื่อโซนบน Windows กับ Linux คนละแบบ ถ้าหาไม่เจอทั้งคู่ค่อยใช้ UTC+7 ตรง ๆ
-    /// </summary>
-    private static readonly TimeZoneInfo ThaiTimeZone = ResolveThaiTimeZone();
-
-    private static TimeZoneInfo ResolveThaiTimeZone()
-    {
-        foreach (var id in new[] { "SE Asia Standard Time", "Asia/Bangkok" })
-        {
-            try { return TimeZoneInfo.FindSystemTimeZoneById(id); }
-            catch (TimeZoneNotFoundException) { }
-            catch (InvalidTimeZoneException) { }
-        }
-        return TimeZoneInfo.CreateCustomTimeZone("ICT", TimeSpan.FromHours(7), "ICT", "ICT");
-    }
-
     /// <summary>เวลาไทย → UTC สำหรับส่งเป็นเงื่อนไขให้ backend</summary>
-    private static DateTime ToUtcFromThai(DateTime thai) =>
-        TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(thai, DateTimeKind.Unspecified), ThaiTimeZone);
+    private static DateTime ToUtcFromThai(DateTime thai) => ThaiTime.ToUtc(thai);
 
-    /// <summary>UTC ที่ backend ส่งมา → เวลาไทย</summary>
-    private static DateTime? ToThaiTime(DateTime? utc)
-    {
-        if (utc == null) return null;
-
-        var value = utc.Value;
-        if (value.Kind == DateTimeKind.Unspecified)
-            value = DateTime.SpecifyKind(value, DateTimeKind.Utc);
-
-        return TimeZoneInfo.ConvertTimeFromUtc(value.ToUniversalTime(), ThaiTimeZone);
-    }
-
-    /// <summary>
-    /// ใช้ InvariantCulture เสมอ — เครื่องหน้างานตั้งเป็น th-TH ซึ่งจะให้ปี พ.ศ.
-    /// ทำให้คอลัมน์ยาวขึ้นและแกะกลับตอนเรียงไม่ได้
-    /// </summary>
-    private static string FormatThaiTime(DateTime? utc) =>
-        ToThaiTime(utc) is { } t
-            ? t.ToString(TimeFormat, System.Globalization.CultureInfo.InvariantCulture)
-            : Dash;
+    private static string FormatThaiTime(DateTime? utc) => ThaiTime.Text(utc, TimeFormat, Dash);
 
     /// <summary>
     /// ตัวเทียบของ AntdUI ได้มาแค่ข้อความในเซลล์ ถ้าทั้งคู่เป็นเวลาก็เทียบเป็นเวลา
@@ -1099,6 +1117,13 @@ public partial class OrderListUserControl : UserControl
             // ของงานที่ยกเลิกหน้างานแล้วไม่ควรค้างอยู่ในตารางให้คนอื่นสับสน
             buttons.Add(new AntdUI.CellButton("cancel", "", AntdUI.TTypeMini.Error)
             { Radius = 6, IconSvg = "CloseOutlined" });
+        }
+        else if (IsCancelled(job))
+        {
+            // งานที่ยกเลิกไปแล้วยังเอากลับมาพิมพ์ใหม่ได้ ต่างจากงานที่จบไปแล้วจริง ๆ
+            // ซึ่งไม่มีปุ่มนี้ — เพราะการยกเลิกคือ "ไม่ได้ทำ" ไม่ใช่ "ทำเสร็จแล้ว"
+            buttons.Add(new AntdUI.CellButton("restore", "พิมพ์ใหม่", AntdUI.TTypeMini.Primary)
+            { Radius = 6 });
         }
         buttons.Add(new AntdUI.CellButton("detail", "", AntdUI.TTypeMini.Default) { Radius = 6, IconSvg = "SearchOutlined" });
 
