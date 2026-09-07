@@ -14,6 +14,15 @@ const PrintJob = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    // เลขงานประจำวัน เริ่มที่ 1 ใหม่ทุกเที่ยงคืนเวลาไทย — ไม่ใช่ id ของตาราง
+    // job_date คือวันตามเวลาไทยที่รับงาน เก็บแยกไว้เพราะ created_at เป็น UTC
+    // งานที่รับตอนตี 1 ไทยจะเป็นวันก่อนหน้าใน UTC ถ้าคิดจาก created_at ตรง ๆ จะข้ามวันผิด
+    job_no: {
+      type: DataTypes.INTEGER,
+    },
+    job_date: {
+      type: DataTypes.DATEONLY,
+    },
     order_no: {
       type: DataTypes.STRING,
     },

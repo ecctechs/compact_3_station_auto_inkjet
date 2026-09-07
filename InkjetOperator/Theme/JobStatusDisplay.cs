@@ -19,8 +19,14 @@ internal static class JobStatusDisplay
             return ("Finished", DesignTokens.SuccessText);
         if (string.Equals(status, "Waiting", StringComparison.OrdinalIgnoreCase))
             return ("Waiting", DesignTokens.Danger);
+        // เทาจาง — งานที่ยกเลิกไม่ใช่ทั้งความผิดพลาด (แดง) และไม่ใช่ผลสำเร็จ (เขียว)
+        // มันคืองานที่ "ไม่ได้ทำ" จึงต้องอ่านออกแต่ถอยไปอยู่หลังงานที่ยังมีชีวิตอยู่
+        //
+        // ใช้ TextMuted ที่แปลว่า disabled อยู่แล้ว ไม่ใช่ TextSecondary ซึ่งเป็นสีของ
+        // ป้ายและข้อความทั่วไป — สีนั้นทำให้ Cancelled ดูเหมือนข้อความธรรมดาไม่ใช่สถานะ
+        // และไม่ใช่ Inactive (#B0B0B0) ที่จางเกินจนอ่านจากระยะไกลไม่ออก
         if (string.Equals(status, "Cancel", StringComparison.OrdinalIgnoreCase))
-            return ("Cancelled", DesignTokens.TextSecondary);
+            return ("Cancelled", DesignTokens.TextMuted);
 
         // สถานะนอกเหนือจาก 3 แบบถูกกรองออกไปแล้ว โชว์ค่าดิบไว้กันงงถ้าหลุดมา
         return (status ?? "", DesignTokens.Danger);

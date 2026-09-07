@@ -1,4 +1,5 @@
 const { Op } = require("sequelize");
+const sequelize = require("../database");
 const ResponseManager = require("../middleware/ResponseManager");
 const { PrintJob, PrintJobCommand } = require("../model/jobModel");
 const {
@@ -22,6 +23,10 @@ const PATTERN_INCLUDE = [
   { model: ServoConfig, as: "servo_configs" },
 ];
 
+// วันที่ "วันนี้" ตามเวลาไทย — เครื่อง server ตั้ง time zone ไว้ยังไงก็ได้ค่าเดียวกัน
+// ใช้ตัวเดียวกันทั้งตอนอ่านเลขล่าสุดและตอนเขียน job_date จะได้ไม่มีทางคนละวันกัน
+const THAI_TODAY = "(now() AT TIME ZONE 'Asia/Bangkok')::date";
+
 class JobController {
   /**
    * POST /job/create
@@ -32,16 +37,41 @@ class JobController {
       const { barcode_raw, created_by, order_no, customer_name, type, qty, st_status } =
         req.body;
 
-      const job = await PrintJob.create({
-        barcode_raw,
-        lot_number: barcode_raw,
-        pattern_no_erp: barcode_raw,
-        order_no,
-        customer_name,
-        type,
-        qty,
-        created_by,
-        st_status: st_status || "0",
+      // เลขงานประจำวันต้องไม่ซ้ำกัน สองคนสแกนพร้อมกันแล้วอ่าน MAX ได้เลขเดียวกันไม่ได้
+      // advisory lock กันไว้ทั้งการอ่านเลขและการ insert ให้เป็นคิวเดียว
+      // ปลดเองตอน transaction จบ ไม่ว่าจะ commit หรือ rollback
+      const job = await sequelize.transaction(async (t) => {
+        await sequelize.query(
+          "SELECT pg_advisory_xact_lock(hashtext('print_jobs_job_no'))",
+          { transaction: t }
+        );
+
+        // คืนวันที่เป็นข้อความ 'YYYY-MM-DD' ไม่ใช่ชนิด date — ถ้าปล่อยเป็น date
+        // ไดรเวอร์จะแปลงเป็น JS Date ตาม time zone ของ node แล้ววันอาจเลื่อนไปหนึ่งวัน
+        const [[{ job_date, next_no }]] = await sequelize.query(
+          `SELECT to_char(${THAI_TODAY}, 'YYYY-MM-DD') AS job_date,
+                  COALESCE(MAX(job_no), 0) + 1 AS next_no
+             FROM print_jobs
+            WHERE job_date = ${THAI_TODAY}`,
+          { transaction: t }
+        );
+
+        return PrintJob.create(
+          {
+            barcode_raw,
+            lot_number: barcode_raw,
+            pattern_no_erp: barcode_raw,
+            job_no: Number(next_no),
+            job_date,
+            order_no,
+            customer_name,
+            type,
+            qty,
+            created_by,
+            st_status: st_status || "0",
+          },
+          { transaction: t }
+        );
       });
 
       return ResponseManager.SuccessResponse(req, res, 201, job);

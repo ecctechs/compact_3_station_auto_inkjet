@@ -1,5 +1,6 @@
 const ResponseManager = require("../middleware/ResponseManager");
 const { IaiClampSetting } = require("../model/iaiSettingModel");
+const { PrintJob } = require("../model/jobModel");
 
 // ค่าที่หาไม่เจอเก็บเป็น null ไม่ใช่ 0 — 0 mm เป็นระยะที่ใช้ได้จริง
 // ถ้าเก็บ 0 แทน "ไม่มีค่า" จะแยกไม่ออกว่ายังไม่ได้ setup หรือ setup ไว้ที่ 0 พอดี
@@ -108,10 +109,29 @@ class IaiController {
    * POST /iai/update/:jobId
    * body: { iai } หรือ { iaip } — ใช้ตอน operator ปรับระยะแล้วกด Upload
    * ส่งฟิลด์ไหนมาเขียนเฉพาะฟิลด์นั้น ไม่ทับค่าที่ไม่ได้ส่ง
+   *
+   * รับเฉพาะงานที่เริ่มไปแล้ว (status = Process) — ระยะแคลมป์เป็นค่าที่ผูกกับ
+   * ชิ้นงานที่อยู่ที่เครื่องตอนนั้น งานที่ยังไม่เริ่มจึงไม่มีอะไรให้ปรับ
+   * ด่านนี้อยู่ฝั่ง server เพราะหน้าจอกันได้แค่ปุ่ม แต่ API ยิงตรงได้เสมอ
    */
   static async update(req, res) {
     try {
       const jobId = Number(req.params.jobId);
+
+      const job = await PrintJob.findByPk(jobId);
+      if (!job) {
+        return ResponseManager.ErrorResponse(req, res, 404, `ไม่พบ job ${jobId}`);
+      }
+
+      if (String(job.status).toLowerCase() !== "process") {
+        return ResponseManager.ErrorResponse(
+          req,
+          res,
+          409,
+          `job ${jobId} ยังไม่ได้เริ่มงาน (สถานะ ${job.status}) — ส่งค่า IAI ไม่ได้`
+        );
+      }
+
       const row = await IaiClampSetting.findOne({
         where: { print_jobs_id: jobId },
       });

@@ -39,6 +39,17 @@ public class PrintJob
     [JsonPropertyName("pattern_no_erp")]
     public string? PatternNoErp { get; set; }
 
+    /// <summary>
+    /// เลขงานประจำวัน เริ่มที่ 1 ใหม่ทุกเที่ยงคืนเวลาไทย — ไม่ใช่ <see cref="Id"/>
+    /// งานเก่าที่รับก่อนมีคอลัมน์นี้อาจเป็น null
+    /// </summary>
+    [JsonPropertyName("job_no")]
+    public int? JobNo { get; set; }
+
+    /// <summary>วันตามเวลาไทยที่รับงาน — คู่กับ <see cref="JobNo"/> ถึงจะระบุงานได้</summary>
+    [JsonPropertyName("job_date")]
+    public string? JobDate { get; set; }
+
     [JsonPropertyName("order_no")]
     public string? OrderNo { get; set; }
 

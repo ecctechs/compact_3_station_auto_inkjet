@@ -36,6 +36,9 @@ public partial class OrderDetailUserControl : UserControl
     /// </summary>
     private readonly Dictionary<string, string> _chosenUvProgram = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>สถานะงานตอนเปิดหน้า — ใช้กันไม่ให้สั่งแคลมป์ก่อนเริ่มงาน</summary>
+    private string _jobStatus = "";
+
     private readonly bool _isDevMode;
     private bool _transferMode;
     private IaiClampSettingDto? _origIai;
@@ -146,6 +149,7 @@ public partial class OrderDetailUserControl : UserControl
         _jobId = resolved.Job.Id;
         _api = api;
         _uvData = resolved.UvJobData;
+        _jobStatus = resolved.Job.Status;
         _markingMethod = resolved.PlanRouting?.MarkingMethod;
         _erpMfg = resolved.PlanRouting?.ErpMfg;
 
@@ -157,10 +161,12 @@ public partial class OrderDetailUserControl : UserControl
             if (chosen != null) _chosenUvProgram[machine] = chosen;
         }
 
-        // วันที่รับงานต่อท้ายเลข job — เลข order เดียวกันวิ่งซ้ำได้หลายวัน
-        // เปิดดูงานเก่าจึงต้องบอกได้ทันทีว่ากำลังดูของวันไหน
+        // เลขงานเริ่มที่ 1 ใหม่ทุกวัน ลำพังเลขจึงระบุงานไม่ได้ ต้องมีวันที่กำกับเสมอ
+        // งานเก่าที่รับก่อนมีเลขประจำวันตกไปใช้ id ของตารางแทน
         var jobDate = ThaiTime.Text(resolved.Job.CreatedAt, ThaiTime.DateFormat, "");
-        lblHeaderTitle.Text = $"Job Information — Job #{resolved.Job.Id}"
+        var jobNo = resolved.Job.JobNo?.ToString() ?? resolved.Job.Id.ToString();
+
+        lblHeaderTitle.Text = $"Job Information — Job #{jobNo}"
             + (jobDate.Length == 0 ? "" : $"  ·  {jobDate}");
 
         // โชว์ address ที่ค่าแต่ละช่องจะถูกส่งไป ดึงจากตาราง register map ของ
@@ -558,7 +564,12 @@ public partial class OrderDetailUserControl : UserControl
             GetSendButton(_sendSteps[_currentStep]).Enabled = true;
 
         if (isFirstStep)
+        {
             _ = _api?.UpdateJobStatusAsync(_jobId, "Process");
+
+            // ปลดล็อกปุ่มสั่งแคลมป์ทันทีโดยไม่ต้องปิดเปิดหน้าใหม่ — งานเริ่มไปแล้วจริง
+            _jobStatus = "Process";
+        }
     }
 
     private AntdUI.Button GetSendButton(string step) => step switch
@@ -1302,8 +1313,32 @@ public partial class OrderDetailUserControl : UserControl
     private static string IaiAxisKey(bool isPlate, string? zone) =>
         (isPlate ? "IAIP" : "IAI") + (zone ?? "");
 
+    /// <summary>
+    /// สั่งแคลมป์ได้เฉพาะงานที่เริ่มไปแล้ว — แกนจะวิ่งจริงตอนกด ถ้างานยังไม่เริ่ม
+    /// แปลว่าชิ้นงานยังไม่อยู่ที่เครื่อง การสั่งแกนวิ่งตอนนั้นคือสั่งลงบนงานของคนอื่น
+    /// ที่ค้างอยู่ หรือสั่งลงบนที่ว่าง
+    /// <para>
+    /// โหมดทดสอบหน้างาน (MENU_LEVEL 99) และหน้าที่เปิดโดยไม่มี job จริงไม่โดนกัน
+    /// เพราะสองกรณีนั้นตั้งใจใช้สั่งแกนโดยไม่มีงานอยู่แล้ว
+    /// </para>
+    /// </summary>
+    private bool CanCommandIai()
+    {
+        if (_isDevMode || _jobId <= 0) return true;
+
+        if (string.Equals(_jobStatus, "Process", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        Notify.WarnModal(this, "ยังสั่งแคลมป์ไม่ได้",
+            $"Job #{_jobId} ยังไม่ได้เริ่มงาน (สถานะ {JobStatusDisplay.Text(_jobStatus)})\n\n"
+            + "กดเริ่มงานที่หน้ารายการงานก่อน จึงจะสั่งค่า IAI ได้");
+        return false;
+    }
+
     private async Task IaiSendAsync(AntdUI.Input input, bool isPlate, string? zone)
     {
+        if (!CanCommandIai()) return;
+
         if (!int.TryParse(input.Text.Trim(), out int mm))
         {
             Notify.WarnModal(this, "แจ้งเตือน", "กรุณากรอกค่า IAI เป็นตัวเลข");
@@ -1361,6 +1396,10 @@ public partial class OrderDetailUserControl : UserControl
 
     private async Task IaiUploadAsync(AntdUI.Input input, AntdUI.Input programInput, AntdUI.Input displayInput, bool isPlate, string? zone)
     {
+        // กันด้วยกฎเดียวกับปุ่ม Send — ค่านี้เขียนทับระยะแคลมป์ที่ผูกกับงาน
+        // และ backend ก็ปฏิเสธงานที่ยังไม่เริ่มอยู่แล้ว ดักที่นี่เพื่อบอกสาเหตุให้ตรง
+        if (!CanCommandIai()) return;
+
         if (!int.TryParse(input.Text.Trim(), out int mm))
         {
             Notify.WarnModal(this, "แจ้งเตือน", "กรุณากรอกค่า IAI เป็นตัวเลข");
