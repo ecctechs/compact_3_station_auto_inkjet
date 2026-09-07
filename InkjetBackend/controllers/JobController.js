@@ -385,6 +385,39 @@ class JobController {
   }
 
   /**
+   * PATCH /job/:id/remote-start
+   *
+   * ST3 ฝากงานให้ ST1 ส่งคำสั่งเข้าเครื่องแทน (เครื่องต่ออยู่กับ PC ของ ST1 ที่เดียว)
+   * body: { remote_start: "0" | "1", remote_program?: string, remote_error?: string }
+   *
+   * ST3 ตั้ง "1" พร้อมชื่อโปรแกรมที่เลือกไว้แล้ว · ST1 ตั้งกลับเป็น "0" เมื่อส่งเสร็จ
+   * หรือส่งไม่สำเร็จ — เก็บเป็นธงใบเดียว งานหนึ่งจึงมีคำขอค้างได้ไม่เกินหนึ่งใบ
+   *
+   * remote_error คือสาเหตุที่ ST1 ส่งไม่สำเร็จ ฝากไว้ให้ ST3 อ่านไปแสดงที่จอตัวเอง
+   * แล้วเรียกมาล้างทิ้ง (ส่งค่าว่างมา) — ทุกครั้งที่เขียนใหม่คือทับของเดิมเสมอ
+   */
+  static async setRemoteStart(req, res) {
+    try {
+      const job = await PrintJob.findByPk(req.params.id);
+      if (!job) {
+        return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
+      }
+
+      const { remote_start, remote_program, remote_error } = req.body;
+
+      await job.update({
+        remote_start: remote_start === "1" ? "1" : "0",
+        remote_program: remote_program ?? null,
+        remote_error: remote_error || null,
+      });
+
+      return ResponseManager.SuccessResponse(req, res, 200, job);
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  /**
    * DELETE /job/remove/:id — deletes job and all children (CASCADE).
    */
   static async remove(req, res) {

@@ -43,6 +43,8 @@ Route.get(RouteName + "/getByMarkingMethod/:method", JobController.getByMarkingM
 
 Route.patch(RouteName + "/:id/send-to-st1", JobController.sendToSt1);
 
+Route.patch(RouteName + "/:id/remote-start", JobController.setRemoteStart);
+
 Route.delete(RouteName + "/remove/:id", JobController.remove);
 
 module.exports = Route;

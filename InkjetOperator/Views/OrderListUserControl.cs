@@ -8,7 +8,9 @@ namespace InkjetOperator.Views;
 public partial class OrderListUserControl : UserControl
 {
     private static readonly string[] ActiveStatuses = ["Waiting", "Process"];
-    private static readonly string[] HistoryStatuses = ["Success"];
+
+    /// <summary>งานที่จบแล้ว — ทั้งที่ทำเสร็จจริงและที่ถูกยกเลิก ล้วนไปอยู่แท็บ History</summary>
+    private static readonly string[] HistoryStatuses = ["Success", "Cancel"];
 
     private ApiClient? _api;
     private System.Windows.Forms.Timer? _pollTimer;
@@ -49,11 +51,12 @@ public partial class OrderListUserControl : UserControl
             new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("ProcessSequence", "Process Sequence", AntdUI.ColumnAlign.Center) { Width = "13%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("Plate", "Plate", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("Shim", "Shim", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("Station", "Station", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Plate", "Plate", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Shim", "Shim", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Station", "Station", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "10%" },
+            // กว้างกว่าคอลัมน์อื่นเพราะแท็บ List ใส่ได้ถึงสามปุ่ม — เริ่ม/จบงาน + ยกเลิก + รายละเอียด
+            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "13%" },
         };
 
         // ColBreak above is what centres the titles, and it is not obvious why.
@@ -94,9 +97,9 @@ public partial class OrderListUserControl : UserControl
         ("OrderNo", "12%", "10%"),
         ("Customer", "9%", "8%"),
         ("ProcessSequence", "15%", "13%"),
-        ("Plate", "8%", "7%"),
-        ("Shim", "8%", "7%"),
-        ("Station", "9%", "8%"),
+        ("Plate", "7%", "6%"),
+        ("Shim", "7%", "6%"),
+        ("Station", "8%", "7%"),
         ("Status", "8%", "7%"),
     ];
 
@@ -194,6 +197,14 @@ public partial class OrderListUserControl : UserControl
             }
             _allJobs = jobs;
 
+            // ทำก่อนเช็ค signature เพราะคำขอจาก ST3 ไม่ได้เปลี่ยนอะไรที่ตารางวาด
+            // ถ้าไปทำหลังจากนั้น รอบที่หน้าจอไม่มีอะไรเปลี่ยนจะข้ามคำขอไปเลย
+            await ProcessRemoteStartsAsync();
+            if (IsDisposed) return;
+
+            await ShowRemoteErrorsAsync();
+            if (IsDisposed) return;
+
             // ผูก DataSource ใหม่ทีไร ตารางจะรีเซ็ตทั้งลำดับที่เรียงไว้และตำแหน่ง scroll
             // รอบ poll ที่ข้อมูลไม่เปลี่ยนจึงไม่ต้องผูกใหม่ ไม่งั้นทุก 5 วิจะกระตุกทีนึง
             var signature = BuildSignature(jobs);
@@ -277,8 +288,16 @@ public partial class OrderListUserControl : UserControl
     private void RebindTable()
     {
         var statuses = _showHistory ? HistoryStatuses : ActiveStatuses;
+        int station = StationService.Current;
+
         var filtered = _allJobs
             .Where(j => statuses.Contains(j.Status, StringComparer.OrdinalIgnoreCase))
+            // แท็บ List คัดตามสถานี — ST1 ไม่เห็น marking 10 · ST3 เห็นแค่ 10/11/12
+            //
+            // แท็บ History ไม่คัด เพราะทั้งสองสถานีต้องตามประวัติงานที่ตัวเองไม่ได้ทำได้
+            // โดยเฉพาะ marking 10 ที่ ST3 ทำจนจบ แต่ ST1 ต้องเห็นในประวัติ
+            .Where(j => _showHistory
+                || MarkingMethodService.VisibleAt(station, j.PlanRouting?.MarkingMethod))
             .OrderBy(StatusRank)
             .ThenByDescending(j => j.CreatedAt ?? DateTime.MinValue)
             .ToList();
@@ -354,6 +373,44 @@ public partial class OrderListUserControl : UserControl
         {
             await CompleteJobAsync(row.Id);
         }
+        else if (e.Btn?.Id == "cancel")
+        {
+            await CancelJobAsync(row.Id, row.OrderNo);
+        }
+    }
+
+    // ── ยกเลิกงาน ──────────────────────────────────────────
+
+    /// <summary>
+    /// ยกเลิกงาน — สถานะไปเป็น "Cancel" งานจึงหลุดจากแท็บ List ไปโผล่ที่ History
+    /// เหมือนงานที่จบแล้ว ต่างกันแค่ป้ายสถานะ
+    ///
+    /// ไม่ส่งอะไรเข้าเครื่องและไม่ย้อนคำสั่งที่ส่งไปแล้ว — สิ่งที่พิมพ์ไปแล้วก็พิมพ์ไปแล้ว
+    /// ประวัติการส่งยังอยู่ครบใน print_job_commands ตามเดิม
+    /// </summary>
+    private async Task CancelJobAsync(int jobId, string orderNo)
+    {
+        if (_api == null) return;
+
+        var order = string.IsNullOrWhiteSpace(orderNo) ? "" : $" ({orderNo})";
+        if (!Confirm.Ask(this, "ยืนยันยกเลิกงาน",
+                $"ยกเลิก Job #{jobId}{order}\n\n"
+                + "งานจะถูกย้ายออกจากรายการไปอยู่ในประวัติ และเริ่มใหม่ไม่ได้\n\n"
+                + "ยืนยันหรือไม่?"))
+            return;
+
+        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Cancel");
+        if (IsDisposed) return;
+
+        if (ok)
+        {
+            Notify.Success(this, $"ยกเลิก Job #{jobId} แล้ว");
+            await RefreshDataAsync(force: true);
+        }
+        else
+        {
+            Notify.ErrorModal(this, "ยกเลิกงานไม่สำเร็จ", err ?? "ไม่สามารถบันทึกสถานะยกเลิกได้");
+        }
     }
 
     // ── เริ่มงาน ────────────────────────────────────────────
@@ -362,10 +419,11 @@ public partial class OrderListUserControl : UserControl
     private bool _sending;
 
     /// <summary>
-    /// งานที่กดเริ่มได้ = ยังไม่ได้เริ่ม และมีขั้นตอนให้ส่งจริง
+    /// งานที่กดเริ่มได้ = ยังไม่ได้เริ่ม · สถานีนี้มีสิทธิ์เริ่ม · และรหัสใช้งานได้จริง
     /// <para>
-    /// รหัส "00" ไม่มีขั้นตอนเลย ส่วน "21" เป็นรหัสที่ไม่มีอยู่จริง สองอันนี้
-    /// กดเริ่มไม่ได้ ให้ตกไปใช้ปุ่มจบงานแทน
+    /// รหัส "00" ไม่มีขั้นตอนต้องส่งเลย แต่ยังกดเริ่มได้ — เป็นงานที่ทำด้วยมือ
+    /// การกดเริ่มแค่เปลี่ยนสถานะให้คนอื่นเห็นว่ามีคนรับไปทำแล้ว
+    /// ส่วน "21" เป็นรหัสที่ไม่มีอยู่จริง กดเริ่มไม่ได้ ให้ตกไปใช้ปุ่มจบงานแทน
     /// </para>
     /// </summary>
     private static bool CanStart(PrintJob job)
@@ -373,8 +431,11 @@ public partial class OrderListUserControl : UserControl
         if (!string.Equals(job.Status, "Waiting", StringComparison.OrdinalIgnoreCase))
             return false;
 
-        var plan = MarkingMethodService.Resolve(job.PlanRouting?.MarkingMethod);
-        return !plan.NoCase && plan.Steps.Count > 0;
+        var method = job.PlanRouting?.MarkingMethod;
+        if (!MarkingMethodService.CanStartAt(StationService.Current, method))
+            return false;
+
+        return !MarkingMethodService.Resolve(method).NoCase;
     }
 
     /// <summary>
@@ -396,21 +457,52 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        var plan = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod);
-        if (plan.NoCase || plan.Steps.Count == 0)
+        var method = resolved.PlanRouting?.MarkingMethod;
+        int station = StationService.Current;
+
+        if (!MarkingMethodService.CanStartAt(station, method))
+        {
+            Notify.WarnModal(this, "เริ่มงานที่สถานีนี้ไม่ได้",
+                $"Job #{jobId} — marking {Method(method)}\n\n"
+                + ((method ?? "").Trim() == "10"
+                    ? "งาน marking 10 เริ่มได้ที่ ST3 เท่านั้น"
+                    : "งานนี้เริ่มได้ที่ ST1 เท่านั้น"));
+            return;
+        }
+
+        var plan = MarkingMethodService.Resolve(method);
+        if (plan.NoCase)
         {
             Notify.WarnModal(this, "แจ้งเตือน",
-                $"Job #{jobId} ไม่มีขั้นตอนให้ส่ง (marking {Method(resolved.PlanRouting?.MarkingMethod)})");
+                $"Job #{jobId} ใช้รหัส marking ที่ไม่มีอยู่จริง ({Method(method)})");
+            return;
+        }
+
+        // marking 00 ไม่มีคำสั่งต้องส่งเข้าเครื่องเลย — เป็นงานที่ทำด้วยมือล้วน
+        // การกดเริ่มจึงแค่เปลี่ยนสถานะให้คนอื่นเห็นว่ามีคนรับไปทำแล้ว
+        if (plan.Steps.Count == 0)
+        {
+            await StartWithoutSendingAsync(jobId, method);
             return;
         }
 
         var step = plan.Steps[0];
-        int station = JobStationService.StationOf(step) ?? 0;
 
-        if (StationOwner(station, jobId) is int busyJob)
+        // ST3 ไม่ได้ต่อสายเข้าเครื่อง จึงฝากให้ ST1 เป็นคนส่งให้
+        if (station == StationService.St3)
+        {
+            await RequestRemoteStartAsync(jobId, step, resolved);
+            return;
+        }
+
+        // สถานีของ "เครื่อง" ที่จะรับงาน คนละเรื่องกับสถานีของ "เครื่องคอมที่กดอยู่"
+        // ข้างบน — MK อยู่ ST1 · UV1 อยู่ ST2 · UV2 อยู่ ST3
+        int machineStation = JobStationService.StationOf(step) ?? 0;
+
+        if (StationOwner(machineStation, jobId) is int busyJob)
         {
             Notify.WarnModal(this, "สถานีไม่ว่าง",
-                $"ST{station} มีงาน #{busyJob} อยู่\n\nต้องจบงานนั้นก่อนถึงจะเริ่มงานนี้ได้");
+                $"ST{machineStation} มีงาน #{busyJob} อยู่\n\nต้องจบงานนั้นก่อนถึงจะเริ่มงานนี้ได้");
             return;
         }
 
@@ -419,7 +511,7 @@ public partial class OrderListUserControl : UserControl
 
         if (!Confirm.Ask(this, "ยืนยันเริ่มงาน",
                 $"Job #{jobId} — marking {Method(resolved.PlanRouting?.MarkingMethod)}\n\n"
-                + $"ส่งไป {step} (ST{station}){next}\n\nยืนยันหรือไม่?"))
+                + $"ส่งไป {step} (ST{machineStation}){next}\n\nยืนยันหรือไม่?"))
             return;
 
         _sending = true;
@@ -449,9 +541,13 @@ public partial class OrderListUserControl : UserControl
     /// คืนรายการว่างเมื่อผู้ใช้กดยกเลิกที่กล่องเลือกรุ่นย่อย — ไม่ต้องรายงานอะไร
     /// แต่สถานะที่ตั้งไปแล้วจะถูกคืนกลับเป็น Waiting
     /// </para>
+    /// <para>
+    /// <paramref name="forcedProgram"/> มีค่าเมื่อกำลังส่งแทน ST3 ซึ่งเลือกโปรแกรม
+    /// ไว้ให้เสร็จแล้ว — การส่งรอบนั้นจะไม่เด้งหน้าต่างใด ๆ ที่จอ ST1
+    /// </para>
     /// </summary>
     private async Task<List<Notify.ResultLine>> SendFirstStepAsync(
-        int jobId, string step, ResolvedJobResponse resolved)
+        int jobId, string step, ResolvedJobResponse resolved, string? forcedProgram = null)
     {
         await _api!.UpdateJobStatusAsync(jobId, "Process");
 
@@ -476,7 +572,7 @@ public partial class OrderListUserControl : UserControl
         }
 
         int uvNumber = step == "UV1" ? 1 : 2;
-        var uv = await JobSendService.SendUvAsync(this, uvNumber, resolved.UvJobData);
+        var uv = await JobSendService.SendUvAsync(this, uvNumber, resolved.UvJobData, forcedProgram);
 
         if (uv.Status == SendStatus.Ok)
         {
@@ -500,6 +596,220 @@ public partial class OrderListUserControl : UserControl
                 [Notify.Bad($"{uv.MachineName} — เชื่อมต่อไม่ได้ ({uv.Ip}:{uv.Port})")],
             _ => [Notify.Bad($"{uv.MachineName} — {uv.FailReason}")],
         };
+    }
+
+    // ── งานที่ไม่ต้องส่งคำสั่ง (marking 00) ─────────────────
+
+    /// <summary>
+    /// เริ่มงานที่ไม่มีขั้นตอนต้องส่งเข้าเครื่อง — เปลี่ยนสถานะอย่างเดียว
+    /// ไม่แตะทั้ง Inkjet และ UV เพราะงานแบบนี้ทำด้วยมือทั้งหมด
+    /// </summary>
+    private async Task StartWithoutSendingAsync(int jobId, string? markingMethod)
+    {
+        if (!Confirm.Ask(this, "ยืนยันเริ่มงาน",
+                $"Job #{jobId} — marking {Method(markingMethod)}\n\n"
+                + "งานนี้ไม่มีขั้นตอนต้องส่งเข้าเครื่อง จะเปลี่ยนสถานะเป็นกำลังผลิตอย่างเดียว\n\n"
+                + "ยืนยันหรือไม่?"))
+            return;
+
+        var (ok, err) = await _api!.UpdateJobStatusAsync(jobId, "Process");
+        if (IsDisposed) return;
+
+        if (ok) Notify.Success(this, $"เริ่มงาน Job #{jobId} แล้ว");
+        else Notify.ErrorModal(this, "เริ่มงานไม่สำเร็จ", err ?? "ไม่สามารถเปลี่ยนสถานะได้");
+
+        await RefreshDataAsync(force: true);
+    }
+
+    // ── ST3 ฝากงานให้ ST1 ส่ง ───────────────────────────────
+
+    /// <summary>
+    /// ST3 กดเริ่มงาน: เลือกโปรแกรม UV ให้เสร็จตรงนี้ แล้วฝากคำขอไว้ที่ backend
+    /// ให้ ST1 เป็นคนส่งเข้าเครื่อง (สาย MK/UV ต่ออยู่กับ PC ของ ST1 ที่เดียว)
+    /// <para>
+    /// ที่ต้องเลือกโปรแกรมตรงนี้ เพราะถ้าปล่อยให้ ST1 เลือก หน้าต่างเลือกรุ่นย่อย
+    /// จะไปเด้งค้างที่จอ ST1 ซึ่งไม่มีคนเฝ้าอยู่ งานก็จะค้างไปเรื่อย ๆ
+    /// </para>
+    /// </summary>
+    private async Task RequestRemoteStartAsync(int jobId, string step, ResolvedJobResponse resolved)
+    {
+        int machineStation = JobStationService.StationOf(step) ?? 0;
+        if (StationOwner(machineStation, jobId) is int busyJob)
+        {
+            Notify.WarnModal(this, "สถานีไม่ว่าง",
+                $"ST{machineStation} มีงาน #{busyJob} อยู่\n\nต้องจบงานนั้นก่อนถึงจะเริ่มงานนี้ได้");
+            return;
+        }
+
+        int uvNumber = step == "UV1" ? 1 : 2;
+        var uvRow = resolved.UvJobData.FirstOrDefault(r => r.Machine == step);
+
+        var pick = UvProgramResolver.Resolve(
+            uvRow?.ProgramName, UvSettingsManager.GetDocumentFolder(uvNumber), this);
+
+        if (pick.Program == null) return;   // ผู้ใช้ปิดกล่องเลือกรุ่นย่อย
+
+        var uvName = UvSettingsManager.Read(
+            uvNumber == 1 ? "UV1_NAME" : "UV2_NAME", $"UV-00{uvNumber}");
+
+        if (pick.IsDefault &&
+            !UvProgramResolver.ConfirmDefault(uvRow?.ProgramName ?? "", uvName, this))
+            return;
+
+        if (!Confirm.Ask(this, "ยืนยันเริ่มงาน",
+                $"Job #{jobId} — marking {Method(resolved.PlanRouting?.MarkingMethod)}\n\n"
+                + $"ส่งไป {step} ด้วยโปรแกรม {pick.Program}.uvdx\n"
+                + "คำสั่งจะถูกส่งเข้าเครื่องโดยโปรแกรมที่ ST1\n\n"
+                + "ยืนยันหรือไม่?"))
+            return;
+
+        // ตั้งสถานะก่อนตั้งธง เพื่อไม่ให้ ST1 หยิบคำขอไปทำตอนที่งานยังเป็น Waiting อยู่
+        await _api!.UpdateJobStatusAsync(jobId, "Process");
+
+        var (ok, err) = await _api.SetRemoteStartAsync(jobId, requested: true, pick.Program);
+        if (IsDisposed) return;
+
+        if (ok)
+        {
+            Notify.Success(this, $"ส่งคำขอเริ่มงาน Job #{jobId} ไปที่ ST1 แล้ว");
+        }
+        else
+        {
+            await _api.UpdateJobStatusAsync(jobId, "Waiting");
+            Notify.ErrorModal(this, "ส่งคำขอไม่สำเร็จ", err ?? "ไม่สามารถฝากคำขอไว้ที่ ST1 ได้");
+        }
+
+        await RefreshDataAsync(force: true);
+    }
+
+    // ── ST1 หยิบคำขอของ ST3 ไปส่ง ───────────────────────────
+
+    /// <summary>
+    /// งานที่กำลังส่งแทน ST3 อยู่ — กันไม่ให้รอบ poll ถัดไปหยิบงานเดิมไปส่งซ้ำ
+    /// ระหว่างที่รอบนี้ยังส่งไม่เสร็จ (รอบ poll ทุก 5 วิ แต่การส่ง UV ใช้เวลานานกว่านั้นได้)
+    /// </summary>
+    private readonly HashSet<int> _remoteInFlight = new();
+
+    /// <summary>
+    /// ST1 กวาดหาคำขอที่ ST3 ฝากไว้ แล้วส่งเข้าเครื่องให้ — ทำเงียบ ๆ ไม่มีหน้าต่างเด้ง
+    /// เพราะโปรแกรมที่ ST3 เลือกไว้แล้วถูกส่งมากับคำขอ
+    /// </summary>
+    private async Task ProcessRemoteStartsAsync()
+    {
+        // ST3 เป็นฝ่ายฝาก ไม่ใช่ฝ่ายส่ง · ระหว่างที่คนที่ ST1 กดส่งเองอยู่ก็ไม่แทรก
+        if (_api == null || StationService.IsSt3 || _sending) return;
+
+        var pending = _allJobs
+            .Where(j => j.RemoteStart == "1" && !_remoteInFlight.Contains(j.Id))
+            .Select(j => j.Id)
+            .ToList();
+
+        foreach (var jobId in pending)
+        {
+            _remoteInFlight.Add(jobId);
+            _sending = true;
+            try
+            {
+                await RunRemoteStartAsync(jobId);
+            }
+            finally
+            {
+                _sending = false;
+                _remoteInFlight.Remove(jobId);
+            }
+
+            if (IsDisposed) return;
+        }
+    }
+
+    /// <summary>
+    /// ส่งคำขอหนึ่งใบ — ล้างธงทุกเส้นทางที่ออกจากเมธอดนี้ ไม่ว่าจะส่งได้หรือไม่
+    /// ธงที่ค้างคือสาเหตุเดียวที่จะทำให้รอบถัดไปส่งซ้ำ
+    /// </summary>
+    private async Task RunRemoteStartAsync(int jobId)
+    {
+        var resolved = await _api!.GetResolvedJobAsync(jobId);
+        if (resolved == null) return;   // อ่านไม่ได้ = คงธงไว้ให้รอบหน้าลองใหม่
+
+        var plan = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod);
+        var step = plan.Steps.FirstOrDefault();
+
+        if (step == null)
+        {
+            await _api.SetRemoteStartAsync(jobId, requested: false);
+            return;
+        }
+
+        // อ่านสดจาก backend แล้วเช็คว่าขั้นตอนนี้ส่งสำเร็จไปแล้วหรือยัง —
+        // ด่านสุดท้ายที่กันการส่งซ้ำ ถ้าธงค้างเพราะเหตุอื่น เช่นโปรแกรมถูกปิดกลางคัน
+        if (resolved.Commands?.Any(c => c.Success &&
+                string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true)
+        {
+            await _api.SetRemoteStartAsync(jobId, requested: false);
+            return;
+        }
+
+        // เครื่องปลายทางไม่ว่าง — คงธงไว้ให้รอบ poll ถัดไปลองใหม่ ไม่ต้องรบกวนใคร
+        int machineStation = JobStationService.StationOf(step) ?? 0;
+        if (StationOwner(machineStation, jobId) != null) return;
+
+        var program = _allJobs.FirstOrDefault(j => j.Id == jobId)?.RemoteProgram;
+        var lines = await SendFirstStepAsync(jobId, step, resolved, program);
+
+        // ล้มเหลวแล้วฝากสาเหตุกลับไปให้ ST3 ด้วย — คนที่กดเริ่มงานอยู่ที่นั่น
+        // ไม่ได้เห็นจอนี้ ถ้าไม่ฝากไว้เขาจะเห็นแค่งานเด้งกลับเป็น Waiting เฉย ๆ
+        bool failed = lines.Any(l => l.Kind == Notify.ResultKind.Error);
+        var failure = failed
+            ? string.Join(" · ", lines.Where(l => l.Kind == Notify.ResultKind.Error).Select(l => l.Text))
+            : null;
+
+        await _api.SetRemoteStartAsync(jobId, requested: false, failure: failure);
+
+        if (IsDisposed || lines.Count == 0) return;
+
+        // ต้องเป็นข้อความลอย ไม่ใช่กล่องที่ต้องกดปิด — จอ ST1 ไม่มีคนเฝ้าอยู่
+        // กล่อง modal จะค้างหน้าจอและหยุดรอบ poll ไปจนกว่าจะมีคนมากด
+        var text = $"Job #{jobId} — {lines[0].Text} (คำขอจาก ST3)";
+
+        if (failed) Notify.Warn(this, text);
+        else Notify.Success(this, text);
+    }
+
+    // ── ST3 รับผลกลับจาก ST1 ────────────────────────────────
+
+    /// <summary>กล่องแจ้งผลเปิดค้างอยู่ — กันไม่ให้รอบ poll ถัดไปเปิดซ้อนขึ้นมาอีกใบ</summary>
+    private bool _showingRemoteError;
+
+    /// <summary>
+    /// ST3 หยิบสาเหตุที่ ST1 ส่งไม่สำเร็จมาแสดงที่จอตัวเอง แล้วล้างทิ้งทันที
+    ///
+    /// ล้างทันทีที่แสดง จึงไม่ต้องจำว่าเคยแสดงใบไหนไปแล้ว และไม่เด้งซ้ำตอนเปิดโปรแกรมใหม่
+    /// ตัวงานเองถูก SendFirstStepAsync ตีกลับเป็น Waiting ไว้แล้ว กดเริ่มใหม่ได้เลย
+    /// </summary>
+    private async Task ShowRemoteErrorsAsync()
+    {
+        if (_api == null || !StationService.IsSt3 || _showingRemoteError) return;
+
+        var failed = _allJobs.FirstOrDefault(j => !string.IsNullOrWhiteSpace(j.RemoteError));
+        if (failed == null) return;
+
+        var message = failed.RemoteError!;
+
+        // ล้างก่อนเปิดกล่อง — ระหว่างกล่องเปิดค้าง รอบ poll ยังเดินอยู่หลังกล่อง
+        await _api.SetRemoteStartAsync(failed.Id, requested: false);
+        if (IsDisposed) return;
+
+        _showingRemoteError = true;
+        try
+        {
+            Notify.ErrorModal(this, "ST1 ส่งงานไม่สำเร็จ",
+                $"Job #{failed.Id} ({failed.OrderNo})\n\n{message}\n\n"
+                + "งานถูกตีกลับเป็นรอเริ่ม กดเริ่มงานใหม่ได้");
+        }
+        finally
+        {
+            _showingRemoteError = false;
+        }
     }
 
     /// <summary>งานที่จองสถานีนี้อยู่ — null = ว่าง</summary>
@@ -529,7 +839,16 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        var steps = CheckSteps(resolved.PlanRouting?.MarkingMethod, resolved.Commands);
+        var method = resolved.PlanRouting?.MarkingMethod;
+        if (!MarkingMethodService.CanCompleteAt(StationService.Current, method))
+        {
+            Notify.WarnModal(this, "จบงานที่สถานีนี้ไม่ได้",
+                $"Job #{jobId} — marking {Method(method)}\n\n"
+                + "งาน marking 10 / 11 / 12 จบได้ที่ ST3 เท่านั้น");
+            return;
+        }
+
+        var steps = CheckSteps(method, resolved.Commands);
 
         // งานยังไม่ครบก็จบได้ ถ้าผู้ใช้ยืนยันเอง — บันทึกไว้ว่าเป็นการจบด้วยมือ
         bool manual = !steps.Complete;
@@ -758,14 +1077,15 @@ public partial class OrderListUserControl : UserControl
         var buttons = new List<AntdUI.CellButton>();
         if (!isHistory)
         {
-            // คอลัมน์ปุ่มกว้าง 12% ยัดสามปุ่มไม่ลง จึงสลับปุ่มตามสถานะแทน
+            // คอลัมน์ปุ่มยัดปุ่มข้อความสองอันไม่ลง จึงสลับปุ่มแรกตามสถานะแทน
             // งานที่ยังไม่เริ่ม = เริ่มงาน · งานที่เดินอยู่ = จบงาน
             if (CanStart(job))
             {
                 buttons.Add(new AntdUI.CellButton("start", "เริ่มงาน", AntdUI.TTypeMini.Primary)
                 { Radius = 6 });
             }
-            else
+            else if (MarkingMethodService.CanCompleteAt(
+                         StationService.Current, job.PlanRouting?.MarkingMethod))
             {
                 // เขียว = ส่งครบแล้วจบได้เลย · ส้ม = ยังไม่ครบ กดได้แต่จะเตือนก่อน
                 // commands / plan_routing มาจาก /job/getAll ที่ include ไว้ให้แล้ว
@@ -774,11 +1094,19 @@ public partial class OrderListUserControl : UserControl
                     steps.Complete ? AntdUI.TTypeMini.Success : AntdUI.TTypeMini.Warn)
                 { Radius = 6 });
             }
+
+            // ยกเลิกได้ทุกงานที่ยังไม่จบ ไม่ว่าเริ่มไปแล้วหรือยัง — เป็นทางออกเดียว
+            // ของงานที่ยกเลิกหน้างานแล้วไม่ควรค้างอยู่ในตารางให้คนอื่นสับสน
+            buttons.Add(new AntdUI.CellButton("cancel", "", AntdUI.TTypeMini.Error)
+            { Radius = 6, IconSvg = "CloseOutlined" });
         }
         buttons.Add(new AntdUI.CellButton("detail", "", AntdUI.TTypeMini.Default) { Radius = 6, IconSvg = "SearchOutlined" });
 
         // End มีความหมายเฉพาะงานที่จบแล้ว — งานที่ยังวิ่งอยู่ updated_at คือเวลาแก้ล่าสุด ไม่ใช่เวลาจบ
-        bool finished = string.Equals(job.Status, "Success", StringComparison.OrdinalIgnoreCase);
+        // งานที่ถูกยกเลิกก็นับว่าจบ updated_at ของมันคือเวลาที่กดยกเลิก
+        bool finished =
+            string.Equals(job.Status, "Success", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(job.Status, "Cancel", StringComparison.OrdinalIgnoreCase);
 
         return new OrderRow
         {

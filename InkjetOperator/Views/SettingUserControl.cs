@@ -21,15 +21,20 @@ public partial class SettingUserControl : UserControl
         var raw = CustomSettingsManager.Read("MENU_LEVEL", "1");
         int.TryParse(raw, out var level);
 
-        var allButtons = new[] { btnDatabaseSetting, btnDbPathSetting, btnDB3Setting, btnPLCSetting, btnClampSetting, btnUvTest };
+        var allButtons = new[] { btnDatabaseSetting, btnDbPathSetting, btnDB3Setting, btnPLCSetting, btnClampSetting, btnUvTest, btnUv2Folder };
 
         bool[] visible = level switch
         {
-            0 => [false, true, true, false, false, false],
-            1 => [true, false, false, true, true, false],
-            3 => [false, false, true, false, false, false],  // ST3 — Backend DB only
-            9 => [false, false, false, true, true, true],    // ทดสอบหน้างาน: PLC / Clamp / UV Test
-            _ => [true, true, true, true, true, true],
+            0 => [false, true, true, false, false, false, false],
+            1 => [true, false, false, true, true, false, false],
+            // ST3 — Backend DB + UV2 Folder
+            //
+            // UV2 Folder เป็นหน้าเล็กที่มีช่องเดียว ทำไว้ให้ ST3 โดยเฉพาะ ไม่ใช่หน้า
+            // Inkjet Setting เต็ม ๆ ซึ่งมี COM port ของ MK กับ IP ของ UV ปนอยู่ด้วย
+            // ST3 ต้องตั้งค่านี้เพื่อไล่ดูรุ่นย่อยของโปรแกรม .uvdx ตอนกดเริ่มงาน
+            3 => [false, false, true, false, false, false, true],
+            9 => [false, false, false, true, true, true, false],  // ทดสอบหน้างาน: PLC / Clamp / UV Test
+            _ => [true, true, true, true, true, true, true],
         };
 
         int row = 0;
@@ -151,6 +156,7 @@ public partial class SettingUserControl : UserControl
         nameof(btnPLCSetting) => new PlcSettingUserControl(),
         nameof(btnClampSetting) => new ClampSettingUserControl(),
         nameof(btnUvTest) => new UvTestUserControl(),
+        nameof(btnUv2Folder) => new Uv2FolderSettingUserControl(),
         _ => null,
     };
 

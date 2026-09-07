@@ -36,6 +36,7 @@ partial class SettingUserControl
         btnPLCSetting = new AntdUI.Button();
         btnClampSetting = new AntdUI.Button();
         btnUvTest = new AntdUI.Button();
+        btnUv2Folder = new AntdUI.Button();
         pnlContent = new AntdUI.Panel();
         pnlContentArea = new BufferedPanel();
         tlpSettingRoot.SuspendLayout();
@@ -87,18 +88,20 @@ partial class SettingUserControl
         tlpSidebar.Controls.Add(btnPLCSetting, 0, 3);
         tlpSidebar.Controls.Add(btnClampSetting, 0, 4);
         tlpSidebar.Controls.Add(btnUvTest, 0, 5);
+        tlpSidebar.Controls.Add(btnUv2Folder, 0, 6);
         tlpSidebar.Dock = DockStyle.Top;
         tlpSidebar.Location = new Point(2, 2);
         tlpSidebar.Margin = new Padding(0);
         tlpSidebar.Name = "tlpSidebar";
-        tlpSidebar.RowCount = 6;
+        tlpSidebar.RowCount = 7;
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
-        tlpSidebar.Size = new Size(265, 336);
+        tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
+        tlpSidebar.Size = new Size(265, 392);
         tlpSidebar.TabIndex = 0;
         // 
         // btnDatabaseSetting
@@ -178,6 +181,19 @@ partial class SettingUserControl
         btnUvTest.Size = new Size(265, 56);
         btnUvTest.TabIndex = 5;
         btnUvTest.Text = "UV Test";
+        //
+        // btnUv2Folder
+        //
+        btnUv2Folder.Dock = DockStyle.Fill;
+        btnUv2Folder.Font = new Font("Segoe UI", 15F);
+        btnUv2Folder.ForeColor = Color.FromArgb(51, 51, 51);
+        btnUv2Folder.Location = new Point(0, 336);
+        btnUv2Folder.Margin = new Padding(0);
+        btnUv2Folder.Name = "btnUv2Folder";
+        btnUv2Folder.Radius = 0;
+        btnUv2Folder.Size = new Size(265, 56);
+        btnUv2Folder.TabIndex = 6;
+        btnUv2Folder.Text = "UV2 Folder";
         // 
         // pnlContent
         // 
@@ -232,6 +248,7 @@ partial class SettingUserControl
     private AntdUI.Button btnPLCSetting;
     private AntdUI.Button btnClampSetting;
     private AntdUI.Button btnUvTest;
+    private AntdUI.Button btnUv2Folder;
     private AntdUI.Panel pnlContent;
     private BufferedPanel pnlContentArea;
 }

@@ -155,9 +155,15 @@ public static class JobSendService
     /// กล่องเลือกรุ่นย่อย (.uvdx) จะเด้งขึ้นถ้าชื่อโปรแกรมตรงกับหลายไฟล์ — ผูกกับ
     /// <paramref name="owner"/> ที่ส่งมา จึงขึ้นบนหน้าจอที่สั่งส่ง ไม่ว่าจะเป็นหน้าไหน
     /// </para>
+    /// <para>
+    /// ส่ง <paramref name="forcedProgram"/> มาเมื่อมีคนเลือกโปรแกรมไว้ให้แล้วที่อื่น
+    /// (ST3 กดเริ่มงานแล้วฝากให้ ST1 ส่ง) — ข้ามทั้งกล่องเลือกรุ่นย่อยและกล่องยืนยัน
+    /// default ทำให้ส่งได้เงียบ ๆ โดยไม่มีหน้าต่างเด้งค้างที่จอ ST1 ซึ่งไม่มีคนเฝ้า
+    /// </para>
     /// </summary>
     public static async Task<UvSendResult> SendUvAsync(
-        IWin32Window? owner, int uvNumber, List<UvJobDataDto> uvData)
+        IWin32Window? owner, int uvNumber, List<UvJobDataDto> uvData,
+        string? forcedProgram = null)
     {
         string stepName = uvNumber == 1 ? "UV1" : "UV2";
         string table = uvNumber == 1 ? "MK063" : "MK067";
@@ -187,8 +193,17 @@ public static class JobSendService
         if (!await CanConnectAsync(ip, port))
             return new UvSendResult(SendStatus.Unreachable, uvName, done, Ip: ip, Port: port);
 
-        var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber);
-        var pick = UvProgramResolver.Resolve(uvRow.ProgramName, docFolder, owner);
+        UvProgramPick pick;
+        if (string.IsNullOrWhiteSpace(forcedProgram))
+        {
+            var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber);
+            pick = UvProgramResolver.Resolve(uvRow.ProgramName, docFolder, owner);
+        }
+        else
+        {
+            // เลือกมาแล้วจากที่อื่น — ถือว่าผ่านการยืนยันของคนมาเรียบร้อย
+            pick = new UvProgramPick(forcedProgram.Trim(), false);
+        }
 
         var programFile = pick.Program;
         if (programFile == null)

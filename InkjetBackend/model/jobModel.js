@@ -65,6 +65,22 @@ const PrintJob = sequelize.define(
     st1_send_time: {
       type: DataTypes.DATE,
     },
+    // ST3 กดเริ่มงานแล้วฝากให้ ST1 เป็นคนส่งคำสั่งเข้าเครื่องแทน
+    // (เครื่อง MK/UV ต่ออยู่กับ PC ของ ST1 ที่เดียว)
+    // "0" = ไม่มีคำขอค้าง · "1" = รอ ST1 หยิบไปส่ง
+    remote_start: {
+      type: DataTypes.STRING,
+      defaultValue: "0",
+    },
+    // โปรแกรม UV ที่ ST3 เลือกไว้ให้เสร็จแล้ว — ST1 จะได้ส่งโดยไม่ต้องถามใครที่จอตัวเอง
+    remote_program: {
+      type: DataTypes.STRING,
+    },
+    // สาเหตุที่ ST1 ส่งให้ไม่สำเร็จ — ST3 อ่านไปแสดงที่จอตัวเองแล้วล้างทิ้ง
+    // แยกจาก error_message ที่เป็นของ flow postResults/retry คนละเรื่องกัน
+    remote_error: {
+      type: DataTypes.TEXT,
+    },
   },
   { timestamps: true, createdAt: "created_at", updatedAt: "updated_at" }
 );

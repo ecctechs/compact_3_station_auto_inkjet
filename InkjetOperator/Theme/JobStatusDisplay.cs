@@ -19,6 +19,8 @@ internal static class JobStatusDisplay
             return ("Finished", DesignTokens.SuccessText);
         if (string.Equals(status, "Waiting", StringComparison.OrdinalIgnoreCase))
             return ("Waiting", DesignTokens.Danger);
+        if (string.Equals(status, "Cancel", StringComparison.OrdinalIgnoreCase))
+            return ("Cancelled", DesignTokens.TextSecondary);
 
         // สถานะนอกเหนือจาก 3 แบบถูกกรองออกไปแล้ว โชว์ค่าดิบไว้กันงงถ้าหลุดมา
         return (status ?? "", DesignTokens.Danger);

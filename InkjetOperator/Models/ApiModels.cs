@@ -69,6 +69,19 @@ public class PrintJob
     [JsonPropertyName("st_status")]
     public string? StStatus { get; set; }
 
+    // ST3 กดเริ่มงานแล้วฝากให้ ST1 ส่งคำสั่งเข้าเครื่องแทน
+    // "1" = มีคำขอค้างอยู่ ST1 ยังไม่ได้ส่ง · remote_program = โปรแกรม UV ที่ ST3 เลือกไว้แล้ว
+
+    [JsonPropertyName("remote_start")]
+    public string? RemoteStart { get; set; }
+
+    [JsonPropertyName("remote_program")]
+    public string? RemoteProgram { get; set; }
+
+    /// <summary>สาเหตุที่ ST1 ส่งให้ไม่สำเร็จ — ST3 อ่านไปแสดงที่จอตัวเองแล้วล้างทิ้ง</summary>
+    [JsonPropertyName("remote_error")]
+    public string? RemoteError { get; set; }
+
     // เวลาเป็น UTC ตามที่ backend ส่งมา แปลงเป็นเวลาไทยตอนแสดงผล
     // created_at = เวลารับงาน · updated_at = เวลาแก้ล่าสุด ใช้เป็นเวลาจบงานเมื่อสถานะเป็น Success
 

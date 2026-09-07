@@ -78,6 +78,50 @@ public static class MarkingMethodService
         return new MarkingPlan(false, plate, shim, steps);
     }
 
+    // ── งานไหนเป็นของสถานีไหน ──────────────────────────────
+    //
+    // กฎสามข้อล่างนี้เป็นกฎการผลิต ไม่ใช่กฎการแสดงผล จึงอยู่รวมที่นี่กับการแปลรหัส
+    // ห้ามเขียนซ้ำในหน้าจอ — ที่ผ่านมาการแยกกฎไปไว้หลายที่ทำให้สองหน้าตีความไม่ตรงกัน
+
+    /// <summary>งานที่วิ่งผ่าน ST3 — UV2 เป็นขั้นตอนสุดท้ายของทั้งสามรหัสนี้</summary>
+    private static readonly string[] St3Codes = ["10", "11", "12"];
+
+    /// <summary>
+    /// สถานีนี้ควรเห็นงาน marking นี้ในตารางไหม
+    ///
+    /// ST3 เห็นเฉพาะงานที่ตัวเองต้องแตะ (10 / 11 / 12) · ST1 เห็นทุกอย่างยกเว้น 10
+    /// ซึ่งเป็นงานที่ทำที่ ST3 ตั้งแต่ต้นจนจบ
+    /// </summary>
+    public static bool VisibleAt(int station, string? markingMethod)
+    {
+        var code = Code(markingMethod);
+        return station == StationService.St3
+            ? St3Codes.Contains(code)
+            : code != "10";
+    }
+
+    /// <summary>
+    /// สถานีนี้กดเริ่มงาน marking นี้ได้ไหม
+    ///
+    /// 10 เริ่มได้ที่ ST3 เท่านั้น · ที่เหลือเริ่มได้ที่ ST1 เท่านั้น
+    /// (11 กับ 12 นั้น ST3 เห็นงานได้แต่กดเริ่มไม่ได้ ต้องให้ ST1 เริ่ม)
+    /// </summary>
+    public static bool CanStartAt(int station, string? markingMethod) =>
+        Code(markingMethod) == "10"
+            ? station == StationService.St3
+            : station == StationService.St1;
+
+    /// <summary>
+    /// สถานีนี้กดจบงาน marking นี้ได้ไหม
+    ///
+    /// ทั้ง 10 / 11 / 12 จบได้ที่ ST3 เท่านั้น เพราะ UV2 เป็นขั้นตอนสุดท้ายของทั้งสามรหัส
+    /// ST1 เห็น 11 กับ 12 ในตารางและกดเริ่มได้ แต่คนที่รู้ว่างานจบจริงคือคนที่ ST3
+    /// </summary>
+    public static bool CanCompleteAt(int station, string? markingMethod) =>
+        !St3Codes.Contains(Code(markingMethod)) || station == StationService.St3;
+
+    private static string Code(string? markingMethod) => (markingMethod ?? "").Trim();
+
     /// <summary>
     /// ชื่อเครื่องที่แสดงบนจอ — อยู่ที่นี่เพราะทั้ง Order List และ Order Detail
     /// ต้องเรียกด้านเดียวกันว่าชื่อเดียวกัน หน้าไหนอยากให้ None เป็นขีดก็แปลงเอง

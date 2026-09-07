@@ -316,6 +316,43 @@ public class ApiClient
         }
     }
 
+    /// <summary>
+    /// ตั้ง/ล้างคำขอให้ ST1 ส่งคำสั่งแทน — ST3 ตั้งพร้อมชื่อโปรแกรมที่เลือกไว้แล้ว
+    /// ST1 ล้างทิ้ง (<paramref name="requested"/> = false) ทุกครั้งที่ลงมือส่งเสร็จ
+    /// ไม่ว่าจะสำเร็จหรือไม่ เพื่อไม่ให้รอบ poll ถัดไปหยิบไปส่งซ้ำ
+    /// <para>
+    /// <paramref name="failure"/> คือสาเหตุที่ส่งไม่สำเร็จ ฝากไว้ให้ ST3 อ่านไปแสดง
+    /// ที่จอตัวเอง — ส่ง null มาเมื่อไหร่คือล้างของเดิมทิ้ง
+    /// </para>
+    /// </summary>
+    public async Task<(bool ok, string? error)> SetRemoteStartAsync(
+        int jobId, bool requested, string? program = null, string? failure = null)
+    {
+        try
+        {
+            var payload = new
+            {
+                remote_start = requested ? "1" : "0",
+                remote_program = program,
+                remote_error = failure,
+            };
+            var content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(payload),
+                System.Text.Encoding.UTF8,
+                "application/json");
+
+            var response = await _http.PatchAsync($"/job/{jobId}/remote-start", content);
+            var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+                return (false, $"[{(int)response.StatusCode}] {body}");
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
+    }
+
     public async Task<(bool ok, string? error)> UpdateJobStatusAsync(int jobId, string status)
     {
         try
