@@ -114,6 +114,31 @@ public class SqliteDataService
     }
 
     /// <summary>
+    /// อ่านข้อมูลหัวงานที่หน้า Scan Barcode เอาไปโชว์ — ไม่พบแถวใน print_data คืน null
+    ///
+    /// marking_method อยู่คนละตาราง (plan_routing) และ lot ที่ยังไม่มีแถวตรงนั้นก็มี
+    /// จึงปล่อยให้เป็นค่าว่างแทนที่จะถือว่าหาไม่เจอทั้ง lot
+    /// </summary>
+    public LotSummary? GetLotSummary(string barcode)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT erp_mfg, qty FROM print_data WHERE lot_no = @barcode LIMIT 1";
+        cmd.Parameters.AddWithValue("@barcode", barcode);
+
+        using var reader = cmd.ExecuteReader();
+        if (!reader.Read()) return null;
+
+        return new LotSummary
+        {
+            LotNo = barcode,
+            ErpMfg = ReadStr(reader, "erp_mfg"),
+            Qty = ReadInt(reader, "qty"),   // เก็บเป็น TEXT ใน DB3 → ReadInt แปลงให้
+            MarkingMethod = GetPlanRouting(barcode, 0)?.MarkingMethod,
+        };
+    }
+
+    /// <summary>
     /// อ่าน UV detail ของ lot นี้จาก print_data — 1 lot ได้สูงสุด 2 แถว (UV1/UV2)
     /// เครื่องที่ไม่มีทั้งชื่อโปรแกรมและข้อความ = ไม่มีงาน UV → ไม่เก็บ
     /// </summary>

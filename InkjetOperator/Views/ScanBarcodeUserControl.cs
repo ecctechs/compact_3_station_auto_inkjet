@@ -8,11 +8,20 @@ public partial class ScanBarcodeUserControl : UserControl
     private ApiClient? _api;
     private SqliteDataService? _sqlite;
 
+    /// <summary>
+    /// บาร์โค้ดที่ดึงข้อมูลขึ้นมาโชว์แล้ว — ใช้เทียบกับสิ่งที่อยู่ในช่องตอนกด OK
+    /// เพื่อกันไม่ให้ลงทะเบียนด้วยข้อมูลของ lot ก่อนหน้าที่ค้างอยู่บนจอ
+    /// </summary>
+    private string? _loadedBarcode;
+
     public ScanBarcodeUserControl()
     {
         InitializeComponent();
         btnConfirm.Click += BtnConfirm_Click;
         btnCancel.Click += BtnCancel_Click;
+        btnEditQty.Click += BtnEditQty_Click;
+        txtBarcode.KeyDown += TxtBarcode_KeyDown;
+        txtBarcode.TextChanged += TxtBarcode_TextChanged;
     }
 
     /// <summary>
@@ -41,10 +50,97 @@ public partial class ScanBarcodeUserControl : UserControl
         var pcIp = CustomSettingsManager.Read("PC_IP", "127.0.0.1");
         _api = new ApiClient($"http://{pcIp}:3000");
 
-        var dbPath = CustomSettingsManager.Read("DB_PATH", "");
-        _sqlite = new SqliteDataService(dbPath);
+        _sqlite = OpenSourceDb();
 
         return (_api, _sqlite);
+    }
+
+    /// <summary>PrintData.db3 ตามที่ตั้งไว้ใน Setting — เปิดแบบอ่านอย่างเดียวเสมอ</summary>
+    private static SqliteDataService OpenSourceDb() =>
+        new(CustomSettingsManager.Read("DB_PATH", ""));
+
+    // ---- สแกนแล้วดึงข้อมูลมาโชว์ ----
+
+    /// <summary>
+    /// สแกนเนอร์แบบ keyboard wedge จบบาร์โค้ดด้วย Enter — ใช้จังหวะนั้นดึงข้อมูล
+    /// ของ lot ขึ้นมาโชว์ โดยไม่ต้องให้พนักงานกดอะไรเพิ่ม
+    /// </summary>
+    private void TxtBarcode_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyCode != Keys.Enter) return;
+
+        // กัน beep ของ WinForms ตอนกด Enter ในช่องบรรทัดเดียว
+        e.Handled = true;
+        e.SuppressKeyPress = true;
+
+        LoadLot();
+    }
+
+    /// <summary>
+    /// แก้บาร์โค้ดเมื่อไหร่ ข้อมูลที่โชว์อยู่ก็ไม่ใช่ของ lot ในช่องอีกต่อไป
+    /// ล้างทิ้งทันทีเพื่อไม่ให้เผลอลงทะเบียนด้วยข้อมูลค้าง
+    /// </summary>
+    private void TxtBarcode_TextChanged(object? sender, EventArgs e)
+    {
+        if (_loadedBarcode == null) return;
+        if (txtBarcode.Text.Trim() == _loadedBarcode) return;
+
+        ClearLotInfo();
+    }
+
+    private void LoadLot()
+    {
+        var barcode = txtBarcode.Text.Trim();
+        if (string.IsNullOrWhiteSpace(barcode))
+        {
+            ShowWarning("กรุณาสแกนหรือพิมพ์ Barcode");
+            return;
+        }
+
+        var sqlite = OpenSourceDb();
+        if (!sqlite.CanConnect())
+        {
+            ShowError("ไม่สามารถเชื่อมต่อ PrintData.db3 ได้\nกรุณาตรวจสอบ Database Path ใน Setting");
+            return;
+        }
+
+        var lot = sqlite.GetLotSummary(barcode);
+        if (lot == null)
+        {
+            ClearLotInfo();
+            ShowWarning($"ไม่พบข้อมูลใน print_data สำหรับ barcode: {barcode}");
+            txtBarcode.Focus();
+            return;
+        }
+
+        // ช่องไหนไม่มีค่าใน DB3 ก็ปล่อยว่างไว้ ไม่เตือน — ช่องว่างบอกตัวมันเองอยู่แล้ว
+        // และการเตือนตอนนี้จะไปขวางจังหวะสแกนงานถัดไปของพนักงาน
+        _loadedBarcode = barcode;
+        txtOrderNo.Text = lot.ErpMfg ?? "";
+        txtMarkingMethod.Text = lot.MarkingMethod ?? "";
+        txtQty.Text = lot.Qty?.ToString() ?? "";
+        btnEditQty.Enabled = true;
+    }
+
+    /// <summary>
+    /// เปิดหน้าต่างให้แก้ Qty ของงานที่กำลังจะลงทะเบียน
+    ///
+    /// ค่าที่แก้มีผลเฉพาะ job ที่สร้างจากการกด OK ครั้งนี้เท่านั้น — ไม่เขียนกลับ
+    /// PrintData.db3 (เปิดแบบอ่านอย่างเดียวอยู่แล้ว) และไม่แตะ qty ของ uv_job_data
+    /// ซึ่งยังเก็บค่าดิบจาก print_data ตามเดิม
+    /// </summary>
+    private void BtnEditQty_Click(object? sender, EventArgs e)
+    {
+        using var dlg = new InputDialog("Edit Qty", "Qty:", txtQty.Text.Trim());
+        if (dlg.ShowDialog(this) != DialogResult.OK) return;
+
+        if (!int.TryParse(dlg.Value, out var qty) || qty <= 0)
+        {
+            ShowWarning("Qty ต้องเป็นตัวเลขจำนวนเต็มที่มากกว่า 0");
+            return;
+        }
+
+        txtQty.Text = qty.ToString();
     }
 
     private async void BtnConfirm_Click(object? sender, EventArgs e)
@@ -73,39 +169,20 @@ public partial class ScanBarcodeUserControl : UserControl
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(txtOrderNo.Text))
+        // ช่องที่เหลืออ่านอย่างเดียว มาจากการสแกน ไม่ใช่จากการพิมพ์ —
+        // ถ้ายังไม่ได้ดึงข้อมูลของบาร์โค้ดนี้ ก็ยังไม่มีอะไรให้ลงทะเบียน
+        if (_loadedBarcode != txtBarcode.Text.Trim())
         {
-            ShowWarning("กรุณากรอก Order No");
-            txtOrderNo.Focus();
+            ShowWarning("กรุณาสแกนบาร์โค้ดแล้วกด Enter เพื่อดึงข้อมูลก่อน");
+            txtBarcode.Focus();
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(txtCustomerName.Text))
-        {
-            ShowWarning("กรุณากรอก Customer Name");
-            txtCustomerName.Focus();
-            return false;
-        }
-
-        if (string.IsNullOrWhiteSpace(txtType.Text))
-        {
-            ShowWarning("กรุณากรอก Type");
-            txtType.Focus();
-            return false;
-        }
-
+        // qty ใน print_data ว่างหรือเป็น 0 ได้ ให้พนักงานใส่เองผ่านปุ่มดินสอ
         var qtyText = txtQty.Text.Trim();
-        if (string.IsNullOrWhiteSpace(qtyText))
-        {
-            ShowWarning("กรุณากรอก Qty");
-            txtQty.Focus();
-            return false;
-        }
-
         if (!int.TryParse(qtyText, out var qty) || qty <= 0)
         {
-            ShowWarning("Qty ต้องเป็นตัวเลขจำนวนเต็มที่มากกว่า 0");
-            txtQty.Focus();
+            ShowWarning("Qty ต้องเป็นตัวเลขจำนวนเต็มที่มากกว่า 0\nกดปุ่มดินสอเพื่อแก้ไข Qty");
             return false;
         }
 
@@ -150,8 +227,9 @@ public partial class ScanBarcodeUserControl : UserControl
             BarcodeRaw = barcode,
             CreatedBy = "operator",
             OrderNo = txtOrderNo.Text.Trim(),
-            CustomerName = txtCustomerName.Text.Trim(),
-            Type = txtType.Text.Trim(),
+            // Qty ที่ส่งไปคือค่าที่โชว์อยู่บนจอ ซึ่งอาจถูกแก้ด้วยปุ่มดินสอแล้ว
+            // ผลของการแก้จบที่ print_jobs แถวนี้แถวเดียว
+            Type = txtMarkingMethod.Text.Trim(),
             Qty = int.TryParse(txtQty.Text.Trim(), out var q) ? q : null,
             StStatus = "0",
         };
@@ -296,11 +374,18 @@ public partial class ScanBarcodeUserControl : UserControl
     private void ClearForm()
     {
         txtBarcode.Text = "";
-        txtOrderNo.Text = "";
-        txtCustomerName.Text = "";
-        txtType.Text = "";
-        txtQty.Text = "";
+        ClearLotInfo();
         txtBarcode.Focus();
+    }
+
+    /// <summary>ล้างเฉพาะข้อมูลที่ดึงมาจาก DB3 — ช่องบาร์โค้ดไม่ถูกแตะ</summary>
+    private void ClearLotInfo()
+    {
+        _loadedBarcode = null;
+        txtOrderNo.Text = "";
+        txtMarkingMethod.Text = "";
+        txtQty.Text = "";
+        btnEditQty.Enabled = false;
     }
 
     private static void ShowWarning(string msg) =>

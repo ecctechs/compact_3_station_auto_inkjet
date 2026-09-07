@@ -105,8 +105,7 @@ public static class LanguageService
         ["Barcode / Lot No."] = "บาร์โค้ด / เลขล็อต",
         ["Barcode:"] = "บาร์โค้ด:",
         ["Order No:"] = "เลขออเดอร์:",
-        ["Customer Name:"] = "ชื่อลูกค้า:",
-        ["Type:"] = "ประเภท:",
+        ["Marking Method:"] = "รูปแบบการมาร์ก:",
         ["Qty:"] = "จำนวน:",
         ["Lot:"] = "ล็อต:",
 
