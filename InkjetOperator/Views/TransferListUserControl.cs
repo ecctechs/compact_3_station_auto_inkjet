@@ -143,14 +143,15 @@ public partial class TransferListUserControl : UserControl
                 return;
             }
 
-            ShowDetailDialog(row.Id, resolved);
+            ShowDetailDialog(resolved);
         }
     }
 
-    private void ShowDetailDialog(int jobId, ResolvedJobResponse resolved)
+    private void ShowDetailDialog(ResolvedJobResponse resolved)
     {
         using var dlg = new OrderDetailDialog();
-        dlg.TitleText = $"Job #{jobId} — Order Detail";
+        // ชื่อเดียวกับหัวที่อยู่ในหน้า ไม่ประกอบเอง ไม่งั้นสองที่จะขึ้นคนละเลข
+        dlg.TitleText = $"{OrderDetailUserControl.JobTitle(resolved.Job)} — Order Detail";
         dlg.Text = dlg.TitleText;
         dlg.SetTransferMode();
         dlg.LoadDetail(resolved, _api);

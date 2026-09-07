@@ -46,9 +46,9 @@ public partial class OrderListUserControl : UserControl
         {
             new AntdUI.Column("Start", "Start", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("End", "End", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center) { Width = "11%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("ErpMfg", "ERP MFG", AntdUI.ColumnAlign.Center) { Width = "12%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("LotNo", "Lot Number", AntdUI.ColumnAlign.Center) { Width = "12%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("MarkingMethod", "Marking Method", AntdUI.ColumnAlign.Center) { Width = "13%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("ProcessSequence", "Process Sequence", AntdUI.ColumnAlign.Center) { Width = "13%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Plate", "Plate", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Shim", "Shim", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
@@ -93,13 +93,12 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private static readonly (string Key, string ListWidth, string HistoryWidth)[] TabColumnWidths =
     [
-        ("OrderNo", "12%", "11%"),
+        ("ErpMfg", "14%", "12%"),
+        ("LotNo", "14%", "12%"),
         ("Qty", "7%", "6%"),
-        ("MarkingMethod", "15%", "13%"),
         ("ProcessSequence", "15%", "13%"),
         ("Plate", "7%", "6%"),
         ("Shim", "7%", "6%"),
-        ("Station", "8%", "7%"),
     ];
 
     /// <summary>
@@ -360,7 +359,7 @@ public partial class OrderListUserControl : UserControl
                 Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลด Detail ของ Job #{row.Id} ได้");
                 return;
             }
-            ShowDetailDialog(row.Id, resolved);
+            ShowDetailDialog(resolved);
         }
         else if (e.Btn?.Id == "start")
         {
@@ -372,12 +371,43 @@ public partial class OrderListUserControl : UserControl
         }
         else if (e.Btn?.Id == "cancel")
         {
-            await CancelJobAsync(row.Id, row.OrderNo);
+            await CancelJobAsync(row.Id, row.ErpMfg);
         }
         else if (e.Btn?.Id == "restore")
         {
-            await RestoreJobAsync(row.Id, row.OrderNo);
+            await RestoreJobAsync(row.Id, row.ErpMfg);
         }
+    }
+
+    /// <summary>
+    /// ชื่อเรียกงานที่พนักงานหน้างานใช้จริง — "ERP MFG (เลขล็อต)"
+    ///
+    /// ใช้แทนเลข id ในข้อความที่พูดถึง "งานอีกใบ" เพราะ id เป็นเลขในฐานข้อมูล
+    /// ที่ไม่ได้อยู่บนใบสั่งงานและไม่มีในตาราง คนอ่านจึงไล่หาไม่เจอว่าเป็นงานไหน
+    ///
+    /// ขาดค่าไหนก็ตัดออก เหลือเท่าที่รู้ ไม่มีเลยค่อยตกไปใช้ id
+    /// </summary>
+    private static string JobLabel(PrintJob job)
+    {
+        var erp = (job.OrderNo ?? "").Trim();
+        var lot = (job.LotNumber ?? job.BarcodeRaw ?? "").Trim();
+
+        if (erp.Length > 0 && lot.Length > 0) return $"{erp} ({lot})";
+        if (erp.Length > 0) return erp;
+        if (lot.Length > 0) return lot;
+
+        return $"#{job.Id}";
+    }
+
+    /// <summary>ค่าแรกที่ไม่ว่าง — ว่างทั้งคู่คืนขีด ให้เข้าชุดกับคอลัมน์อื่นที่ใช้ขีดแทนช่องว่าง</summary>
+    private static string FirstFilled(params string?[] values)
+    {
+        foreach (var value in values)
+        {
+            var text = (value ?? "").Trim();
+            if (text.Length > 0) return text;
+        }
+        return Dash;
     }
 
     /// <summary>งานที่ถูกยกเลิก — แยกจากงานที่จบแล้ว ทั้งที่อยู่แท็บ History เหมือนกัน</summary>
@@ -546,10 +576,10 @@ public partial class OrderListUserControl : UserControl
         // ข้างบน — MK อยู่ ST1 · UV1 อยู่ ST2 · UV2 อยู่ ST3
         int machineStation = JobStationService.StationOf(step) ?? 0;
 
-        if (StationOwner(machineStation, jobId) is int busyJob)
+        if (StationOwner(machineStation, jobId) is { } busyJob)
         {
             Notify.WarnModal(this, "สถานีไม่ว่าง",
-                $"ST{machineStation} มีงาน #{busyJob} อยู่\n\nต้องจบงานนั้นก่อนถึงจะเริ่มงานนี้ได้");
+                $"ST{machineStation} มีงาน {JobLabel(busyJob)} อยู่\n\nต้องจบงานนั้นก่อนถึงจะเริ่มงานนี้ได้");
             return;
         }
 
@@ -681,10 +711,10 @@ public partial class OrderListUserControl : UserControl
     private async Task RequestRemoteStartAsync(int jobId, string step, ResolvedJobResponse resolved)
     {
         int machineStation = JobStationService.StationOf(step) ?? 0;
-        if (StationOwner(machineStation, jobId) is int busyJob)
+        if (StationOwner(machineStation, jobId) is { } busyJob)
         {
             Notify.WarnModal(this, "สถานีไม่ว่าง",
-                $"ST{machineStation} มีงาน #{busyJob} อยู่\n\nต้องจบงานนั้นก่อนถึงจะเริ่มงานนี้ได้");
+                $"ST{machineStation} มีงาน {JobLabel(busyJob)} อยู่\n\nต้องจบงานนั้นก่อนถึงจะเริ่มงานนี้ได้");
             return;
         }
 
@@ -868,7 +898,7 @@ public partial class OrderListUserControl : UserControl
     }
 
     /// <summary>งานที่จองสถานีนี้อยู่ — null = ว่าง</summary>
-    private int? StationOwner(int station, int exceptJobId)
+    private PrintJob? StationOwner(int station, int exceptJobId)
     {
         if (station == 0) return null;
 
@@ -876,7 +906,7 @@ public partial class OrderListUserControl : UserControl
         {
             if (job.Id == exceptJobId) continue;
             if (!string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase)) continue;
-            if (JobStationService.Current(job.Commands) == station) return job.Id;
+            if (JobStationService.Current(job.Commands) == station) return job;
         }
 
         return null;
@@ -981,10 +1011,11 @@ public partial class OrderListUserControl : UserControl
     private static List<string> GetRequiredSteps(string markingMethod) =>
         MarkingMethodService.Resolve(markingMethod).Steps;
 
-    private void ShowDetailDialog(int jobId, ResolvedJobResponse resolved)
+    private void ShowDetailDialog(ResolvedJobResponse resolved)
     {
         using var dlg = new OrderDetailDialog();
-        dlg.TitleText = $"Job #{jobId} — Order Detail";
+        // ชื่อเดียวกับหัวที่อยู่ในหน้า ไม่ประกอบเอง ไม่งั้นสองที่จะขึ้นคนละเลข
+        dlg.TitleText = $"{OrderDetailUserControl.JobTitle(resolved.Job)} — Order Detail";
         dlg.Text = dlg.TitleText;
         dlg.LoadDetail(resolved, _api);
         dlg.ShowDialog(this);
@@ -1136,11 +1167,10 @@ public partial class OrderListUserControl : UserControl
             Id = job.Id,
             Start = FormatThaiTime(job.CreatedAt),
             End = finished ? FormatThaiTime(job.UpdatedAt) : Dash,
-            OrderNo = job.OrderNo ?? "",
-            // เลข marking_method ดิบ เช่น "12" "02" "22" — ไม่แปลเป็นชื่อเครื่อง
-            // เพราะใบสั่งงานที่พนักงานถืออยู่ก็เขียนเป็นตัวเลขแบบเดียวกัน
-            // ความหมายของแต่ละหลักดูได้ที่คอลัมน์ Plate / Shim ที่อยู่ถัดไป
-            MarkingMethod = Method(job.PlanRouting?.MarkingMethod),
+            ErpMfg = job.OrderNo ?? "",
+            // barcode ที่สแกนเข้ามา = เลขล็อต — backend เก็บซ้ำไว้ใน lot_number ด้วย
+            // ใช้ตัวที่มีค่าจริง เผื่องานเก่าที่กรอกมาคนละทาง
+            LotNo = FirstFilled(job.LotNumber, job.BarcodeRaw),
             Qty = job.Qty?.ToString() ?? "",
             // ค่าดิบจาก plan_routing.process_sequence เช่น "online" / "offline"
             // โชว์ตามที่ database ส่งมาตรง ๆ ไม่แปลง ไม่ normalize ตัวพิมพ์
@@ -1492,9 +1522,9 @@ internal class OrderRow : AntdUI.NotifyProperty
     public int Id { get; set; }
     public string Start { get; set; } = "";
     public string End { get; set; } = "";
-    public string OrderNo { get; set; } = "";
+    public string ErpMfg { get; set; } = "";
+    public string LotNo { get; set; } = "";
     public string Qty { get; set; } = "";
-    public string MarkingMethod { get; set; } = "";
     public string ProcessSequence { get; set; } = "";
     public string Plate { get; set; } = "";
     public string Shim { get; set; } = "";

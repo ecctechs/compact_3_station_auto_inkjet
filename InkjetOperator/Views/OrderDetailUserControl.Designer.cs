@@ -31,12 +31,12 @@ partial class OrderDetailUserControl
         pnlHeaderBar = new AntdUI.Panel();
         lblHeaderTitle = new AntdUI.Label();
         tlpJobFields = new System.Windows.Forms.TableLayoutPanel();
-        lblJobOrderNo = new AntdUI.Label();
+        lblJobErpMfg = new AntdUI.Label();
         lblJobLotNo = new AntdUI.Label();
         lblJobCustomer = new AntdUI.Label();
         lblJobQty = new AntdUI.Label();
         lblJobStatus = new AntdUI.Label();
-        txtJobOrderNo = new AntdUI.Input();
+        txtJobErpMfg = new AntdUI.Input();
         txtJobLotNo = new AntdUI.Input();
         txtJobCustomer = new AntdUI.Input();
         txtJobQty = new AntdUI.Input();
@@ -206,6 +206,7 @@ partial class OrderDetailUserControl
         btnIaiAdj2Z2Send = new AntdUI.Button();
         btnIaiAdj2Z2Upload = new AntdUI.Button();
         btnIaiAdj2Z2Reset = new AntdUI.Button();
+        tlpDetailActions = new System.Windows.Forms.TableLayoutPanel();
         flpDetailActions = new System.Windows.Forms.FlowLayoutPanel();
         btnSendMk = new AntdUI.Button();
         btnSendUv1 = new AntdUI.Button();
@@ -258,6 +259,7 @@ partial class OrderDetailUserControl
         tlpUv2Head.SuspendLayout();
         tlpUv2Iai.SuspendLayout();
         pnlUv2Chip.SuspendLayout();
+        tlpDetailActions.SuspendLayout();
         flpDetailActions.SuspendLayout();
         SuspendLayout();
         //
@@ -270,16 +272,16 @@ partial class OrderDetailUserControl
         tlpDetailRoot.Controls.Add(tlpJobFields, 0, 1);
         tlpDetailRoot.Controls.Add(tlpConnStatus, 0, 2);
         tlpDetailRoot.Controls.Add(pnlBody, 0, 3);
-        tlpDetailRoot.Controls.Add(flpDetailActions, 0, 4);
+        tlpDetailRoot.Controls.Add(tlpDetailActions, 0, 4);
         tlpDetailRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpDetailRoot.Location = new System.Drawing.Point(0, 0);
         tlpDetailRoot.Name = "tlpDetailRoot";
         tlpDetailRoot.RowCount = 5;
-        tlpDetailRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 70F));
-        tlpDetailRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 200F));
-        tlpDetailRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 45F));
+        tlpDetailRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 56F));
+        tlpDetailRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 168F));
+        tlpDetailRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
         tlpDetailRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpDetailRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 110F));
+        tlpDetailRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 72F));
         tlpDetailRoot.Size = new System.Drawing.Size(1650, 1125);
         tlpDetailRoot.TabIndex = 0;
         //
@@ -294,18 +296,18 @@ partial class OrderDetailUserControl
         pnlHeaderBar.Name = "pnlHeaderBar";
         pnlHeaderBar.Padding = new System.Windows.Forms.Padding(24, 0, 24, 0);
         pnlHeaderBar.Radius = 0;
-        pnlHeaderBar.Size = new System.Drawing.Size(1650, 70);
+        pnlHeaderBar.Size = new System.Drawing.Size(1650, 56);
         pnlHeaderBar.TabIndex = 0;
         //
         // lblHeaderTitle
         //
         lblHeaderTitle.BackColor = System.Drawing.Color.FromArgb(36, 71, 101);
         lblHeaderTitle.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblHeaderTitle.Font = new System.Drawing.Font("Segoe UI", 20F, System.Drawing.FontStyle.Bold);
+        lblHeaderTitle.Font = new System.Drawing.Font("Segoe UI", 17F, System.Drawing.FontStyle.Bold);
         lblHeaderTitle.ForeColor = System.Drawing.Color.White;
         lblHeaderTitle.Location = new System.Drawing.Point(24, 0);
         lblHeaderTitle.Name = "lblHeaderTitle";
-        lblHeaderTitle.Size = new System.Drawing.Size(1590, 70);
+        lblHeaderTitle.Size = new System.Drawing.Size(1590, 56);
         lblHeaderTitle.TabIndex = 0;
         lblHeaderTitle.Text = "Job Information";
         lblHeaderTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -319,12 +321,12 @@ partial class OrderDetailUserControl
         tlpJobFields.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 28F));
         tlpJobFields.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 14F));
         tlpJobFields.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 18F));
-        tlpJobFields.Controls.Add(lblJobOrderNo, 0, 0);
+        tlpJobFields.Controls.Add(lblJobErpMfg, 0, 0);
         tlpJobFields.Controls.Add(lblJobLotNo, 1, 0);
         tlpJobFields.Controls.Add(lblJobCustomer, 2, 0);
         tlpJobFields.Controls.Add(lblJobQty, 3, 0);
         tlpJobFields.Controls.Add(lblJobStatus, 4, 0);
-        tlpJobFields.Controls.Add(txtJobOrderNo, 0, 1);
+        tlpJobFields.Controls.Add(txtJobErpMfg, 0, 1);
         tlpJobFields.Controls.Add(txtJobLotNo, 1, 1);
         tlpJobFields.Controls.Add(txtJobCustomer, 2, 1);
         tlpJobFields.Controls.Add(txtJobQty, 3, 1);
@@ -337,26 +339,26 @@ partial class OrderDetailUserControl
         tlpJobFields.Location = new System.Drawing.Point(0, 56);
         tlpJobFields.Margin = new System.Windows.Forms.Padding(0);
         tlpJobFields.Name = "tlpJobFields";
-        tlpJobFields.Padding = new System.Windows.Forms.Padding(24, 14, 24, 10);
+        tlpJobFields.Padding = new System.Windows.Forms.Padding(24, 10, 24, 8);
         tlpJobFields.RowCount = 3;
-        tlpJobFields.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
-        tlpJobFields.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 58F));
+        tlpJobFields.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
+        tlpJobFields.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 52F));
         tlpJobFields.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpJobFields.Size = new System.Drawing.Size(1650, 200);
+        tlpJobFields.Size = new System.Drawing.Size(1650, 168);
         tlpJobFields.TabIndex = 1;
         //
-        // lblJobOrderNo
+        // lblJobErpMfg
         //
-        lblJobOrderNo.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblJobOrderNo.Font = new System.Drawing.Font("Segoe UI", 12.5F);
-        lblJobOrderNo.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-        lblJobOrderNo.Location = new System.Drawing.Point(27, 14);
-        lblJobOrderNo.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
-        lblJobOrderNo.Name = "lblJobOrderNo";
-        lblJobOrderNo.Size = new System.Drawing.Size(249, 35);
-        lblJobOrderNo.TabIndex = 0;
-        lblJobOrderNo.Text = "Order No.";
-        lblJobOrderNo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        lblJobErpMfg.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblJobErpMfg.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        lblJobErpMfg.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblJobErpMfg.Location = new System.Drawing.Point(27, 14);
+        lblJobErpMfg.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblJobErpMfg.Name = "lblJobErpMfg";
+        lblJobErpMfg.Size = new System.Drawing.Size(249, 28);
+        lblJobErpMfg.TabIndex = 0;
+        lblJobErpMfg.Text = "ERP MFG";
+        lblJobErpMfg.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
         //
         // lblJobLotNo
         //
@@ -366,7 +368,7 @@ partial class OrderDetailUserControl
         lblJobLotNo.Location = new System.Drawing.Point(232, 14);
         lblJobLotNo.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
         lblJobLotNo.Name = "lblJobLotNo";
-        lblJobLotNo.Size = new System.Drawing.Size(312, 35);
+        lblJobLotNo.Size = new System.Drawing.Size(312, 28);
         lblJobLotNo.TabIndex = 1;
         lblJobLotNo.Text = "Barcode / Lot No.";
         lblJobLotNo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -379,7 +381,7 @@ partial class OrderDetailUserControl
         lblJobCustomer.Location = new System.Drawing.Point(488, 14);
         lblJobCustomer.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
         lblJobCustomer.Name = "lblJobCustomer";
-        lblJobCustomer.Size = new System.Drawing.Size(345, 35);
+        lblJobCustomer.Size = new System.Drawing.Size(345, 28);
         lblJobCustomer.TabIndex = 2;
         lblJobCustomer.Text = "Customer Name";
         lblJobCustomer.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -393,7 +395,7 @@ partial class OrderDetailUserControl
         lblJobQty.Location = new System.Drawing.Point(975, 14);
         lblJobQty.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
         lblJobQty.Name = "lblJobQty";
-        lblJobQty.Size = new System.Drawing.Size(185, 35);
+        lblJobQty.Size = new System.Drawing.Size(185, 28);
         lblJobQty.TabIndex = 4;
         lblJobQty.Text = "Qty";
         lblJobQty.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -406,24 +408,24 @@ partial class OrderDetailUserControl
         lblJobStatus.Location = new System.Drawing.Point(1129, 14);
         lblJobStatus.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
         lblJobStatus.Name = "lblJobStatus";
-        lblJobStatus.Size = new System.Drawing.Size(208, 35);
+        lblJobStatus.Size = new System.Drawing.Size(208, 28);
         lblJobStatus.TabIndex = 5;
         lblJobStatus.Text = "Status";
         lblJobStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
         //
-        // txtJobOrderNo
+        // txtJobErpMfg
         //
-        txtJobOrderNo.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtJobOrderNo.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtJobOrderNo.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
-        txtJobOrderNo.Font = new System.Drawing.Font("Segoe UI", 14F);
-        txtJobOrderNo.Location = new System.Drawing.Point(27, 46);
-        txtJobOrderNo.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-        txtJobOrderNo.Name = "txtJobOrderNo";
-        txtJobOrderNo.Radius = 8;
-        txtJobOrderNo.ReadOnly = true;
-        txtJobOrderNo.Size = new System.Drawing.Size(249, 48);
-        txtJobOrderNo.TabIndex = 6;
+        txtJobErpMfg.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtJobErpMfg.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtJobErpMfg.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtJobErpMfg.Font = new System.Drawing.Font("Segoe UI", 14F);
+        txtJobErpMfg.Location = new System.Drawing.Point(27, 46);
+        txtJobErpMfg.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+        txtJobErpMfg.Name = "txtJobErpMfg";
+        txtJobErpMfg.Radius = 8;
+        txtJobErpMfg.ReadOnly = true;
+        txtJobErpMfg.Size = new System.Drawing.Size(249, 48);
+        txtJobErpMfg.TabIndex = 6;
         //
         // txtJobLotNo
         //
@@ -432,7 +434,7 @@ partial class OrderDetailUserControl
         txtJobLotNo.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
         txtJobLotNo.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         txtJobLotNo.Location = new System.Drawing.Point(232, 46);
-        txtJobLotNo.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+        txtJobLotNo.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
         txtJobLotNo.Name = "txtJobLotNo";
         txtJobLotNo.Radius = 8;
         txtJobLotNo.ReadOnly = true;
@@ -446,7 +448,7 @@ partial class OrderDetailUserControl
         txtJobCustomer.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
         txtJobCustomer.Font = new System.Drawing.Font("Segoe UI", 14F);
         txtJobCustomer.Location = new System.Drawing.Point(488, 46);
-        txtJobCustomer.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+        txtJobCustomer.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
         txtJobCustomer.Name = "txtJobCustomer";
         txtJobCustomer.Radius = 8;
         txtJobCustomer.ReadOnly = true;
@@ -461,7 +463,7 @@ partial class OrderDetailUserControl
         txtJobQty.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
         txtJobQty.Font = new System.Drawing.Font("Segoe UI", 14F);
         txtJobQty.Location = new System.Drawing.Point(975, 46);
-        txtJobQty.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+        txtJobQty.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
         txtJobQty.Name = "txtJobQty";
         txtJobQty.Radius = 8;
         txtJobQty.ReadOnly = true;
@@ -475,7 +477,7 @@ partial class OrderDetailUserControl
         txtJobStatus.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
         txtJobStatus.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         txtJobStatus.Location = new System.Drawing.Point(1129, 46);
-        txtJobStatus.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+        txtJobStatus.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
         txtJobStatus.Name = "txtJobStatus";
         txtJobStatus.Radius = 8;
         txtJobStatus.ReadOnly = true;
@@ -491,7 +493,7 @@ partial class OrderDetailUserControl
         lblMarkingMethod.Location = new System.Drawing.Point(27, 88);
         lblMarkingMethod.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
         lblMarkingMethod.Name = "lblMarkingMethod";
-        lblMarkingMethod.Size = new System.Drawing.Size(249, 78);
+        lblMarkingMethod.Size = new System.Drawing.Size(249, 70);
         lblMarkingMethod.TabIndex = 12;
         lblMarkingMethod.Text = "Marking Method";
         lblMarkingMethod.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -522,7 +524,7 @@ partial class OrderDetailUserControl
         flpMarkingFlow.Location = new System.Drawing.Point(491, 88);
         flpMarkingFlow.Margin = new System.Windows.Forms.Padding(6, 0, 3, 0);
         flpMarkingFlow.Name = "flpMarkingFlow";
-        flpMarkingFlow.Size = new System.Drawing.Size(1032, 78);
+        flpMarkingFlow.Size = new System.Drawing.Size(1032, 70);
         flpMarkingFlow.TabIndex = 14;
         flpMarkingFlow.WrapContents = false;
         //
@@ -537,10 +539,10 @@ partial class OrderDetailUserControl
         btnFlowPlate.IconPosition = AntdUI.TAlignMini.Right;
         btnFlowPlate.IconRatio = 0.85F;
         btnFlowPlate.IconSvg = "PictureOutlined";
-        btnFlowPlate.Margin = new System.Windows.Forms.Padding(0, 0, 0, 5);
+        btnFlowPlate.Margin = new System.Windows.Forms.Padding(0, 0, 0, 4);
         btnFlowPlate.Name = "btnFlowPlate";
         btnFlowPlate.Radius = 6;
-        btnFlowPlate.Size = new System.Drawing.Size(400, 34);
+        btnFlowPlate.Size = new System.Drawing.Size(400, 31);
         btnFlowPlate.TabIndex = 0;
         btnFlowPlate.Text = "Plate - None";
         btnFlowPlate.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -557,10 +559,10 @@ partial class OrderDetailUserControl
         btnFlowShim.IconPosition = AntdUI.TAlignMini.Right;
         btnFlowShim.IconRatio = 0.85F;
         btnFlowShim.IconSvg = "PictureOutlined";
-        btnFlowShim.Margin = new System.Windows.Forms.Padding(0, 0, 0, 5);
+        btnFlowShim.Margin = new System.Windows.Forms.Padding(0, 0, 0, 4);
         btnFlowShim.Name = "btnFlowShim";
         btnFlowShim.Radius = 6;
-        btnFlowShim.Size = new System.Drawing.Size(400, 34);
+        btnFlowShim.Size = new System.Drawing.Size(400, 31);
         btnFlowShim.TabIndex = 1;
         btnFlowShim.Text = "Shim - None";
         btnFlowShim.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -585,7 +587,7 @@ partial class OrderDetailUserControl
         tlpConnStatus.Padding = new System.Windows.Forms.Padding(24, 0, 24, 0);
         tlpConnStatus.RowCount = 1;
         tlpConnStatus.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpConnStatus.Size = new System.Drawing.Size(1650, 45);
+        tlpConnStatus.Size = new System.Drawing.Size(1650, 36);
         tlpConnStatus.TabIndex = 4;
         //
         // lblConnMk1
@@ -3012,6 +3014,23 @@ partial class OrderDetailUserControl
         btnIaiAdj2Z2Reset.Text = "Reset";
         btnIaiAdj2Z2Reset.Type = AntdUI.TTypeMini.Default;
         //
+        // tlpDetailActions — ปุ่มสั่งงานชิดซ้าย · ปุ่มปิดชิดขวา
+        //
+        tlpDetailActions.BackColor = System.Drawing.Color.White;
+        tlpDetailActions.ColumnCount = 2;
+        tlpDetailActions.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpDetailActions.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.AutoSize));
+        tlpDetailActions.Controls.Add(flpDetailActions, 0, 0);
+        tlpDetailActions.Controls.Add(btnDetailClose, 1, 0);
+        tlpDetailActions.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpDetailActions.Location = new System.Drawing.Point(0, 850);
+        tlpDetailActions.Margin = new System.Windows.Forms.Padding(0);
+        tlpDetailActions.Name = "tlpDetailActions";
+        tlpDetailActions.RowCount = 1;
+        tlpDetailActions.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpDetailActions.Size = new System.Drawing.Size(1650, 72);
+        tlpDetailActions.TabIndex = 3;
+        //
         // flpDetailActions
         //
         flpDetailActions.BackColor = System.Drawing.Color.White;
@@ -3020,15 +3039,14 @@ partial class OrderDetailUserControl
         flpDetailActions.Controls.Add(btnSendUv2);
         flpDetailActions.Controls.Add(btnSendToSt1);
         flpDetailActions.Controls.Add(btnTestPlc);
-        flpDetailActions.Controls.Add(btnDetailClose);
         flpDetailActions.Dock = System.Windows.Forms.DockStyle.Fill;
         flpDetailActions.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
-        flpDetailActions.Location = new System.Drawing.Point(0, 812);
+        flpDetailActions.Location = new System.Drawing.Point(0, 0);
         flpDetailActions.Margin = new System.Windows.Forms.Padding(0);
         flpDetailActions.Name = "flpDetailActions";
-        flpDetailActions.Padding = new System.Windows.Forms.Padding(24, 16, 24, 16);
-        flpDetailActions.Size = new System.Drawing.Size(1650, 110);
-        flpDetailActions.TabIndex = 3;
+        flpDetailActions.Padding = new System.Windows.Forms.Padding(24, 12, 12, 12);
+        flpDetailActions.Size = new System.Drawing.Size(1494, 72);
+        flpDetailActions.TabIndex = 0;
         flpDetailActions.WrapContents = false;
         //
         // btnSendMk
@@ -3106,14 +3124,15 @@ partial class OrderDetailUserControl
         //
         // btnDetailClose
         //
-        btnDetailClose.Font = new System.Drawing.Font("Segoe UI", 16F);
+        btnDetailClose.Anchor = System.Windows.Forms.AnchorStyles.Right;
+        btnDetailClose.Font = new System.Drawing.Font("Segoe UI", 13F);
         btnDetailClose.ForeColor = System.Drawing.Color.White;
-        btnDetailClose.Location = new System.Drawing.Point(760, 16);
-        btnDetailClose.Margin = new System.Windows.Forms.Padding(0);
+        btnDetailClose.Location = new System.Drawing.Point(1518, 13);
+        btnDetailClose.Margin = new System.Windows.Forms.Padding(12, 0, 24, 0);
         btnDetailClose.Name = "btnDetailClose";
-        btnDetailClose.Radius = 10;
-        btnDetailClose.Size = new System.Drawing.Size(200, 70);
-        btnDetailClose.TabIndex = 3;
+        btnDetailClose.Radius = 8;
+        btnDetailClose.Size = new System.Drawing.Size(108, 46);
+        btnDetailClose.TabIndex = 1;
         btnDetailClose.Text = "ปิด";
         btnDetailClose.Type = AntdUI.TTypeMini.Error;
         //
@@ -3174,6 +3193,7 @@ partial class OrderDetailUserControl
         tlpUv1AdjustZ2.ResumeLayout(false);
         tlpUv2AdjustZ1.ResumeLayout(false);
         tlpUv2AdjustZ2.ResumeLayout(false);
+        tlpDetailActions.ResumeLayout(false);
         flpDetailActions.ResumeLayout(false);
         ResumeLayout(false);
     }
@@ -3184,12 +3204,12 @@ partial class OrderDetailUserControl
     private AntdUI.Panel pnlHeaderBar;
     private AntdUI.Label lblHeaderTitle;
     private System.Windows.Forms.TableLayoutPanel tlpJobFields;
-    private AntdUI.Label lblJobOrderNo;
+    private AntdUI.Label lblJobErpMfg;
     private AntdUI.Label lblJobLotNo;
     private AntdUI.Label lblJobCustomer;
     private AntdUI.Label lblJobQty;
     private AntdUI.Label lblJobStatus;
-    private AntdUI.Input txtJobOrderNo;
+    private AntdUI.Input txtJobErpMfg;
     private AntdUI.Input txtJobLotNo;
     private AntdUI.Input txtJobCustomer;
     private AntdUI.Input txtJobQty;
@@ -3311,6 +3331,7 @@ partial class OrderDetailUserControl
     private AntdUI.Label lblUv2ErpMfg;
     private AntdUI.Input txtUv2ErpMfg;
     private AntdUI.Table tblUv2Texts;
+    private System.Windows.Forms.TableLayoutPanel tlpDetailActions;
     private System.Windows.Forms.FlowLayoutPanel flpDetailActions;
     private AntdUI.Button btnSendMk;
     private AntdUI.Button btnSendUv1;

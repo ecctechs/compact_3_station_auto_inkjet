@@ -141,6 +141,24 @@ public partial class OrderDetailUserControl : UserControl
 
     public void SetTransferMode() => _transferMode = true;
 
+    /// <summary>
+    /// ชื่อเรียกงานบนหัวจอ — "Job #1 · 07/09/26"
+    ///
+    /// เลขงานเริ่มที่ 1 ใหม่ทุกวัน ลำพังเลขจึงระบุงานไม่ได้ ต้องมีวันที่กำกับเสมอ
+    /// งานเก่าที่รับก่อนมีเลขประจำวันตกไปใช้ id ของตารางแทน
+    ///
+    /// เป็น public เพราะแถบหัวหน้าต่างที่ครอบหน้านี้อยู่ต้องเรียกชื่อเดียวกัน —
+    /// เดิมสองที่ประกอบชื่อกันเอง หัวหน้าต่างเลยขึ้น id ส่วนหัวในหน้าขึ้นเลขประจำวัน
+    /// กลายเป็นงานเดียวกันแต่เห็นสองเลขบนจอเดียว
+    /// </summary>
+    public static string JobTitle(PrintJob job)
+    {
+        var date = ThaiTime.Text(job.CreatedAt, ThaiTime.DateFormat, "");
+        var no = job.JobNo?.ToString() ?? job.Id.ToString();
+
+        return date.Length == 0 ? $"Job #{no}" : $"Job #{no}  ·  {date}";
+    }
+
     public void LoadDetail(ResolvedJobResponse resolved, ApiClient? api = null)
     {
         _pattern = resolved.Pattern;
@@ -161,13 +179,7 @@ public partial class OrderDetailUserControl : UserControl
             if (chosen != null) _chosenUvProgram[machine] = chosen;
         }
 
-        // เลขงานเริ่มที่ 1 ใหม่ทุกวัน ลำพังเลขจึงระบุงานไม่ได้ ต้องมีวันที่กำกับเสมอ
-        // งานเก่าที่รับก่อนมีเลขประจำวันตกไปใช้ id ของตารางแทน
-        var jobDate = ThaiTime.Text(resolved.Job.CreatedAt, ThaiTime.DateFormat, "");
-        var jobNo = resolved.Job.JobNo?.ToString() ?? resolved.Job.Id.ToString();
-
-        lblHeaderTitle.Text = $"Job Information — Job #{jobNo}"
-            + (jobDate.Length == 0 ? "" : $"  ·  {jobDate}");
+        lblHeaderTitle.Text = $"Job Information — {JobTitle(resolved.Job)}";
 
         // โชว์ address ที่ค่าแต่ละช่องจะถูกส่งไป ดึงจากตาราง register map ของ
         // หน้า PLC Setting ไม่ได้ให้รอ เพราะแค่ป้ายกำกับ ไม่ควรหน่วงการเปิดหน้า
@@ -1005,7 +1017,7 @@ public partial class OrderDetailUserControl : UserControl
     {
         var job = resolved.Job;
 
-        txtJobOrderNo.Text = OrDash(job.OrderNo);
+        txtJobErpMfg.Text = OrDash(job.OrderNo);
         txtJobLotNo.Text = OrDash(job.BarcodeRaw);
         txtJobCustomer.Text = OrDash(job.CustomerName);
         txtJobQty.Text = job.Qty?.ToString() ?? Dash;

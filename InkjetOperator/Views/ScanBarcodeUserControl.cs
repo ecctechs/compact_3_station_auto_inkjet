@@ -1,4 +1,4 @@
-using InkjetOperator.Models;
+﻿using InkjetOperator.Models;
 using InkjetOperator.Services;
 
 namespace InkjetOperator.Views;
@@ -125,7 +125,7 @@ public partial class ScanBarcodeUserControl : UserControl
         // และการเตือนตอนนี้จะไปขวางจังหวะสแกนงานถัดไปของพนักงาน
         _loadedBarcode = barcode;
         _customerName = lot.Customer;
-        txtOrderNo.Text = lot.ErpMfg ?? "";
+        txtErpMfg.Text = lot.ErpMfg ?? "";
         txtMarkingMethod.Text = lot.MarkingMethod ?? "";
         txtQty.Text = lot.Qty?.ToString() ?? "";
         btnEditQty.Enabled = true;
@@ -235,7 +235,7 @@ public partial class ScanBarcodeUserControl : UserControl
         {
             BarcodeRaw = barcode,
             CreatedBy = "operator",
-            OrderNo = txtOrderNo.Text.Trim(),
+            OrderNo = txtErpMfg.Text.Trim(),
             // ชื่อลูกค้าไม่มีช่องบนหน้านี้ ดึงมาจาก inkjet_data.customer ตอนสแกน
             // แล้วติดไปกับงานเฉย ๆ ไปโผล่ที่หน้า Order Detail
             CustomerName = _customerName,
@@ -395,7 +395,7 @@ public partial class ScanBarcodeUserControl : UserControl
     {
         _loadedBarcode = null;
         _customerName = null;
-        txtOrderNo.Text = "";
+        txtErpMfg.Text = "";
         txtMarkingMethod.Text = "";
         txtQty.Text = "";
         btnEditQty.Enabled = false;

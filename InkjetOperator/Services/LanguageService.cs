@@ -104,7 +104,6 @@ public static class LanguageService
         ["Scan Barcode"] = "สแกนบาร์โค้ด",
         ["Barcode / Lot No."] = "บาร์โค้ด / เลขล็อต",
         ["Barcode:"] = "บาร์โค้ด:",
-        ["Order No:"] = "เลขออเดอร์:",
         ["Marking Method:"] = "รูปแบบการมาร์ก:",
         ["Qty:"] = "จำนวน:",
         ["Lot:"] = "ล็อต:",
@@ -112,7 +111,9 @@ public static class LanguageService
         // ── ตารางออเดอร์ ──
         ["List"] = "รายการ",
         ["History"] = "ประวัติ",
-        ["Order No."] = "เลขออเดอร์",
+        // "ERP MFG" ไม่แปลโดยตั้งใจ เป็นชื่อเรียกในระบบ ERP เหมือนรหัสเครื่อง
+        ["Lot Number"] = "เลขล็อต",
+        ["Order No."] = "เลขออเดอร์",   // ยังใช้ที่หน้า Transfer ST1
         ["Customer"] = "ลูกค้า",
         ["Type"] = "ประเภท",
         ["Qty"] = "จำนวน",

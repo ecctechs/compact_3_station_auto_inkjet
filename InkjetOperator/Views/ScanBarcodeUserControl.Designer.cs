@@ -37,11 +37,11 @@ partial class ScanBarcodeUserControl
         pnlOrderInformation = new AntdUI.Panel();
         tlpOrderInformation = new TableLayoutPanel();
         lblBarcode = new AntdUI.Label();
-        lblOrderNo = new AntdUI.Label();
+        lblErpMfg = new AntdUI.Label();
         lblMarkingMethod = new AntdUI.Label();
         lblQty = new AntdUI.Label();
         txtBarcode = new AntdUI.Input();
-        txtOrderNo = new AntdUI.Input();
+        txtErpMfg = new AntdUI.Input();
         txtMarkingMethod = new AntdUI.Input();
         tlpQty = new TableLayoutPanel();
         txtQty = new AntdUI.Input();
@@ -177,11 +177,11 @@ partial class ScanBarcodeUserControl
         tlpOrderInformation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 23F));
         tlpOrderInformation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 77F));
         tlpOrderInformation.Controls.Add(lblBarcode, 0, 0);
-        tlpOrderInformation.Controls.Add(lblOrderNo, 0, 1);
+        tlpOrderInformation.Controls.Add(lblErpMfg, 0, 1);
         tlpOrderInformation.Controls.Add(lblMarkingMethod, 0, 2);
         tlpOrderInformation.Controls.Add(lblQty, 0, 3);
         tlpOrderInformation.Controls.Add(txtBarcode, 1, 0);
-        tlpOrderInformation.Controls.Add(txtOrderNo, 1, 1);
+        tlpOrderInformation.Controls.Add(txtErpMfg, 1, 1);
         tlpOrderInformation.Controls.Add(txtMarkingMethod, 1, 2);
         tlpOrderInformation.Controls.Add(tlpQty, 1, 3);
         tlpOrderInformation.Dock = DockStyle.Fill;
@@ -209,18 +209,18 @@ partial class ScanBarcodeUserControl
         lblBarcode.Text = "Barcode:";
         lblBarcode.TextAlign = ContentAlignment.MiddleRight;
         // 
-        // lblOrderNo
+        // lblErpMfg
         // 
-        lblOrderNo.Dock = DockStyle.Fill;
-        lblOrderNo.Font = new Font("Segoe UI", 18F);
-        lblOrderNo.ForeColor = Color.FromArgb(17, 17, 17);
-        lblOrderNo.Location = new Point(4, 135);
-        lblOrderNo.Margin = new Padding(4, 0, 30, 0);
-        lblOrderNo.Name = "lblOrderNo";
-        lblOrderNo.Size = new Size(237, 135);
-        lblOrderNo.TabIndex = 1;
-        lblOrderNo.Text = "Order No:";
-        lblOrderNo.TextAlign = ContentAlignment.MiddleRight;
+        lblErpMfg.Dock = DockStyle.Fill;
+        lblErpMfg.Font = new Font("Segoe UI", 18F);
+        lblErpMfg.ForeColor = Color.FromArgb(17, 17, 17);
+        lblErpMfg.Location = new Point(4, 135);
+        lblErpMfg.Margin = new Padding(4, 0, 30, 0);
+        lblErpMfg.Name = "lblErpMfg";
+        lblErpMfg.Size = new Size(237, 135);
+        lblErpMfg.TabIndex = 1;
+        lblErpMfg.Text = "ERP MFG:";
+        lblErpMfg.TextAlign = ContentAlignment.MiddleRight;
         // 
         // lblMarkingMethod
         // 
@@ -260,20 +260,20 @@ partial class ScanBarcodeUserControl
         txtBarcode.Size = new Size(692, 87);
         txtBarcode.TabIndex = 4;
         // 
-        // txtOrderNo
+        // txtErpMfg
         // 
-        txtOrderNo.BackColor = Color.FromArgb(242, 242, 242);
-        txtOrderNo.BorderColor = Color.FromArgb(191, 191, 191);
-        txtOrderNo.Dock = DockStyle.Fill;
-        txtOrderNo.Font = new Font("Segoe UI", 18F);
-        txtOrderNo.ForeColor = Color.FromArgb(89, 89, 89);
-        txtOrderNo.Location = new Point(275, 159);
-        txtOrderNo.Margin = new Padding(4, 24, 4, 24);
-        txtOrderNo.Name = "txtOrderNo";
-        txtOrderNo.Radius = 8;
-        txtOrderNo.ReadOnly = true;
-        txtOrderNo.Size = new Size(692, 87);
-        txtOrderNo.TabIndex = 5;
+        txtErpMfg.BackColor = Color.FromArgb(242, 242, 242);
+        txtErpMfg.BorderColor = Color.FromArgb(191, 191, 191);
+        txtErpMfg.Dock = DockStyle.Fill;
+        txtErpMfg.Font = new Font("Segoe UI", 18F);
+        txtErpMfg.ForeColor = Color.FromArgb(89, 89, 89);
+        txtErpMfg.Location = new Point(275, 159);
+        txtErpMfg.Margin = new Padding(4, 24, 4, 24);
+        txtErpMfg.Name = "txtErpMfg";
+        txtErpMfg.Radius = 8;
+        txtErpMfg.ReadOnly = true;
+        txtErpMfg.Size = new Size(692, 87);
+        txtErpMfg.TabIndex = 5;
         // 
         // txtMarkingMethod
         // 
@@ -410,11 +410,11 @@ partial class ScanBarcodeUserControl
     private AntdUI.Panel pnlOrderInformation;
     private System.Windows.Forms.TableLayoutPanel tlpOrderInformation;
     private AntdUI.Label lblBarcode;
-    private AntdUI.Label lblOrderNo;
+    private AntdUI.Label lblErpMfg;
     private AntdUI.Label lblMarkingMethod;
     private AntdUI.Label lblQty;
     private AntdUI.Input txtBarcode;
-    private AntdUI.Input txtOrderNo;
+    private AntdUI.Input txtErpMfg;
     private AntdUI.Input txtMarkingMethod;
     private System.Windows.Forms.TableLayoutPanel tlpQty;
     private AntdUI.Input txtQty;
