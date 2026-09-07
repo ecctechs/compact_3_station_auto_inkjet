@@ -14,6 +14,14 @@ public partial class ScanBarcodeUserControl : UserControl
     /// </summary>
     private string? _loadedBarcode;
 
+    /// <summary>
+    /// ชื่อลูกค้าจาก inkjet_data.customer ของ lot ที่สแกน
+    ///
+    /// หน้านี้ไม่มีช่องให้เห็นและไม่ให้แก้ — แค่ติดไปกับงานตอนลงทะเบียน
+    /// แล้วไปโผล่ที่หน้า Order Detail ที่เดียว
+    /// </summary>
+    private string? _customerName;
+
     public ScanBarcodeUserControl()
     {
         InitializeComponent();
@@ -116,6 +124,7 @@ public partial class ScanBarcodeUserControl : UserControl
         // ช่องไหนไม่มีค่าใน DB3 ก็ปล่อยว่างไว้ ไม่เตือน — ช่องว่างบอกตัวมันเองอยู่แล้ว
         // และการเตือนตอนนี้จะไปขวางจังหวะสแกนงานถัดไปของพนักงาน
         _loadedBarcode = barcode;
+        _customerName = lot.Customer;
         txtOrderNo.Text = lot.ErpMfg ?? "";
         txtMarkingMethod.Text = lot.MarkingMethod ?? "";
         txtQty.Text = lot.Qty?.ToString() ?? "";
@@ -227,6 +236,9 @@ public partial class ScanBarcodeUserControl : UserControl
             BarcodeRaw = barcode,
             CreatedBy = "operator",
             OrderNo = txtOrderNo.Text.Trim(),
+            // ชื่อลูกค้าไม่มีช่องบนหน้านี้ ดึงมาจาก inkjet_data.customer ตอนสแกน
+            // แล้วติดไปกับงานเฉย ๆ ไปโผล่ที่หน้า Order Detail
+            CustomerName = _customerName,
             // Qty ที่ส่งไปคือค่าที่โชว์อยู่บนจอ ซึ่งอาจถูกแก้ด้วยปุ่มดินสอแล้ว
             // ผลของการแก้จบที่ print_jobs แถวนี้แถวเดียว
             Type = txtMarkingMethod.Text.Trim(),
@@ -382,6 +394,7 @@ public partial class ScanBarcodeUserControl : UserControl
     private void ClearLotInfo()
     {
         _loadedBarcode = null;
+        _customerName = null;
         txtOrderNo.Text = "";
         txtMarkingMethod.Text = "";
         txtQty.Text = "";

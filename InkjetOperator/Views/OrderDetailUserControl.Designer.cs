@@ -1,4 +1,4 @@
-namespace InkjetOperator.Views;
+﻿namespace InkjetOperator.Views;
 
 partial class OrderDetailUserControl
 {
@@ -34,13 +34,11 @@ partial class OrderDetailUserControl
         lblJobOrderNo = new AntdUI.Label();
         lblJobLotNo = new AntdUI.Label();
         lblJobCustomer = new AntdUI.Label();
-        lblJobType = new AntdUI.Label();
         lblJobQty = new AntdUI.Label();
         lblJobStatus = new AntdUI.Label();
         txtJobOrderNo = new AntdUI.Input();
         txtJobLotNo = new AntdUI.Input();
         txtJobCustomer = new AntdUI.Input();
-        txtJobType = new AntdUI.Input();
         txtJobQty = new AntdUI.Input();
         txtJobStatus = new AntdUI.Input();
         lblMarkingMethod = new AntdUI.Label();
@@ -315,29 +313,26 @@ partial class OrderDetailUserControl
         // tlpJobFields
         //
         tlpJobFields.BackColor = System.Drawing.Color.White;
-        tlpJobFields.ColumnCount = 6;
-        tlpJobFields.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 16F));
-        tlpJobFields.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 20F));
+        tlpJobFields.ColumnCount = 5;
+        tlpJobFields.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 18F));
         tlpJobFields.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 22F));
-        tlpJobFields.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 16F));
-        tlpJobFields.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 12F));
+        tlpJobFields.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 28F));
         tlpJobFields.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 14F));
+        tlpJobFields.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 18F));
         tlpJobFields.Controls.Add(lblJobOrderNo, 0, 0);
         tlpJobFields.Controls.Add(lblJobLotNo, 1, 0);
         tlpJobFields.Controls.Add(lblJobCustomer, 2, 0);
-        tlpJobFields.Controls.Add(lblJobType, 3, 0);
-        tlpJobFields.Controls.Add(lblJobQty, 4, 0);
-        tlpJobFields.Controls.Add(lblJobStatus, 5, 0);
+        tlpJobFields.Controls.Add(lblJobQty, 3, 0);
+        tlpJobFields.Controls.Add(lblJobStatus, 4, 0);
         tlpJobFields.Controls.Add(txtJobOrderNo, 0, 1);
         tlpJobFields.Controls.Add(txtJobLotNo, 1, 1);
         tlpJobFields.Controls.Add(txtJobCustomer, 2, 1);
-        tlpJobFields.Controls.Add(txtJobType, 3, 1);
-        tlpJobFields.Controls.Add(txtJobQty, 4, 1);
-        tlpJobFields.Controls.Add(txtJobStatus, 5, 1);
+        tlpJobFields.Controls.Add(txtJobQty, 3, 1);
+        tlpJobFields.Controls.Add(txtJobStatus, 4, 1);
         tlpJobFields.Controls.Add(lblMarkingMethod, 0, 2);
         tlpJobFields.Controls.Add(txtMarkingMethod, 1, 2);
         tlpJobFields.Controls.Add(flpMarkingFlow, 2, 2);
-        tlpJobFields.SetColumnSpan(flpMarkingFlow, 4);
+        tlpJobFields.SetColumnSpan(flpMarkingFlow, 3);
         tlpJobFields.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpJobFields.Location = new System.Drawing.Point(0, 56);
         tlpJobFields.Margin = new System.Windows.Forms.Padding(0);
@@ -388,19 +383,7 @@ partial class OrderDetailUserControl
         lblJobCustomer.TabIndex = 2;
         lblJobCustomer.Text = "Customer Name";
         lblJobCustomer.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-        //
-        // lblJobType
-        //
-        lblJobType.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblJobType.Font = new System.Drawing.Font("Segoe UI", 12.5F);
-        lblJobType.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-        lblJobType.Location = new System.Drawing.Point(770, 14);
-        lblJobType.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
-        lblJobType.Name = "lblJobType";
-        lblJobType.Size = new System.Drawing.Size(249, 35);
-        lblJobType.TabIndex = 3;
-        lblJobType.Text = "Type";
-        lblJobType.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+
         //
         // lblJobQty
         //
@@ -469,20 +452,7 @@ partial class OrderDetailUserControl
         txtJobCustomer.ReadOnly = true;
         txtJobCustomer.Size = new System.Drawing.Size(345, 48);
         txtJobCustomer.TabIndex = 8;
-        //
-        // txtJobType
-        //
-        txtJobType.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtJobType.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtJobType.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
-        txtJobType.Font = new System.Drawing.Font("Segoe UI", 14F);
-        txtJobType.Location = new System.Drawing.Point(770, 46);
-        txtJobType.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-        txtJobType.Name = "txtJobType";
-        txtJobType.Radius = 8;
-        txtJobType.ReadOnly = true;
-        txtJobType.Size = new System.Drawing.Size(249, 48);
-        txtJobType.TabIndex = 9;
+
         //
         // txtJobQty
         //
@@ -3217,13 +3187,11 @@ partial class OrderDetailUserControl
     private AntdUI.Label lblJobOrderNo;
     private AntdUI.Label lblJobLotNo;
     private AntdUI.Label lblJobCustomer;
-    private AntdUI.Label lblJobType;
     private AntdUI.Label lblJobQty;
     private AntdUI.Label lblJobStatus;
     private AntdUI.Input txtJobOrderNo;
     private AntdUI.Input txtJobLotNo;
     private AntdUI.Input txtJobCustomer;
-    private AntdUI.Input txtJobType;
     private AntdUI.Input txtJobQty;
     private AntdUI.Input txtJobStatus;
     private AntdUI.Label lblMarkingMethod;

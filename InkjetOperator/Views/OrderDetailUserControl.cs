@@ -1008,7 +1008,6 @@ public partial class OrderDetailUserControl : UserControl
         txtJobOrderNo.Text = OrDash(job.OrderNo);
         txtJobLotNo.Text = OrDash(job.BarcodeRaw);
         txtJobCustomer.Text = OrDash(job.CustomerName);
-        txtJobType.Text = OrDash(job.Type);
         txtJobQty.Text = job.Qty?.ToString() ?? Dash;
         // ทั้งคำและสีมาจาก JobStatusDisplay ที่เดียวกับคอลัมน์ Status ในตาราง
         // Order List — backend เก็บเป็น Process / Success แต่บนจอเรียก Working /

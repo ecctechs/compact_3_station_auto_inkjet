@@ -16,6 +16,14 @@ public sealed class LotSummary
     /// <summary>print_data.erp_mfg — โชว์เป็น Order No. ในหน้าจอ</summary>
     public string? ErpMfg { get; set; }
 
+    /// <summary>
+    /// inkjet_data.customer — ชื่อลูกค้า มาจากคนละตารางกับช่องอื่น
+    ///
+    /// หน้า Scan Barcode ไม่ได้โชว์ช่องนี้ พนักงานไม่ต้องกรอกและไม่ต้องเห็น
+    /// แค่ติดไปกับงานตอนลงทะเบียน แล้วไปโผล่ในหน้า Order Detail
+    /// </summary>
+    public string? Customer { get; set; }
+
     /// <summary>plan_routing.marking_method — เลขดิบ ไม่ได้แปลเป็นชื่อเครื่อง</summary>
     public string? MarkingMethod { get; set; }
 

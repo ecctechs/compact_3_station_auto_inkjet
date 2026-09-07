@@ -46,17 +46,16 @@ public partial class OrderListUserControl : UserControl
         {
             new AntdUI.Column("Start", "Start", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("End", "End", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center) { Width = "10%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center) { Width = "11%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("MarkingMethod", "Marking Method", AntdUI.ColumnAlign.Center) { Width = "13%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("ProcessSequence", "Process Sequence", AntdUI.ColumnAlign.Center) { Width = "13%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Plate", "Plate", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Shim", "Shim", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Station", "Station", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true, ColBreak = true },
             // กว้างกว่าคอลัมน์อื่นเพราะแท็บ List ใส่ได้ถึงสามปุ่ม — เริ่ม/จบงาน + ยกเลิก + รายละเอียด
-            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "13%" },
+            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "12%" },
         };
 
         // ColBreak above is what centres the titles, and it is not obvious why.
@@ -94,13 +93,13 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private static readonly (string Key, string ListWidth, string HistoryWidth)[] TabColumnWidths =
     [
-        ("OrderNo", "12%", "10%"),
-        ("Customer", "9%", "8%"),
+        ("OrderNo", "12%", "11%"),
+        ("Qty", "7%", "6%"),
+        ("MarkingMethod", "15%", "13%"),
         ("ProcessSequence", "15%", "13%"),
         ("Plate", "7%", "6%"),
         ("Shim", "7%", "6%"),
         ("Station", "8%", "7%"),
-        ("Status", "8%", "7%"),
     ];
 
     /// <summary>
@@ -230,8 +229,6 @@ public partial class OrderListUserControl : UserControl
             sb.Append(j.Id).Append('|')
               .Append(j.Status).Append('|')
               .Append(j.OrderNo).Append('|')
-              .Append(j.CustomerName).Append('|')
-              .Append(j.Type).Append('|')
               .Append(j.Qty).Append('|')
               .Append(j.StStatus).Append('|')
               .Append(j.CreatedAt?.Ticks).Append('|')
@@ -1140,8 +1137,10 @@ public partial class OrderListUserControl : UserControl
             Start = FormatThaiTime(job.CreatedAt),
             End = finished ? FormatThaiTime(job.UpdatedAt) : Dash,
             OrderNo = job.OrderNo ?? "",
-            Customer = job.CustomerName ?? "",
-            Type = job.Type ?? "",
+            // เลข marking_method ดิบ เช่น "12" "02" "22" — ไม่แปลเป็นชื่อเครื่อง
+            // เพราะใบสั่งงานที่พนักงานถืออยู่ก็เขียนเป็นตัวเลขแบบเดียวกัน
+            // ความหมายของแต่ละหลักดูได้ที่คอลัมน์ Plate / Shim ที่อยู่ถัดไป
+            MarkingMethod = Method(job.PlanRouting?.MarkingMethod),
             Qty = job.Qty?.ToString() ?? "",
             // ค่าดิบจาก plan_routing.process_sequence เช่น "online" / "offline"
             // โชว์ตามที่ database ส่งมาตรง ๆ ไม่แปลง ไม่ normalize ตัวพิมพ์
@@ -1494,9 +1493,8 @@ internal class OrderRow : AntdUI.NotifyProperty
     public string Start { get; set; } = "";
     public string End { get; set; } = "";
     public string OrderNo { get; set; } = "";
-    public string Customer { get; set; } = "";
-    public string Type { get; set; } = "";
     public string Qty { get; set; } = "";
+    public string MarkingMethod { get; set; } = "";
     public string ProcessSequence { get; set; } = "";
     public string Plate { get; set; } = "";
     public string Shim { get; set; } = "";

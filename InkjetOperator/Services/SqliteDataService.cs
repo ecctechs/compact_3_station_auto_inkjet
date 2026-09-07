@@ -135,7 +135,30 @@ public class SqliteDataService
             ErpMfg = ReadStr(reader, "erp_mfg"),
             Qty = ReadInt(reader, "qty"),   // เก็บเป็น TEXT ใน DB3 → ReadInt แปลงให้
             MarkingMethod = GetPlanRouting(barcode, 0)?.MarkingMethod,
+            Customer = GetCustomer(barcode),
         };
+    }
+
+    /// <summary>
+    /// ชื่อลูกค้าของ lot นี้ — อยู่ใน inkjet_data คนละตารางกับช่องอื่นของหน้า Scan Barcode
+    /// ไม่พบแถวหรือไม่มีคอลัมน์ก็คืน null ไม่ถือว่าผิด งานยังลงทะเบียนได้ตามปกติ
+    /// </summary>
+    private string? GetCustomer(string barcode)
+    {
+        try
+        {
+            using var conn = Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT customer FROM inkjet_data WHERE lot_no = @barcode LIMIT 1";
+            cmd.Parameters.AddWithValue("@barcode", barcode);
+
+            using var reader = cmd.ExecuteReader();
+            return reader.Read() ? ReadStr(reader, "customer") : null;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     /// <summary>
