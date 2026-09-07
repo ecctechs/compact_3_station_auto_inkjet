@@ -22,6 +22,17 @@ public partial class ScanBarcodeUserControl : UserControl
     /// </summary>
     private string? _customerName;
 
+    /// <summary>
+    /// หยุดพิมพ์นานเท่านี้ (มิลลิวินาที) แล้วโปรแกรมจะดึงข้อมูลให้เอง
+    ///
+    /// ยาวพอให้พิมพ์เลขทีละตัวด้วยนิ้วบนทัชสกรีนไม่โดนขัดจังหวะ และสั้นพอที่จะ
+    /// ไม่รู้สึกว่าต้องรอ · เครื่องสแกนพิมพ์รวดเดียวจบแล้วปิดท้ายด้วย Enter อยู่แล้ว
+    /// จึงไม่ต้องรอครบเวลานี้
+    /// </summary>
+    private const int AutoLookupDelayMs = 600;
+
+    private System.Windows.Forms.Timer? _autoLookupTimer;
+
     public ScanBarcodeUserControl()
     {
         InitializeComponent();
@@ -30,6 +41,17 @@ public partial class ScanBarcodeUserControl : UserControl
         btnEditQty.Click += BtnEditQty_Click;
         txtBarcode.KeyDown += TxtBarcode_KeyDown;
         txtBarcode.TextChanged += TxtBarcode_TextChanged;
+
+        // จอที่หน้างานเป็นทัชสกรีน ไม่มีคีย์บอร์ดให้กด Enter — โปรแกรมจึงต้องดึงข้อมูล
+        // ให้เองเมื่อพนักงานพิมพ์เลขเสร็จ ไม่ใช่รอให้สั่ง
+        _autoLookupTimer = new System.Windows.Forms.Timer { Interval = AutoLookupDelayMs };
+        _autoLookupTimer.Tick += AutoLookupTimer_Tick;
+
+        Disposed += (_, _) =>
+        {
+            _autoLookupTimer?.Stop();
+            _autoLookupTimer?.Dispose();
+        };
     }
 
     /// <summary>
@@ -81,8 +103,14 @@ public partial class ScanBarcodeUserControl : UserControl
         e.Handled = true;
         e.SuppressKeyPress = true;
 
-        LoadLot();
+        LoadLot(quiet: false);
     }
+
+    /// <summary>
+    /// พิมพ์เสร็จแล้ว (หยุดพิมพ์ครบเวลา) — ลองดึงข้อมูลให้เองแบบเงียบ ๆ
+    /// หาไม่เจอก็ไม่ต้องบอกอะไร เพราะอาจแค่ยังพิมพ์ไม่ครบ
+    /// </summary>
+    private void AutoLookupTimer_Tick(object? sender, EventArgs e) => LoadLot(quiet: true);
 
     /// <summary>
     /// แก้บาร์โค้ดเมื่อไหร่ ข้อมูลที่โชว์อยู่ก็ไม่ใช่ของ lot ในช่องอีกต่อไป
@@ -90,35 +118,53 @@ public partial class ScanBarcodeUserControl : UserControl
     /// </summary>
     private void TxtBarcode_TextChanged(object? sender, EventArgs e)
     {
-        if (_loadedBarcode == null) return;
-        if (txtBarcode.Text.Trim() == _loadedBarcode) return;
+        // ตั้งนาฬิกาใหม่ทุกตัวอักษร — จะยิงก็ต่อเมื่อหยุดพิมพ์จริง ๆ
+        // เครื่องสแกนพิมพ์รัวจึงไม่มีทางยิงกลางคัน
+        _autoLookupTimer?.Stop();
 
-        ClearLotInfo();
+        if (_loadedBarcode != null && txtBarcode.Text.Trim() != _loadedBarcode)
+            ClearLotInfo();
+
+        if (txtBarcode.Text.Trim().Length > 0) _autoLookupTimer?.Start();
     }
 
-    private void LoadLot()
+    /// <summary>
+    /// ดึงข้อมูลของ lot ขึ้นมาโชว์
+    /// </summary>
+    /// <param name="quiet">
+    /// true = ไม่ต้องเด้งเตือนเมื่อหาไม่เจอ ใช้ตอนที่โปรแกรมลองหาเองระหว่างพนักงาน
+    /// พิมพ์อยู่ — เลขที่พิมพ์ไปได้ครึ่งเดียวย่อมหาไม่เจอเป็นธรรมดา ไม่ใช่ความผิดพลาด
+    /// เตือนเฉพาะตอนที่พนักงานสั่งเองเท่านั้น (กด Enter หรือกด OK)
+    /// </param>
+    /// <returns>true = เจอและโชว์ข้อมูลแล้ว</returns>
+    private bool LoadLot(bool quiet)
     {
+        _autoLookupTimer?.Stop();
+
         var barcode = txtBarcode.Text.Trim();
         if (string.IsNullOrWhiteSpace(barcode))
         {
-            ShowWarning("กรุณาสแกนหรือพิมพ์ Barcode");
-            return;
+            if (!quiet) ShowWarning("กรุณาสแกนหรือพิมพ์ Barcode");
+            return false;
         }
 
         var sqlite = OpenSourceDb();
         if (!sqlite.CanConnect())
         {
-            ShowError("ไม่สามารถเชื่อมต่อ PrintData.db3 ได้\nกรุณาตรวจสอบ Database Path ใน Setting");
-            return;
+            if (!quiet)
+                ShowError("ไม่สามารถเชื่อมต่อ PrintData.db3 ได้\nกรุณาตรวจสอบ Database Path ใน Setting");
+            return false;
         }
 
         var lot = sqlite.GetLotSummary(barcode);
         if (lot == null)
         {
+            if (quiet) return false;
+
             ClearLotInfo();
             ShowWarning($"ไม่พบข้อมูลใน print_data สำหรับ barcode: {barcode}");
             txtBarcode.Focus();
-            return;
+            return false;
         }
 
         // ช่องไหนไม่มีค่าใน DB3 ก็ปล่อยว่างไว้ ไม่เตือน — ช่องว่างบอกตัวมันเองอยู่แล้ว
@@ -129,6 +175,7 @@ public partial class ScanBarcodeUserControl : UserControl
         txtMarkingMethod.Text = lot.MarkingMethod ?? "";
         txtQty.Text = lot.Qty?.ToString() ?? "";
         btnEditQty.Enabled = true;
+        return true;
     }
 
     /// <summary>
@@ -178,12 +225,15 @@ public partial class ScanBarcodeUserControl : UserControl
             return false;
         }
 
-        // ช่องที่เหลืออ่านอย่างเดียว มาจากการสแกน ไม่ใช่จากการพิมพ์ —
-        // ถ้ายังไม่ได้ดึงข้อมูลของบาร์โค้ดนี้ ก็ยังไม่มีอะไรให้ลงทะเบียน
+        // ยังไม่ได้ดึงข้อมูลของบาร์โค้ดนี้ — ดึงให้เลยตรงนี้ ไม่ต้องให้ไปกด Enter
+        // (จอทัชสกรีนไม่มีคีย์บอร์ด) หาไม่เจอ LoadLot จะบอกสาเหตุเอง
         if (_loadedBarcode != txtBarcode.Text.Trim())
         {
-            ShowWarning("กรุณาสแกนบาร์โค้ดแล้วกด Enter เพื่อดึงข้อมูลก่อน");
-            txtBarcode.Focus();
+            if (!LoadLot(quiet: false)) return false;
+
+            // เจอแล้วแต่ยังไม่ลงทะเบียนรอบนี้ ให้ดูข้อมูลที่เพิ่งขึ้นมาก่อน
+            // แล้วค่อยกด OK อีกครั้ง — กันลงทะเบียนงานที่ยังไม่มีใครเห็นตัวเลข
+            Notify.Info(this, "ดึงข้อมูลแล้ว — ตรวจสอบแล้วกด OK อีกครั้งเพื่อลงทะเบียน");
             return false;
         }
 

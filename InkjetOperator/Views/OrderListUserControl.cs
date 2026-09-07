@@ -356,7 +356,7 @@ public partial class OrderListUserControl : UserControl
             var resolved = await _api.GetResolvedJobAsync(row.Id);
             if (resolved == null)
             {
-                Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลด Detail ของ Job #{row.Id} ได้");
+                Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลด Detail ของ {JobName(row.Id)} ได้");
                 return;
             }
             ShowDetailDialog(resolved);
@@ -371,11 +371,11 @@ public partial class OrderListUserControl : UserControl
         }
         else if (e.Btn?.Id == "cancel")
         {
-            await CancelJobAsync(row.Id, row.ErpMfg);
+            await CancelJobAsync(row.Id);
         }
         else if (e.Btn?.Id == "restore")
         {
-            await RestoreJobAsync(row.Id, row.ErpMfg);
+            await RestoreJobAsync(row.Id);
         }
     }
 
@@ -387,6 +387,16 @@ public partial class OrderListUserControl : UserControl
     ///
     /// ขาดค่าไหนก็ตัดออก เหลือเท่าที่รู้ ไม่มีเลยค่อยตกไปใช้ id
     /// </summary>
+    /// <summary>
+    /// ชื่อเรียกงานจากเลข id — ใช้ในข้อความที่มีแต่ id อยู่ในมือ
+    /// หางานในรายการที่โหลดมาไม่เจอค่อยตกไปใช้ id ให้ยังอ้างอิงอะไรได้อยู่
+    /// </summary>
+    private string JobName(int jobId)
+    {
+        var job = _allJobs.FirstOrDefault(j => j.Id == jobId);
+        return job == null ? $"#{jobId}" : JobLabel(job);
+    }
+
     private static string JobLabel(PrintJob job)
     {
         var erp = (job.OrderNo ?? "").Trim();
@@ -422,13 +432,12 @@ public partial class OrderListUserControl : UserControl
     /// ยังเป็นชุดเดิมทั้งหมด ไม่ต้องสแกนบาร์โค้ดซ้ำ และประวัติการส่งของรอบก่อน
     /// ยังอยู่ครบใน print_job_commands ให้ย้อนดูได้ว่าเคยพิมพ์อะไรไปแล้วบ้าง
     /// </summary>
-    private async Task RestoreJobAsync(int jobId, string orderNo)
+    private async Task RestoreJobAsync(int jobId)
     {
         if (_api == null) return;
 
-        var order = string.IsNullOrWhiteSpace(orderNo) ? "" : $" ({orderNo})";
         if (!Confirm.Ask(this, "ยืนยันนำกลับมาพิมพ์ใหม่",
-                $"Job #{jobId}{order}\n\n"
+                $"{JobName(jobId)}\n\n"
                 + "งานจะกลับไปอยู่ในรายการงาน รอกดเริ่มงานอีกครั้ง\n\n"
                 + "ยืนยันหรือไม่?"))
             return;
@@ -447,7 +456,7 @@ public partial class OrderListUserControl : UserControl
         await _api.SetRemoteStartAsync(jobId, requested: false);
         if (IsDisposed) return;
 
-        Notify.Success(this, $"Job #{jobId} กลับไปอยู่ในรายการงานแล้ว");
+        Notify.Success(this, $"{JobName(jobId)} กลับไปอยู่ในรายการงานแล้ว");
         await RefreshDataAsync(force: true);
     }
 
@@ -460,13 +469,12 @@ public partial class OrderListUserControl : UserControl
     /// ไม่ส่งอะไรเข้าเครื่องและไม่ย้อนคำสั่งที่ส่งไปแล้ว — สิ่งที่พิมพ์ไปแล้วก็พิมพ์ไปแล้ว
     /// ประวัติการส่งยังอยู่ครบใน print_job_commands ตามเดิม
     /// </summary>
-    private async Task CancelJobAsync(int jobId, string orderNo)
+    private async Task CancelJobAsync(int jobId)
     {
         if (_api == null) return;
 
-        var order = string.IsNullOrWhiteSpace(orderNo) ? "" : $" ({orderNo})";
         if (!Confirm.Ask(this, "ยืนยันยกเลิกงาน",
-                $"ยกเลิก Job #{jobId}{order}\n\n"
+                $"ยกเลิก {JobName(jobId)}\n\n"
                 + "งานจะถูกย้ายออกจากรายการไปอยู่ในประวัติ\n"
                 + "ถ้าต้องการทำต่อ กดพิมพ์ใหม่ได้ที่แท็บ History\n\n"
                 + "ยืนยันหรือไม่?"))
@@ -486,7 +494,7 @@ public partial class OrderListUserControl : UserControl
         await _api.SetRemoteStartAsync(jobId, requested: false);
         if (IsDisposed) return;
 
-        Notify.Success(this, $"ยกเลิก Job #{jobId} แล้ว");
+        Notify.Success(this, $"ยกเลิก {JobName(jobId)} แล้ว");
         await RefreshDataAsync(force: true);
     }
 
@@ -530,7 +538,7 @@ public partial class OrderListUserControl : UserControl
         var resolved = await _api.GetResolvedJobAsync(jobId);
         if (resolved == null)
         {
-            Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลดข้อมูล Job #{jobId} ได้");
+            Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลดข้อมูล {JobName(jobId)} ได้");
             return;
         }
 
@@ -540,7 +548,7 @@ public partial class OrderListUserControl : UserControl
         if (!MarkingMethodService.CanStartAt(station, method))
         {
             Notify.WarnModal(this, "เริ่มงานที่สถานีนี้ไม่ได้",
-                $"Job #{jobId} — marking {Method(method)}\n\n"
+                $"{JobName(jobId)} — marking {Method(method)}\n\n"
                 + ((method ?? "").Trim() == "10"
                     ? "งาน marking 10 เริ่มได้ที่ ST3 เท่านั้น"
                     : "งานนี้เริ่มได้ที่ ST1 เท่านั้น"));
@@ -551,7 +559,7 @@ public partial class OrderListUserControl : UserControl
         if (plan.NoCase)
         {
             Notify.WarnModal(this, "แจ้งเตือน",
-                $"Job #{jobId} ใช้รหัส marking ที่ไม่มีอยู่จริง ({Method(method)})");
+                $"{JobName(jobId)} ใช้รหัส marking ที่ไม่มีอยู่จริง ({Method(method)})");
             return;
         }
 
@@ -587,7 +595,7 @@ public partial class OrderListUserControl : UserControl
         var next = plan.Steps.Count > 1 ? $"\n\nขั้นตอนถัดไป: {rest}" : "";
 
         if (!Confirm.Ask(this, "ยืนยันเริ่มงาน",
-                $"Job #{jobId} — marking {Method(resolved.PlanRouting?.MarkingMethod)}\n\n"
+                $"{JobName(jobId)} — marking {Method(resolved.PlanRouting?.MarkingMethod)}\n\n"
                 + $"ส่งไป {step} (ST{machineStation}){next}\n\nยืนยันหรือไม่?"))
             return;
 
@@ -598,7 +606,7 @@ public partial class OrderListUserControl : UserControl
             if (IsDisposed) return;
 
             if (lines.Count > 0)
-                Notify.Result(this, $"เริ่มงาน Job #{jobId}", lines);
+                Notify.Result(this, $"เริ่มงาน {JobName(jobId)}", lines);
         }
         finally
         {
@@ -684,7 +692,7 @@ public partial class OrderListUserControl : UserControl
     private async Task StartWithoutSendingAsync(int jobId, string? markingMethod)
     {
         if (!Confirm.Ask(this, "ยืนยันเริ่มงาน",
-                $"Job #{jobId} — marking {Method(markingMethod)}\n\n"
+                $"{JobName(jobId)} — marking {Method(markingMethod)}\n\n"
                 + "งานนี้ไม่มีขั้นตอนต้องส่งเข้าเครื่อง จะเปลี่ยนสถานะเป็นกำลังผลิตอย่างเดียว\n\n"
                 + "ยืนยันหรือไม่?"))
             return;
@@ -692,7 +700,7 @@ public partial class OrderListUserControl : UserControl
         var (ok, err) = await _api!.UpdateJobStatusAsync(jobId, "Process");
         if (IsDisposed) return;
 
-        if (ok) Notify.Success(this, $"เริ่มงาน Job #{jobId} แล้ว");
+        if (ok) Notify.Success(this, $"เริ่มงาน {JobName(jobId)} แล้ว");
         else Notify.ErrorModal(this, "เริ่มงานไม่สำเร็จ", err ?? "ไม่สามารถเปลี่ยนสถานะได้");
 
         await RefreshDataAsync(force: true);
@@ -734,7 +742,7 @@ public partial class OrderListUserControl : UserControl
             return;
 
         if (!Confirm.Ask(this, "ยืนยันเริ่มงาน",
-                $"Job #{jobId} — marking {Method(resolved.PlanRouting?.MarkingMethod)}\n\n"
+                $"{JobName(jobId)} — marking {Method(resolved.PlanRouting?.MarkingMethod)}\n\n"
                 + $"ส่งไป {step} ด้วยโปรแกรม {pick.Program}.uvdx\n"
                 + "คำสั่งจะถูกส่งเข้าเครื่องโดยโปรแกรมที่ ST1\n\n"
                 + "ยืนยันหรือไม่?"))
@@ -748,7 +756,7 @@ public partial class OrderListUserControl : UserControl
 
         if (ok)
         {
-            Notify.Success(this, $"ส่งคำขอเริ่มงาน Job #{jobId} ไปที่ ST1 แล้ว");
+            Notify.Success(this, $"ส่งคำขอเริ่มงาน {JobName(jobId)} ไปที่ ST1 แล้ว");
         }
         else
         {
@@ -854,7 +862,7 @@ public partial class OrderListUserControl : UserControl
 
         // ต้องเป็นข้อความลอย ไม่ใช่กล่องที่ต้องกดปิด — จอ ST1 ไม่มีคนเฝ้าอยู่
         // กล่อง modal จะค้างหน้าจอและหยุดรอบ poll ไปจนกว่าจะมีคนมากด
-        var text = $"Job #{jobId} — {lines[0].Text} (คำขอจาก ST3)";
+        var text = $"{JobName(jobId)} — {lines[0].Text} (คำขอจาก ST3)";
 
         if (failed) Notify.Warn(this, text);
         else Notify.Success(this, text);
@@ -888,7 +896,7 @@ public partial class OrderListUserControl : UserControl
         try
         {
             Notify.ErrorModal(this, "ST1 ส่งงานไม่สำเร็จ",
-                $"Job #{failed.Id} ({failed.OrderNo})\n\n{message}\n\n"
+                $"{JobLabel(failed)}\n\n{message}\n\n"
                 + "งานถูกตีกลับเป็นรอเริ่ม กดเริ่มงานใหม่ได้");
         }
         finally
@@ -920,7 +928,7 @@ public partial class OrderListUserControl : UserControl
         var resolved = await _api.GetResolvedJobAsync(jobId);
         if (resolved == null)
         {
-            Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลดข้อมูล Job #{jobId} ได้");
+            Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลดข้อมูล {JobName(jobId)} ได้");
             return;
         }
 
@@ -928,7 +936,7 @@ public partial class OrderListUserControl : UserControl
         if (!MarkingMethodService.CanCompleteAt(StationService.Current, method))
         {
             Notify.WarnModal(this, "จบงานที่สถานีนี้ไม่ได้",
-                $"Job #{jobId} — marking {Method(method)}\n\n"
+                $"{JobName(jobId)} — marking {Method(method)}\n\n"
                 + "งาน marking 10 / 11 / 12 จบได้ที่ ST3 เท่านั้น");
             return;
         }
@@ -941,12 +949,12 @@ public partial class OrderListUserControl : UserControl
         {
             var list = string.Join(", ", steps.Missing);
             if (!Confirm.Ask(this, "งานยังส่งไม่ครบ",
-                    $"Job #{jobId} ยังส่งไม่ครบ\n\nยังขาด: {list}\n\n" +
+                    $"{JobName(jobId)} ยังส่งไม่ครบ\n\nยังขาด: {list}\n\n" +
                     "ยืนยันจบงานทั้งที่ยังส่งไม่ครบหรือไม่?"))
                 return;
         }
         else if (!Confirm.Ask(this, "ยืนยันจบงาน",
-                     $"จบงาน Job #{jobId}\n\nยืนยันหรือไม่?"))
+                     $"จบงาน {JobName(jobId)}\n\nยืนยันหรือไม่?"))
         {
             return;
         }
@@ -958,8 +966,8 @@ public partial class OrderListUserControl : UserControl
         if (ok)
         {
             Notify.Success(this, manual
-                ? $"Job #{jobId} จบงานแล้ว (ยืนยันด้วยมือ)"
-                : $"Job #{jobId} จบงานแล้ว");
+                ? $"{JobName(jobId)} จบงานแล้ว (ยืนยันด้วยมือ)"
+                : $"{JobName(jobId)} จบงานแล้ว");
             await RefreshDataAsync();
         }
         else
