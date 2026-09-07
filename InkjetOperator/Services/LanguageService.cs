@@ -162,7 +162,6 @@ public static class LanguageService
         ["Conveyor 1 (Hz)"] = "สายพาน 1 (Hz)",
         ["Conveyor 2 (Hz)"] = "สายพาน 2 (Hz)",
         ["Conveyor 3 (Hz)"] = "สายพาน 3 (Hz)",
-        ["Qty (Shared)"] = "จำนวน (ใช้ร่วม)",
         ["Clamp (mm)"] = "แคลมป์ (มม.)",
         ["SWAP"] = "สลับ",
         ["Block"] = "บล็อก",

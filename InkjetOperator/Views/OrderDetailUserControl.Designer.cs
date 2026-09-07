@@ -1703,7 +1703,7 @@ partial class OrderDetailUserControl
         lblUvQtyShared.Name = "lblUvQtyShared";
         lblUvQtyShared.Size = new System.Drawing.Size(130, 50);
         lblUvQtyShared.TabIndex = 1;
-        lblUvQtyShared.Text = "Qty (Shared)";
+        lblUvQtyShared.Text = "Qty";
         lblUvQtyShared.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtUvQtyShared
