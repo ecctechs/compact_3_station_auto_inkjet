@@ -440,7 +440,8 @@ public partial class OrderListUserControl : UserControl
         var order = string.IsNullOrWhiteSpace(orderNo) ? "" : $" ({orderNo})";
         if (!Confirm.Ask(this, "ยืนยันยกเลิกงาน",
                 $"ยกเลิก Job #{jobId}{order}\n\n"
-                + "งานจะถูกย้ายออกจากรายการไปอยู่ในประวัติ และเริ่มใหม่ไม่ได้\n\n"
+                + "งานจะถูกย้ายออกจากรายการไปอยู่ในประวัติ\n"
+                + "ถ้าต้องการทำต่อ กดพิมพ์ใหม่ได้ที่แท็บ History\n\n"
                 + "ยืนยันหรือไม่?"))
             return;
 
