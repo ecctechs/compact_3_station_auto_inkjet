@@ -28,6 +28,9 @@ internal sealed partial class MarkingRefPickerDialog : Form
         Services.LanguageService.Apply(this);
 
         lstOptions.SelectedIndexChanged += (_, _) => ShowImagesForSelection();
+
+        // ย่อ/ขยายหน้าต่างแล้วรูปต้องยังอยู่กลางกรอบเหมือนเดิม
+        pnlImages.SizeChanged += (_, _) => CenterImages();
         lstOptions.DoubleClick += (_, _) => AcceptIfSelected();
         btnOk.Click += (_, _) => AcceptIfSelected();
         btnCancel.Click += (_, _) => { DialogResult = DialogResult.Cancel; Close(); };
@@ -40,6 +43,9 @@ internal sealed partial class MarkingRefPickerDialog : Form
             if (e.KeyCode == Keys.Escape) { DialogResult = DialogResult.Cancel; Close(); }
             else if (e.KeyCode == Keys.Enter) AcceptIfSelected();
         };
+
+        // กรอบรูปได้ขนาดจริงตอนหน้าต่างถูกวางเสร็จ ซึ่งอาจช้ากว่าตอนใส่รูปเข้าไป
+        Shown += (_, _) => CenterImages();
 
         FormClosed += (_, _) => ClearImages();
     }
@@ -165,6 +171,48 @@ internal sealed partial class MarkingRefPickerDialog : Form
             lblEmpty.Text = "เปิดไฟล์รูปไม่ได้";
             lblEmpty.Visible = true;
             flpImages.Visible = false;
+            return;
+        }
+
+        // ต้องบังคับให้จัดวางก่อน ไม่งั้น flpImages.Width ยังเป็นขนาดของรูปชุดก่อนหน้า
+        // แล้วจะคำนวณตำแหน่งกลางจากขนาดที่ผิด
+        flpImages.PerformLayout();
+        pnlImages.AutoScrollPosition = Point.Empty;
+        CenterImages();
+    }
+
+    /// <summary>กำลังจัดกลางอยู่ — กันเรียกซ้อนตอน scrollbar โผล่/หายแล้วยิง SizeChanged กลับมา</summary>
+    private bool _centering;
+
+    /// <summary>
+    /// วางแถบรูปไว้กลางกรอบทั้งแนวนอนและแนวตั้ง
+    ///
+    /// <c>flpImages</c> เป็น AutoSize อยู่แล้ว ขนาดจึงพอดีกับรูปที่มี การจัดกลางคือ
+    /// เลื่อนตำแหน่งมันเองในกรอบ ไม่ใช่ไปยุ่งกับรูปข้างใน — รูปใบเดียวจึงอยู่กลางจริง
+    /// ไม่ชิดซ้ายเหมือนพฤติกรรมปกติของ FlowLayoutPanel ที่เรียงจากซ้ายเสมอ
+    ///
+    /// รูปกว้าง/สูงเกินกรอบ ตำแหน่งจะถูกหนีบไว้ที่ 0 แล้วปล่อยให้ scrollbar ของ
+    /// <c>pnlImages</c> ทำงานแทน — เริ่มดูจากมุมบนซ้ายซึ่งเป็นสิ่งที่ถูกต้องในกรณีนั้น
+    /// </summary>
+    private void CenterImages()
+    {
+        if (_centering || !flpImages.Visible) return;
+
+        _centering = true;
+        try
+        {
+            // อ่านจาก PreferredSize ไม่ใช่ Width/Height — ตอนเพิ่งใส่รูปเข้าไป
+            // ขนาดจริงอาจยังไม่ทันอัปเดตตาม AutoSize
+            var frame = pnlImages.ClientSize;
+            var content = flpImages.PreferredSize;
+
+            flpImages.Location = new Point(
+                Math.Max(0, (frame.Width - content.Width) / 2),
+                Math.Max(0, (frame.Height - content.Height) / 2));
+        }
+        finally
+        {
+            _centering = false;
         }
     }
 

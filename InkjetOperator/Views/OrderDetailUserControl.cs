@@ -20,6 +20,22 @@ public partial class OrderDetailUserControl : UserControl
     private ApiClient? _api;
     private ImageHoverPopup? _refPopup;
     private List<UvJobDataDto> _uvData = [];
+
+    // เก็บไว้เพื่อคำนวณบรรทัด Plate / Shim ใหม่ได้ทุกเมื่อ ไม่ใช่แค่ตอนเปิดหน้า
+    private string? _markingMethod;
+    private string? _erpMfg;
+
+    /// <summary>
+    /// โปรแกรม UV ที่ "เลือกแล้ว" ของแต่ละเครื่อง — คีย์เป็น "UV1" / "UV2"
+    ///
+    /// มาจากสามทาง: รุ่นที่ส่งเข้าเครื่องไปแล้ว · รุ่นที่ ST3 เลือกไว้รอ ST1 ส่ง ·
+    /// และรุ่นที่ผู้ใช้เพิ่งเลือกในหน้านี้ ไม่มีในนี้ = ยังใช้ชื่อฐานจากข้อมูลงาน
+    ///
+    /// รูปอ้างอิงของ Plate / Shim อ่านจากตรงนี้ที่เดียว เปลี่ยนค่าแล้วเรียก
+    /// <see cref="RefreshFlowRows"/> รูปจะตามทันทีโดยไม่มีทางค้างรุ่นเก่า
+    /// </summary>
+    private readonly Dictionary<string, string> _chosenUvProgram = new(StringComparer.OrdinalIgnoreCase);
+
     private readonly bool _isDevMode;
     private bool _transferMode;
     private IaiClampSettingDto? _origIai;
@@ -77,8 +93,13 @@ public partial class OrderDetailUserControl : UserControl
         var name = box.Text.Trim();
         if (name.Length == 0 || name == Dash) return;
 
-        // ยังไม่รู้ว่าจะเลือกรุ่นย่อยไหน ให้ดูรวมทุกรุ่นไปก่อน
-        var paths = MarkingRefImageService.FindImages(name);
+        // เลือกรุ่นย่อยแล้วต้องเห็นเฉพาะรุ่นนั้น ค้นแบบตรงเป๊ะจึงไม่ลากรุ่นพี่น้อง
+        // ที่ชื่อขึ้นต้นเหมือนกันติดมาด้วย — ยังไม่ได้เลือกค่อยดูรวมทุกรุ่นไปก่อน
+        string machine = ReferenceEquals(box, txtUv1Program) ? "UV1" : "UV2";
+        var paths = _chosenUvProgram.ContainsKey(machine)
+            ? MarkingRefImageService.FindImagesExact(name)
+            : MarkingRefImageService.FindImages(name);
+
         if (paths.Count == 0) return;
 
         _refPopup ??= new ImageHoverPopup();
@@ -125,6 +146,16 @@ public partial class OrderDetailUserControl : UserControl
         _jobId = resolved.Job.Id;
         _api = api;
         _uvData = resolved.UvJobData;
+        _markingMethod = resolved.PlanRouting?.MarkingMethod;
+        _erpMfg = resolved.PlanRouting?.ErpMfg;
+
+        // ต้องรู้ว่าแต่ละเครื่องเลือกรุ่นไหนไว้แล้ว ก่อนจะไปคำนวณบรรทัด Plate / Shim
+        _chosenUvProgram.Clear();
+        foreach (var machine in new[] { "UV1", "UV2" })
+        {
+            var chosen = SentProgram(resolved.Commands, machine) ?? PendingProgram(resolved, machine);
+            if (chosen != null) _chosenUvProgram[machine] = chosen;
+        }
 
         lblHeaderTitle.Text = $"Job Information — Job #{resolved.Job.Id}";
 
@@ -136,12 +167,12 @@ public partial class OrderDetailUserControl : UserControl
         FillJobInfo(resolved);
         FillMkChipLabels();
         FillUvChipLabels();
-        ApplyMarkingMethodButtons(resolved.PlanRouting?.MarkingMethod, resolved.PlanRouting?.ErpMfg);
+        ApplyMarkingMethodButtons();
         RestoreCompletedSteps(resolved.Commands);
         ApplyStepButtons();
         FillMkSection(_pattern);
         FillConveyor(_pattern);
-        FillUvSection(resolved.UvJobData, resolved.Commands);
+        FillUvSection(resolved);
         ClearIaiFields();
         _ = LoadIaiAsync(resolved.Job.Id);
         _ = CheckConnectionsAsync();
@@ -323,28 +354,63 @@ public partial class OrderDetailUserControl : UserControl
     /// กฎการแปล marking_method อยู่ที่ <see cref="MarkingMethodService"/> ที่เดียว
     /// หน้า Order List ใช้ตัวเดียวกัน ห้ามตีความซ้ำที่นี่
     /// </summary>
-    private void ApplyMarkingMethodButtons(string? markingMethod, string? erpMfg)
+    private void ApplyMarkingMethodButtons()
     {
-        var plan = MarkingMethodService.Resolve(markingMethod);
+        var plan = MarkingMethodService.Resolve(_markingMethod);
+
+        _sendSteps = plan.NoCase ? [] : new List<string>(plan.Steps);
+        _currentStep = 0;
+
+        RefreshFlowRows();
+        ApplyStepButtons();
+    }
+
+    /// <summary>
+    /// คำนวณบรรทัด Plate / Shim ใหม่ทั้งสองบรรทัด รวมถึงรูปอ้างอิงของแต่ละด้าน
+    ///
+    /// แยกออกมาจาก <see cref="ApplyMarkingMethodButtons"/> เพราะต้องเรียกซ้ำได้
+    /// ทุกครั้งที่ผู้ใช้เลือกรุ่นย่อยใหม่ โดยไม่ไปรีเซ็ตลำดับขั้นตอนที่ส่งไปแล้ว
+    ///
+    /// ชื่อรูปฝั่ง UV มาจากรุ่นที่เลือกไว้ ไม่ใช่ชื่อฐาน — เปลี่ยนรุ่นเมื่อไหร่รูปจึงตามทันที
+    /// ส่วนฝั่ง MK ประกอบจาก ERP ซึ่งไม่เปลี่ยนตามการเลือก
+    /// </summary>
+    private void RefreshFlowRows()
+    {
+        var plan = MarkingMethodService.Resolve(_markingMethod);
 
         if (plan.NoCase)
         {
-            _sendSteps = [];
-            _currentStep = 0;
             ApplyFlowRow(btnFlowPlate, "Plate", MarkingMachine.None, null, "   ไม่มีเคสนี้");
             ApplyFlowRow(btnFlowShim, "Shim", MarkingMachine.None, null, "   ไม่มีเคสนี้");
-            ApplyStepButtons();
             return;
         }
 
-        _sendSteps = new List<string>(plan.Steps);
-        _currentStep = 0;
+        var sides = MarkingRefResolver.Resolve(
+            _markingMethod, _erpMfg, UvProgramOf("UV1"), UvProgramOf("UV2"));
 
-        ApplyFlowRow(btnFlowPlate, "Plate", plan.Plate, ErpRefName(plan.Plate, erpMfg, "P-"), "");
-        ApplyFlowRow(btnFlowShim, "Shim", plan.Shim, ErpRefName(plan.Shim, erpMfg, "S-"), "");
-
-        ApplyStepButtons();
+        ApplyFlowRow(btnFlowPlate, "Plate", plan.Plate,
+            sides.FirstOrDefault(s => s.Side == "Plate"), "");
+        ApplyFlowRow(btnFlowShim, "Shim", plan.Shim,
+            sides.FirstOrDefault(s => s.Side == "Shim"), "");
     }
+
+    /// <summary>โปรแกรมของเครื่อง UV เครื่องหนึ่ง — เลือกแล้วหรือยังเป็นชื่อฐาน</summary>
+    private UvProgramInfo UvProgramOf(string machine)
+    {
+        if (_chosenUvProgram.TryGetValue(machine, out var chosen))
+            return new UvProgramInfo(chosen, Confirmed: true);
+
+        var baseName = _uvData.FirstOrDefault(r => r.Machine == machine)?.ProgramName;
+        return new UvProgramInfo(baseName, Confirmed: false);
+    }
+
+    /// <summary>
+    /// ชื่อรูปกับ path ของรูปที่บรรทัดหนึ่งถืออยู่
+    ///
+    /// เก็บ path ไปด้วยแทนที่จะเก็บแค่ชื่อแล้วค่อยไปค้นตอนกด เพราะการค้นใหม่จากชื่อ
+    /// คือทางที่ทำให้รูปไม่ตรงกับที่บรรทัดบอก ถ้าชื่อถูกเปลี่ยนระหว่างนั้น
+    /// </summary>
+    private sealed record FlowRef(string Name, List<string> Images);
 
     /// <summary>
     /// หนึ่งบรรทัดของ marking method — "Plate - MK - (P-ABC123)"
@@ -354,16 +420,18 @@ public partial class OrderDetailUserControl : UserControl
     /// และมีไอคอนรูปกำกับว่ากดได้ — บรรทัดที่ไม่มีรูปจะไม่มีไอคอนและกดไม่ได้
     /// </summary>
     private static void ApplyFlowRow(
-        AntdUI.Button row, string side, MarkingMachine machine, string? refName, string suffix)
+        AntdUI.Button row, string side, MarkingMachine machine,
+        MarkingRefSide? reference, string suffix)
     {
-        bool hasRef = refName != null && refName != Dash;
+        var refName = reference?.LookupName;
+        bool hasRef = !string.IsNullOrEmpty(refName) && refName != Dash;
 
         row.Text = $"{side} - {MachineLabel(machine)}"
             + (hasRef ? $" - ({refName})" : "")
             + suffix;
 
-        // Tag พาชื่อรูปไปให้ตัวจัดการคลิก บรรทัดไหนไม่มีรูปก็ไม่มี Tag
-        row.Tag = hasRef ? refName : null;
+        // Tag พาทั้งชื่อและรูปของรอบนี้ไปให้ตัวจัดการคลิก บรรทัดไหนไม่มีรูปก็ไม่มี Tag
+        row.Tag = hasRef ? new FlowRef(refName!, reference!.Images) : null;
 
         // บรรทัดที่กดไม่ได้ถอดกรอบกับพื้นออกให้เหลือเป็นข้อความเปล่า ๆ ไม่ใช้ Enabled
         // เพราะปุ่มที่ถูก disable จะจางลงทั้งบรรทัด ทั้งที่ "Plate - UV1" เป็นข้อมูล
@@ -375,34 +443,26 @@ public partial class OrderDetailUserControl : UserControl
     }
 
     /// <summary>
-    /// ชื่อรูปฝั่ง MK ลงท้าย "-1" "-2" คือคนละงาน ไม่ใช่รุ่นย่อยของงานเดียวกัน
-    /// จึงค้นแบบตรงเป๊ะ ต่างจากฝั่ง UV ที่ยังไม่รู้ว่าจะเลือกรุ่นไหน
+    /// เปิดรูปชุดที่บรรทัดนี้ถืออยู่ — เป็นชุดเดียวกับที่ <see cref="RefreshFlowRows"/>
+    /// คำนวณไว้ล่าสุด จึงตรงกับชื่อที่บรรทัดแสดงเสมอ ไม่ว่าผู้ใช้จะเปลี่ยนรุ่นย่อยกี่รอบ
     /// </summary>
     private void OpenFlowRefImages(AntdUI.Button row)
     {
-        if (row.Tag is not string name || name.Length == 0) return;
+        if (row.Tag is not FlowRef reference) return;
 
-        var paths = MarkingRefImageService.FindImagesExact(name);
-        if (paths.Count == 0)
+        if (reference.Images.Count == 0)
         {
             Notify.WarnModal(this, "รูปอ้างอิง",
                 MarkingRefImageService.DescribeEmpty(MarkingRefImageService.CheckFolder()));
             return;
         }
 
-        MarkingRefPickerDialog.View(this, $"รูปอ้างอิง — {name}", name, paths);
+        MarkingRefPickerDialog.View(
+            this, $"รูปอ้างอิง — {reference.Name}", reference.Name, reference.Images);
     }
 
     private static string MachineLabel(MarkingMachine machine) =>
         MarkingMethodService.Label(machine);
-
-    private static string ErpRefName(MarkingMachine machine, string? erpMfg, string prefix)
-    {
-        if (machine != MarkingMachine.Mk) return Dash;
-
-        var erp = (erpMfg ?? "").Trim();
-        return erp.Length == 0 ? Dash : prefix + erp;
-    }
 
     private void RestoreCompletedSteps(List<CommandResult> commands)
     {
@@ -468,12 +528,18 @@ public partial class OrderDetailUserControl : UserControl
     /// </summary>
     private void CompleteSendStep(string stepName, object? detail = null)
     {
-        if (_isDevMode)
-        {
-            _ = _api?.SaveSendStepAsync(_jobId, stepName, detail);
-            return;
-        }
+        // บันทึกก่อนเสมอ ก่อนเช็คลำดับขั้นตอนใด ๆ — มาถึงบรรทัดนี้คือส่งเข้าเครื่อง
+        // สำเร็จไปแล้วจริง ต้องมีร่องรอยไว้เสมอ
+        //
+        // เดิมสองบรรทัดเช็คลำดับข้างล่างคืนค่าออกไปก่อนถึงการบันทึก ทำให้การส่งซ้ำ
+        // (ส่ง UV2 ไปแล้ว แล้วเลือกรุ่นย่อยใหม่ส่งอีกรอบ) ไม่ถูกบันทึกเลย
+        // เปิด Order Detail ใหม่จึงเห็นรุ่นเก่า ไม่ใช่รุ่นที่เพิ่งเลือกและพิมพ์จริง
+        _ = _api?.SaveSendStepAsync(_jobId, stepName, detail);
 
+        if (_isDevMode) return;
+
+        // ที่เหลือคือการเดินสถานะปุ่มตามลำดับขั้นตอน — ส่งซ้ำหรือส่งข้ามลำดับ
+        // ไม่ควรเลื่อนลำดับ จึงยังคงเงื่อนไขเดิมไว้ตรงนี้
         if (_currentStep >= _sendSteps.Count) return;
         if (_sendSteps[_currentStep] != stepName) return;
 
@@ -486,8 +552,6 @@ public partial class OrderDetailUserControl : UserControl
         _currentStep++;
         if (_currentStep < _sendSteps.Count)
             GetSendButton(_sendSteps[_currentStep]).Enabled = true;
-
-        _ = _api?.SaveSendStepAsync(_jobId, stepName, detail);
 
         if (isFirstStep)
             _ = _api?.UpdateJobStatusAsync(_jobId, "Process");
@@ -711,6 +775,11 @@ public partial class OrderDetailUserControl : UserControl
             // ช่อง Program ยังเป็นชื่อฐานอยู่ ถ้าไม่อัปเดตหน้าจอจะบอกคนละตัวกับที่เครื่องพิมพ์
             // และ hover ดูรูปจะได้รูปของรุ่นที่พิมพ์จริงด้วย
             (uvNumber == 1 ? txtUv1Program : txtUv2Program).Text = programFile;
+
+            // จำรุ่นที่เพิ่งเลือก แล้ววาดบรรทัด Plate / Shim ใหม่ทั้งสองบรรทัด —
+            // รูปอ้างอิงของด้านนี้จะเปลี่ยนตามรุ่นใหม่ทันที ไม่ค้างรุ่นเดิม
+            _chosenUvProgram[stepName] = programFile;
+            RefreshFlowRows();
 
             var summary = $"ส่ง {uvName} สำเร็จ\n\n"
                 + string.Join("\n", done.Select(s => "• " + s))
@@ -1007,15 +1076,44 @@ public partial class OrderDetailUserControl : UserControl
         txtConveyor3.Text = Number(speeds?.Speed3);
     }
 
-    private void FillUvSection(List<UvJobDataDto> uvRows, List<CommandResult> commands)
+    private void FillUvSection(ResolvedJobResponse resolved)
     {
+        var uvRows = resolved.UvJobData;
+        var commands = resolved.Commands;
+
         var uv1 = uvRows.FirstOrDefault(r => r.Machine == "UV1");
         var uv2 = uvRows.FirstOrDefault(r => r.Machine == "UV2");
 
         txtUvQtyShared.Text = (uv1?.Qty ?? uv2?.Qty)?.ToString() ?? Dash;
 
-        FillUv(uv1, txtUv1Program, txtUv1ErpMfg, tblUv1Texts, SentProgram(commands, "UV1"));
-        FillUv(uv2, txtUv2Program, txtUv2ErpMfg, tblUv2Texts, SentProgram(commands, "UV2"));
+        FillUv(uv1, txtUv1Program, txtUv1ErpMfg, tblUv1Texts,
+            SentProgram(commands, "UV1") ?? PendingProgram(resolved, "UV1"));
+        FillUv(uv2, txtUv2Program, txtUv2ErpMfg, tblUv2Texts,
+            SentProgram(commands, "UV2") ?? PendingProgram(resolved, "UV2"));
+    }
+
+    /// <summary>
+    /// รุ่นย่อยที่ผู้ใช้เลือกไว้แล้วแต่ยังไม่ได้ส่งเข้าเครื่อง
+    ///
+    /// เกิดตอน ST3 กดเริ่มงาน: ผู้ใช้เลือกรุ่นย่อยที่จอ ST3 แล้วฝากคำขอไว้ให้ ST1 ส่งแทน
+    /// ค่าที่เลือกถูกเก็บไว้ที่ <c>print_jobs.remote_program</c> ระหว่างรอ ถ้าไม่เอามาโชว์
+    /// หน้าจอจะยังบอกชื่อฐาน ทั้งที่ผู้ใช้เพิ่งเลือกรุ่นย่อยไปกับมือ
+    ///
+    /// พอ ST1 ส่งสำเร็จ payload ของ command จะมีค่านี้แล้ว และ backend ล้าง
+    /// remote_program ทิ้ง — ลำดับการหาค่าจึงยังถูกต้องทุกช่วงเวลา
+    /// </summary>
+    private static string? PendingProgram(ResolvedJobResponse resolved, string machine)
+    {
+        var pending = resolved.Job.RemoteProgram?.Trim();
+        if (string.IsNullOrEmpty(pending)) return null;
+
+        // remote_program มีค่าเดียวต่องาน จึงต้องรู้ว่าเป็นของเครื่องไหน —
+        // ขั้นตอนแรกตาม marking method คือขั้นที่ ST3 ฝากให้ ST1 ส่ง
+        var step = MarkingMethodService
+            .Resolve(resolved.PlanRouting?.MarkingMethod)
+            .Steps.FirstOrDefault();
+
+        return string.Equals(step, machine, StringComparison.OrdinalIgnoreCase) ? pending : null;
     }
 
     /// <summary>
