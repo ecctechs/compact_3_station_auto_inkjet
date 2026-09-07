@@ -105,6 +105,17 @@ public static class MarkingRefImageService
     }
 
     /// <summary>
+    /// รูปแทนสำหรับช่องที่ไม่มีรูป — ฝังมากับ .exe ไม่ได้อ่านจากดิสก์
+    /// จึงใช้ได้แม้ share ล่มหรือยังไม่ได้ตั้งค่าโฟลเดอร์
+    /// <para>
+    /// คืน "สำเนาใหม่" ทุกครั้งโดยตั้งใจ เพราะ PictureBox ทุกช่องเรียก
+    /// <c>Image.Dispose()</c> ตอนเปลี่ยนรูป ถ้าคืนตัวเดียวกันไปเรื่อย ๆ
+    /// ครั้งแรกที่ถูก dispose รูปจะพังทั้งโปรแกรม
+    /// </para>
+    /// </summary>
+    public static Image Placeholder() => new Bitmap(Properties.Resources.NoImageAvailable);
+
+    /// <summary>
     /// Load an image as an independent copy so the source file is NOT locked
     /// (customer can overwrite the file anytime). Returns null on error.
     /// </summary>

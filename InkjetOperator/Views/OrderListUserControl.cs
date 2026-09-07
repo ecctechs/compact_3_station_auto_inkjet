@@ -26,11 +26,14 @@ public partial class OrderListUserControl : UserControl
     private void ConfigureColumns()
     {
         // SortOrder = ให้ AntdUI จัดเรียงคอลัมน์นั้นเองเมื่อคลิกหัวตาราง
-        // คอลัมน์ Source / Op ไม่ใส่ เพราะเป็นแท็กกับปุ่ม เรียงแล้วไม่มีความหมาย
+        // คอลัมน์ Op ไม่ใส่ เพราะเป็นปุ่ม เรียงแล้วไม่มีความหมาย
         //
         // ความกว้างเป็น % ของตาราง รวมกันพอดี 100 — ทุกคอลัมน์แบ่งพื้นที่ตามสัดส่วน
         // ไม่มีช่องว่างเหลือ และไม่ขยับตอนสลับภาษาเพราะไม่ได้วัดจากข้อความหัวตาราง
         // (ถ้าไม่กำหนด Width เลย AntdUI จะวัดจากหัวตารางให้ ซึ่งเปลี่ยนตามภาษา)
+        //
+        // ตัวเลขที่เขียนไว้ตรงนี้คือชุดของแท็บ History ซึ่งมีคอลัมน์ครบทุกคอลัมน์
+        // แท็บ List ซ่อน End แล้วแจก 9% ที่ว่างคืนให้คอลัมน์อื่น ดู ApplyTabColumns
         //
         // ตัวเลข % เกลี่ยจากระยะห่างระหว่างข้อความหัวตารางกับลูกศร sort ที่ชิดขวา
         // ให้ทุกคอลัมน์ห่างพอ ๆ กัน ไม่ใช่บีบจนลูกศรติดตัวหนังสือบางคอลัมน์
@@ -41,17 +44,16 @@ public partial class OrderListUserControl : UserControl
         {
             new AntdUI.Column("Start", "Start", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("End", "End", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("OrderNo", "Order No.", AntdUI.ColumnAlign.Center) { Width = "10%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Customer", "Customer", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Type", "Type", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("Method", "Method", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("ProcessSequence", "Process Sequence", AntdUI.ColumnAlign.Center) { Width = "13%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Plate", "Plate", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Shim", "Shim", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Station", "Station", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("Source", "", AntdUI.ColumnAlign.Center) { Width = "6%" },
-            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "9%" },
+            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "10%" },
         };
 
         // ColBreak above is what centres the titles, and it is not obvious why.
@@ -78,6 +80,51 @@ public partial class OrderListUserControl : UserControl
         // Sort arrows default to 60% of the header text height, which at 14pt bold
         // crowds the title. Pin a smaller size that is still easy to read across the room.
         tblOrders.SortOrderSize = 12;
+
+        // แท็บตั้งต้นคือ List — SwitchTab ไม่ได้ถูกเรียกตอนเปิดหน้า
+        ApplyTabColumns(showHistory: false);
+    }
+
+    /// <summary>
+    /// คอลัมน์ที่ความกว้างไม่เท่ากันระหว่างสองแท็บ — (key, กว้างตอน List, กว้างตอน History)
+    /// ส่วนที่เหลือกว้างเท่ากันทั้งสองแท็บ จึงไม่ต้องมีในนี้
+    /// </summary>
+    private static readonly (string Key, string ListWidth, string HistoryWidth)[] TabColumnWidths =
+    [
+        ("OrderNo", "12%", "10%"),
+        ("Customer", "9%", "8%"),
+        ("ProcessSequence", "15%", "13%"),
+        ("Plate", "8%", "7%"),
+        ("Shim", "8%", "7%"),
+        ("Station", "9%", "8%"),
+        ("Status", "8%", "7%"),
+    ];
+
+    /// <summary>
+    /// แท็บ List ไม่มีคอลัมน์ End เพราะงานที่ยังไม่จบก็ยังไม่มีเวลาจบ — ทั้งคอลัมน์
+    /// เป็นขีดทุกแถวอยู่แล้ว เวลาจบงานดูได้ที่แท็บ History ที่เดียว
+    ///
+    /// ที่ต้องขยับความกว้างด้วย เพราะ AntdUI คิดความกว้างเป็นสัดส่วนของตารางตรง ๆ
+    /// (Table.Layout: width = rect.Width × ratio) ไม่ได้เกลี่ยใหม่ให้เมื่อซ่อนคอลัมน์
+    /// ซ่อน End เฉย ๆ จะเหลือที่ว่าง 9% ค้างท้ายตาราง จึงแจก 9% นั้นคืนเอง
+    ///
+    /// ทั้งสองชุดต้องรวมได้ 100 พอดี — แก้ตัวเลขเมื่อไหร่ต้องบวกใหม่ทั้งสองชุด
+    /// </summary>
+    private void ApplyTabColumns(bool showHistory)
+    {
+        if (tblOrders.Columns == null) return;
+
+        foreach (var column in tblOrders.Columns)
+        {
+            if (column.Key == "End") column.Visible = showHistory;
+
+            foreach (var (key, list, history) in TabColumnWidths)
+            {
+                if (column.Key != key) continue;
+                column.Width = showHistory ? history : list;
+                break;
+            }
+        }
     }
 
     private void SetupEvents()
@@ -179,6 +226,7 @@ public partial class OrderListUserControl : UserControl
               .Append(j.CreatedAt?.Ticks).Append('|')
               .Append(j.UpdatedAt?.Ticks).Append('|')
               .Append(j.PlanRouting?.MarkingMethod).Append('|')
+              .Append(j.PlanRouting?.ProcessSequence).Append('|')
               .Append(j.Commands?.Count(c => c.Success) ?? 0).Append(';');
         }
         return sb.ToString();
@@ -204,6 +252,8 @@ public partial class OrderListUserControl : UserControl
 
         // แผงขวามีเฉพาะแท็บ List
         pnlProcessing.Visible = !showHistory;
+
+        ApplyTabColumns(showHistory);
 
         RebindTable();
         _ = UpdateProcessingAsync();
@@ -705,10 +755,6 @@ public partial class OrderListUserControl : UserControl
         var (statusLabel, statusColor) = JobStatusDisplay.Resolve(job.Status);
         var statusText = new AntdUI.CellText(statusLabel) { Fore = statusColor };
 
-        var sourceTag = job.StStatus == "1"
-            ? new AntdUI.CellTag[] { new AntdUI.CellTag("จาก ST3", AntdUI.TTypeMini.Success) }
-            : null;
-
         var buttons = new List<AntdUI.CellButton>();
         if (!isHistory)
         {
@@ -743,12 +789,13 @@ public partial class OrderListUserControl : UserControl
             Customer = job.CustomerName ?? "",
             Type = job.Type ?? "",
             Qty = job.Qty?.ToString() ?? "",
-            Method = Method(job.PlanRouting?.MarkingMethod),
+            // ค่าดิบจาก plan_routing.process_sequence เช่น "online" / "offline"
+            // โชว์ตามที่ database ส่งมาตรง ๆ ไม่แปลง ไม่ normalize ตัวพิมพ์
+            ProcessSequence = job.PlanRouting?.ProcessSequence ?? "",
             Plate = plan.NoCase ? Dash : MachineCell(plan.Plate),
             Shim = plan.NoCase ? Dash : MachineCell(plan.Shim),
             Station = OrDashStation(JobStationService.Current(job.Commands)),
             Status = statusText,
-            Source = sourceTag,
             Op = buttons.ToArray(),
             Back = string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase)
                 ? DesignTokens.RowSuccess
@@ -1003,6 +1050,7 @@ public partial class OrderListUserControl : UserControl
                     ? $"ไม่พบรูปชื่อ {side.LookupName} (มี {side.NearMiss} ไฟล์ชื่อใกล้เคียง)"
                     : MarkingRefImageService.DescribeEmpty(MarkingRefImageService.CheckFolder());
             caption.Text = $"{side.Side} · {side.Machine} · {reason}";
+            box.Image = MarkingRefImageService.Placeholder();
             return;
         }
 
@@ -1018,6 +1066,7 @@ public partial class OrderListUserControl : UserControl
         if (box.Image == null)
         {
             caption.Text = $"{side.Side} · {side.Machine} · เปิดไฟล์รูปไม่ได้";
+            box.Image = MarkingRefImageService.Placeholder();
             return;
         }
 
@@ -1094,12 +1143,11 @@ internal class OrderRow : AntdUI.NotifyProperty
     public string Customer { get; set; } = "";
     public string Type { get; set; } = "";
     public string Qty { get; set; } = "";
-    public string Method { get; set; } = "";
+    public string ProcessSequence { get; set; } = "";
     public string Plate { get; set; } = "";
     public string Shim { get; set; } = "";
     public string Station { get; set; } = "";
     public AntdUI.CellText? Status { get; set; }
-    public AntdUI.CellTag[]? Source { get; set; }
     public AntdUI.CellButton[] Op { get; set; } = [];
     public Color? Back { get; set; }
 }

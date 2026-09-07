@@ -116,6 +116,7 @@ public static class LanguageService
         ["Customer"] = "ลูกค้า",
         ["Type"] = "ประเภท",
         ["Qty"] = "จำนวน",
+        ["Process Sequence"] = "ลำดับกระบวนการ",
         ["Status"] = "สถานะ",
         ["Start"] = "เริ่ม",
         ["End"] = "จบ",
@@ -125,7 +126,6 @@ public static class LanguageService
         // ── หน้ารายละเอียดงาน ──
         ["Job Information"] = "ข้อมูลงาน",
         ["Marking Method"] = "รูปแบบการมาร์ก",
-        ["Method"] = "วิธีมาร์ก",
         ["Plate"] = "เพลต",
         ["Shim"] = "ชิม",
         ["Station"] = "สถานี",
