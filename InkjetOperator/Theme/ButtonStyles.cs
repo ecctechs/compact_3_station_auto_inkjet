@@ -33,6 +33,34 @@ public static class ButtonStyles
         button.BorderWidth = 0F;
     }
 
+    /// <summary>ไอคอนกากบาทที่กำกับปุ่มปิดทุกปุ่ม</summary>
+    public const string CloseIcon = "CloseOutlined";
+
+    /// <summary>ข้อความบนปุ่มปิด — คำเดียวกันทั้งระบบ</summary>
+    public const string CloseText = "ปิด";
+
+    /// <summary>
+    /// ปุ่มปิดหน้าจอ — หน้าตาเดียวกันทุกที่ในระบบ
+    ///
+    /// แดงพร้อมไอคอนกากบาท ชุดเดียวกับปุ่มปิดหน้าต่างบนแถบหัวที่ขึ้นแดงตอนเอาเมาส์จ่อ
+    /// พนักงานจึงจำได้ว่าสีนี้กับกากบาทนี้คือทางออก ไม่ต้องอ่านตัวหนังสือ
+    ///
+    /// ตั้งทั้งข้อความและไอคอนให้เลย ผู้เรียกไม่ต้องจำว่าใช้คำไหนไอคอนไหน —
+    /// ที่ผ่านมาแต่ละหน้าตั้งเอง ปุ่มปิดจึงเป็นคนละสีคนละแบบกัน
+    /// </summary>
+    public static void Close(AntdUI.Button button, float fontSize = 13f)
+    {
+        ArgumentNullException.ThrowIfNull(button);
+
+        button.Text = CloseText;
+        button.IconSvg = CloseIcon;
+        button.Type = AntdUI.TTypeMini.Error;
+        button.Font = DesignTokens.ButtonFont(fontSize);
+        button.Radius = DesignTokens.Radius;
+        button.ForeColor = DesignTokens.TextOnPrimary;
+        button.BorderWidth = 0F;
+    }
+
     /// <summary>
     /// Secondary action - white fill with a visible border (Browse, Close, Add Row).
     /// </summary>

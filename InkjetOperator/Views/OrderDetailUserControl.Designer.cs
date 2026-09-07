@@ -3131,7 +3131,7 @@ partial class OrderDetailUserControl
         btnDetailClose.Margin = new System.Windows.Forms.Padding(12, 0, 24, 0);
         btnDetailClose.Name = "btnDetailClose";
         btnDetailClose.Radius = 8;
-        btnDetailClose.Size = new System.Drawing.Size(108, 46);
+        btnDetailClose.Size = new System.Drawing.Size(124, 46);
         btnDetailClose.TabIndex = 1;
         btnDetailClose.Text = "ปิด";
         btnDetailClose.Type = AntdUI.TTypeMini.Error;

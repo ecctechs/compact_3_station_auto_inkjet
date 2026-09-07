@@ -89,6 +89,7 @@ public static class LanguageService
         // ── ปุ่มที่ใช้ร่วมกันทั้งระบบ ──
         ["Save"] = "บันทึก",
         ["Cancel"] = "ยกเลิก",
+        ["Clear"] = "ล้างข้อมูล",
         ["OK"] = "ตกลง",
         ["Delete"] = "ลบ",
         ["Reset"] = "รีเซ็ต",

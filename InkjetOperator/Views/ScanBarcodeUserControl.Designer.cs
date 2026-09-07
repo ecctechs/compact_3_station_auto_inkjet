@@ -48,7 +48,7 @@ partial class ScanBarcodeUserControl
         btnEditQty = new AntdUI.Button();
         flpActions = new FlowLayoutPanel();
         btnConfirm = new AntdUI.Button();
-        btnCancel = new AntdUI.Button();
+        btnClear = new AntdUI.Button();
         tlpScanBarcodeRoot.SuspendLayout();
         tlpBarcodeCenter.SuspendLayout();
         pnlBarcodeContainer.SuspendLayout();
@@ -342,7 +342,7 @@ partial class ScanBarcodeUserControl
         flpActions.AutoSizeMode = AutoSizeMode.GrowAndShrink;
         flpActions.BackColor = Color.FromArgb(91, 155, 213);
         flpActions.Controls.Add(btnConfirm);
-        flpActions.Controls.Add(btnCancel);
+        flpActions.Controls.Add(btnClear);
         flpActions.Location = new Point(604, 1373);
         flpActions.Margin = new Padding(0);
         flpActions.Name = "flpActions";
@@ -363,18 +363,18 @@ partial class ScanBarcodeUserControl
         btnConfirm.Text = "OK";
         btnConfirm.Type = AntdUI.TTypeMini.Success;
         // 
-        // btnCancel
+        // btnClear
         // 
-        btnCancel.Font = new Font("Segoe UI", 28.5F);
-        btnCancel.ForeColor = Color.White;
-        btnCancel.Location = new Point(479, 0);
-        btnCancel.Margin = new Padding(52, 0, 0, 0);
-        btnCancel.Name = "btnCancel";
-        btnCancel.Radius = 12;
-        btnCancel.Size = new Size(375, 117);
-        btnCancel.TabIndex = 1;
-        btnCancel.Text = "Cancel";
-        btnCancel.Type = AntdUI.TTypeMini.Error;
+        btnClear.Font = new Font("Segoe UI", 28.5F);
+        btnClear.ForeColor = Color.White;
+        btnClear.Location = new Point(479, 0);
+        btnClear.Margin = new Padding(52, 0, 0, 0);
+        btnClear.Name = "btnClear";
+        btnClear.Radius = 12;
+        btnClear.Size = new Size(375, 117);
+        btnClear.TabIndex = 1;
+        btnClear.Text = "Clear";
+        btnClear.Type = AntdUI.TTypeMini.Error;
         // 
         // ScanBarcodeUserControl
         // 
@@ -421,5 +421,5 @@ partial class ScanBarcodeUserControl
     private AntdUI.Button btnEditQty;
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnConfirm;
-    private AntdUI.Button btnCancel;
+    private AntdUI.Button btnClear;
 }

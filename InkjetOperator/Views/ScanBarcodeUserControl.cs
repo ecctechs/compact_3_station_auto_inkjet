@@ -26,7 +26,7 @@ public partial class ScanBarcodeUserControl : UserControl
     {
         InitializeComponent();
         btnConfirm.Click += BtnConfirm_Click;
-        btnCancel.Click += BtnCancel_Click;
+        btnClear.Click += BtnClear_Click;
         btnEditQty.Click += BtnEditQty_Click;
         txtBarcode.KeyDown += TxtBarcode_KeyDown;
         txtBarcode.TextChanged += TxtBarcode_TextChanged;
@@ -378,7 +378,7 @@ public partial class ScanBarcodeUserControl : UserControl
         await api.CreateIaiAsync(request);
     }
 
-    private void BtnCancel_Click(object? sender, EventArgs e)
+    private void BtnClear_Click(object? sender, EventArgs e)
     {
         ClearForm();
     }

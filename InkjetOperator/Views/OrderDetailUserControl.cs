@@ -53,6 +53,8 @@ public partial class OrderDetailUserControl : UserControl
         var rawLevel = CustomSettingsManager.Read("MENU_LEVEL", "1");
         _isDevMode = int.TryParse(rawLevel, out var lvl) && lvl == 99;
 
+        // หน้าตาปุ่มปิดมาจากที่เดียวกับทุกหน้า — designer คุมแค่ตำแหน่งกับขนาด
+        ButtonStyles.Close(btnDetailClose);
         btnDetailClose.Click += (_, _) => CloseRequested?.Invoke(this, EventArgs.Empty);
         btnMkSwap.Click += (_, _) => SwapMkData();
         picMk1Abc.Click += (_, _) => ToggleAbc(1, picMk1Abc);

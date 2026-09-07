@@ -95,7 +95,10 @@ internal sealed partial class MarkingRefPickerDialog : Form
         lstOptions.Visible = false;
         tlpContent.ColumnStyles[0].Width = 0F;
         btnCancel.Visible = false;
-        btnOk.Text = "ปิด";
+
+        // โหมดนี้ไม่มีอะไรให้เลือก ปุ่มเดียวที่เหลือคือทางออก — แต่งให้เหมือน
+        // ปุ่มปิดที่อื่นทั้งระบบ ไม่ใช่ปุ่มตกลงสีน้ำเงินที่ดูเหมือนต้องตัดสินใจอะไร
+        Theme.ButtonStyles.Close(btnOk, fontSize: 15f);
     }
 
     private void SetOptions(List<MarkingRefOption> options)
