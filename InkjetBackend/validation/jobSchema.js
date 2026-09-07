@@ -1,13 +1,21 @@
 const { z } = require("zod");
 
+// ทุกช่องที่ไม่บังคับต้องรับ null ด้วย ไม่ใช่แค่ optional
+//
+// .optional() เฉย ๆ แปลว่า "ไม่ส่ง key มาก็ได้" แต่ถ้าส่งมาต้องเป็น string —
+// ส่ง null มาจะโดนตีกลับ 400 ทันที ซึ่งเป็นสิ่งที่เกิดขึ้นตอนหน้า Scan Barcode
+// เปลี่ยนไปดึง customer_name จาก inkjet_data แล้ว lot นั้นไม่มีชื่อลูกค้า
+//
+// คอลัมน์พวกนี้ใน print_jobs เป็น NULL ได้อยู่แล้ว และ schema อื่นในโปรเจกต์
+// (plan_routing, uv_job_data) ก็ใช้ .nullable().optional() มาตั้งแต่แรก
 const createJobSchema = z.object({
   barcode_raw: z.string().min(1),
   created_by: z.enum(["scanner", "operator"]).default("scanner"),
-  order_no: z.string().optional(),
-  customer_name: z.string().optional(),
-  type: z.string().optional(),
-  qty: z.number().int().optional(),
-  st_status: z.string().optional(),
+  order_no: z.string().nullable().optional(),
+  customer_name: z.string().nullable().optional(),
+  type: z.string().nullable().optional(),
+  qty: z.number().int().nullable().optional(),
+  st_status: z.string().nullable().optional(),
 });
 
 const jobFilterSchema = z.object({
