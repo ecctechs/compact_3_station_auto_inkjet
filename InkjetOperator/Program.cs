@@ -108,10 +108,7 @@ static class Program
         // so drawing each string in one pass is both safer and cheaper.
         AntdUI.Config.EmojiEnabled = false;
 
-        // Draw glyphs as antialiased outlines (GraphicsPath) rather than through
-        // GDI+ DrawString - this is what keeps AntdUI text even at fractional
-        // display scaling instead of showing uneven stems.
-        AntdUI.Config.TextRenderingHighQuality = true;
+        ConfigureTextRendering();
 
         // AntdUI draws the header sort arrows with TextQuaternary while a column is
         // unsorted and with Primary while it is sorted. Both defaults are dark, and
@@ -125,6 +122,56 @@ static class Program
         AntdUI.Style.Set(AntdUI.Colour.Primary, System.Drawing.Color.White, nameof(AntdUI.Table));
 
         AntdUI.Config.Mode = AntdUI.TMode.Light;
+    }
+
+    /// <summary>
+    /// เลือกวิธีวาดตัวหนังสือตามจอที่กำลังใช้จริง
+    ///
+    /// <para>
+    /// จอที่สเกลลงตัว (100% อย่าง panel PC 1920x1080 ที่หน้างานใช้ หรือ 200%) ได้ตัวหนังสือคม
+    /// ที่สุดจาก ClearType ของ Windows เพราะมันจัดเส้นให้ลงกริดพิกเซลพอดีและใช้
+    /// subpixel ช่วย ตัวอักษรจึงคมเหมือนโปรแกรมอื่นในเครื่อง
+    /// </para>
+    /// <para>
+    /// ส่วนจอที่ตั้งสเกลไม่ลงตัว (125% / 150% อย่างจอ 4K ที่ใช้พัฒนา) การจัดลงกริด
+    /// แบบนั้นกลับทำให้เส้นหนาบางไม่เท่ากัน จึงสลับไปวาดเป็นเส้นขอบแบบ antialias แทน
+    /// ซึ่งเสียความคมไปบ้างแต่ได้ความสม่ำเสมอ
+    /// </para>
+    /// <para>
+    /// เดิมบังคับใช้แบบหลังตลอด ซึ่งเลือกไว้ตอนพัฒนาบนจอ 4K ที่ย่อขยาย พอเอาไป
+    /// รันบน panel PC ที่ 100% ตัวหนังสือจึงดูฟุ้งกว่าที่ควรทั้งโปรแกรม
+    /// </para>
+    /// </summary>
+    private static void ConfigureTextRendering()
+    {
+        // เกณฑ์คือ "สเกลลงตัวไหม" ไม่ใช่ "100% หรือเปล่า" — ที่ 200% ตัวอักษรก็ยัง
+        // ลงกริดพิกเซลพอดี ClearType จึงยังคมที่สุด มีแต่สเกลเศษอย่าง 125% / 150%
+        // ที่ทำให้เส้นหนาบางไม่เท่ากันจนต้องยอมแลกไปใช้เส้นขอบ antialias แทน
+        float dpi = ScreenDpi();
+        bool wholeScale = Math.Abs(dpi % 96f) < 0.5f;
+
+        AntdUI.Config.TextRenderingHighQuality = !wholeScale;
+
+        if (wholeScale)
+            AntdUI.Config.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+    }
+
+    /// <summary>
+    /// DPI ของจอหลัก — 96 คือ 100% · ต้องเรียกหลัง ApplicationConfiguration.Initialize()
+    /// ไม่งั้นได้ค่าที่ Windows หลอกให้โปรแกรมที่ยังไม่ประกาศ DPI awareness เห็น
+    /// </summary>
+    private static float ScreenDpi()
+    {
+        try
+        {
+            using var g = System.Drawing.Graphics.FromHwnd(IntPtr.Zero);
+            return g.DpiX;
+        }
+        catch
+        {
+            // อ่านไม่ได้ก็ถือว่าเป็นจอปกติ — ตรงกับเครื่องที่หน้างานใช้
+            return 96f;
+        }
     }
 
     /// <summary>
