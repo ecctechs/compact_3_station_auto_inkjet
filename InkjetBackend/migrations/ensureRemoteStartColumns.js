@@ -1,4 +1,4 @@
-const sequelize = require("../database");
+﻿const sequelize = require("../database");
 
 // print_jobs ต้องมี remote_start / remote_program ไว้ให้ ST3 ฝากงานให้ ST1 ส่งแทน
 // sequelize.sync() ไม่เพิ่มคอลัมน์ให้ตารางที่มีอยู่แล้ว จึงต้องเติมเอง — รันซ้ำได้ ไม่พัง
@@ -24,6 +24,15 @@ module.exports = async function ensureRemoteStartColumns() {
         `ALTER TABLE print_jobs ADD COLUMN remote_program VARCHAR(255)`
       );
       console.log("print_jobs.remote_program added");
+    }
+
+    // ขั้นตอนที่คำขอนี้ขอให้ส่ง — งานหนึ่งใบมีได้หลายขั้น (เช่น 32 = MK แล้ว UV2)
+    // ถ้าไม่บอกมา ST1 จะเดาว่าเป็นขั้นแรกเสมอ แล้วส่งขั้นแรกซ้ำแทนที่จะส่งขั้นที่ขอ
+    if (!has("remote_step")) {
+      await sequelize.query(
+        `ALTER TABLE print_jobs ADD COLUMN remote_step VARCHAR(255)`
+      );
+      console.log("print_jobs.remote_step added");
     }
 
     if (!has("remote_error")) {

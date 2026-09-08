@@ -752,7 +752,8 @@ public partial class OrderListUserControl : UserControl
         //
         // งานคงเป็น Waiting ไว้จนกว่า ST1 จะต่อเครื่องติดและส่งสำเร็จจริง
         // (SendFirstStepAsync เป็นคนตั้ง Working และตีกลับเป็น Waiting เองถ้าส่งไม่ผ่าน)
-        var (ok, err) = await _api!.SetRemoteStartAsync(jobId, requested: true, pick.Program);
+        var (ok, err) = await _api!.SetRemoteStartAsync(
+            jobId, requested: true, pick.Program, step: step);
         if (IsDisposed) return;
 
         if (!ok)
@@ -996,11 +997,27 @@ public partial class OrderListUserControl : UserControl
         }
 
         var plan = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod);
-        var step = plan.Steps.FirstOrDefault();
 
+        // ขั้นตอนที่จะส่งมาจากตัวคำขอ ไม่ใช่การเดาเอาว่าเป็นขั้นแรกเสมอ
+        //
+        // งานหนึ่งใบมีได้หลายขั้น เช่น marking 32 คือ MK แล้วต่อ UV2 ถ้าหยิบขั้นแรก
+        // ตายตัวแบบเดิม คำขอที่ ST3 ฝากไว้ว่าขอ UV2 จะกลายเป็นส่ง MK ซ้ำ
+        //
+        // คำขอที่ไม่ได้ระบุขั้นถือว่าเป็นขั้นแรก — ใบที่ค้างอยู่ตอนอัปเดตโปรแกรม
+        // จึงยังทำงานถูกเหมือนเดิม
+        var requested = _allJobs.FirstOrDefault(j => j.Id == jobId)?.RemoteStep;
+        var step = string.IsNullOrWhiteSpace(requested)
+            ? plan.Steps.FirstOrDefault()
+            : plan.Steps.FirstOrDefault(x =>
+                string.Equals(x, requested.Trim(), StringComparison.OrdinalIgnoreCase));
+
+        // ขั้นที่ขอมาไม่มีอยู่ในแผนของงานนี้ = คำขอใช้ไม่ได้ ทิ้งไปพร้อมบอกสาเหตุ
         if (step == null)
         {
-            await _api.SetRemoteStartAsync(jobId, requested: false);
+            await _api.SetRemoteStartAsync(jobId, requested: false,
+                failure: string.IsNullOrWhiteSpace(requested)
+                    ? null
+                    : $"งานนี้ไม่มีขั้นตอน {requested.Trim()} ให้ส่ง");
             return;
         }
 
@@ -1021,7 +1038,7 @@ public partial class OrderListUserControl : UserControl
 
         // จองไว้ก่อนลงมือ — ตั้งแต่บรรทัดนี้ไป ST3 จะเห็นว่า "กำลังส่งอยู่" ไม่ใช่
         // "ไม่มีใครรับ" จึงไม่ตีงานกลับเป็น Waiting ทับงานที่เครื่องกำลังรับข้อมูล
-        await _api.ClaimRemoteStartAsync(jobId, program);
+        await _api.ClaimRemoteStartAsync(jobId, program, step);
         if (IsDisposed) return;
 
         var lines = await SendFirstStepAsync(jobId, step, resolved, program);

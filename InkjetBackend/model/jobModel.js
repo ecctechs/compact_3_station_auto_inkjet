@@ -1,4 +1,4 @@
-const { DataTypes } = require("sequelize");
+﻿const { DataTypes } = require("sequelize");
 const sequelize = require("../database");
 const { Pattern } = require("./patternModel");
 
@@ -83,6 +83,11 @@ const PrintJob = sequelize.define(
     },
     // โปรแกรม UV ที่ ST3 เลือกไว้ให้เสร็จแล้ว — ST1 จะได้ส่งโดยไม่ต้องถามใครที่จอตัวเอง
     remote_program: {
+      type: DataTypes.STRING,
+    },
+    // ขั้นตอนที่คำขอใบนี้ขอให้ส่ง — "MK" / "UV1" / "UV2"
+    // ว่างไว้ได้ แปลว่าเป็นคำขอรุ่นเก่าที่ไม่ได้ระบุ ST1 จะถือว่าเป็นขั้นแรก
+    remote_step: {
       type: DataTypes.STRING,
     },
     // สาเหตุที่ ST1 ส่งให้ไม่สำเร็จ — ST3 อ่านไปแสดงที่จอตัวเองแล้วล้างทิ้ง

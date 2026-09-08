@@ -331,11 +331,18 @@ public class ApiClient
     /// ต้องแยกจากสถานะ "รอคนหยิบ" เพราะ ST3 ใช้ตัดสินว่าจะตีงานกลับเป็น Waiting
     /// ได้ไหม — ใบที่ไม่มีใครหยิบเลยตีกลับได้ ใบที่กำลังส่งอยู่ห้ามแตะ
     /// </summary>
-    public async Task<(bool ok, string? error)> ClaimRemoteStartAsync(int jobId, string? program)
+    public async Task<(bool ok, string? error)> ClaimRemoteStartAsync(
+        int jobId, string? program, string? step = null)
     {
         try
         {
-            var payload = new { remote_start = "2", remote_program = program, remote_error = (string?)null };
+            var payload = new
+            {
+                remote_start = "2",
+                remote_program = program,
+                remote_step = step,
+                remote_error = (string?)null,
+            };
             var content = new StringContent(
                 System.Text.Json.JsonSerializer.Serialize(payload),
                 System.Text.Encoding.UTF8,
@@ -354,7 +361,7 @@ public class ApiClient
     }
 
     public async Task<(bool ok, string? error)> SetRemoteStartAsync(
-        int jobId, bool requested, string? program = null, string? failure = null)
+        int jobId, bool requested, string? program = null, string? failure = null, string? step = null)
     {
         try
         {
@@ -362,6 +369,7 @@ public class ApiClient
             {
                 remote_start = requested ? "1" : "0",
                 remote_program = program,
+                remote_step = step,
                 remote_error = failure,
             };
             var content = new StringContent(

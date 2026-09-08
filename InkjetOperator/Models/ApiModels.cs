@@ -89,6 +89,16 @@ public class PrintJob
     [JsonPropertyName("remote_program")]
     public string? RemoteProgram { get; set; }
 
+    /// <summary>
+    /// ขั้นตอนที่คำขอใบนี้ขอให้ส่ง — "MK" / "UV1" / "UV2"
+    /// <para>
+    /// ว่าง = คำขอที่ไม่ได้ระบุ ST1 จะถือว่าเป็นขั้นแรก ซึ่งเป็นพฤติกรรมเดิม
+    /// ก่อนมีช่องนี้ ใบที่ค้างอยู่ตอนอัปเดตโปรแกรมจึงยังทำงานถูก
+    /// </para>
+    /// </summary>
+    [JsonPropertyName("remote_step")]
+    public string? RemoteStep { get; set; }
+
     /// <summary>สาเหตุที่ ST1 ส่งให้ไม่สำเร็จ — ST3 อ่านไปแสดงที่จอตัวเองแล้วล้างทิ้ง</summary>
     [JsonPropertyName("remote_error")]
     public string? RemoteError { get; set; }

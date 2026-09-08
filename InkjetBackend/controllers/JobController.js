@@ -1,4 +1,4 @@
-const { Op } = require("sequelize");
+﻿const { Op } = require("sequelize");
 const sequelize = require("../database");
 const ResponseManager = require("../middleware/ResponseManager");
 const { PrintJob, PrintJobCommand } = require("../model/jobModel");
@@ -433,16 +433,27 @@ class JobController {
         return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
       }
 
-      const { remote_start, remote_program, remote_error } = req.body;
+      const { remote_start, remote_program, remote_step, remote_error } = req.body;
 
-      await job.update({
-        // "1" = ST3 ฝากไว้ ยังไม่มีใครหยิบ · "2" = ST1 หยิบไปแล้วกำลังส่งเข้าเครื่อง
-        // แยกสองสถานะเพราะ ST3 ต้องรู้ว่า "ไม่มีใครทำ" ต่างจาก "กำลังทำอยู่"
-        // ใบที่ไม่มีใครหยิบเลยถึงจะตีกลับเป็น Waiting ได้ ใบที่กำลังส่งห้ามแตะ
-        remote_start: ["1", "2"].includes(String(remote_start)) ? String(remote_start) : "0",
-        remote_program: remote_program ?? null,
-        remote_error: remote_error || null,
-      });
+      await job.update(
+        {
+          // "1" = ST3 ฝากไว้ ยังไม่มีใครหยิบ · "2" = ST1 หยิบไปแล้วกำลังส่งเข้าเครื่อง
+          // แยกสองสถานะเพราะ ST3 ต้องรู้ว่า "ไม่มีใครทำ" ต่างจาก "กำลังทำอยู่"
+          // ใบที่ไม่มีใครหยิบเลยถึงจะตีกลับเป็น Waiting ได้ ใบที่กำลังส่งห้ามแตะ
+          remote_start: ["1", "2"].includes(String(remote_start)) ? String(remote_start) : "0",
+          remote_program: remote_program ?? null,
+          remote_step: remote_step ?? null,
+          remote_error: remote_error || null,
+        },
+        // ทั้งสี่ช่องนี้เป็นชุดเดียวกัน ส่งอะไรมาก็ต้องได้อย่างนั้น รวมถึงการล้างเป็นค่าว่าง
+        //
+        // ตัว sequelize ตั้ง omitNull ไว้ทั้งโปรเจค (database.js) ซึ่งแปลว่าช่องที่เป็น
+        // null จะถูกข้ามตอน UPDATE ค่าเก่าจึงค้างอยู่ ผลคือ
+        //   คำขอที่ไม่ได้ระบุขั้นตอน ได้ขั้นของคำขอก่อนหน้าติดมา แล้วส่งผิดขั้น
+        //   remote_error ล้างไม่ออก ST3 เลยเด้งกล่องเดิมซ้ำทุกรอบ poll
+        // ปิดเฉพาะตรงนี้ ไม่ไปแตะค่าเริ่มต้นของทั้งโปรเจค
+        { omitNull: false }
+      );
 
       return ResponseManager.SuccessResponse(req, res, 200, job);
     } catch (err) {
