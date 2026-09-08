@@ -17,6 +17,15 @@ public partial class OrderListUserControl : UserControl
 
     /// <summary>ตัวเฝ้าบิตปุ่มกดหน้างาน — เริ่มเองตอนหน้านี้โหลด</summary>
     private readonly PushButtonWatcher _pushButton = new();
+
+    /// <summary>
+    /// กำลังจัดการการกดปุ่มอยู่ — คลุมตั้งแต่รับสัญญาณจนจบ รวมช่วงที่มีหน้าต่างเปิดค้าง
+    /// <para>
+    /// ต้องมีแยกจาก <c>_sending</c> เพราะ WinForms Timer ยังเดินต่อระหว่างที่กล่อง
+    /// modal เปิดอยู่ ถ้าไม่กันไว้ ตัวเฝ้าจะรับสัญญาณรอบใหม่ทับของเดิมได้
+    /// </para>
+    /// </summary>
+    private bool _pushHandling;
     private bool _showHistory;
     private List<PrintJob> _allJobs = new();
     private string _lastSignature = "";
@@ -177,9 +186,9 @@ public partial class OrderListUserControl : UserControl
         // เฝ้าเฉพาะตอนที่มีงานรอปุ่มกดอยู่จริง และไม่มีอะไรค้างอยู่บนหน้าจอ
         // ไม่มีงานรออยู่ก็ไม่ต้องไปกวน PLC ทุก 300 ms เปล่า ๆ
         _pushButton.ShouldWatch = () =>
-            !_sending && !_showingRemoteError && Visible && PushTarget() != null;
+            !_sending && !_pushHandling && !_showingRemoteError && Visible && PushTarget() != null;
 
-        _pushButton.Pressed += (_, _) => OnPushButtonPressed();
+        _pushButton.Pressed += async (_, _) => await OnPushButtonPressedAsync();
 
         // ขาดการติดต่อไม่ใช่เรื่องต้องกดปิด — ใช้ข้อความลอย ไม่ใช่กล่อง modal
         // ตัวเฝ้าแจ้งครั้งเดียวตอนขาด และอีกครั้งตอนกลับมา ไม่ได้แจ้งทุกรอบ
@@ -232,20 +241,46 @@ public partial class OrderListUserControl : UserControl
             string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true;
 
     /// <summary>
-    /// มีคนกดปุ่มหน้างาน
+    /// มีคนกดปุ่มหน้างาน — ส่งขั้นตอนถัดไปให้ทันที
     ///
     /// <para>
-    /// ตอนนี้แค่ยืนยันให้เห็นว่าจับสัญญาณได้ ตัวส่งงานจริงจะมาแทนที่ในข้อ 3.3
-    /// แยกสองก้อนเพราะอยากพิสูจน์เรื่องสายกับ PLC ให้จบก่อน ค่อยไปยุ่งกับการส่งงาน
+    /// ไม่ถามยืนยัน คนกดยืนอยู่หน้าเครื่องแล้ว การเด้งกล่องให้เดินมากดตกลงที่จอ
+    /// อีกทีทำให้ปุ่มไม่มีประโยชน์ กล่องเลือกโปรแกรม UV ยังเด้งอยู่ถ้าจำเป็น
+    /// เพราะนั่นคือการ "เลือก" ไม่ใช่การ "ยืนยัน"
     /// </para>
     /// </summary>
-    private void OnPushButtonPressed()
+    private async Task OnPushButtonPressedAsync()
     {
-        if (PushTarget() is not { } target || IsDisposed) return;
+        if (_api == null || _sending || _pushHandling || IsDisposed) return;
+        if (PushTarget() is not { } target) return;
 
-        Notify.Success(this,
-            $"รับสัญญาณปุ่มกด — {JobLabel(target.Job)} รอส่ง {target.Step}");
+        _pushHandling = true;
+        try
+        {
+            // ตารางค้างได้ถึง 5 วิตามรอบ poll — อ่านสดก่อนลงมือ เผื่อระหว่างนั้น
+            // มีคนกดส่งจากหน้าจอไปแล้ว จะได้ไม่ส่งซ้ำลงชิ้นงานจริง
+            var resolved = await _api.GetResolvedJobAsync(target.Job.Id);
+            if (resolved == null || IsDisposed) return;
+
+            var steps = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod).Steps;
+            int next = steps.FindIndex(step => !SentAlready(resolved, step));
+
+            // -1 = ส่งครบแล้ว · 0 = ยังไม่ได้เริ่มเลย ซึ่งไม่ใช่หน้าที่ของปุ่มหน้างาน
+            if (next <= 0) return;
+
+            await RequestRemoteStartAsync(target.Job.Id, steps[next], resolved, askFirst: false);
+        }
+        finally
+        {
+            _pushHandling = false;
+        }
+
+        if (!IsDisposed) await RefreshDataAsync(force: true);
     }
+
+    private static bool SentAlready(ResolvedJobResponse resolved, string step) =>
+        resolved.Commands?.Any(c => c.Success &&
+            string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true;
 
     private void StartPolling()
     {
@@ -685,7 +720,7 @@ public partial class OrderListUserControl : UserControl
         _sending = true;
         try
         {
-            var lines = await SendFirstStepAsync(jobId, step, resolved);
+            var lines = await SendStepAsync(jobId, step, resolved);
             if (IsDisposed) return;
 
             if (lines.Count > 0)
@@ -700,22 +735,30 @@ public partial class OrderListUserControl : UserControl
     }
 
     /// <summary>
-    /// ส่งขั้นตอนแรกเข้าเครื่อง แล้วบันทึกลงประวัติถ้าสำเร็จ
+    /// ส่งขั้นตอนหนึ่งเข้าเครื่อง แล้วบันทึกลงประวัติถ้าสำเร็จ
     /// <para>
     /// เปลี่ยนสถานะเป็น Process ก่อนส่ง เพื่อให้แถวขึ้นสีและกันคนอื่นเริ่มงานซ้ำ
     /// ระหว่างที่เครื่องกำลังรับข้อมูลอยู่
     /// </para>
     /// <para>
     /// คืนรายการว่างเมื่อผู้ใช้กดยกเลิกที่กล่องเลือกรุ่นย่อย — ไม่ต้องรายงานอะไร
-    /// แต่สถานะที่ตั้งไปแล้วจะถูกคืนกลับเป็น Waiting
     /// </para>
     /// <para>
     /// <paramref name="forcedProgram"/> มีค่าเมื่อกำลังส่งแทน ST3 ซึ่งเลือกโปรแกรม
     /// ไว้ให้เสร็จแล้ว — การส่งรอบนั้นจะไม่เด้งหน้าต่างใด ๆ ที่จอ ST1
     /// </para>
     /// </summary>
-    private async Task<List<Notify.ResultLine>> SendFirstStepAsync(
-        int jobId, string step, ResolvedJobResponse resolved, string? forcedProgram = null)
+    /// <param name="isFirstStep">
+    /// ส่งไม่สำเร็จแล้วจะคืนสถานะเป็น Waiting ได้เฉพาะขั้นแรกเท่านั้น
+    /// <para>
+    /// ขั้นหลัง ๆ มีขั้นก่อนหน้าที่พ่นลงชิ้นงานไปแล้ว ถ้าตีกลับเป็น Waiting
+    /// งานจะกลายเป็นกดเริ่มใหม่ได้ แล้วการกดเริ่มจะส่งขั้นแรกซ้ำ = พ่นซ้ำของจริง
+    /// ปล่อยให้คงเป็น Working ไว้ คนหน้างานกดปุ่มส่งขั้นเดิมใหม่ได้เลย
+    /// </para>
+    /// </param>
+    private async Task<List<Notify.ResultLine>> SendStepAsync(
+        int jobId, string step, ResolvedJobResponse resolved,
+        string? forcedProgram = null, bool isFirstStep = true)
     {
         await _api!.UpdateJobStatusAsync(jobId, "Process");
 
@@ -733,7 +776,7 @@ public partial class OrderListUserControl : UserControl
 
             if (mk.Status == SendStatus.Ok)
                 await _api.SaveSendStepAsync(jobId, "MK");
-            else
+            else if (isFirstStep)
                 await _api.UpdateJobStatusAsync(jobId, "Waiting");
 
             return lines;
@@ -754,7 +797,7 @@ public partial class OrderListUserControl : UserControl
             return [Notify.Ok($"{uv.MachineName} — ส่งสำเร็จ ({uv.ProgramFile}.uvdx)")];
         }
 
-        await _api.UpdateJobStatusAsync(jobId, "Waiting");
+        if (isFirstStep) await _api.UpdateJobStatusAsync(jobId, "Waiting");
 
         return uv.Status switch
         {
@@ -799,7 +842,13 @@ public partial class OrderListUserControl : UserControl
     /// จะไปเด้งค้างที่จอ ST1 ซึ่งไม่มีคนเฝ้าอยู่ งานก็จะค้างไปเรื่อย ๆ
     /// </para>
     /// </summary>
-    private async Task RequestRemoteStartAsync(int jobId, string step, ResolvedJobResponse resolved)
+    /// <param name="askFirst">
+    /// false = มาจากปุ่มกดหน้างาน ข้ามกล่องยืนยัน เพราะคนกดยืนอยู่หน้าเครื่องแล้ว
+    /// กล่องเลือกโปรแกรม UV กับกล่องยืนยันการใช้ default ยังเด้งอยู่ทั้งคู่
+    /// นั่นคือการเลือก ไม่ใช่การยืนยัน และเลือกผิดหมายถึงพิมพ์ผิดแบบลงชิ้นงานจริง
+    /// </param>
+    private async Task RequestRemoteStartAsync(
+        int jobId, string step, ResolvedJobResponse resolved, bool askFirst = true)
     {
         int machineStation = JobStationService.StationOf(step) ?? 0;
         if (StationOwner(machineStation, jobId) is { } busyJob)
@@ -824,7 +873,7 @@ public partial class OrderListUserControl : UserControl
             !UvProgramResolver.ConfirmDefault(uvRow?.ProgramName ?? "", uvName, this))
             return;
 
-        if (!Confirm.Ask(this, "ยืนยันเริ่มงาน",
+        if (askFirst &&!Confirm.Ask(this, "ยืนยันเริ่มงาน",
                 $"{JobName(jobId)} — marking {Method(resolved.PlanRouting?.MarkingMethod)}\n\n"
                 + $"ส่งไป {step} ด้วยโปรแกรม {pick.Program}.uvdx\n"
                 + "คำสั่งจะถูกส่งเข้าเครื่องโดยโปรแกรมที่ ST1\n\n"
@@ -835,7 +884,7 @@ public partial class OrderListUserControl : UserControl
         // แต่ตอนนี้ยังไม่มีใครแตะเครื่องเลย ยังไม่รู้ด้วยซ้ำว่า ST1 ต่อ UV ได้ไหม
         //
         // งานคงเป็น Waiting ไว้จนกว่า ST1 จะต่อเครื่องติดและส่งสำเร็จจริง
-        // (SendFirstStepAsync เป็นคนตั้ง Working และตีกลับเป็น Waiting เองถ้าส่งไม่ผ่าน)
+        // (SendStepAsync เป็นคนตั้ง Working และตีกลับเป็น Waiting เองถ้าขั้นแรกส่งไม่ผ่าน)
         var (ok, err) = await _api!.SetRemoteStartAsync(
             jobId, requested: true, pick.Program, step: step);
         if (IsDisposed) return;
@@ -1125,7 +1174,9 @@ public partial class OrderListUserControl : UserControl
         await _api.ClaimRemoteStartAsync(jobId, program, step);
         if (IsDisposed) return;
 
-        var lines = await SendFirstStepAsync(jobId, step, resolved, program);
+        // ขั้นแรกหรือไม่ ตัดสินจากแผนของงาน ไม่ใช่จากว่าใครเป็นคนขอ
+        var lines = await SendStepAsync(
+            jobId, step, resolved, program, isFirstStep: plan.Steps.IndexOf(step) == 0);
 
         // ล้มเหลวแล้วฝากสาเหตุกลับไปให้ ST3 ด้วย — คนที่กดเริ่มงานอยู่ที่นั่น
         // ไม่ได้เห็นจอนี้ ถ้าไม่ฝากไว้เขาจะเห็นแค่งานเด้งกลับเป็น Waiting เฉย ๆ
@@ -1155,7 +1206,7 @@ public partial class OrderListUserControl : UserControl
     /// ST3 หยิบสาเหตุที่ ST1 ส่งไม่สำเร็จมาแสดงที่จอตัวเอง แล้วล้างทิ้งทันที
     ///
     /// ล้างทันทีที่แสดง จึงไม่ต้องจำว่าเคยแสดงใบไหนไปแล้ว และไม่เด้งซ้ำตอนเปิดโปรแกรมใหม่
-    /// ตัวงานเองถูก SendFirstStepAsync ตีกลับเป็น Waiting ไว้แล้ว กดเริ่มใหม่ได้เลย
+    /// ตัวงานเองถูก SendStepAsync ตีกลับเป็น Waiting ไว้แล้ว กดเริ่มใหม่ได้เลย
     /// </summary>
     private async Task ShowRemoteErrorsAsync()
     {
