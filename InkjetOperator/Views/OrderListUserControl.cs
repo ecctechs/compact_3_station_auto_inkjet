@@ -14,6 +14,9 @@ public partial class OrderListUserControl : UserControl
 
     private ApiClient? _api;
     private System.Windows.Forms.Timer? _pollTimer;
+
+    /// <summary>ตัวเฝ้าบิตปุ่มกดหน้างาน — เริ่มเองตอนหน้านี้โหลด</summary>
+    private readonly PushButtonWatcher _pushButton = new();
     private bool _showHistory;
     private List<PrintJob> _allJobs = new();
     private string _lastSignature = "";
@@ -145,6 +148,8 @@ public partial class OrderListUserControl : UserControl
 
         WirePanels();
 
+        WirePushButton();
+
         Load += OnLoad;
         Disposed += OnDisposed;
     }
@@ -154,13 +159,92 @@ public partial class OrderListUserControl : UserControl
         _api = new ApiClient($"http://{CustomSettingsManager.Read("PC_IP", "127.0.0.1")}:3000");
         _ = RefreshDataAsync();
         StartPolling();
+        _pushButton.Start();
     }
 
     private void OnDisposed(object? sender, EventArgs e)
     {
         _pollTimer?.Stop();
         _pollTimer?.Dispose();
+        _pushButton.Dispose();
         DisposePanelImages();
+    }
+
+    // ── ปุ่มกดหน้างาน ───────────────────────────────────────
+
+    private void WirePushButton()
+    {
+        // เฝ้าเฉพาะตอนที่มีงานรอปุ่มกดอยู่จริง และไม่มีอะไรค้างอยู่บนหน้าจอ
+        // ไม่มีงานรออยู่ก็ไม่ต้องไปกวน PLC ทุก 300 ms เปล่า ๆ
+        _pushButton.ShouldWatch = () =>
+            !_sending && !_showingRemoteError && Visible && PushTarget() != null;
+
+        _pushButton.Pressed += (_, _) => OnPushButtonPressed();
+
+        // ขาดการติดต่อไม่ใช่เรื่องต้องกดปิด — ใช้ข้อความลอย ไม่ใช่กล่อง modal
+        // ตัวเฝ้าแจ้งครั้งเดียวตอนขาด และอีกครั้งตอนกลับมา ไม่ได้แจ้งทุกรอบ
+        _pushButton.Trouble += (_, error) =>
+        {
+            if (IsDisposed) return;
+
+            if (error == null) Notify.Success(this, "ปุ่มกดหน้างาน — กลับมาอ่านค่าได้แล้ว");
+            else Notify.Warn(this, $"ปุ่มกดหน้างาน — อ่านค่าจาก PLC ไม่ได้ ({error})");
+        };
+    }
+
+    /// <summary>
+    /// งานที่รอปุ่มกดอยู่ พร้อมขั้นตอนที่ปุ่มจะสั่งส่ง — null = ไม่มี ไม่ต้องเฝ้า
+    ///
+    /// <para>
+    /// เงื่อนไขครบทุกข้อ: อยู่ที่ ST3 · สถานะ Working · แผนมีมากกว่าหนึ่งขั้น ·
+    /// ขั้นก่อนหน้าส่งไปแล้ว · ขั้นถัดไปยังไม่ได้ส่ง
+    /// </para>
+    /// <para>
+    /// ใช้ข้อมูลจากตารางที่โหลดไว้แล้ว ไม่ยิง API เพิ่ม เพราะถูกเรียกทุกรอบของ
+    /// ตัวเฝ้า (/job/getAll ส่ง commands กับ plan_routing มาให้อยู่แล้ว)
+    /// </para>
+    /// </summary>
+    private (PrintJob Job, string Step)? PushTarget()
+    {
+        if (!StationService.IsSt3) return null;
+
+        foreach (var job in _allJobs)
+        {
+            if (!string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var steps = MarkingMethodService.Resolve(job.PlanRouting?.MarkingMethod).Steps;
+            if (steps.Count < 2) continue;
+
+            int next = steps.FindIndex(step => !AlreadySent(job, step));
+
+            // -1 = ส่งครบแล้ว · 0 = ยังไม่ได้เริ่มเลย ซึ่งเป็นหน้าที่ของปุ่มบนจอ ไม่ใช่ปุ่มหน้างาน
+            if (next <= 0) continue;
+
+            return (job, steps[next]);
+        }
+
+        return null;
+    }
+
+    private static bool AlreadySent(PrintJob job, string step) =>
+        job.Commands?.Any(c => c.Success &&
+            string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true;
+
+    /// <summary>
+    /// มีคนกดปุ่มหน้างาน
+    ///
+    /// <para>
+    /// ตอนนี้แค่ยืนยันให้เห็นว่าจับสัญญาณได้ ตัวส่งงานจริงจะมาแทนที่ในข้อ 3.3
+    /// แยกสองก้อนเพราะอยากพิสูจน์เรื่องสายกับ PLC ให้จบก่อน ค่อยไปยุ่งกับการส่งงาน
+    /// </para>
+    /// </summary>
+    private void OnPushButtonPressed()
+    {
+        if (PushTarget() is not { } target || IsDisposed) return;
+
+        Notify.Success(this,
+            $"รับสัญญาณปุ่มกด — {JobLabel(target.Job)} รอส่ง {target.Step}");
     }
 
     private void StartPolling()
