@@ -1,4 +1,4 @@
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 
 namespace InkjetOperator.Services;
 
@@ -9,6 +9,7 @@ namespace InkjetOperator.Services;
 ///   WriteWordAsync  เขียนค่าเป้าหมาย เช่น D216
 ///   WriteBitAsync   พัลส์สั่งงาน เช่น M700 / M701
 ///   ReadWordAsync   อ่านสถานะกลับ เช่น W38
+///   ReadBitAsync    อ่านสถานะปุ่มกดหน้างาน เช่น M800
 ///
 /// เปิด/ปิด TCP ต่อ 1 คำสั่ง เหมือน <see cref="ModbusTcpService"/>
 /// PLC ตัวนี้คนละตัวกับ PLC servo/conveyor ที่ใช้ Modbus TCP
@@ -74,6 +75,27 @@ public static class McProtocolService
         if (payload.Length < 2) return (false, 0, "ตอบกลับสั้นกว่าที่ควร");
 
         return (true, (short)(payload[0] | (payload[1] << 8)), "");
+    }
+
+    /// <summary>
+    /// อ่าน 1 bit เช่น M800 — ใช้อ่านสัญญาณปุ่มกดหน้างาน
+    ///
+    /// อ่านแบบ bit unit ตอบกลับมา 1 ไบต์ต่อ 2 จุด จุดแรกอยู่ nibble บน
+    /// ขอจุดเดียวจึงดูแค่ว่า nibble บนเป็น 0 หรือไม่
+    /// </summary>
+    public static async Task<(bool ok, bool on, string error)> ReadBitAsync(
+        string ip, int port, string address)
+    {
+        if (!TryParseAddress(address, out byte code, out int number, out string parseError))
+            return (false, false, parseError);
+
+        var (ok, payload, error) = await SendAsync(
+            ip, port, CmdBatchRead, SubBit, DeviceSpec(code, number, 1), 1);
+
+        if (!ok) return (false, false, error);
+        if (payload.Length < 1) return (false, false, "ตอบกลับสั้นกว่าที่ควร");
+
+        return (true, (payload[0] >> 4) != 0, "");
     }
 
     /// <summary>

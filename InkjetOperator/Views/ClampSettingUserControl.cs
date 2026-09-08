@@ -22,6 +22,7 @@ public partial class ClampSettingUserControl : UserControl
         new(StringComparer.Ordinal) { "ValueMm", "AddrTarget", "AddrRun", "AddrReset", "AddrStatus" };
 
     private ClampSettings _settings = new();
+    private PushButtonSettings _push = new();
     private List<AxisRow> _rows = [];
     private bool _unlocked;
 
@@ -64,6 +65,8 @@ public partial class ClampSettingUserControl : UserControl
         btnApplyAll.Click += async (_, _) => await ApplyAllAsync();
         btnUploadAll.Click += (_, _) => UploadAll();
 
+        btnPushTest.Click += async (_, _) => await TestPushButtonAsync();
+
         btnSave.Click += (_, _) => SaveSettings();
         btnCancel.Click += (_, _) => LoadSettings();
         btnUnlock.Click += (_, _) => ToggleLock();
@@ -98,9 +101,63 @@ public partial class ClampSettingUserControl : UserControl
             Op = NewButtons(),
         }).ToList();
 
+        _push = PushButtonSettings.Load();
+        chkPushEnabled.Checked = _push.Enabled;
+        txtPushAddress.Text = _push.Address;
+        txtPushPollMs.Text = _push.PollMs.ToString();
+        lblPushStatus.Text = "";
+
         RebindTable();
         ResetColors();
         UpdateDbStatus();
+    }
+
+    /// <summary>
+    /// อ่านบิตปุ่มกดหนึ่งครั้งให้เห็นกับตาว่าต่อติดและที่อยู่ถูกต้อง
+    ///
+    /// ใช้ค่าที่พิมพ์อยู่ในช่อง ไม่ใช่ค่าที่บันทึกไว้ จะได้ลองก่อนกด Save ได้
+    /// </summary>
+    private async Task TestPushButtonAsync()
+    {
+        var probe = new PushButtonSettings
+        {
+            Enabled = true,
+            Address = txtPushAddress.Text,
+        };
+
+        if (probe.Validate() is string problem)
+        {
+            lblPushStatus.ForeColor = Red;
+            lblPushStatus.Text = problem;
+            return;
+        }
+
+        if (probe.Ip.Length == 0)
+        {
+            lblPushStatus.ForeColor = Red;
+            lblPushStatus.Text = "ยังไม่ได้ตั้ง IP ของ PLC ในหัวข้อที่ 1";
+            return;
+        }
+
+        btnPushTest.Enabled = false;
+        lblPushStatus.ForeColor = Color.Gray;
+        lblPushStatus.Text = "กำลังอ่าน...";
+        try
+        {
+            var (ok, on, error) = await McProtocolService.ReadBitAsync(
+                probe.Ip, probe.Port, probe.Address.Trim());
+
+            if (IsDisposed) return;
+
+            lblPushStatus.ForeColor = ok ? Green : Red;
+            lblPushStatus.Text = ok
+                ? $"{probe.Address.Trim().ToUpperInvariant()} = {(on ? "1 (กำลังกดอยู่)" : "0 (ยังไม่กด)")}"
+                : error;
+        }
+        finally
+        {
+            if (!IsDisposed) btnPushTest.Enabled = true;
+        }
     }
 
     /// <summary>
@@ -173,6 +230,11 @@ public partial class ClampSettingUserControl : UserControl
         btnApplyAll.Enabled = _unlocked;
         btnUploadAll.Enabled = _unlocked;
 
+        // 4. ปุ่มกดหน้างาน — ปุ่มทดสอบไม่ล็อก เพราะแค่อ่านค่า ไม่เปลี่ยนอะไร
+        chkPushEnabled.Enabled = _unlocked;
+        txtPushAddress.Enabled = _unlocked;
+        txtPushPollMs.Enabled = _unlocked;
+
         btnSave.Enabled = _unlocked;
         btnCancel.Enabled = _unlocked;
 
@@ -210,7 +272,22 @@ public partial class ClampSettingUserControl : UserControl
             return;
         }
 
+        _push.Enabled = chkPushEnabled.Checked;
+        _push.Address = txtPushAddress.Text;
+        _push.PollMs = int.TryParse(txtPushPollMs.Text.Trim(), out int ms) ? ms : _push.PollMs;
+
+        if (_push.Validate() is string pushProblem)
+        {
+            Warn(pushProblem);
+            return;
+        }
+
         _settings.Save();
+        _push.Save();
+
+        // Clamp คืนค่าที่ถูกปัดให้อยู่ในช่วงที่ใช้ได้จริง สะท้อนกลับให้เห็นบนหน้าจอ
+        _push = PushButtonSettings.Load();
+        txtPushPollMs.Text = _push.PollMs.ToString();
         ResetColors();
         _ = CheckStatusAsync();
 
