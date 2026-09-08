@@ -40,7 +40,7 @@ function Good($msg)     { Write-Host "      $msg" -ForegroundColor Green }
 $script:known = $false
 function Fail($msg) { $script:known = $true; throw $msg }
 
-# ใส่ไอคอนของโปรแกรมลงในหน้า Programs and Features
+# ใส่ไอคอนของโปรแกรมลงในไฟล์ติดตั้ง ทั้ง shortcut และหน้า Programs and Features
 #
 # ทำไมมาแก้ที่ตัว .msi แทนที่จะตั้งใน .vdproj — ช่อง AddRemoveProgramsIcon ของ VS
 # เก็บค่าเป็นรหัสของ "ไฟล์ในโปรเจค" ซึ่งต้องประกาศไฟล์เพิ่มสองที่พร้อมกัน
@@ -51,7 +51,7 @@ function Fail($msg) { $script:known = $true; throw $msg }
 #
 # ถ้าพลาดจะไม่ล้มทั้ง build เพราะ shortcut บน Desktop กับ Start Menu ได้ไอคอน
 # จากตัว .exe อยู่แล้ว ขาดแค่รูปในหน้า Programs and Features
-function Add-MsiArpIcon($msiPath, $icoPath) {
+function Set-MsiIcons($msiPath, $icoPath) {
     $wi = New-Object -ComObject WindowsInstaller.Installer
     $db = $null
     try {
@@ -77,6 +77,16 @@ function Add-MsiArpIcon($msiPath, $icoPath) {
         & $run 'INSERT INTO `Icon` (`Name`, `Data`) VALUES (''app.ico'', ?)' $rec
 
         & $run 'INSERT INTO `Property` (`Property`, `Value`) VALUES (''ARPPRODUCTICON'', ''app.ico'')' $null
+
+        # ชี้ shortcut ทุกอันมาที่ไอคอนตัวนี้
+        #
+        # ตอนแรกเข้าใจว่าช่อง Icon ที่เว้นว่างใน vdproj แปลว่า "ใช้ไอคอนของไฟล์
+        # ปลายทาง" แต่พอแกะไฟล์ที่ VS สร้างออกมาดู มันฝังไอคอนเอกสารสำเร็จรูป
+        # ของตัวเองมาแทน ปลายทางเลยเห็นเป็นรูปกระดาษ ไม่ใช่รูปโปรแกรม
+        & $run 'UPDATE `Shortcut` SET `Icon_` = ''app.ico'', `IconIndex` = 0' $null
+
+        # ไอคอนสำเร็จรูปที่ VS ใส่มาไม่มีใครอ้างถึงแล้ว เอาออกไม่ให้ค้างในไฟล์
+        try { & $run 'DELETE FROM `Icon` WHERE `Name` <> ''app.ico''' $null } catch { }
 
         [void]$db.GetType().InvokeMember('Commit', 'InvokeMethod', $null, $db, $null)
         return $null
@@ -215,19 +225,19 @@ try {
         Fail "$msi เป็นไฟล์เก่า — build ไม่ได้สร้างตัวติดตั้งใหม่"
     }
 
-    $out = Join-Path $dist "CompactDemo-$new.msi"
-    Copy-Item $msi $out -Force
-
     $ico = Join-Path $root 'InkjetOperator\Resources\app.ico'
     if (Test-Path $ico) {
-        $iconProblem = Add-MsiArpIcon $out $ico
+        $iconProblem = Set-MsiIcons $msi $ico
         if ($iconProblem) {
-            Note "ใส่ไอคอนในหน้า Programs and Features ไม่สำเร็จ: $iconProblem"
-            Note 'ไม่กระทบการติดตั้ง shortcut ยังมีไอคอนตามปกติ'
+            Note "ใส่ไอคอนในไฟล์ติดตั้งไม่สำเร็จ: $iconProblem"
+            Note 'ยังติดตั้งได้ตามปกติ แต่ไอคอนจะเป็นรูปสำเร็จรูปของ Visual Studio'
         } else {
-            Good 'ใส่ไอคอนในหน้า Programs and Features แล้ว'
+            Good 'ใส่ไอคอนให้ shortcut และหน้า Programs and Features แล้ว'
         }
     }
+
+    $out = Join-Path $dist "CompactDemo-$new.msi"
+    Copy-Item $msi $out -Force
 
     $mb = [math]::Round((Get-Item $out).Length / 1MB, 1)
 
