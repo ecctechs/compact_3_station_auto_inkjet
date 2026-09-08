@@ -779,7 +779,7 @@ public partial class OrderListUserControl : UserControl
         // ระหว่างรอ ตั้ง _sending ไว้ให้รอบ poll หยุด จะได้ไม่มีกล่องจากเบื้องหลัง
         // มาเด้งซ้อนเรื่องเดียวกัน
         _sending = true;
-        ShowSending($"กำลังส่งไปที่ ST1\n{JobName(jobId)}");
+        ShowSending($"กำลังส่งไปที่ ST1 · {JobName(jobId)}");
         try
         {
             await ShowRemoteOutcomeAsync(jobId, step);
@@ -799,6 +799,11 @@ public partial class OrderListUserControl : UserControl
     /// ปิดตารางไปด้วยระหว่างแสดง เป็นการกันกดซ้ำที่แน่นอนกว่าการหวังให้คนอ่านข้อความทัน
     /// (ข้อความลอยเล็กเกินกว่าจะทันเห็นตอนยืนห่างจากจอ) และทำให้เห็นชัดว่าเครื่องกำลังทำงาน
     /// ไม่ใช่ค้าง
+    /// <para>
+    /// ข้อความต้องเป็นบรรทัดเดียวเสมอ — AntdUI วาดข้อความของ Spin ด้วย NoWrapEllipsis
+    /// (ไม่ตัดบรรทัด) และคำนวณขนาดวงกลมจากความสูงของข้อความ ใส่ขึ้นบรรทัดใหม่เข้าไป
+    /// วงกลมจะใหญ่ขึ้นเท่าตัวจนล้นกรอบและโดนตัดหัวตัดท้าย
+    /// </para>
     /// </summary>
     private void ShowSending(string? text)
     {

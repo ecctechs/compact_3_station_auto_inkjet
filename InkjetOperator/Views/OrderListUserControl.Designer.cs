@@ -118,16 +118,22 @@ partial class OrderListUserControl
         pnlSending.Padding = new System.Windows.Forms.Padding(24);
         pnlSending.Radius = 12;
         pnlSending.Shadow = 8;
-        pnlSending.Size = new System.Drawing.Size(520, 170);
+        pnlSending.Size = new System.Drawing.Size(620, 168);
         pnlSending.TabIndex = 1;
         pnlSending.Visible = false;
         //
         // spinSending
         //
+        // BackColor ต้องสั่งเอง — ไม่งั้นจะสืบสีฟ้ามาจากหน้าจอ กลายเป็นแถบน้ำเงินกลางการ์ดขาว
+        spinSending.BackColor = System.Drawing.Color.White;
         spinSending.Dock = System.Windows.Forms.DockStyle.Fill;
-        spinSending.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        spinSending.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         spinSending.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        // สีของวงกลมที่หมุน ไม่ใช่สีพื้นหลัง
         spinSending.Fill = System.Drawing.Color.FromArgb(91, 155, 213);
+        // กำหนดขนาดวงกลมเอง — ค่าเริ่มต้นคิดจากความสูงของข้อความ
+        // ข้อความยาวหรือหลายบรรทัดจะทำให้วงใหญ่จนล้นกรอบ
+        spinSending.CirSize = 36;
         spinSending.Name = "spinSending";
         spinSending.TabIndex = 0;
         //
