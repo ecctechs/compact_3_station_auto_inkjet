@@ -1,4 +1,4 @@
-namespace InkjetOperator.Services;
+﻿namespace InkjetOperator.Services;
 
 /// <summary>เครื่องที่รับผิดชอบด้านหนึ่งของงาน</summary>
 public enum MarkingMachine
@@ -42,16 +42,9 @@ public static class MarkingMethodService
 {
     public static MarkingPlan Resolve(string? markingMethod)
     {
-        char shimDigit = '0', plateDigit = '0';
-        if (markingMethod is { Length: >= 2 })
-        {
-            shimDigit = markingMethod[0];
-            plateDigit = markingMethod[1];
-        }
-
-        // 3 ใช้เส้นทางเดียวกับ 1
-        if (shimDigit == '3') shimDigit = '1';
-        if (plateDigit == '3') plateDigit = '1';
+        var code = Code(markingMethod);
+        var shimDigit = code.Length >= 2 ? code[0] : '0';
+        var plateDigit = code.Length >= 2 ? code[1] : '0';
 
         // Shim=MK + Plate=UV ไม่มีอยู่จริงตามสเปกของสายการผลิต
         if (shimDigit == '2' && plateDigit == '1')
@@ -83,7 +76,12 @@ public static class MarkingMethodService
     // กฎสามข้อล่างนี้เป็นกฎการผลิต ไม่ใช่กฎการแสดงผล จึงอยู่รวมที่นี่กับการแปลรหัส
     // ห้ามเขียนซ้ำในหน้าจอ — ที่ผ่านมาการแยกกฎไปไว้หลายที่ทำให้สองหน้าตีความไม่ตรงกัน
 
-    /// <summary>งานที่วิ่งผ่าน ST3 — UV2 เป็นขั้นตอนสุดท้ายของทั้งสามรหัสนี้</summary>
+    /// <summary>
+    /// งานที่วิ่งผ่าน ST3 — UV2 เป็นขั้นตอนสุดท้ายของทั้งสามรหัสนี้
+    ///
+    /// เทียบกับรหัสที่ผ่าน <see cref="Code"/> มาแล้ว จึงครอบคลุมรหัสที่ใช้เลข 3
+    /// ด้วยโดยอัตโนมัติ — 30 เท่ากับ 10 · 31 กับ 33 เท่ากับ 11 · 32 เท่ากับ 12
+    /// </summary>
     private static readonly string[] St3Codes = ["10", "11", "12"];
 
     /// <summary>
@@ -120,7 +118,27 @@ public static class MarkingMethodService
     public static bool CanCompleteAt(int station, string? markingMethod) =>
         !St3Codes.Contains(Code(markingMethod)) || station == StationService.St3;
 
-    private static string Code(string? markingMethod) => (markingMethod ?? "").Trim();
+    /// <summary>
+    /// รหัสในรูปมาตรฐานที่ใช้เทียบทุกกฎในไฟล์นี้ — ตัดช่องว่าง และแปลง 3 เป็น 1
+    ///
+    /// เดิมการแปลง 3 เป็น 1 ทำอยู่ใน <see cref="Resolve"/> ที่เดียว ส่วนกฎแบ่งสถานี
+    /// ข้างบนเทียบกับข้อความดิบ ผลคือรหัส 32 ซึ่งแปลได้เท่ากับ 12 ทุกประการ
+    /// (MK แล้วต่อ UV2) ไม่ถูกนับเป็นงานของ ST3 — ST3 ไม่เห็นงาน และ ST1
+    /// กดจบงานได้ทั้งที่ UV2 ซึ่งเป็นเครื่องของ ST3 ยังไม่ได้ทำ
+    /// ในฐานข้อมูลจริงรหัส 32 มีอยู่ 689 งาน มากเป็นอันดับสอง
+    ///
+    /// ย้ายมาไว้ที่นี่ที่เดียว ทั้ง Resolve และกฎแบ่งสถานีจึงมองรหัสเหมือนกันเสมอ
+    /// 30 · 31 · 33 · 13 ที่ผิดด้วยเหตุเดียวกันก็ถูกแก้ไปพร้อมกัน
+    /// </summary>
+    private static string Code(string? markingMethod)
+    {
+        var code = (markingMethod ?? "").Trim();
+        if (code.Length < 2) return code;
+
+        return $"{Same(code[0])}{Same(code[1])}";
+
+        static char Same(char digit) => digit == '3' ? '1' : digit;
+    }
 
     /// <summary>
     /// ชื่อเครื่องที่แสดงบนจอ — อยู่ที่นี่เพราะทั้ง Order List และ Order Detail
