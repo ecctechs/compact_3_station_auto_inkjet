@@ -112,6 +112,10 @@ public partial class TransferListUserControl : UserControl
         tblTransfer.DataSource = rows;
     }
 
+    /// <summary>เรียกงานด้วย ERP เหมือนหน้าอื่น ตารางนี้ไม่มี Lot ให้ใช้</summary>
+    private static string RowLabel(TransferRow row) =>
+        Services.JobDisplay.Label(row.OrderNo, null, row.Id);
+
     private async void TblTransfer_CellButtonClick(object? sender, AntdUI.TableButtonEventArgs e)
     {
         if (e.Record is not TransferRow row) return;
@@ -120,13 +124,13 @@ public partial class TransferListUserControl : UserControl
         if (e.Btn?.Id == "send")
         {
             if (!Confirm.Ask(this, "ยืนยันส่ง ST1",
-                    $"ส่ง Job #{row.Id} ({row.OrderNo}) ไป Station 1\n\nยืนยันหรือไม่?"))
+                    $"ส่ง {RowLabel(row)} ไป Station 1\n\nยืนยันหรือไม่?"))
                 return;
 
             var (ok, err) = await _api.SendToSt1Async(row.Id);
             if (ok)
             {
-                Notify.Success(this, $"ส่ง Job #{row.Id} ไป ST1 แล้ว");
+                Notify.Success(this, $"ส่ง {RowLabel(row)} ไป ST1 แล้ว");
                 await RefreshDataAsync();
             }
             else
@@ -139,7 +143,7 @@ public partial class TransferListUserControl : UserControl
             var resolved = await _api.GetResolvedJobAsync(row.Id);
             if (resolved == null)
             {
-                Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลด Detail ของ Job #{row.Id} ได้");
+                Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลด Detail ของ {RowLabel(row)} ได้");
                 return;
             }
 
@@ -182,6 +186,7 @@ public partial class TransferListUserControl : UserControl
     }
 }
 
+// ตารางหน้านี้ไม่มีคอลัมน์ Lot จึงเรียกงานด้วย ERP อย่างเดียว
 internal class TransferRow : AntdUI.NotifyProperty
 {
     public int Id { get; set; }

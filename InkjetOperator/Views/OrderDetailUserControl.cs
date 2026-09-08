@@ -39,6 +39,9 @@ public partial class OrderDetailUserControl : UserControl
     /// <summary>สถานะงานตอนเปิดหน้า — ใช้กันไม่ให้สั่งแคลมป์ก่อนเริ่มงาน</summary>
     private string _jobStatus = "";
 
+    /// <summary>ชื่อเรียกงานในข้อความที่พนักงานอ่าน — "ERP (LOT)" ไม่ใช่เลข id</summary>
+    private string _jobLabel = "";
+
     private readonly bool _isDevMode;
     private bool _transferMode;
     private IaiClampSettingDto? _origIai;
@@ -953,7 +956,7 @@ public partial class OrderDetailUserControl : UserControl
         if (_api == null) return;
 
         if (!Confirm.Ask(this, "ยืนยันส่ง ST1",
-                $"ส่ง Job #{_jobId} ไป Station 1\n\nยืนยันหรือไม่?"))
+                $"ส่ง {JobText()} ไป Station 1\n\nยืนยันหรือไม่?"))
             return;
 
         btnSendToSt1.Enabled = false;
@@ -964,7 +967,7 @@ public partial class OrderDetailUserControl : UserControl
             if (ok)
             {
                 btnSendToSt1.Text = "✓ ส่งแล้ว";
-                Notify.Success(this, $"ส่ง Job #{_jobId} ไป ST1 แล้ว");
+                Notify.Success(this, $"ส่ง {JobText()} ไป ST1 แล้ว");
             }
             else
             {
@@ -1018,6 +1021,8 @@ public partial class OrderDetailUserControl : UserControl
     private void FillJobInfo(ResolvedJobResponse resolved)
     {
         var job = resolved.Job;
+
+        _jobLabel = Services.JobDisplay.Label(job.OrderNo, job.LotNumber ?? job.BarcodeRaw, job.Id);
 
         txtJobErpMfg.Text = OrDash(job.OrderNo);
         txtJobLotNo.Text = OrDash(job.BarcodeRaw);
@@ -1335,6 +1340,9 @@ public partial class OrderDetailUserControl : UserControl
     /// เพราะสองกรณีนั้นตั้งใจใช้สั่งแกนโดยไม่มีงานอยู่แล้ว
     /// </para>
     /// </summary>
+    /// <summary>ชื่องานสำหรับข้อความ — เผื่อเรียกก่อนที่ข้อมูลงานจะโหลดเสร็จ</summary>
+    private string JobText() => _jobLabel.Length > 0 ? _jobLabel : $"#{_jobId}";
+
     private bool CanCommandIai()
     {
         if (_isDevMode || _jobId <= 0) return true;
@@ -1343,7 +1351,7 @@ public partial class OrderDetailUserControl : UserControl
             return true;
 
         Notify.WarnModal(this, "ยังสั่งแคลมป์ไม่ได้",
-            $"Job #{_jobId} ยังไม่ได้เริ่มงาน (สถานะ {JobStatusDisplay.Text(_jobStatus)})\n\n"
+            $"{JobText()} ยังไม่ได้เริ่มงาน (สถานะ {JobStatusDisplay.Text(_jobStatus)})\n\n"
             + "กดเริ่มงานที่หน้ารายการงานก่อน จึงจะสั่งค่า IAI ได้");
         return false;
     }

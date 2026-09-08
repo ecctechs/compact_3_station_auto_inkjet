@@ -346,7 +346,8 @@ public partial class ScanBarcodeUserControl : UserControl
         // Step 2E: บันทึกระยะแคลมป์ (IAI) ของงานนี้ลง backend
         await SyncIaiAsync(api, job.Id, uvItems);
 
-        Notify.Success(this, $"สร้าง Job #{job.Id} สำเร็จ");
+        Notify.Success(this,
+            $"สร้างงาน {Services.JobDisplay.Label(job.OrderNo, job.LotNumber ?? job.BarcodeRaw, job.Id)} สำเร็จ");
 
         ClearForm();
     }

@@ -400,17 +400,7 @@ public partial class OrderListUserControl : UserControl
         return job == null ? $"#{jobId}" : JobLabel(job);
     }
 
-    private static string JobLabel(PrintJob job)
-    {
-        var erp = (job.OrderNo ?? "").Trim();
-        var lot = (job.LotNumber ?? job.BarcodeRaw ?? "").Trim();
-
-        if (erp.Length > 0 && lot.Length > 0) return $"{erp} ({lot})";
-        if (erp.Length > 0) return erp;
-        if (lot.Length > 0) return lot;
-
-        return $"#{job.Id}";
-    }
+    private static string JobLabel(PrintJob job) => JobDisplay.Label(job);
 
     /// <summary>ค่าแรกที่ไม่ว่าง — ว่างทั้งคู่คืนขีด ให้เข้าชุดกับคอลัมน์อื่นที่ใช้ขีดแทนช่องว่าง</summary>
     private static string FirstFilled(params string?[] values)
