@@ -26,6 +26,15 @@
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ApplicationDefaultFont>Segoe UI, 9pt</ApplicationDefaultFont>
 
+    <!-- ข้อมูลบริษัทและชื่อโปรแกรมที่ฝังใน .exe
+         โผล่ที่ คลิกขวาไฟล์ > Properties > Details, ที่ Task Manager
+         และเป็นค่าที่ตัวติดตั้งกับ Programs and Features หยิบไปแสดง -->
+    <Company>ECC Solutions (Thailand) Co., Ltd</Company>
+    <Product>Compact</Product>
+    <AssemblyTitle>Compact</AssemblyTitle>
+    <Description>Compact 3 Station Auto Inkjet</Description>
+    <Copyright>Copyright (c) ECC Solutions (Thailand) Co., Ltd</Copyright>
+
     <!-- ไอคอนของ .exe — ไฟล์เดียวเก็บหลายขนาดไว้ 16 ถึง 256 เพราะ Windows
          หยิบไปใช้คนละขนาดตามที่ ทั้งแถบงาน มุมหน้าต่าง Alt-Tab และในโฟลเดอร์ -->
     <ApplicationIcon>Resources\app.ico</ApplicationIcon>
