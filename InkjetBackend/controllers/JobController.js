@@ -436,7 +436,10 @@ class JobController {
       const { remote_start, remote_program, remote_error } = req.body;
 
       await job.update({
-        remote_start: remote_start === "1" ? "1" : "0",
+        // "1" = ST3 ฝากไว้ ยังไม่มีใครหยิบ · "2" = ST1 หยิบไปแล้วกำลังส่งเข้าเครื่อง
+        // แยกสองสถานะเพราะ ST3 ต้องรู้ว่า "ไม่มีใครทำ" ต่างจาก "กำลังทำอยู่"
+        // ใบที่ไม่มีใครหยิบเลยถึงจะตีกลับเป็น Waiting ได้ ใบที่กำลังส่งห้ามแตะ
+        remote_start: ["1", "2"].includes(String(remote_start)) ? String(remote_start) : "0",
         remote_program: remote_program ?? null,
         remote_error: remote_error || null,
       });

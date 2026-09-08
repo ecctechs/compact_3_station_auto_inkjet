@@ -29,6 +29,8 @@ partial class OrderListUserControl
     {
         tlpOrderListRoot = new System.Windows.Forms.TableLayoutPanel();
         pnlTableContainer = new AntdUI.Panel();
+        pnlSending = new AntdUI.Panel();
+        spinSending = new AntdUI.Spin();
         tlpTableInner = new System.Windows.Forms.TableLayoutPanel();
         flpTabs = new System.Windows.Forms.FlowLayoutPanel();
         btnTabList = new AntdUI.Button();
@@ -58,6 +60,7 @@ partial class OrderListUserControl
         btnStart = new AntdUI.Button();
         tlpOrderListRoot.SuspendLayout();
         pnlTableContainer.SuspendLayout();
+        pnlSending.SuspendLayout();
         tlpTableInner.SuspendLayout();
         flpTabs.SuspendLayout();
         tlpBottom.SuspendLayout();
@@ -92,6 +95,7 @@ partial class OrderListUserControl
         pnlTableContainer.Back = System.Drawing.Color.White;
         pnlTableContainer.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
         pnlTableContainer.BorderWidth = 2F;
+        pnlTableContainer.Controls.Add(pnlSending);
         pnlTableContainer.Controls.Add(tlpTableInner);
         pnlTableContainer.Dock = System.Windows.Forms.DockStyle.Fill;
         pnlTableContainer.Location = new System.Drawing.Point(32, 32);
@@ -101,6 +105,31 @@ partial class OrderListUserControl
         pnlTableContainer.Radius = 12;
         pnlTableContainer.Size = new System.Drawing.Size(1288, 882);
         pnlTableContainer.TabIndex = 0;
+        //
+        // pnlSending — การ์ดแจ้งว่ากำลังส่ง ลอยกลางตาราง ซ่อนไว้จนกว่าจะใช้
+        //
+        pnlSending.Anchor = System.Windows.Forms.AnchorStyles.None;
+        pnlSending.Back = System.Drawing.Color.White;
+        pnlSending.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlSending.BorderWidth = 3F;
+        pnlSending.Controls.Add(spinSending);
+        pnlSending.Location = new System.Drawing.Point(384, 356);
+        pnlSending.Name = "pnlSending";
+        pnlSending.Padding = new System.Windows.Forms.Padding(24);
+        pnlSending.Radius = 12;
+        pnlSending.Shadow = 8;
+        pnlSending.Size = new System.Drawing.Size(520, 170);
+        pnlSending.TabIndex = 1;
+        pnlSending.Visible = false;
+        //
+        // spinSending
+        //
+        spinSending.Dock = System.Windows.Forms.DockStyle.Fill;
+        spinSending.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        spinSending.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        spinSending.Fill = System.Drawing.Color.FromArgb(91, 155, 213);
+        spinSending.Name = "spinSending";
+        spinSending.TabIndex = 0;
         //
         // tlpTableInner
         //
@@ -491,6 +520,7 @@ partial class OrderListUserControl
         Size = new System.Drawing.Size(1375, 1075);
         tlpOrderListRoot.ResumeLayout(false);
         tlpOrderListRoot.PerformLayout();
+        pnlSending.ResumeLayout(false);
         pnlTableContainer.ResumeLayout(false);
         tlpTableInner.ResumeLayout(false);
         flpTabs.ResumeLayout(false);
@@ -509,6 +539,8 @@ partial class OrderListUserControl
 
     private System.Windows.Forms.TableLayoutPanel tlpOrderListRoot;
     private AntdUI.Panel pnlTableContainer;
+    private AntdUI.Panel pnlSending;
+    private AntdUI.Spin spinSending;
     private System.Windows.Forms.TableLayoutPanel tlpTableInner;
     private System.Windows.Forms.FlowLayoutPanel flpTabs;
     private AntdUI.Button btnTabList;

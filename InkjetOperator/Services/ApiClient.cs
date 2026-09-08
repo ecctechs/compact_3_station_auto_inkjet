@@ -325,6 +325,34 @@ public class ApiClient
     /// ที่จอตัวเอง — ส่ง null มาเมื่อไหร่คือล้างของเดิมทิ้ง
     /// </para>
     /// </summary>
+    /// <summary>
+    /// ST1 จองคำขอไว้แล้วว่ากำลังส่งเข้าเครื่องอยู่ (remote_start = "2")
+    ///
+    /// ต้องแยกจากสถานะ "รอคนหยิบ" เพราะ ST3 ใช้ตัดสินว่าจะตีงานกลับเป็น Waiting
+    /// ได้ไหม — ใบที่ไม่มีใครหยิบเลยตีกลับได้ ใบที่กำลังส่งอยู่ห้ามแตะ
+    /// </summary>
+    public async Task<(bool ok, string? error)> ClaimRemoteStartAsync(int jobId, string? program)
+    {
+        try
+        {
+            var payload = new { remote_start = "2", remote_program = program, remote_error = (string?)null };
+            var content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(payload),
+                System.Text.Encoding.UTF8,
+                "application/json");
+
+            var response = await _http.PatchAsync($"/job/{jobId}/remote-start", content);
+            var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+                return (false, $"[{(int)response.StatusCode}] {body}");
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
+    }
+
     public async Task<(bool ok, string? error)> SetRemoteStartAsync(
         int jobId, bool requested, string? program = null, string? failure = null)
     {

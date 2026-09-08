@@ -197,6 +197,9 @@ public partial class OrderListUserControl : UserControl
 
             // ทำก่อนเช็ค signature เพราะคำขอจาก ST3 ไม่ได้เปลี่ยนอะไรที่ตารางวาด
             // ถ้าไปทำหลังจากนั้น รอบที่หน้าจอไม่มีอะไรเปลี่ยนจะข้ามคำขอไปเลย
+            await RecoverAbandonedRemoteStartsAsync();
+            if (IsDisposed) return;
+
             await ProcessRemoteStartsAsync();
             if (IsDisposed) return;
 
@@ -516,6 +519,12 @@ public partial class OrderListUserControl : UserControl
         if (!string.Equals(job.Status, "Waiting", StringComparison.OrdinalIgnoreCase))
             return false;
 
+        // มีคำขอจาก ST3 ค้างอยู่ = งานถูกจองไว้แล้ว แม้สถานะจะยังเป็น Waiting
+        // (Working จะถูกตั้งก็ต่อเมื่อ ST1 ต่อเครื่องติดและส่งจริง) ถ้าไม่กันตรงนี้
+        // จะมีคนกดเริ่มซ้ำระหว่างที่คำขอกำลังรอ ST1 อยู่ กลายเป็นส่งสองรอบ
+        if (job.RemoteStart is RemotePending or RemoteSending)
+            return false;
+
         var method = job.PlanRouting?.MarkingMethod;
         if (!MarkingMethodService.CanStartAt(StationService.Current, method))
             return false;
@@ -748,32 +757,192 @@ public partial class OrderListUserControl : UserControl
                 + "ยืนยันหรือไม่?"))
             return;
 
-        // ตั้งสถานะก่อนตั้งธง เพื่อไม่ให้ ST1 หยิบคำขอไปทำตอนที่งานยังเป็น Waiting อยู่
-        await _api!.UpdateJobStatusAsync(jobId, "Process");
-
-        var (ok, err) = await _api.SetRemoteStartAsync(jobId, requested: true, pick.Program);
+        // ไม่ตั้งสถานะเป็น Working ตรงนี้โดยตั้งใจ — Working แปลว่า "ส่งเข้าเครื่องแล้ว"
+        // แต่ตอนนี้ยังไม่มีใครแตะเครื่องเลย ยังไม่รู้ด้วยซ้ำว่า ST1 ต่อ UV ได้ไหม
+        //
+        // งานคงเป็น Waiting ไว้จนกว่า ST1 จะต่อเครื่องติดและส่งสำเร็จจริง
+        // (SendFirstStepAsync เป็นคนตั้ง Working และตีกลับเป็น Waiting เองถ้าส่งไม่ผ่าน)
+        var (ok, err) = await _api!.SetRemoteStartAsync(jobId, requested: true, pick.Program);
         if (IsDisposed) return;
 
-        if (ok)
-        {
-            Notify.Success(this, $"ส่งคำขอเริ่มงาน {JobName(jobId)} ไปที่ ST1 แล้ว");
-        }
-        else
+        if (!ok)
         {
             await _api.UpdateJobStatusAsync(jobId, "Waiting");
             Notify.ErrorModal(this, "ส่งคำขอไม่สำเร็จ", err ?? "ไม่สามารถฝากคำขอไว้ที่ ST1 ได้");
+            await RefreshDataAsync(force: true);
+            return;
         }
 
-        await RefreshDataAsync(force: true);
+        // รอผลจริงตรงนี้ ไม่ปล่อยให้ไปโผล่ทีหลังเบื้องหลัง — คนที่กดยืนอยู่หน้าจอนี้
+        // ต้องได้คำตอบจากการกดของตัวเอง เหมือนกดที่ ST1 ทุกประการ
+        //
+        // ระหว่างรอ ตั้ง _sending ไว้ให้รอบ poll หยุด จะได้ไม่มีกล่องจากเบื้องหลัง
+        // มาเด้งซ้อนเรื่องเดียวกัน
+        _sending = true;
+        ShowSending($"กำลังส่งไปที่ ST1\n{JobName(jobId)}");
+        try
+        {
+            await ShowRemoteOutcomeAsync(jobId, step);
+        }
+        finally
+        {
+            _sending = false;
+            ShowSending(null);
+        }
+
+        if (!IsDisposed) await RefreshDataAsync(force: true);
+    }
+
+    /// <summary>
+    /// การ์ดวงกลมหมุนกลางตาราง บอกว่ากำลังส่งอยู่ — ส่ง null เพื่อปิด
+    ///
+    /// ปิดตารางไปด้วยระหว่างแสดง เป็นการกันกดซ้ำที่แน่นอนกว่าการหวังให้คนอ่านข้อความทัน
+    /// (ข้อความลอยเล็กเกินกว่าจะทันเห็นตอนยืนห่างจากจอ) และทำให้เห็นชัดว่าเครื่องกำลังทำงาน
+    /// ไม่ใช่ค้าง
+    /// </summary>
+    private void ShowSending(string? text)
+    {
+        bool busy = text != null;
+
+        if (busy)
+        {
+            spinSending.Text = text;
+
+            // จัดกึ่งกลางตอนแสดงทุกครั้ง — Anchor.None รักษาแค่สัดส่วนจากตำแหน่ง
+            // ตอนออกแบบ พอจอจริงคนละขนาดการ์ดจะเยื้องไปจากกลาง
+            var frame = pnlTableContainer.ClientSize;
+            pnlSending.Location = new Point(
+                Math.Max(0, (frame.Width - pnlSending.Width) / 2),
+                Math.Max(0, (frame.Height - pnlSending.Height) / 2));
+
+            pnlSending.Visible = true;
+            pnlSending.BringToFront();
+        }
+        else
+        {
+            pnlSending.Visible = false;
+        }
+
+        tlpTableInner.Enabled = !busy;
+    }
+
+    /// <summary>
+    /// นานสุดที่ ST3 ยอมรอผลจาก ST1 — ST1 หยิบคำขอทุกรอบ poll (5 วิ) บวกเวลาที่
+    /// เครื่อง UV ใช้หยุด เขียน CPI โหลดโปรแกรม แล้วสั่งพิมพ์อีกหลายวินาที
+    /// </summary>
+    private static readonly TimeSpan RemoteOutcomeWait = TimeSpan.FromSeconds(40);
+
+    /// <summary>
+    /// รอจน ST1 ส่งเสร็จ แล้วแสดงผลแบบเดียวกับที่ ST1 แสดงให้คนที่ยืนตรงนั้นเห็น
+    ///
+    /// <para>
+    /// ST3 ต่อสายไปหา UV ไม่ถึงก็จริง แต่ไม่จำเป็นต้องต่อ — ผลที่ ST1 วัดได้ถูกฝากไว้ที่
+    /// backend อยู่แล้วทั้งสองทาง: สำเร็จเห็นเป็นแถวใน print_job_commands · ไม่สำเร็จ
+    /// เห็นเป็นข้อความใน remote_error หน้าที่ตรงนี้คือเฝ้าช่องนั้นจนกว่าจะมีคำตอบ
+    /// </para>
+    /// <para>
+    /// ล้าง remote_error ก่อนแสดงเสมอ เพื่อไม่ให้ตัวเฝ้าเบื้องหลังหยิบใบเดิมมาเด้งซ้ำ
+    /// </para>
+    /// </summary>
+    private async Task ShowRemoteOutcomeAsync(int jobId, string step)
+    {
+        var deadline = DateTime.UtcNow + RemoteOutcomeWait;
+
+        while (DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(700);
+            if (IsDisposed) return;
+
+            var job = await _api!.GetJobByIdAsync(jobId);
+            if (IsDisposed) return;
+            if (job == null) continue;
+
+            var failure = job.RemoteError?.Trim();
+            if (!string.IsNullOrEmpty(failure))
+            {
+                await _api.SetRemoteStartAsync(jobId, requested: false);
+                if (IsDisposed) return;
+
+                Notify.Result(this, $"เริ่มงาน {JobName(jobId)}", [Notify.Bad(failure)]);
+                return;
+            }
+
+            bool sent = job.Commands?.Any(c => c.Success &&
+                string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true;
+            if (!sent) continue;
+
+            var uvName = UvSettingsManager.Read(step == "UV1" ? "UV1_NAME" : "UV2_NAME", step);
+            Notify.Result(this, $"เริ่มงาน {JobName(jobId)}", [Notify.Ok($"{uvName} — ส่งสำเร็จ")]);
+            return;
+        }
+
+        // หมดเวลาแล้วยังเงียบ — ต้องแยกให้ออกว่า "ไม่มีใครหยิบไปทำเลย" กับ
+        // "ST1 หยิบไปแล้วแต่ยังส่งไม่เสร็จ" เพราะสองอย่างนี้ต้องจัดการคนละแบบ
+        var final = await _api!.GetJobByIdAsync(jobId);
+        if (IsDisposed) return;
+
+        if (final?.RemoteStart == RemoteSending)
+        {
+            Notify.WarnModal(this, "ST1 กำลังส่งอยู่",
+                $"{JobName(jobId)}\n\n"
+                + "ST1 รับคำขอไปแล้วและกำลังส่งเข้าเครื่อง แต่ใช้เวลานานกว่าปกติ\n\n"
+                + "งานยังเดินอยู่ ไม่ต้องกดซ้ำ — รอผลอีกสักครู่");
+            return;
+        }
+
+        // ไม่มีใครหยิบเลย = โปรแกรมที่ ST1 ไม่ได้เปิด หรือต่อ Backend ไม่ได้
+        // ต้องตีงานกลับเป็น Waiting ไม่งั้นค้างเป็น Working ตลอดกาลทั้งที่ยังไม่ได้พิมพ์
+        // ปิดโปรแกรมเปิดใหม่ก็ยังเห็นเป็น Working และกดเริ่มใหม่ไม่ได้
+        await _api.SetRemoteStartAsync(jobId, requested: false);
+        await _api.UpdateJobStatusAsync(jobId, "Waiting");
+        if (IsDisposed) return;
+
+        Notify.WarnModal(this, "ST1 ไม่รับคำขอ",
+            $"{JobName(jobId)}\n\n"
+            + $"รอมา {RemoteOutcomeWait.TotalSeconds:0} วินาทีแล้วยังไม่มีใครรับไปส่ง\n"
+            + "งานถูกตีกลับเป็นรอเริ่มแล้ว ยังไม่มีอะไรถูกส่งเข้าเครื่อง\n\n"
+            + "ตรวจว่าโปรแกรมที่เครื่อง ST1 เปิดอยู่และต่อ Backend ได้ แล้วกดเริ่มงานใหม่");
     }
 
     // ── ST1 หยิบคำขอของ ST3 ไปส่ง ───────────────────────────
+
+    /// <summary>ST3 ฝากไว้ ยังไม่มีใครหยิบ — ตีกลับเป็น Waiting ได้</summary>
+    private const string RemotePending = "1";
+
+    /// <summary>ST1 หยิบไปแล้วกำลังส่งเข้าเครื่อง — ห้ามแตะ งานกำลังเดินอยู่จริง</summary>
+    private const string RemoteSending = "2";
 
     /// <summary>
     /// งานที่กำลังส่งแทน ST3 อยู่ — กันไม่ให้รอบ poll ถัดไปหยิบงานเดิมไปส่งซ้ำ
     /// ระหว่างที่รอบนี้ยังส่งไม่เสร็จ (รอบ poll ทุก 5 วิ แต่การส่ง UV ใช้เวลานานกว่านั้นได้)
     /// </summary>
     private readonly HashSet<int> _remoteInFlight = new();
+
+    /// <summary>
+    /// เก็บกวาดคำขอที่ค้างสถานะ "กำลังส่ง" ทั้งที่ ST1 ตัวนี้ไม่ได้ส่งอยู่
+    ///
+    /// เกิดตอนโปรแกรม ST1 ถูกปิดหรือดับกลางคันระหว่างส่ง — ธงค้างเป็น "2" ตลอดกาล
+    /// ไม่มีใครหยิบไปทำต่อ (ตัวหยิบมองเฉพาะ "1") และ ST3 ก็จะเห็นว่า "กำลังส่งอยู่"
+    /// ทั้งที่ไม่มีใครส่ง คืนงานกลับเป็นรอเริ่มเพื่อให้กดใหม่ได้
+    /// </summary>
+    private async Task RecoverAbandonedRemoteStartsAsync()
+    {
+        if (_api == null || StationService.IsSt3) return;
+
+        var abandoned = _allJobs
+            .Where(j => j.RemoteStart == RemoteSending && !_remoteInFlight.Contains(j.Id))
+            .Select(j => j.Id)
+            .ToList();
+
+        foreach (var jobId in abandoned)
+        {
+            await _api.SetRemoteStartAsync(jobId, requested: false,
+                failure: "ST1 ปิดกลางคันระหว่างส่ง — งานถูกคืนเป็นรอเริ่ม");
+            await _api.UpdateJobStatusAsync(jobId, "Waiting");
+
+            if (IsDisposed) return;
+        }
+    }
 
     /// <summary>
     /// ST1 กวาดหาคำขอที่ ST3 ฝากไว้ แล้วส่งเข้าเครื่องให้ — ทำเงียบ ๆ ไม่มีหน้าต่างเด้ง
@@ -785,7 +954,7 @@ public partial class OrderListUserControl : UserControl
         if (_api == null || StationService.IsSt3 || _sending) return;
 
         var pending = _allJobs
-            .Where(j => j.RemoteStart == "1" && !_remoteInFlight.Contains(j.Id))
+            .Where(j => j.RemoteStart == RemotePending && !_remoteInFlight.Contains(j.Id))
             .Select(j => j.Id)
             .ToList();
 
@@ -816,9 +985,16 @@ public partial class OrderListUserControl : UserControl
         var resolved = await _api!.GetResolvedJobAsync(jobId);
         if (resolved == null) return;   // อ่านไม่ได้ = คงธงไว้ให้รอบหน้าลองใหม่
 
-        // งานต้องยังเดินอยู่จริงถึงจะส่งได้ — ระหว่างที่คำขอรออยู่ อาจมีคนกดยกเลิกงาน
-        // หรือจบงานไปแล้ว ถ้าไม่ดักตรงนี้ ธงที่ค้างจะสั่งพิมพ์งานที่ถูกยกเลิกไปแล้ว
-        if (!string.Equals(resolved.Job.Status, "Process", StringComparison.OrdinalIgnoreCase))
+        // งานต้องยังไม่ถูกยกเลิกหรือจบไปแล้ว ถ้าไม่ดักตรงนี้ ธงที่ค้างจะสั่งพิมพ์
+        // งานที่ถูกยกเลิกไปแล้ว
+        //
+        // รับทั้ง Waiting และ Process — คำขอจาก ST3 มาถึงตอนงานยังเป็น Waiting
+        // เพราะ Working จะถูกตั้งก็ต่อเมื่อต่อเครื่องติดและส่งจริงแล้วเท่านั้น
+        var status = resolved.Job.Status;
+        bool live = string.Equals(status, "Waiting", StringComparison.OrdinalIgnoreCase)
+                 || string.Equals(status, "Process", StringComparison.OrdinalIgnoreCase);
+
+        if (!live)
         {
             await _api.SetRemoteStartAsync(jobId, requested: false);
             return;
@@ -847,6 +1023,12 @@ public partial class OrderListUserControl : UserControl
         if (StationOwner(machineStation, jobId) != null) return;
 
         var program = _allJobs.FirstOrDefault(j => j.Id == jobId)?.RemoteProgram;
+
+        // จองไว้ก่อนลงมือ — ตั้งแต่บรรทัดนี้ไป ST3 จะเห็นว่า "กำลังส่งอยู่" ไม่ใช่
+        // "ไม่มีใครรับ" จึงไม่ตีงานกลับเป็น Waiting ทับงานที่เครื่องกำลังรับข้อมูล
+        await _api.ClaimRemoteStartAsync(jobId, program);
+        if (IsDisposed) return;
+
         var lines = await SendFirstStepAsync(jobId, step, resolved, program);
 
         // ล้มเหลวแล้วฝากสาเหตุกลับไปให้ ST3 ด้วย — คนที่กดเริ่มงานอยู่ที่นั่น
