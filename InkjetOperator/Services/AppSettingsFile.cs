@@ -1,4 +1,4 @@
-namespace InkjetOperator.Services;
+﻿namespace InkjetOperator.Services;
 
 /// <summary>
 /// หาที่อยู่ของไฟล์ตั้งค่า และย้ายของเดิมมาให้ครั้งแรกที่เปิด
@@ -58,20 +58,45 @@ public static class AppSettingsFile
     /// เช็คด้วยการเขียนจริง ไม่ใช่ดูสิทธิ์จาก ACL เพราะผลจริงขึ้นกับหลายอย่าง
     /// ทั้งสิทธิ์ นโยบายขององค์กร โปรแกรมป้องกันไวรัส และพื้นที่ดิสก์
     /// </para>
+    /// <para>
+    /// เดิมใช้ชื่อไฟล์ตายตัวว่า <c>.write-test</c> แล้วเขียนกับลบเป็นสองจังหวะ
+    /// ซึ่งพลาดได้ทั้งที่สิทธิ์ปกติดี เพราะไปชนกับคนอื่นที่ถือไฟล์ชื่อเดียวกันอยู่
+    /// ("used by another process") — ชนได้จากสองทาง คือเปิดโปรแกรมพร้อมกันสองตัว
+    /// บนเครื่องเดียว หรือโปรแกรมสแกนไวรัสเปิดไฟล์ที่เพิ่งถูกสร้างขึ้นมาอ่านพอดี
+    /// ทำให้เตือนผิดว่าบันทึกค่าไม่ได้ ทั้งที่บันทึกได้
+    /// </para>
     /// </summary>
     public static string? CheckWritable()
     {
-        var probe = Path.Combine(Folder, ".write-test");
-        try
+        Exception? last = null;
+
+        // ลองสามครั้ง เผื่อโดนถือค้างชั่วคราวจากตัวสแกนไวรัส
+        for (var attempt = 0; attempt < 3; attempt++)
         {
-            Directory.CreateDirectory(Folder);
-            File.WriteAllText(probe, "");
-            File.Delete(probe);
-            return null;
+            // ชื่อไม่ซ้ำกันทุกครั้ง จึงไม่มีทางไปชนไฟล์ของโปรเซสอื่น
+            var probe = Path.Combine(Folder, $".write-test-{Guid.NewGuid():N}");
+            try
+            {
+                Directory.CreateDirectory(Folder);
+
+                // DeleteOnClose ให้ Windows ลบให้เองตอนปิด handle จึงไม่มีจังหวะ
+                // ลบแยกที่จะพลาดได้ ส่วน FileShare.Delete คือยอมให้คนอื่นเปิดค้าง
+                // ไว้ระหว่างที่ไฟล์รอถูกลบ ตัวสแกนไวรัสจึงไม่ทำให้ล้ม
+                using var fs = new FileStream(
+                    probe, FileMode.CreateNew, FileAccess.Write,
+                    FileShare.ReadWrite | FileShare.Delete,
+                    bufferSize: 1, FileOptions.DeleteOnClose);
+                fs.WriteByte(0);
+                fs.Flush();
+                return null;
+            }
+            catch (Exception ex)
+            {
+                last = ex;
+                Thread.Sleep(150);
+            }
         }
-        catch (Exception ex)
-        {
-            return ex.Message;
-        }
+
+        return last?.Message;
     }
 }
