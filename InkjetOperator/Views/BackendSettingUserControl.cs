@@ -14,6 +14,8 @@ public partial class BackendSettingUserControl : UserControl
         LoadSettings();
 
         txtPcIp.TextChanged += (_, _) => MarkDirty(txtPcIp);
+        txtBackendPath.TextChanged += (_, _) => MarkDirty(txtBackendPath);
+        btnBrowseBackend.Click += (_, _) => BrowseBackendFolder();
         btnPcName.Click += (_, _) => EditName();
         btnCheckStatus.Click += async (_, _) => await CheckStatusAsync();
         btnSave.Click += BtnSave_Click;
@@ -24,6 +26,8 @@ public partial class BackendSettingUserControl : UserControl
     {
         _savedPcIp = CustomSettingsManager.Read("PC_IP", "127.0.0.1");
         txtPcIp.Text = _savedPcIp;
+
+        txtBackendPath.Text = CustomSettingsManager.Read("BACKEND_PATH", "");
 
         var name = CustomSettingsManager.Read("PC2IP_NAME", "PC");
         lblPcBadge.Text = name;
@@ -37,8 +41,32 @@ public partial class BackendSettingUserControl : UserControl
         CustomSettingsManager.Write("PC_IP", ip);
         _savedPcIp = ip;
 
+        CustomSettingsManager.Write("BACKEND_PATH", txtBackendPath.Text.Trim());
+
         ResetColors();
         Notify.Success(this, "Saved.");
+    }
+
+    /// <summary>
+    /// เลือกโฟลเดอร์ backend — ตัวโปรแกรมใช้สั่งเปิด backend ให้เองตอนเริ่ม
+    /// เตือนตรงนี้เลยถ้าเลือกโฟลเดอร์ผิด ดีกว่าไปรู้ตอนเปิดโปรแกรมครั้งหน้า
+    /// </summary>
+    private void BrowseBackendFolder()
+    {
+        using var dlg = new FolderBrowserDialog
+        {
+            Description = "เลือกโฟลเดอร์ backend (โฟลเดอร์ที่มีไฟล์ index.js)",
+            UseDescriptionForTitle = true,
+            SelectedPath = txtBackendPath.Text.Trim(),
+        };
+
+        if (dlg.ShowDialog(this) != DialogResult.OK) return;
+
+        txtBackendPath.Text = dlg.SelectedPath;
+
+        if (!File.Exists(Path.Combine(dlg.SelectedPath, "index.js")))
+            Notify.WarnModal(this, "ไม่พบ index.js",
+                "โฟลเดอร์นี้ไม่มีไฟล์ index.js\n\nปกติคือโฟลเดอร์ InkjetBackend");
     }
 
     private void EditName()
@@ -90,6 +118,9 @@ public partial class BackendSettingUserControl : UserControl
     private void MarkDirty(Control input) =>
         input.BackColor = Color.LightYellow;
 
-    private void ResetColors() =>
+    private void ResetColors()
+    {
         txtPcIp.BackColor = Color.White;
+        txtBackendPath.BackColor = Color.White;
+    }
 }

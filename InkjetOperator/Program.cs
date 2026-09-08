@@ -26,8 +26,32 @@ static class Program
         PatternStore.SeedDefaults(patternsPath);
 
         WarnIfSettingsReadOnly();
+        StartBackendIfNeeded();
 
         Application.Run(new Views.MainShellForm());
+    }
+
+    /// <summary>
+    /// เปิด backend ให้เองก่อนเปิดหน้าจอ ถ้ามันอยู่เครื่องเดียวกันและยังไม่ได้เปิด
+    /// <para>
+    /// รอจนกว่าจะตอบก่อนค่อยเปิดหน้าจอ เพราะทุกหน้าเรียก API ตั้งแต่โหลด
+    /// ถ้าปล่อยให้หน้าจอขึ้นก่อนจะเห็นตารางว่างแล้วค่อย ๆ มีข้อมูลโผล่ ดูเหมือนพัง
+    /// ปกติ node ขึ้นภายในไม่กี่วินาที
+    /// </para>
+    /// <para>
+    /// พลาดแล้วยังเปิดโปรแกรมต่อ ไม่ปิดตัวเอง — อาจแค่ตั้งค่ายังไม่ครบ และหน้า
+    /// Setting ยังต้องเข้าได้เพื่อไปแก้
+    /// </para>
+    /// </summary>
+    private static void StartBackendIfNeeded()
+    {
+        var problem = BackendLauncher.EnsureRunningAsync().GetAwaiter().GetResult();
+        if (problem == null) return;
+
+        MessageBox.Show(
+            $"{problem}\n\n"
+            + "โปรแกรมยังเปิดใช้งานได้ แต่จะดึงข้อมูลไม่ได้จนกว่า backend จะทำงาน",
+            "เปิด backend ไม่สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
     }
 
     /// <summary>
