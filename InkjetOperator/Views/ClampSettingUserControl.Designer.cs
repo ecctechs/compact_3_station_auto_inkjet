@@ -56,7 +56,6 @@ partial class ClampSettingUserControl
         chkPushEnabled = new AntdUI.Checkbox();
         btnPushTest = new AntdUI.Button();
         lblPushStatus = new System.Windows.Forms.Label();
-        lblPushHint = new System.Windows.Forms.Label();
 
         grpLog = new System.Windows.Forms.GroupBox();
         txtLog = new System.Windows.Forms.TextBox();
@@ -103,7 +102,7 @@ partial class ClampSettingUserControl
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 325F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 85F));
-        tlpRoot.Size = new System.Drawing.Size(1350, 1610);
+        tlpRoot.Size = new System.Drawing.Size(1350, 1530);
         tlpRoot.TabIndex = 0;
         //
         // grpConnection
@@ -502,13 +501,11 @@ partial class ClampSettingUserControl
         tlpPush.Controls.Add(lblPushPollLabel, 2, 0);
         tlpPush.Controls.Add(txtPushPollMs, 3, 0);
         tlpPush.Controls.Add(flpPushActions, 0, 1);
-        tlpPush.Controls.Add(lblPushHint, 0, 2);
         tlpPush.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpPush.Name = "tlpPush";
-        tlpPush.RowCount = 3;
+        tlpPush.RowCount = 2;
         tlpPush.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 58F));
         tlpPush.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 72F));
-        tlpPush.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
         tlpPush.TabIndex = 0;
         //
         // lblPushAddrLabel
@@ -603,18 +600,6 @@ partial class ClampSettingUserControl
         lblPushStatus.TabIndex = 2;
         lblPushStatus.Text = "";
         //
-        // lblPushHint
-        //
-        lblPushHint.AutoSize = true;
-        lblPushHint.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblPushHint.Font = new System.Drawing.Font("Segoe UI", 12.5F);
-        lblPushHint.ForeColor = System.Drawing.Color.FromArgb(120, 120, 120);
-        lblPushHint.Margin = new System.Windows.Forms.Padding(3, 0, 3, 8);
-        lblPushHint.Name = "lblPushHint";
-        lblPushHint.TabIndex = 5;
-        lblPushHint.Text = "บิตนี้คือสัญญาณจากปุ่มกดหน้างาน  PLC ต้องตั้งค่าเป็น 1 ค้างไว้ 1-2 วินาที เพื่อให้จับได้แน่นอน\nโปรแกรมจะเฝ้าดูเฉพาะตอนมีงานที่ต้องส่ง 2 สถานี และส่งขั้นแรกไปแล้วเท่านั้น\nพอจับสัญญาณได้จะส่งขั้นถัดไปให้ทันที ไม่ถามซ้ำ ยกเว้นต้องเลือกโปรแกรม UV หรือ prefix";
-        tlpPush.SetColumnSpan(lblPushHint, 4);
-        //
         // grpLog
         //
         grpLog.Controls.Add(txtLog);
@@ -686,7 +671,7 @@ partial class ClampSettingUserControl
         BackColor = System.Drawing.Color.White;
         Controls.Add(tlpRoot);
         Name = "ClampSettingUserControl";
-        Size = new System.Drawing.Size(1350, 1610);
+        Size = new System.Drawing.Size(1350, 1530);
 
         tlpRoot.ResumeLayout(false);
         grpConnection.ResumeLayout(false);
@@ -754,7 +739,6 @@ partial class ClampSettingUserControl
     private AntdUI.Checkbox chkPushEnabled;
     private AntdUI.Button btnPushTest;
     private System.Windows.Forms.Label lblPushStatus;
-    private System.Windows.Forms.Label lblPushHint;
     private System.Windows.Forms.GroupBox grpLog;
     private System.Windows.Forms.TextBox txtLog;
 
