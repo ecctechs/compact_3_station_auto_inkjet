@@ -58,6 +58,13 @@ try {
     }
     Note 'ไม่มีโปรแกรมเปิดค้าง'
 
+    # ไม่ใช่ปัญหา แต่ควรรู้ไว้ ถ้า VS เปิดอยู่ devenv ที่สคริปต์เรียกจะโยนงาน
+    # ไปให้ IDE ตัวที่เปิดอยู่ทำแทน แล้วจบตัวเองทันที รหัสที่คืนมาจึงเชื่อไม่ได้
+    # (สคริปต์เลยไปดูบรรทัดสรุปใน log เป็นหลักแทน)
+    if (Get-Process -Name 'devenv' -ErrorAction SilentlyContinue) {
+        Note 'พบ Visual Studio เปิดอยู่ — build จะถูกส่งไปให้ IDE ตัวนั้นทำ'
+    }
+
     # ── หา devenv ────────────────────────────────────────────
     Step 2 'หา Visual Studio'
 
@@ -95,23 +102,46 @@ try {
     Step 4 'build แบบ Release (ใช้เวลาสักครู่ รอสักหน่อย)'
     Note "รายละเอียดถูกบันทึกไว้ที่ $log"
 
+    # ลบ log รอบก่อนทิ้ง จะได้แน่ใจว่าบรรทัดที่อ่านทีหลังเป็นของรอบนี้จริง
+    Remove-Item $log -Force -ErrorAction SilentlyContinue
+
     $start = Get-Date
 
-    # ใช้ Start-Process -Wait เพราะเรียก devenv ตรง ๆ มันคืนค่ากลับมาก่อนที่
-    # ตัวติดตั้งจะเขียนไฟล์เสร็จ
+    # เคยใช้ Start-Process -Wait แล้วค้างเป็นสิบนาทีทั้งที่ build เสร็จไปแล้ว
+    # เพราะ -Wait ของ PowerShell รอ "ลูกหลาน" ของ process ด้วย ไม่ใช่แค่ตัวมันเอง
+    # devenv ทิ้ง VBCSCompiler กับ MSBuild node ไว้ให้ค้างเผื่อ build รอบหน้า
+    # พวกนี้หมดอายุเองราว 10-15 นาที สคริปต์เลยนั่งรอมันเปล่า ๆ
+    # WaitForExit() รอเฉพาะ devenv ตัวเดียว ไม่สนลูกหลาน
     $p = Start-Process -FilePath $devenv `
         -ArgumentList @($sln, '/build', 'Release', '/out', $log) `
-        -Wait -PassThru -NoNewWindow
+        -PassThru -NoNewWindow
+    $p.WaitForExit()
 
-    if ($p.ExitCode -ne 0) {
+    # devenv จบแล้วไม่ได้แปลว่า build จบ — ถ้ามี IDE เปิดอยู่ งานจะถูกโยนไปให้
+    # ตัวนั้นทำต่อ ยึดบรรทัดสรุปท้าย log เป็นตัวชี้ขาดแทน
+    $deadline = (Get-Date).AddMinutes(20)
+    $summary  = $null
+    while (-not $summary -and (Get-Date) -lt $deadline) {
+        # devenv อาจถือ handle ของ log ค้างไว้อยู่ อ่านไม่ได้ก็แค่วนมาใหม่
+        try {
+            $summary = Select-String -Path $log -Pattern '^=+ Build: (\d+) succeeded, (\d+) failed' -ErrorAction Stop |
+                       Select-Object -Last 1
+        } catch { }
+        if (-not $summary) { Start-Sleep -Milliseconds 500 }
+    }
+
+    if (-not $summary) {
+        Fail "build ไม่จบภายใน 20 นาที  —  log อยู่ที่ $log"
+    }
+
+    $failed = [int]$summary.Matches[0].Groups[2].Value
+    if ($failed -gt 0) {
         Write-Host ''
         Write-Host '      บรรทัดท้าย ๆ ของ log:' -ForegroundColor DarkYellow
-        if (Test-Path $log) {
-            Get-Content $log -Tail 25 | ForEach-Object {
-                Write-Host "      $_" -ForegroundColor DarkYellow
-            }
+        Get-Content $log -Tail 25 | ForEach-Object {
+            Write-Host "      $_" -ForegroundColor DarkYellow
         }
-        Fail "devenv จบด้วยรหัส $($p.ExitCode)  —  log เต็มอยู่ที่ $log"
+        Fail "build ไม่ผ่าน $failed โปรเจค  —  log เต็มอยู่ที่ $log"
     }
 
     Good "build ผ่าน ใช้เวลา $([math]::Round(((Get-Date) - $start).TotalMinutes, 1)) นาที"
