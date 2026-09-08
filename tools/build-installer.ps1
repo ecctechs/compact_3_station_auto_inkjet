@@ -40,6 +40,56 @@ function Good($msg)     { Write-Host "      $msg" -ForegroundColor Green }
 $script:known = $false
 function Fail($msg) { $script:known = $true; throw $msg }
 
+# ใส่ไอคอนของโปรแกรมลงในหน้า Programs and Features
+#
+# ทำไมมาแก้ที่ตัว .msi แทนที่จะตั้งใน .vdproj — ช่อง AddRemoveProgramsIcon ของ VS
+# เก็บค่าเป็นรหัสของ "ไฟล์ในโปรเจค" ซึ่งต้องประกาศไฟล์เพิ่มสองที่พร้อมกัน
+# ลองเขียนมือแล้ว VS ตีความ .ico เป็น assembly จน build ไม่ผ่าน
+# ("Unable to build assembly named 'app.ico'") ตัว .vdproj เองก็ไม่มีเอกสารกำกับ
+# เดาต่อไปเสี่ยงพังทั้งไฟล์ เลยเลือกใช้ API ของ Windows Installer ตรง ๆ แทน
+# ซึ่งมีเอกสารและตรวจผลย้อนได้ คือฝังไอคอนเข้าตาราง Icon แล้วชี้ ARPPRODUCTICON มาที่มัน
+#
+# ถ้าพลาดจะไม่ล้มทั้ง build เพราะ shortcut บน Desktop กับ Start Menu ได้ไอคอน
+# จากตัว .exe อยู่แล้ว ขาดแค่รูปในหน้า Programs and Features
+function Add-MsiArpIcon($msiPath, $icoPath) {
+    $wi = New-Object -ComObject WindowsInstaller.Installer
+    $db = $null
+    try {
+        # 1 = เปิดแบบแก้ไขได้ ต้องสั่ง Commit เองถึงจะเขียนลงไฟล์จริง
+        $db = $wi.GetType().InvokeMember('OpenDatabase', 'InvokeMethod', $null, $wi,
+            [object[]]@([string]$msiPath, [int]1))
+
+        $run = {
+            param($sql, $rec)
+            $v = $db.GetType().InvokeMember('OpenView', 'InvokeMethod', $null, $db, [object[]]@([string]$sql))
+            [void]$v.GetType().InvokeMember('Execute', 'InvokeMethod', $null, $v, @($rec))
+            [void]$v.GetType().InvokeMember('Close', 'InvokeMethod', $null, $v, $null)
+        }
+
+        # ลบของเดิมก่อน เผื่อมีการรันซ้ำบนไฟล์เดียวกัน
+        try { & $run 'DELETE FROM `Icon` WHERE `Name` = ''app.ico''' $null } catch { }
+        try { & $run 'DELETE FROM `Property` WHERE `Property` = ''ARPPRODUCTICON''' $null } catch { }
+
+        # ตัวไฟล์ .ico ฝังลงไปเป็น stream ในตาราง Icon
+        $rec = $wi.GetType().InvokeMember('CreateRecord', 'InvokeMethod', $null, $wi, [object[]]@([int]1))
+        [void]$rec.GetType().InvokeMember('SetStream', 'InvokeMethod', $null, $rec,
+            [object[]]@([int]1, [string]$icoPath))
+        & $run 'INSERT INTO `Icon` (`Name`, `Data`) VALUES (''app.ico'', ?)' $rec
+
+        & $run 'INSERT INTO `Property` (`Property`, `Value`) VALUES (''ARPPRODUCTICON'', ''app.ico'')' $null
+
+        [void]$db.GetType().InvokeMember('Commit', 'InvokeMethod', $null, $db, $null)
+        return $null
+    }
+    catch { return $_.Exception.Message }
+    finally {
+        # ต้องปล่อย COM ให้หมด ไม่งั้น handle ค้างจนแตะไฟล์ต่อไม่ได้
+        if ($db) { [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($db) }
+        [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($wi)
+        [GC]::Collect(); [GC]::WaitForPendingFinalizers()
+    }
+}
+
 try {
     Write-Host ''
     Write-Host '=== Compact Inkjet - build installer ===' -ForegroundColor White
@@ -167,6 +217,17 @@ try {
 
     $out = Join-Path $dist "CompactDemo-$new.msi"
     Copy-Item $msi $out -Force
+
+    $ico = Join-Path $root 'InkjetOperator\Resources\app.ico'
+    if (Test-Path $ico) {
+        $iconProblem = Add-MsiArpIcon $out $ico
+        if ($iconProblem) {
+            Note "ใส่ไอคอนในหน้า Programs and Features ไม่สำเร็จ: $iconProblem"
+            Note 'ไม่กระทบการติดตั้ง shortcut ยังมีไอคอนตามปกติ'
+        } else {
+            Good 'ใส่ไอคอนในหน้า Programs and Features แล้ว'
+        }
+    }
 
     $mb = [math]::Round((Get-Item $out).Length / 1MB, 1)
 
