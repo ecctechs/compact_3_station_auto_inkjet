@@ -24,9 +24,6 @@ partial class BackendSettingUserControl
         lblPcIpLabel = new System.Windows.Forms.Label();
         txtPcIp = new IpAddressInput();
 
-        lblBackendPathLabel = new System.Windows.Forms.Label();
-        txtBackendPath = new AntdUI.Input();
-        btnBrowseBackend = new AntdUI.Button();
         flpActions = new System.Windows.Forms.FlowLayoutPanel();
         btnSave = new AntdUI.Button();
         btnCancel = new AntdUI.Button();
@@ -50,7 +47,7 @@ partial class BackendSettingUserControl
         tlpRoot.Name = "tlpRoot";
         tlpRoot.Padding = new System.Windows.Forms.Padding(16);
         tlpRoot.RowCount = 3;
-        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 270F));
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 205F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 85F));
         tlpRoot.Size = new System.Drawing.Size(975, 505);
@@ -84,13 +81,9 @@ partial class BackendSettingUserControl
         tlpDevice.Controls.Add(btnPcName, 2, 0);
         tlpDevice.Controls.Add(lblPcIpLabel, 1, 1);
         tlpDevice.Controls.Add(txtPcIp, 3, 1);
-        tlpDevice.Controls.Add(lblBackendPathLabel, 1, 2);
-        tlpDevice.Controls.Add(txtBackendPath, 3, 2);
-        tlpDevice.Controls.Add(btnBrowseBackend, 5, 2);
         tlpDevice.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpDevice.Name = "tlpDevice";
-        tlpDevice.RowCount = 4;
-        tlpDevice.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
+        tlpDevice.RowCount = 3;
         tlpDevice.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpDevice.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpDevice.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
@@ -151,41 +144,6 @@ partial class BackendSettingUserControl
         txtPcIp.Name = "txtPcIp";
         tlpDevice.SetColumnSpan(txtPcIp, 3);
         txtPcIp.TabIndex = 4;
-        //
-        // lblBackendPathLabel
-        //
-        lblBackendPathLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblBackendPathLabel.Font = new System.Drawing.Font("Segoe UI", 14F);
-        lblBackendPathLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-        lblBackendPathLabel.Name = "lblBackendPathLabel";
-        lblBackendPathLabel.TabIndex = 5;
-        lblBackendPathLabel.Text = "Backend folder:";
-        lblBackendPathLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-        //
-        // txtBackendPath
-        //
-        txtBackendPath.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtBackendPath.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtBackendPath.Font = new System.Drawing.Font("Segoe UI", 12.5F);
-        txtBackendPath.Margin = new System.Windows.Forms.Padding(3, 8, 3, 8);
-        txtBackendPath.Name = "txtBackendPath";
-        txtBackendPath.PlaceholderText = "โฟลเดอร์ที่มีไฟล์ index.js ของ backend";
-        txtBackendPath.Radius = 4;
-        txtBackendPath.TabIndex = 6;
-        //
-        // btnBrowseBackend
-        //
-        btnBrowseBackend.BorderWidth = 2F;
-        btnBrowseBackend.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        btnBrowseBackend.Dock = System.Windows.Forms.DockStyle.Fill;
-        btnBrowseBackend.Font = new System.Drawing.Font("Segoe UI", 13F);
-        btnBrowseBackend.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnBrowseBackend.Margin = new System.Windows.Forms.Padding(3, 8, 3, 8);
-        btnBrowseBackend.Name = "btnBrowseBackend";
-        btnBrowseBackend.Radius = 6;
-        btnBrowseBackend.TabIndex = 7;
-        btnBrowseBackend.Text = "Browse";
-        btnBrowseBackend.Type = AntdUI.TTypeMini.Default;
         //
         // flpActions
         //
@@ -265,9 +223,6 @@ partial class BackendSettingUserControl
     private AntdUI.Button btnPcName;
     private System.Windows.Forms.Label lblPcIpLabel;
     private IpAddressInput txtPcIp;
-    private System.Windows.Forms.Label lblBackendPathLabel;
-    private AntdUI.Input txtBackendPath;
-    private AntdUI.Button btnBrowseBackend;
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnSave;
     private AntdUI.Button btnCancel;
