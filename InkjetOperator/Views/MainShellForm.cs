@@ -74,9 +74,25 @@ public partial class MainShellForm : AntdUI.Window
 
     private void StayMaximized()
     {
-        // เช็ค Normal อย่างเดียว — ถ้าเช็ค "ไม่ใช่ Maximized" ตอนผู้ใช้กดพับหน้าจอ
-        // หน้าต่างจะเด้งกลับขึ้นมาทันทีจนพับไม่ได้
-        if (WindowState == FormWindowState.Normal) MaxRestore();
+        // พับลงแถบงานอยู่ ต้องปล่อยไว้เฉย ๆ ไม่งั้นหน้าต่างจะเด้งกลับขึ้นมาทันที
+        // จนผู้ใช้พับหน้าจอไม่ได้เลย
+        if (WindowState == FormWindowState.Minimized) return;
+
+        // ใช้ Max() ไม่ใช่ MaxRestore() — MaxRestore เป็นตัวสลับ ขยายอยู่แล้วเรียกซ้ำ
+        // จะกลายเป็นย่อลง ส่วน Max() สั่งขยายอย่างเดียว เรียกซ้ำกี่ครั้งก็ปลอดภัย
+        if (WindowState != FormWindowState.Maximized)
+        {
+            Max();
+            return;
+        }
+
+        // ขยายอยู่แล้วแต่ยังไม่เต็มจอจริง
+        //
+        // เจอตอนคืนจากการพับลงแถบงาน Windows คืนขนาดที่จำไว้ตอนก่อนพับ ซึ่งอาจเป็น
+        // ขนาดพื้นที่ทำงาน (ไม่รวมแถบงาน) ไม่ใช่ขนาดจอเต็มที่ WM_GETMINMAXINFO
+        // ตอบไว้ตอนขยายครั้งแรก ด่านนี้จึงยัดขนาดจอเต็มกลับไปเอง
+        var full = Screen.FromHandle(Handle).Bounds;
+        if (Bounds != full) Bounds = full;
     }
 
     private async void MainShellForm_Load(object? sender, EventArgs e)

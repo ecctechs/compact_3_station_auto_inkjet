@@ -21,20 +21,21 @@ public partial class SettingUserControl : UserControl
         var raw = CustomSettingsManager.Read("MENU_LEVEL", "1");
         int.TryParse(raw, out var level);
 
-        var allButtons = new[] { btnDatabaseSetting, btnDbPathSetting, btnDB3Setting, btnPLCSetting, btnClampSetting, btnUvTest, btnUv2Folder };
+        var allButtons = new[] { btnDatabaseSetting, btnDbPathSetting, btnDB3Setting, btnPLCSetting, btnClampSetting, btnUvTest };
 
         bool[] visible = level switch
         {
-            0 => [false, true, true, false, false, false, false],
-            1 => [true, false, false, true, true, false, false],
-            // ST3 — Backend DB + UV2 Folder
+            0 => [false, true, true, false, false, false],
+            1 => [true, false, false, true, true, false],
+            // ST3 — Backend DB อย่างเดียว
             //
-            // UV2 Folder เป็นหน้าเล็กที่มีช่องเดียว ทำไว้ให้ ST3 โดยเฉพาะ ไม่ใช่หน้า
-            // Inkjet Setting เต็ม ๆ ซึ่งมี COM port ของ MK กับ IP ของ UV ปนอยู่ด้วย
-            // ST3 ต้องตั้งค่านี้เพื่อไล่ดูรุ่นย่อยของโปรแกรม .uvdx ตอนกดเริ่มงาน
-            3 => [false, false, true, false, false, false, true],
-            9 => [false, false, false, true, true, true, false],  // ทดสอบหน้างาน: PLC / Clamp / UV Test
-            _ => [true, true, true, true, true, true, true],
+            // โฟลเดอร์ UV2 ที่ ST3 ต้องใช้ไล่ดูรุ่นย่อยของ .uvdx ตั้งที่ UV2_FOLDER
+            // ใน uv.config ของเครื่องนั้น ตั้งครั้งเดียวตอนติดตั้ง ไม่มีหน้าจอให้แก้
+            // เพราะหน้า Printer Setting ที่มีช่องนี้อยู่แล้วมี COM port ของ MK กับ
+            // IP ของ UV ปนอยู่ด้วย ซึ่งไม่ควรเปิดให้ ST3 แตะ
+            3 => [false, false, true, false, false, false],
+            9 => [false, false, false, true, true, true],  // ทดสอบหน้างาน: PLC / Clamp / UV Test
+            _ => [true, true, true, true, true, true],
         };
 
         int row = 0;
@@ -156,7 +157,6 @@ public partial class SettingUserControl : UserControl
         nameof(btnPLCSetting) => new PlcSettingUserControl(),
         nameof(btnClampSetting) => new ClampSettingUserControl(),
         nameof(btnUvTest) => new UvTestUserControl(),
-        nameof(btnUv2Folder) => new Uv2FolderSettingUserControl(),
         _ => null,
     };
 
