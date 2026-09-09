@@ -234,9 +234,15 @@ try {
     $deadline = (Get-Date).AddMinutes(20)
     $summary  = $null
     while (-not $summary -and (Get-Date) -lt $deadline) {
+        # devenv พิมพ์บรรทัดสรุปได้สองแบบ ขึ้นกับว่ามีโปรเจคไหนถูก build ใหม่จริงบ้าง
+        #   Build: 2 succeeded, 0 failed, 0 up-to-date, 0 skipped
+        #   Build: 1 succeeded or up-to-date, 0 failed, 0 skipped
+        # เดิมรับแบบแรกอย่างเดียว พอเจอแบบที่สองจะหาบรรทัดสรุปไม่เจอแล้วรอจนครบ
+        # 20 นาทีทั้งที่ build เสร็จไปแล้ว
+        #
         # devenv อาจถือ handle ของ log ค้างไว้อยู่ อ่านไม่ได้ก็แค่วนมาใหม่
         try {
-            $summary = Select-String -Path $log -Pattern '^=+ Build: (\d+) succeeded, (\d+) failed' -ErrorAction Stop |
+            $summary = Select-String -Path $log -Pattern '^=+ Build: (\d+) succeeded(?: or up-to-date)?, (\d+) failed' -ErrorAction Stop |
                        Select-Object -Last 1
         } catch { }
         if (-not $summary) { Start-Sleep -Milliseconds 500 }
