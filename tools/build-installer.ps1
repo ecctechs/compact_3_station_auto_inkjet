@@ -125,6 +125,47 @@ try {
         Note 'พบ Visual Studio เปิดอยู่ — build จะถูกส่งไปให้ IDE ตัวนั้นทำ'
     }
 
+    # ── โค้ดที่จะถูก build ────────────────────────────────────
+    #
+    # ตัวติดตั้งต้องตรงกับ commit เสมอ ไม่ใช่ตรงกับสิ่งที่บังเอิญค้างอยู่ในโฟลเดอร์
+    # เคยเกิดจริง — มีคน reset commit ทิ้ง 84 วินาทีก่อน build ตัวติดตั้งจึงได้โค้ด
+    # ของ commit ก่อนหน้าโดยไม่มีใครรู้ตัว กว่าจะรู้ก็ตอนเอาไปลงเครื่องแล้ว
+    #
+    # กันสองชั้น บอกให้เห็นว่ากำลัง build จาก commit ไหน และหยุดถ้ามีของที่ยัง
+    # ไม่ได้ commit เพราะไฟล์ที่ได้จะไม่ตรงกับ commit ไหนเลย ตามกลับไม่ได้
+    $commit = ''
+    $head = git -C $root rev-parse --short HEAD 2>$null
+    if ($LASTEXITCODE -ne 0 -or -not $head) {
+        Note 'ไม่ใช่โฟลเดอร์ git — ข้ามการตรวจว่าตรงกับ commit ไหน'
+    }
+    else {
+        $commit = $head.Trim()
+        $branch = (git -C $root rev-parse --abbrev-ref HEAD).Trim()
+        $subject = (git -C $root log -1 --pretty=format:'%s').Trim()
+        $when = (git -C $root log -1 --pretty=format:'%ad' --date=format:'%d/%m %H:%M').Trim()
+
+        Note "branch $branch"
+        Note "commit $commit  $when"
+        Note "        $subject"
+
+        # ไม่นับ vdproj เพราะสคริปต์นี้เองเป็นคนแก้เลขเวอร์ชันในนั้น
+        $dirty = @(git -C $root status --porcelain |
+            Where-Object { $_ -and $_ -notmatch 'CompactDemo\.vdproj' })
+
+        if ($dirty.Count -gt 0) {
+            Write-Host ''
+            Write-Host '      ไฟล์ที่ยังไม่ได้ commit:' -ForegroundColor DarkYellow
+            $dirty | Select-Object -First 12 | ForEach-Object {
+                Write-Host "      $_" -ForegroundColor DarkYellow
+            }
+            if ($dirty.Count -gt 12) { Note "... และอีก $($dirty.Count - 12) ไฟล์" }
+            Write-Host ''
+            Fail 'มีของที่ยังไม่ได้ commit — commit หรือ stash ก่อน ไม่งั้นตัวติดตั้งจะไม่ตรงกับ commit ไหนเลย'
+        }
+
+        Good 'โฟลเดอร์ตรงกับ commit ล่าสุดแล้ว'
+    }
+
     # ── หา devenv ────────────────────────────────────────────
     Step 2 'หา Visual Studio'
 
@@ -236,8 +277,16 @@ try {
         }
     }
 
-    $out = Join-Path $dist "CompactDemo-$new.msi"
-    Copy-Item $msi $out -Force
+    # ใส่เลข commit ในชื่อไฟล์ด้วย — เลขเวอร์ชันอย่างเดียวไม่พอ เพราะมันย้อนกลับได้
+    # เวลามีใคร reset แล้ว build ใหม่ จะได้เลขเดิมซ้ำแล้วทับไฟล์เก่าจนแยกไม่ออก
+    $stamp = if ($commit) { "-$commit" } else { "" }
+    $out = Join-Path $dist "CompactDemo-$new$stamp.msi"
+
+    if (Test-Path $out) {
+        Fail "มีไฟล์ $out อยู่แล้ว — สร้างจาก commit เดียวกันและเวอร์ชันเดียวกัน ลบทิ้งก่อนถ้าต้องการสร้างใหม่"
+    }
+
+    Copy-Item $msi $out
 
     $mb = [math]::Round((Get-Item $out).Length / 1MB, 1)
 
@@ -245,6 +294,7 @@ try {
     Write-Host '  =============== สำเร็จ ===============' -ForegroundColor Green
     Write-Host "  ไฟล์ติดตั้ง : $out" -ForegroundColor Green
     Write-Host "  เวอร์ชัน    : $new   ($mb MB)" -ForegroundColor Green
+    if ($commit) { Write-Host "  จาก commit  : $commit" -ForegroundColor Green }
     Write-Host ''
     Write-Host '  เอาไฟล์นี้ไปติดตั้งที่เครื่องปลายทางได้เลย' -ForegroundColor Gray
     Write-Host '  ติดตั้งทับตัวเก่าได้ ไม่ต้องถอนก่อน' -ForegroundColor Gray
