@@ -36,10 +36,10 @@
     <Copyright>Copyright (c) ECC Solutions (Thailand) Co., Ltd</Copyright>
 
     <!-- เลขเวอร์ชันที่ฝังใน .exe — ต้องตรงกับเลขของตัวติดตั้งเสมอ
-         toolsuild-installer.ps1 เป็นคนบวกเลขให้ทั้งไฟล์นี้และ CompactDemo.vdproj
+         tools/build-installer.ps1 เป็นคนบวกเลขให้ทั้งไฟล์นี้และ CompactDemo.vdproj
          พร้อมกัน ห้ามแก้มือทีละที่ ไม่งั้นเลขบน exe กับบนตัวติดตั้งจะไม่ตรงกัน
          เดิมไม่มีบรรทัดนี้ .NET จึงใส่ 1.0.0.0 ให้ตลอด ดูที่ไฟล์แล้วเหมือนไม่เคยอัปเดต -->
-    <Version>1.0.22</Version>
+    <Version>1.0.23</Version>
 
     <!-- ไม่ต่อท้ายด้วยเลข commit ใน ProductVersion — คนที่เปิดดูคุณสมบัติไฟล์
          อยากเห็นแค่ 1.0.20 ไม่ใช่ 1.0.20+ac281ba0252... -->
