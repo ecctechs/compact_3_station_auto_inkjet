@@ -25,6 +25,7 @@ try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch { }
 
 $root   = Split-Path $PSScriptRoot -Parent
 $vdproj = Join-Path $root 'CompactDemo\CompactDemo.vdproj'
+$csproj = Join-Path $root 'InkjetOperator\InkjetOperator.csproj'
 $sln    = Join-Path $root 'CompactInkjet.sln'
 $dist   = Join-Path $root 'dist'
 $log    = Join-Path $dist 'build.log'
@@ -148,9 +149,9 @@ try {
         Note "commit $commit  $when"
         Note "        $subject"
 
-        # ไม่นับ vdproj เพราะสคริปต์นี้เองเป็นคนแก้เลขเวอร์ชันในนั้น
+        # ไม่นับสองไฟล์นี้ เพราะสคริปต์เองเป็นคนแก้เลขเวอร์ชันในนั้น
         $dirty = @(git -C $root status --porcelain |
-            Where-Object { $_ -and $_ -notmatch 'CompactDemo\.vdproj' })
+            Where-Object { $_ -and $_ -notmatch 'CompactDemo\.vdproj' -and $_ -notmatch 'InkjetOperator\.csproj' })
 
         if ($dirty.Count -gt 0) {
             Write-Host ''
@@ -197,7 +198,17 @@ try {
     $text = $text -replace '"RemovePreviousVersions" = "11:FALSE"', '"RemovePreviousVersions" = "11:TRUE"'
 
     Set-Content $vdproj -Value $text -Encoding UTF8 -NoNewline
-    Good "$old  ->  $new"
+
+    # เลขบน .exe ต้องเดินตามเลขของตัวติดตั้งเสมอ ไม่งั้นเปิดดูคุณสมบัติไฟล์แล้ว
+    # เห็นเลขค้างอยู่ที่เดิม ทั้งที่เพิ่งลงตัวใหม่ไป
+    $cs = Get-Content $csproj -Raw -Encoding UTF8
+    if ($cs -notmatch '<Version>\d+\.\d+\.\d+</Version>') {
+        Fail "ไม่พบ <Version> ใน $csproj — ต้องมีไว้ให้สคริปต์บวกเลขให้"
+    }
+    $cs = $cs -replace '<Version>\d+\.\d+\.\d+</Version>', "<Version>$new</Version>"
+    Set-Content $csproj -Value $cs -Encoding UTF8 -NoNewline
+
+    Good "$old  ->  $new   (ทั้งตัวติดตั้งและ .exe)"
 
     # ── build ───────────────────────────────────────────────
     Step 4 'build แบบ Release (ใช้เวลาสักครู่ รอสักหน่อย)'
