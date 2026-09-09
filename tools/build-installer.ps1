@@ -32,7 +32,7 @@ $log    = Join-Path $dist 'build.log'
 
 $ok = $false
 
-function Step($n, $msg) { Write-Host "[$n/5] $msg" -ForegroundColor Cyan }
+function Step($n, $msg) { Write-Host "[$n/6] $msg" -ForegroundColor Cyan }
 function Note($msg)     { Write-Host "      $msg" -ForegroundColor DarkGray }
 function Good($msg)     { Write-Host "      $msg" -ForegroundColor Green }
 
@@ -210,8 +210,42 @@ try {
 
     Good "$old  ->  $new   (ทั้งตัวติดตั้งและ .exe)"
 
-    # ── build ───────────────────────────────────────────────
-    Step 4 'build แบบ Release (ใช้เวลาสักครู่ รอสักหน่อย)'
+
+    # ── คอมไพล์ตัวโปรแกรมเองก่อน ──────────────────────────────
+    #
+    # ไม่ปล่อยให้ devenv เป็นคนคอมไพล์ .exe เพราะถ้ามี Visual Studio เปิดอยู่
+    # devenv จะโยนงานไปให้ IDE ตัวนั้นทำ แล้ว IDE ใช้สถานะโปรเจคที่จำไว้ในหน่วยความจำ
+    # มองไม่เห็นว่า .csproj เพิ่งถูกแก้ จึงตอบว่า up-to-date แล้วข้ามการคอมไพล์
+    # ผลคือได้ .msi ใหม่ที่ห่อ .exe ตัวเก่าไว้ข้างใน โดยไม่มีอะไรฟ้อง
+    #
+    # เจอจริง — csproj เป็น 1.0.22 แต่ exe ที่ถูกห่อยังเป็นของ build เมื่อ 16 นาทีก่อน
+    #
+    # dotnet build ไม่ผ่าน IDE จึงเห็นไฟล์บนดิสก์ตามจริงเสมอ
+    Step 4 'คอมไพล์โปรแกรม'
+
+    $csprojDir = Split-Path $csproj -Parent
+    $buildOut = & dotnet build $csproj -c Release --nologo 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host ''
+        $buildOut | Select-Object -Last 15 | ForEach-Object {
+            Write-Host "      $_" -ForegroundColor DarkYellow
+        }
+        Fail 'คอมไพล์โปรแกรมไม่ผ่าน'
+    }
+
+    # ยืนยันว่า .exe ที่จะถูกห่อเป็นของรอบนี้จริง ไม่ใช่ของเก่าที่ค้างอยู่
+    $exe = Join-Path $csprojDir 'bin\Release\net8.0-windows\InkjetOperator.exe'
+    if (-not (Test-Path $exe)) { Fail "คอมไพล์ผ่านแล้วแต่ไม่พบ $exe" }
+
+    $exeVersion = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($exe).FileVersion
+    if ($exeVersion -notlike "$new*") {
+        Fail "เลขเวอร์ชันบน .exe เป็น $exeVersion ไม่ใช่ $new — แปลว่ายังเป็นไฟล์เก่า ปิด Visual Studio แล้วลองใหม่"
+    }
+
+    Good "คอมไพล์แล้ว  .exe เวอร์ชัน $exeVersion"
+
+    # ── สร้างตัวติดตั้ง ──────────────────────────────────────
+    Step 5 'สร้างตัวติดตั้ง (ใช้เวลาสักครู่ รอสักหน่อย)'
     Note "รายละเอียดถูกบันทึกไว้ที่ $log"
 
     # ลบ log รอบก่อนทิ้ง จะได้แน่ใจว่าบรรทัดที่อ่านทีหลังเป็นของรอบนี้จริง
@@ -265,7 +299,7 @@ try {
     Good "build ผ่าน ใช้เวลา $([math]::Round(((Get-Date) - $start).TotalMinutes, 1)) นาที"
 
     # ── เก็บผลลัพธ์ ──────────────────────────────────────────
-    Step 5 'เก็บไฟล์ติดตั้ง'
+    Step 6 'เก็บไฟล์ติดตั้ง'
 
     $msi = Join-Path $root 'CompactDemo\Release\CompactDemo.msi'
 
