@@ -408,13 +408,16 @@ public partial class OrderListUserControl : UserControl
         var statuses = _showHistory ? HistoryStatuses : ActiveStatuses;
         int station = StationService.Current;
 
+        // ST1 เห็นประวัติทั้งสาย รวมงานที่ ST3 ทำจนจบซึ่งตัวเองไม่เคยเห็นในแท็บ List
+        // เพราะเป็นจอที่ใช้ตามงานทั้งกระบวนการ
+        //
+        // ST3 เห็นเฉพาะงานของตัวเอง (10 / 11 / 12 และรหัสที่ใช้เลข 3 เช่น 32)
+        // ทั้งในแท็บ List และ History จอหน้างานจะได้ไม่มีงานที่ไม่เกี่ยวข้องปนมา
+        bool showEveryStation = _showHistory && !StationService.IsSt3;
+
         var filtered = _allJobs
             .Where(j => statuses.Contains(j.Status, StringComparer.OrdinalIgnoreCase))
-            // แท็บ List คัดตามสถานี — ST1 ไม่เห็น marking 10 · ST3 เห็นแค่ 10/11/12
-            //
-            // แท็บ History ไม่คัด เพราะทั้งสองสถานีต้องตามประวัติงานที่ตัวเองไม่ได้ทำได้
-            // โดยเฉพาะ marking 10 ที่ ST3 ทำจนจบ แต่ ST1 ต้องเห็นในประวัติ
-            .Where(j => _showHistory
+            .Where(j => showEveryStation
                 || MarkingMethodService.VisibleAt(station, j.PlanRouting?.MarkingMethod))
             .OrderBy(StatusRank)
             .ThenByDescending(j => j.CreatedAt ?? DateTime.MinValue)
