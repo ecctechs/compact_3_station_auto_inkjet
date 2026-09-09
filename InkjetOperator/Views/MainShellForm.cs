@@ -72,28 +72,44 @@ public partial class MainShellForm : AntdUI.Window
         base.WndProc(ref m);
     }
 
+    /// <summary>กำลังบังคับขนาดอยู่ — กันไม่ให้ Resize ที่เกิดจากการบังคับวนกลับมาซ้ำ</summary>
+    private bool _forcingFullScreen;
+
     private void StayMaximized()
     {
+        if (_forcingFullScreen) return;
+
         // พับลงแถบงานอยู่ ต้องปล่อยไว้เฉย ๆ ไม่งั้นหน้าต่างจะเด้งกลับขึ้นมาทันที
         // จนผู้ใช้พับหน้าจอไม่ได้เลย
         if (WindowState == FormWindowState.Minimized) return;
 
-        // ใช้ Max() ไม่ใช่ MaxRestore() — MaxRestore เป็นตัวสลับ ขยายอยู่แล้วเรียกซ้ำ
-        // จะกลายเป็นย่อลง ส่วน Max() สั่งขยายอย่างเดียว เรียกซ้ำกี่ครั้งก็ปลอดภัย
-        if (WindowState != FormWindowState.Maximized)
-        {
-            Max();
-            return;
-        }
-
-        // ขยายอยู่แล้วแต่ยังไม่เต็มจอจริง
+        // ขยายอยู่และไม่เล็กกว่าพื้นที่ทำงาน = ปกติดี ไม่ต้องแตะ
         //
-        // เจอตอนคืนจากการพับลงแถบงาน Windows คืนขนาดที่จำไว้ตอนก่อนพับ ซึ่งอาจเป็น
-        // ขนาดพื้นที่ทำงาน (ไม่รวมแถบงาน) ไม่ใช่ขนาดจอเต็มที่ WM_GETMINMAXINFO
-        // ตอบไว้ตอนขยายครั้งแรก ด่านนี้จึงยัดขนาดจอเต็มกลับไปเอง
-        var full = Screen.FromHandle(Handle).Bounds;
-        if (Bounds != full) Bounds = full;
+        // เทียบกับพื้นที่ทำงาน ไม่ใช่ขนาดจอ เพราะกรอบหน้าต่างของ AntdUI ปรับ
+        // non-client area เอง ขนาดจริงตอนขยายจึงไม่เท่าขนาดจอพอดี ถ้าไปเทียบกับ
+        // ขนาดจอตรง ๆ เงื่อนไขจะไม่มีวันเป็นจริง แล้วสั่งขยายซ้ำทุกครั้งที่หน้าต่างขยับ
+        var work = Screen.FromHandle(Handle).WorkingArea;
+        if (WindowState == FormWindowState.Maximized
+            && Bounds.Width >= work.Width && Bounds.Height >= work.Height) return;
+
+        // ต้องแวะ Normal ก่อนเสมอ สั่ง Maximized ทับตอนที่สถานะเป็น Maximized อยู่แล้ว
+        // Windows มองว่าไม่มีอะไรเปลี่ยน จึงไม่คำนวณขนาดใหม่ให้
+        //
+        // เจอจริงตอนคืนจากการพับ — สถานะกลับมาเป็น Maximized แต่ขนาดเป็นขนาดที่
+        // จำไว้ก่อนขยาย (1920x1080) การตั้ง Bounds ตรง ๆ ก็ไม่ช่วย เพราะ WinForms
+        // เก็บค่าไว้เป็นขนาดตอนคืนสถานะแทนที่จะเอาไปใช้จริง
+        _forcingFullScreen = true;
+        try
+        {
+            WindowState = FormWindowState.Normal;
+            WindowState = FormWindowState.Maximized;
+        }
+        finally
+        {
+            _forcingFullScreen = false;
+        }
     }
+
 
     private async void MainShellForm_Load(object? sender, EventArgs e)
     {
