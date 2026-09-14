@@ -15,15 +15,42 @@ public static class StationService
     public const int St1 = 1;
     public const int St3 = 3;
 
+    /// <summary>ชื่อผลิตภัณฑ์ — ไม่แปลตามภาษา ดูที่ <c>LanguageService</c></summary>
+    public const string ProductName = "Compact Inkjet";
+
     /// <summary>สถานีของเครื่องนี้ — ค่าที่ไม่ใช่ 3 ถือเป็น ST1 ทั้งหมด</summary>
-    public static int Current
+    public static int Current => Level == St3 ? St3 : St1;
+
+    public static bool IsSt3 => Current == St3;
+
+    /// <summary>
+    /// ชื่อที่ขึ้นบนแถบหัวและแถบงาน — บอกว่าเครื่องตรงหน้าเป็นเครื่องไหน
+    ///
+    /// <para>
+    /// <b>เลขใน MENU_LEVEL ไม่ใช่เลขที่พนักงานเห็น</b> — ระดับ 3 ขึ้นว่า Station 2
+    /// เพราะสายผลิตมีสามเครื่องคือเครื่องสแกนบาร์โค้ด กับเครื่องมาร์กอีกสองเครื่อง
+    /// พนักงานเรียกเครื่องมาร์กว่าเครื่องที่ 1 กับเครื่องที่ 2 ส่วนเลข 3 เป็นค่าที่
+    /// ตั้งไว้ในไฟล์ตั้งค่ามาแต่แรกและมีโค้ดอ้างอิงอยู่หลายที่ จึงไม่ไปไล่เปลี่ยน
+    /// (ไม่มีเครื่องไหนตั้งเป็น 2 เลย)
+    /// </para>
+    /// <para>
+    /// ระดับอื่นเช่นโหมดทดสอบขึ้นชื่อผลิตภัณฑ์เปล่า ๆ เพราะไม่ได้ผูกกับเครื่องไหน
+    /// </para>
+    /// </summary>
+    public static string ProgramTitle => Level switch
+    {
+        0 => $"{ProductName} - Scanbarcode",
+        1 => $"{ProductName} - Station 1",
+        3 => $"{ProductName} - Station 2",
+        _ => ProductName,
+    };
+
+    private static int Level
     {
         get
         {
             var raw = CustomSettingsManager.Read("MENU_LEVEL", "1");
-            return int.TryParse(raw, out var level) && level == St3 ? St3 : St1;
+            return int.TryParse(raw, out var level) ? level : St1;
         }
     }
-
-    public static bool IsSt3 => Current == St3;
 }

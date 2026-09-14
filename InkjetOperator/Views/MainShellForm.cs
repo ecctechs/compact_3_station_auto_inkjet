@@ -20,6 +20,7 @@ public partial class MainShellForm : AntdUI.Window
     {
         InitializeComponent();
         ApplyMenuLevel();
+        ApplyProgramTitle();
         Load += MainShellForm_Load;
 
         // จอหน้างานเป็น Full HD และใช้เต็มจอตลอด
@@ -36,6 +37,22 @@ public partial class MainShellForm : AntdUI.Window
 
         btnLang.Click += (_, _) => ToggleLanguage();
         ApplyLanguage();
+    }
+
+    /// <summary>
+    /// ตั้งชื่อโปรแกรมตามสถานีของเครื่อง ทั้งแถบหัวบนจอและชื่อที่แถบงานกับ Alt-Tab
+    ///
+    /// <para>
+    /// ตั้งทั้งสองที่เพราะคนละหน้าที่ — แถบหัวบอกคนที่ยืนอยู่หน้าเครื่อง ส่วนชื่อที่
+    /// แถบงานใช้ตอนเปิดหลายเครื่องหรือรีโมตเข้ามาดู จะได้รู้ว่าหน้าต่างไหนของสถานีไหน
+    /// </para>
+    /// </summary>
+    private void ApplyProgramTitle()
+    {
+        var title = Services.StationService.ProgramTitle;
+
+        titleBar.TitleText = title;
+        Text = title;
     }
 
     /// <summary>
