@@ -83,7 +83,10 @@ partial class ScanBarcodeUserControl
         // ความสูงเป็นหน่วยของ Designer ที่ 144 DPI ตอนรันที่ 96 DPI จะถูกคูณ 0.667
         tlpScanBarcodeRoot.RowCount = 9;
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
-        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 173F));
+        // สูงพอดีตัวอักษรเป๊ะ ๆ (93px ตอนรัน / 140 หน่วย Designer)
+        // ถ้าแถวสูงกว่านี้ ตัวอักษรจะลอยกลางกล่องแล้วเหลือที่ว่างในกล่องอีกชั้น
+        // ซึ่งไปบวกกับช่องว่างที่ตาเห็น ทำให้ช่องใต้หัวข้อดูกว้างกว่าช่องอื่น
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 140F));
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 270F));
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
