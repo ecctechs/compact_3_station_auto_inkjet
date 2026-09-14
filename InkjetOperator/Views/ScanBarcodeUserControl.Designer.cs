@@ -78,7 +78,7 @@ partial class ScanBarcodeUserControl
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 12F));
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 28F));
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 44F));
-        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 16F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 14F));
         tlpScanBarcodeRoot.Size = new Size(2062, 1612);
         tlpScanBarcodeRoot.TabIndex = 0;
         // 
@@ -88,7 +88,7 @@ partial class ScanBarcodeUserControl
         lblScanBarcodeTitle.Font = new Font("Segoe UI", 52.5F, FontStyle.Bold);
         lblScanBarcodeTitle.ForeColor = Color.FromArgb(17, 17, 17);
         lblScanBarcodeTitle.Location = new Point(60, 66);
-        lblScanBarcodeTitle.Margin = new Padding(0, 6, 0, 0);
+        lblScanBarcodeTitle.Margin = new Padding(0, 22, 0, 0);
         lblScanBarcodeTitle.Name = "lblScanBarcodeTitle";
         lblScanBarcodeTitle.Size = new Size(1942, 173);
         lblScanBarcodeTitle.TabIndex = 0;
