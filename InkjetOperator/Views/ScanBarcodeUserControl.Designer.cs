@@ -41,10 +41,10 @@ partial class ScanBarcodeUserControl
         lblMarkingMethod = new AntdUI.Label();
         lblQty = new AntdUI.Label();
         txtBarcode = new AntdUI.Input();
-        txtErpMfg = new AntdUI.Input();
-        txtMarkingMethod = new AntdUI.Input();
+        txtErpMfg = new ReadOnlyInput();
+        txtMarkingMethod = new ReadOnlyInput();
         tlpQty = new TableLayoutPanel();
-        txtQty = new AntdUI.Input();
+        txtQty = new ReadOnlyInput();
         btnEditQty = new AntdUI.Button();
         flpActions = new FlowLayoutPanel();
         btnConfirm = new AntdUI.Button();
@@ -414,10 +414,10 @@ partial class ScanBarcodeUserControl
     private AntdUI.Label lblMarkingMethod;
     private AntdUI.Label lblQty;
     private AntdUI.Input txtBarcode;
-    private AntdUI.Input txtErpMfg;
-    private AntdUI.Input txtMarkingMethod;
+    private ReadOnlyInput txtErpMfg;
+    private ReadOnlyInput txtMarkingMethod;
     private System.Windows.Forms.TableLayoutPanel tlpQty;
-    private AntdUI.Input txtQty;
+    private ReadOnlyInput txtQty;
     private AntdUI.Button btnEditQty;
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnConfirm;
