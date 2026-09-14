@@ -65,20 +65,32 @@ partial class ScanBarcodeUserControl
         tlpScanBarcodeRoot.BackColor = Color.FromArgb(91, 155, 213);
         tlpScanBarcodeRoot.ColumnCount = 1;
         tlpScanBarcodeRoot.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        tlpScanBarcodeRoot.Controls.Add(lblScanBarcodeTitle, 0, 0);
-        tlpScanBarcodeRoot.Controls.Add(tlpBarcodeCenter, 0, 1);
-        tlpScanBarcodeRoot.Controls.Add(tlpOrderCenter, 0, 2);
-        tlpScanBarcodeRoot.Controls.Add(flpActions, 0, 3);
+        tlpScanBarcodeRoot.Controls.Add(lblScanBarcodeTitle, 0, 1);
+        tlpScanBarcodeRoot.Controls.Add(tlpBarcodeCenter, 0, 3);
+        tlpScanBarcodeRoot.Controls.Add(tlpOrderCenter, 0, 5);
+        tlpScanBarcodeRoot.Controls.Add(flpActions, 0, 7);
         tlpScanBarcodeRoot.Dock = DockStyle.Fill;
         tlpScanBarcodeRoot.Location = new Point(0, 0);
         tlpScanBarcodeRoot.Margin = new Padding(4, 4, 4, 4);
         tlpScanBarcodeRoot.Name = "tlpScanBarcodeRoot";
-        tlpScanBarcodeRoot.Padding = new Padding(24, 24, 24, 24);
-        tlpScanBarcodeRoot.RowCount = 4;
-        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 12F));
-        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 28F));
-        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 44F));
-        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 14F));
+        tlpScanBarcodeRoot.Padding = new Padding(0);
+        // สลับแถวเนื้อหากับแถวช่องว่าง แถวเนื้อหาสูงคงที่ ช่องว่างห้าช่องแบ่งที่เหลือ
+        // เท่า ๆ กันช่องละ 20% จึงเท่ากันเป๊ะเสมอ ไม่ว่าหน้าต่างจะสูงเท่าไหร่
+        //
+        // ของเดิมแถวเนื้อหาเป็นเปอร์เซ็นต์ เนื้อหาลอยกลางแถว ช่องว่างจึงเป็นเศษที่เหลือ
+        // ของแต่ละแถวซึ่งไม่เท่ากัน และเพี้ยนมากขึ้นเมื่อจอสูงขึ้น
+        //
+        // ความสูงเป็นหน่วยของ Designer ที่ 144 DPI ตอนรันที่ 96 DPI จะถูกคูณ 0.667
+        tlpScanBarcodeRoot.RowCount = 9;
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 173F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 270F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 580F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 117F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
         tlpScanBarcodeRoot.Size = new Size(2062, 1612);
         tlpScanBarcodeRoot.TabIndex = 0;
         // 
@@ -88,7 +100,7 @@ partial class ScanBarcodeUserControl
         lblScanBarcodeTitle.Font = new Font("Segoe UI", 52.5F, FontStyle.Bold);
         lblScanBarcodeTitle.ForeColor = Color.FromArgb(17, 17, 17);
         lblScanBarcodeTitle.Location = new Point(60, 66);
-        lblScanBarcodeTitle.Margin = new Padding(0, 22, 0, 0);
+        lblScanBarcodeTitle.Margin = new Padding(0);
         lblScanBarcodeTitle.Name = "lblScanBarcodeTitle";
         lblScanBarcodeTitle.Size = new Size(1942, 173);
         lblScanBarcodeTitle.TabIndex = 0;
@@ -118,7 +130,7 @@ partial class ScanBarcodeUserControl
         pnlBarcodeContainer.BorderWidth = 3F;
         pnlBarcodeContainer.Controls.Add(picBarcode);
         pnlBarcodeContainer.Location = new Point(551, 73);
-        pnlBarcodeContainer.Margin = new Padding(4, 4, 4, 4);
+        pnlBarcodeContainer.Margin = new Padding(0);
         pnlBarcodeContainer.Name = "pnlBarcodeContainer";
         pnlBarcodeContainer.Padding = new Padding(24, 24, 24, 24);
         pnlBarcodeContainer.Radius = 24;
@@ -163,7 +175,7 @@ partial class ScanBarcodeUserControl
         pnlOrderInformation.Controls.Add(tlpOrderInformation);
         pnlOrderInformation.Dock = DockStyle.Fill;
         pnlOrderInformation.Location = new Point(431, 4);
-        pnlOrderInformation.Margin = new Padding(4, 4, 4, 4);
+        pnlOrderInformation.Margin = new Padding(0);
         pnlOrderInformation.Name = "pnlOrderInformation";
         pnlOrderInformation.Padding = new Padding(48, 48, 48, 48);
         pnlOrderInformation.Radius = 22;
@@ -174,8 +186,10 @@ partial class ScanBarcodeUserControl
         // 
         tlpOrderInformation.BackColor = Color.White;
         tlpOrderInformation.ColumnCount = 2;
-        tlpOrderInformation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 23F));
-        tlpOrderInformation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 77F));
+        // คอลัมน์ป้ายชื่อแคบลงเล็กน้อย เพื่อให้ที่ว่างซ้ายของข้อความยาวที่สุด
+        // (Marking Method:) เท่ากับที่ว่างขวาของช่องกรอก
+        tlpOrderInformation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 22.2F));
+        tlpOrderInformation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 77.8F));
         tlpOrderInformation.Controls.Add(lblBarcode, 0, 0);
         tlpOrderInformation.Controls.Add(lblErpMfg, 0, 1);
         tlpOrderInformation.Controls.Add(lblMarkingMethod, 0, 2);
