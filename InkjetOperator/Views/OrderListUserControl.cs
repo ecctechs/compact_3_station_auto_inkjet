@@ -144,6 +144,11 @@ public partial class OrderListUserControl : UserControl
     {
         btnTabList.Click += (_, _) => SwitchTab(false);
         btnTabHistory.Click += (_, _) => SwitchTab(true);
+
+        // ST3 ไม่มีแท็บ History — ซ่อนปุ่มไปเลย ไม่ใช่แค่กรองรายการให้ว่าง
+        // จอหน้างานมีหน้าที่เดียวคือทำงานที่ค้างอยู่ ไม่ได้ใช้ย้อนดูประวัติ
+        // ตัวกรองวันที่ผูกกับแท็บนี้อยู่แล้ว จึงไม่โผล่ตามไปด้วย
+        btnTabHistory.Visible = !StationService.IsSt3;
         tblOrders.CellButtonClick += TblOrders_CellButtonClick;
 
         // AntdUI เรียงด้วยการเทียบ "ข้อความในเซลล์" ซึ่งทำให้ 26/08 มาหลัง 02/09
@@ -411,8 +416,8 @@ public partial class OrderListUserControl : UserControl
         // ST1 เห็นประวัติทั้งสาย รวมงานที่ ST3 ทำจนจบซึ่งตัวเองไม่เคยเห็นในแท็บ List
         // เพราะเป็นจอที่ใช้ตามงานทั้งกระบวนการ
         //
-        // ST3 เห็นเฉพาะงานของตัวเอง (10 / 11 / 12 และรหัสที่ใช้เลข 3 เช่น 32)
-        // ทั้งในแท็บ List และ History จอหน้างานจะได้ไม่มีงานที่ไม่เกี่ยวข้องปนมา
+        // ส่วน ST3 ไม่มีแท็บ History ให้กดอยู่แล้ว เงื่อนไข IsSt3 ตรงนี้จึงเป็นแค่
+        // ตัวกันไว้ เผื่อวันหลังเปิดแท็บคืนให้ ST3 จะได้ยังกรองเฉพาะงานของตัวเอง
         bool showEveryStation = _showHistory && !StationService.IsSt3;
 
         var filtered = _allJobs
