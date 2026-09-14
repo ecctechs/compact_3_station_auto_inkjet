@@ -82,18 +82,26 @@ partial class ScanBarcodeUserControl
         //
         // ความสูงเป็นหน่วยของ Designer ที่ 144 DPI ตอนรันที่ 96 DPI จะถูกคูณ 0.667
         tlpScanBarcodeRoot.RowCount = 9;
-        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
-        // สูงพอดีตัวอักษรเป๊ะ ๆ (93px ตอนรัน / 140 หน่วย Designer)
-        // ถ้าแถวสูงกว่านี้ ตัวอักษรจะลอยกลางกล่องแล้วเหลือที่ว่างในกล่องอีกชั้น
-        // ซึ่งไปบวกกับช่องว่างที่ตาเห็น ทำให้ช่องใต้หัวข้อดูกว้างกว่าช่องอื่น
-        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 140F));
-        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+
+        // แถวเว้นวรรคสองแถวที่ติดกับหัวข้อแคบกว่าเพื่อนมาก โดยตั้งใจ
+        //
+        // กล่องของหัวข้อสูง 115px แต่ตัวอักษรที่มีหมึกจริงสูงแค่ 53px
+        // (วัดจากภาพที่วาดออกมา ไม่ใช่ค่าจาก MeasureText ซึ่งรวมที่ว่างของบรรทัด
+        //  ไว้ด้วยและคืนมา 93px) จึงเหลือที่ว่างในกล่องอีกด้านละ 31px
+        // ตาเห็นที่ว่างนั้นรวมเป็นช่องไฟด้วย ถ้าตั้งแถวเว้นวรรคเท่ากันหมด
+        // ช่องบนกับใต้หัวข้อจะดูกว้างกว่าช่องอื่นถึง 31px
+        //
+        // ไม่หดกล่องหัวข้อให้พอดีตัวอักษร เพราะ AntdUI.Label วาดเอง
+        // กล่องแคบเกินไปแล้วตัวอักษรหายทั้งบรรทัด
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 10.2F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 173F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 12.6F));
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 270F));
-        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 26.4F));
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 580F));
-        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 26.4F));
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 117F));
-        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 24.4F));
         tlpScanBarcodeRoot.Size = new Size(2062, 1612);
         tlpScanBarcodeRoot.TabIndex = 0;
         // 
