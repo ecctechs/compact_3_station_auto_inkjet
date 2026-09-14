@@ -93,15 +93,15 @@ partial class ScanBarcodeUserControl
         //
         // ไม่หดกล่องหัวข้อให้พอดีตัวอักษร เพราะ AntdUI.Label วาดเอง
         // กล่องแคบเกินไปแล้วตัวอักษรหายทั้งบรรทัด
-        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 10.2F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 8.04F));
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 173F));
-        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 12.6F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 11.67F));
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 270F));
-        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 26.4F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 28.15F));
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 580F));
-        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 26.4F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 26.07F));
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 117F));
-        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 24.4F));
+        tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 26.07F));
         tlpScanBarcodeRoot.Size = new Size(2062, 1612);
         tlpScanBarcodeRoot.TabIndex = 0;
         // 
