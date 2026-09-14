@@ -199,8 +199,8 @@ partial class ScanBarcodeUserControl
         tlpOrderInformation.ColumnCount = 2;
         // คอลัมน์ป้ายชื่อแคบลงเล็กน้อย เพื่อให้ที่ว่างซ้ายของข้อความยาวที่สุด
         // (Marking Method:) เท่ากับที่ว่างขวาของช่องกรอก
-        tlpOrderInformation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 22.0F));
-        tlpOrderInformation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 78.0F));
+        tlpOrderInformation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 22.2F));
+        tlpOrderInformation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 77.8F));
         tlpOrderInformation.Controls.Add(lblBarcode, 0, 0);
         tlpOrderInformation.Controls.Add(lblErpMfg, 0, 1);
         tlpOrderInformation.Controls.Add(lblMarkingMethod, 0, 2);
@@ -279,7 +279,7 @@ partial class ScanBarcodeUserControl
         txtBarcode.Dock = DockStyle.Fill;
         txtBarcode.Font = new Font("Segoe UI", 18F);
         txtBarcode.Location = new Point(275, 24);
-        txtBarcode.Margin = new Padding(4, 26, 26, 19);
+        txtBarcode.Margin = new Padding(4, 23, 23, 22);
         txtBarcode.Name = "txtBarcode";
         txtBarcode.Radius = 8;
         txtBarcode.Size = new Size(692, 87);
@@ -293,7 +293,7 @@ partial class ScanBarcodeUserControl
         txtErpMfg.Font = new Font("Segoe UI", 18F);
         txtErpMfg.ForeColor = Color.FromArgb(89, 89, 89);
         txtErpMfg.Location = new Point(275, 159);
-        txtErpMfg.Margin = new Padding(4, 26, 26, 19);
+        txtErpMfg.Margin = new Padding(4, 23, 23, 22);
         txtErpMfg.Name = "txtErpMfg";
         txtErpMfg.Radius = 8;
         txtErpMfg.ReadOnly = true;
@@ -308,7 +308,7 @@ partial class ScanBarcodeUserControl
         txtMarkingMethod.Font = new Font("Segoe UI", 18F);
         txtMarkingMethod.ForeColor = Color.FromArgb(89, 89, 89);
         txtMarkingMethod.Location = new Point(275, 294);
-        txtMarkingMethod.Margin = new Padding(4, 26, 26, 19);
+        txtMarkingMethod.Margin = new Padding(4, 23, 23, 22);
         txtMarkingMethod.Name = "txtMarkingMethod";
         txtMarkingMethod.Radius = 8;
         txtMarkingMethod.ReadOnly = true;
@@ -325,7 +325,7 @@ partial class ScanBarcodeUserControl
         tlpQty.Controls.Add(btnEditQty, 1, 0);
         tlpQty.Dock = DockStyle.Fill;
         tlpQty.Location = new Point(275, 429);
-        tlpQty.Margin = new Padding(4, 26, 26, 19);
+        tlpQty.Margin = new Padding(4, 23, 23, 22);
         tlpQty.Name = "tlpQty";
         tlpQty.RowCount = 1;
         tlpQty.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
