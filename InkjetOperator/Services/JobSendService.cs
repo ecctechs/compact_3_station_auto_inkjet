@@ -67,10 +67,16 @@ public static class JobSendService
     // ── MK ─────────────────────────────────────────────────
 
     /// <summary>
-    /// ส่งเข้าเครื่อง MK ทุกตัวที่ตั้ง IP ไว้
+    /// ส่งเข้าเครื่อง MK ตามที่งานกำหนดไว้
     /// <para>
     /// เก็บผลแยกทีละเครื่อง เพราะเครื่องหนึ่งสำเร็จอีกเครื่องพลาดเป็นเรื่องปกติ
     /// รวมเป็นบรรทัดเดียวแล้วจะไม่รู้ว่าเครื่องไหนไม่ผ่าน
+    /// </para>
+    /// <para>
+    /// <b>เครื่องที่งานสั่งให้ใช้ แต่ยังไม่ได้ตั้ง IP ต้องฟ้อง ไม่ใช่ข้ามเงียบ ๆ</b> —
+    /// เดิมข้ามไปเฉย ๆ พนักงานที่กด SWAP ให้งานไปเข้าอีกเครื่องจึงไม่รู้เลยว่า
+    /// เครื่องปลายทางไม่ได้รับอะไร เห็นแต่ผลของเครื่องที่ตั้ง IP ไว้ แล้วเข้าใจว่า
+    /// การสลับไม่ทำงาน
     /// </para>
     /// </summary>
     public static async Task<MkSendResult> SendMkAsync(PatternDetail pattern)
@@ -79,14 +85,15 @@ public static class JobSendService
 
         foreach (var (ipKey, nameKey, fallbackName, ordinal, label) in MkMachines)
         {
-            var ip = CustomSettingsManager.Read(ipKey);
-            if (string.IsNullOrWhiteSpace(ip)) continue;
-
             var config = pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
             if (config == null) continue;
 
             var name = CustomSettingsManager.Read(nameKey, fallbackName);
-            machines.Add(new MkMachineResult(name, await SendToOneMkAsync(ip, config, label)));
+            var ip = CustomSettingsManager.Read(ipKey);
+
+            machines.Add(string.IsNullOrWhiteSpace(ip)
+                ? new MkMachineResult(name, $"{label}: ยังไม่ได้ตั้ง IP — ไปตั้งที่ Setting → Inkjet Setting")
+                : new MkMachineResult(name, await SendToOneMkAsync(ip, config, label)));
         }
 
         if (machines.Count == 0)
