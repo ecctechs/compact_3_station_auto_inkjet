@@ -148,20 +148,19 @@ public partial class MainShellForm : AntdUI.Window
         var raw = Services.CustomSettingsManager.Read("MENU_LEVEL", "1");
         int.TryParse(raw, out var level);
 
-        var allTabs = new[] { btnInputOrder, btnOrderList, btnEditPattern, btnTransfer, btnSetting };
-        var allPages = new Control[] { scanBarcodePage, orderListPage, editPatternPage, transferListPage, settingPage };
+        var allTabs = new[] { btnInputOrder, btnOrderList, btnEditPattern, btnSetting };
+        var allPages = new Control[] { scanBarcodePage, orderListPage, editPatternPage, settingPage };
 
         bool[] visible = level switch
         {
-            0 => [true, false, false, false, true],
-            1 => [false, true, true, false, true],
+            0 => [true, false, false, true],
+            1 => [false, true, true, true],
             // ST3 ใช้หน้า Order List หน้าเดียวกับ ST1 แต่กรองงานคนละชุด
             // (กฎอยู่ที่ MarkingMethodService — ST3 เห็นเฉพาะ marking 10 / 11 / 12
             //  รวมถึงรหัสที่ลงท้ายด้วย 3 ซึ่งเดินเส้นทางเดียวกับ 1 เช่น 32 เท่ากับ 12)
-            // หน้า Transfer เดิมถูกปิด ไม่ได้ลบ เปิดคืนได้ด้วยการสลับสองค่าล่างนี้
-            3 => [false, true, false, false, true],    // ST3 — Order List + Setting
-            9 => [false, false, false, false, true],   // โหมดทดสอบหน้างาน — เข้าได้เฉพาะ Setting
-            _ => [true, true, true, true, true],
+            3 => [false, true, false, true],    // ST3 — Order List + Setting
+            9 => [false, false, false, true],   // โหมดทดสอบหน้างาน — เข้าได้เฉพาะ Setting
+            _ => [true, true, true, true],
         };
 
         // Edit Pattern is hidden at every menu level. Kept as one override rather
@@ -222,11 +221,5 @@ public partial class MainShellForm : AntdUI.Window
     {
         settingPage.BringToFront();
         SetActiveTab(btnSetting);
-    }
-
-    private void btnTransfer_Click(object sender, EventArgs e)
-    {
-        transferListPage.BringToFront();
-        SetActiveTab(btnTransfer);
     }
 }

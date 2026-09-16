@@ -358,22 +358,6 @@ public class ApiClient
         }
     }
 
-    public async Task<(bool ok, string? error)> SendToSt1Async(int jobId)
-    {
-        try
-        {
-            var response = await _http.PatchAsync($"/job/{jobId}/send-to-st1", null);
-            var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
-                return (false, $"[{(int)response.StatusCode}] {body}");
-            return (true, null);
-        }
-        catch (Exception ex)
-        {
-            return (false, ex.Message);
-        }
-    }
-
     /// <summary>
     /// ตั้ง/ล้างคำขอให้ ST1 ส่งคำสั่งแทน — ST3 ตั้งพร้อมชื่อโปรแกรมที่เลือกไว้แล้ว
     /// ST1 ล้างทิ้ง (<paramref name="requested"/> = false) ทุกครั้งที่ลงมือส่งเสร็จ

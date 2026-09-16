@@ -46,7 +46,6 @@ public partial class OrderDetailUserControl : UserControl
     private string _jobLabel = "";
 
     private readonly bool _isDevMode;
-    private bool _transferMode;
     private IaiClampSettingDto? _origIai;
 
     public event EventHandler? CloseRequested;
@@ -68,7 +67,6 @@ public partial class OrderDetailUserControl : UserControl
         btnSendMk.Click += async (_, _) => await SendToMkAsync();
         btnSendUv1.Click += async (_, _) => await SendToUvAsync(1);
         btnSendUv2.Click += async (_, _) => await SendToUvAsync(2);
-        btnSendToSt1.Click += async (_, _) => await SendToSt1Async();
         btnTestPlc.Click += async (_, _) => await TestPlcAsync();
 
         btnFlowPlate.Click += (_, _) => OpenFlowRefImages(btnFlowPlate);
@@ -146,8 +144,6 @@ public partial class OrderDetailUserControl : UserControl
         new AntdUI.Column("Field", "Field", AntdUI.ColumnAlign.Center) { Width = "30%" },
         new AntdUI.Column("Value", "Value", AntdUI.ColumnAlign.Left) { Width = "70%" },
     ];
-
-    public void SetTransferMode() => _transferMode = true;
 
     /// <summary>
     /// ชื่อเรียกงานบนหัวจอ — "Job #1 · 07/09/26"
@@ -622,13 +618,6 @@ public partial class OrderDetailUserControl : UserControl
         btnSendUv1.Enabled = false;
         btnSendUv2.Enabled = false;
 
-        if (_transferMode)
-        {
-            btnSendToSt1.Visible = true;
-            btnSendToSt1.Enabled = true;
-            return;
-        }
-
         if (_currentStep < _sendSteps.Count)
         {
             var step = _sendSteps[_currentStep];
@@ -977,39 +966,6 @@ public partial class OrderDetailUserControl : UserControl
                 btnTestPlc.Text = originalText;
                 btnTestPlc.Enabled = true;
             }
-        }
-    }
-
-    private async Task SendToSt1Async()
-    {
-        if (_api == null) return;
-
-        if (!Confirm.Ask(this, "ยืนยันส่ง ST1",
-                $"ส่ง {JobText()} ไป Station 1\n\nยืนยันหรือไม่?"))
-            return;
-
-        btnSendToSt1.Enabled = false;
-        btnSendToSt1.Text = "กำลังส่ง...";
-        try
-        {
-            var (ok, err) = await _api.SendToSt1Async(_jobId);
-            if (ok)
-            {
-                btnSendToSt1.Text = "✓ ส่งแล้ว";
-                Notify.Success(this, $"ส่ง {JobText()} ไป ST1 แล้ว");
-            }
-            else
-            {
-                btnSendToSt1.Text = "ส่งไป ST1";
-                btnSendToSt1.Enabled = true;
-                Notify.ErrorModal(this, "ส่งไม่สำเร็จ", err ?? "Unknown error");
-            }
-        }
-        catch (Exception ex)
-        {
-            btnSendToSt1.Text = "ส่งไป ST1";
-            btnSendToSt1.Enabled = true;
-            Notify.ErrorModal(this, "ส่งไม่สำเร็จ", ex.Message);
         }
     }
 

@@ -57,8 +57,6 @@ internal sealed partial class OrderDetailDialog : AntdUI.BorderlessForm
     /// opening the popup feel slow.
     /// </para>
     /// </summary>
-    public void SetTransferMode() => detailPage.SetTransferMode();
-
     public void LoadDetail(ResolvedJobResponse resolved, ApiClient? api = null)
     {
         SuspendTree(detailPage);

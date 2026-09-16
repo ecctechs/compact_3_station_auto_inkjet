@@ -83,7 +83,6 @@ public static class LanguageService
         ["Input Order"] = "รับออเดอร์",
         ["Order List"] = "รายการออเดอร์",
         ["Edit Pattern"] = "แก้ไขแพทเทิร์น",
-        ["Transfer ST1"] = "ส่งต่อ ST1",
         ["Setting"] = "ตั้งค่า",
 
         // ── ปุ่มที่ใช้ร่วมกันทั้งระบบ ──
@@ -114,7 +113,7 @@ public static class LanguageService
         ["History"] = "ประวัติ",
         // "ERP MFG" ไม่แปลโดยตั้งใจ เป็นชื่อเรียกในระบบ ERP เหมือนรหัสเครื่อง
         ["Lot Number"] = "เลขล็อต",
-        ["Order No."] = "เลขออเดอร์",   // ยังใช้ที่หน้า Transfer ST1
+        ["Order No."] = "เลขออเดอร์",
         ["Customer"] = "ลูกค้า",
         ["Type"] = "ประเภท",
         ["Qty"] = "จำนวน",
