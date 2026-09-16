@@ -53,6 +53,9 @@ public partial class OrderDetailUserControl : UserControl
     public OrderDetailUserControl()
     {
         InitializeComponent();
+
+        // แถบเลื่อนของตารางต้องอ้วนพอให้จิ้มด้วยนิ้วได้บนจอสัมผัส
+        Theme.ScrollStyles.Touch(this);
         ConfigureColumns();
 
         var rawLevel = CustomSettingsManager.Read("MENU_LEVEL", "1");

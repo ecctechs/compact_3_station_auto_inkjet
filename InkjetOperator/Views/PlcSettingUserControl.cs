@@ -22,6 +22,9 @@ public partial class PlcSettingUserControl : UserControl
     public PlcSettingUserControl()
     {
         InitializeComponent();
+
+        // แถบเลื่อนของตารางต้องอ้วนพอให้จิ้มด้วยนิ้วได้บนจอสัมผัส
+        Theme.ScrollStyles.Touch(this);
         _api = new ApiClient(BuildBaseUrl());
         ConfigurePlcColumns();
         SetupEvents();

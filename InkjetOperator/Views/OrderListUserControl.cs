@@ -33,6 +33,9 @@ public partial class OrderListUserControl : UserControl
     public OrderListUserControl()
     {
         InitializeComponent();
+
+        // แถบเลื่อนของตารางต้องอ้วนพอให้จิ้มด้วยนิ้วได้บนจอสัมผัส
+        Theme.ScrollStyles.Touch(this);
         ConfigureColumns();
         SetupEvents();
     }
