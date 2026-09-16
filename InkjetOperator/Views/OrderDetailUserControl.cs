@@ -591,8 +591,25 @@ public partial class OrderDetailUserControl : UserControl
 
     }
 
+    /// <summary>งานนี้มีขั้นตอนนี้อยู่ในแผนไหม — ชื่อขั้นมาจาก MarkingMethodService</summary>
+    private bool HasStep(string step) =>
+        _sendSteps.Any(s => string.Equals(s, step, StringComparison.OrdinalIgnoreCase));
+
     private void ApplyStepButtons()
     {
+        // ปุ่มส่งมือเหลือไว้เฉพาะโหมดทดสอบ
+        //
+        // การส่งงานจริงเป็นหน้าที่ของปุ่มเริ่มงานหน้า Order List กับปุ่มกดหน้างาน
+        // ซึ่งเดินตามลำดับขั้นของ marking method ให้เอง ปุ่มพวกนี้กดข้ามลำดับได้
+        // เปิดไว้ในโหมดใช้งานปกติจึงเสี่ยงที่จะส่งซ้ำหรือส่งข้ามขั้น แล้วพ่นซ้ำ
+        // ลงชิ้นงานจริง
+        //
+        // ในโหมดทดสอบก็โชว์เฉพาะขั้นที่งานนี้มีจริง งานที่ไม่ผ่าน UV1 จะได้ไม่มี
+        // ปุ่ม UV1 ค้างอยู่ให้กดผิดเครื่อง
+        btnSendMk.Visible = _isDevMode && HasStep("MK");
+        btnSendUv1.Visible = _isDevMode && HasStep("UV1");
+        btnSendUv2.Visible = _isDevMode && HasStep("UV2");
+
         if (_isDevMode)
         {
             btnSendMk.Enabled = true;
@@ -605,19 +622,8 @@ public partial class OrderDetailUserControl : UserControl
         btnSendUv1.Enabled = false;
         btnSendUv2.Enabled = false;
 
-        // งานขั้นตอนเดียว (00 01 10 02 20 22) สั่งจากปุ่มเริ่มงานในหน้า Order List
-        // ได้ครบวงจรแล้ว จึงไม่ต้องมีปุ่มส่งมือให้กดซ้ำ ส่วนงานสองขั้นตอน
-        // (11 12 32) ยังต้องกดส่งขั้นที่สองเอง จนกว่า push button จะใช้งานได้
-        bool manualSend = _sendSteps.Count > 1;
-        btnSendMk.Visible = manualSend;
-        btnSendUv1.Visible = manualSend;
-        btnSendUv2.Visible = manualSend;
-
         if (_transferMode)
         {
-            btnSendMk.Visible = false;
-            btnSendUv1.Visible = false;
-            btnSendUv2.Visible = false;
             btnSendToSt1.Visible = true;
             btnSendToSt1.Enabled = true;
             return;
