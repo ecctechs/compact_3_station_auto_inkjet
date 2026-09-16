@@ -5,9 +5,32 @@ namespace InkjetOperator;
 
 static class Program
 {
+    /// <summary>
+    /// ชื่อล็อกที่บอกว่าโปรแกรมเปิดอยู่แล้ว — ตั้งชื่อเฉพาะเจาะจงกันไปชนกับโปรแกรมอื่น
+    /// </summary>
+    private const string SingleInstanceName = "CompactInkjet.Operator.SingleInstance";
+
     [STAThread]
     static void Main()
     {
+        // เปิดได้ทีละตัวเท่านั้น
+        //
+        // ไอคอนบนเดสก์ท็อปกดรัว ๆ ได้ง่ายมากบนจอสัมผัส และการเปิดโปรแกรมใช้เวลา
+        // หลายวินาที (รอ backend ตอบก่อนถึงจะขึ้นหน้าจอ) ระหว่างนั้นไม่มีอะไรบอกว่า
+        // กำลังเปิดอยู่ พนักงานจึงกดซ้ำ แล้วได้โปรแกรมซ้อนกันหลายตัว
+        //
+        // ตัวที่สองเป็นปัญหาจริง ไม่ใช่แค่รก — ทั้งสองตัวเฝ้าบิตปุ่มกดหน้างานคนละ
+        // ตัว กดปุ่มครั้งเดียวจึงถูกนับสองรอบ และตัวที่สองยังไปแย่งเปิด backend
+        // ทับตัวแรกอีก
+        //
+        // ปล่อยล็อกตอน Main จบ ไม่ว่าจะปิดตามปกติหรือหลุดกลางคัน
+        using var single = new Mutex(initiallyOwned: true, SingleInstanceName, out bool isFirst);
+        if (!isFirst)
+        {
+            BringRunningInstanceToFront();
+            return;
+        }
+
         // Must be the very first call. It applies <ApplicationHighDpiMode>,
         // <ApplicationDefaultFont>, EnableVisualStyles() and
         // SetCompatibleTextRenderingDefault(false) from InkjetOperator.csproj.
@@ -29,6 +52,52 @@ static class Program
         StartBackendIfNeeded();
 
         Application.Run(new Views.MainShellForm());
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+    /// <summary>คืนหน้าต่างจากที่พับไว้ที่แถบงาน ถ้าไม่ได้พับอยู่ก็ไม่มีผลอะไร</summary>
+    private const int SW_RESTORE = 9;
+
+    /// <summary>
+    /// ดึงตัวที่เปิดอยู่แล้วขึ้นมาแทนการเปิดตัวใหม่
+    ///
+    /// <para>
+    /// ต้องทำให้เห็นอะไรสักอย่าง ไม่งั้นพนักงานกดไอคอนแล้วเงียบสนิทจะนึกว่าไม่ติด
+    /// แล้วกดซ้ำอีก — ปลุกตัวเดิมขึ้นมาคือคำตอบที่ตรงกับสิ่งที่เขาต้องการอยู่แล้ว
+    /// </para>
+    /// <para>
+    /// หาไม่เจอก็เงียบไป ดีกว่าเด้งกล่องบอกว่าเปิดอยู่แล้วซึ่งต้องกดปิดอีกที
+    /// </para>
+    /// </summary>
+    private static void BringRunningInstanceToFront()
+    {
+        try
+        {
+            using var me = System.Diagnostics.Process.GetCurrentProcess();
+            foreach (var other in System.Diagnostics.Process.GetProcessesByName(me.ProcessName))
+            {
+                using (other)
+                {
+                    if (other.Id == me.Id) continue;
+
+                    var window = other.MainWindowHandle;
+                    if (window == IntPtr.Zero) continue;
+
+                    ShowWindow(window, SW_RESTORE);
+                    SetForegroundWindow(window);
+                    return;
+                }
+            }
+        }
+        catch
+        {
+            // อ่านรายการโปรเซสไม่ได้ก็ไม่ต้องทำอะไร ตัวที่สองปิดตัวเองอยู่ดี
+        }
     }
 
     /// <summary>
