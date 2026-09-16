@@ -210,6 +210,26 @@ internal static class Notify
     public static ResultLine Note(string text) => new(ResultKind.Info, text);
 
     /// <summary>
+    /// แปลงผลการส่ง MK เป็นบรรทัดผล — อยู่ที่นี่ที่เดียวเพราะทั้งหน้า Order List
+    /// และ Order Detail ต้องแสดงเรื่องเดียวกันด้วยถ้อยคำเดียวกัน
+    ///
+    /// <para>
+    /// เครื่องที่ไม่มีงานแล้วสั่งหยุดไม่ได้ ขึ้นเป็น "คำเตือน" ไม่ใช่ "ล้มเหลว" —
+    /// งานถูกส่งไปเรียบร้อยแล้ว แต่ต้องบอกให้ไปดูด้วยตาว่าเครื่องนั้นหยุดจริง
+    /// เพราะถ้าสายหลุดขณะเครื่องยังเปิด มันจะพิมพ์ของงานก่อนหน้าต่อ
+    /// </para>
+    /// </summary>
+    public static List<ResultLine> MkLines(IEnumerable<Services.MkMachineResult> machines) =>
+        machines.Select(m => m switch
+        {
+            { Ok: true, Suspended: true } => Ok($"{m.Name} — ไม่มีงาน สั่งหยุดพิมพ์แล้ว"),
+            { Ok: true } => Ok($"{m.Name} — ส่งสำเร็จ"),
+            { Suspended: true } => Careful(
+                $"{m.Name} — ไม่มีงานอยู่แล้ว แต่สั่งหยุดพิมพ์ไม่ได้ · ไปดูว่าเครื่องหยุดจริงไหม\n{m.Error}"),
+            _ => Bad($"{m.Name} — {m.Error}"),
+        }).ToList();
+
+    /// <summary>
     /// รวมผลหลายรายการไว้ในกล่องเดียว แต่ละบรรทัดมีไอคอนบอกระดับของตัวเอง
     ///
     /// ใช้ตอนที่งานเดียวแตะหลายเครื่อง เช่นส่ง MK สองเครื่องแล้วสำเร็จหนึ่งพลาดหนึ่ง

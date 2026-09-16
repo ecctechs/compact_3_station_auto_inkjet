@@ -704,11 +704,7 @@ public partial class OrderDetailUserControl : UserControl
             // ของตัวเองอีกชุด แก้กฎการส่งทีหนึ่งต้องไล่แก้สองที่ และพลาดไปแล้วหนึ่งรอบ
             var mk = await JobSendService.SendMkAsync(_pattern);
 
-            var lines = mk.Machines
-                .Select(m => m.Ok
-                    ? Notify.Ok($"{m.Name} — {(m.Suspended ? "ไม่มีงาน สั่งหยุดพิมพ์แล้ว" : "ส่งสำเร็จ")}")
-                    : Notify.Bad($"{m.Name} — {m.Error}"))
-                .ToList();
+            var lines = Notify.MkLines(mk.Machines);
 
             if (lines.Count == 0)
                 lines.Add(Notify.Careful("ไม่มีเครื่อง MK ที่ตั้งค่า IP ไว้"));

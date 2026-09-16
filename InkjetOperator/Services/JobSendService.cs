@@ -87,6 +87,7 @@ public static class JobSendService
     {
         var machines = new List<MkMachineResult>();
         bool anySent = false;
+        bool workFailed = false;
 
         foreach (var (ipKey, nameKey, fallbackName, ordinal, label) in MkMachines)
         {
@@ -106,26 +107,36 @@ public static class JobSendService
 
             if (string.IsNullOrWhiteSpace(ip))
             {
+                workFailed = true;
                 machines.Add(new MkMachineResult(
                     name, $"{label}: ยังไม่ได้ตั้ง IP — ไปตั้งที่ Setting → Inkjet Setting"));
                 continue;
             }
 
             var error = await SendToOneMkAsync(ip, config!, label);
-            if (error == null) anySent = true;
+            if (error == null) anySent = true; else workFailed = true;
             machines.Add(new MkMachineResult(name, error));
         }
 
         if (machines.Count == 0)
             return new MkSendResult(SendStatus.NotConfigured, machines);
 
-        // สั่งหยุดทุกเครื่องแล้วไม่ได้ส่งงานให้ใครเลย = ขั้นตอนนี้ยังไม่ได้ทำ
-        // ต้องไม่ถูกบันทึกว่าส่งสำเร็จ ไม่งั้นงานจะเดินไปขั้นถัดไปทั้งที่ยังไม่ได้พ่น
-        if (!anySent && machines.All(m => m.Suspended))
+        // ไม่มีเครื่องไหนได้รับงานเลย = ขั้นตอนนี้ยังไม่ได้ทำ ต้องไม่ถูกบันทึกว่าสำเร็จ
+        // ไม่งั้นงานจะเดินไปขั้นถัดไปทั้งที่ยังไม่ได้พ่นอะไรลงชิ้นงาน
+        if (!anySent)
             return new MkSendResult(SendStatus.NotConfigured, machines);
 
+        // ตัดสินสำเร็จ/ล้มเหลวจากเฉพาะเครื่องที่ "มีงาน" เท่านั้น
+        //
+        // การสั่งหยุดเครื่องที่ไม่มีงานเป็นการกันพลาด ไม่ใช่ตัวงาน เครื่องที่ปิดอยู่
+        // หรือถอดสายไว้จะสั่งหยุดไม่ได้เป็นธรรมดา ถ้านับรวมเป็นล้มเหลวด้วย งานที่ใช้
+        // เครื่องเดียวจะเดินไม่ได้เลยตลอดกะที่อีกเครื่องไม่ได้เปิด ทั้งที่เครื่องที่
+        // ต้องทำงานรับข้อมูลครบและกำลังพิมพ์อยู่แล้ว
+        //
+        // ยังฟ้องเป็นคำเตือนอยู่ ผู้เรียกต้องแสดงให้เห็น เพราะกรณีสายหลุดขณะเครื่อง
+        // ยังเปิดอยู่ เครื่องนั้นจะค้างพิมพ์ของงานก่อนหน้าต่อโดยเราสั่งหยุดไม่ได้
         return new MkSendResult(
-            machines.All(m => m.Ok) ? SendStatus.Ok : SendStatus.Failed,
+            workFailed ? SendStatus.Failed : SendStatus.Ok,
             machines);
     }
 
