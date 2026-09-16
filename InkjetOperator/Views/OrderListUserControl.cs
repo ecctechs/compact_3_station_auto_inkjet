@@ -728,8 +728,14 @@ public partial class OrderListUserControl : UserControl
         // การ์ดหมุนชุดเดียวกับตอน ST3 ฝากงานให้ ST1 — การส่งเข้าเครื่องกินเวลา
         // หลายวินาที (ต่อสาย · หยุดเครื่อง · ส่งทีละบล็อก) ไม่มีอะไรบอกเลยว่า
         // กำลังทำอยู่ พนักงานจะกดซ้ำเพราะคิดว่าเครื่องค้าง
+        // บอกสถานีของเครื่องปลายทางไปด้วย ชื่อขั้นอย่างเดียว (MK / UV1 / UV2)
+        // ไม่ได้บอกว่าต้องไปยืนรอที่เครื่องไหน ซึ่งเป็นสิ่งที่คนกดต้องรู้ต่อทันที
+        var atStation = machineStation > 0
+            ? $" ({JobStationService.Label(machineStation)})"
+            : "";
+
         _sending = true;
-        ShowSending($"กำลังส่งไปที่ {step} · {JobName(jobId)}");
+        ShowSending($"กำลังส่งไปที่ {step}{atStation} · {JobName(jobId)}");
 
         List<Notify.ResultLine> lines;
         try
