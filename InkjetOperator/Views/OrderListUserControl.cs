@@ -725,19 +725,28 @@ public partial class OrderListUserControl : UserControl
                 + $"ส่งไป {step} (ST{machineStation}){next}\n\nยืนยันหรือไม่?"))
             return;
 
+        // การ์ดหมุนชุดเดียวกับตอน ST3 ฝากงานให้ ST1 — การส่งเข้าเครื่องกินเวลา
+        // หลายวินาที (ต่อสาย · หยุดเครื่อง · ส่งทีละบล็อก) ไม่มีอะไรบอกเลยว่า
+        // กำลังทำอยู่ พนักงานจะกดซ้ำเพราะคิดว่าเครื่องค้าง
         _sending = true;
+        ShowSending($"กำลังส่งไปที่ {step} · {JobName(jobId)}");
+
+        List<Notify.ResultLine> lines;
         try
         {
-            var lines = await SendStepAsync(jobId, step, resolved);
-            if (IsDisposed) return;
-
-            if (lines.Count > 0)
-                Notify.Result(this, $"เริ่มงาน {JobName(jobId)}", lines);
+            lines = await SendStepAsync(jobId, step, resolved);
         }
         finally
         {
             _sending = false;
+            if (!IsDisposed) ShowSending(null);
         }
+
+        if (IsDisposed) return;
+
+        // เก็บการ์ดหมุนก่อนค่อยโชว์ผล ไม่งั้นกล่องผลจะไปซ้อนอยู่บนการ์ดที่ยังหมุนอยู่
+        if (lines.Count > 0)
+            Notify.Result(this, $"เริ่มงาน {JobName(jobId)}", lines);
 
         if (!IsDisposed) await RefreshDataAsync(force: true);
     }
