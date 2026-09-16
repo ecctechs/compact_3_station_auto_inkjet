@@ -14,6 +14,9 @@ public partial class OrderDetailUserControl : UserControl
     private PatternDetail? _pattern;
     private string _barcode = "";
     private bool _isSwapped;
+
+    /// <summary>กำลังบันทึก pattern อยู่ — กันกดปุ่มที่แก้ pattern ซ้อนกันระหว่างนั้น</summary>
+    private bool _savingPattern;
     private List<string> _sendSteps = [];
     private int _currentStep;
     private int _jobId;
@@ -59,9 +62,9 @@ public partial class OrderDetailUserControl : UserControl
         // หน้าตาปุ่มปิดมาจากที่เดียวกับทุกหน้า — designer คุมแค่ตำแหน่งกับขนาด
         ButtonStyles.Close(btnDetailClose);
         btnDetailClose.Click += (_, _) => CloseRequested?.Invoke(this, EventArgs.Empty);
-        btnMkSwap.Click += (_, _) => SwapMkData();
-        picMk1Abc.Click += (_, _) => ToggleAbc(1, picMk1Abc);
-        picMk2Abc.Click += (_, _) => ToggleAbc(2, picMk2Abc);
+        btnMkSwap.Click += async (_, _) => await SwapMkDataAsync();
+        picMk1Abc.Click += async (_, _) => await ToggleAbcAsync(1, picMk1Abc);
+        picMk2Abc.Click += async (_, _) => await ToggleAbcAsync(2, picMk2Abc);
         btnSendMk.Click += async (_, _) => await SendToMkAsync();
         btnSendUv1.Click += async (_, _) => await SendToUvAsync(1);
         btnSendUv2.Click += async (_, _) => await SendToUvAsync(2);
@@ -285,7 +288,46 @@ public partial class OrderDetailUserControl : UserControl
 
     private static int Flip(int o) => o == 1 ? 2 : o == 2 ? 1 : o;
 
-    private void SwapMkData()
+    /// <summary>
+    /// สลับว่าโปรแกรมไหนไปเข้าเครื่องไหน แล้วบันทึกลงฐานข้อมูล
+    ///
+    /// <para>
+    /// ต้องบันทึกจริง ไม่ใช่เก็บไว้ในจอ เพราะปุ่มเริ่มงานย้ายไปอยู่หน้า Order List
+    /// แล้ว และหน้านั้นอ่าน pattern ใหม่จาก backend ทุกครั้งที่สั่งส่ง ถ้าเก็บไว้
+    /// แค่ในหน้านี้ กดสลับไปก็ไม่มีผลอะไรเลย
+    /// </para>
+    /// <para>
+    /// บันทึกไม่ผ่านก็สลับกลับทันที จอจะได้ตรงกับของที่อยู่ในฐานข้อมูลจริงเสมอ
+    /// ไม่ใช่ค้างโชว์ค่าที่ไม่ได้ถูกบันทึก แล้วพนักงานเข้าใจว่าสลับไปแล้ว
+    /// </para>
+    /// </summary>
+    private async Task SwapMkDataAsync()
+    {
+        if (_pattern == null || _savingPattern) return;
+
+        FlipMkOrdinals();
+
+        var error = await SavePatternAsync();
+        if (error == null) return;
+
+        FlipMkOrdinals();
+        Notify.ErrorModal(this, "สลับเครื่องไม่สำเร็จ",
+            $"ยังไม่ได้บันทึกลงฐานข้อมูล จอจึงถูกปรับกลับเป็นค่าเดิม\n\n{error}");
+    }
+
+    /// <summary>
+    /// สลับ ordinal ของทั้ง inkjet และ servo แล้ววาดจอใหม่
+    ///
+    /// ordinal คือตัวชี้ว่าไปเครื่องไหน — <c>JobSendService.SendMkAsync</c> หยิบ
+    /// config ตาม ordinal (1 = MK-058, 2 = MK-059) การสลับ ordinal จึงเท่ากับ
+    /// สลับปลายทางจริง ไม่ใช่แค่สลับที่โชว์บนจอ
+    ///
+    /// <para>
+    /// ป้ายชื่อเครื่องบนหัวคอลัมน์ไม่ต้องสลับตาม เพราะคอลัมน์ซ้ายผูกกับ ordinal 1
+    /// ซึ่งคือ MK-058 เสมอ เดิมโค้ดสลับป้ายด้วย ป้ายเลยบอกเครื่องผิดตัวหลังกดสลับ
+    /// </para>
+    /// </summary>
+    private void FlipMkOrdinals()
     {
         if (_pattern == null) return;
 
@@ -305,13 +347,36 @@ public partial class OrderDetailUserControl : UserControl
             ? DesignTokens.Warning
             : DesignTokens.DarkNavy;
 
-        var mk1Name = CustomSettingsManager.Read("MK058_NAME", "MK-058");
-        var mk2Name = CustomSettingsManager.Read("MK059_NAME", "MK-059");
-
-        lblMk1Chip.Text = _isSwapped ? mk2Name : mk1Name;
-        lblMk2Chip.Text = _isSwapped ? mk1Name : mk2Name;
-
         FillMkSection(_pattern);
+    }
+
+    /// <summary>
+    /// บันทึก pattern ที่ถืออยู่ในหน้านี้ลง backend — คืนข้อความปัญหา หรือ null เมื่อสำเร็จ
+    ///
+    /// ล็อกปุ่มที่แก้ pattern ไว้ระหว่างบันทึก กันกดรัวจนคำสั่งสองชุดไปถึง backend
+    /// สลับกันแล้วได้ผลลัพธ์ที่ไม่ตรงกับที่เห็นบนจอ
+    /// </summary>
+    private async Task<string?> SavePatternAsync()
+    {
+        if (_pattern == null) return "ยังไม่มีข้อมูล pattern ของงานนี้";
+        if (_api == null) return "ยังไม่ได้เชื่อมต่อ backend";
+
+        _savingPattern = true;
+        btnMkSwap.Enabled = false;
+        picMk1Abc.Enabled = false;
+        picMk2Abc.Enabled = false;
+        try
+        {
+            var (ok, error) = await _api.UpdatePatternAsync(_pattern.Id, _pattern);
+            return ok ? null : error ?? "บันทึกไม่สำเร็จ";
+        }
+        finally
+        {
+            _savingPattern = false;
+            btnMkSwap.Enabled = true;
+            picMk1Abc.Enabled = true;
+            picMk2Abc.Enabled = true;
+        }
     }
 
     private void SortPatternByOrdinal()
@@ -327,15 +392,22 @@ public partial class OrderDetailUserControl : UserControl
 
     /// <summary>
     /// สลับทิศทางการพิมพ์ของเครื่อง MK ตัวนั้น ระหว่างปกติกับกลับหัว 180 องศา
+    /// แล้วบันทึกลงฐานข้อมูล
     ///
-    /// เขียนลง InkjetConfig ที่ถืออยู่ในหน้านี้ ตอนกดส่ง MK ค่าจะถูกใส่ไปในคำสั่ง
-    /// FM เอง ไม่ได้บันทึกกลับ backend — กดแล้วมีผลกับการส่งรอบนี้เท่านั้น เปิด
-    /// Order Detail ใหม่จะกลับไปใช้ค่าที่เก็บไว้ในดาต้าเบส เหมือนโปรแกรมเดิมที่
-    /// อ่านมุมจากบนจอตอนกดส่ง ไม่ได้เขียนกลับลงไฟล์ตั้งต้น
+    /// <para>
+    /// ค่านี้ถูกใส่ไปในคำสั่ง FM ตอนส่งเข้าเครื่อง และคนกดส่งคือหน้า Order List
+    /// ซึ่งอ่าน pattern ใหม่จาก backend จึงต้องบันทึกจริง เดิมเก็บไว้แค่ในหน้านี้
+    /// ตอนที่ปุ่มเริ่มงานยังอยู่ที่นี่ พอย้ายปุ่มไปหน้า Order List แล้วการกดปุ่มนี้
+    /// ก็ไม่มีผลกับงานที่ส่งออกไปอีกเลย
+    /// </para>
+    /// <para>
+    /// บันทึกไม่ผ่านก็พลิกกลับทันที รูป ABC บนจอจะได้ตรงกับทิศทางที่จะถูกส่งจริง
+    /// — พิมพ์กลับหัวผิดคืองานเสียทั้งล็อต
+    /// </para>
     /// </summary>
-    private void ToggleAbc(int ordinal, PictureBox box)
+    private async Task ToggleAbcAsync(int ordinal, PictureBox box)
     {
-        if (_pattern == null) return;
+        if (_pattern == null || _savingPattern) return;
 
         var config = _pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
         if (config == null)
@@ -344,6 +416,18 @@ public partial class OrderDetailUserControl : UserControl
             return;
         }
 
+        FlipDirection(config, box);
+
+        var error = await SavePatternAsync();
+        if (error == null) return;
+
+        FlipDirection(config, box);
+        Notify.ErrorModal(this, "สลับทิศทางพิมพ์ไม่สำเร็จ",
+            $"ยังไม่ได้บันทึกลงฐานข้อมูล จอจึงถูกปรับกลับเป็นค่าเดิม\n\n{error}");
+    }
+
+    private static void FlipDirection(InkjetConfigDto config, PictureBox box)
+    {
         config.Direction = MkCompactAdapter.IsFlipped(config.Direction)
             ? MkCompactAdapter.DirectionNormal
             : MkCompactAdapter.DirectionFlipped;

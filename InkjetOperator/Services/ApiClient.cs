@@ -112,6 +112,37 @@ public class ApiClient
         }
     }
 
+    /// <summary>
+    /// บันทึก pattern ของงานทับของเดิม
+    ///
+    /// <para>
+    /// ใช้ตอนพนักงานแก้ค่าที่หน้า Order Detail เช่นสลับเครื่อง (SWAP) หรือสลับ
+    /// ทิศทางพิมพ์ (ABC) ค่าต้องลงฐานข้อมูลจริง เพราะคนกดส่งงานคือหน้า Order List
+    /// ซึ่งอ่าน pattern ใหม่จาก backend ทุกครั้ง ไม่ได้ใช้ค่าที่ค้างอยู่ในจอ
+    /// </para>
+    /// <para>
+    /// ฝั่ง backend ลบ inkjet_configs / text_blocks / servo_configs ของ pattern นี้
+    /// ทิ้งแล้วสร้างใหม่จากที่ส่งไป จึงต้องส่ง <see cref="PatternDetail"/> ไปทั้งก้อน
+    /// ส่งไปแค่บางส่วนแล้วส่วนที่ไม่ได้ส่งจะหายไปด้วย
+    /// </para>
+    /// </summary>
+    public async Task<(bool ok, string? error)> UpdatePatternAsync(int patternId, PatternDetail pattern)
+    {
+        try
+        {
+            var response = await _http.PutAsJsonAsync(
+                $"/pattern/update/{patternId}", pattern, JsonOptions);
+            var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+                return (false, $"[{(int)response.StatusCode}] {body}");
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
+    }
+
     /// <summary>บันทึกระยะแคลมป์ของงาน — job เดิมเรียกซ้ำจะทับแถวเดิม ไม่สร้างซ้ำ</summary>
     public async Task<(bool ok, string? error)> CreateIaiAsync(IaiCreateRequest request)
     {
