@@ -677,6 +677,30 @@ public partial class OrderListUserControl : UserControl
     /// ส่วน "21" เป็นรหัสที่ไม่มีอยู่จริง กดเริ่มไม่ได้ ให้ตกไปใช้ปุ่มจบงานแทน
     /// </para>
     /// </summary>
+    /// <summary>
+    /// งานที่ยังไม่มีใครเริ่ม และสถานีนี้ไม่ใช่คนที่มีสิทธิ์เริ่ม = ยังไม่ถึงตาสถานีนี้
+    ///
+    /// <para>
+    /// เกิดที่ ST3 กับงาน 11 และ 12 (รวม 13 31 32 33) ซึ่ง ST3 เห็นในตารางแต่ต้อง
+    /// ให้ ST1 เป็นคนเริ่ม เดิมพอ <see cref="CanStart"/> คืน false งานพวกนี้จะตกไป
+    /// เข้าเงื่อนไขปุ่มจบงานทันที กลายเป็นกดจบงานที่ยังไม่เคยพ่นอะไรลงชิ้นงานได้
+    /// </para>
+    /// <para>
+    /// รหัสที่ไม่มีอยู่จริง (21) ไม่เข้าข่ายนี้โดยตั้งใจ — มันกดเริ่มไม่ได้อยู่แล้ว
+    /// และต้องเหลือปุ่มจบงานไว้เป็นทางเคลียร์ออกจากตาราง
+    /// </para>
+    /// </summary>
+    private static bool NotMyTurnYet(PrintJob job)
+    {
+        bool started = job.Commands?.Any(c => c.Success) == true;
+        if (started) return false;
+
+        var method = job.PlanRouting?.MarkingMethod;
+        if (MarkingMethodService.Resolve(method).NoCase) return false;
+
+        return !MarkingMethodService.CanStartAt(StationService.Current, method);
+    }
+
     private static bool CanStart(PrintJob job)
     {
         if (!string.Equals(job.Status, "Waiting", StringComparison.OrdinalIgnoreCase))
@@ -1533,6 +1557,10 @@ public partial class OrderListUserControl : UserControl
             {
                 buttons.Add(new AntdUI.CellButton("start", "เริ่มงาน", AntdUI.TTypeMini.Primary)
                 { Radius = 6 });
+            }
+            else if (NotMyTurnYet(job))
+            {
+                // ยังไม่ถึงตาสถานีนี้ — ไม่ใส่ปุ่มข้อความ เหลือแค่ยกเลิกกับดูรายละเอียด
             }
             else if (MarkingMethodService.CanCompleteAt(
                          StationService.Current, job.PlanRouting?.MarkingMethod))
