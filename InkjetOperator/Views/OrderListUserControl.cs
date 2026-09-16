@@ -218,9 +218,22 @@ public partial class OrderListUserControl : UserControl
     /// ตัวเฝ้า (/job/getAll ส่ง commands กับ plan_routing มาให้อยู่แล้ว)
     /// </para>
     /// </summary>
-    private (PrintJob Job, string Step)? PushTarget()
+    private (PrintJob Job, string Step)? PushTarget() => PushTargets().FirstOrDefault();
+
+    /// <summary>
+    /// งานที่รอปุ่มกดอยู่ทั้งหมด ไม่ใช่แค่ตัวแรก
+    ///
+    /// <para>
+    /// ต้องได้ทั้งหมดเพราะสองล็อตรออยู่พร้อมกันได้ เช่น marking 11 เพิ่งผ่าน UV1
+    /// ขณะที่ marking 12 เพิ่งผ่าน MK ทั้งคู่รอ UV2 เหมือนกัน ถ้าหยิบตัวแรกมาส่งเลย
+    /// จะเป็นการเดาว่าชิ้นงานที่อยู่ในเครื่องตอนนี้เป็นของล็อตไหน เดาผิดคือพิมพ์
+    /// ข้อความของอีกล็อตลงชิ้นงานจริง
+    /// </para>
+    /// </summary>
+    private List<(PrintJob Job, string Step)> PushTargets()
     {
-        if (!StationService.IsSt3) return null;
+        var found = new List<(PrintJob, string)>();
+        if (!StationService.IsSt3) return found;
 
         foreach (var job in _allJobs)
         {
@@ -235,10 +248,36 @@ public partial class OrderListUserControl : UserControl
             // -1 = ส่งครบแล้ว · 0 = ยังไม่ได้เริ่มเลย ซึ่งเป็นหน้าที่ของปุ่มบนจอ ไม่ใช่ปุ่มหน้างาน
             if (next <= 0) continue;
 
-            return (job, steps[next]);
+            found.Add((job, steps[next]));
         }
 
-        return null;
+        return found;
+    }
+
+    /// <summary>
+    /// รอหลายล็อตพร้อมกัน — ให้คนที่กดปุ่มเลือกเองว่าชิ้นงานในมือเป็นล็อตไหน
+    /// คืน null เมื่อปิดกล่องทิ้ง ซึ่งแปลว่าไม่ต้องส่งอะไร
+    /// </summary>
+    private (PrintJob Job, string Step)? AskWhichJob(List<(PrintJob Job, string Step)> targets)
+    {
+        var options = targets
+            .Select(t => new MarkingRefOption(
+                t.Job.Id.ToString(),
+                $"{JobLabel(t.Job)}  —  marking {Method(t.Job.PlanRouting?.MarkingMethod)}  →  {t.Step}",
+                []))
+            .ToList();
+
+        var picked = MarkingRefPickerDialog.Pick(this,
+            "มีงานรออยู่มากกว่าหนึ่งล็อต",
+            $"มี {targets.Count} ล็อตที่รอส่งขั้นถัดไปอยู่พร้อมกัน "
+            + "เลือกล็อตของชิ้นงานที่อยู่ในเครื่องตอนนี้",
+            options);
+
+        if (picked == null) return null;
+
+        return targets.FirstOrDefault(t => t.Job.Id.ToString() == picked) is { Job: not null } hit
+            ? hit
+            : null;
     }
 
     private static bool AlreadySent(PrintJob job, string step) =>
@@ -257,11 +296,18 @@ public partial class OrderListUserControl : UserControl
     private async Task OnPushButtonPressedAsync()
     {
         if (_api == null || _sending || _pushHandling || IsDisposed) return;
-        if (PushTarget() is not { } target) return;
+
+        var waiting = PushTargets();
+        if (waiting.Count == 0) return;
 
         _pushHandling = true;
         try
         {
+            // รอล็อตเดียวก็ส่งเลยตามเดิม · รอหลายล็อตต้องให้คนเลือก จะเดาแทนไม่ได้
+            // ตั้ง _pushHandling ไว้ก่อนเปิดกล่อง ตัวเฝ้าจะได้หยุดอ่าน PLC ระหว่างนั้น
+            var target = waiting.Count == 1 ? waiting[0] : AskWhichJob(waiting) ?? default;
+            if (target.Job == null) return;
+
             // ตารางค้างได้ถึง 5 วิตามรอบ poll — อ่านสดก่อนลงมือ เผื่อระหว่างนั้น
             // มีคนกดส่งจากหน้าจอไปแล้ว จะได้ไม่ส่งซ้ำลงชิ้นงานจริง
             var resolved = await _api.GetResolvedJobAsync(target.Job.Id);
