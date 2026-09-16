@@ -25,7 +25,11 @@ public enum SendStatus
 }
 
 /// <summary>ผลของเครื่อง MK หนึ่งตัว</summary>
-public sealed record MkMachineResult(string Name, string? Error)
+/// <param name="Suspended">
+/// งานนี้ไม่มีโปรแกรมให้เครื่องนี้ จึงสั่งหยุดพิมพ์แทนการส่งข้อมูล — ไม่ใช่ความล้มเหลว
+/// แต่ก็ไม่ใช่การส่งงาน ผู้เรียกต้องแยกข้อความให้คนอ่านรู้ว่าเครื่องนี้ไม่ได้รับงาน
+/// </param>
+public sealed record MkMachineResult(string Name, string? Error, bool Suspended = false)
 {
     public bool Ok => Error == null;
 }
@@ -82,26 +86,87 @@ public static class JobSendService
     public static async Task<MkSendResult> SendMkAsync(PatternDetail pattern)
     {
         var machines = new List<MkMachineResult>();
+        bool anySent = false;
 
         foreach (var (ipKey, nameKey, fallbackName, ordinal, label) in MkMachines)
         {
-            var config = pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
-            if (config == null) continue;
-
             var name = CustomSettingsManager.Read(nameKey, fallbackName);
             var ip = CustomSettingsManager.Read(ipKey);
+            var config = pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
 
-            machines.Add(string.IsNullOrWhiteSpace(ip)
-                ? new MkMachineResult(name, $"{label}: ยังไม่ได้ตั้ง IP — ไปตั้งที่ Setting → Inkjet Setting")
-                : new MkMachineResult(name, await SendToOneMkAsync(ip, config, label)));
+            if (!HasProgram(config))
+            {
+                // ไม่ได้ตั้ง IP ก็สั่งอะไรไม่ได้ และงานนี้ก็ไม่ได้ใช้เครื่องนี้อยู่แล้ว
+                if (string.IsNullOrWhiteSpace(ip)) continue;
+
+                machines.Add(new MkMachineResult(
+                    name, await StopOneMkAsync(ip, label), Suspended: true));
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(ip))
+            {
+                machines.Add(new MkMachineResult(
+                    name, $"{label}: ยังไม่ได้ตั้ง IP — ไปตั้งที่ Setting → Inkjet Setting"));
+                continue;
+            }
+
+            var error = await SendToOneMkAsync(ip, config!, label);
+            if (error == null) anySent = true;
+            machines.Add(new MkMachineResult(name, error));
         }
 
         if (machines.Count == 0)
             return new MkSendResult(SendStatus.NotConfigured, machines);
 
+        // สั่งหยุดทุกเครื่องแล้วไม่ได้ส่งงานให้ใครเลย = ขั้นตอนนี้ยังไม่ได้ทำ
+        // ต้องไม่ถูกบันทึกว่าส่งสำเร็จ ไม่งั้นงานจะเดินไปขั้นถัดไปทั้งที่ยังไม่ได้พ่น
+        if (!anySent && machines.All(m => m.Suspended))
+            return new MkSendResult(SendStatus.NotConfigured, machines);
+
         return new MkSendResult(
             machines.All(m => m.Ok) ? SendStatus.Ok : SendStatus.Failed,
             machines);
+    }
+
+    /// <summary>งานนี้มีโปรแกรมให้เครื่องนี้จริงไหม — แถวเปล่าที่มีแต่ ordinal ไม่นับ</summary>
+    private static bool HasProgram(InkjetConfigDto? config) =>
+        config != null
+        && (config.ProgramNumber is > 0 || !string.IsNullOrWhiteSpace(config.ProgramName));
+
+    /// <summary>
+    /// สั่งเครื่องที่ไม่มีงานให้หยุดพิมพ์ — กฎเดียวกับโปรแกรมเดิม (PySocketClient)
+    ///
+    /// <para>
+    /// ข้อมูลจาก PrintData.db3 สร้างแถวไว้ให้ทั้งสองเครื่องเสมอ ถึงงานจะใช้เครื่องเดียว
+    /// อีกแถวจึงเป็นแถวเปล่า เดิมแถวเปล่านั้นถูกส่งเข้าเครื่องเหมือนงานจริง กลายเป็น
+    /// สั่ง <c>FW,1</c> แล้วปิดท้ายด้วย <c>SQ</c> คือสั่งให้เครื่องเริ่มพิมพ์โปรแกรม
+    /// เบอร์ 1 ลงชิ้นงานที่วิ่งผ่านมา
+    /// </para>
+    /// <para>
+    /// การไม่ส่งอะไรเลยก็ไม่ปลอดภัย เพราะเครื่องยังค้างโปรแกรมของงานก่อนหน้าแล้ว
+    /// พิมพ์ของงานเก่าทับ ต้องสั่งหยุดให้ชัดเจนเท่านั้น
+    /// </para>
+    /// </summary>
+    private static async Task<string?> StopOneMkAsync(string ip, string label)
+    {
+        var tcp = new TcpManager();
+        try
+        {
+            await tcp.ConnectAsync(ip, MkPort)
+                .WaitAsync(TimeSpan.FromSeconds(ConnectTimeoutSeconds));
+
+            var sr = await new MkCompactAdapter(tcp).SuspendAsync();
+            return sr.Success ? null : $"{label}: สั่งหยุดพิมพ์ไม่สำเร็จ";
+        }
+        catch (Exception ex)
+        {
+            return $"{label}: {ex.Message}";
+        }
+        finally
+        {
+            tcp.Disconnect();
+        }
     }
 
     private static readonly (string IpKey, string NameKey, string Fallback, int Ordinal, string Label)[]

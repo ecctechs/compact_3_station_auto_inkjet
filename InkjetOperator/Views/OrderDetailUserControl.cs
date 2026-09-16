@@ -700,36 +700,20 @@ public partial class OrderDetailUserControl : UserControl
 
         try
         {
-            var mk1Ip = CustomSettingsManager.Read("MK058_COM");
-            var mk2Ip = CustomSettingsManager.Read("MK059_COM");
-            var mk1Name = CustomSettingsManager.Read("MK058_NAME", "MK-058");
-            var mk2Name = CustomSettingsManager.Read("MK059_NAME", "MK-059");
-            var config1 = _pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == 1);
-            var config2 = _pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == 2);
+            // ใช้ตัวส่งชุดเดียวกับปุ่มเริ่มงานที่หน้า Order List — เดิมหน้านี้มีโค้ดส่ง
+            // ของตัวเองอีกชุด แก้กฎการส่งทีหนึ่งต้องไล่แก้สองที่ และพลาดไปแล้วหนึ่งรอบ
+            var mk = await JobSendService.SendMkAsync(_pattern);
 
-            // เก็บผลแยกทีละเครื่อง — เครื่องหนึ่งสำเร็จอีกเครื่องพลาดเป็นเรื่องปกติ
-            // สรุปรวมเป็นบรรทัดเดียวจะไม่รู้ว่าเครื่องไหนไม่ผ่าน
-            var lines = new List<Notify.ResultLine>();
-            int sent = 0;
-
-            if (config1 != null && !string.IsNullOrWhiteSpace(mk1Ip))
-            {
-                var err = await SendToOneMkAsync(mk1Ip, config1, "MK1");
-                if (err == null) { sent++; lines.Add(Notify.Ok($"{mk1Name} — ส่งสำเร็จ")); }
-                else lines.Add(Notify.Bad($"{mk1Name} — {err}"));
-            }
-
-            if (config2 != null && !string.IsNullOrWhiteSpace(mk2Ip))
-            {
-                var err = await SendToOneMkAsync(mk2Ip, config2, "MK2");
-                if (err == null) { sent++; lines.Add(Notify.Ok($"{mk2Name} — ส่งสำเร็จ")); }
-                else lines.Add(Notify.Bad($"{mk2Name} — {err}"));
-            }
+            var lines = mk.Machines
+                .Select(m => m.Ok
+                    ? Notify.Ok($"{m.Name} — {(m.Suspended ? "ไม่มีงาน สั่งหยุดพิมพ์แล้ว" : "ส่งสำเร็จ")}")
+                    : Notify.Bad($"{m.Name} — {m.Error}"))
+                .ToList();
 
             if (lines.Count == 0)
                 lines.Add(Notify.Careful("ไม่มีเครื่อง MK ที่ตั้งค่า IP ไว้"));
 
-            bool allOk = sent > 0 && sent == lines.Count;
+            bool allOk = mk.Status == SendStatus.Ok;
 
 
             if (!allOk)
@@ -748,47 +732,6 @@ public partial class OrderDetailUserControl : UserControl
             btnSendMk.Text = originalText;
             btnSendMk.Enabled = true;
             Notify.ErrorModal(this, "Error", $"เกิดข้อผิดพลาด: {ex.Message}");
-        }
-    }
-
-    private static async Task<string?> SendToOneMkAsync(string ip, InkjetConfigDto config, string label)
-    {
-        var tcp = new TcpManager();
-        try
-        {
-            await tcp.ConnectAsync(ip, 9004).WaitAsync(TimeSpan.FromSeconds(3));
-            var adapter = new MkCompactAdapter(tcp);
-
-            var sr = await adapter.SuspendAsync();
-            if (!sr.Success) return $"{label}: Suspend ไม่สำเร็จ";
-
-            var fw = await adapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
-            if (!fw.Success) return $"{label}: เปลี่ยนโปรแกรมไม่สำเร็จ";
-
-            foreach (var block in config.TextBlocks.OrderBy(b => b.BlockNumber))
-            {
-                var fb = await adapter.SendTextBlockAsync(block, block.BlockNumber);
-                if (!fb.Success) return $"{label}: ส่ง Block {block.BlockNumber} ไม่สำเร็จ";
-            }
-
-            // FM ต้องมาหลัง FS/F1 ตามสเปกของเครื่อง (FW -> FS/F1 -> FM)
-            // เดิมส่ง FM ก่อน Block ทิศทางที่ตั้งไว้จึงถูก Block ที่ตามมาเขียนทับ
-            // ปุ่ม ABC เลยกดแล้วเครื่องพิมพ์หัวตั้งเหมือนเดิม
-            var fm = await adapter.SendConfigAsync(config);
-            if (!fm.Success) return $"{label}: ส่ง Config ไม่สำเร็จ";
-
-            var sq = await adapter.ResumeAsync();
-            if (!sq.Success) return $"{label}: Resume ไม่สำเร็จ";
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            return $"{label}: {ex.Message}";
-        }
-        finally
-        {
-            tcp.Disconnect();
         }
     }
 

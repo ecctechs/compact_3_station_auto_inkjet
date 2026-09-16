@@ -791,7 +791,7 @@ public partial class OrderListUserControl : UserControl
             var mk = await JobSendService.SendMkAsync(resolved.Pattern);
             var lines = mk.Machines
                 .Select(m => m.Ok
-                    ? Notify.Ok($"{m.Name} — ส่งสำเร็จ")
+                    ? Notify.Ok($"{m.Name} — {(m.Suspended ? "ไม่มีงาน สั่งหยุดพิมพ์แล้ว" : "ส่งสำเร็จ")}")
                     : Notify.Bad($"{m.Name} — {m.Error}"))
                 .ToList();
 
