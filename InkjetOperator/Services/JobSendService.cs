@@ -302,7 +302,7 @@ public static class JobSendService
             return new UvSendResult(SendStatus.Cancelled, uvName, done);
 
         if (pick.IsDefault &&
-            !UvProgramResolver.ConfirmDefault(uvRow.ProgramName ?? "", uvName, owner))
+            !UvProgramResolver.ConfirmDefault(uvRow.ProgramName ?? "", uvName, owner as Control))
             return new UvSendResult(SendStatus.Cancelled, uvName, done);
 
         try

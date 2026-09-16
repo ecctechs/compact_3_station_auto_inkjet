@@ -62,8 +62,13 @@ public static class UvProgramResolver
         return new UvProgramPick(DefaultProgram, true);
     }
 
-    /// <summary>ยืนยันก่อนใช้ default — ไม่ให้พิมพ์ผิดแบบโดยไม่รู้ตัว</summary>
-    public static bool ConfirmDefault(string requestedProgram, string machineName, IWin32Window? owner = null)
+    /// <summary>
+    /// ยืนยันก่อนใช้ default — ไม่ให้พิมพ์ผิดแบบโดยไม่รู้ตัว
+    ///
+    /// ใช้กล่องของ AntdUI ชุดเดียวกับที่ยืนยันเรื่องอื่นทั้งระบบ ไม่ใช่กล่องของ
+    /// Windows ซึ่งตัวหนังสือเล็กและหน้าตาคนละแบบกับทุกหน้าในโปรแกรม
+    /// </summary>
+    public static bool ConfirmDefault(string requestedProgram, string machineName, Control? owner = null)
     {
         var text =
             $"ไม่พบโปรแกรม \"{requestedProgram}\" ในเครื่อง {machineName}\n\n"
@@ -71,13 +76,7 @@ public static class UvProgramResolver
             + "กรุณาแจ้งผู้ดูแลให้เพิ่มโปรแกรมนี้เข้าเครื่อง\n\n"
             + "ต้องการทำต่อหรือไม่?";
 
-        var result = owner == null
-            ? MessageBox.Show(text, "ไม่พบโปรแกรม",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2)
-            : MessageBox.Show(owner, text, "ไม่พบโปรแกรม",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2);
-
-        return result == DialogResult.Yes;
+        return Views.Confirm.Ask(owner, "ไม่พบโปรแกรม", text);
     }
 
     /// <summary>
