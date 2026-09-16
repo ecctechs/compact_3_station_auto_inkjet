@@ -35,45 +35,66 @@ internal static class Notify
 
     // ---- One-line toast ----
 
+    /// <summary>
+    /// ขนาดตัวอักษรของข้อความลอย
+    ///
+    /// <para>
+    /// เดิมมีแต่ <see cref="Success"/> ที่ตั้งฟอนต์ไว้ ส่วนเตือน/ผิดพลาด/ข้อมูล
+    /// ปล่อยให้ AntdUI ตกไปใช้ฟอนต์เริ่มต้นของฟอร์มซึ่งเป็น 9pt — เล็กจนอ่านไม่ทัน
+    /// เวลายืนห่างจากจอ ทั้งที่เป็นข้อความที่ต้องรีบเห็นที่สุด
+    /// </para>
+    /// <para>
+    /// AntdUI คิดขนาดไอคอนจากความสูงของตัวอักษร (86%) และคูณ padding ด้วย DPI ให้เอง
+    /// ตั้งฟอนต์ที่เดียวกล่องจึงโตขึ้นทั้งใบ ไม่ต้องไปไล่ตั้งขนาดอย่างอื่น
+    /// </para>
+    /// </summary>
+    private static readonly Font ToastFont = InkjetOperator.Theme.DesignTokens.SectionLabel(19f);
+
+    /// <summary>ที่ว่างรอบข้อความ — AntdUI คูณ DPI ให้เอง ค่าที่ใส่จึงเป็นหน่วยออกแบบ</summary>
+    private static readonly Size ToastPadding = new(20, 14);
+
+    /// <summary>
+    /// กว้างสุดก่อนตัดขึ้นบรรทัดใหม่
+    ///
+    /// ไม่ใส่ค่านี้ AntdUI จะวัดความกว้างเป็นบรรทัดเดียวไม่จำกัด ข้อความยาว ๆ อย่าง
+    /// เหตุผลที่ต่อ PLC ไม่ได้จะลากกล่องยาวจนล้นออกนอกจอ
+    /// </summary>
+    private const int ToastMaxWidth = 1000;
+
+    private static void Toast(
+        Control? owner, AntdUI.TType type, string text, int seconds, MessageBoxIcon fallbackIcon)
+    {
+        if (Resolve(owner) is not { } form)
+        {
+            Fallback(text, fallbackIcon);
+            return;
+        }
+
+        AntdUI.Message.open(new AntdUI.Message.Config(form, text, type, ToastFont, seconds)
+        {
+            Padding = ToastPadding,
+            MaxWidth = ToastMaxWidth,
+        });
+    }
+
     /// <summary>An action completed - saved, sent, created.</summary>
     public static void Success(Control? owner, string text)
     {
         System.Media.SystemSounds.Asterisk.Play();
-
-        if (Resolve(owner) is { } form)
-            AntdUI.Message.success(form, text,
-                font: new Font(form.Font.FontFamily, 16f, FontStyle.Bold),
-                autoClose: SuccessSeconds);
-        else
-            Fallback(text, MessageBoxIcon.Information);
+        Toast(owner, AntdUI.TType.Success, text, SuccessSeconds, MessageBoxIcon.Information);
     }
 
     /// <summary>Neutral progress or state information.</summary>
-    public static void Info(Control? owner, string text)
-    {
-        if (Resolve(owner) is { } form)
-            AntdUI.Message.info(form, text, autoClose: InfoSeconds);
-        else
-            Fallback(text, MessageBoxIcon.Information);
-    }
+    public static void Info(Control? owner, string text) =>
+        Toast(owner, AntdUI.TType.Info, text, InfoSeconds, MessageBoxIcon.Information);
 
     /// <summary>Validation problem or a step that could not run as asked.</summary>
-    public static void Warn(Control? owner, string text)
-    {
-        if (Resolve(owner) is { } form)
-            AntdUI.Message.warn(form, text, autoClose: WarnSeconds);
-        else
-            Fallback(text, MessageBoxIcon.Warning);
-    }
+    public static void Warn(Control? owner, string text) =>
+        Toast(owner, AntdUI.TType.Warn, text, WarnSeconds, MessageBoxIcon.Warning);
 
     /// <summary>Something failed.</summary>
-    public static void Error(Control? owner, string text)
-    {
-        if (Resolve(owner) is { } form)
-            AntdUI.Message.error(form, text, autoClose: ErrorSeconds);
-        else
-            Fallback(text, MessageBoxIcon.Error);
-    }
+    public static void Error(Control? owner, string text) =>
+        Toast(owner, AntdUI.TType.Error, text, ErrorSeconds, MessageBoxIcon.Error);
 
     // ---- Centered modal dialog (blocks until OK) ----
 
