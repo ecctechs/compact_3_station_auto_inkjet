@@ -65,6 +65,9 @@ public sealed record UvSendResult(
 public static class JobSendService
 {
     private const int MkPort = 9004;
+
+    /// <summary>จำนวนช่องข้อความต่อเครื่องหนึ่งตัว — ตรงกับที่ PrintData.db3 เก็บไว้</summary>
+    private const int MkBlockCount = 5;
     private const int UvDefaultPort = 10086;
     private const int ConnectTimeoutSeconds = 3;
 
@@ -203,10 +206,16 @@ public static class JobSendService
             var fw = await adapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
             if (!fw.Success) return $"{label}: เปลี่ยนโปรแกรมไม่สำเร็จ";
 
-            foreach (var block in config.TextBlocks.OrderBy(b => b.BlockNumber))
+            // ส่งครบทุกช่องเสมอ ช่องที่งานนี้ไม่ได้ใช้ก็ส่งข้อความว่างไปทับ —
+            // กฎเดียวกับโปรแกรมเดิม ถ้าข้ามไปเฉย ๆ ข้อความของงานก่อนหน้าจะค้าง
+            // อยู่ในช่องนั้นแล้วถูกพิมพ์ติดไปกับงานใหม่
+            for (int slot = 1; slot <= MkBlockCount; slot++)
             {
-                var fb = await adapter.SendTextBlockAsync(block, block.BlockNumber);
-                if (!fb.Success) return $"{label}: ส่ง Block {block.BlockNumber} ไม่สำเร็จ";
+                var block = config.TextBlocks.FirstOrDefault(b => b.BlockNumber == slot)
+                    ?? new TextBlockDto { BlockNumber = slot, Text = "" };
+
+                var fb = await adapter.SendTextBlockAsync(block, slot);
+                if (!fb.Success) return $"{label}: ส่ง Block {slot} ไม่สำเร็จ";
             }
 
             // FM ต้องมาหลัง FS/F1 ตามสเปกของเครื่อง (FW -> FS/F1 -> FM)

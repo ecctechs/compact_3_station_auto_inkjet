@@ -20,6 +20,9 @@ public class MkCompactAdapter : IInkjetAdapter
     /// Size conversion dict — from rs232_connector.py lines 8-22.
     /// Maps logical size to device encoding.
     /// </summary>
+    /// <summary>ตัวคูณของช่องหน่วงทริกเกอร์ในคำสั่ง FM — เก็บเป็น มม. ส่งเป็นสิบเท่า</summary>
+    private const int TriggerDelayScale = 10;
+
     private static readonly Dictionary<string, string> SizeConversion = new()
     {
         { "1", "0" },
@@ -178,7 +181,11 @@ public class MkCompactAdapter : IInkjetAdapter
         string normalizedName = progName.Normalize(NormalizationForm.FormKD);
 
         string direction = IsFlipped(config.Direction) ? "3" : "0";
-        string delay = (config.TriggerDelay ?? 0).ToString();
+
+        // ค่าที่เก็บเป็นมิลลิเมตร แต่ช่องนี้ของคำสั่ง FM รับเป็นหน่วยสิบเท่า
+        // จึงต้องคูณ 10 ก่อนส่ง ตรงกับโปรแกรมเดิมที่ทำ int(float(delay) * 10)
+        // ลืมคูณแล้วหมึกจะลงเร็วกว่าที่ตั้งไว้สิบเท่า คือผิดตำแหน่งบนชิ้นงานจริง
+        string delay = ((config.TriggerDelay ?? 0) * TriggerDelayScale).ToString();
         string height = (config.Height ?? 100).ToString();
         string width = (config.Width ?? 200).ToString();
 
