@@ -26,6 +26,24 @@ public partial class OrderListUserControl : UserControl
     /// </para>
     /// </summary>
     private bool _pushHandling;
+
+    /// <summary>กำลังดึงข้อมูลรอบ poll อยู่ — กันรอบใหม่ทับรอบเก่าตอน backend ช้า</summary>
+    private bool _refreshing;
+
+    /// <summary>
+    /// กำลังทำงานตามปุ่มในแถวอยู่ — กันกดซ้ำระหว่างรออ่านข้อมูลจาก backend
+    ///
+    /// <para>
+    /// ทุกปุ่มในแถว (เริ่มงาน · จบงาน · แว่น · กากบาท) ต้องอ่านข้อมูลสดก่อนลงมือ
+    /// ซึ่งรอได้ถึง 10 วินาทีตอนต่อ backend ไม่ติด ระหว่างนั้นจอไม่มีอะไรบอกเลย
+    /// พนักงานจะกดซ้ำ แล้วแต่ละครั้งไปตั้งคำขอใหม่ พอครบกำหนดพร้อมกันก็เด้ง
+    /// กล่องผิดพลาดซ้อนกันเป็นพรวด
+    /// </para>
+    /// </summary>
+    private bool _rowBusy;
+
+    /// <summary>ช้ากว่านี้ถึงจะขึ้นการ์ดว่ากำลังโหลด — เร็วกว่านี้การ์ดจะวาบจนรำคาญ</summary>
+    private const int SlowLoadMs = 250;
     private bool _showHistory;
     private List<PrintJob> _allJobs = new();
     private string _lastSignature = "";
@@ -350,6 +368,13 @@ public partial class OrderListUserControl : UserControl
         // ระหว่างส่งงานห้ามผูก DataSource ใหม่ ไม่งั้นแถวขยับใต้มือผู้ใช้
         // และกล่องเลือกรุ่นย่อยของ UV อาจถูกวาดทับ
         if (_sending) return;
+
+        // รอบก่อนยังไม่จบก็ข้ามรอบนี้ไป — นาฬิกาเดินทุก 5 วิ แต่ถ้า backend ช้า
+        // หรือต่อไม่ติด คำขอหนึ่งรออยู่ได้ถึง 10 วิ ไม่กันไว้รอบใหม่จะทับกันไป
+        // เรื่อย ๆ จนมีคำขอค้างพร้อมกันหลายชุด แล้วเด้งกล่องผิดพลาดตามมาเป็นพรวด
+        if (_refreshing) return;
+
+        _refreshing = true;
         try
         {
             DateTime? fromUtc = null, toUtc = null;
@@ -392,6 +417,10 @@ public partial class OrderListUserControl : UserControl
         {
             if (!IsDisposed)
                 tblOrders.EmptyText = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _refreshing = false;
         }
     }
 
@@ -528,11 +557,47 @@ public partial class OrderListUserControl : UserControl
     private async void TblOrders_CellButtonClick(object? sender, AntdUI.TableButtonEventArgs e)
     {
         if (e.Record is not OrderRow row) return;
-        if (_api == null) return;
+        if (_api == null || _rowBusy) return;
 
-        if (e.Btn?.Id == "detail")
+        _rowBusy = true;
+        try
         {
-            var resolved = await _api.GetResolvedJobAsync(row.Id);
+            await HandleRowButtonAsync(e.Btn?.Id, row);
+        }
+        finally
+        {
+            _rowBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// รออ่านข้อมูลงานสดจาก backend พร้อมขึ้นการ์ดบอกเมื่อรอนานผิดปกติ
+    ///
+    /// ปกติอ่านเสร็จในหลักสิบมิลลิวินาที ขึ้นการ์ดทุกครั้งจะวาบจนรำคาญ จึงรอ
+    /// สักครู่ก่อนแล้วค่อยขึ้น — เห็นการ์ดเมื่อไหร่แปลว่าเครือข่ายมีปัญหาจริง
+    /// </summary>
+    private async Task<ResolvedJobResponse?> LoadJobAsync(int jobId, string busyText)
+    {
+        var task = _api!.GetResolvedJobAsync(jobId);
+        if (await Task.WhenAny(task, Task.Delay(SlowLoadMs)) == task) return await task;
+
+        ShowSending(busyText);
+        try
+        {
+            return await task;
+        }
+        finally
+        {
+            if (!IsDisposed) ShowSending(null);
+        }
+    }
+
+    private async Task HandleRowButtonAsync(string? buttonId, OrderRow row)
+    {
+        if (buttonId == "detail")
+        {
+            var resolved = await LoadJobAsync(row.Id, $"กำลังโหลดข้อมูล · {JobName(row.Id)}");
+            if (IsDisposed) return;
             if (resolved == null)
             {
                 Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลด Detail ของ {JobName(row.Id)} ได้");
@@ -540,19 +605,19 @@ public partial class OrderListUserControl : UserControl
             }
             ShowDetailDialog(resolved);
         }
-        else if (e.Btn?.Id == "start")
+        else if (buttonId == "start")
         {
             await StartJobAsync(row.Id);
         }
-        else if (e.Btn?.Id == "complete")
+        else if (buttonId == "complete")
         {
             await CompleteJobAsync(row.Id);
         }
-        else if (e.Btn?.Id == "cancel")
+        else if (buttonId == "cancel")
         {
             await CancelJobAsync(row.Id);
         }
-        else if (e.Btn?.Id == "restore")
+        else if (buttonId == "restore")
         {
             await RestoreJobAsync(row.Id);
         }
@@ -734,7 +799,8 @@ public partial class OrderListUserControl : UserControl
         if (_api == null || _sending) return;
 
         // อ่านสดก่อนตัดสินใจ — ตารางอาจค้างได้ถึง 5 วิตามรอบ poll
-        var resolved = await _api.GetResolvedJobAsync(jobId);
+        var resolved = await LoadJobAsync(jobId, $"กำลังโหลดข้อมูล · {JobName(jobId)}");
+        if (IsDisposed) return;
         if (resolved == null)
         {
             Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลดข้อมูล {JobName(jobId)} ได้");
@@ -1347,7 +1413,8 @@ public partial class OrderListUserControl : UserControl
         if (_api == null) return;
 
         // อ่านสดก่อนตัดสินใจ — ตารางอาจค้างได้ถึง 5 วิตามรอบ poll
-        var resolved = await _api.GetResolvedJobAsync(jobId);
+        var resolved = await LoadJobAsync(jobId, $"กำลังโหลดข้อมูล · {JobName(jobId)}");
+        if (IsDisposed) return;
         if (resolved == null)
         {
             Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลดข้อมูล {JobName(jobId)} ได้");
