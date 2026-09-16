@@ -59,6 +59,17 @@ public partial class OrderDetailUserControl : UserControl
         var rawLevel = CustomSettingsManager.Read("MENU_LEVEL", "1");
         _isDevMode = int.TryParse(rawLevel, out var lvl) && lvl == 99;
 
+        // ปุ่มส่งเข้าเครื่องทีละตัวเหลือไว้เฉพาะโหมดทดสอบ
+        //
+        // การส่งงานจริงย้ายไปอยู่ที่ปุ่มเริ่มงานหน้า Order List แล้ว ซึ่งเดินตามลำดับ
+        // ขั้นของ marking method ให้เอง ปุ่มพวกนี้กดข้ามลำดับได้ เปิดไว้ในโหมดใช้งาน
+        // ปกติจึงเสี่ยงที่จะกดส่งซ้ำหรือส่งข้ามขั้น แล้วพ่นซ้ำลงชิ้นงานจริง
+        //
+        // อยู่ใน FlowLayoutPanel ปุ่มที่เหลือจึงเลื่อนมาชิดซ้ายเอง ไม่มีช่องโหว่ค้าง
+        btnSendMk.Visible = _isDevMode;
+        btnSendUv1.Visible = _isDevMode;
+        btnSendUv2.Visible = _isDevMode;
+
         // หน้าตาปุ่มปิดมาจากที่เดียวกับทุกหน้า — designer คุมแค่ตำแหน่งกับขนาด
         ButtonStyles.Close(btnDetailClose);
         btnDetailClose.Click += (_, _) => CloseRequested?.Invoke(this, EventArgs.Empty);
