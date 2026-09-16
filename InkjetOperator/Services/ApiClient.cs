@@ -15,10 +15,37 @@ public class ApiClient
         PropertyNameCaseInsensitive = true,
     };
 
+    /// <summary>
+    /// สายเชื่อมต่อใช้ร่วมกันทุก <see cref="ApiClient"/> ในโปรแกรม
+    ///
+    /// <para>
+    /// เดิม <c>HttpClient</c> แต่ละตัวถือสายของตัวเอง และหน้า Scan Barcode สร้าง
+    /// <c>ApiClient</c> ใหม่ทุกครั้งที่กด OK โดยไม่ได้ปิดตัวเก่า สายที่เปิดค้างไว้
+    /// จึงค้างอยู่อย่างนั้นจนกว่าตัวเก็บขยะจะมาเก็บ วัดจริงแล้วกด 60 ครั้ง
+    /// เหลือสายค้าง 60 เส้น สแกนทั้งกะหลายร้อยงานก็ค้างหลายร้อยเส้น
+    /// สุดท้ายพอร์ตของ Windows หมดแล้วเปิดสายใหม่ไม่ได้
+    /// </para>
+    /// <para>
+    /// ย้ายสายมาไว้ที่เดียวแล้วให้ทุกตัวใช้ร่วมกัน ตัว <c>HttpClient</c> ที่ถูกทิ้ง
+    /// จึงไม่ได้พาสายไปด้วย สายที่ใช้เสร็จกลับเข้ากองกลางให้คนถัดไปใช้ต่อ
+    /// (<c>disposeHandler: false</c> คือบอกว่าอย่าไปปิดกองกลางตอนตัวเองถูกทิ้ง)
+    /// </para>
+    /// <para>
+    /// ปล่อยสายที่ไม่มีใครใช้ทิ้งหลังว่าง 1 นาที และรื้อสายที่ใช้มานาน 5 นาที
+    /// เพื่อไม่ให้ค้างกับปลายทางเดิมตอนมีคนไปเปลี่ยน PC_IP ที่หน้า Setting
+    /// </para>
+    /// </summary>
+    private static readonly SocketsHttpHandler SharedHandler = new()
+    {
+        PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
+        PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+        MaxConnectionsPerServer = 8,
+    };
+
     public ApiClient(string baseUrl)
     {
         _baseUrl = baseUrl.TrimEnd('/');
-        _http = new HttpClient
+        _http = new HttpClient(SharedHandler, disposeHandler: false)
         {
             BaseAddress = new Uri(_baseUrl),
             Timeout = TimeSpan.FromSeconds(10),
