@@ -106,7 +106,7 @@ partial class ClampSettingUserControl
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 325F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 85F));
-        tlpRoot.Size = new System.Drawing.Size(1350, 1530);
+        tlpRoot.Size = new System.Drawing.Size(1350, 1650);
         tlpRoot.TabIndex = 0;
         //
         // grpConnection
@@ -732,7 +732,7 @@ partial class ClampSettingUserControl
         BackColor = System.Drawing.Color.White;
         Controls.Add(tlpRoot);
         Name = "ClampSettingUserControl";
-        Size = new System.Drawing.Size(1350, 1530);
+        Size = new System.Drawing.Size(1350, 1650);
 
         tlpRoot.ResumeLayout(false);
         grpConnection.ResumeLayout(false);
