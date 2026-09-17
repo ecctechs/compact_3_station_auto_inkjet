@@ -1,4 +1,4 @@
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 
 using InkjetOperator.Adapters;
 using InkjetOperator.Managers;
@@ -88,6 +88,9 @@ public static class JobSendService
     /// </summary>
     public static async Task<MkSendResult> SendMkAsync(PatternDetail pattern)
     {
+        // กันไฟสถานะตามหน้าจอไม่ให้เปิดซ็อกเก็ตไปแย่งคิวเครื่องระหว่างส่งงานจริง
+        using var busy = MachineBusy.Hold();
+
         var machines = new List<MkMachineResult>();
         bool anySent = false;
         bool workFailed = false;
@@ -257,6 +260,8 @@ public static class JobSendService
         IWin32Window? owner, int uvNumber, List<UvJobDataDto> uvData,
         string? forcedProgram = null)
     {
+        using var busy = MachineBusy.Hold();
+
         string stepName = uvNumber == 1 ? "UV1" : "UV2";
         string table = uvNumber == 1 ? "MK063" : "MK067";
 

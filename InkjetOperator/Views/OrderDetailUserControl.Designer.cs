@@ -207,8 +207,10 @@ partial class OrderDetailUserControl
         btnIaiAdj2Z2Upload = new AntdUI.Button();
         btnIaiAdj2Z2Reset = new AntdUI.Button();
         tlpDetailActions = new System.Windows.Forms.TableLayoutPanel();
+        components = new System.ComponentModel.Container();
         flpDetailActions = new System.Windows.Forms.FlowLayoutPanel();
         btnRemoteSend = new AntdUI.Button();
+        tmrConnCheck = new System.Windows.Forms.Timer(components);
         btnSendMk = new AntdUI.Button();
         btnSendUv1 = new AntdUI.Button();
         btnSendUv2 = new AntdUI.Button();
@@ -3104,6 +3106,10 @@ partial class OrderDetailUserControl
         btnRemoteSend.Type = AntdUI.TTypeMini.Warn;
         btnRemoteSend.Visible = false;
         //
+        // tmrConnCheck - รีเฟรชไฟสถานะการเชื่อมต่อสี่ดวงระหว่างที่หน้านี้เปิดอยู่
+        //
+        tmrConnCheck.Interval = 15000;
+        //
         // btnTestPlc - ปุ่มแยกสำหรับทดสอบส่งค่าเข้า PLC ยังไม่รวมกับปุ่มส่ง MK
         //
         btnTestPlc.BorderWidth = 2F;
@@ -3333,6 +3339,7 @@ partial class OrderDetailUserControl
     private System.Windows.Forms.TableLayoutPanel tlpDetailActions;
     private System.Windows.Forms.FlowLayoutPanel flpDetailActions;
     private AntdUI.Button btnRemoteSend;
+    private System.Windows.Forms.Timer tmrConnCheck;
     private AntdUI.Button btnSendMk;
     private AntdUI.Button btnSendUv1;
     private AntdUI.Button btnSendUv2;

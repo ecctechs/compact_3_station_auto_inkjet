@@ -89,6 +89,14 @@ public static class HealthMonitor
         // รอบก่อนยังไม่จบก็ข้ามรอบนี้ ไม่ให้คำขอค้างซ้อนกันตอนปลายทางอืด
         if (Interlocked.Exchange(ref _running, 1) == 1) return;
 
+        // กำลังส่งงานเข้าเครื่องอยู่ก็ข้ามไปเหมือนกัน เหตุผลอยู่ที่ MachineBusy
+        // ผลรอบก่อนยังค้างอยู่ใน Latest หน้าสถานะจึงไม่กะพริบเป็นช่องว่าง
+        if (MachineBusy.Active)
+        {
+            Interlocked.Exchange(ref _running, 0);
+            return;
+        }
+
         try
         {
             var items = await CheckAllAsync();

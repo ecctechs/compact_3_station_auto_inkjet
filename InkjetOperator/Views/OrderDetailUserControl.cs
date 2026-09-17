@@ -45,6 +45,9 @@ public partial class OrderDetailUserControl : UserControl
     /// <summary>ชื่อเรียกงานในข้อความที่พนักงานอ่าน — "ERP (LOT)" ไม่ใช่เลข id</summary>
     private string _jobLabel = "";
 
+    /// <summary>รอบก่อนยังตรวจไม่เสร็จ — กันไม่ให้รอบใหม่ทับ</summary>
+    private bool _connCheckBusy;
+
     private readonly bool _isDevMode;
     private IaiClampSettingDto? _origIai;
 
@@ -80,6 +83,7 @@ public partial class OrderDetailUserControl : UserControl
         picMk2Abc.Click += async (_, _) => await ToggleAbcAsync(2, picMk2Abc);
         btnSendMk.Click += async (_, _) => await SendToMkAsync();
         btnRemoteSend.Click += (_, _) => RequestRemoteStart();
+        tmrConnCheck.Tick += ConnCheck_Tick;
         btnSendUv1.Click += async (_, _) => await SendToUvAsync(1);
         btnSendUv2.Click += async (_, _) => await SendToUvAsync(2);
         btnTestPlc.Click += async (_, _) => await TestPlcAsync();
@@ -216,7 +220,10 @@ public partial class OrderDetailUserControl : UserControl
         FillUvSection(resolved);
         ClearIaiFields();
         _ = LoadIaiAsync(resolved.Job.Id);
-        _ = CheckConnectionsAsync();
+        // รอบแรกโชว์ "กำลังตรวจสอบ..." ได้ เพราะยังไม่มีอะไรให้ดูอยู่ก่อน
+        // รอบถัด ๆ ไปห้ามล้างเป็นสีเทา ไม่งั้นไฟจะกะพริบเทา-เขียวทุก 15 วิ
+        _ = CheckConnectionsAsync(showChecking: true);
+        tmrConnCheck.Start();
     }
 
     private void FillMkChipLabels()
@@ -231,7 +238,54 @@ public partial class OrderDetailUserControl : UserControl
         lblUv2Chip.Text = UvSettingsManager.Read("UV2_NAME", "UV-002");
     }
 
-    private async Task CheckConnectionsAsync()
+    /// <summary>
+    /// จังหวะรีเฟรชไฟสถานะ — <c>async void</c> ตัวเดียวที่ยอมให้มีในหน้านี้
+    /// ข้างในจึงห้ามโยน exception ออกมาเด็ดขาด ไม่งั้นโปรแกรมหลุดทั้งตัว
+    /// (<see cref="CheckConnectionsAsync"/> กลืน exception ไว้หมดแล้ว)
+    /// </summary>
+    private async void ConnCheck_Tick(object? sender, EventArgs e)
+    {
+        if (IsDisposed) return;
+        await CheckConnectionsAsync(showChecking: false);
+    }
+
+    /// <summary>
+    /// ไฟสี่ดวงบอกว่าต่อเครื่องไหนติดบ้าง — รอบแรกตอนเปิดหน้า แล้ววนเองทุก 15 วินาที
+    ///
+    /// <para>
+    /// ไม่บล็อกอะไรเลย งานทั้งหมดเป็น I/O แบบ async และ timeout อยู่ที่ 3 วินาที
+    /// ต่อปลายทาง ยิงพร้อมกันทั้งสี่ รอบหนึ่งจึงนานเท่ารายที่ช้าที่สุดรายเดียว
+    /// </para>
+    /// <para>
+    /// เงียบเสมอ ไม่มีกล่องเด้ง ต่อไม่ติดก็แค่เปลี่ยนสีกับข้อความบนป้าย และถ้ารอบไหน
+    /// พลาด ไฟจะค้างค่าเดิมไว้เฉย ๆ รอรอบหน้า ดีกว่าล้างเป็นเทาให้คนเข้าใจผิด
+    /// </para>
+    /// </summary>
+    private async Task CheckConnectionsAsync(bool showChecking)
+    {
+        // รอบก่อนยังไม่จบก็ข้ามรอบนี้ ไม่ต่อคิวซ้อนกันตอนปลายทางอืด
+        if (_connCheckBusy || IsDisposed) return;
+
+        // กำลังส่งงานเข้าเครื่องอยู่ก็ข้ามเหมือนกัน เหตุผลอยู่ที่ MachineBusy
+        // ไฟสถานะยอมช้าไปหนึ่งรอบได้ การส่งงานยอมพลาดไม่ได้
+        if (MachineBusy.Active) return;
+
+        _connCheckBusy = true;
+        try
+        {
+            await RunConnectionCheckAsync(showChecking);
+        }
+        catch
+        {
+            // ไฟสถานะพังไม่ควรลากทั้งหน้าไปด้วย ปล่อยค้างค่าเดิม รอบหน้ามาใหม่
+        }
+        finally
+        {
+            _connCheckBusy = false;
+        }
+    }
+
+    private async Task RunConnectionCheckAsync(bool showChecking)
     {
         var mk1Ip = CustomSettingsManager.Read("MK058_COM");
         var mk2Ip = CustomSettingsManager.Read("MK059_COM");
@@ -245,10 +299,13 @@ public partial class OrderDetailUserControl : UserControl
         var uv1Name = UvSettingsManager.Read("UV1_NAME", "UV-001");
         var uv2Name = UvSettingsManager.Read("UV2_NAME", "UV-002");
 
-        SetConnLabel(lblConnMk1, mk1Name, mk1Ip, "", "กำลังตรวจสอบ...", Color.Gray);
-        SetConnLabel(lblConnMk2, mk2Name, mk2Ip, "", "กำลังตรวจสอบ...", Color.Gray);
-        SetConnLabel(lblConnUv1, uv1Name, uv1Ip, uv1Port, "กำลังตรวจสอบ...", Color.Gray);
-        SetConnLabel(lblConnUv2, uv2Name, uv2Ip, uv2Port, "กำลังตรวจสอบ...", Color.Gray);
+        if (showChecking)
+        {
+            SetConnLabel(lblConnMk1, mk1Name, mk1Ip, "", "กำลังตรวจสอบ...", Color.Gray);
+            SetConnLabel(lblConnMk2, mk2Name, mk2Ip, "", "กำลังตรวจสอบ...", Color.Gray);
+            SetConnLabel(lblConnUv1, uv1Name, uv1Ip, uv1Port, "กำลังตรวจสอบ...", Color.Gray);
+            SetConnLabel(lblConnUv2, uv2Name, uv2Ip, uv2Port, "กำลังตรวจสอบ...", Color.Gray);
+        }
 
         var results = await Task.WhenAll(
             TcpCheckAsync(mk1Ip, 9004),
@@ -278,19 +335,35 @@ public partial class OrderDetailUserControl : UserControl
             string.IsNullOrWhiteSpace(port) ? ip : $"{ip}:{port}";
         void Apply()
         {
+            if (lbl.IsDisposed) return;
             lbl.Text = $"●  {name}  ({addr})  {status}";
             lbl.ForeColor = color;
         }
-        if (lbl.InvokeRequired) lbl.Invoke(Apply); else Apply();
+
+        // ผลอาจกลับมาตอนคนปิดหน้าไปแล้วพอดี — ปล่อยผ่านเงียบ ๆ ไม่ใช่ปล่อยให้หลุด
+        try
+        {
+            if (lbl.InvokeRequired) lbl.Invoke(Apply); else Apply();
+        }
+        catch (ObjectDisposedException) { }
+        catch (InvalidOperationException) { }
     }
 
     private static async Task<bool> TcpCheckAsync(string ip, int port)
     {
         if (string.IsNullOrWhiteSpace(ip) || port <= 0) return false;
         var tcp = new TcpManager();
+        var connect = tcp.ConnectAsync(ip, port);
+
+        // ตอน timeout เราเดินต่อโดยทิ้ง task ไว้ ต้องมีคนรับ exception ของมัน
+        // ไม่งั้นกลายเป็น unobserved exception ลอยอยู่ — เดิมเช็คครั้งเดียวตอนเปิดหน้า
+        // เลยไม่เห็นผล ตอนนี้มันวนทุก 15 วินาทีตราบเท่าที่หน้ายังเปิดอยู่
+        _ = connect.ContinueWith(static t => _ = t.Exception,
+            TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+
         try
         {
-            await tcp.ConnectAsync(ip, port).WaitAsync(TimeSpan.FromSeconds(3));
+            await connect.WaitAsync(TimeSpan.FromSeconds(3));
             return tcp.IsConnected();
         }
         catch { return false; }
@@ -841,6 +914,10 @@ public partial class OrderDetailUserControl : UserControl
         var done = new List<string>();
         try
         {
+            // ปุ่มนี้มีเฉพาะโหมดทดสอบ แต่ก็ต้องกันไฟสถานะไม่ให้แย่งซ็อกเก็ตเหมือนกัน
+            // จองตรงนี้ ไม่ใช่ตั้งแต่ต้นฟังก์ชัน เพราะข้างบนมีกล่องเลือกรุ่นย่อยที่ค้างรอคนได้นาน
+            using var busy = MachineBusy.Hold();
+
             var uvTcp = new UvTcpService();
 
             // 1. หยุดเครื่องก่อนเสมอ — ไม่ตอบรับก็ไปต่อ เพราะเครื่องอาจหยุดอยู่แล้ว
