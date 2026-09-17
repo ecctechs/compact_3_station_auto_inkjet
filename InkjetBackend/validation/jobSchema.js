@@ -18,12 +18,24 @@ const createJobSchema = z.object({
   st_status: z.string().nullable().optional(),
 });
 
+// ทุกช่องที่หน้าเว็บส่งมาต้องประกาศไว้ที่นี่ให้ครบ
+//
+// middleware validate เขียนทับ req.query ด้วยผลที่ zod แปลงแล้ว และ z.object
+// ตัดคีย์ที่ไม่ได้ประกาศทิ้งเป็นค่าเริ่มต้น คีย์ที่ลืมใส่จึงหายไปก่อนถึง controller
+// เงียบ ๆ ไม่มี error อะไรให้เห็น — from กับ to ของตัวกรองวันที่หน้า History
+// หายแบบนี้มาตลอด โค้ดกรองวันที่ใน controller จึงไม่เคยได้ทำงานเลย
 const jobFilterSchema = z.object({
   status: z
     .enum(["Waiting", "executing", "completed", "failed"])
     .optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
+
+  // ตัวกรองวันที่ของหน้า History — ฝั่ง client ส่ง ISO (UTC) ที่ขยายเป็นทั้งวัน
+  // ตามเวลาไทยมาแล้ว coerce.date ตีกลับ 400 ทันทีถ้าส่งของที่อ่านเป็นวันไม่ได้
+  // ดีกว่าปล่อยผ่านแล้วเงียบ ๆ ไม่กรองให้เหมือนเดิม
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
 });
 
 const commandResultSchema = z.object({

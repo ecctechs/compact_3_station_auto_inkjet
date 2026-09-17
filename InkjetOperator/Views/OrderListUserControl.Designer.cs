@@ -37,6 +37,7 @@ partial class OrderListUserControl
         btnTabHistory = new AntdUI.Button();
         lblDateFilter = new System.Windows.Forms.Label();
         dtpHistoryRange = new AntdUI.DatePickerRange();
+        btnSearchDate = new AntdUI.Button();
         btnClearDate = new AntdUI.Button();
         tblOrders = new AntdUI.Table();
         tlpBottom = new System.Windows.Forms.TableLayoutPanel();
@@ -160,6 +161,7 @@ partial class OrderListUserControl
         flpTabs.Controls.Add(btnTabHistory);
         flpTabs.Controls.Add(lblDateFilter);
         flpTabs.Controls.Add(dtpHistoryRange);
+        flpTabs.Controls.Add(btnSearchDate);
         flpTabs.Controls.Add(btnClearDate);
         flpTabs.Dock = System.Windows.Forms.DockStyle.Fill;
         flpTabs.Location = new System.Drawing.Point(0, 0);
@@ -226,6 +228,20 @@ partial class OrderListUserControl
         dtpHistoryRange.TabIndex = 3;
         dtpHistoryRange.Visible = false;
         //
+        // btnSearchDate
+        //
+        btnSearchDate.Font = new System.Drawing.Font("Segoe UI", 12.5F, System.Drawing.FontStyle.Bold);
+        btnSearchDate.ForeColor = System.Drawing.Color.White;
+        btnSearchDate.IconSvg = "SearchOutlined";
+        btnSearchDate.Margin = new System.Windows.Forms.Padding(3);
+        btnSearchDate.Name = "btnSearchDate";
+        btnSearchDate.Radius = 6;
+        btnSearchDate.Size = new System.Drawing.Size(118, 45);
+        btnSearchDate.TabIndex = 4;
+        btnSearchDate.Text = "ค้นหา";
+        btnSearchDate.Type = AntdUI.TTypeMini.Primary;
+        btnSearchDate.Visible = false;
+        //
         // btnClearDate
         //
         btnClearDate.DefaultBorderColor = System.Drawing.Color.FromArgb(180, 180, 180);
@@ -236,7 +252,7 @@ partial class OrderListUserControl
         btnClearDate.Name = "btnClearDate";
         btnClearDate.Radius = 6;
         btnClearDate.Size = new System.Drawing.Size(88, 45);
-        btnClearDate.TabIndex = 4;
+        btnClearDate.TabIndex = 5;
         btnClearDate.Text = "ล้าง";
         btnClearDate.Type = AntdUI.TTypeMini.Default;
         btnClearDate.Visible = false;
@@ -553,6 +569,7 @@ partial class OrderListUserControl
     private AntdUI.Button btnTabHistory;
     private System.Windows.Forms.Label lblDateFilter;
     private AntdUI.DatePickerRange dtpHistoryRange;
+    private AntdUI.Button btnSearchDate;
     private AntdUI.Button btnClearDate;
     private AntdUI.Table tblOrders;
     private System.Windows.Forms.TableLayoutPanel tlpBottom;

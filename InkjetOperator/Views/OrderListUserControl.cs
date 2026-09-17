@@ -176,7 +176,10 @@ public partial class OrderListUserControl : UserControl
         tblOrders.SetRowStyle += TblOrders_SetRowStyle;
 
         // เปลี่ยนช่วงวันที่ = ต้องดึงใหม่ ไม่ใช่กรองของที่โหลดไว้ — งานเก่ายังไม่ได้อยู่ในมือ
+        // เลือกวันแล้วค้นให้เลย ปุ่มค้นหาเป็นทางกดซ้ำสำหรับคนที่อยากสั่งเอง
+        // (เช่นเลือกวันเดิมอีกครั้ง ซึ่ง ValueChanged ไม่ยิงให้)
         dtpHistoryRange.ValueChanged += async (_, _) => await RefreshDataAsync(force: true);
+        btnSearchDate.Click += async (_, _) => await RefreshDataAsync(force: true);
         btnClearDate.Click += (_, _) => dtpHistoryRange.Value = null;
 
         WirePanels();
@@ -453,6 +456,7 @@ public partial class OrderListUserControl : UserControl
         // ไม่งั้นกลับเข้ามาใหม่จะเห็นรายการหายไปโดยไม่รู้ว่าโดนกรองอยู่
         lblDateFilter.Visible = showHistory;
         dtpHistoryRange.Visible = showHistory;
+        btnSearchDate.Visible = showHistory;
         btnClearDate.Visible = showHistory;
         if (!showHistory) dtpHistoryRange.Value = null;
 
