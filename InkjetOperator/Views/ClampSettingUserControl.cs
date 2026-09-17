@@ -62,6 +62,7 @@ public partial class ClampSettingUserControl : UserControl
     private void SetupEvents()
     {
         btnCheckStatus.Click += async (_, _) => await CheckStatusAsync();
+        btnClampName.Click += (_, _) => EditName();
         btnBrowse.Click += (_, _) => BrowseDatabase();
 
         btnLoadAll.Click += (_, _) => LoadAllFromDatabase();
@@ -86,6 +87,7 @@ public partial class ClampSettingUserControl : UserControl
     {
         _settings = ClampSettings.Load();
 
+        lblClampBadge.Text = ClampPlcName();
         txtIp.Text = _settings.Ip;
         txtPort.Text = _settings.Port.ToString();
         txtDbPath.Text = _settings.DbPath;
@@ -567,12 +569,37 @@ public partial class ClampSettingUserControl : UserControl
             : $"{axis.Display} — ❌ {error}");
     }
 
+    /// <summary>
+    /// เปลี่ยนชื่อที่แสดงของ PLC แคลมป์ — ชุดเดียวกับหน้า PLC Setting
+    ///
+    /// หน้างานมี PLC หลายตัว เรียกด้วยชื่อที่ติดอยู่กับเครื่องจริงจะสื่อกันได้ดีกว่าเลข IP
+    /// </summary>
+    private void EditName()
+    {
+        using var dlg = new InputDialog("Rename", "Display name:", ClampPlcName());
+        if (dlg.ShowDialog(this) != DialogResult.OK) return;
+
+        CustomSettingsManager.Write(ClampNameKey, dlg.Value);
+        lblClampBadge.Text = dlg.Value;
+    }
+
+    private const string ClampNameKey = "CLAMP_PLC_NAME";
+
+    private static string ClampPlcName() => CustomSettingsManager.Read(ClampNameKey, "PLC แคลมป์");
+
+    /// <summary>ไฟสถานะ — เทาคือยังไม่ได้เช็ค เขียวคือต่อได้ แดงคือต่อไม่ได้</summary>
+    private void SetConnDot(Color colour)
+    {
+        if (!IsDisposed) lblClampStatusDot.ForeColor = colour;
+    }
+
     public async Task CheckStatusAsync()
     {
         string ip = txtIp.Text.Trim();
 
         if (ip.Length == 0 || !int.TryParse(txtPort.Text.Trim(), out int port))
         {
+            SetConnDot(Color.Gray);
             Log(ip.Length == 0 ? "ยังไม่ได้ตั้ง IP ของ PLC แคลมป์" : "Port ไม่ถูกต้อง");
             return;
         }
@@ -585,11 +612,14 @@ public partial class ClampSettingUserControl : UserControl
             if (IsDisposed) return;
 
             bool ok = completed == connect && !connect.IsFaulted && tcp.Connected;
+            SetConnDot(ok ? Green : Red);
             Log(ok ? $"เชื่อมต่อ {ip}:{port} ได้" : $"เชื่อมต่อ {ip}:{port} ไม่ได้");
         }
         catch (Exception ex)
         {
-            if (!IsDisposed) Log($"เชื่อมต่อ {ip}:{port} ไม่ได้ — {ex.Message}");
+            if (IsDisposed) return;
+            SetConnDot(Red);
+            Log($"เชื่อมต่อ {ip}:{port} ไม่ได้ — {ex.Message}");
         }
     }
 

@@ -1,4 +1,4 @@
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 
 namespace InkjetOperator.Services;
 
@@ -126,7 +126,7 @@ public static class HealthMonitor
                 CustomSettingsManager.Read("UV002_IP"), CustomSettingsManager.Read("UV002_PORT")),
             EndpointAsync(links, CustomSettingsManager.Read("PLC_NAME", "PLC-001"),
                 CustomSettingsManager.Read("PLC_IP"), CustomSettingsManager.Read("PLC_PORT", "502")),
-            EndpointAsync(links, "PLC แคลมป์",
+            EndpointAsync(links, CustomSettingsManager.Read("CLAMP_PLC_NAME", "PLC แคลมป์"),
                 CustomSettingsManager.Read("CLAMP_PLC_IP"), CustomSettingsManager.Read("CLAMP_PLC_PORT")));
 
         // การแตะไฟล์อาจค้างได้ถ้า path ชี้ไปเครื่องอื่นที่หลุด จึงโยนลงเธรดพูล

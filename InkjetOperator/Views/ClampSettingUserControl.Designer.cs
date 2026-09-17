@@ -23,6 +23,10 @@ partial class ClampSettingUserControl
         lblPortLabel = new System.Windows.Forms.Label();
         txtPort = new AntdUI.Input();
         btnCheckStatus = new AntdUI.Button();
+        flpClampIdentity = new System.Windows.Forms.FlowLayoutPanel();
+        lblClampStatusDot = new System.Windows.Forms.Label();
+        lblClampBadge = new System.Windows.Forms.Label();
+        btnClampName = new AntdUI.Button();
         lblDbLabel = new System.Windows.Forms.Label();
         txtDbPath = new AntdUI.Input();
         btnBrowse = new AntdUI.Button();
@@ -131,22 +135,79 @@ partial class ClampSettingUserControl
         tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 75F));
         tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 138F));
         tlpConn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 170F));
-        tlpConn.Controls.Add(lblIpLabel, 0, 0);
-        tlpConn.Controls.Add(txtIp, 1, 0);
-        tlpConn.Controls.Add(lblPortLabel, 2, 0);
-        tlpConn.Controls.Add(txtPort, 3, 0);
-        tlpConn.Controls.Add(btnCheckStatus, 4, 0);
-        tlpConn.Controls.Add(lblDbLabel, 0, 1);
-        tlpConn.Controls.Add(txtDbPath, 1, 1);
-        tlpConn.Controls.Add(btnBrowse, 4, 1);
-        tlpConn.Controls.Add(lblStatus, 1, 2);
+        tlpConn.Controls.Add(flpClampIdentity, 0, 0);
+        tlpConn.SetColumnSpan(flpClampIdentity, 5);
+        tlpConn.Controls.Add(lblIpLabel, 0, 1);
+        tlpConn.Controls.Add(txtIp, 1, 1);
+        tlpConn.Controls.Add(lblPortLabel, 2, 1);
+        tlpConn.Controls.Add(txtPort, 3, 1);
+        tlpConn.Controls.Add(btnCheckStatus, 4, 1);
+        tlpConn.Controls.Add(lblDbLabel, 0, 2);
+        tlpConn.Controls.Add(txtDbPath, 1, 2);
+        tlpConn.Controls.Add(btnBrowse, 4, 2);
+        tlpConn.Controls.Add(lblStatus, 1, 3);
         tlpConn.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpConn.Name = "tlpConn";
-        tlpConn.RowCount = 3;
+        tlpConn.RowCount = 4;
+        tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 58F));
         tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 58F));
         tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
         tlpConn.TabIndex = 0;
+        //
+        // flpClampIdentity
+        //
+        flpClampIdentity.AutoSize = true;
+        flpClampIdentity.BackColor = System.Drawing.Color.Transparent;
+        flpClampIdentity.Controls.Add(lblClampStatusDot);
+        flpClampIdentity.Controls.Add(lblClampBadge);
+        flpClampIdentity.Controls.Add(btnClampName);
+        flpClampIdentity.Dock = System.Windows.Forms.DockStyle.Fill;
+        flpClampIdentity.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
+        flpClampIdentity.Margin = new System.Windows.Forms.Padding(0);
+        flpClampIdentity.Name = "flpClampIdentity";
+        flpClampIdentity.TabIndex = 0;
+        flpClampIdentity.WrapContents = false;
+        //
+        // lblClampStatusDot
+        //
+        lblClampStatusDot.Anchor = System.Windows.Forms.AnchorStyles.Left;
+        lblClampStatusDot.Font = new System.Drawing.Font("Segoe UI", 25F);
+        lblClampStatusDot.ForeColor = System.Drawing.Color.Gray;
+        lblClampStatusDot.Margin = new System.Windows.Forms.Padding(0, 0, 8, 0);
+        lblClampStatusDot.Name = "lblClampStatusDot";
+        lblClampStatusDot.Size = new System.Drawing.Size(45, 45);
+        lblClampStatusDot.TabIndex = 0;
+        lblClampStatusDot.Text = "●";
+        lblClampStatusDot.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+        //
+        // lblClampBadge
+        //
+        lblClampBadge.Anchor = System.Windows.Forms.AnchorStyles.Left;
+        lblClampBadge.BackColor = System.Drawing.Color.FromArgb(33, 33, 33);
+        lblClampBadge.Font = new System.Drawing.Font("Segoe UI", 12.5F, System.Drawing.FontStyle.Bold);
+        lblClampBadge.ForeColor = System.Drawing.Color.White;
+        lblClampBadge.Margin = new System.Windows.Forms.Padding(0, 0, 12, 0);
+        lblClampBadge.Name = "lblClampBadge";
+        lblClampBadge.Size = new System.Drawing.Size(175, 42);
+        lblClampBadge.TabIndex = 1;
+        lblClampBadge.Text = "PLC แคลมป";
+        lblClampBadge.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+        //
+        // btnClampName
+        //
+        btnClampName.Anchor = System.Windows.Forms.AnchorStyles.Left;
+        btnClampName.BorderWidth = 2F;
+        btnClampName.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnClampName.Font = new System.Drawing.Font("Segoe UI", 11F);
+        btnClampName.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnClampName.Margin = new System.Windows.Forms.Padding(0);
+        btnClampName.Name = "btnClampName";
+        btnClampName.Radius = 6;
+        btnClampName.Size = new System.Drawing.Size(100, 42);
+        btnClampName.TabIndex = 2;
+        btnClampName.Text = "Rename";
+        btnClampName.Type = AntdUI.TTypeMini.Default;
         //
         // lblIpLabel
         //
@@ -706,6 +767,10 @@ partial class ClampSettingUserControl
     private System.Windows.Forms.Label lblPortLabel;
     private AntdUI.Input txtPort;
     private AntdUI.Button btnCheckStatus;
+    private System.Windows.Forms.FlowLayoutPanel flpClampIdentity;
+    private System.Windows.Forms.Label lblClampStatusDot;
+    private System.Windows.Forms.Label lblClampBadge;
+    private AntdUI.Button btnClampName;
     private System.Windows.Forms.Label lblDbLabel;
     private AntdUI.Input txtDbPath;
     private AntdUI.Button btnBrowse;
