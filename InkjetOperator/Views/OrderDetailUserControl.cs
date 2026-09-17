@@ -712,10 +712,19 @@ public partial class OrderDetailUserControl : UserControl
         // โชว์เฉพาะเครื่องของ ST3 เพราะขั้นที่สองของงานสองสถานีเป็นของ ST3 ที่เดียว
         // (เปิดให้โหมดทดสอบเห็นด้วย ไว้ลองก่อนเอาไปเปิดใช้จริงที่หน้างาน)
         var remoteStep = NextRemoteStep();
-        btnRemoteSend.Visible = remoteStep != null
+
+        // เก็บเป็นตัวแปรแล้วใช้ค่านั้นทั้งสองที่ ห้ามอ่าน .Visible กลับมาใช้ต่อ
+        //
+        // ตัวอ่านของ Control.Visible คืน false ถ้าพ่อแม่ชั้นไหนยังไม่ได้ถูกแสดง
+        // ไม่ใช่ค่าที่เพิ่งเซ็ตลงไป และหน้านี้ถูกเติมข้อมูลตั้งแต่ก่อนกล่องจะ ShowDialog
+        // (OrderDetailDialog.LoadDetail มาก่อน dlg.ShowDialog เสมอ) ผลคือ Enabled
+        // ถูกตั้งเป็น false ค้างไว้ พอกล่องเปิดขึ้นมาปุ่มจึงโผล่มาแบบกดไม่ได้
+        bool showRemote = remoteStep != null
             && StationService.ManualRemoteSendEnabled
             && (StationService.IsSt3 || _isDevMode);
-        btnRemoteSend.Enabled = btnRemoteSend.Visible;
+
+        btnRemoteSend.Visible = showRemote;
+        btnRemoteSend.Enabled = showRemote;
         if (remoteStep != null) btnRemoteSend.Text = $"ขอให้ ST1 ส่ง {remoteStep}";
 
         // ปุ่มส่งมือเหลือไว้เฉพาะโหมดทดสอบ
