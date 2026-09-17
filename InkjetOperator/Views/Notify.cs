@@ -33,6 +33,13 @@ internal static class Notify
     private const int ErrorSeconds = 6;
     private const int DetailSeconds = 10;
 
+    /// <summary>
+    /// ผลการส่งที่ผ่านหมด ค้างนานกว่าข้อความสำเร็จทั่วไป
+    ///
+    /// มีหลายบรรทัด (เครื่องละบรรทัด) ต้องมีเวลาให้กวาดตาอ่านครบก่อนหาย
+    /// </summary>
+    private const int ResultSeconds = 5;
+
     // ---- One-line toast ----
 
     /// <summary>
@@ -270,6 +277,22 @@ internal static class Notify
             : list.Any(l => l.Kind == ResultKind.Warn) ? AntdUI.TType.Warn
             : list.Any(l => l.Kind == ResultKind.Success) ? AntdUI.TType.Success
             : AntdUI.TType.Info;
+
+        // ผ่านหมดทุกบรรทัด = ไม่มีอะไรให้ตัดสินใจ ใช้ข้อความลอยกลางจอบนพอ
+        // คนที่เพิ่งกดส่งจะได้ทำงานต่อได้เลย ไม่ต้องเดินมากดปิดกล่องก่อน
+        //
+        // มีไม่ผ่านแม้แต่บรรทัดเดียวยังใช้กล่องเหมือนเดิม เพราะต้องอ่านให้ครบแล้ว
+        // ตัดสินใจว่าจะส่งซ้ำหรือไปแก้อะไร ข้อความลอยหายเองภายในไม่กี่วินาที
+        // ซึ่งพลาดได้ง่ายถ้ากดแล้วเดินไปที่เครื่องเลย
+        if (worst == AntdUI.TType.Success)
+        {
+            System.Media.SystemSounds.Asterisk.Play();
+
+            var plain = string.Join(Environment.NewLine, list.Select(l => l.Text));
+            Toast(owner, AntdUI.TType.Success, $"{title}{Environment.NewLine}{plain}",
+                ResultSeconds, MessageBoxIcon.Information);
+            return;
+        }
 
         if (Resolve(owner) is not { } form)
         {
