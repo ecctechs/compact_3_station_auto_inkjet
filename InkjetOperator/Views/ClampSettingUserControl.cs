@@ -36,6 +36,10 @@ public partial class ClampSettingUserControl : UserControl
 
         lblStatus.ForeColor = Color.Gray;
         _ = CheckStatusAsync();
+
+        // ไฟสถานะต้องตรงกับของจริง ไม่ใช่ภาพนิ่งตั้งแต่ตอนเปิดโปรแกรม
+        // กติกาทั้งหมดอยู่ที่ StatusRecheck
+        Services.StatusRecheck.Wire(this, tmrAutoCheck, () => CheckStatusAsync(quiet: true));
     }
 
     // ── Setup ──────────────────────────────────────────────
@@ -590,14 +594,20 @@ public partial class ClampSettingUserControl : UserControl
         if (!IsDisposed) lblClampStatusDot.ForeColor = colour;
     }
 
-    public async Task CheckStatusAsync()
+    /// <param name="quiet">
+    /// true = รอบตรวจซ้ำอัตโนมัติ เปลี่ยนแค่สีไฟ ไม่เขียนลงกล่องผลการทำงาน
+    /// ไม่งั้นกล่องจะเต็มไปด้วยบรรทัดเดิมนาทีละสี่บรรทัดจนอ่านของจริงไม่เจอ
+    /// </param>
+    public async Task CheckStatusAsync(bool quiet = false)
     {
+        void Note(string text) { if (!quiet) Log(text); }
+
         string ip = txtIp.Text.Trim();
 
         if (ip.Length == 0 || !int.TryParse(txtPort.Text.Trim(), out int port))
         {
             SetConnDot(Color.Gray);
-            Log(ip.Length == 0 ? "ยังไม่ได้ตั้ง IP ของ PLC แคลมป์" : "Port ไม่ถูกต้อง");
+            Note(ip.Length == 0 ? "ยังไม่ได้ตั้ง IP ของ PLC แคลมป์" : "Port ไม่ถูกต้อง");
             return;
         }
 
@@ -610,13 +620,13 @@ public partial class ClampSettingUserControl : UserControl
 
             bool ok = completed == connect && !connect.IsFaulted && tcp.Connected;
             SetConnDot(ok ? Green : Red);
-            Log(ok ? $"เชื่อมต่อ {ip}:{port} ได้" : $"เชื่อมต่อ {ip}:{port} ไม่ได้");
+            Note(ok ? $"เชื่อมต่อ {ip}:{port} ได้" : $"เชื่อมต่อ {ip}:{port} ไม่ได้");
         }
         catch (Exception ex)
         {
             if (IsDisposed) return;
             SetConnDot(Red);
-            Log($"เชื่อมต่อ {ip}:{port} ไม่ได้ — {ex.Message}");
+            Note($"เชื่อมต่อ {ip}:{port} ไม่ได้ — {ex.Message}");
         }
     }
 

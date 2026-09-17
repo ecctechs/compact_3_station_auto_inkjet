@@ -1,4 +1,4 @@
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using Microsoft.Data.Sqlite;
 using InkjetOperator.Services;
 
@@ -40,6 +40,10 @@ public partial class InkjetSettingUserControl : UserControl
         btnCancel.Click += (_, _) => LoadAllSettings();
 
         Load += async (_, _) => await CheckAllStatusAsync();
+
+        // ไฟสถานะต้องตรงกับของจริง ไม่ใช่ภาพนิ่งตั้งแต่ตอนเปิดโปรแกรม
+        // กติกาทั้งหมดอยู่ที่ StatusRecheck
+        Services.StatusRecheck.Wire(this, tmrAutoCheck, () => CheckAllStatusAsync(quiet: true));
     }
 
     private void LoadAllSettings()
@@ -110,10 +114,17 @@ public partial class InkjetSettingUserControl : UserControl
 
     // ── Check Status ────────────────────────────────────────────────
 
-    public async Task CheckAllStatusAsync()
+    /// <param name="quiet">
+    /// true = รอบตรวจซ้ำอัตโนมัติ ไม่ต้องหมุนปุ่มให้รำคาญตาทุก 15 วินาที
+    /// เปลี่ยนแค่สีไฟกับข้อความ ซึ่งเป็นสิ่งที่คนเปิดหน้านี้มาดูอยู่แล้ว
+    /// </param>
+    public async Task CheckAllStatusAsync(bool quiet = false)
     {
-        btnCheckStatus.Loading = true;
-        btnCheckStatus.Enabled = false;
+        if (!quiet)
+        {
+            btnCheckStatus.Loading = true;
+            btnCheckStatus.Enabled = false;
+        }
         try
         {
             await Task.WhenAll(
@@ -126,8 +137,11 @@ public partial class InkjetSettingUserControl : UserControl
         }
         finally
         {
-            btnCheckStatus.Loading = false;
-            btnCheckStatus.Enabled = true;
+            if (!quiet)
+            {
+                btnCheckStatus.Loading = false;
+                btnCheckStatus.Enabled = true;
+            }
         }
     }
 

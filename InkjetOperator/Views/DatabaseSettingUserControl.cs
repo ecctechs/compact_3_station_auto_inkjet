@@ -1,4 +1,4 @@
-using Microsoft.Data.Sqlite;
+﻿using Microsoft.Data.Sqlite;
 using InkjetOperator.Services;
 
 using InkjetOperator.Theme;
@@ -16,6 +16,10 @@ public partial class DatabaseSettingUserControl : UserControl
         btnBrowseClamp.Click += (_, _) => BrowseClampFile();
         btnSave.Click += BtnSave_Click;
         btnCancel.Click += (_, _) => LoadData();
+
+        // ไฟสถานะต้องตรงกับของจริง ไม่ใช่ภาพนิ่งตั้งแต่ตอนเปิดโปรแกรม
+        // กติกาทั้งหมดอยู่ที่ StatusRecheck
+        Services.StatusRecheck.Wire(this, tmrAutoCheck, () => CheckStatusAsync());
     }
 
     private void LoadData()

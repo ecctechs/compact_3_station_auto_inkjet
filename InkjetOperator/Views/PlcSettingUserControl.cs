@@ -31,6 +31,10 @@ public partial class PlcSettingUserControl : UserControl
         lblPlcStatus.ForeColor = StatusGray;
         _ = CheckStatusAsync();
         _ = LoadTableAsync();
+
+        // ไฟสถานะต้องตรงกับของจริง ไม่ใช่ภาพนิ่งตั้งแต่ตอนเปิดโปรแกรม
+        // กติกาทั้งหมดอยู่ที่ StatusRecheck
+        Services.StatusRecheck.Wire(this, tmrAutoCheck, () => CheckStatusAsync());
     }
 
     private static string BuildBaseUrl()

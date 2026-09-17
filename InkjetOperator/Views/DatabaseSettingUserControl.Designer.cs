@@ -1,4 +1,4 @@
-namespace InkjetOperator.Views;
+﻿namespace InkjetOperator.Views;
 
 partial class DatabaseSettingUserControl
 {
@@ -14,6 +14,8 @@ partial class DatabaseSettingUserControl
 
     private void InitializeComponent()
     {
+        components = new System.ComponentModel.Container();
+        tmrAutoCheck = new System.Windows.Forms.Timer(components);
         tlpRoot = new System.Windows.Forms.TableLayoutPanel();
         grpDatabase = new System.Windows.Forms.GroupBox();
         tlpForm = new System.Windows.Forms.TableLayoutPanel();
@@ -239,6 +241,10 @@ partial class DatabaseSettingUserControl
         grpDatabase.ResumeLayout(false);
         tlpForm.ResumeLayout(false);
         flpActions.ResumeLayout(false);
+        //
+        // tmrAutoCheck - ตรวจสถานะซ้ำเองระหว่างที่เปิดหน้านี้ค้างอยู่
+        //
+        tmrAutoCheck.Interval = 15000;
         ResumeLayout(false);
     }
 
@@ -258,4 +264,5 @@ partial class DatabaseSettingUserControl
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnSave;
     private AntdUI.Button btnCancel;
+    private System.Windows.Forms.Timer tmrAutoCheck;
 }

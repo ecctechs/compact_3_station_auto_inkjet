@@ -1,4 +1,4 @@
-namespace InkjetOperator.Views;
+﻿namespace InkjetOperator.Views;
 
 partial class InkjetSettingUserControl
 {
@@ -14,6 +14,8 @@ partial class InkjetSettingUserControl
 
     private void InitializeComponent()
     {
+        components = new System.ComponentModel.Container();
+        tmrAutoCheck = new System.Windows.Forms.Timer(components);
         tlpRoot = new System.Windows.Forms.TableLayoutPanel();
 
         grpInkjet = new System.Windows.Forms.GroupBox();
@@ -729,6 +731,10 @@ partial class InkjetSettingUserControl
         flpActions.ResumeLayout(false);
         grpMarkingRef.ResumeLayout(false);
         tlpMarkingRef.ResumeLayout(false);
+        //
+        // tmrAutoCheck - ตรวจสถานะซ้ำเองระหว่างที่เปิดหน้านี้ค้างอยู่
+        //
+        tmrAutoCheck.Interval = 15000;
         ResumeLayout(false);
     }
 
@@ -785,4 +791,5 @@ partial class InkjetSettingUserControl
     private System.Windows.Forms.Label lblMarkingRefLabel;
     private AntdUI.Input txtMarkingRefFolder;
     private AntdUI.Button btnMarkingRefBrowse;
+    private System.Windows.Forms.Timer tmrAutoCheck;
 }

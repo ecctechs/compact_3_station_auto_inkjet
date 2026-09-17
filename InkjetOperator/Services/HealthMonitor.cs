@@ -137,21 +137,26 @@ public static class HealthMonitor
             EndpointAsync(links, CustomSettingsManager.Read("CLAMP_PLC_NAME", "PLC แคลมป์"),
                 CustomSettingsManager.Read("CLAMP_PLC_IP"), CustomSettingsManager.Read("CLAMP_PLC_PORT")));
 
-        // การแตะไฟล์อาจค้างได้ถ้า path ชี้ไปเครื่องอื่นที่หลุด จึงโยนลงเธรดพูล
-        // พร้อมกำหนดเวลารอเหมือนปลายทางอื่น ไม่ให้รอบนี้ค้างเพราะเรื่องนี้
-        var onDisk = await WithTimeoutAsync(Task.Run(() => new[]
-        {
-            FileItem(files, "PrintData.db3", CustomSettingsManager.Read("DB_PATH")),
-            FileItem(files, "mydatabase.db3 (แคลมป์)", CustomSettingsManager.Read("CLAMP_DB_PATH")),
-            FolderItem(files, "โฟลเดอร์รูปอ้างอิง", CustomSettingsManager.Read("MARKING_REF_FOLDER")),
-            FolderItem(files, $"โฟลเดอร์โปรแกรม {uv1Name}", UvSettingsManager.GetDocumentFolder(1)),
-            FolderItem(files, $"โฟลเดอร์โปรแกรม {uv2Name}", UvSettingsManager.GetDocumentFolder(2)),
-            BackendFolderItem(files),
-            SettingsItem(files),
-        }));
+        // ไฟล์กับโฟลเดอร์ยิงพร้อมกันเหมือนปลายทางบนเครือข่าย
+        //
+        // เดิมทั้งเจ็ดรายการอยู่ใน Task.Run ก้อนเดียว เรียงกันทีละอัน และใช้เวลารอ
+        // ร่วมกันก้อนเดียว พอ path เกือบทั้งหมดชี้ไปเครื่องอื่น เครื่องปลายทางดับ
+        // แค่เครื่องเดียว รายการแรกที่ค้างก็กินเวลาที่มีไปคนเดียว อีกหกรายการ
+        // ไม่ได้ถูกเช็คด้วยซ้ำแต่ขึ้น "ตรวจไม่สำเร็จ" ตามไปทั้งแถบ
+        //
+        // PathProbe เช็คตัวเครื่องก่อนแตะไฟล์ เครื่องดับจึงรู้ใน 1 วินาทีและไม่ไป
+        // แตะไฟล์เลย รายละเอียดอยู่ในคลาสนั้น
+        var onDisk = await Task.WhenAll(
+            PathItemAsync(files, "PrintData.db3", CustomSettingsManager.Read("DB_PATH"), folder: false),
+            PathItemAsync(files, "mydatabase.db3 (แคลมป์)", CustomSettingsManager.Read("CLAMP_DB_PATH"), folder: false),
+            PathItemAsync(files, "โฟลเดอร์รูปอ้างอิง", CustomSettingsManager.Read("MARKING_REF_FOLDER"), folder: true),
+            PathItemAsync(files, $"โฟลเดอร์โปรแกรม {uv1Name}", UvSettingsManager.GetDocumentFolder(1), folder: true),
+            PathItemAsync(files, $"โฟลเดอร์โปรแกรม {uv2Name}", UvSettingsManager.GetDocumentFolder(2), folder: true),
+            BackendFolderItemAsync(files),
+            Task.FromResult(SettingsItem(files)));
 
         var all = new List<HealthItem>();
-        all.AddRange(onDisk ?? [Unknown(files, "ไฟล์และโฟลเดอร์")]);
+        all.AddRange(onDisk);
         all.AddRange(network);
         return all;
     }
@@ -184,40 +189,48 @@ public static class HealthMonitor
 
     // ── ไฟล์และโฟลเดอร์ ────────────────────────────────────
 
-    private static HealthItem FileItem(string group, string name, string? path)
+    /// <summary>
+    /// แปลงผลของ <see cref="PathProbe"/> เป็นแถวในตาราง
+    ///
+    /// "เครื่องไม่ตอบ" กับ "ไม่มีไฟล์" ขึ้นเป็นข้อความคนละอันโดยตั้งใจ — สองอย่างนี้
+    /// แก้กันคนละวิธี คนอ่านต้องแยกออกตั้งแต่บรรทัดแรกโดยไม่ต้องเดา
+    /// </summary>
+    private static async Task<HealthItem> PathItemAsync(
+        string group, string name, string? path, bool folder)
     {
-        var value = (path ?? "").Trim();
-        if (value.Length == 0)
-            return new HealthItem(group, name, HealthState.NotConfigured, "ยังไม่ได้ตั้งค่า");
+        var result = folder
+            ? await PathProbe.FolderAsync(path)
+            : await PathProbe.FileAsync(path);
 
-        return File.Exists(value)
-            ? new HealthItem(group, name, HealthState.Ok, value)
-            : new HealthItem(group, name, HealthState.Bad, $"ไม่พบไฟล์: {value}");
-    }
+        var state = result.State switch
+        {
+            PathState.Ok => HealthState.Ok,
+            PathState.NotSet => HealthState.NotConfigured,
+            _ => HealthState.Bad,
+        };
 
-    private static HealthItem FolderItem(string group, string name, string? path)
-    {
-        var value = (path ?? "").Trim();
-        if (value.Length == 0)
-            return new HealthItem(group, name, HealthState.NotConfigured, "ยังไม่ได้ตั้งค่า");
+        var detail = result.State == PathState.Missing
+            ? $"{result.Detail}: {(path ?? "").Trim()}"
+            : result.Detail;
 
-        return Directory.Exists(value)
-            ? new HealthItem(group, name, HealthState.Ok, value)
-            : new HealthItem(group, name, HealthState.Bad, $"ไม่พบโฟลเดอร์: {value}");
+        return new HealthItem(group, name, state, detail);
     }
 
     /// <summary>โฟลเดอร์ backend ต้องมี index.js อยู่จริง ไม่ใช่แค่มีโฟลเดอร์</summary>
-    private static HealthItem BackendFolderItem(string group)
+    private static async Task<HealthItem> BackendFolderItemAsync(string group)
     {
         const string name = "โฟลเดอร์ backend";
         var folder = CustomSettingsManager.Read("BACKEND_PATH", "").Trim();
         if (folder.Length == 0)
             return new HealthItem(group, name, HealthState.NotConfigured, "ยังไม่ได้ตั้งค่า");
 
-        var entry = Path.Combine(folder, "index.js");
-        return File.Exists(entry)
-            ? new HealthItem(group, name, HealthState.Ok, folder)
-            : new HealthItem(group, name, HealthState.Bad, $"ไม่พบ index.js ใน {folder}");
+        var result = await PathProbe.FileAsync(Path.Combine(folder, "index.js"));
+        return result.State switch
+        {
+            PathState.Ok => new HealthItem(group, name, HealthState.Ok, folder),
+            PathState.Missing => new HealthItem(group, name, HealthState.Bad, $"ไม่พบ index.js ใน {folder}"),
+            _ => new HealthItem(group, name, HealthState.Bad, result.Detail),
+        };
     }
 
     private static HealthItem SettingsItem(string group)
@@ -229,15 +242,6 @@ public static class HealthMonitor
     }
 
     // ── ตัวช่วย ────────────────────────────────────────────
-
-    private static async Task<T?> WithTimeoutAsync<T>(Task<T> task) where T : class
-    {
-        try { return await task.WaitAsync(Timeout); }
-        catch { return null; }
-    }
-
-    private static HealthItem Unknown(string group, string name) =>
-        new(group, name, HealthState.Bad, "ตรวจไม่สำเร็จ อาจเป็นเพราะ path ชี้ไปเครื่องที่หลุด");
 
     /// <summary>ข้อความของ .NET ยาวเกินกว่าจะใส่ในตาราง เอาแค่ประโยคแรก</summary>
     private static string Short(Exception ex)

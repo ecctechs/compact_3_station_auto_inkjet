@@ -18,6 +18,10 @@ public partial class BackendSettingUserControl : UserControl
         btnCheckStatus.Click += async (_, _) => await CheckStatusAsync();
         btnSave.Click += BtnSave_Click;
         btnCancel.Click += (_, _) => { LoadSettings(); ResetColors(); };
+
+        // ไฟสถานะต้องตรงกับของจริง ไม่ใช่ภาพนิ่งตั้งแต่ตอนเปิดโปรแกรม
+        // กติกาทั้งหมดอยู่ที่ StatusRecheck
+        Services.StatusRecheck.Wire(this, tmrAutoCheck, () => CheckStatusAsync(quiet: true));
     }
 
     private void LoadSettings()
@@ -50,7 +54,8 @@ public partial class BackendSettingUserControl : UserControl
         lblPcBadge.Text = dlg.Value;
     }
 
-    public async Task CheckStatusAsync()
+    /// <param name="quiet">true = รอบตรวจซ้ำอัตโนมัติ ไม่ต้องหมุนปุ่ม</param>
+    public async Task CheckStatusAsync(bool quiet = false)
     {
         var ip = txtPcIp.Text.Trim();
         if (string.IsNullOrWhiteSpace(ip))
@@ -59,8 +64,11 @@ public partial class BackendSettingUserControl : UserControl
             return;
         }
 
-        btnCheckStatus.Loading = true;
-        btnCheckStatus.Enabled = false;
+        if (!quiet)
+        {
+            btnCheckStatus.Loading = true;
+            btnCheckStatus.Enabled = false;
+        }
         try
         {
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
@@ -73,8 +81,11 @@ public partial class BackendSettingUserControl : UserControl
         }
         finally
         {
-            btnCheckStatus.Loading = false;
-            btnCheckStatus.Enabled = true;
+            if (!quiet)
+            {
+                btnCheckStatus.Loading = false;
+                btnCheckStatus.Enabled = true;
+            }
         }
     }
 

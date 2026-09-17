@@ -14,6 +14,8 @@ partial class BackendSettingUserControl
 
     private void InitializeComponent()
     {
+        components = new System.ComponentModel.Container();
+        tmrAutoCheck = new System.Windows.Forms.Timer(components);
         tlpRoot = new System.Windows.Forms.TableLayoutPanel();
         grpBackend = new System.Windows.Forms.GroupBox();
         tlpDevice = new System.Windows.Forms.TableLayoutPanel();
@@ -210,6 +212,10 @@ partial class BackendSettingUserControl
         grpBackend.ResumeLayout(false);
         tlpDevice.ResumeLayout(false);
         flpActions.ResumeLayout(false);
+        //
+        // tmrAutoCheck - ตรวจสถานะซ้ำเองระหว่างที่เปิดหน้านี้ค้างอยู่
+        //
+        tmrAutoCheck.Interval = 15000;
         ResumeLayout(false);
     }
 
@@ -227,4 +233,5 @@ partial class BackendSettingUserControl
     private AntdUI.Button btnSave;
     private AntdUI.Button btnCancel;
     private AntdUI.Button btnCheckStatus;
+    private System.Windows.Forms.Timer tmrAutoCheck;
 }

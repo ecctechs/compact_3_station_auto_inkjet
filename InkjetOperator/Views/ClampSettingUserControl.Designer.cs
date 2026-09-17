@@ -14,6 +14,8 @@ partial class ClampSettingUserControl
 
     private void InitializeComponent()
     {
+        components = new System.ComponentModel.Container();
+        tmrAutoCheck = new System.Windows.Forms.Timer(components);
         tlpRoot = new System.Windows.Forms.TableLayoutPanel();
 
         grpConnection = new System.Windows.Forms.GroupBox();
@@ -753,6 +755,10 @@ partial class ClampSettingUserControl
         grpLog.ResumeLayout(false);
         grpLog.PerformLayout();
         flpActions.ResumeLayout(false);
+        //
+        // tmrAutoCheck - ตรวจสถานะซ้ำเองระหว่างที่เปิดหน้านี้ค้างอยู่
+        //
+        tmrAutoCheck.Interval = 15000;
         ResumeLayout(false);
     }
 
@@ -810,4 +816,5 @@ partial class ClampSettingUserControl
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnSave;
     private AntdUI.Button btnCancel;
+    private System.Windows.Forms.Timer tmrAutoCheck;
 }
