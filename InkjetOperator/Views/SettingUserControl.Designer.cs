@@ -36,6 +36,7 @@ partial class SettingUserControl
         btnPLCSetting = new AntdUI.Button();
         btnClampSetting = new AntdUI.Button();
         btnUvTest = new AntdUI.Button();
+        btnSystemHealth = new AntdUI.Button();
         pnlContent = new AntdUI.Panel();
         pnlContentArea = new BufferedPanel();
         tlpSettingRoot.SuspendLayout();
@@ -87,6 +88,7 @@ partial class SettingUserControl
         tlpSidebar.Controls.Add(btnPLCSetting, 0, 3);
         tlpSidebar.Controls.Add(btnClampSetting, 0, 4);
         tlpSidebar.Controls.Add(btnUvTest, 0, 5);
+        tlpSidebar.Controls.Add(btnSystemHealth, 0, 6);
         tlpSidebar.Dock = DockStyle.Top;
         tlpSidebar.Location = new Point(2, 2);
         tlpSidebar.Margin = new Padding(0);
@@ -180,6 +182,19 @@ partial class SettingUserControl
         btnUvTest.TabIndex = 5;
         btnUvTest.Text = "UV Test";
         // 
+        // btnSystemHealth
+        // 
+        btnSystemHealth.Dock = DockStyle.Fill;
+        btnSystemHealth.Font = new Font("Segoe UI", 15F);
+        btnSystemHealth.ForeColor = Color.FromArgb(51, 51, 51);
+        btnSystemHealth.Location = new Point(0, 336);
+        btnSystemHealth.Margin = new Padding(0);
+        btnSystemHealth.Name = "btnSystemHealth";
+        btnSystemHealth.Radius = 0;
+        btnSystemHealth.Size = new Size(265, 56);
+        btnSystemHealth.TabIndex = 6;
+        btnSystemHealth.Text = "สถานะระบบ";
+        // 
         // pnlContent
         // 
         pnlContent.Back = Color.White;
@@ -233,6 +248,7 @@ partial class SettingUserControl
     private AntdUI.Button btnPLCSetting;
     private AntdUI.Button btnClampSetting;
     private AntdUI.Button btnUvTest;
+    private AntdUI.Button btnSystemHealth;
     private AntdUI.Panel pnlContent;
     private BufferedPanel pnlContentArea;
 }

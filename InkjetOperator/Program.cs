@@ -51,7 +51,12 @@ static class Program
         WarnIfSettingsReadOnly();
         StartBackendIfNeeded();
 
+        // เฝ้าไฟล์ โฟลเดอร์ และเครื่องปลายทางไปเรื่อย ๆ เบื้องหลัง
+        // ผลไปโผล่ที่หน้า Setting หัวข้อสถานะระบบ ไม่มีการเด้งกล่องใด ๆ
+        HealthMonitor.Start();
+
         Application.Run(new Views.MainShellForm());
+        HealthMonitor.Stop();
     }
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]
