@@ -1022,23 +1022,10 @@ public partial class OrderListUserControl : UserControl
         int uvNumber = step == "UV1" ? 1 : 2;
         var uvRow = resolved.UvJobData.FirstOrDefault(r => r.Machine == step);
 
-        // ไม่มีชื่อโปรแกรมก็ไปต่อไม่ได้ ต้องบอกให้รู้
-        //
-        // เดิมตกไปรวมกับ pick.Program == null ข้างล่างซึ่ง return เงียบ ๆ ผลคือกดปุ่ม
-        // แล้วไม่มีอะไรเกิดขึ้นเลยสักอย่าง ไม่มีกล่อง ไม่มีข้อความ แยกไม่ออกว่าปุ่มเสีย
-        // ข้อมูลขาด หรือโปรแกรมค้าง — ทั้งปุ่มกดหน้างานและปุ่มสำรองเจอเหมือนกัน
-        if (string.IsNullOrWhiteSpace(uvRow?.ProgramName))
-        {
-            Notify.WarnModal(this, "ไม่มีชื่อโปรแกรม UV",
-                $"{JobName(jobId)} ไม่มีชื่อโปรแกรมของ {step} ในข้อมูลงาน" + Environment.NewLine + Environment.NewLine
-                + "ส่งเข้าเครื่องไม่ได้จนกว่าจะมีชื่อโปรแกรม");
-            return;
-        }
-
         var pick = UvProgramResolver.Resolve(
-            uvRow.ProgramName, UvSettingsManager.GetDocumentFolder(uvNumber), this);
+            uvRow?.ProgramName, UvSettingsManager.GetDocumentFolder(uvNumber), this);
 
-        if (pick.Program == null) return;   // ผู้ใช้ปิดกล่องเลือกรุ่นย่อยเอง จึงไม่ต้องบอกอะไรอีก
+        if (pick.Program == null) return;   // ผู้ใช้ปิดกล่องเลือกรุ่นย่อย
 
         var uvName = UvSettingsManager.Read(
             uvNumber == 1 ? "UV1_NAME" : "UV2_NAME", $"UV-00{uvNumber}");
@@ -1555,15 +1542,7 @@ public partial class OrderListUserControl : UserControl
     private async Task RequestRemoteStartFromDetailAsync(int jobId)
     {
         var resolved = await LoadJobAsync(jobId, $"กำลังตรวจสอบงาน · {JobName(jobId)}");
-        if (IsDisposed) return;
-
-        if (resolved == null)
-        {
-            Notify.WarnModal(this, "ดึงข้อมูลงานไม่ได้",
-                $"อ่านข้อมูลล่าสุดของ {JobName(jobId)} ไม่ได้" + Environment.NewLine + Environment.NewLine
-                + "ตรวจการเชื่อมต่อ backend แล้วลองใหม่");
-            return;
-        }
+        if (resolved == null || IsDisposed) return;
 
         var steps = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod).Steps;
         int next = steps.FindIndex(step => !SentAlready(resolved, step));
