@@ -6,6 +6,12 @@ namespace InkjetOperator.Views;
 
 public partial class SettingUserControl : UserControl
 {
+    /// <summary>ระดับเมนูของโหมดทดสอบ — ตัวเดียวกับที่หน้า Order Detail ใช้</summary>
+    private const int DevMenuLevel = 99;
+
+    /// <summary>ตำแหน่งของปุ่มสถานะระบบในตารางระดับเมนู</summary>
+    private const int SystemHealthTab = 6;
+
     private AntdUI.Button[] _menuButtons = [];
     private AntdUI.Button? _activeButton;
     private readonly Dictionary<string, UserControl> _subPages = new();
@@ -25,18 +31,25 @@ public partial class SettingUserControl : UserControl
 
         bool[] visible = level switch
         {
-            0 => [false, true, true, false, false, false, true],
-            1 => [true, false, false, true, true, false, true],
+            0 => [false, true, true, false, false, false, false],
+            1 => [true, false, false, true, true, false, false],
             // ST3 — Backend DB อย่างเดียว
             //
             // โฟลเดอร์ UV2 ที่ ST3 ต้องใช้ไล่ดูรุ่นย่อยของ .uvdx ตั้งที่ UV2_FOLDER
             // ใน uv.config ของเครื่องนั้น ตั้งครั้งเดียวตอนติดตั้ง ไม่มีหน้าจอให้แก้
             // เพราะหน้า Printer Setting ที่มีช่องนี้อยู่แล้วมี COM port ของ MK กับ
             // IP ของ UV ปนอยู่ด้วย ซึ่งไม่ควรเปิดให้ ST3 แตะ
-            3 => [false, false, true, false, false, false, true],
-            9 => [false, false, false, true, true, true, true],  // ทดสอบหน้างาน: PLC / Clamp / UV Test
-            _ => [true, true, true, true, true, true, true],
+            3 => [false, false, true, false, false, false, false],
+            9 => [false, false, false, true, true, true, false],  // ทดสอบหน้างาน: PLC / Clamp / UV Test
+            _ => [true, true, true, true, true, true, false],
         };
+
+        // หน้าสถานะระบบเปิดเฉพาะโหมดทดสอบ
+        //
+        // เป็นหน้าไว้ไล่หาสาเหตุตอนมีอะไรใช้ไม่ได้ ไม่ใช่หน้าที่พนักงานต้องดูระหว่าง
+        // ทำงาน และรายการที่ขึ้นแดงส่วนใหญ่เป็นของที่สถานีนั้นไม่ได้ใช้อยู่แล้ว
+        // เปิดให้ทุกคนเห็นมีแต่จะสร้างคำถามโดยไม่จำเป็น
+        visible[SystemHealthTab] = level == DevMenuLevel;
 
         int row = 0;
         for (int i = 0; i < allButtons.Length; i++)

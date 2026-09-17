@@ -51,13 +51,30 @@ static class Program
         WarnIfSettingsReadOnly();
         StartBackendIfNeeded();
 
-        // เฝ้าไฟล์ โฟลเดอร์ และเครื่องปลายทางไปเรื่อย ๆ เบื้องหลัง
-        // ผลไปโผล่ที่หน้า Setting หัวข้อสถานะระบบ ไม่มีการเด้งกล่องใด ๆ
-        HealthMonitor.Start();
+        StartHealthMonitorIfDevMode();
 
         Application.Run(new Views.MainShellForm());
         HealthMonitor.Stop();
     }
+
+    /// <summary>
+    /// เฝ้าสถานะไฟล์ โฟลเดอร์ และเครื่องปลายทาง เฉพาะโหมดทดสอบ
+    ///
+    /// <para>
+    /// หน้าที่แสดงผลเปิดเฉพาะโหมดทดสอบ เครื่องที่ใช้งานจริงจึงไม่มีใครดูผลเลย
+    /// การเช็คทุก 30 วินาทีบนเครื่องพวกนั้นคือการเปิดสายเข้าเครื่องพิมพ์กับ PLC
+    /// ทิ้งเปล่า ๆ ตลอดกะ ไม่มีประโยชน์และเป็นภาระของปลายทางโดยไม่จำเป็น
+    /// </para>
+    /// </summary>
+    private static void StartHealthMonitorIfDevMode()
+    {
+        var raw = CustomSettingsManager.Read("MENU_LEVEL", "1");
+        if (int.TryParse(raw, out var level) && level == DevMenuLevel)
+            HealthMonitor.Start();
+    }
+
+    /// <summary>ระดับเมนูของโหมดทดสอบ — ตัวเดียวกับที่หน้า Setting และ Order Detail ใช้</summary>
+    private const int DevMenuLevel = 99;
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern bool SetForegroundWindow(IntPtr hWnd);
