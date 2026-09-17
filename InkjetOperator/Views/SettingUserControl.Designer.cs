@@ -37,6 +37,7 @@ partial class SettingUserControl
         btnClampSetting = new AntdUI.Button();
         btnUvTest = new AntdUI.Button();
         btnSystemHealth = new AntdUI.Button();
+        btnStationOptions = new AntdUI.Button();
         pnlContent = new AntdUI.Panel();
         pnlContentArea = new BufferedPanel();
         tlpSettingRoot.SuspendLayout();
@@ -89,11 +90,12 @@ partial class SettingUserControl
         tlpSidebar.Controls.Add(btnClampSetting, 0, 4);
         tlpSidebar.Controls.Add(btnUvTest, 0, 5);
         tlpSidebar.Controls.Add(btnSystemHealth, 0, 6);
+        tlpSidebar.Controls.Add(btnStationOptions, 0, 7);
         tlpSidebar.Dock = DockStyle.Top;
         tlpSidebar.Location = new Point(2, 2);
         tlpSidebar.Margin = new Padding(0);
         tlpSidebar.Name = "tlpSidebar";
-        tlpSidebar.RowCount = 7;
+        tlpSidebar.RowCount = 8;
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
@@ -101,7 +103,8 @@ partial class SettingUserControl
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
         tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
-        tlpSidebar.Size = new Size(265, 392);
+        tlpSidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
+        tlpSidebar.Size = new Size(265, 448);
         tlpSidebar.TabIndex = 0;
         // 
         // btnDatabaseSetting
@@ -194,6 +197,19 @@ partial class SettingUserControl
         btnSystemHealth.Size = new Size(265, 56);
         btnSystemHealth.TabIndex = 6;
         btnSystemHealth.Text = "สถานะระบบ";
+        //
+        // btnStationOptions
+        //
+        btnStationOptions.Dock = DockStyle.Fill;
+        btnStationOptions.Font = new Font("Segoe UI", 15F);
+        btnStationOptions.ForeColor = Color.FromArgb(51, 51, 51);
+        btnStationOptions.Location = new Point(0, 392);
+        btnStationOptions.Margin = new Padding(0);
+        btnStationOptions.Name = "btnStationOptions";
+        btnStationOptions.Radius = 0;
+        btnStationOptions.Size = new Size(265, 56);
+        btnStationOptions.TabIndex = 7;
+        btnStationOptions.Text = "ตัวเลือกหน้างาน";
         // 
         // pnlContent
         // 
@@ -249,6 +265,7 @@ partial class SettingUserControl
     private AntdUI.Button btnClampSetting;
     private AntdUI.Button btnUvTest;
     private AntdUI.Button btnSystemHealth;
+    private AntdUI.Button btnStationOptions;
     private AntdUI.Panel pnlContent;
     private BufferedPanel pnlContentArea;
 }

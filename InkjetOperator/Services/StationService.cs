@@ -1,4 +1,4 @@
-namespace InkjetOperator.Services;
+﻿namespace InkjetOperator.Services;
 
 /// <summary>
 /// เครื่องนี้ทำหน้าที่เป็นสถานีไหนในสายการผลิต
@@ -42,6 +42,21 @@ public static class StationService
         3 => $"{ProductName} - Station 3",
         _ => ProductName,
     };
+
+    /// <summary>
+    /// คีย์ใน Setting.config ที่บอกว่าให้โชว์ปุ่มสำรอง "ขอให้ ST1 ส่ง" ในหน้า Order Detail ไหม
+    ///
+    /// <para>
+    /// ปุ่มนั้นเป็นทางสำรองของปุ่มกดหน้างานตอนปุ่มกดใช้ไม่ได้ ตามปกติจึงปิดไว้
+    /// เปิดได้ที่หน้า Setting → ตัวเลือกหน้างาน ซึ่งเห็นเฉพาะโหมดทดสอบ
+    /// คนคุมเครื่องจึงเปิดเองไม่ได้ ต้องมีคนที่รู้เรื่องเข้าไปเปิดให้
+    /// </para>
+    /// </summary>
+    public const string ManualRemoteSendKey = "ST3_MANUAL_SEND";
+
+    /// <summary>ปุ่มสำรองเปิดอยู่ไหม — ค่าเริ่มต้นคือปิด</summary>
+    public static bool ManualRemoteSendEnabled =>
+        CustomSettingsManager.Read(ManualRemoteSendKey, "0") == "1";
 
     private static int Level
     {

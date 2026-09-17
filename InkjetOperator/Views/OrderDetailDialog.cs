@@ -35,11 +35,21 @@ internal sealed partial class OrderDetailDialog : AntdUI.BorderlessForm
         // title bar has no close cross.
         detailPage.CloseRequested += (_, _) => Close();
 
+        // ปุ่มสำรอง "ขอให้ ST1 ส่ง" ในหน้าไม่ได้ยิงคำขอเอง มันฝากชื่อขั้นไว้ตรงนี้
+        // แล้วปิดกล่อง คนเปิดกล่องเป็นคนอ่านค่าไปทำต่อ
+        detailPage.RemoteStartRequested += (_, step) => RemoteStartStep = step;
+
         // Neither MaximizeRequested (double-click on the bar) nor DragRequested is
         // handled. Both restore a maximised BorderlessForm to its Normal size, which
         // for this page is 1750x1250 - larger than the panel, and with no maximise
         // button left to undo it. The bar is a heading here, not a window control.
     }
+
+    /// <summary>
+    /// ขั้นที่คนในหน้าขอให้ ST1 ส่งให้ — null คือปิดกล่องไปเฉย ๆ ไม่ได้ขออะไร
+    /// อ่านหลัง <c>ShowDialog</c> คืนค่า
+    /// </summary>
+    public string? RemoteStartStep { get; private set; }
 
     /// <summary>Heading shown in the title bar.</summary>
     public string TitleText

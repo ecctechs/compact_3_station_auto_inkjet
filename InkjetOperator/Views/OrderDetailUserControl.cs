@@ -50,6 +50,17 @@ public partial class OrderDetailUserControl : UserControl
 
     public event EventHandler? CloseRequested;
 
+    /// <summary>
+    /// ขอให้หน้า Order List สั่ง ST1 ส่งขั้นถัดไปให้ — ค่าที่แนบมาคือชื่อขั้น เช่น "UV2"
+    ///
+    /// <para>
+    /// หน้านี้ไม่ยิงคำขอเอง เพราะการขอให้ ST1 ส่งมีด่านตรวจอยู่ที่หน้า Order List ครบแล้ว
+    /// (สถานีปลายทางว่างไหม · เลือกรุ่นย่อยของโปรแกรม UV · รอผลจริงจาก ST1 ไม่เกิน 40 วิ)
+    /// ทำอีกชุดที่นี่คือเปิดทางให้สองที่ตรวจไม่เหมือนกันในวันข้างหน้า
+    /// </para>
+    /// </summary>
+    public event EventHandler<string>? RemoteStartRequested;
+
     public OrderDetailUserControl()
     {
         InitializeComponent();
@@ -68,6 +79,7 @@ public partial class OrderDetailUserControl : UserControl
         picMk1Abc.Click += async (_, _) => await ToggleAbcAsync(1, picMk1Abc);
         picMk2Abc.Click += async (_, _) => await ToggleAbcAsync(2, picMk2Abc);
         btnSendMk.Click += async (_, _) => await SendToMkAsync();
+        btnRemoteSend.Click += (_, _) => RequestRemoteStart();
         btnSendUv1.Click += async (_, _) => await SendToUvAsync(1);
         btnSendUv2.Click += async (_, _) => await SendToUvAsync(2);
         btnTestPlc.Click += async (_, _) => await TestPlcAsync();
@@ -594,8 +606,48 @@ public partial class OrderDetailUserControl : UserControl
     private bool HasStep(string step) =>
         _sendSteps.Any(s => string.Equals(s, step, StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>
+    /// ขั้นถัดไปที่ต้องให้ ST1 เป็นคนส่งเข้าเครื่อง — null เมื่องานนี้ไม่เข้าเงื่อนไข
+    ///
+    /// เงื่อนไขเดียวกับที่ปุ่มกดหน้างานใช้เลือกงาน: งานเดินอยู่ · ขั้นแรกส่งไปแล้ว ·
+    /// ยังมีขั้นเหลือ ขั้นแรกของงานเป็นหน้าที่ของปุ่มเริ่มงานหน้า Order List ไม่ใช่ปุ่มนี้
+    /// </summary>
+    private string? NextRemoteStep()
+    {
+        if (_currentStep <= 0 || _currentStep >= _sendSteps.Count) return null;
+        if (!string.Equals(_jobStatus, "Process", StringComparison.OrdinalIgnoreCase)) return null;
+
+        return _sendSteps[_currentStep];
+    }
+
+    /// <summary>
+    /// ทางสำรองของปุ่มกดหน้างาน สำหรับตอนปุ่มกดหรือ PLC ใช้ไม่ได้
+    ///
+    /// ปิดหน้านี้ก่อนแล้วให้หน้า Order List เป็นคนยิงคำขอ วงกลมหมุนกับกล่องยืนยัน
+    /// จะได้อยู่บนหน้าที่ไม่มีอะไรบัง ไม่ใช่โผล่อยู่หลังกล่อง Order Detail
+    /// </summary>
+    private void RequestRemoteStart()
+    {
+        if (NextRemoteStep() is not string step) return;
+
+        RemoteStartRequested?.Invoke(this, step);
+        CloseRequested?.Invoke(this, EventArgs.Empty);
+    }
+
     private void ApplyStepButtons()
     {
+        // ปุ่มสำรองของปุ่มกดหน้างาน — ปิดไว้เป็นค่าเริ่มต้น เปิดที่ Setting → ตัวเลือกหน้างาน
+        // ซึ่งเห็นเฉพาะโหมดทดสอบ คนคุมเครื่องจึงเปิดเองไม่ได้
+        //
+        // โชว์เฉพาะเครื่องของ ST3 เพราะขั้นที่สองของงานสองสถานีเป็นของ ST3 ที่เดียว
+        // (เปิดให้โหมดทดสอบเห็นด้วย ไว้ลองก่อนเอาไปเปิดใช้จริงที่หน้างาน)
+        var remoteStep = NextRemoteStep();
+        btnRemoteSend.Visible = remoteStep != null
+            && StationService.ManualRemoteSendEnabled
+            && (StationService.IsSt3 || _isDevMode);
+        btnRemoteSend.Enabled = btnRemoteSend.Visible;
+        if (remoteStep != null) btnRemoteSend.Text = $"ขอให้ ST1 ส่ง {remoteStep}";
+
         // ปุ่มส่งมือเหลือไว้เฉพาะโหมดทดสอบ
         //
         // การส่งงานจริงเป็นหน้าที่ของปุ่มเริ่มงานหน้า Order List กับปุ่มกดหน้างาน

@@ -12,6 +12,9 @@ public partial class SettingUserControl : UserControl
     /// <summary>ตำแหน่งของปุ่มสถานะระบบในตารางระดับเมนู</summary>
     private const int SystemHealthTab = 6;
 
+    /// <summary>ตำแหน่งของปุ่มตัวเลือกหน้างานในตารางระดับเมนู</summary>
+    private const int StationOptionsTab = 7;
+
     private AntdUI.Button[] _menuButtons = [];
     private AntdUI.Button? _activeButton;
     private readonly Dictionary<string, UserControl> _subPages = new();
@@ -27,21 +30,21 @@ public partial class SettingUserControl : UserControl
         var raw = CustomSettingsManager.Read("MENU_LEVEL", "1");
         int.TryParse(raw, out var level);
 
-        var allButtons = new[] { btnDatabaseSetting, btnDbPathSetting, btnDB3Setting, btnPLCSetting, btnClampSetting, btnUvTest, btnSystemHealth };
+        var allButtons = new[] { btnDatabaseSetting, btnDbPathSetting, btnDB3Setting, btnPLCSetting, btnClampSetting, btnUvTest, btnSystemHealth, btnStationOptions };
 
         bool[] visible = level switch
         {
-            0 => [false, true, true, false, false, false, false],
-            1 => [true, false, false, true, true, false, false],
+            0 => [false, true, true, false, false, false, false, false],
+            1 => [true, false, false, true, true, false, false, false],
             // ST3 — Backend DB อย่างเดียว
             //
             // โฟลเดอร์ UV2 ที่ ST3 ต้องใช้ไล่ดูรุ่นย่อยของ .uvdx ตั้งที่ UV2_FOLDER
             // ใน uv.config ของเครื่องนั้น ตั้งครั้งเดียวตอนติดตั้ง ไม่มีหน้าจอให้แก้
             // เพราะหน้า Printer Setting ที่มีช่องนี้อยู่แล้วมี COM port ของ MK กับ
             // IP ของ UV ปนอยู่ด้วย ซึ่งไม่ควรเปิดให้ ST3 แตะ
-            3 => [false, false, true, false, false, false, false],
-            9 => [false, false, false, true, true, true, false],  // ทดสอบหน้างาน: PLC / Clamp / UV Test
-            _ => [true, true, true, true, true, true, false],
+            3 => [false, false, true, false, false, false, false, false],
+            9 => [false, false, false, true, true, true, false, false],  // ทดสอบหน้างาน: PLC / Clamp / UV Test
+            _ => [true, true, true, true, true, true, false, false],
         };
 
         // หน้าสถานะระบบเปิดเฉพาะโหมดทดสอบ
@@ -50,6 +53,10 @@ public partial class SettingUserControl : UserControl
         // ทำงาน และรายการที่ขึ้นแดงส่วนใหญ่เป็นของที่สถานีนั้นไม่ได้ใช้อยู่แล้ว
         // เปิดให้ทุกคนเห็นมีแต่จะสร้างคำถามโดยไม่จำเป็น
         visible[SystemHealthTab] = level == DevMenuLevel;
+
+        // ตัวเลือกหน้างานก็เปิดเฉพาะโหมดทดสอบด้วยเหตุผลเดียวกัน — ในนั้นเป็นสวิตช์
+        // ที่เปลี่ยนกฎการทำงานหน้างาน ไม่ใช่ค่าที่พนักงานควรพลิกเองระหว่างผลิต
+        visible[StationOptionsTab] = level == DevMenuLevel;
 
         int row = 0;
         for (int i = 0; i < allButtons.Length; i++)
@@ -171,6 +178,7 @@ public partial class SettingUserControl : UserControl
         nameof(btnClampSetting) => new ClampSettingUserControl(),
         nameof(btnUvTest) => new UvTestUserControl(),
         nameof(btnSystemHealth) => new SystemHealthUserControl(),
+        nameof(btnStationOptions) => new StationOptionsUserControl(),
         _ => null,
     };
 

@@ -208,6 +208,7 @@ partial class OrderDetailUserControl
         btnIaiAdj2Z2Reset = new AntdUI.Button();
         tlpDetailActions = new System.Windows.Forms.TableLayoutPanel();
         flpDetailActions = new System.Windows.Forms.FlowLayoutPanel();
+        btnRemoteSend = new AntdUI.Button();
         btnSendMk = new AntdUI.Button();
         btnSendUv1 = new AntdUI.Button();
         btnSendUv2 = new AntdUI.Button();
@@ -3036,6 +3037,7 @@ partial class OrderDetailUserControl
         flpDetailActions.Controls.Add(btnSendMk);
         flpDetailActions.Controls.Add(btnSendUv1);
         flpDetailActions.Controls.Add(btnSendUv2);
+        flpDetailActions.Controls.Add(btnRemoteSend);
         flpDetailActions.Controls.Add(btnTestPlc);
         flpDetailActions.Dock = System.Windows.Forms.DockStyle.Fill;
         flpDetailActions.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
@@ -3088,6 +3090,19 @@ partial class OrderDetailUserControl
         btnSendUv2.TabIndex = 2;
         btnSendUv2.Text = "ส่งหา UV2";
         btnSendUv2.Type = AntdUI.TTypeMini.Primary;
+        //
+        // btnRemoteSend - ปุ่มสำรองของปุ่มกดหน้างาน ขอให้ ST1 ส่งขั้นถัดไปแทน
+        //
+        btnRemoteSend.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
+        btnRemoteSend.ForeColor = System.Drawing.Color.White;
+        btnRemoteSend.Margin = new System.Windows.Forms.Padding(0, 0, 12, 0);
+        btnRemoteSend.Name = "btnRemoteSend";
+        btnRemoteSend.Radius = 10;
+        btnRemoteSend.Size = new System.Drawing.Size(360, 70);
+        btnRemoteSend.TabIndex = 3;
+        btnRemoteSend.Text = "ขอให้ ST1 ส่งขั้นถัดไป";
+        btnRemoteSend.Type = AntdUI.TTypeMini.Warn;
+        btnRemoteSend.Visible = false;
         //
         // btnTestPlc - ปุ่มแยกสำหรับทดสอบส่งค่าเข้า PLC ยังไม่รวมกับปุ่มส่ง MK
         //
@@ -3317,6 +3332,7 @@ partial class OrderDetailUserControl
     private AntdUI.Table tblUv2Texts;
     private System.Windows.Forms.TableLayoutPanel tlpDetailActions;
     private System.Windows.Forms.FlowLayoutPanel flpDetailActions;
+    private AntdUI.Button btnRemoteSend;
     private AntdUI.Button btnSendMk;
     private AntdUI.Button btnSendUv1;
     private AntdUI.Button btnSendUv2;

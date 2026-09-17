@@ -603,7 +603,7 @@ public partial class OrderListUserControl : UserControl
                 Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลด Detail ของ {JobName(row.Id)} ได้");
                 return;
             }
-            ShowDetailDialog(resolved);
+            await ShowDetailDialogAsync(resolved);
         }
         else if (buttonId == "start")
         {
@@ -1508,14 +1508,58 @@ public partial class OrderListUserControl : UserControl
     private static List<string> GetRequiredSteps(string markingMethod) =>
         MarkingMethodService.Resolve(markingMethod).Steps;
 
-    private void ShowDetailDialog(ResolvedJobResponse resolved)
+    /// <summary>
+    /// เปิดกล่อง Order Detail แล้วทำตามสิ่งที่คนในกล่องขอไว้ตอนปิด
+    ///
+    /// ตอนนี้มีอย่างเดียวคือปุ่มสำรอง "ขอให้ ST1 ส่ง" ซึ่งเป็นทางออกตอนปุ่มกดหน้างาน
+    /// ใช้ไม่ได้ ตัวคำขอยิงจากที่นี่ ไม่ใช่จากในกล่อง เพราะด่านตรวจทั้งหมดอยู่ที่นี่
+    /// </summary>
+    private async Task ShowDetailDialogAsync(ResolvedJobResponse resolved)
     {
-        using var dlg = new OrderDetailDialog();
-        // ชื่อเดียวกับหัวที่อยู่ในหน้า ไม่ประกอบเอง ไม่งั้นสองที่จะขึ้นคนละเลข
-        dlg.TitleText = $"{OrderDetailUserControl.JobTitle(resolved.Job)} — Order Detail";
-        dlg.Text = dlg.TitleText;
-        dlg.LoadDetail(resolved, _api);
-        dlg.ShowDialog(this);
+        string? requestedStep;
+
+        using (var dlg = new OrderDetailDialog())
+        {
+            // ชื่อเดียวกับหัวที่อยู่ในหน้า ไม่ประกอบเอง ไม่งั้นสองที่จะขึ้นคนละเลข
+            dlg.TitleText = $"{OrderDetailUserControl.JobTitle(resolved.Job)} — Order Detail";
+            dlg.Text = dlg.TitleText;
+            dlg.LoadDetail(resolved, _api);
+            dlg.ShowDialog(this);
+            requestedStep = dlg.RemoteStartStep;
+        }
+
+        if (requestedStep == null || _api == null || IsDisposed) return;
+
+        await RequestRemoteStartFromDetailAsync(resolved.Job.Id);
+    }
+
+    /// <summary>
+    /// ทำต่อจากปุ่มสำรองในหน้า Order Detail — เดินทางเดียวกับปุ่มกดหน้างานทุกประการ
+    ///
+    /// <para>
+    /// อ่านงานสดใหม่ก่อนเสมอ เพราะกล่อง Order Detail เปิดค้างได้นาน ระหว่างนั้น
+    /// ปุ่มกดหน้างานหรืออีกสถานีอาจส่งขั้นนั้นไปแล้ว ถ้าเชื่อค่าที่อ่านไว้ตอนเปิดกล่อง
+    /// จะกลายเป็นส่งซ้ำลงชิ้นงานจริง
+    /// </para>
+    /// </summary>
+    private async Task RequestRemoteStartFromDetailAsync(int jobId)
+    {
+        var resolved = await LoadJobAsync(jobId, $"กำลังตรวจสอบงาน · {JobName(jobId)}");
+        if (resolved == null || IsDisposed) return;
+
+        var steps = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod).Steps;
+        int next = steps.FindIndex(step => !SentAlready(resolved, step));
+
+        // -1 = ส่งครบแล้ว · 0 = ยังไม่ได้เริ่มเลย ซึ่งเป็นหน้าที่ของปุ่มเริ่มงาน ไม่ใช่ปุ่มนี้
+        if (next <= 0)
+        {
+            Notify.WarnModal(this, "ไม่มีขั้นที่ต้องส่ง",
+                $"{JobName(jobId)} ไม่มีขั้นถัดไปที่รอ ST1 ส่งแล้ว\n\n"
+                + "อาจมีคนกดปุ่มหน้างานไปก่อนหน้านี้");
+            return;
+        }
+
+        await RequestRemoteStartAsync(jobId, steps[next], resolved, askFirst: true);
     }
 
 
