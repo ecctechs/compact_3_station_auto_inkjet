@@ -67,9 +67,6 @@ public partial class OrderDetailUserControl : UserControl
     public OrderDetailUserControl()
     {
         InitializeComponent();
-
-        // แถบเลื่อนของตารางต้องอ้วนพอให้จิ้มด้วยนิ้วได้บนจอสัมผัส
-        Theme.ScrollStyles.Touch(this);
         ConfigureColumns();
 
         var rawLevel = CustomSettingsManager.Read("MENU_LEVEL", "1");
@@ -1148,7 +1145,10 @@ public partial class OrderDetailUserControl : UserControl
         // ทั้งคำและสีมาจาก JobStatusDisplay ที่เดียวกับคอลัมน์ Status ในตาราง
         // Order List — backend เก็บเป็น Process / Success แต่บนจอเรียก Working /
         // Finished ทั้งสองหน้า ไม่งั้นงานเดียวกันดูสองหน้าแล้วเหมือนคนละสถานะ
-        var jobStatus = Theme.JobStatusDisplay.Resolve(job.Status);
+        var jobStatus = Theme.JobStatusDisplay.Resolve(
+            job.Status,
+            MarkingMethodService.FinishedIncomplete(
+                job.Status, resolved.PlanRouting?.MarkingMethod, resolved.Commands));
         txtJobStatus.Text = OrDash(jobStatus.Text);
         txtJobStatus.ForeColor = jobStatus.Fore;
 

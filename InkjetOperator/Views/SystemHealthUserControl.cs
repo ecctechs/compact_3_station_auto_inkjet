@@ -1,4 +1,4 @@
-using InkjetOperator.Services;
+﻿using InkjetOperator.Services;
 using InkjetOperator.Theme;
 
 namespace InkjetOperator.Views;
@@ -20,7 +20,6 @@ public partial class SystemHealthUserControl : UserControl
     public SystemHealthUserControl()
     {
         InitializeComponent();
-        ScrollStyles.Touch(this);
         ConfigureColumns();
 
         // ผลรอบก่อนมีอยู่แล้วก็วาดเลย ไม่ต้องให้คนเปิดหน้ามานั่งรอรอบถัดไป

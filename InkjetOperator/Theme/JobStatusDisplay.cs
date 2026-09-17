@@ -1,4 +1,4 @@
-namespace InkjetOperator.Theme;
+﻿namespace InkjetOperator.Theme;
 
 /// <summary>
 /// สถานะงานที่ผู้ใช้เห็นมี 3 แบบ: Waiting แดง · Working ส้ม · Finished เขียว
@@ -31,6 +31,22 @@ internal static class JobStatusDisplay
         // สถานะนอกเหนือจาก 3 แบบถูกกรองออกไปแล้ว โชว์ค่าดิบไว้กันงงถ้าหลุดมา
         return (status ?? "", DesignTokens.Danger);
     }
+
+    /// <summary>
+    /// เหมือน <see cref="Resolve(string?)"/> แต่แยกงานที่กดจบทั้งที่ยังส่งไม่ครบทุกขั้น
+    /// ออกมาเป็นคำของตัวเอง
+    ///
+    /// <para>
+    /// ใช้สีส้มเดียวกับ Working ไม่ใช่เขียวของ Finished — งานแบบนี้ไม่ได้เสียหาย
+    /// แต่ก็ไม่ได้ทำครบตามแผน คนที่มาไล่ดูย้อนหลังต้องแยกออกจากงานที่ทำครบจริง
+    /// โดยไม่ต้องเปิดเข้าไปดูทีละงาน
+    /// </para>
+    /// <para>
+    /// ใครเป็นคนตัดสินว่าครบหรือไม่ครบ ดูที่ <c>MarkingMethodService.FinishedIncomplete</c>
+    /// </para>
+    /// </summary>
+    public static (string Text, Color Fore) Resolve(string? status, bool finishedIncomplete) =>
+        finishedIncomplete ? ("จบไม่ครบ", DesignTokens.Warning) : Resolve(status);
 
     public static string Text(string? status) => Resolve(status).Text;
 

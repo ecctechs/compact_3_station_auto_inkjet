@@ -52,8 +52,6 @@ public partial class OrderListUserControl : UserControl
     {
         InitializeComponent();
 
-        // แถบเลื่อนของตารางต้องอ้วนพอให้จิ้มด้วยนิ้วได้บนจอสัมผัส
-        Theme.ScrollStyles.Touch(this);
         ConfigureColumns();
         SetupEvents();
     }
@@ -1478,12 +1476,7 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private static StepStatus CheckSteps(string? markingMethod, List<CommandResult>? commands)
     {
-        var sent = (commands ?? new List<CommandResult>())
-            .Where(c => c.Success)
-            .Select(c => c.Command)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        var need = GetRequiredSteps(markingMethod ?? "").Where(x => !sent.Contains(x)).ToList();
+        var need = MarkingMethodService.MissingSteps(markingMethod, commands);
         return new StepStatus(need.Count == 0, need);
     }
 
@@ -1659,7 +1652,11 @@ public partial class OrderListUserControl : UserControl
     {
         var plan = MarkingMethodService.Resolve(job.PlanRouting?.MarkingMethod);
 
-        var (statusLabel, statusColor) = JobStatusDisplay.Resolve(job.Status);
+        // งานที่กดจบทั้งที่ยังส่งไม่ครบต้องดูออกจากในตาราง ไม่ต้องเปิดเข้าไปดูทีละงาน
+        var (statusLabel, statusColor) = JobStatusDisplay.Resolve(
+            job.Status,
+            MarkingMethodService.FinishedIncomplete(
+                job.Status, job.PlanRouting?.MarkingMethod, job.Commands));
         var statusText = new AntdUI.CellText(statusLabel) { Fore = statusColor };
 
         var buttons = new List<AntdUI.CellButton>();

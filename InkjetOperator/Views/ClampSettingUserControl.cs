@@ -29,9 +29,6 @@ public partial class ClampSettingUserControl : UserControl
     public ClampSettingUserControl()
     {
         InitializeComponent();
-
-        // แถบเลื่อนของตารางต้องอ้วนพอให้จิ้มด้วยนิ้วได้บนจอสัมผัส
-        Theme.ScrollStyles.Touch(this);
         ConfigureColumns();
         SetupEvents();
         LoadSettings();

@@ -99,6 +99,38 @@ public static class MarkingMethodService
     }
 
     /// <summary>
+    /// ขั้นที่แผนกำหนดไว้แต่ยังไม่มีคำสั่งส่งสำเร็จ — รายการว่างคือส่งครบแล้ว
+    ///
+    /// <para>
+    /// อยู่ที่นี่เพราะ Order List กับ Order Detail ต้องตอบเหมือนกันเสมอว่างานหนึ่ง
+    /// ส่งครบหรือยัง ถ้าแยกกันคิด วันหนึ่งสองหน้าจะบอกคนละเรื่องกันเรื่องงานเดียวกัน
+    /// </para>
+    /// <para>
+    /// คิดจากคำสั่งที่ส่งสำเร็จจริง ไม่ได้ดูหมุด MANUAL_COMPLETE เพราะงานเก่าที่จบ
+    /// ไปก่อนจะมีหมุดนั้นก็ต้องนับว่าไม่ครบเหมือนกัน
+    /// </para>
+    /// </summary>
+    public static List<string> MissingSteps(
+        string? markingMethod, IEnumerable<Models.CommandResult>? commands)
+    {
+        var sent = (commands ?? [])
+            .Where(c => c.Success)
+            .Select(c => c.Command)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        return Resolve(markingMethod).Steps.Where(step => !sent.Contains(step)).ToList();
+    }
+
+    /// <summary>
+    /// งานนี้จบไปแล้วทั้งที่ยังส่งไม่ครบทุกขั้นไหม — งานที่ถูกยกเลิกไม่นับ
+    /// เพราะ "ไม่ได้ทำ" ไม่ใช่ "ทำไม่ครบ"
+    /// </summary>
+    public static bool FinishedIncomplete(
+        string? status, string? markingMethod, IEnumerable<Models.CommandResult>? commands) =>
+        string.Equals(status, "Success", StringComparison.OrdinalIgnoreCase)
+        && MissingSteps(markingMethod, commands).Count > 0;
+
+    /// <summary>
     /// สถานีนี้กดเริ่มงาน marking นี้ได้ไหม
     ///
     /// 10 เริ่มได้ที่ ST3 เท่านั้น · ที่เหลือเริ่มได้ที่ ST1 เท่านั้น

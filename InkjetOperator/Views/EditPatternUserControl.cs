@@ -38,9 +38,6 @@ public partial class EditPatternUserControl : UserControl
     public EditPatternUserControl()
     {
         InitializeComponent();
-
-        // แถบเลื่อนของตารางต้องอ้วนพอให้จิ้มด้วยนิ้วได้บนจอสัมผัส
-        Theme.ScrollStyles.Touch(this);
         ConfigureRuleColumns();
         WireEvents();
         LoadData();
