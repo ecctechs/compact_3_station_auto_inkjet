@@ -521,6 +521,7 @@ partial class InkjetSettingUserControl
         txtUv2Ip.Dock = System.Windows.Forms.DockStyle.Fill;
         txtUv2Ip.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtUv2Ip.Name = "txtUv2Ip";
+        txtUv2Ip.Placeholder = "192.168.1.1";
         txtUv2Ip.TabIndex = 17;
         //
         // lblUv2Colon
@@ -540,7 +541,7 @@ partial class InkjetSettingUserControl
         txtUv2Port.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtUv2Port.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtUv2Port.Name = "txtUv2Port";
-        txtUv2Port.PlaceholderText = "Port";
+        txtUv2Port.PlaceholderText = "10086";
         txtUv2Port.Radius = 4;
         txtUv2Port.TabIndex = 19;
         //
