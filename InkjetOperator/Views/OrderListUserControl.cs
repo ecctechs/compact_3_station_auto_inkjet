@@ -210,11 +210,10 @@ public partial class OrderListUserControl : UserControl
 
     private void WirePushButton()
     {
-        // ปุ่มบอกว่า "เครื่องว่างแล้ว" ซึ่งกดได้ตลอดที่เครื่องถืองานอยู่ จึงเฝ้าไว้
-        // ตลอดที่หน้านี้เปิด ไม่ต้องรอว่ามีงานในคิวไหม กดตอนไม่มีอะไรถือเครื่องอยู่
-        // ก็ไม่เกิดอะไรขึ้น backend คืน released เป็นค่าว่างเฉย ๆ
+        // เฝ้าเฉพาะตอนที่มีงานรอปุ่มกดอยู่จริง และไม่มีอะไรค้างอยู่บนหน้าจอ
+        // ไม่มีงานรออยู่ก็ไม่ต้องไปกวน PLC ทุก 300 ms เปล่า ๆ
         _pushButton.ShouldWatch = () =>
-            !_sending && !_pushHandling && !_showingRemoteError && Visible;
+            !_sending && !_pushHandling && !_showingRemoteError && Visible && PushTarget() != null;
 
         _pushButton.Pressed += async (_, _) => await OnPushButtonPressedAsync();
 
@@ -229,6 +228,79 @@ public partial class OrderListUserControl : UserControl
         };
     }
 
+    /// <summary>
+    /// งานที่รอปุ่มกดอยู่ พร้อมขั้นตอนที่ปุ่มจะสั่งส่ง — null = ไม่มี ไม่ต้องเฝ้า
+    ///
+    /// <para>
+    /// เงื่อนไขครบทุกข้อ: อยู่ที่ ST3 · สถานะ Working · แผนมีมากกว่าหนึ่งขั้น ·
+    /// ขั้นก่อนหน้าส่งไปแล้ว · ขั้นถัดไปยังไม่ได้ส่ง
+    /// </para>
+    /// <para>
+    /// ใช้ข้อมูลจากตารางที่โหลดไว้แล้ว ไม่ยิง API เพิ่ม เพราะถูกเรียกทุกรอบของ
+    /// ตัวเฝ้า (/job/getAll ส่ง commands กับ plan_routing มาให้อยู่แล้ว)
+    /// </para>
+    /// </summary>
+    private (PrintJob Job, string Step)? PushTarget() => PushTargets().FirstOrDefault();
+
+    /// <summary>
+    /// งานที่รอปุ่มกดอยู่ทั้งหมด ไม่ใช่แค่ตัวแรก
+    ///
+    /// <para>
+    /// ต้องได้ทั้งหมดเพราะสองล็อตรออยู่พร้อมกันได้ เช่น marking 11 เพิ่งผ่าน UV1
+    /// ขณะที่ marking 12 เพิ่งผ่าน MK ทั้งคู่รอ UV2 เหมือนกัน ถ้าหยิบตัวแรกมาส่งเลย
+    /// จะเป็นการเดาว่าชิ้นงานที่อยู่ในเครื่องตอนนี้เป็นของล็อตไหน เดาผิดคือพิมพ์
+    /// ข้อความของอีกล็อตลงชิ้นงานจริง
+    /// </para>
+    /// </summary>
+    private List<(PrintJob Job, string Step)> PushTargets()
+    {
+        var found = new List<(PrintJob, string)>();
+        if (!StationService.IsSt3) return found;
+
+        foreach (var job in _allJobs)
+        {
+            if (!string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var steps = MarkingMethodService.Resolve(job.PlanRouting?.MarkingMethod).Steps;
+            if (steps.Count < 2) continue;
+
+            int next = steps.FindIndex(step => !AlreadySent(job, step));
+
+            // -1 = ส่งครบแล้ว · 0 = ยังไม่ได้เริ่มเลย ซึ่งเป็นหน้าที่ของปุ่มบนจอ ไม่ใช่ปุ่มหน้างาน
+            if (next <= 0) continue;
+
+            found.Add((job, steps[next]));
+        }
+
+        return found;
+    }
+
+    /// <summary>
+    /// รอหลายล็อตพร้อมกัน — ให้คนที่กดปุ่มเลือกเองว่าชิ้นงานในมือเป็นล็อตไหน
+    /// คืน null เมื่อปิดกล่องทิ้ง ซึ่งแปลว่าไม่ต้องส่งอะไร
+    /// </summary>
+    private (PrintJob Job, string Step)? AskWhichJob(List<(PrintJob Job, string Step)> targets)
+    {
+        var options = targets
+            .Select(t => new MarkingRefOption(
+                t.Job.Id.ToString(),
+                $"{JobLabel(t.Job)}  —  marking {Method(t.Job.PlanRouting?.MarkingMethod)}  →  {t.Step}",
+                []))
+            .ToList();
+
+        var picked = MarkingRefPickerDialog.Pick(this,
+            "มีงานรออยู่มากกว่าหนึ่งล็อต",
+            $"มี {targets.Count} ล็อตที่รอส่งขั้นถัดไปอยู่พร้อมกัน "
+            + "เลือกล็อตของชิ้นงานที่อยู่ในเครื่องตอนนี้",
+            options);
+
+        if (picked == null) return null;
+
+        return targets.FirstOrDefault(t => t.Job.Id.ToString() == picked) is { Job: not null } hit
+            ? hit
+            : null;
+    }
 
     private static bool AlreadySent(PrintJob job, string step) =>
         job.Commands?.Any(c => c.Success &&
@@ -243,44 +315,33 @@ public partial class OrderListUserControl : UserControl
     /// เพราะนั่นคือการ "เลือก" ไม่ใช่การ "ยืนยัน"
     /// </para>
     /// </summary>
-    /// <summary>
-    /// เครื่องที่ปุ่มกดของสถานีนี้คุมอยู่ — ST1 คุม MK · ST3 คุม UV2
-    ///
-    /// ปุ่มของ ST2 (UV1) ยังไม่มีเครื่องคอมเฝ้า เพราะ ST2 ไม่มีจอ
-    /// </summary>
-    private static string MachineOfThisStation() =>
-        StationService.IsSt3 ? "UV2" : "MK";
-
-    /// <summary>
-    /// มีคนกดปุ่มหน้างาน = พิมพ์ชิ้นเดิมเสร็จแล้ว ปล่อยเครื่องให้คิวถัดไป
-    ///
-    /// <para>
-    /// ปุ่มนี้ไม่ได้สั่งส่งงานเองอีกต่อไป มันบอกแค่ว่า "เครื่องนี้ว่างแล้ว"
-    /// ใครจะได้เครื่องต่อเป็นเรื่องของคิวที่ backend และคนที่หยิบไปส่งคือ ST1
-    /// </para>
-    /// <para>
-    /// ไม่ถามยืนยัน คนกดยืนอยู่หน้าเครื่องแล้ว และไม่มีอะไรให้เลือกด้วย
-    /// เพราะลำดับคิวถูกกำหนดไว้ก่อนแล้วตั้งแต่ตอนกดเริ่มงาน
-    /// </para>
-    /// </summary>
     private async Task OnPushButtonPressedAsync()
     {
-        if (_api == null || _pushHandling || IsDisposed) return;
+        if (_api == null || _sending || _pushHandling || IsDisposed) return;
+
+        var waiting = PushTargets();
+        if (waiting.Count == 0) return;
 
         _pushHandling = true;
         try
         {
-            var machine = MachineOfThisStation();
-            var (ok, error) = await _api.ReleaseMachineAsync(machine);
-            if (IsDisposed) return;
+            // รอล็อตเดียวก็ส่งเลยตามเดิม · รอหลายล็อตต้องให้คนเลือก จะเดาแทนไม่ได้
+            // ตั้ง _pushHandling ไว้ก่อนเปิดกล่อง ตัวเฝ้าจะได้หยุดอ่าน PLC ระหว่างนั้น
+            var target = waiting.Count == 1 ? waiting[0] : AskWhichJob(waiting) ?? default;
+            if (target.Job == null) return;
 
-            if (!ok)
-            {
-                Notify.Warn(this, $"ปล่อยเครื่อง {machine} ไม่สำเร็จ — {error}");
-                return;
-            }
+            // ตารางค้างได้ถึง 5 วิตามรอบ poll — อ่านสดก่อนลงมือ เผื่อระหว่างนั้น
+            // มีคนกดส่งจากหน้าจอไปแล้ว จะได้ไม่ส่งซ้ำลงชิ้นงานจริง
+            var resolved = await _api.GetResolvedJobAsync(target.Job.Id);
+            if (resolved == null || IsDisposed) return;
 
-            Notify.Success(this, $"{machine} ว่างแล้ว · งานถัดไปในคิวจะถูกส่งให้");
+            var steps = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod).Steps;
+            int next = steps.FindIndex(step => !SentAlready(resolved, step));
+
+            // -1 = ส่งครบแล้ว · 0 = ยังไม่ได้เริ่มเลย ซึ่งไม่ใช่หน้าที่ของปุ่มหน้างาน
+            if (next <= 0) return;
+
+            await RequestRemoteStartAsync(target.Job.Id, steps[next], resolved, askFirst: false);
         }
         finally
         {
@@ -339,9 +400,6 @@ public partial class OrderListUserControl : UserControl
             if (IsDisposed) return;
 
             await ProcessRemoteStartsAsync();
-            if (IsDisposed) return;
-
-            await ProcessMachineQueueAsync();
             if (IsDisposed) return;
 
             await ShowRemoteErrorsAsync();
@@ -658,9 +716,6 @@ public partial class OrderListUserControl : UserControl
                 + "ยืนยันหรือไม่?"))
             return;
 
-        // ล้างคิวก่อนเปลี่ยนสถานะ งานที่ยกเลิกต้องไม่ถือเครื่องหรือค้างคิวไว้
-        await _api.ClearMachineQueueAsync(jobId);
-
         var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Cancel");
         if (IsDisposed) return;
 
@@ -783,136 +838,64 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        // จองทุกเครื่องที่แผนของงานนี้ต้องใช้ ในคราวเดียว
-        //
-        // จองก่อนส่งเสมอ เพราะการจองคือสิ่งที่บอกว่างานนี้มีสิทธิ์ในเครื่องไหนบ้าง
-        // เครื่องที่ว่างจะถูกส่งต่อทันทีข้างล่าง ส่วนเครื่องที่ไม่ว่างก็รออยู่ในคิว
-        // จนกว่าคนหน้างานจะกดปุ่มปล่อยเครื่อง
-        var (queued, queueError) = await _api.EnqueueMachinesAsync(jobId, QueueItemsFor(plan.Steps));
-        if (IsDisposed) return;
+        var step = plan.Steps[0];
 
-        if (!queued)
-        {
-            Notify.ErrorModal(this, "จองเครื่องไม่สำเร็จ",
-                $"{JobName(jobId)} ยังไม่ได้เข้าคิว" + Environment.NewLine + Environment.NewLine
-                + (queueError ?? "ติดต่อ backend ไม่ได้"));
-            return;
-        }
-
-        // ST3 ไม่ได้ต่อสายเข้าเครื่อง จองแล้วจบ ST1 จะหยิบไปส่งให้เองจากคิว
+        // ST3 ไม่ได้ต่อสายเข้าเครื่อง จึงฝากให้ ST1 เป็นคนส่งให้
         if (station == StationService.St3)
         {
-            Notify.Success(this, $"{JobName(jobId)} เข้าคิวแล้ว · ST1 จะส่งให้");
-            await RefreshDataAsync(force: true);
+            await RequestRemoteStartAsync(jobId, step, resolved);
             return;
         }
 
-        await SendQueuedForJobAsync(jobId, resolved, $"เริ่มงาน {JobName(jobId)}");
-    }
+        // สถานีของ "เครื่อง" ที่จะรับงาน คนละเรื่องกับสถานีของ "เครื่องคอมที่กดอยู่"
+        // ข้างบน — MK อยู่ ST1 · UV1 อยู่ ST2 · UV2 อยู่ ST3
+        int machineStation = JobStationService.StationOf(step) ?? 0;
 
-    /// <summary>
-    /// แปลงลำดับขั้นของแผนเป็นรายการจองเครื่อง
-    ///
-    /// เครื่องเดียวกันที่โผล่ซ้ำในแผนได้รอบเพิ่มขึ้นทีละหนึ่ง — marking 22 เข้า MK
-    /// สองรอบ จึงได้ MK รอบ 1 กับ MK รอบ 2 ซึ่งเป็นคนละคิวกัน
-    /// </summary>
-    private static List<MachineQueueItem> QueueItemsFor(List<string> steps)
-    {
-        var rounds = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        var items = new List<MachineQueueItem>();
-
-        foreach (var step in steps)
+        if (StationOwner(machineStation, jobId) is { } busyJob)
         {
-            rounds[step] = rounds.TryGetValue(step, out int used) ? used + 1 : 1;
-            items.Add(new MachineQueueItem { Machine = step, Round = rounds[step] });
+            Notify.WarnModal(this, "สถานีไม่ว่าง",
+                $"ST{machineStation} มีงาน {JobLabel(busyJob)} อยู่\n\nต้องจบงานนั้นก่อนถึงจะเริ่มงานนี้ได้");
+            return;
         }
 
-        return items;
-    }
+        var rest = string.Join(" -> ", plan.Steps.Skip(1));
+        var next = plan.Steps.Count > 1 ? $"\n\nขั้นตอนถัดไป: {rest}" : "";
 
-    /// <summary>
-    /// ไล่ส่งงานนี้เข้าเครื่องที่ว่างอยู่ทุกเครื่อง เครื่องที่ไม่ว่างปล่อยไว้ในคิว
-    ///
-    /// <para>
-    /// หยิบทีละเครื่องด้วย claim ซึ่ง backend เป็นคนตัดสินว่าว่างไหมและใครได้ไปก่อน
-    /// ฝั่งนี้ไม่เดาเอง เพราะ ST1 กับ ST3 กดพร้อมกันได้
-    /// </para>
-    /// <para>
-    /// เครื่องไหนส่งไม่ผ่าน คืนแถวกลับเป็น pending เพื่อให้รอบถัดไปลองใหม่
-    /// ไม่ใช่ทิ้งคิวไป ไม่งั้นงานจะค้างโดยไม่มีใครหยิบต่อ
-    /// </para>
-    /// </summary>
-    private async Task SendQueuedForJobAsync(int jobId, ResolvedJobResponse resolved, string title)
-    {
-        var (rows, _) = await _api!.GetMachineQueueAsync();
-        if (IsDisposed) return;
+        if (!Confirm.Ask(this, "ยืนยันเริ่มงาน",
+                $"{JobName(jobId)} — marking {Method(resolved.PlanRouting?.MarkingMethod)}\n\n"
+                + $"ส่งไป {step} (ST{machineStation}){next}\n\nยืนยันหรือไม่?"))
+            return;
 
-        var mine = rows
-            .Where(r => r.PrintJobsId == jobId && r.State == "pending")
-            .OrderBy(r => r.Round)
-            .ToList();
+        // การ์ดหมุนชุดเดียวกับตอน ST3 ฝากงานให้ ST1 — การส่งเข้าเครื่องกินเวลา
+        // หลายวินาที (ต่อสาย · หยุดเครื่อง · ส่งทีละบล็อก) ไม่มีอะไรบอกเลยว่า
+        // กำลังทำอยู่ พนักงานจะกดซ้ำเพราะคิดว่าเครื่องค้าง
+        // บอกแค่ปลายทาง ไม่ต้องบอกว่างานไหน — คนที่กดเพิ่งกดจากแถวของงานนั้นเอง
+        // และเพิ่งยืนยันในกล่องที่มีชื่องานอยู่แล้ว ใส่ซ้ำอีกรอบมีแต่ทำให้อ่านช้าลง
+        // สิ่งที่ยังไม่รู้คือต้องไปยืนรอที่เครื่องไหน จึงเหลือไว้แค่ขั้นกับสถานี
+        var atStation = machineStation > 0
+            ? $" ({JobStationService.Label(machineStation)})"
+            : "";
 
-        var lines = new List<Notify.ResultLine>();
+        _sending = true;
+        ShowSending($"กำลังส่งไปที่ {step}{atStation}");
 
-        foreach (var row in mine)
+        List<Notify.ResultLine> lines;
+        try
         {
-            var (claim, claimError) = await _api.ClaimMachineAsync(row.Machine);
-            if (IsDisposed) return;
-
-            if (claimError != null)
-            {
-                lines.Add(Notify.Bad($"{row.Machine}: {claimError}"));
-                continue;
-            }
-
-            if (claim?.Claimed == null)
-            {
-                // เครื่องไม่ว่าง หรือมีงานอื่นแทรกเข้าคิวก่อน — ไม่ใช่ความผิดพลาด
-                lines.Add(Notify.Careful(claim?.Reason == "busy"
-                    ? $"{row.Machine}: เครื่องไม่ว่าง เข้าคิวรอไว้แล้ว"
-                    : $"{row.Machine}: เข้าคิวรอไว้แล้ว"));
-                continue;
-            }
-
-            var claimed = claim.Claimed;
-            if (claimed.PrintJobsId != jobId)
-            {
-                // หยิบได้งานอื่นที่เข้าคิวมาก่อน — ต้องส่งงานนั้นให้จบตรงนี้เลย
-                //
-                // ปล่อยผ่านไม่ได้ เพราะแถวนั้นถือเครื่องไปแล้วตั้งแต่ตอน claim
-                // ถ้าไม่ส่ง เครื่องจะถูกจองค้างโดยไม่มีอะไรพิมพ์ และรอบ poll
-                // ก็หยิบต่อไม่ได้เพราะมันมองเฉพาะแถวที่ยังรอคิวอยู่
-                await SendClaimedAsync(claimed);
-                if (IsDisposed) return;
-
-                lines.Add(Notify.Careful($"{row.Machine}: มีงานก่อนหน้ารออยู่ · เข้าคิวรอไว้แล้ว"));
-                continue;
-            }
-
-            _sending = true;
-            ShowSending($"กำลังส่งไปที่ {claimed.Machine}");
-            List<Notify.ResultLine> sent;
-            try
-            {
-                sent = await SendStepAsync(jobId, claimed.Machine, resolved, claimed.ProgramName);
-            }
-            finally
-            {
-                _sending = false;
-                if (!IsDisposed) ShowSending(null);
-            }
-
-            if (IsDisposed) return;
-            lines.AddRange(sent);
-
-            // ส่งไม่ผ่านต้องคืนเครื่อง ไม่งั้นเครื่องจะถูกจองค้างโดยไม่มีอะไรพิมพ์
-            if (sent.Any(l => l.Kind != Notify.ResultKind.Success))
-                await _api.UpdateMachineQueueAsync(claimed.Id, state: "pending");
+            lines = await SendStepAsync(jobId, step, resolved);
+        }
+        finally
+        {
+            _sending = false;
+            if (!IsDisposed) ShowSending(null);
         }
 
         if (IsDisposed) return;
 
-        if (lines.Count > 0) Notify.Result(this, title, lines);
+        // เก็บการ์ดหมุนก่อนค่อยโชว์ผล ไม่งั้นกล่องผลจะไปซ้อนอยู่บนการ์ดที่ยังหมุนอยู่
+        if (lines.Count > 0)
+            Notify.Result(this, $"เริ่มงาน {JobName(jobId)}", lines);
+
         if (!IsDisposed) await RefreshDataAsync(force: true);
     }
 
@@ -1255,73 +1238,6 @@ public partial class OrderListUserControl : UserControl
     /// ST1 กวาดหาคำขอที่ ST3 ฝากไว้ แล้วส่งเข้าเครื่องให้ — ทำเงียบ ๆ ไม่มีหน้าต่างเด้ง
     /// เพราะโปรแกรมที่ ST3 เลือกไว้แล้วถูกส่งมากับคำขอ
     /// </summary>
-    /// <summary>
-    /// ST1 ไล่หยิบงานที่รออยู่ในคิวไปส่งเข้าเครื่อง — เรียกทุกรอบ poll
-    ///
-    /// <para>
-    /// เครื่องต่อสายอยู่กับ PC ของ ST1 ที่เดียว การส่งจริงจึงเกิดที่นี่เสมอ
-    /// ไม่ว่าคนที่กดเริ่มงานจะยืนอยู่สถานีไหน งานที่ ST3 จองไว้ก็มาถึงทางนี้
-    /// และงานที่รอเครื่องว่างอยู่ก็ถูกหยิบต่อทันทีที่มีคนกดปุ่มปล่อยเครื่อง
-    /// </para>
-    /// <para>
-    /// ถามทีละเครื่อง เครื่องไหนไม่ว่าง backend จะไม่ให้หยิบเอง ฝั่งนี้ไม่ต้องเดา
-    /// </para>
-    /// </summary>
-    private async Task ProcessMachineQueueAsync()
-    {
-        // ST3 เป็นฝ่ายจอง ไม่ใช่ฝ่ายส่ง · ระหว่างที่คนกดส่งเองอยู่ก็ไม่แทรก
-        if (_api == null || StationService.IsSt3 || _sending) return;
-
-        var (rows, error) = await _api.GetMachineQueueAsync();
-        if (error != null || IsDisposed) return;
-
-        foreach (var machine in rows.Where(r => r.State == "pending").Select(r => r.Machine).Distinct())
-        {
-            var (claim, claimError) = await _api.ClaimMachineAsync(machine);
-            if (IsDisposed) return;
-            if (claimError != null || claim?.Claimed == null) continue;
-
-            await SendClaimedAsync(claim.Claimed);
-            if (IsDisposed) return;
-        }
-    }
-
-    /// <summary>
-    /// ส่งงานที่หยิบมาได้เข้าเครื่อง แล้วรายงานผล — ส่งไม่ผ่านคืนแถวกลับเข้าคิว
-    /// </summary>
-    private async Task SendClaimedAsync(MachineQueueRow claimed)
-    {
-        var resolved = await _api!.GetResolvedJobAsync(claimed.PrintJobsId);
-        if (resolved == null || IsDisposed)
-        {
-            // อ่านงานไม่ได้ อย่าถือเครื่องค้างไว้
-            if (_api != null) await _api.UpdateMachineQueueAsync(claimed.Id, state: "pending");
-            return;
-        }
-
-        _sending = true;
-        ShowSending($"กำลังส่งไปที่ {claimed.Machine} · {JobName(claimed.PrintJobsId)}");
-        List<Notify.ResultLine> lines;
-        try
-        {
-            lines = await SendStepAsync(
-                claimed.PrintJobsId, claimed.Machine, resolved, claimed.ProgramName);
-        }
-        finally
-        {
-            _sending = false;
-            if (!IsDisposed) ShowSending(null);
-        }
-
-        if (IsDisposed) return;
-
-        if (lines.Any(l => l.Kind != Notify.ResultKind.Success))
-            await _api.UpdateMachineQueueAsync(claimed.Id, state: "pending");
-
-        if (lines.Count > 0)
-            Notify.Result(this, $"ส่ง {claimed.Machine} · {JobName(claimed.PrintJobsId)}", lines);
-    }
-
     private async Task ProcessRemoteStartsAsync()
     {
         // ST3 เป็นฝ่ายฝาก ไม่ใช่ฝ่ายส่ง · ระหว่างที่คนที่ ST1 กดส่งเองอยู่ก็ไม่แทรก
@@ -1536,9 +1452,6 @@ public partial class OrderListUserControl : UserControl
 
         if (manual)
             await _api.SaveSendStepAsync(jobId, "MANUAL_COMPLETE");
-
-        // จบงานแล้วคิวที่เหลือของงานนี้ไม่มีความหมาย ล้างทิ้งไม่ให้ไปกันเครื่องคนอื่น
-        await _api.ClearMachineQueueAsync(jobId);
 
         var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Success");
         if (ok)
