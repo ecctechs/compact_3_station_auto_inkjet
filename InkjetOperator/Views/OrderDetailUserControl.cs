@@ -79,6 +79,7 @@ public partial class OrderDetailUserControl : UserControl
         picMk1Abc.Click += async (_, _) => await ToggleAbcAsync(1, picMk1Abc);
         picMk2Abc.Click += async (_, _) => await ToggleAbcAsync(2, picMk2Abc);
         btnSendMk.Click += async (_, _) => await SendToMkAsync();
+        btnSavePattern.Click += async (_, _) => await SaveEditedValuesAsync();
         btnRemoteSend.Click += (_, _) => RequestRemoteStart();
         tmrConnCheck.Tick += ConnCheck_Tick;
         btnSendUv1.Click += async (_, _) => await SendToUvAsync(1);
@@ -437,6 +438,147 @@ public partial class OrderDetailUserControl : UserControl
     /// ล็อกปุ่มที่แก้ pattern ไว้ระหว่างบันทึก กันกดรัวจนคำสั่งสองชุดไปถึง backend
     /// สลับกันแล้วได้ผลลัพธ์ที่ไม่ตรงกับที่เห็นบนจอ
     /// </summary>
+    /// <summary>
+    /// เก็บค่าที่แก้ในหน้านี้กลับเข้า pattern แล้วบันทึกลงฐานข้อมูล
+    ///
+    /// <para>
+    /// ต้องบันทึกลงฐานข้อมูลจริง ไม่ใช่เก็บไว้ในจอ เพราะการส่งงานจริงเกิดที่หน้า
+    /// Order List ซึ่งอ่าน pattern ใหม่จาก backend ทุกครั้ง แก้ไว้ในจออย่างเดียว
+    /// จึงไม่มีผลอะไรเลย — เหตุผลเดียวกับปุ่ม Swap กับ ABC
+    /// </para>
+    /// <para>
+    /// pattern ผูกกับงานแบบหนึ่งต่อหนึ่ง (backend หาด้วย <c>job_id</c>) การแก้ที่นี่
+    /// จึงกระทบงานนี้งานเดียว ไม่ลามไปงานอื่นที่ใช้แบบเดียวกัน
+    /// </para>
+    /// </summary>
+    private async Task SaveEditedValuesAsync()
+    {
+        if (_savingPattern) return;
+
+        if (CollectEditedValues() is string problem)
+        {
+            Notify.WarnModal(this, "ค่าที่กรอกไม่ถูกต้อง", problem);
+            return;
+        }
+
+        btnSavePattern.Enabled = false;
+        try
+        {
+            var error = await SavePatternAsync();
+            if (IsDisposed) return;
+
+            if (error != null)
+            {
+                Notify.ErrorModal(this, "บันทึกไม่สำเร็จ",
+                    "ค่าที่แก้ยังไม่ได้ลงฐานข้อมูล" + Environment.NewLine + Environment.NewLine + error);
+                return;
+            }
+
+            // วาดใหม่จากค่าที่บันทึกแล้ว ช่องที่เว้นว่างไว้จะได้กลับมาเป็นขีด
+            FillMkSection(_pattern!);
+            FillConveyor(_pattern!);
+            Notify.Success(this, "บันทึกค่าเรียบร้อย");
+        }
+        finally
+        {
+            if (!IsDisposed) btnSavePattern.Enabled = true;
+        }
+    }
+
+    /// <summary>
+    /// อ่านค่าจากช่องกรอกทั้งหมดกลับเข้า <see cref="_pattern"/>
+    /// คืนข้อความปัญหาเมื่อมีช่องที่กรอกมาไม่ถูก หรือ null เมื่อเก็บครบ
+    ///
+    /// <para>
+    /// ตรวจให้ครบก่อนค่อยเขียนลง pattern จะได้ไม่เหลือสภาพเก็บไปได้ครึ่งเดียว
+    /// แล้วเด้ง error ทิ้งไว้
+    /// </para>
+    /// </summary>
+    private string? CollectEditedValues()
+    {
+        if (_pattern == null) return "ยังไม่มีข้อมูล pattern ของงานนี้";
+
+        var errors = new List<string>();
+
+        int? Int(AntdUI.Input box, string label)
+        {
+            var text = box.Text.Trim();
+            if (text.Length == 0 || text == Dash) return null;
+            if (int.TryParse(text, out int v)) return v;
+            errors.Add($"{label}: \"{text}\" ไม่ใช่จำนวนเต็ม");
+            return null;
+        }
+
+        double? Dbl(AntdUI.Input box, string label)
+        {
+            var text = box.Text.Trim();
+            if (text.Length == 0 || text == Dash) return null;
+            if (double.TryParse(text, out double v)) return v;
+            errors.Add($"{label}: \"{text}\" ไม่ใช่ตัวเลข");
+            return null;
+        }
+
+        string? Str(AntdUI.Input box)
+        {
+            var text = box.Text.Trim();
+            return text.Length == 0 || text == Dash ? null : text;
+        }
+
+        var mk1 = CustomSettingsManager.Read("MK058_NAME", "MK-058");
+        var mk2 = CustomSettingsManager.Read("MK059_NAME", "MK-059");
+
+        // อ่านให้ครบทุกช่องก่อน แม้เจอที่ผิดแล้ว จะได้บอกทีเดียวว่าผิดตรงไหนบ้าง
+        var v1 = (Program: Str(txtMk1Program), No: Int(txtMk1ProgramNo, $"{mk1} Program No"),
+                  W: Int(txtMk1Width, $"{mk1} Width"), H: Int(txtMk1Height, $"{mk1} Height"),
+                  Trig: Int(txtMk1Trigger, $"{mk1} Trigger Delay"),
+                  Act: Dbl(txtMk1PosAct, $"{mk1} Pos Act"), Dly: Dbl(txtMk1Delay, $"{mk1} Delay"));
+
+        var v2 = (Program: Str(txtMk2Program), No: Int(txtMk2ProgramNo, $"{mk2} Program No"),
+                  W: Int(txtMk2Width, $"{mk2} Width"), H: Int(txtMk2Height, $"{mk2} Height"),
+                  Trig: Int(txtMk2Trigger, $"{mk2} Trigger Delay"),
+                  Act: Dbl(txtMk2PosAct, $"{mk2} Pos Act"), Dly: Dbl(txtMk2Delay, $"{mk2} Delay"));
+
+        var s1 = Int(txtConveyor1, "Conveyor 1");
+        var s2 = Int(txtConveyor2, "Conveyor 2");
+        var s3 = Int(txtConveyor3, "Conveyor 3");
+
+        if (errors.Count > 0) return string.Join(Environment.NewLine, errors);
+
+        void ApplyMk(int ordinal,
+            (string? Program, int? No, int? W, int? H, int? Trig, double? Act, double? Dly) v)
+        {
+            var config = _pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
+            if (config != null)
+            {
+                config.ProgramName = v.Program;
+                config.ProgramNumber = v.No;
+                config.Width = v.W;
+                config.Height = v.H;
+                config.TriggerDelay = v.Trig;
+            }
+
+            // PosAct กับ Delay อยู่บน ServoConfig ไม่ใช่ InkjetConfig — เป็นค่าที่ส่งเข้า PLC
+            var servo = _pattern.ServoConfigs.FirstOrDefault(s => s.Ordinal == ordinal);
+            if (servo != null)
+            {
+                servo.PostAct = v.Act;
+                servo.Delay = v.Dly;
+            }
+        }
+
+        ApplyMk(1, v1);
+        ApplyMk(2, v2);
+
+        if (_pattern.ConveyorSpeeds is { } speeds)
+        {
+            speeds.Speed1 = s1;
+            speeds.Speed2 = s2;
+            speeds.Speed3 = s3;
+        }
+
+        return null;
+    }
+
     private async Task<string?> SavePatternAsync()
     {
         if (_pattern == null) return "ยังไม่มีข้อมูล pattern ของงานนี้";

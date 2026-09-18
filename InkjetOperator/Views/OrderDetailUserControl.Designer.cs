@@ -210,6 +210,7 @@ partial class OrderDetailUserControl
         components = new System.ComponentModel.Container();
         flpDetailActions = new System.Windows.Forms.FlowLayoutPanel();
         btnRemoteSend = new AntdUI.Button();
+        btnSavePattern = new AntdUI.Button();
         tmrConnCheck = new System.Windows.Forms.Timer(components);
         btnSendMk = new AntdUI.Button();
         btnSendUv1 = new AntdUI.Button();
@@ -844,7 +845,6 @@ partial class OrderDetailUserControl
         txtMk1Program.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
         txtMk1Program.Name = "txtMk1Program";
         txtMk1Program.Radius = 8;
-        txtMk1Program.ReadOnly = true;
         txtMk1Program.Size = new System.Drawing.Size(235, 42);
         txtMk1Program.TabIndex = 2;
         //
@@ -871,7 +871,6 @@ partial class OrderDetailUserControl
         txtMk1ProgramNo.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
         txtMk1ProgramNo.Name = "txtMk1ProgramNo";
         txtMk1ProgramNo.Radius = 8;
-        txtMk1ProgramNo.ReadOnly = true;
         txtMk1ProgramNo.Size = new System.Drawing.Size(80, 42);
         txtMk1ProgramNo.TabIndex = 4;
         txtMk1ProgramNo.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
@@ -973,7 +972,6 @@ partial class OrderDetailUserControl
         txtMk1Trigger.Margin = new System.Windows.Forms.Padding(3, 9, 3, 9);
         txtMk1Trigger.Name = "txtMk1Trigger";
         txtMk1Trigger.Radius = 8;
-        txtMk1Trigger.ReadOnly = true;
         txtMk1Trigger.Size = new System.Drawing.Size(88, 42);
         txtMk1Trigger.TabIndex = 2;
         //
@@ -1001,7 +999,6 @@ partial class OrderDetailUserControl
         txtMk1PosAct.Margin = new System.Windows.Forms.Padding(3, 9, 3, 9);
         txtMk1PosAct.Name = "txtMk1PosAct";
         txtMk1PosAct.Radius = 8;
-        txtMk1PosAct.ReadOnly = true;
         txtMk1PosAct.Size = new System.Drawing.Size(88, 42);
         txtMk1PosAct.TabIndex = 4;
         //
@@ -1029,7 +1026,6 @@ partial class OrderDetailUserControl
         txtMk1Delay.Margin = new System.Windows.Forms.Padding(3, 9, 3, 9);
         txtMk1Delay.Name = "txtMk1Delay";
         txtMk1Delay.Radius = 8;
-        txtMk1Delay.ReadOnly = true;
         txtMk1Delay.Size = new System.Drawing.Size(88, 42);
         txtMk1Delay.TabIndex = 6;
         //
@@ -1077,7 +1073,6 @@ partial class OrderDetailUserControl
         txtMk1Width.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
         txtMk1Width.Name = "txtMk1Width";
         txtMk1Width.Radius = 8;
-        txtMk1Width.ReadOnly = true;
         txtMk1Width.Size = new System.Drawing.Size(288, 42);
         txtMk1Width.TabIndex = 1;
         //
@@ -1104,7 +1099,6 @@ partial class OrderDetailUserControl
         txtMk1Height.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
         txtMk1Height.Name = "txtMk1Height";
         txtMk1Height.Radius = 8;
-        txtMk1Height.ReadOnly = true;
         txtMk1Height.Size = new System.Drawing.Size(288, 42);
         txtMk1Height.TabIndex = 3;
         //
@@ -1219,7 +1213,6 @@ partial class OrderDetailUserControl
         txtMk2Program.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
         txtMk2Program.Name = "txtMk2Program";
         txtMk2Program.Radius = 8;
-        txtMk2Program.ReadOnly = true;
         txtMk2Program.Size = new System.Drawing.Size(235, 42);
         txtMk2Program.TabIndex = 2;
         //
@@ -1246,7 +1239,6 @@ partial class OrderDetailUserControl
         txtMk2ProgramNo.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
         txtMk2ProgramNo.Name = "txtMk2ProgramNo";
         txtMk2ProgramNo.Radius = 8;
-        txtMk2ProgramNo.ReadOnly = true;
         txtMk2ProgramNo.Size = new System.Drawing.Size(80, 42);
         txtMk2ProgramNo.TabIndex = 4;
         txtMk2ProgramNo.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
@@ -1362,7 +1354,6 @@ partial class OrderDetailUserControl
         txtMk2Trigger.Margin = new System.Windows.Forms.Padding(3, 9, 3, 9);
         txtMk2Trigger.Name = "txtMk2Trigger";
         txtMk2Trigger.Radius = 8;
-        txtMk2Trigger.ReadOnly = true;
         txtMk2Trigger.Size = new System.Drawing.Size(88, 42);
         txtMk2Trigger.TabIndex = 2;
         //
@@ -1390,7 +1381,6 @@ partial class OrderDetailUserControl
         txtMk2PosAct.Margin = new System.Windows.Forms.Padding(3, 9, 3, 9);
         txtMk2PosAct.Name = "txtMk2PosAct";
         txtMk2PosAct.Radius = 8;
-        txtMk2PosAct.ReadOnly = true;
         txtMk2PosAct.Size = new System.Drawing.Size(88, 42);
         txtMk2PosAct.TabIndex = 4;
         //
@@ -1418,7 +1408,6 @@ partial class OrderDetailUserControl
         txtMk2Delay.Margin = new System.Windows.Forms.Padding(3, 9, 3, 9);
         txtMk2Delay.Name = "txtMk2Delay";
         txtMk2Delay.Radius = 8;
-        txtMk2Delay.ReadOnly = true;
         txtMk2Delay.Size = new System.Drawing.Size(88, 42);
         txtMk2Delay.TabIndex = 6;
         //
@@ -1466,7 +1455,6 @@ partial class OrderDetailUserControl
         txtMk2Width.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
         txtMk2Width.Name = "txtMk2Width";
         txtMk2Width.Radius = 8;
-        txtMk2Width.ReadOnly = true;
         txtMk2Width.Size = new System.Drawing.Size(288, 42);
         txtMk2Width.TabIndex = 1;
         //
@@ -1493,7 +1481,6 @@ partial class OrderDetailUserControl
         txtMk2Height.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
         txtMk2Height.Name = "txtMk2Height";
         txtMk2Height.Radius = 8;
-        txtMk2Height.ReadOnly = true;
         txtMk2Height.Size = new System.Drawing.Size(288, 42);
         txtMk2Height.TabIndex = 3;
         //
@@ -1574,7 +1561,6 @@ partial class OrderDetailUserControl
         txtConveyor1.Margin = new System.Windows.Forms.Padding(3, 3, 3, 3);
         txtConveyor1.Name = "txtConveyor1";
         txtConveyor1.Radius = 8;
-        txtConveyor1.ReadOnly = true;
         txtConveyor1.Size = new System.Drawing.Size(308, 42);
         txtConveyor1.TabIndex = 2;
         //
@@ -1601,7 +1587,6 @@ partial class OrderDetailUserControl
         txtConveyor2.Margin = new System.Windows.Forms.Padding(3, 3, 3, 3);
         txtConveyor2.Name = "txtConveyor2";
         txtConveyor2.Radius = 8;
-        txtConveyor2.ReadOnly = true;
         txtConveyor2.Size = new System.Drawing.Size(308, 42);
         txtConveyor2.TabIndex = 4;
         //
@@ -1628,7 +1613,6 @@ partial class OrderDetailUserControl
         txtConveyor3.Margin = new System.Windows.Forms.Padding(3, 3, 3, 3);
         txtConveyor3.Name = "txtConveyor3";
         txtConveyor3.Radius = 8;
-        txtConveyor3.ReadOnly = true;
         txtConveyor3.Size = new System.Drawing.Size(320, 42);
         txtConveyor3.TabIndex = 6;
         //
@@ -3039,6 +3023,7 @@ partial class OrderDetailUserControl
         flpDetailActions.Controls.Add(btnSendMk);
         flpDetailActions.Controls.Add(btnSendUv1);
         flpDetailActions.Controls.Add(btnSendUv2);
+        flpDetailActions.Controls.Add(btnSavePattern);
         flpDetailActions.Controls.Add(btnRemoteSend);
         flpDetailActions.Controls.Add(btnTestPlc);
         flpDetailActions.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -3092,6 +3077,19 @@ partial class OrderDetailUserControl
         btnSendUv2.TabIndex = 2;
         btnSendUv2.Text = "ส่งหา UV2";
         btnSendUv2.Type = AntdUI.TTypeMini.Primary;
+        //
+        // btnSavePattern
+        //
+        btnSavePattern.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
+        btnSavePattern.ForeColor = System.Drawing.Color.White;
+        btnSavePattern.IconSvg = "SaveOutlined";
+        btnSavePattern.Margin = new System.Windows.Forms.Padding(0, 0, 12, 0);
+        btnSavePattern.Name = "btnSavePattern";
+        btnSavePattern.Radius = 10;
+        btnSavePattern.Size = new System.Drawing.Size(230, 70);
+        btnSavePattern.TabIndex = 4;
+        btnSavePattern.Text = "บันทึกค่า";
+        btnSavePattern.Type = AntdUI.TTypeMini.Success;
         //
         // btnRemoteSend - ปุ่มสำรองของปุ่มกดหน้างาน ขอให้ ST1 ส่งขั้นถัดไปแทน
         //
@@ -3339,6 +3337,7 @@ partial class OrderDetailUserControl
     private System.Windows.Forms.TableLayoutPanel tlpDetailActions;
     private System.Windows.Forms.FlowLayoutPanel flpDetailActions;
     private AntdUI.Button btnRemoteSend;
+    private AntdUI.Button btnSavePattern;
     private System.Windows.Forms.Timer tmrConnCheck;
     private AntdUI.Button btnSendMk;
     private AntdUI.Button btnSendUv1;
