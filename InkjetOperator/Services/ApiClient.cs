@@ -458,8 +458,13 @@ public class ApiClient
     {
         try
         {
+            // ใส่เฉพาะช่องที่มีค่าจริง — ฝั่ง backend ตรวจด้วย zod ซึ่ง optional หมายถึง
+            // "ไม่ส่งมาก็ได้" ไม่ได้แปลว่า "ส่ง null มาได้" ส่ง null ไปคือถูกตีกลับ 400
+            var payload = new Dictionary<string, object> { ["machine"] = machine };
+            if (jobId != null) payload["print_jobs_id"] = jobId.Value;
+
             var response = await _http.PostAsJsonAsync(
-                "/machine-queue/claim", new { machine, print_jobs_id = jobId }, JsonOptions);
+                "/machine-queue/claim", payload, JsonOptions);
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return (null, $"[{(int)response.StatusCode}] {body}");
 
@@ -498,7 +503,19 @@ public class ApiClient
     {
         try
         {
-            var payload = new { state, program_name = programName, sent };
+            // ส่งเฉพาะช่องที่ตั้งใจจะแก้จริง ๆ
+            //
+            // เดิมส่งทั้งสามช่องเสมอ ช่องที่ไม่ได้ตั้งค่าจึงกลายเป็น null แล้วโดน zod
+            // ตีกลับ 400 ทั้งคำขอ ผลคือการบอกว่า "ส่งเข้าเครื่องแล้ว" ไม่เคยถึง backend
+            // แถวยังเป็น "ถึงคิวแล้วแต่ยังไม่ได้ส่ง" อยู่ รอบ poll จึงส่งซ้ำทุก 5 วินาที
+            //
+            // อีกด้านหนึ่ง ถ้า state ผ่านการตรวจ ช่อง program_name ที่ติด null ไปด้วย
+            // จะไปล้างรุ่นย่อยของโปรแกรม UV ที่เลือกไว้ทิ้งโดยไม่มีใครสั่ง
+            var payload = new Dictionary<string, object>();
+            if (state != null) payload["state"] = state;
+            if (programName != null) payload["program_name"] = programName;
+            if (sent != null) payload["sent"] = sent.Value;
+
             var content = new StringContent(
                 System.Text.Json.JsonSerializer.Serialize(payload, JsonOptions),
                 System.Text.Encoding.UTF8,

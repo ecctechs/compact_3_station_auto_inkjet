@@ -1079,9 +1079,17 @@ public partial class OrderListUserControl : UserControl
             // ของ MK จะถูกคืนเป็นรอคิวทั้งที่เครื่องรับงานไปแล้วและกำลังพิมพ์อยู่
             // เครื่องจึงดูเหมือนว่าง งานใบถัดไปเลยแย่งเข้าไปเปลี่ยนโปรแกรมทับได้
             if (sent.Sent)
-                await _api.UpdateMachineQueueAsync(claimed.Id, sent: true);
+            {
+                // บันทึกไม่ลงต้องฟ้อง ไม่ใช่ปล่อยเงียบ — แถวจะค้างเป็น "ยังไม่ได้ส่ง"
+                // แล้วรอบ poll จะส่งซ้ำเข้าเครื่องทุก 5 วินาทีโดยไม่มีใครรู้ว่าทำไม
+                var (marked, markError) = await _api.UpdateMachineQueueAsync(claimed.Id, sent: true);
+                if (!marked)
+                    lines.Add(Notify.Bad($"{claimed.Machine}: ส่งเข้าเครื่องแล้วแต่บันทึกคิวไม่ได้ · {markError}"));
+            }
             else
+            {
                 await _api.UpdateMachineQueueAsync(claimed.Id, state: "pending");
+            }
         }
 
         if (IsDisposed) return;
@@ -1515,9 +1523,16 @@ public partial class OrderListUserControl : UserControl
         // ส่งไม่ผ่าน = คืนแถวกลับไปรอคิว แล้วจบตรงนั้น ไม่มีใครมาลองใหม่ให้เอง
         // ต้องมีคนกดเริ่มงานใบนั้นอีกครั้ง ถึงจะยิงซ้ำ
         if (sent.Sent)
-            await _api.UpdateMachineQueueAsync(claimed.Id, sent: true);
+        {
+            // เหมือนกับตอนกดเริ่มงาน — บันทึกไม่ลงแปลว่ารอบหน้าจะส่งซ้ำ ต้องให้เห็น
+            var (marked, markError) = await _api.UpdateMachineQueueAsync(claimed.Id, sent: true);
+            if (!marked)
+                sent.Lines.Add(Notify.Bad($"{claimed.Machine}: ส่งเข้าเครื่องแล้วแต่บันทึกคิวไม่ได้ · {markError}"));
+        }
         else
+        {
             await _api.UpdateMachineQueueAsync(claimed.Id, state: "pending");
+        }
 
         if (sent.Lines.Count > 0)
             Notify.Result(this, $"ส่ง {claimed.Machine} · {JobName(claimed.PrintJobsId)}", sent.Lines);
