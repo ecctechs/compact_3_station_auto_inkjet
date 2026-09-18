@@ -6,6 +6,7 @@ const validate = require("../middleware/validate");
 const {
   enqueueSchema,
   machineSchema,
+  claimSchema,
   updateQueueSchema,
 } = require("../validation/machineQueueSchema");
 
@@ -19,7 +20,7 @@ Route.post(
 
 Route.post(
   RouteName + "/claim",
-  validate(machineSchema),
+  validate(claimSchema),
   MachineQueueController.claim
 );
 

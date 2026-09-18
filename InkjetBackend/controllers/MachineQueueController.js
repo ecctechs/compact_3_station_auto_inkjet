@@ -103,7 +103,7 @@ class MachineQueueController {
   static async claim(req, res) {
     const t = await sequelize.transaction();
     try {
-      const { machine } = req.body;
+      const { machine, print_jobs_id } = req.body;
 
       const busy = await MachineQueue.findOne({
         where: { machine, state: ACTIVE },
@@ -120,8 +120,15 @@ class MachineQueueController {
         });
       }
 
+      // ระบุงานมาด้วย = หยิบเฉพาะแถวของงานใบนั้น ไม่ใช่ใบที่เข้าคิวมาก่อน
+      //
+      // ปุ่มเริ่มงานใช้ทางนี้ คนกดเริ่มงานใบไหนต้องได้ใบนั้น ไม่ใช่ไปส่งใบอื่น
+      // ที่บังเอิญรออยู่ในคิวเครื่องเดียวกัน ซึ่งเท่ากับสั่งพิมพ์งานที่ไม่มีใครกด
+      const where = { machine, state: PENDING };
+      if (print_jobs_id) where.print_jobs_id = print_jobs_id;
+
       const next = await MachineQueue.findOne({
-        where: { machine, state: PENDING },
+        where,
         order: [
           ["created_at", "ASC"],
           ["id", "ASC"],
@@ -138,7 +145,10 @@ class MachineQueueController {
         });
       }
 
-      await next.update({ state: ACTIVE, sent_at: new Date() }, { transaction: t });
+      // ไม่ตั้ง sent_at ตรงนี้ — active แปลว่า "ถึงคิวแล้ว รอ ST1 ส่ง" เท่านั้น
+      // ฝั่งที่ส่งสำเร็จจริงเป็นคนประทับเวลาเอง แถวที่ยังไม่มี sent_at คือแถวที่
+      // ST1 ต้องหยิบไปส่ง จึงไม่มีทางส่งซ้ำแถวที่ส่งไปแล้ว
+      await next.update({ state: ACTIVE }, { transaction: t });
 
       await t.commit();
       return ResponseManager.SuccessResponse(req, res, 200, { claimed: next });
@@ -156,20 +166,47 @@ class MachineQueueController {
    * แถวที่ถือเครื่องอยู่กลายเป็น done เครื่องจึงว่างให้คิวถัดไป
    */
   static async release(req, res) {
+    const t = await sequelize.transaction();
     try {
       const { machine } = req.body;
 
       const holder = await MachineQueue.findOne({
         where: { machine, state: ACTIVE },
+        transaction: t,
+        lock: t.LOCK.UPDATE,
       });
 
-      if (!holder) {
-        return ResponseManager.SuccessResponse(req, res, 200, { released: null });
+      if (holder) {
+        await holder.update(
+          { state: DONE, released_at: new Date() },
+          { transaction: t }
+        );
       }
 
-      await holder.update({ state: DONE, released_at: new Date() });
-      return ResponseManager.SuccessResponse(req, res, 200, { released: holder });
+      // ยกเครื่องให้คิวถัดไปในจังหวะเดียวกับที่ปล่อย
+      //
+      // ทำตรงนี้เพราะการกดปุ่มหน้างานคือจังหวะเดียวที่งานใหม่มีสิทธิ์เข้าเครื่อง
+      // ถ้าปล่อยให้ฝั่งโปรแกรมไล่หยิบคิวเองเป็นรอบ ๆ งานที่ไม่มีใครกดก็จะถูกส่ง
+      // ออกไปเงียบ ๆ ได้ ซึ่งเคยเกิดมาแล้วและกลายเป็นพิมพ์งานที่ไม่มีใครสั่ง
+      const next = await MachineQueue.findOne({
+        where: { machine, state: PENDING },
+        order: [
+          ["created_at", "ASC"],
+          ["id", "ASC"],
+        ],
+        transaction: t,
+        lock: t.LOCK.UPDATE,
+      });
+
+      if (next) await next.update({ state: ACTIVE }, { transaction: t });
+
+      await t.commit();
+      return ResponseManager.SuccessResponse(req, res, 200, {
+        released: holder,
+        next,
+      });
     } catch (err) {
+      await t.rollback();
       return ResponseManager.CatchResponse(req, res, err.message);
     }
   }
@@ -188,11 +225,14 @@ class MachineQueueController {
         return ResponseManager.ErrorResponse(req, res, 404, "Queue row not found");
       }
 
-      const { state, program_name } = req.body;
+      const { state, program_name, sent } = req.body;
       const patch = {};
 
       if ([PENDING, ACTIVE, DONE].includes(String(state))) patch.state = String(state);
       if (program_name !== undefined) patch.program_name = program_name || null;
+
+      // ส่งเข้าเครื่องสำเร็จแล้ว — ประทับเวลาไว้กันหยิบไปส่งซ้ำ
+      if (sent === true) patch.sent_at = new Date();
 
       // omitNull ถูกเปิดไว้ทั้งโปรเจค การล้าง program_name เป็นค่าว่างจึงต้องปิดตรงนี้
       await row.update(patch, { omitNull: false });

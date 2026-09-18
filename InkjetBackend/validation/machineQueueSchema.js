@@ -18,9 +18,16 @@ const machineSchema = z.object({
   machine: machineName,
 });
 
+// ระบุงานได้ = หยิบเฉพาะแถวของงานใบนั้น ไม่ระบุ = หยิบใบที่รอมาก่อนสุด
+const claimSchema = z.object({
+  machine: machineName,
+  print_jobs_id: z.number().int().min(1).optional(),
+});
+
 const updateQueueSchema = z.object({
   state: z.enum(["pending", "active", "done"]).optional(),
   program_name: z.string().nullable().optional(),
+  sent: z.boolean().optional(),
 });
 
-module.exports = { enqueueSchema, machineSchema, updateQueueSchema };
+module.exports = { enqueueSchema, machineSchema, claimSchema, updateQueueSchema };

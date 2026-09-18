@@ -453,12 +453,13 @@ public class ApiClient
     /// <summary>
     /// ขอหยิบงานถัดไปของเครื่องนั้นมาถือเครื่อง — คืน Claimed เป็น null เมื่อไม่ว่างหรือคิวว่าง
     /// </summary>
-    public async Task<(MachineClaimResult? result, string? error)> ClaimMachineAsync(string machine)
+    public async Task<(MachineClaimResult? result, string? error)> ClaimMachineAsync(
+        string machine, int? jobId = null)
     {
         try
         {
             var response = await _http.PostAsJsonAsync(
-                "/machine-queue/claim", new { machine }, JsonOptions);
+                "/machine-queue/claim", new { machine, print_jobs_id = jobId }, JsonOptions);
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return (null, $"[{(int)response.StatusCode}] {body}");
 
@@ -493,11 +494,11 @@ public class ApiClient
 
     /// <summary>แก้แถวในคิว — ใช้ตอนเลือกรุ่นย่อย UV เสร็จ หรือคืนแถวให้ลองส่งใหม่</summary>
     public async Task<(bool ok, string? error)> UpdateMachineQueueAsync(
-        int rowId, string? state = null, string? programName = null)
+        int rowId, string? state = null, string? programName = null, bool? sent = null)
     {
         try
         {
-            var payload = new { state, program_name = programName };
+            var payload = new { state, program_name = programName, sent };
             var content = new StringContent(
                 System.Text.Json.JsonSerializer.Serialize(payload, JsonOptions),
                 System.Text.Encoding.UTF8,

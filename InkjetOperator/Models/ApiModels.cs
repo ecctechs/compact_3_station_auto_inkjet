@@ -555,6 +555,15 @@ public class MachineQueueRow
     [JsonPropertyName("program_name")]
     public string? ProgramName { get; set; }
 
+    /// <summary>
+    /// เวลาที่ส่งเข้าเครื่องสำเร็จ — ว่างแปลว่ายังไม่ได้ส่ง
+    ///
+    /// แถวที่เป็น active แต่ยังไม่มีเวลานี้คือแถวที่ถึงคิวแล้วและรอ ST1 หยิบไปส่ง
+    /// มีเวลาแล้วคือส่งไปเรียบร้อย ห้ามหยิบไปส่งอีก
+    /// </summary>
+    [JsonPropertyName("sent_at")]
+    public DateTime? SentAt { get; set; }
+
     /// <summary>pending รอคิว · active ถือเครื่องอยู่ · done ปล่อยแล้ว</summary>
     [JsonPropertyName("state")]
     public string State { get; set; } = "";

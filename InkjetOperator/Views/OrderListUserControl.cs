@@ -838,8 +838,8 @@ public partial class OrderListUserControl : UserControl
     /// ฝั่งนี้ไม่เดาเอง เพราะ ST1 กับ ST3 กดพร้อมกันได้
     /// </para>
     /// <para>
-    /// เครื่องไหนส่งไม่ผ่าน คืนแถวกลับเป็น pending เพื่อให้รอบถัดไปลองใหม่
-    /// ไม่ใช่ทิ้งคิวไป ไม่งั้นงานจะค้างโดยไม่มีใครหยิบต่อ
+    /// เครื่องไหนส่งไม่ผ่าน คืนแถวกลับเป็นรอคิวแล้วบอกคนที่กด — ไม่มีการลองใหม่เอง
+    /// เบื้องหลัง คนหน้างานเป็นคนตัดสินว่าจะกดส่งซ้ำไหม
     /// </para>
     /// </summary>
     private async Task SendQueuedForJobAsync(int jobId, ResolvedJobResponse resolved, string title)
@@ -856,7 +856,9 @@ public partial class OrderListUserControl : UserControl
 
         foreach (var row in mine)
         {
-            var (claim, claimError) = await _api.ClaimMachineAsync(row.Machine);
+            // ขอเฉพาะแถวของงานใบนี้ — กดเริ่มงานใบไหนต้องได้ใบนั้น ห้ามไปหยิบ
+            // ใบอื่นที่บังเอิญรออยู่ในคิวเครื่องเดียวกันมาส่งแทน
+            var (claim, claimError) = await _api.ClaimMachineAsync(row.Machine, jobId);
             if (IsDisposed) return;
 
             if (claimError != null)
@@ -867,27 +869,12 @@ public partial class OrderListUserControl : UserControl
 
             if (claim?.Claimed == null)
             {
-                // เครื่องไม่ว่าง หรือมีงานอื่นแทรกเข้าคิวก่อน — ไม่ใช่ความผิดพลาด
-                lines.Add(Notify.Careful(claim?.Reason == "busy"
-                    ? $"{row.Machine}: เครื่องไม่ว่าง เข้าคิวรอไว้แล้ว"
-                    : $"{row.Machine}: เข้าคิวรอไว้แล้ว"));
+                // เครื่องไม่ว่าง — ไม่ใช่ความผิดพลาด แถวยังรออยู่ในคิวเหมือนเดิม
+                lines.Add(Notify.Careful($"{row.Machine}: เครื่องไม่ว่าง เข้าคิวรอไว้แล้ว"));
                 continue;
             }
 
             var claimed = claim.Claimed;
-            if (claimed.PrintJobsId != jobId)
-            {
-                // หยิบได้งานอื่นที่เข้าคิวมาก่อน — ต้องส่งงานนั้นให้จบตรงนี้เลย
-                //
-                // ปล่อยผ่านไม่ได้ เพราะแถวนั้นถือเครื่องไปแล้วตั้งแต่ตอน claim
-                // ถ้าไม่ส่ง เครื่องจะถูกจองค้างโดยไม่มีอะไรพิมพ์ และรอบ poll
-                // ก็หยิบต่อไม่ได้เพราะมันมองเฉพาะแถวที่ยังรอคิวอยู่
-                await SendClaimedAsync(claimed);
-                if (IsDisposed) return;
-
-                lines.Add(Notify.Careful($"{row.Machine}: มีงานก่อนหน้ารออยู่ · เข้าคิวรอไว้แล้ว"));
-                continue;
-            }
 
             _sending = true;
             ShowSending($"กำลังส่งไปที่ {claimed.Machine}");
@@ -908,6 +895,8 @@ public partial class OrderListUserControl : UserControl
             // ส่งไม่ผ่านต้องคืนเครื่อง ไม่งั้นเครื่องจะถูกจองค้างโดยไม่มีอะไรพิมพ์
             if (sent.Any(l => l.Kind != Notify.ResultKind.Success))
                 await _api.UpdateMachineQueueAsync(claimed.Id, state: "pending");
+            else
+                await _api.UpdateMachineQueueAsync(claimed.Id, sent: true);
         }
 
         if (IsDisposed) return;
@@ -1275,13 +1264,22 @@ public partial class OrderListUserControl : UserControl
         var (rows, error) = await _api.GetMachineQueueAsync();
         if (error != null || IsDisposed) return;
 
-        foreach (var machine in rows.Where(r => r.State == "pending").Select(r => r.Machine).Distinct())
-        {
-            var (claim, claimError) = await _api.ClaimMachineAsync(machine);
-            if (IsDisposed) return;
-            if (claimError != null || claim?.Claimed == null) continue;
+        // ส่งเฉพาะแถวที่ "ถึงคิวแล้วแต่ยังไม่ได้ส่ง" เท่านั้น และไม่หยิบคิวเองเด็ดขาด
+        //
+        // แถวจะมาอยู่ในสภาพนี้ได้จากการกดของคนเท่านั้น — กดเริ่มงาน หรือกดปุ่ม
+        // หน้างานปล่อยเครื่องแล้ว backend ยกเครื่องให้คิวถัดไป รอบนี้จึงเป็นแค่
+        // "มือที่ไปส่งแทน ST3" ไม่ใช่ตัวตัดสินว่างานไหนได้เข้าเครื่อง
+        //
+        // เดิมตรงนี้ไล่หยิบคิวเองทุก 5 วิ ผลคืองานที่ส่งไม่ผ่านแล้วถูกคืนเป็นรอคิว
+        // จะถูกหยิบมายิงใหม่ไม่มีวันจบ และงานใบอื่นที่ไม่มีใครกดก็ถูกส่งออกไปด้วย
+        var ready = rows
+            .Where(r => r.State == "active" && r.SentAt == null)
+            .OrderBy(r => r.Id)
+            .ToList();
 
-            await SendClaimedAsync(claim.Claimed);
+        foreach (var row in ready)
+        {
+            await SendClaimedAsync(row);
             if (IsDisposed) return;
         }
     }
@@ -1315,8 +1313,12 @@ public partial class OrderListUserControl : UserControl
 
         if (IsDisposed) return;
 
+        // ส่งไม่ผ่าน = คืนแถวกลับไปรอคิว แล้วจบตรงนั้น ไม่มีใครมาลองใหม่ให้เอง
+        // ต้องมีคนกดเริ่มงานใบนั้นอีกครั้ง ถึงจะยิงซ้ำ
         if (lines.Any(l => l.Kind != Notify.ResultKind.Success))
             await _api.UpdateMachineQueueAsync(claimed.Id, state: "pending");
+        else
+            await _api.UpdateMachineQueueAsync(claimed.Id, sent: true);
 
         if (lines.Count > 0)
             Notify.Result(this, $"ส่ง {claimed.Machine} · {JobName(claimed.PrintJobsId)}", lines);
