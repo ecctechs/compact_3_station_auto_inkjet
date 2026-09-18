@@ -218,6 +218,10 @@ public partial class OrderListUserControl : UserControl
 
         _pushButton.Pressed += async (_, _) => await OnPushButtonPressedAsync();
 
+        // ปุ่มจำลองสำหรับโหมดทดสอบ — designer ซ่อนไว้ ที่นี่คือที่เดียวที่เปิดให้เห็น
+        btnSimPush.Visible = StationService.IsDevMode;
+        btnSimPush.Click += async (_, _) => await SimulatePushButtonAsync();
+
         // ขาดการติดต่อไม่ใช่เรื่องต้องกดปิด — ใช้ข้อความลอย ไม่ใช่กล่อง modal
         // ตัวเฝ้าแจ้งครั้งเดียวตอนขาด และอีกครั้งตอนกลับมา ไม่ได้แจ้งทุกรอบ
         _pushButton.Trouble += (_, error) =>
@@ -263,14 +267,14 @@ public partial class OrderListUserControl : UserControl
     /// เพราะลำดับคิวถูกกำหนดไว้ก่อนแล้วตั้งแต่ตอนกดเริ่มงาน
     /// </para>
     /// </summary>
-    private async Task OnPushButtonPressedAsync()
+    private async Task OnPushButtonPressedAsync(string? machineOverride = null)
     {
         if (_api == null || _pushHandling || IsDisposed) return;
 
         _pushHandling = true;
         try
         {
-            var machine = MachineOfThisStation();
+            var machine = machineOverride ?? MachineOfThisStation();
             var (ok, error) = await _api.ReleaseMachineAsync(machine);
             if (IsDisposed) return;
 
@@ -288,6 +292,53 @@ public partial class OrderListUserControl : UserControl
         }
 
         if (!IsDisposed) await RefreshDataAsync(force: true);
+    }
+
+    /// <summary>
+    /// จำลองการกดปุ่มหน้างาน — โหมดทดสอบเท่านั้น
+    ///
+    /// <para>
+    /// ให้เลือกเครื่องเองก่อน เพราะเครื่องทดสอบเครื่องเดียวต้องลองแทนได้ทั้งสามปุ่ม
+    /// โดยเฉพาะปุ่มของ UV1 ที่ ST2 ซึ่งไม่มีคอมเฝ้าอยู่จริง จึงไม่มีทางกดได้เลย
+    /// ถ้าไม่มีปุ่มนี้
+    /// </para>
+    /// <para>
+    /// จากตรงนี้ไปใช้ทางเดียวกับปุ่มจริงทุกประการ ไม่ได้เขียนทางลัดของตัวเอง —
+    /// ที่จำลองจึงเป็น "การกด" เท่านั้น ส่วนที่เกิดขึ้นหลังจากนั้นคือของจริง
+    /// </para>
+    /// </summary>
+    private async Task SimulatePushButtonAsync()
+    {
+        if (_api == null || _pushHandling || IsDisposed) return;
+
+        var (rows, _) = await _api.GetMachineQueueAsync();
+        if (IsDisposed) return;
+
+        // บอกไปด้วยว่าตอนนี้แต่ละเครื่องถืองานอะไรอยู่ จะได้รู้ว่ากดแล้วปล่อยอะไร
+        var options = new[] { "MK", "UV1", "UV2" }
+            .Select(machine =>
+            {
+                var holder = rows.FirstOrDefault(r => r.Machine == machine && r.State == "active");
+                var waiting = rows.Count(r => r.Machine == machine && r.State == "pending");
+
+                var status = holder == null
+                    ? "ว่างอยู่ ไม่มีอะไรให้ปล่อย"
+                    : $"ถือ {JobName(holder.PrintJobsId)} อยู่";
+
+                if (waiting > 0) status += $" · รอคิวอีก {waiting}";
+
+                return new MarkingRefOption(machine, $"{machine}  —  {status}", []);
+            })
+            .ToList();
+
+        var picked = MarkingRefPickerDialog.Pick(this,
+            "จำลองปุ่มกดหน้างาน",
+            "เลือกเครื่องที่จะกดปุ่มปล่อย — ผลที่ได้เหมือนคนกดปุ่มจริงที่หน้าเครื่องนั้น",
+            options);
+
+        if (picked == null || IsDisposed) return;
+
+        await OnPushButtonPressedAsync(picked);
     }
 
     private static bool SentAlready(ResolvedJobResponse resolved, string step) =>

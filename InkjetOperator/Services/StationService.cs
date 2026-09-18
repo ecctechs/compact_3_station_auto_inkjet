@@ -58,6 +58,14 @@ public static class StationService
     public static bool ManualRemoteSendEnabled =>
         CustomSettingsManager.Read(ManualRemoteSendKey, "0") == "1";
 
+    /// <summary>
+    /// โหมดทดสอบไหม — <c>MENU_LEVEL</c> 99
+    ///
+    /// ใช้เปิดเครื่องมือที่มีไว้ลองของเท่านั้น เช่นปุ่มส่งตรงเข้าเครื่องกับปุ่มจำลอง
+    /// ปุ่มกดหน้างาน ซึ่งเปิดไว้ที่หน้างานจริงแล้วเสี่ยงพิมพ์ซ้ำหรือพิมพ์ข้ามขั้น
+    /// </summary>
+    public static bool IsDevMode => Level == 99;
+
     private static int Level
     {
         get

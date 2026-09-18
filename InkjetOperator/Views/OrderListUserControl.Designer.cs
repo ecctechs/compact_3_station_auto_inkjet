@@ -39,6 +39,7 @@ partial class OrderListUserControl
         dtpHistoryRange = new AntdUI.DatePickerRange();
         btnSearchDate = new AntdUI.Button();
         btnClearDate = new AntdUI.Button();
+        btnSimPush = new AntdUI.Button();
         tblOrders = new AntdUI.Table();
         tlpBottom = new System.Windows.Forms.TableLayoutPanel();
         pnlPreview = new AntdUI.Panel();
@@ -163,6 +164,7 @@ partial class OrderListUserControl
         flpTabs.Controls.Add(dtpHistoryRange);
         flpTabs.Controls.Add(btnSearchDate);
         flpTabs.Controls.Add(btnClearDate);
+        flpTabs.Controls.Add(btnSimPush);
         flpTabs.Dock = System.Windows.Forms.DockStyle.Fill;
         flpTabs.Location = new System.Drawing.Point(0, 0);
         flpTabs.Margin = new System.Windows.Forms.Padding(0);
@@ -256,6 +258,21 @@ partial class OrderListUserControl
         btnClearDate.Text = "ล้าง";
         btnClearDate.Type = AntdUI.TTypeMini.Default;
         btnClearDate.Visible = false;
+        //
+        // btnSimPush - จำลองปุ่มกดหน้างาน เห็นเฉพาะโหมดทดสอบ (ซ่อนไว้เป็นค่าตั้งต้น)
+        //
+        btnSimPush.BorderWidth = 2F;
+        btnSimPush.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnSimPush.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        btnSimPush.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnSimPush.Margin = new System.Windows.Forms.Padding(20, 3, 3, 3);
+        btnSimPush.Name = "btnSimPush";
+        btnSimPush.Radius = 6;
+        btnSimPush.Size = new System.Drawing.Size(250, 45);
+        btnSimPush.TabIndex = 6;
+        btnSimPush.Text = "จำลองปุ่มกดหน้างาน";
+        btnSimPush.Type = AntdUI.TTypeMini.Default;
+        btnSimPush.Visible = false;
         //
         // tblOrders
         //
@@ -571,6 +588,7 @@ partial class OrderListUserControl
     private AntdUI.DatePickerRange dtpHistoryRange;
     private AntdUI.Button btnSearchDate;
     private AntdUI.Button btnClearDate;
+    private AntdUI.Button btnSimPush;
     private AntdUI.Table tblOrders;
     private System.Windows.Forms.TableLayoutPanel tlpBottom;
     private AntdUI.Panel pnlPreview;
