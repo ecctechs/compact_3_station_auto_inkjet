@@ -528,3 +528,63 @@ public class CommandResult
     [JsonPropertyName("sent_at")]
     public string? SentAt { get; set; }
 }
+
+/// <summary>
+/// หนึ่งแถวในคิวของเครื่อง — งานนี้จองเครื่องนี้ไว้ และตอนนี้อยู่ในสถานะไหน
+/// <para>
+/// กติกาทั้งหมดอยู่ที่ backend (ตาราง machine_queue) ฝั่งโปรแกรมแค่อ่านไปทำตาม
+/// </para>
+/// </summary>
+public class MachineQueueRow
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("print_jobs_id")]
+    public int PrintJobsId { get; set; }
+
+    /// <summary>MK · UV1 · UV2 — ชื่อเดียวกับขั้นตอนใน marking method</summary>
+    [JsonPropertyName("machine")]
+    public string Machine { get; set; } = "";
+
+    /// <summary>รอบที่เท่าไรของเครื่องนั้นในงานเดียวกัน — marking 22 เข้า MK สองรอบ</summary>
+    [JsonPropertyName("round")]
+    public int Round { get; set; } = 1;
+
+    /// <summary>รุ่นย่อยของโปรแกรม UV ที่เลือกไว้แล้ว — ว่างแปลว่ายังไม่ได้เลือก</summary>
+    [JsonPropertyName("program_name")]
+    public string? ProgramName { get; set; }
+
+    /// <summary>pending รอคิว · active ถือเครื่องอยู่ · done ปล่อยแล้ว</summary>
+    [JsonPropertyName("state")]
+    public string State { get; set; } = "";
+}
+
+/// <summary>หนึ่งเครื่องที่งานหนึ่งจะจอง</summary>
+public class MachineQueueItem
+{
+    [JsonPropertyName("machine")]
+    public string Machine { get; set; } = "";
+
+    [JsonPropertyName("round")]
+    public int Round { get; set; } = 1;
+
+    [JsonPropertyName("program_name")]
+    public string? ProgramName { get; set; }
+}
+
+/// <summary>ผลของการขอหยิบงานถัดไปมาถือเครื่อง</summary>
+public class MachineClaimResult
+{
+    /// <summary>งานที่หยิบได้ — null แปลว่าเครื่องไม่ว่าง หรือคิวว่าง</summary>
+    [JsonPropertyName("claimed")]
+    public MachineQueueRow? Claimed { get; set; }
+
+    /// <summary>busy = มีงานถือเครื่องอยู่ · empty = ไม่มีใครรอ</summary>
+    [JsonPropertyName("reason")]
+    public string? Reason { get; set; }
+
+    /// <summary>งานที่ถือเครื่องอยู่ตอนนี้ — มีค่าเมื่อ reason เป็น busy</summary>
+    [JsonPropertyName("holder")]
+    public MachineQueueRow? Holder { get; set; }
+}
