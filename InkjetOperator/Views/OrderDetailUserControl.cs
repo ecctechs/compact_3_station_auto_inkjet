@@ -142,13 +142,19 @@ public partial class OrderDetailUserControl : UserControl
     {
         tblMk1Blocks.Columns = BuildBlockColumns();
         tblMk2Blocks.Columns = BuildBlockColumns();
+
+        // ข้อความกับตำแหน่งของแต่ละบล็อกแก้ได้เหมือนโปรแกรมเดิม แตะช่องแล้วพิมพ์ทับ
+        // แตะครั้งเดียวพอ ไม่ใช่ดับเบิลคลิก เพราะบนจอสัมผัสดับเบิลคลิกทำยาก
+        tblMk1Blocks.EditMode = AntdUI.TEditMode.Click;
+        tblMk2Blocks.EditMode = AntdUI.TEditMode.Click;
         tblUv1Texts.Columns = BuildUvColumns();
         tblUv2Texts.Columns = BuildUvColumns();
     }
 
     private static AntdUI.ColumnCollection BuildBlockColumns() =>
     [
-        new AntdUI.Column("Block", "Block", AntdUI.ColumnAlign.Center) { Width = "16%" },
+        // เลขบล็อกเป็นตัวชี้ว่าแถวนี้คือช่องไหนของเครื่อง แก้ไม่ได้
+        new AntdUI.Column("Block", "Block", AntdUI.ColumnAlign.Center) { Width = "16%", Editable = false },
         new AntdUI.Column("BlockText", "Text", AntdUI.ColumnAlign.Left) { Width = "36%" },
         new AntdUI.Column("X", "X", AntdUI.ColumnAlign.Center) { Width = "12%" },
         new AntdUI.Column("Y", "Y", AntdUI.ColumnAlign.Center) { Width = "12%" },
@@ -542,6 +548,9 @@ public partial class OrderDetailUserControl : UserControl
         var s2 = Int(txtConveyor2, "Conveyor 2");
         var s3 = Int(txtConveyor3, "Conveyor 3");
 
+        var blocks1 = ReadBlocks(tblMk1Blocks, mk1, errors);
+        var blocks2 = ReadBlocks(tblMk2Blocks, mk2, errors);
+
         if (errors.Count > 0) return string.Join(Environment.NewLine, errors);
 
         void ApplyMk(int ordinal,
@@ -568,6 +577,8 @@ public partial class OrderDetailUserControl : UserControl
 
         ApplyMk(1, v1);
         ApplyMk(2, v2);
+        ApplyBlocks(1, blocks1);
+        ApplyBlocks(2, blocks2);
 
         if (_pattern.ConveyorSpeeds is { } speeds)
         {
@@ -577,6 +588,83 @@ public partial class OrderDetailUserControl : UserControl
         }
 
         return null;
+    }
+
+    /// <summary>ค่าของบล็อกหนึ่งแถวที่อ่านกลับมาจากตาราง</summary>
+    private readonly record struct BlockEdit(
+        int Number, string? Text, int? X, int? Y, int? Size, int? Scale);
+
+    /// <summary>
+    /// อ่านค่าที่แก้ในตารางบล็อกกลับมา — ข้อความ ตำแหน่ง ขนาด และสเกล
+    ///
+    /// <para>
+    /// ช่องข้อความเก็บผลที่ผ่าน <see cref="PatternEngine"/> แล้ว ไม่ใช่สูตรดิบ
+    /// ถ้าผู้ใช้ไม่ได้แตะแถวนั้น ค่าที่อ่านกลับมาจึงเท่ากับผลลัพธ์เดิม ไม่ใช่สูตร
+    /// การเขียนทับจึงทำเฉพาะแถวที่ค่าต่างไปจากที่วาดไว้ตอนเปิดหน้า
+    /// </para>
+    /// </summary>
+    private List<BlockEdit> ReadBlocks(AntdUI.Table table, string machine, List<string> errors)
+    {
+        var result = new List<BlockEdit>();
+        if (table.DataSource is not List<BlockRow> rows) return result;
+
+        int? Int(string? text, string label)
+        {
+            var value = (text ?? "").Trim();
+            if (value.Length == 0 || value == Dash) return null;
+            if (int.TryParse(value, out int v)) return v;
+            errors.Add($"{label}: \"{value}\" ไม่ใช่จำนวนเต็ม");
+            return null;
+        }
+
+        foreach (var row in rows)
+        {
+            if (!int.TryParse(row.Block, out int number)) continue;
+
+            var where = $"{machine} Block {number}";
+            var text = (row.BlockText ?? "").Trim();
+
+            result.Add(new BlockEdit(
+                number,
+                text.Length == 0 || text == Dash ? null : text,
+                Int(row.X, $"{where} X"),
+                Int(row.Y, $"{where} Y"),
+                Int(row.Size, $"{where} Size"),
+                Int(row.Scale, $"{where} Scale")));
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// เขียนค่าบล็อกที่แก้แล้วกลับลง pattern
+    ///
+    /// <para>
+    /// ข้ามช่องข้อความของแถวที่ผู้ใช้ไม่ได้แตะ — บล็อกที่มีสูตรอยู่ (เช่นสูตรตัด
+    /// บาร์โค้ด) ถูกวาดบนจอเป็นผลลัพธ์ที่แปลแล้ว ถ้าเขียนค่าที่เห็นกลับลงไปทุกแถว
+    /// สูตรจะถูกแทนที่ด้วยข้อความตายตัวของงานนี้ แล้วงานถัดไปที่ใช้สูตรเดียวกัน
+    /// จะพิมพ์ข้อความของงานเก่า
+    /// </para>
+    /// </summary>
+    private void ApplyBlocks(int ordinal, List<BlockEdit> edits)
+    {
+        var config = _pattern?.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
+        if (config == null) return;
+
+        foreach (var edit in edits)
+        {
+            var block = config.TextBlocks.FirstOrDefault(b => b.BlockNumber == edit.Number);
+            if (block == null) continue;
+
+            block.X = edit.X;
+            block.Y = edit.Y;
+            block.Size = edit.Size;
+            block.Scale = edit.Scale;
+
+            // ข้อความเขียนทับเฉพาะตอนที่ต่างไปจากผลลัพธ์ที่วาดไว้ตอนเปิดหน้า
+            var shown = PatternEngine.Process(_barcode, block.Text ?? "");
+            if (edit.Text != shown) block.Text = edit.Text;
+        }
     }
 
     private async Task<string?> SavePatternAsync()
@@ -1151,15 +1239,13 @@ public partial class OrderDetailUserControl : UserControl
         var mk1 = CustomSettingsManager.Read("MK058_NAME", "MK-058");
         var mk2 = CustomSettingsManager.Read("MK059_NAME", "MK-059");
 
-        TagAddress(lblMk1Trigger, plan, $"{mk1} Trigger");
+        // Trigger Delay กับสายพาน 2/3 ไม่ได้ส่งเข้า PLC แล้ว จึงไม่ติดป้าย address ให้
+        // ไม่งั้นจะขึ้นว่า "ยังไม่ได้ map" ค้างอยู่ ทั้งที่ตั้งใจให้ไม่มี map
         TagAddress(lblMk1PosAct, plan, $"{mk1} PostAct");
         TagAddress(lblMk1Delay, plan, $"{mk1} Delay");
-        TagAddress(lblMk2Trigger, plan, $"{mk2} Trigger");
         TagAddress(lblMk2PosAct, plan, $"{mk2} PostAct");
         TagAddress(lblMk2Delay, plan, $"{mk2} Delay");
         TagAddress(lblConveyor1, plan, "Conveyor Speed 1");
-        TagAddress(lblConveyor2, plan, "Conveyor Speed 2");
-        TagAddress(lblConveyor3, plan, "Conveyor Speed 3");
     }
 
     private void TagAddress(AntdUI.Label label, List<PlcOrderService.PlcField> plan, string listName)

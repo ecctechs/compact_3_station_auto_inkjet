@@ -838,8 +838,8 @@ partial class OrderDetailUserControl
         // txtMk1Program
         //
         txtMk1Program.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk1Program.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtMk1Program.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk1Program.BackColor = System.Drawing.Color.White;
+        txtMk1Program.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtMk1Program.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk1Program.Location = new System.Drawing.Point(173, 6);
         txtMk1Program.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
@@ -864,8 +864,8 @@ partial class OrderDetailUserControl
         // txtMk1ProgramNo
         //
         txtMk1ProgramNo.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk1ProgramNo.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtMk1ProgramNo.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk1ProgramNo.BackColor = System.Drawing.Color.White;
+        txtMk1ProgramNo.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtMk1ProgramNo.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk1ProgramNo.Location = new System.Drawing.Point(455, 6);
         txtMk1ProgramNo.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
@@ -965,8 +965,8 @@ partial class OrderDetailUserControl
         // txtMk1Trigger
         //
         txtMk1Trigger.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk1Trigger.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtMk1Trigger.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk1Trigger.BackColor = System.Drawing.Color.White;
+        txtMk1Trigger.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtMk1Trigger.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk1Trigger.Location = new System.Drawing.Point(3, 57);
         txtMk1Trigger.Margin = new System.Windows.Forms.Padding(3, 9, 3, 9);
@@ -992,8 +992,8 @@ partial class OrderDetailUserControl
         // txtMk1PosAct
         //
         txtMk1PosAct.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk1PosAct.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtMk1PosAct.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk1PosAct.BackColor = System.Drawing.Color.White;
+        txtMk1PosAct.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtMk1PosAct.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk1PosAct.Location = new System.Drawing.Point(3, 121);
         txtMk1PosAct.Margin = new System.Windows.Forms.Padding(3, 9, 3, 9);
@@ -1019,8 +1019,8 @@ partial class OrderDetailUserControl
         // txtMk1Delay
         //
         txtMk1Delay.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk1Delay.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtMk1Delay.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk1Delay.BackColor = System.Drawing.Color.White;
+        txtMk1Delay.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtMk1Delay.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk1Delay.Location = new System.Drawing.Point(3, 185);
         txtMk1Delay.Margin = new System.Windows.Forms.Padding(3, 9, 3, 9);
@@ -1066,8 +1066,8 @@ partial class OrderDetailUserControl
         // txtMk1Width
         //
         txtMk1Width.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk1Width.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtMk1Width.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk1Width.BackColor = System.Drawing.Color.White;
+        txtMk1Width.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtMk1Width.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk1Width.Location = new System.Drawing.Point(63, 6);
         txtMk1Width.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
@@ -1092,8 +1092,8 @@ partial class OrderDetailUserControl
         // txtMk1Height
         //
         txtMk1Height.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk1Height.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtMk1Height.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk1Height.BackColor = System.Drawing.Color.White;
+        txtMk1Height.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtMk1Height.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk1Height.Location = new System.Drawing.Point(359, 6);
         txtMk1Height.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
@@ -1206,8 +1206,8 @@ partial class OrderDetailUserControl
         // txtMk2Program
         //
         txtMk2Program.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk2Program.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtMk2Program.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk2Program.BackColor = System.Drawing.Color.White;
+        txtMk2Program.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtMk2Program.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk2Program.Location = new System.Drawing.Point(173, 6);
         txtMk2Program.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
@@ -1232,8 +1232,8 @@ partial class OrderDetailUserControl
         // txtMk2ProgramNo
         //
         txtMk2ProgramNo.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk2ProgramNo.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtMk2ProgramNo.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk2ProgramNo.BackColor = System.Drawing.Color.White;
+        txtMk2ProgramNo.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtMk2ProgramNo.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk2ProgramNo.Location = new System.Drawing.Point(455, 6);
         txtMk2ProgramNo.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
@@ -1347,8 +1347,8 @@ partial class OrderDetailUserControl
         // txtMk2Trigger
         //
         txtMk2Trigger.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk2Trigger.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtMk2Trigger.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk2Trigger.BackColor = System.Drawing.Color.White;
+        txtMk2Trigger.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtMk2Trigger.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk2Trigger.Location = new System.Drawing.Point(3, 57);
         txtMk2Trigger.Margin = new System.Windows.Forms.Padding(3, 9, 3, 9);
@@ -1374,8 +1374,8 @@ partial class OrderDetailUserControl
         // txtMk2PosAct
         //
         txtMk2PosAct.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk2PosAct.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtMk2PosAct.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk2PosAct.BackColor = System.Drawing.Color.White;
+        txtMk2PosAct.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtMk2PosAct.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk2PosAct.Location = new System.Drawing.Point(3, 121);
         txtMk2PosAct.Margin = new System.Windows.Forms.Padding(3, 9, 3, 9);
@@ -1401,8 +1401,8 @@ partial class OrderDetailUserControl
         // txtMk2Delay
         //
         txtMk2Delay.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk2Delay.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtMk2Delay.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk2Delay.BackColor = System.Drawing.Color.White;
+        txtMk2Delay.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtMk2Delay.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk2Delay.Location = new System.Drawing.Point(3, 185);
         txtMk2Delay.Margin = new System.Windows.Forms.Padding(3, 9, 3, 9);
@@ -1448,8 +1448,8 @@ partial class OrderDetailUserControl
         // txtMk2Width
         //
         txtMk2Width.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk2Width.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtMk2Width.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk2Width.BackColor = System.Drawing.Color.White;
+        txtMk2Width.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtMk2Width.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk2Width.Location = new System.Drawing.Point(63, 6);
         txtMk2Width.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
@@ -1474,8 +1474,8 @@ partial class OrderDetailUserControl
         // txtMk2Height
         //
         txtMk2Height.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk2Height.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtMk2Height.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk2Height.BackColor = System.Drawing.Color.White;
+        txtMk2Height.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtMk2Height.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk2Height.Location = new System.Drawing.Point(359, 6);
         txtMk2Height.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
@@ -1554,8 +1554,8 @@ partial class OrderDetailUserControl
         // txtConveyor1
         //
         txtConveyor1.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtConveyor1.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtConveyor1.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtConveyor1.BackColor = System.Drawing.Color.White;
+        txtConveyor1.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtConveyor1.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtConveyor1.Location = new System.Drawing.Point(289, 19);
         txtConveyor1.Margin = new System.Windows.Forms.Padding(3, 3, 3, 3);
@@ -1580,8 +1580,8 @@ partial class OrderDetailUserControl
         // txtConveyor2
         //
         txtConveyor2.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtConveyor2.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtConveyor2.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtConveyor2.BackColor = System.Drawing.Color.White;
+        txtConveyor2.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtConveyor2.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtConveyor2.Location = new System.Drawing.Point(637, 19);
         txtConveyor2.Margin = new System.Windows.Forms.Padding(3, 3, 3, 3);
@@ -1606,8 +1606,8 @@ partial class OrderDetailUserControl
         // txtConveyor3
         //
         txtConveyor3.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtConveyor3.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtConveyor3.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtConveyor3.BackColor = System.Drawing.Color.White;
+        txtConveyor3.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtConveyor3.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtConveyor3.Location = new System.Drawing.Point(985, 19);
         txtConveyor3.Margin = new System.Windows.Forms.Padding(3, 3, 3, 3);
