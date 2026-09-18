@@ -1041,7 +1041,7 @@ public partial class OrderListUserControl : UserControl
 
             _sending = true;
             ShowSending($"กำลังส่งไปที่ {claimed.Machine}");
-            List<Notify.ResultLine> sent;
+            StepSendResult sent;
             try
             {
                 sent = await SendStepAsync(jobId, claimed.Machine, resolved, claimed.ProgramName);
@@ -1053,13 +1053,18 @@ public partial class OrderListUserControl : UserControl
             }
 
             if (IsDisposed) return;
-            lines.AddRange(sent);
+            lines.AddRange(sent.Lines);
 
-            // ส่งไม่ผ่านต้องคืนเครื่อง ไม่งั้นเครื่องจะถูกจองค้างโดยไม่มีอะไรพิมพ์
-            if (sent.Any(l => l.Kind != Notify.ResultKind.Success))
-                await _api.UpdateMachineQueueAsync(claimed.Id, state: "pending");
-            else
+            // ตัดสินจาก "ข้อมูลเข้าเครื่องแล้วไหม" ไม่ใช่จากว่ามีคำเตือนติดมาไหม
+            //
+            // เดิมนับทุกบรรทัดที่ไม่ใช่สีเขียวเป็นส่งไม่ผ่าน ผลคืองาน marking 12 ที่ใช้
+            // หัวพ่นตัวเดียว พอหัวอีกตัวปิดอยู่จนสั่งหยุดไม่ได้ (ขึ้นเป็นคำเตือน) แถวคิว
+            // ของ MK จะถูกคืนเป็นรอคิวทั้งที่เครื่องรับงานไปแล้วและกำลังพิมพ์อยู่
+            // เครื่องจึงดูเหมือนว่าง งานใบถัดไปเลยแย่งเข้าไปเปลี่ยนโปรแกรมทับได้
+            if (sent.Sent)
                 await _api.UpdateMachineQueueAsync(claimed.Id, sent: true);
+            else
+                await _api.UpdateMachineQueueAsync(claimed.Id, state: "pending");
         }
 
         if (IsDisposed) return;
@@ -1090,7 +1095,18 @@ public partial class OrderListUserControl : UserControl
     /// ปล่อยให้คงเป็น Working ไว้ คนหน้างานกดปุ่มส่งขั้นเดิมใหม่ได้เลย
     /// </para>
     /// </param>
-    private async Task<List<Notify.ResultLine>> SendStepAsync(
+    /// <summary>
+    /// ผลการส่งหนึ่งขั้น — <paramref name="Sent"/> คือ "ข้อมูลเข้าเครื่องแล้วจริงไหม"
+    ///
+    /// <para>
+    /// ต้องแยกจากระดับของบรรทัดที่รายงาน เพราะการส่งที่สำเร็จมีคำเตือนติดมาได้
+    /// เช่นหัวพ่นอีกตัวที่งานนี้ไม่ได้ใช้และปิดอยู่ จะสั่งหยุดไม่ได้และขึ้นเป็นคำเตือน
+    /// ทั้งที่หัวที่ต้องทำงานรับข้อมูลครบและกำลังพิมพ์อยู่
+    /// </para>
+    /// </summary>
+    private sealed record StepSendResult(bool Sent, List<Notify.ResultLine> Lines);
+
+    private async Task<StepSendResult> SendStepAsync(
         int jobId, string step, ResolvedJobResponse resolved,
         string? forcedProgram = null, bool isFirstStep = true)
     {
@@ -1104,12 +1120,14 @@ public partial class OrderListUserControl : UserControl
             if (lines.Count == 0)
                 lines.Add(Notify.Careful("ไม่มีเครื่อง MK ที่ตั้งค่า IP ไว้"));
 
-            if (mk.Status == SendStatus.Ok)
+            bool ok = mk.Status == SendStatus.Ok;
+
+            if (ok)
                 await _api.SaveSendStepAsync(jobId, "MK");
             else if (isFirstStep)
                 await _api.UpdateJobStatusAsync(jobId, "Waiting");
 
-            return lines;
+            return new StepSendResult(ok, lines);
         }
 
         int uvNumber = step == "UV1" ? 1 : 2;
@@ -1124,19 +1142,20 @@ public partial class OrderListUserControl : UserControl
                 is_default = uv.UsedDefault,
             });
 
-            return [Notify.Ok($"{uv.MachineName} — ส่งสำเร็จ ({uv.ProgramFile}.uvdx)")];
+            return new StepSendResult(true,
+                [Notify.Ok($"{uv.MachineName} — ส่งสำเร็จ ({uv.ProgramFile}.uvdx)")]);
         }
 
         if (isFirstStep) await _api.UpdateJobStatusAsync(jobId, "Waiting");
 
-        return uv.Status switch
+        return new StepSendResult(false, uv.Status switch
         {
             // ยกเลิกที่กล่องเลือกรุ่นย่อย ไม่ใช่ความผิดพลาด ไม่ต้องขึ้นกล่องสรุป
             SendStatus.Cancelled => [],
             SendStatus.Unreachable =>
                 [Notify.Bad($"{uv.MachineName} — เชื่อมต่อไม่ได้ ({uv.Ip}:{uv.Port})")],
             _ => [Notify.Bad($"{uv.MachineName} — {uv.FailReason}")],
-        };
+        });
     }
 
     // ── งานที่ไม่ต้องส่งคำสั่ง (marking 00) ─────────────────
@@ -1462,10 +1481,10 @@ public partial class OrderListUserControl : UserControl
 
         _sending = true;
         ShowSending($"กำลังส่งไปที่ {claimed.Machine} · {JobName(claimed.PrintJobsId)}");
-        List<Notify.ResultLine> lines;
+        StepSendResult sent;
         try
         {
-            lines = await SendStepAsync(
+            sent = await SendStepAsync(
                 claimed.PrintJobsId, claimed.Machine, resolved, claimed.ProgramName);
         }
         finally
@@ -1478,13 +1497,13 @@ public partial class OrderListUserControl : UserControl
 
         // ส่งไม่ผ่าน = คืนแถวกลับไปรอคิว แล้วจบตรงนั้น ไม่มีใครมาลองใหม่ให้เอง
         // ต้องมีคนกดเริ่มงานใบนั้นอีกครั้ง ถึงจะยิงซ้ำ
-        if (lines.Any(l => l.Kind != Notify.ResultKind.Success))
-            await _api.UpdateMachineQueueAsync(claimed.Id, state: "pending");
-        else
+        if (sent.Sent)
             await _api.UpdateMachineQueueAsync(claimed.Id, sent: true);
+        else
+            await _api.UpdateMachineQueueAsync(claimed.Id, state: "pending");
 
-        if (lines.Count > 0)
-            Notify.Result(this, $"ส่ง {claimed.Machine} · {JobName(claimed.PrintJobsId)}", lines);
+        if (sent.Lines.Count > 0)
+            Notify.Result(this, $"ส่ง {claimed.Machine} · {JobName(claimed.PrintJobsId)}", sent.Lines);
     }
 
     private async Task ProcessRemoteStartsAsync()
@@ -1585,8 +1604,8 @@ public partial class OrderListUserControl : UserControl
         if (IsDisposed) return;
 
         // ขั้นแรกหรือไม่ ตัดสินจากแผนของงาน ไม่ใช่จากว่าใครเป็นคนขอ
-        var lines = await SendStepAsync(
-            jobId, step, resolved, program, isFirstStep: plan.Steps.IndexOf(step) == 0);
+        var lines = (await SendStepAsync(
+            jobId, step, resolved, program, isFirstStep: plan.Steps.IndexOf(step) == 0)).Lines;
 
         // ล้มเหลวแล้วฝากสาเหตุกลับไปให้ ST3 ด้วย — คนที่กดเริ่มงานอยู่ที่นั่น
         // ไม่ได้เห็นจอนี้ ถ้าไม่ฝากไว้เขาจะเห็นแค่งานเด้งกลับเป็น Waiting เฉย ๆ
