@@ -470,7 +470,7 @@ public partial class OrderDetailUserControl : UserControl
         btnSavePattern.Enabled = false;
         try
         {
-            var error = await SavePatternAsync();
+            var error = await SavePatternAsync() ?? await SaveUvProgramNamesAsync();
             if (IsDisposed) return;
 
             if (error != null)
@@ -588,6 +588,70 @@ public partial class OrderDetailUserControl : UserControl
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// บันทึกชื่อโปรแกรม UV ที่แก้ในหน้านี้ — คืนข้อความปัญหา หรือ null เมื่อสำเร็จ
+    ///
+    /// <para>
+    /// ชื่อโปรแกรม UV อยู่คนละที่กับค่าของ MK — อยู่ใน <c>uv_job_data</c> ไม่ใช่ pattern
+    /// จึงต้องบันทึกแยกอีกทาง
+    /// </para>
+    /// <para>
+    /// ใช้ปลายทาง create ตัวเดิม เพราะฝั่ง backend มันลบของเก่าทั้งงานแล้วเขียนใหม่
+    /// ทั้งชุดอยู่แล้ว (<c>UvJobData.destroy</c> แล้ว <c>bulkCreate</c>) จึงทำหน้าที่
+    /// เป็น update ได้ในตัว ไม่ต้องเพิ่ม endpoint ใหม่ — แต่ต้องส่งไปครบทุกแถว
+    /// ไม่งั้นแถวที่ไม่ได้ส่งจะหายไป
+    /// </para>
+    /// </summary>
+    private async Task<string?> SaveUvProgramNamesAsync()
+    {
+        if (_api == null || _jobId <= 0 || _uvData.Count == 0) return null;
+
+        string? Picked(string machine, AntdUI.Input box)
+        {
+            var text = box.Text.Trim();
+            return text.Length == 0 || text == Dash ? null : text;
+        }
+
+        var uv1 = Picked("UV1", txtUv1Program);
+        var uv2 = Picked("UV2", txtUv2Program);
+
+        bool changed = false;
+        foreach (var row in _uvData)
+        {
+            var edited = string.Equals(row.Machine, "UV1", StringComparison.OrdinalIgnoreCase) ? uv1
+                       : string.Equals(row.Machine, "UV2", StringComparison.OrdinalIgnoreCase) ? uv2
+                       : row.ProgramName;
+
+            if (edited == row.ProgramName) continue;
+            row.ProgramName = edited;
+            changed = true;
+        }
+
+        if (!changed) return null;
+
+        var request = new CreateUvJobRequest
+        {
+            PrintJobsId = _jobId,
+            Items = _uvData.Select(r => new UvJobItem
+            {
+                Machine = r.Machine ?? "",
+                TableName = r.TableName,
+                ProgramName = r.ProgramName,
+                Lot = r.Lot,
+                ErpMfg = r.ErpMfg,
+                Qty = r.Qty,
+                Text1 = r.Text1,
+                Text2 = r.Text2,
+                Text3 = r.Text3,
+                Text4 = r.Text4,
+                Text5 = r.Text5,
+            }).ToList(),
+        };
+
+        var (ok, error) = await _api.CreateUvJobDataAsync(request);
+        return ok ? null : error ?? "บันทึกชื่อโปรแกรม UV ไม่สำเร็จ";
     }
 
     /// <summary>ค่าของบล็อกหนึ่งแถวที่อ่านกลับมาจากตาราง</summary>

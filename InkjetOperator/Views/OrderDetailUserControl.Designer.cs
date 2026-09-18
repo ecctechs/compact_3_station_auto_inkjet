@@ -1572,6 +1572,7 @@ partial class OrderDetailUserControl
         lblConveyor2.Location = new System.Drawing.Point(541, 0);
         lblConveyor2.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
         lblConveyor2.Name = "lblConveyor2";
+        lblConveyor2.Visible = false;
         lblConveyor2.Size = new System.Drawing.Size(112, 90);
         lblConveyor2.TabIndex = 3;
         lblConveyor2.Text = "Conveyor 2 (Hz)";
@@ -1586,6 +1587,7 @@ partial class OrderDetailUserControl
         txtConveyor2.Location = new System.Drawing.Point(637, 19);
         txtConveyor2.Margin = new System.Windows.Forms.Padding(3, 3, 3, 3);
         txtConveyor2.Name = "txtConveyor2";
+        txtConveyor2.Visible = false;
         txtConveyor2.Radius = 8;
         txtConveyor2.Size = new System.Drawing.Size(308, 42);
         txtConveyor2.TabIndex = 4;
@@ -1598,6 +1600,7 @@ partial class OrderDetailUserControl
         lblConveyor3.Location = new System.Drawing.Point(889, 0);
         lblConveyor3.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
         lblConveyor3.Name = "lblConveyor3";
+        lblConveyor3.Visible = false;
         lblConveyor3.Size = new System.Drawing.Size(112, 90);
         lblConveyor3.TabIndex = 5;
         lblConveyor3.Text = "Conveyor 3 (Hz)";
@@ -1612,6 +1615,7 @@ partial class OrderDetailUserControl
         txtConveyor3.Location = new System.Drawing.Point(985, 19);
         txtConveyor3.Margin = new System.Windows.Forms.Padding(3, 3, 3, 3);
         txtConveyor3.Name = "txtConveyor3";
+        txtConveyor3.Visible = false;
         txtConveyor3.Radius = 8;
         txtConveyor3.Size = new System.Drawing.Size(320, 42);
         txtConveyor3.TabIndex = 6;
@@ -1829,14 +1833,13 @@ partial class OrderDetailUserControl
         // txtUv1Program
         //
         txtUv1Program.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtUv1Program.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtUv1Program.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtUv1Program.BackColor = System.Drawing.Color.White;
+        txtUv1Program.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtUv1Program.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtUv1Program.Location = new System.Drawing.Point(173, 6);
         txtUv1Program.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
         txtUv1Program.Name = "txtUv1Program";
         txtUv1Program.Radius = 8;
-        txtUv1Program.ReadOnly = true;
         txtUv1Program.Size = new System.Drawing.Size(520, 42);
         txtUv1Program.TabIndex = 2;
         //
@@ -2104,14 +2107,13 @@ partial class OrderDetailUserControl
         // txtUv2Program
         //
         txtUv2Program.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtUv2Program.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtUv2Program.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtUv2Program.BackColor = System.Drawing.Color.White;
+        txtUv2Program.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtUv2Program.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtUv2Program.Location = new System.Drawing.Point(173, 6);
         txtUv2Program.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
         txtUv2Program.Name = "txtUv2Program";
         txtUv2Program.Radius = 8;
-        txtUv2Program.ReadOnly = true;
         txtUv2Program.Size = new System.Drawing.Size(520, 42);
         txtUv2Program.TabIndex = 2;
         //
