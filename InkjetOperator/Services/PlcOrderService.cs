@@ -23,8 +23,11 @@ public static class PlcOrderService
     /// <param name="Address">null = ไม่พบแถวนี้ในตาราง</param>
     public sealed record PlcField(string Label, string ListName, int? Address, int Value);
 
-    /// <summary>ผลการเขียนหนึ่งชุด — ชุดที่ address ติดกันถูกยิงไปในคำสั่งเดียว</summary>
-    public readonly record struct BlockResult(string Name, string? Error);
+    /// <summary>ผลการเขียนหนึ่ง register</summary>
+    /// <param name="Name">ชื่อที่รายงานให้ผู้ใช้ เช่น "D5 MK-058 Servo Post Act."</param>
+    /// <param name="Value">ค่าที่เขียนลงไป</param>
+    /// <param name="ReadBack">ค่าที่อ่านกลับมาได้หลังเขียน — null เมื่ออ่านไม่สำเร็จ</param>
+    public readonly record struct BlockResult(string Name, int Value, int? ReadBack, string? Error);
 
     /// <summary>
     /// รายการค่าทั้งหมดที่จะส่งของงานนี้ เรียงตามลำดับที่ผู้ใช้เห็นบนหน้าจอ
@@ -58,8 +61,14 @@ public static class PlcOrderService
     /// <summary>
     /// เขียนค่าตามแผนที่สร้างไว้ ข้ามตัวที่ยังไม่มี address
     /// <para>
-    /// address ที่เรียงติดกันถูกรวมเป็นคำสั่งเดียว (FC 16) เพื่อให้ PLC เห็นค่าเปลี่ยน
-    /// พร้อมกันทั้งชุด ไม่ใช่ทยอยเปลี่ยนทีละตัวจนได้ค่าครึ่ง ๆ กลาง ๆ ระหว่างทาง
+    /// เขียนทีละ register ด้วย FC 6 แล้วอ่านกลับมายืนยัน — วิธีเดียวกับปุ่ม Write
+    /// ในตาราง register map หน้า PLC Setting ทุกประการ ค่าที่ส่งคือตัวเลขที่เห็น
+    /// บนหน้าจอตรง ๆ ไม่มีการคูณหรือแปลงหน่วยใด ๆ ระหว่างทาง
+    /// </para>
+    /// <para>
+    /// เดิมรวม address ที่ติดกันแล้วยิงเป็นชุดเดียวด้วย FC 16 ซึ่งต่างจากที่หน้า
+    /// PLC Setting ใช้ ตอนนี้ยึดวิธีของหน้านั้นเป็นหลัก เพื่อให้ผลที่ได้จากปุ่มนี้
+    /// กับที่ได้จากการกด Write ทีละแถวเป็นอย่างเดียวกัน
     /// </para>
     /// </summary>
     public static async Task<List<BlockResult>> SendAsync(List<PlcField> plan)
@@ -69,7 +78,7 @@ public static class PlcOrderService
         var ip = CustomSettingsManager.Read("PLC_IP", "").Trim();
         if (ip.Length == 0)
         {
-            results.Add(new BlockResult("PLC", "ยังไม่ได้ตั้งค่า IP ในหน้า PLC Setting"));
+            results.Add(new BlockResult("PLC", 0, null, "ยังไม่ได้ตั้งค่า IP ในหน้า PLC Setting"));
             return results;
         }
 
@@ -78,36 +87,34 @@ public static class PlcOrderService
         var ready = plan.Where(f => f.Address != null).OrderBy(f => f.Address).ToList();
         if (ready.Count == 0)
         {
-            results.Add(new BlockResult("PLC", "ไม่มีค่าไหนที่ map address ไว้"));
+            results.Add(new BlockResult("PLC", 0, null, "ไม่มีค่าไหนที่ map address ไว้"));
             return results;
         }
 
-        foreach (var run in GroupConsecutive(ready))
+        foreach (var field in ready)
         {
-            var name = run.Count == 1
-                ? $"D{run[0].Address}"
-                : $"D{run[0].Address}-D{run[^1].Address}";
+            int address = field.Address!.Value;
+            var name = $"D{address}  {field.Label}";
 
-            var (ok, error) = await ModbusTcpService.WriteMultipleRegistersAsync(
-                ip, port, run[0].Address!.Value, run.Select(f => f.Value).ToList());
+            var (ok, error) = await ModbusTcpService.WriteSingleRegisterAsync(
+                ip, port, address, field.Value);
 
-            results.Add(new BlockResult(name, ok ? null : error));
+            if (!ok)
+            {
+                results.Add(new BlockResult(name, field.Value, null, error));
+                continue;
+            }
+
+            // อ่านกลับทันทีเหมือนที่หน้า PLC Setting ทำ — เขียนผ่านแต่ค่าไม่เข้า
+            // จะได้เห็นตั้งแต่ตรงนี้ ไม่ใช่ไปรู้เอาตอนเครื่องเดินผิด
+            var (readOk, values, _) = await ModbusTcpService.ReadHoldingRegistersAsync(
+                ip, port, address, 1);
+
+            results.Add(new BlockResult(
+                name, field.Value, readOk && values.Length > 0 ? values[0] : null, null));
         }
 
         return results;
-    }
-
-    /// <summary>รวมค่าที่ address ต่อกันเป็นชุดเดียว รายการต้องเรียง address มาแล้ว</summary>
-    private static List<List<PlcField>> GroupConsecutive(List<PlcField> sorted)
-    {
-        var runs = new List<List<PlcField>>();
-        foreach (var field in sorted)
-        {
-            var last = runs.Count > 0 ? runs[^1] : null;
-            if (last != null && field.Address == last[^1].Address + 1) last.Add(field);
-            else runs.Add([field]);
-        }
-        return runs;
     }
 
     private static void AddServo(

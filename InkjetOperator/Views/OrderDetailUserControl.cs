@@ -957,20 +957,27 @@ public partial class OrderDetailUserControl : UserControl
         // เปิดไว้ในโหมดใช้งานปกติจึงเสี่ยงที่จะส่งซ้ำหรือส่งข้ามขั้น แล้วพ่นซ้ำ
         // ลงชิ้นงานจริง
         //
-        // ในโหมดทดสอบก็โชว์เฉพาะขั้นที่งานนี้มีจริง งานที่ไม่ผ่าน UV1 จะได้ไม่มี
-        // ปุ่ม UV1 ค้างอยู่ให้กดผิดเครื่อง
-        btnSendMk.Visible = _isDevMode && HasStep("MK");
-        btnSendUv1.Visible = _isDevMode && HasStep("UV1");
-        btnSendUv2.Visible = _isDevMode && HasStep("UV2");
+        // โหมดทดสอบโชว์ครบทุกเครื่อง ไม่ดูว่างานนี้มีขั้นนั้นอยู่ในแผนไหม
+        //
+        // เพราะจุดประสงค์ของปุ่มชุดนี้คือยิงข้อความไปหาเครื่องเพื่อดูว่าเครื่องรับไหม
+        // ไม่ใช่การเดินงานตามแผน คนทดสอบจึงต้องเลือกเครื่องไหนก็ได้จากงานใบเดียว
+        // ปุ่มทดสอบส่ง PLC ก็อยู่ในชุดเดียวกัน — designer ซ่อนไว้เป็นค่าตั้งต้น
+        // ที่นี่คือที่เดียวที่เปิดให้เห็น
+        btnTestPlc.Visible = _isDevMode;
+        btnSendMk.Visible = _isDevMode;
+        btnSendUv1.Visible = _isDevMode;
+        btnSendUv2.Visible = _isDevMode;
 
         if (_isDevMode)
         {
+            btnTestPlc.Enabled = true;
             btnSendMk.Enabled = true;
             btnSendUv1.Enabled = true;
             btnSendUv2.Enabled = true;
             return;
         }
 
+        btnTestPlc.Enabled = false;
         btnSendMk.Enabled = false;
         btnSendUv1.Enabled = false;
         btnSendUv2.Enabled = false;
@@ -991,6 +998,13 @@ public partial class OrderDetailUserControl : UserControl
     /// </summary>
     private void CompleteSendStep(string stepName, object? detail = null)
     {
+        // โหมดทดสอบไม่แตะประวัติและไม่แตะสถานะงาน ออกตรงนี้ก่อนทุกอย่าง
+        //
+        // ปุ่มชุดนั้นมีไว้ยิงข้อความหาเครื่องอย่างเดียว การบันทึกว่า "ขั้นนี้ส่งแล้ว"
+        // จะทำให้ปุ่มเริ่มงานกับปุ่มกดหน้างานข้ามขั้นนั้นไป ทั้งที่ยังไม่ได้พิมพ์จริง
+        // และงานที่เอามาลองก็จะเปลี่ยนสถานะไปเองโดยไม่มีใครสั่ง
+        if (_isDevMode) return;
+
         // บันทึกก่อนเสมอ ก่อนเช็คลำดับขั้นตอนใด ๆ — มาถึงบรรทัดนี้คือส่งเข้าเครื่อง
         // สำเร็จไปแล้วจริง ต้องมีร่องรอยไว้เสมอ
         //
@@ -998,8 +1012,6 @@ public partial class OrderDetailUserControl : UserControl
         // (ส่ง UV2 ไปแล้ว แล้วเลือกรุ่นย่อยใหม่ส่งอีกรอบ) ไม่ถูกบันทึกเลย
         // เปิด Order Detail ใหม่จึงเห็นรุ่นเก่า ไม่ใช่รุ่นที่เพิ่งเลือกและพิมพ์จริง
         _ = _api?.SaveSendStepAsync(_jobId, stepName, detail);
-
-        if (_isDevMode) return;
 
         // ที่เหลือคือการเดินสถานะปุ่มตามลำดับขั้นตอน — ส่งซ้ำหรือส่งข้ามลำดับ
         // ไม่ควรเลื่อนลำดับ จึงยังคงเงื่อนไขเดิมไว้ตรงนี้
@@ -1044,7 +1056,11 @@ public partial class OrderDetailUserControl : UserControl
 
     private async Task SendToMkAsync()
     {
-        if (_pattern == null) return;
+        if (_pattern == null)
+        {
+            Notify.WarnModal(this, "ส่งหา MK", "ยังไม่มีข้อมูล pattern ของงานที่เลือก");
+            return;
+        }
 
         btnSendMk.Enabled = false;
         var originalText = btnSendMk.Text;
@@ -1061,25 +1077,24 @@ public partial class OrderDetailUserControl : UserControl
             if (lines.Count == 0)
                 lines.Add(Notify.Careful("ไม่มีเครื่อง MK ที่ตั้งค่า IP ไว้"));
 
-            bool allOk = mk.Status == SendStatus.Ok;
+            if (mk.Status == SendStatus.Ok) CompleteSendStep("MK");
 
-
-            if (!allOk)
-            {
-                btnSendMk.Text = originalText;
-                btnSendMk.Enabled = true;
-                Notify.Result(this, "ผลการส่ง MK", lines);
-                return;
-            }
-
-            CompleteSendStep("MK");
             Notify.Result(this, "ผลการส่ง MK", lines);
         }
         catch (Exception ex)
         {
-            btnSendMk.Text = originalText;
-            btnSendMk.Enabled = true;
             Notify.ErrorModal(this, "Error", $"เกิดข้อผิดพลาด: {ex.Message}");
+        }
+        finally
+        {
+            // สำเร็จในโหมดใช้งานจริง CompleteSendStep จะ MarkButtonSent ให้เอง
+            // นอกนั้นคืนปุ่มกลับสภาพเดิมเสมอ — โหมดทดสอบไม่มีใครมาปลดปุ่มให้
+            // ถ้าไม่คืนตรงนี้ ปุ่มจะค้างอยู่ที่ "กำลังส่ง..." แบบกดไม่ได้ตลอด
+            if (!IsDisposed && btnSendMk.Text?.StartsWith('✓') != true)
+            {
+                btnSendMk.Text = originalText;
+                btnSendMk.Enabled = true;
+            }
         }
     }
 
@@ -1310,9 +1325,19 @@ public partial class OrderDetailUserControl : UserControl
         try
         {
             var lines = (await PlcOrderService.SendAsync(plan))
-                .Select(b => b.Error == null
-                    ? Notify.Ok($"{b.Name} — ส่งสำเร็จ")
-                    : Notify.Bad($"{b.Name} — {b.Error}"))
+                .Select(b =>
+                {
+                    if (b.Error != null) return Notify.Bad($"{b.Name} — {b.Error}");
+
+                    // อ่านกลับไม่ตรงกับที่เขียนคือค่าไม่เข้า ต้องขึ้นเป็นคำเตือน
+                    // ไม่ใช่รายงานว่าสำเร็จ เพราะคำสั่งผ่านแต่ผลไม่ได้ตามนั้น
+                    if (b.ReadBack == null)
+                        return Notify.Careful($"{b.Name} = {b.Value} (อ่านกลับไม่ได้)");
+
+                    return b.ReadBack == b.Value
+                        ? Notify.Ok($"{b.Name} = {b.Value}")
+                        : Notify.Careful($"{b.Name} = {b.Value} · อ่านกลับได้ {b.ReadBack}");
+                })
                 .ToList();
 
             if (IsDisposed) return;

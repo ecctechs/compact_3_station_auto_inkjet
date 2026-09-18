@@ -3028,12 +3028,12 @@ partial class OrderDetailUserControl
         // flpDetailActions
         //
         flpDetailActions.BackColor = System.Drawing.Color.White;
+        flpDetailActions.Controls.Add(btnTestPlc);
         flpDetailActions.Controls.Add(btnSendMk);
         flpDetailActions.Controls.Add(btnSendUv1);
         flpDetailActions.Controls.Add(btnSendUv2);
         flpDetailActions.Controls.Add(btnSavePattern);
         flpDetailActions.Controls.Add(btnRemoteSend);
-        flpDetailActions.Controls.Add(btnTestPlc);
         flpDetailActions.Dock = System.Windows.Forms.DockStyle.Fill;
         flpDetailActions.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
         flpDetailActions.Location = new System.Drawing.Point(0, 0);
