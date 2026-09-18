@@ -48,9 +48,9 @@ public static class PlcOrderService
         AddServo(fields, map, mk1, Servo(pattern, 1));
         AddServo(fields, map, mk2, Servo(pattern, 2));
 
+        // สายพานตัวเดียว — ตาราง register map เหลือ Conveyor Speed 1 แถวเดียว
+        // โปรแกรมเดิมส่งสามตัวรวดเดียว (D10-D12) แต่ของใหม่ตกลงกันว่าเหลือตัวแรก
         Add(fields, map, "Conveyor Speed 1", "Conveyor 1 (Hz)", Whole(speeds?.Speed1));
-        Add(fields, map, "Conveyor Speed 2", "Conveyor 2 (Hz)", Whole(speeds?.Speed2));
-        Add(fields, map, "Conveyor Speed 3", "Conveyor 3 (Hz)", Whole(speeds?.Speed3));
 
         return fields;
     }
