@@ -1,4 +1,4 @@
-using InkjetOperator.Models;
+﻿using InkjetOperator.Models;
 
 namespace InkjetOperator.Services;
 
@@ -10,9 +10,9 @@ namespace InkjetOperator.Services;
 /// <c>list_name</c> ที่นั่นจึงเป็นที่เดียวที่กำหนดว่าค่าไหนลง register ไหน
 /// </para>
 /// <para>
-/// โปรแกรมเดิมส่ง <c>Position</c> กับ <c>Trigger</c> เป็น 0 ตายตัวทั้งคู่ ที่นี่ Position
-/// ยังเป็น 0 เหมือนเดิมเพราะไม่มีค่านี้ในงาน ส่วน <c>Trigger</c> ส่ง Trigger Delay
-/// ของเครื่องนั้นไปจริง
+/// <b>Trigger Delay ไม่ได้อยู่ในชุดนี้</b> — เป็นค่าของหัวพ่น ส่งเข้าเครื่อง MK
+/// ผ่านคำสั่ง FM โดยตรง (ดู <c>MkCompactAdapter.SendConfigAsync</c>) ไม่ใช่ค่าที่
+/// PLC ต้องรู้ เดิมส่งซ้ำไปทั้งสองทางซึ่งทำให้เข้าใจผิดว่า PLC เป็นคนคุมค่านี้
 /// </para>
 /// </summary>
 public static class PlcOrderService
@@ -45,8 +45,8 @@ public static class PlcOrderService
         var speeds = pattern?.ConveyorSpeeds;
 
         var fields = new List<PlcField>();
-        AddServo(fields, map, mk1, Servo(pattern, 1), Inkjet(pattern, 1));
-        AddServo(fields, map, mk2, Servo(pattern, 2), Inkjet(pattern, 2));
+        AddServo(fields, map, mk1, Servo(pattern, 1));
+        AddServo(fields, map, mk2, Servo(pattern, 2));
 
         Add(fields, map, "Conveyor Speed 1", "Conveyor 1 (Hz)", Whole(speeds?.Speed1));
         Add(fields, map, "Conveyor Speed 2", "Conveyor 2 (Hz)", Whole(speeds?.Speed2));
@@ -111,16 +111,11 @@ public static class PlcOrderService
     }
 
     private static void AddServo(
-        List<PlcField> fields, List<PlcRegisterMap> map, string machine,
-        ServoConfigDto? servo, InkjetConfigDto? inkjet)
+        List<PlcField> fields, List<PlcRegisterMap> map, string machine, ServoConfigDto? servo)
     {
         Add(fields, map, $"{machine} Position", $"{machine} Position", 0);
         Add(fields, map, $"{machine} PostAct", $"{machine} Servo Post Act.", Whole(servo?.PostAct));
         Add(fields, map, $"{machine} Delay", $"{machine} Delay (mm.)", Whole(servo?.Delay));
-
-        // Trigger Delay อยู่บน InkjetConfig ไม่ใช่ ServoConfig และส่งเป็นค่าดิบตามที่
-        // เก็บไว้ ไม่ได้คูณ 10 แบบตอนประกอบคำสั่ง FM ซึ่งเป็นกติกาของเครื่อง MK เอง
-        Add(fields, map, $"{machine} Trigger", $"{machine} Trigger Delay", Whole(inkjet?.TriggerDelay));
     }
 
     private static void Add(
