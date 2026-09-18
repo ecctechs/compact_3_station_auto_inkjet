@@ -168,9 +168,12 @@ public partial class ClampSettingUserControl : UserControl
         lblPushStatus.Text = "กำลังอ่าน...";
         try
         {
-            var lines = new List<string>();
-            bool allOk = true;
+            // ผลลงกล่อง "ผลการทำงาน" บรรทัดละสถานี ไม่ยัดรวมบรรทัดเดียวบนป้าย
+            // ป้ายมีที่จำกัดและตัดหัวตัดท้าย ส่วนกล่อง log เป็น Consolas คอลัมน์
+            // จึงตรงกันอ่านไล่ลงมาได้เร็ว
+            Log($"ทดสอบปุ่มกด · {probe.Ip}:{probe.Port}");
 
+            int okCount = 0;
             foreach (var (station, address) in filled)
             {
                 var (ok, on, error) = await McProtocolService.ReadBitAsync(
@@ -178,25 +181,63 @@ public partial class ClampSettingUserControl : UserControl
 
                 if (IsDisposed) return;
 
+                var addr = address.ToUpperInvariant();
                 if (ok)
                 {
-                    var state = on ? "1 (กำลังกดอยู่)" : "0 (ยังไม่กด)";
-                    lines.Add($"ST{station} {address.ToUpperInvariant()} = {state}");
+                    okCount++;
+                    Log($"  ST{station}  {addr,-6} = {(on ? 1 : 0)}  {(on ? "กำลังกด" : "ไม่ได้กด")}");
                 }
                 else
                 {
-                    allOk = false;
-                    lines.Add($"ST{station} {address.ToUpperInvariant()}: {error}");
+                    Log($"  ST{station}  {addr,-6} อ่านไม่ได้ · {error}");
                 }
             }
 
+            bool allOk = okCount == filled.Count;
+            var summary = $"อ่านได้ {okCount}/{filled.Count}";
+
+            Log($"  {summary} · {PollNote()}");
+
             lblPushStatus.ForeColor = allOk ? Green : Red;
-            lblPushStatus.Text = string.Join("   ·   ", lines);
+            lblPushStatus.Text = summary + " — ดูรายละเอียดในกล่องผลการทำงาน";
         }
         finally
         {
             if (!IsDisposed) btnPushTest.Enabled = true;
         }
+    }
+
+    /// <summary>
+    /// สรุปว่าตกลงแล้วเครื่องนี้จะอ่านปุ่มกดเองหรือเปล่า
+    ///
+    /// <para>
+    /// อ่านค่าทดสอบได้ไม่ได้แปลว่าระบบจะทำงาน ต้องติ๊กเปิดใช้งานและกด Save ด้วย
+    /// (<c>PushButtonWatcher.Start</c> เช็ค <c>IsReady</c> ซึ่งรวมค่าติ๊กนี้ไว้)
+    /// คนตั้งค่ามักลืมข้อนี้แล้วงงว่าทำไมกดปุ่มหน้างานแล้วไม่มีอะไรเกิดขึ้น
+    /// </para>
+    /// <para>
+    /// บอกด้วยว่าเครื่องนี้เฝ้าของสถานีไหน เพราะช่องมีสามช่องแต่เฝ้าช่องเดียว
+    /// </para>
+    /// </summary>
+    private string PollNote()
+    {
+        if (!chkPushEnabled.Checked)
+            return "ยังไม่ติ๊กเปิดใช้งาน เครื่องนี้จะยังไม่อ่านเอง";
+
+        int station = StationService.Current;
+        var mine = station switch
+        {
+            1 => txtPushAddrSt1.Text,
+            2 => txtPushAddrSt2.Text,
+            _ => txtPushAddrSt3.Text,
+        };
+        mine = mine.Trim().ToUpperInvariant();
+
+        if (mine.Length == 0)
+            return $"เครื่องนี้เป็น ST{station} แต่ยังไม่ได้กรอก address ของ ST{station}";
+
+        var ms = int.TryParse(txtPushPollMs.Text.Trim(), out int v) ? v : _push.PollMs;
+        return $"เครื่องนี้เป็น ST{station} อ่าน {mine} ทุก {ms} ms";
     }
 
     /// <summary>
@@ -334,6 +375,11 @@ public partial class ClampSettingUserControl : UserControl
         txtPushAddrSt1.Text = _push.AddressSt1;
         txtPushAddrSt2.Text = _push.AddressSt2;
         txtPushAddrSt3.Text = _push.AddressSt3;
+
+        // บอกทันทีว่าหลังบันทึกแล้วตกลงเครื่องนี้จะอ่านปุ่มกดเองหรือเปล่า
+        // ไม่ต้องให้เดาเอาจากติ๊กถูกในช่อง
+        Log($"บันทึกแล้ว · {PollNote()}");
+
         ResetColors();
         _ = CheckStatusAsync();
 
