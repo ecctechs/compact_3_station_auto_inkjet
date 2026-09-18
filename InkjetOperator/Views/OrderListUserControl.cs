@@ -834,6 +834,12 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
+        // สรุปให้ดูก่อนว่าจะส่งอะไรเข้าเครื่องไหนบ้าง แล้วค่อยลงมือ
+        //
+        // ถามก่อนจอง ไม่ใช่หลังจอง — กดยกเลิกแล้วต้องไม่มีอะไรค้างอยู่ในคิวเลย
+        if (!await ConfirmStartAsync(jobId, resolved, plan)) return;
+        if (IsDisposed) return;
+
         // จองทุกเครื่องที่แผนของงานนี้ต้องใช้ ในคราวเดียว
         //
         // จองก่อนส่งเสมอ เพราะการจองคือสิ่งที่บอกว่างานนี้มีสิทธิ์ในเครื่องไหนบ้าง
@@ -860,6 +866,112 @@ public partial class OrderListUserControl : UserControl
 
         await SendQueuedForJobAsync(jobId, resolved, $"เริ่มงาน {JobName(jobId)}");
     }
+
+    /// <summary>
+    /// สรุปสิ่งที่จะถูกส่งเข้าเครื่อง แล้วรอคนยืนยัน — false = กดยกเลิก ไม่ต้องทำต่อ
+    ///
+    /// <para>
+    /// บอกด้วยว่าเครื่องไหนว่างและเครื่องไหนต้องเข้าคิวรอ เพราะกดเริ่มงานหนึ่งครั้ง
+    /// อาจได้ผลต่างกันในแต่ละเครื่อง คนกดจะได้รู้ตั้งแต่ก่อนกดว่าอะไรจะเข้าเดี๋ยวนี้
+    /// และอะไรต้องรอคนกดปุ่มหน้างานก่อน
+    /// </para>
+    /// <para>
+    /// อ่านคิวก่อนจอง แถวที่เห็นตอนนี้จึงเป็นของงานใบอื่นล้วน ๆ ไม่ใช่ของใบที่กำลังกด
+    /// </para>
+    /// </summary>
+    private async Task<bool> ConfirmStartAsync(int jobId, ResolvedJobResponse resolved, MarkingPlan plan)
+    {
+        var (rows, _) = await _api!.GetMachineQueueAsync();
+        if (IsDisposed) return false;
+
+        return Confirm.Ask(this, "ยืนยันเริ่มงาน",
+            BuildStartPreview(jobId, resolved, plan, rows));
+    }
+
+    /// <summary>ข้อความสรุปที่โชว์ในกล่องยืนยัน — แยกไว้ให้ทดสอบข้อความได้โดยไม่ต้องเปิดกล่อง</summary>
+    private string BuildStartPreview(
+        int jobId, ResolvedJobResponse resolved, MarkingPlan plan, List<MachineQueueRow> rows)
+    {
+        var body = new List<string>
+        {
+            $"{JobName(jobId)} — marking {Method(resolved.PlanRouting?.MarkingMethod)}",
+            "",
+        };
+
+        foreach (var step in plan.Steps)
+        {
+            int station = JobStationService.StationOf(step) ?? 0;
+            var holder = rows.FirstOrDefault(r => r.Machine == step && r.State == "active");
+
+            var state = holder == null
+                ? "ว่าง · ส่งเดี๋ยวนี้"
+                : $"ไม่ว่าง ({JobName(holder.PrintJobsId)} ค้างอยู่) · เข้าคิวรอปุ่มกดหน้างาน";
+
+            body.Add($"[ {step} · ST{station} ]  {state}");
+            body.AddRange(StepPreviewLines(step, resolved).Select(line => "      " + line));
+            body.Add("");
+        }
+
+        return string.Join(Environment.NewLine, body).TrimEnd();
+    }
+
+    /// <summary>ข้อมูลที่จะถูกส่งเข้าเครื่องของขั้นตอนหนึ่ง เขียนให้อ่านจากที่ไกล ๆ ได้</summary>
+    private static List<string> StepPreviewLines(string step, ResolvedJobResponse resolved)
+    {
+        var lines = new List<string>();
+
+        if (string.Equals(step, "MK", StringComparison.OrdinalIgnoreCase))
+        {
+            foreach (var (nameKey, fallback, ordinal) in MkHeads)
+            {
+                var head = CustomSettingsManager.Read(nameKey, fallback);
+                var config = resolved.Pattern?.InkjetConfigs
+                    .FirstOrDefault(c => c.Ordinal == ordinal);
+
+                // เกณฑ์เดียวกับตอนส่งจริง หัวที่งานนี้ไม่ได้ใช้จะถูกสั่งหยุด ไม่ใช่ส่งงานเปล่า
+                bool used = config != null
+                    && (config.ProgramNumber is > 0 || !string.IsNullOrWhiteSpace(config.ProgramName));
+
+                lines.Add(used
+                    ? $"{head}: {OrDash(config!.ProgramName)}  (No. {OrDash(config.ProgramNumber?.ToString())})"
+                    : $"{head}: ไม่ได้ใช้ — จะสั่งหยุดเครื่อง");
+            }
+
+            return lines;
+        }
+
+        int uvNumber = string.Equals(step, "UV1", StringComparison.OrdinalIgnoreCase) ? 1 : 2;
+        var uvName = UvSettingsManager.Read(
+            uvNumber == 1 ? "UV1_NAME" : "UV2_NAME", $"UV-00{uvNumber}");
+
+        var uv = resolved.UvJobData?.FirstOrDefault(r =>
+            string.Equals(r.Machine, step, StringComparison.OrdinalIgnoreCase));
+
+        if (uv == null)
+        {
+            lines.Add($"{uvName}: ยังไม่มีข้อมูลของงานนี้");
+            return lines;
+        }
+
+        lines.Add($"{uvName}: โปรแกรม {OrDash(uv.ProgramName)}");
+        lines.Add($"Lot: {OrDash(uv.Lot)}      Name: {OrDash(uv.ErpMfg)}");
+
+        // รุ่นย่อยของโปรแกรมยังไม่รู้ตอนนี้ กล่องให้เลือกจะเด้งตอนส่งจริง
+        lines.Add("(ถ้ามีรุ่นย่อยให้เลือก จะถามอีกครั้งตอนส่ง)");
+
+        return lines;
+    }
+
+    /// <summary>ช่องว่างให้ขึ้นขีดแทน จะได้ไม่เห็นเป็นบรรทัดแหว่ง</summary>
+    private static string OrDash(string? text) =>
+        string.IsNullOrWhiteSpace(text) ? Dash : text.Trim();
+
+    /// <summary>หัวพ่นของ MK ทั้งสองตัว — คีย์ชื่อ ชื่อสำรอง และลำดับใน pattern</summary>
+    private static readonly (string NameKey, string Fallback, int Ordinal)[] MkHeads =
+    [
+        ("MK058_NAME", "MK-058", 1),
+        ("MK059_NAME", "MK-059", 2),
+    ];
 
     /// <summary>
     /// แปลงลำดับขั้นของแผนเป็นรายการจองเครื่อง
