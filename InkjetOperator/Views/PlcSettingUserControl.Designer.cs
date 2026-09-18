@@ -162,6 +162,7 @@ partial class PlcSettingUserControl
         txtPlc001Ip.Dock = System.Windows.Forms.DockStyle.Fill;
         txtPlc001Ip.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtPlc001Ip.Name = "txtPlc001Ip";
+        txtPlc001Ip.Placeholder = "192.168.1.1";
         tlpConn.SetColumnSpan(txtPlc001Ip, 3);
         txtPlc001Ip.TabIndex = 4;
         //
