@@ -1837,12 +1837,13 @@ partial class OrderDetailUserControl
         // txtUv1Program
         //
         txtUv1Program.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtUv1Program.BackColor = System.Drawing.Color.White;
-        txtUv1Program.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtUv1Program.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtUv1Program.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
         txtUv1Program.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtUv1Program.Location = new System.Drawing.Point(173, 6);
         txtUv1Program.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
         txtUv1Program.Name = "txtUv1Program";
+        txtUv1Program.ReadOnly = true;
         txtUv1Program.Radius = 8;
         txtUv1Program.Size = new System.Drawing.Size(520, 42);
         txtUv1Program.TabIndex = 2;
@@ -2111,12 +2112,13 @@ partial class OrderDetailUserControl
         // txtUv2Program
         //
         txtUv2Program.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtUv2Program.BackColor = System.Drawing.Color.White;
-        txtUv2Program.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtUv2Program.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtUv2Program.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
         txtUv2Program.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtUv2Program.Location = new System.Drawing.Point(173, 6);
         txtUv2Program.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
         txtUv2Program.Name = "txtUv2Program";
+        txtUv2Program.ReadOnly = true;
         txtUv2Program.Radius = 8;
         txtUv2Program.Size = new System.Drawing.Size(520, 42);
         txtUv2Program.TabIndex = 2;
