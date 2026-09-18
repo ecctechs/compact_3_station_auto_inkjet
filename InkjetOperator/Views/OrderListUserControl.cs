@@ -325,11 +325,17 @@ public partial class OrderListUserControl : UserControl
 
             var queue = waiting > 0 ? $"  (รออีก {waiting})" : "";
 
+            // ปุ่มกดได้ตราบใดที่ยังมีอะไรให้ขยับ — ถืออยู่ก็ปล่อย ว่างแต่มีคนรอก็ยกให้คิว
+            //
+            // ปุ่มจริงหน้าเครื่องกดได้ตลอดเวลาอยู่แล้ว และสภาพ "ว่างแต่มีงานรออยู่"
+            // เกิดได้จริง เช่นปล่อยเครื่องไปแล้วแต่การยกให้คิวถัดไปไม่สำเร็จ
+            // ถ้าปุ่มกดไม่ได้ตอนนั้น จะไม่มีทางดันคิวให้เดินต่อได้เลย
+            button.Enabled = holder != null || waiting > 0;
+
             if (holder == null)
             {
                 label.Text = $"● {machine} — ว่าง{queue}";
-                label.ForeColor = DesignTokens.SuccessText;
-                button.Enabled = false;
+                label.ForeColor = waiting > 0 ? Color.FromArgb(214, 108, 0) : DesignTokens.SuccessText;
                 continue;
             }
 
@@ -338,7 +344,6 @@ public partial class OrderListUserControl : UserControl
 
             label.Text = $"● {machine} — {JobName(holder.PrintJobsId)} · {what}{queue}";
             label.ForeColor = Color.FromArgb(214, 108, 0);
-            button.Enabled = true;
         }
     }
 
