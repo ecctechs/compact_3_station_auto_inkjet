@@ -524,23 +524,18 @@ public partial class OrderDetailUserControl : UserControl
             return null;
         }
 
-        string? Str(AntdUI.Input box)
-        {
-            var text = box.Text.Trim();
-            return text.Length == 0 || text == Dash ? null : text;
-        }
-
         var mk1 = CustomSettingsManager.Read("MK058_NAME", "MK-058");
         var mk2 = CustomSettingsManager.Read("MK059_NAME", "MK-059");
 
-        // อ่านให้ครบทุกช่องก่อน แม้เจอที่ผิดแล้ว จะได้บอกทีเดียวว่าผิดตรงไหนบ้าง
-        var v1 = (Program: Str(txtMk1Program), No: Int(txtMk1ProgramNo, $"{mk1} Program No"),
-                  W: Int(txtMk1Width, $"{mk1} Width"), H: Int(txtMk1Height, $"{mk1} Height"),
+        // ชื่อโปรแกรมกับหมายเลขโปรแกรมไม่ได้อ่านกลับ เพราะล็อกไม่ให้แก้
+        // เป็นตัวชี้ว่าจะใช้โปรแกรมไหนในเครื่อง เปลี่ยนคือพิมพ์คนละแบบทั้งใบ
+        //
+        // อ่านช่องที่เหลือให้ครบก่อน แม้เจอที่ผิดแล้ว จะได้บอกทีเดียวว่าผิดตรงไหนบ้าง
+        var v1 = (W: Int(txtMk1Width, $"{mk1} Width"), H: Int(txtMk1Height, $"{mk1} Height"),
                   Trig: Int(txtMk1Trigger, $"{mk1} Trigger Delay"),
                   Act: Dbl(txtMk1PosAct, $"{mk1} Pos Act"), Dly: Dbl(txtMk1Delay, $"{mk1} Delay"));
 
-        var v2 = (Program: Str(txtMk2Program), No: Int(txtMk2ProgramNo, $"{mk2} Program No"),
-                  W: Int(txtMk2Width, $"{mk2} Width"), H: Int(txtMk2Height, $"{mk2} Height"),
+        var v2 = (W: Int(txtMk2Width, $"{mk2} Width"), H: Int(txtMk2Height, $"{mk2} Height"),
                   Trig: Int(txtMk2Trigger, $"{mk2} Trigger Delay"),
                   Act: Dbl(txtMk2PosAct, $"{mk2} Pos Act"), Dly: Dbl(txtMk2Delay, $"{mk2} Delay"));
 
@@ -554,13 +549,11 @@ public partial class OrderDetailUserControl : UserControl
         if (errors.Count > 0) return string.Join(Environment.NewLine, errors);
 
         void ApplyMk(int ordinal,
-            (string? Program, int? No, int? W, int? H, int? Trig, double? Act, double? Dly) v)
+            (int? W, int? H, int? Trig, double? Act, double? Dly) v)
         {
             var config = _pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
             if (config != null)
             {
-                config.ProgramName = v.Program;
-                config.ProgramNumber = v.No;
                 config.Width = v.W;
                 config.Height = v.H;
                 config.TriggerDelay = v.Trig;

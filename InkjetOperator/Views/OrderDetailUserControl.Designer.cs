@@ -838,12 +838,13 @@ partial class OrderDetailUserControl
         // txtMk1Program
         //
         txtMk1Program.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk1Program.BackColor = System.Drawing.Color.White;
-        txtMk1Program.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtMk1Program.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk1Program.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
         txtMk1Program.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk1Program.Location = new System.Drawing.Point(173, 6);
         txtMk1Program.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
         txtMk1Program.Name = "txtMk1Program";
+        txtMk1Program.ReadOnly = true;
         txtMk1Program.Radius = 8;
         txtMk1Program.Size = new System.Drawing.Size(235, 42);
         txtMk1Program.TabIndex = 2;
@@ -864,12 +865,13 @@ partial class OrderDetailUserControl
         // txtMk1ProgramNo
         //
         txtMk1ProgramNo.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk1ProgramNo.BackColor = System.Drawing.Color.White;
-        txtMk1ProgramNo.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtMk1ProgramNo.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk1ProgramNo.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
         txtMk1ProgramNo.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk1ProgramNo.Location = new System.Drawing.Point(455, 6);
         txtMk1ProgramNo.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
         txtMk1ProgramNo.Name = "txtMk1ProgramNo";
+        txtMk1ProgramNo.ReadOnly = true;
         txtMk1ProgramNo.Radius = 8;
         txtMk1ProgramNo.Size = new System.Drawing.Size(80, 42);
         txtMk1ProgramNo.TabIndex = 4;
@@ -1206,12 +1208,13 @@ partial class OrderDetailUserControl
         // txtMk2Program
         //
         txtMk2Program.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk2Program.BackColor = System.Drawing.Color.White;
-        txtMk2Program.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtMk2Program.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk2Program.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
         txtMk2Program.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk2Program.Location = new System.Drawing.Point(173, 6);
         txtMk2Program.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
         txtMk2Program.Name = "txtMk2Program";
+        txtMk2Program.ReadOnly = true;
         txtMk2Program.Radius = 8;
         txtMk2Program.Size = new System.Drawing.Size(235, 42);
         txtMk2Program.TabIndex = 2;
@@ -1232,12 +1235,13 @@ partial class OrderDetailUserControl
         // txtMk2ProgramNo
         //
         txtMk2ProgramNo.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk2ProgramNo.BackColor = System.Drawing.Color.White;
-        txtMk2ProgramNo.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtMk2ProgramNo.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk2ProgramNo.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
         txtMk2ProgramNo.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk2ProgramNo.Location = new System.Drawing.Point(455, 6);
         txtMk2ProgramNo.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
         txtMk2ProgramNo.Name = "txtMk2ProgramNo";
+        txtMk2ProgramNo.ReadOnly = true;
         txtMk2ProgramNo.Radius = 8;
         txtMk2ProgramNo.Size = new System.Drawing.Size(80, 42);
         txtMk2ProgramNo.TabIndex = 4;
