@@ -11,6 +11,7 @@ require("./model/uvJobDataModel");
 require("./model/planRoutingModel");
 require("./model/lastSentJobModel");
 require("./model/iaiSettingModel");
+require("./model/machineQueueModel");
 
 const runMigrations = require("./migrations");
 
@@ -23,6 +24,7 @@ const planRoutingRoute = require("./routes/PlanRouting");
 const systemRoute = require("./routes/System");
 const plcRoute = require("./routes/Plc");
 const iaiRoute = require("./routes/Iai");
+const machineQueueRoute = require("./routes/MachineQueue");
 
 const app = express();
 app.use(bodyParser.json());
@@ -36,6 +38,7 @@ app.use(planRoutingRoute);
 app.use(systemRoute);
 app.use(plcRoute);
 app.use(iaiRoute);
+app.use(machineQueueRoute);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`server is running on port ${PORT}`));
