@@ -39,7 +39,13 @@ partial class OrderListUserControl
         dtpHistoryRange = new AntdUI.DatePickerRange();
         btnSearchDate = new AntdUI.Button();
         btnClearDate = new AntdUI.Button();
-        btnSimPush = new AntdUI.Button();
+        tlpStationBar = new System.Windows.Forms.TableLayoutPanel();
+        lblStationMk = new AntdUI.Label();
+        lblStationUv1 = new AntdUI.Label();
+        lblStationUv2 = new AntdUI.Label();
+        btnSimPushMk = new AntdUI.Button();
+        btnSimPushUv1 = new AntdUI.Button();
+        btnSimPushUv2 = new AntdUI.Button();
         tblOrders = new AntdUI.Table();
         tlpBottom = new System.Windows.Forms.TableLayoutPanel();
         pnlPreview = new AntdUI.Panel();
@@ -64,6 +70,7 @@ partial class OrderListUserControl
         pnlTableContainer.SuspendLayout();
         pnlSending.SuspendLayout();
         tlpTableInner.SuspendLayout();
+        tlpStationBar.SuspendLayout();
         flpTabs.SuspendLayout();
         tlpBottom.SuspendLayout();
         pnlPreview.SuspendLayout();
@@ -146,12 +153,14 @@ partial class OrderListUserControl
         tlpTableInner.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpTableInner.Controls.Add(flpTabs, 0, 0);
         tlpTableInner.Controls.Add(tblOrders, 0, 1);
+        tlpTableInner.Controls.Add(tlpStationBar, 0, 2);
         tlpTableInner.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpTableInner.Location = new System.Drawing.Point(2, 2);
         tlpTableInner.Name = "tlpTableInner";
-        tlpTableInner.RowCount = 2;
+        tlpTableInner.RowCount = 3;
         tlpTableInner.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpTableInner.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpTableInner.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 86F));
         tlpTableInner.Size = new System.Drawing.Size(1282, 878);
         tlpTableInner.TabIndex = 0;
         //
@@ -164,7 +173,6 @@ partial class OrderListUserControl
         flpTabs.Controls.Add(dtpHistoryRange);
         flpTabs.Controls.Add(btnSearchDate);
         flpTabs.Controls.Add(btnClearDate);
-        flpTabs.Controls.Add(btnSimPush);
         flpTabs.Dock = System.Windows.Forms.DockStyle.Fill;
         flpTabs.Location = new System.Drawing.Point(0, 0);
         flpTabs.Margin = new System.Windows.Forms.Padding(0);
@@ -259,20 +267,104 @@ partial class OrderListUserControl
         btnClearDate.Type = AntdUI.TTypeMini.Default;
         btnClearDate.Visible = false;
         //
-        // btnSimPush - จำลองปุ่มกดหน้างาน เห็นเฉพาะโหมดทดสอบ (ซ่อนไว้เป็นค่าตั้งต้น)
+        // tlpStationBar - แถบบอกว่าแต่ละสถานีถืองานอะไรอยู่ พร้อมปุ่มจำลองปุ่มกดหน้างาน
+        //   โผล่เฉพาะโหมดทดสอบ โหมดใช้งานจริงถูกยุบความสูงเหลือ 0 จากโค้ด
         //
-        btnSimPush.BorderWidth = 2F;
-        btnSimPush.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnSimPush.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
-        btnSimPush.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnSimPush.Margin = new System.Windows.Forms.Padding(20, 3, 3, 3);
-        btnSimPush.Name = "btnSimPush";
-        btnSimPush.Radius = 6;
-        btnSimPush.Size = new System.Drawing.Size(250, 45);
-        btnSimPush.TabIndex = 6;
-        btnSimPush.Text = "จำลองปุ่มกดหน้างาน";
-        btnSimPush.Type = AntdUI.TTypeMini.Default;
-        btnSimPush.Visible = false;
+        tlpStationBar.BackColor = System.Drawing.Color.White;
+        tlpStationBar.ColumnCount = 3;
+        tlpStationBar.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33.34F));
+        tlpStationBar.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33.33F));
+        tlpStationBar.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33.33F));
+        tlpStationBar.Controls.Add(lblStationMk, 0, 0);
+        tlpStationBar.Controls.Add(lblStationUv1, 1, 0);
+        tlpStationBar.Controls.Add(lblStationUv2, 2, 0);
+        tlpStationBar.Controls.Add(btnSimPushMk, 0, 1);
+        tlpStationBar.Controls.Add(btnSimPushUv1, 1, 1);
+        tlpStationBar.Controls.Add(btnSimPushUv2, 2, 1);
+        tlpStationBar.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpStationBar.Margin = new System.Windows.Forms.Padding(0, 4, 0, 0);
+        tlpStationBar.Name = "tlpStationBar";
+        tlpStationBar.RowCount = 2;
+        tlpStationBar.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
+        tlpStationBar.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpStationBar.Size = new System.Drawing.Size(1282, 82);
+        tlpStationBar.TabIndex = 2;
+        tlpStationBar.Visible = false;
+        //
+        // lblStationMk
+        //
+        lblStationMk.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblStationMk.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        lblStationMk.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblStationMk.Name = "lblStationMk";
+        lblStationMk.Size = new System.Drawing.Size(421, 32);
+        lblStationMk.TabIndex = 0;
+        lblStationMk.Text = "MK";
+        //
+        // lblStationUv1
+        //
+        lblStationUv1.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblStationUv1.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        lblStationUv1.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblStationUv1.Name = "lblStationUv1";
+        lblStationUv1.Size = new System.Drawing.Size(421, 32);
+        lblStationUv1.TabIndex = 1;
+        lblStationUv1.Text = "UV1";
+        //
+        // lblStationUv2
+        //
+        lblStationUv2.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblStationUv2.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        lblStationUv2.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblStationUv2.Name = "lblStationUv2";
+        lblStationUv2.Size = new System.Drawing.Size(421, 32);
+        lblStationUv2.TabIndex = 2;
+        lblStationUv2.Text = "UV2";
+        //
+        // btnSimPushMk
+        //
+        btnSimPushMk.BorderWidth = 2F;
+        btnSimPushMk.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnSimPushMk.Dock = System.Windows.Forms.DockStyle.Fill;
+        btnSimPushMk.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
+        btnSimPushMk.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnSimPushMk.Margin = new System.Windows.Forms.Padding(3, 0, 3, 4);
+        btnSimPushMk.Name = "btnSimPushMk";
+        btnSimPushMk.Radius = 6;
+        btnSimPushMk.Size = new System.Drawing.Size(421, 46);
+        btnSimPushMk.TabIndex = 3;
+        btnSimPushMk.Text = "จำลองกดปุ่ม MK";
+        btnSimPushMk.Type = AntdUI.TTypeMini.Default;
+        //
+        // btnSimPushUv1
+        //
+        btnSimPushUv1.BorderWidth = 2F;
+        btnSimPushUv1.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnSimPushUv1.Dock = System.Windows.Forms.DockStyle.Fill;
+        btnSimPushUv1.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
+        btnSimPushUv1.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnSimPushUv1.Margin = new System.Windows.Forms.Padding(3, 0, 3, 4);
+        btnSimPushUv1.Name = "btnSimPushUv1";
+        btnSimPushUv1.Radius = 6;
+        btnSimPushUv1.Size = new System.Drawing.Size(421, 46);
+        btnSimPushUv1.TabIndex = 4;
+        btnSimPushUv1.Text = "จำลองกดปุ่ม UV1";
+        btnSimPushUv1.Type = AntdUI.TTypeMini.Default;
+        //
+        // btnSimPushUv2
+        //
+        btnSimPushUv2.BorderWidth = 2F;
+        btnSimPushUv2.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnSimPushUv2.Dock = System.Windows.Forms.DockStyle.Fill;
+        btnSimPushUv2.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
+        btnSimPushUv2.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnSimPushUv2.Margin = new System.Windows.Forms.Padding(3, 0, 3, 4);
+        btnSimPushUv2.Name = "btnSimPushUv2";
+        btnSimPushUv2.Radius = 6;
+        btnSimPushUv2.Size = new System.Drawing.Size(421, 46);
+        btnSimPushUv2.TabIndex = 5;
+        btnSimPushUv2.Text = "จำลองกดปุ่ม UV2";
+        btnSimPushUv2.Type = AntdUI.TTypeMini.Default;
         //
         // tblOrders
         //
@@ -561,6 +653,7 @@ partial class OrderListUserControl
         tlpOrderListRoot.PerformLayout();
         pnlSending.ResumeLayout(false);
         pnlTableContainer.ResumeLayout(false);
+        tlpStationBar.ResumeLayout(false);
         tlpTableInner.ResumeLayout(false);
         flpTabs.ResumeLayout(false);
         tlpBottom.ResumeLayout(false);
@@ -588,7 +681,13 @@ partial class OrderListUserControl
     private AntdUI.DatePickerRange dtpHistoryRange;
     private AntdUI.Button btnSearchDate;
     private AntdUI.Button btnClearDate;
-    private AntdUI.Button btnSimPush;
+    private System.Windows.Forms.TableLayoutPanel tlpStationBar;
+    private AntdUI.Label lblStationMk;
+    private AntdUI.Label lblStationUv1;
+    private AntdUI.Label lblStationUv2;
+    private AntdUI.Button btnSimPushMk;
+    private AntdUI.Button btnSimPushUv1;
+    private AntdUI.Button btnSimPushUv2;
     private AntdUI.Table tblOrders;
     private System.Windows.Forms.TableLayoutPanel tlpBottom;
     private AntdUI.Panel pnlPreview;

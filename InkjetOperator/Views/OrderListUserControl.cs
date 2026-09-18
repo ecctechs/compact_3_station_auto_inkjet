@@ -218,9 +218,17 @@ public partial class OrderListUserControl : UserControl
 
         _pushButton.Pressed += async (_, _) => await OnPushButtonPressedAsync();
 
-        // ปุ่มจำลองสำหรับโหมดทดสอบ — designer ซ่อนไว้ ที่นี่คือที่เดียวที่เปิดให้เห็น
-        btnSimPush.Visible = StationService.IsDevMode;
-        btnSimPush.Click += async (_, _) => await SimulatePushButtonAsync();
+        // แถบสถานีกับปุ่มจำลอง — designer ซ่อนไว้ ที่นี่คือที่เดียวที่เปิดให้เห็น
+        //
+        // โหมดใช้งานจริงต้องยุบความสูงของแถวด้วย ไม่ใช่แค่ซ่อนแผง ไม่งั้นตารางจะเสีย
+        // พื้นที่ไป 86px เปล่า ๆ ทั้งที่ไม่มีอะไรแสดง
+        bool dev = StationService.IsDevMode;
+        tlpStationBar.Visible = dev;
+        tlpTableInner.RowStyles[2].Height = dev ? 86F : 0F;
+
+        btnSimPushMk.Click += async (_, _) => await OnPushButtonPressedAsync("MK");
+        btnSimPushUv1.Click += async (_, _) => await OnPushButtonPressedAsync("UV1");
+        btnSimPushUv2.Click += async (_, _) => await OnPushButtonPressedAsync("UV2");
 
         // ขาดการติดต่อไม่ใช่เรื่องต้องกดปิด — ใช้ข้อความลอย ไม่ใช่กล่อง modal
         // ตัวเฝ้าแจ้งครั้งเดียวตอนขาด และอีกครั้งตอนกลับมา ไม่ได้แจ้งทุกรอบ
@@ -295,50 +303,51 @@ public partial class OrderListUserControl : UserControl
     }
 
     /// <summary>
-    /// จำลองการกดปุ่มหน้างาน — โหมดทดสอบเท่านั้น
+    /// อัปเดตแถบบอกว่าแต่ละสถานีถืองานอะไรอยู่ — โหมดทดสอบเท่านั้น
     ///
     /// <para>
-    /// ให้เลือกเครื่องเองก่อน เพราะเครื่องทดสอบเครื่องเดียวต้องลองแทนได้ทั้งสามปุ่ม
-    /// โดยเฉพาะปุ่มของ UV1 ที่ ST2 ซึ่งไม่มีคอมเฝ้าอยู่จริง จึงไม่มีทางกดได้เลย
-    /// ถ้าไม่มีปุ่มนี้
-    /// </para>
-    /// <para>
-    /// จากตรงนี้ไปใช้ทางเดียวกับปุ่มจริงทุกประการ ไม่ได้เขียนทางลัดของตัวเอง —
-    /// ที่จำลองจึงเป็น "การกด" เท่านั้น ส่วนที่เกิดขึ้นหลังจากนั้นคือของจริง
+    /// "ถืออยู่" อ่านจากคิวที่ backend ไม่ได้ถามเครื่อง เพราะโปรแกรมไม่มีทางรู้ว่า
+    /// เครื่องพิมพ์เสร็จหรือยัง สิ่งเดียวที่บอกว่าเครื่องว่างคือคนกดปุ่มหน้างาน
+    /// แถบนี้จึงแสดงสิ่งที่คิวเชื่ออยู่ ซึ่งเป็นตัวที่ตัดสินว่างานถัดไปเข้าได้ไหม
     /// </para>
     /// </summary>
-    private async Task SimulatePushButtonAsync()
+    private async Task RefreshStationBarAsync()
     {
-        if (_api == null || _pushHandling || IsDisposed) return;
+        if (_api == null || !tlpStationBar.Visible || IsDisposed) return;
 
-        var (rows, _) = await _api.GetMachineQueueAsync();
-        if (IsDisposed) return;
+        var (rows, error) = await _api.GetMachineQueueAsync();
+        if (error != null || IsDisposed) return;
 
-        // บอกไปด้วยว่าตอนนี้แต่ละเครื่องถืองานอะไรอยู่ จะได้รู้ว่ากดแล้วปล่อยอะไร
-        var options = new[] { "MK", "UV1", "UV2" }
-            .Select(machine =>
+        foreach (var (machine, label, button) in StationSlots())
+        {
+            var holder = rows.FirstOrDefault(r => r.Machine == machine && r.State == "active");
+            int waiting = rows.Count(r => r.Machine == machine && r.State == "pending");
+
+            var queue = waiting > 0 ? $"  (รออีก {waiting})" : "";
+
+            if (holder == null)
             {
-                var holder = rows.FirstOrDefault(r => r.Machine == machine && r.State == "active");
-                var waiting = rows.Count(r => r.Machine == machine && r.State == "pending");
+                label.Text = $"● {machine} — ว่าง{queue}";
+                label.ForeColor = DesignTokens.SuccessText;
+                button.Enabled = false;
+                continue;
+            }
 
-                var status = holder == null
-                    ? "ว่างอยู่ ไม่มีอะไรให้ปล่อย"
-                    : $"ถือ {JobName(holder.PrintJobsId)} อยู่";
+            // ถึงคิวแล้วแต่ยังไม่ได้ส่ง กับส่งเข้าเครื่องไปแล้ว เป็นคนละสภาพกัน
+            var what = holder.SentAt == null ? "รอ ST1 ส่ง" : "กำลังพิมพ์";
 
-                if (waiting > 0) status += $" · รอคิวอีก {waiting}";
+            label.Text = $"● {machine} — {JobName(holder.PrintJobsId)} · {what}{queue}";
+            label.ForeColor = Color.FromArgb(214, 108, 0);
+            button.Enabled = true;
+        }
+    }
 
-                return new MarkingRefOption(machine, $"{machine}  —  {status}", []);
-            })
-            .ToList();
-
-        var picked = MarkingRefPickerDialog.Pick(this,
-            "จำลองปุ่มกดหน้างาน",
-            "เลือกเครื่องที่จะกดปุ่มปล่อย — ผลที่ได้เหมือนคนกดปุ่มจริงที่หน้าเครื่องนั้น",
-            options);
-
-        if (picked == null || IsDisposed) return;
-
-        await OnPushButtonPressedAsync(picked);
+    /// <summary>สามช่องของแถบสถานี — ชื่อเครื่อง ป้ายสถานะ และปุ่มจำลองของเครื่องนั้น</summary>
+    private IEnumerable<(string Machine, AntdUI.Label Label, AntdUI.Button Button)> StationSlots()
+    {
+        yield return ("MK", lblStationMk, btnSimPushMk);
+        yield return ("UV1", lblStationUv1, btnSimPushUv1);
+        yield return ("UV2", lblStationUv2, btnSimPushUv2);
     }
 
     private static bool SentAlready(ResolvedJobResponse resolved, string step) =>
@@ -393,6 +402,9 @@ public partial class OrderListUserControl : UserControl
             if (IsDisposed) return;
 
             await ProcessMachineQueueAsync();
+            if (IsDisposed) return;
+
+            await RefreshStationBarAsync();
             if (IsDisposed) return;
 
             await ShowRemoteErrorsAsync();
