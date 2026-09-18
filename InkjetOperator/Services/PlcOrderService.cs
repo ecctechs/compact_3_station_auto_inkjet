@@ -113,7 +113,6 @@ public static class PlcOrderService
     private static void AddServo(
         List<PlcField> fields, List<PlcRegisterMap> map, string machine, ServoConfigDto? servo)
     {
-        Add(fields, map, $"{machine} Position", $"{machine} Position", 0);
         Add(fields, map, $"{machine} PostAct", $"{machine} Servo Post Act.", Whole(servo?.PostAct));
         Add(fields, map, $"{machine} Delay", $"{machine} Delay (mm.)", Whole(servo?.Delay));
     }
