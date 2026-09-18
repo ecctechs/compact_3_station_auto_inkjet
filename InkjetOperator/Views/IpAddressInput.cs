@@ -41,6 +41,30 @@ public partial class IpAddressInput : UserControl
         }
     }
 
+    private string _placeholder = "";
+
+    /// <summary>
+    /// ตัวอย่าง IP ที่ขึ้นจาง ๆ ตอนยังไม่ได้กรอก เช่น "10.10.100.100"
+    ///
+    /// รับมาเป็นสตริงเต็มแล้วแยกจุดไปใส่ทีละช่องให้เอง หน้าที่ใช้จะได้เขียนเหมือน
+    /// ช่องกรอกธรรมดาช่องเดียว ไม่ต้องรู้ว่าข้างในเป็นสี่ช่อง
+    /// </summary>
+    [Browsable(true)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    [DefaultValue("")]
+    public string Placeholder
+    {
+        get => _placeholder;
+        set
+        {
+            _placeholder = value ?? "";
+
+            var parts = _placeholder.Split('.');
+            for (int i = 0; i < _octets.Length; i++)
+                _octets[i].PlaceholderText = i < parts.Length ? parts[i].Trim() : "";
+        }
+    }
+
     /// <summary>ค่า IP เต็ม เช่น "192.168.1.10" — ว่างทุกช่องจะได้สตริงว่าง</summary>
     [Browsable(true)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]

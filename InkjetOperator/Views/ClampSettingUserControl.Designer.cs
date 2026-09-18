@@ -54,8 +54,12 @@ partial class ClampSettingUserControl
 
         grpPushButton = new System.Windows.Forms.GroupBox();
         tlpPush = new System.Windows.Forms.TableLayoutPanel();
-        lblPushAddrLabel = new System.Windows.Forms.Label();
-        txtPushAddress = new AntdUI.Input();
+        lblPushAddrSt1 = new System.Windows.Forms.Label();
+        txtPushAddrSt1 = new AntdUI.Input();
+        lblPushAddrSt2 = new System.Windows.Forms.Label();
+        txtPushAddrSt2 = new AntdUI.Input();
+        lblPushAddrSt3 = new System.Windows.Forms.Label();
+        txtPushAddrSt3 = new AntdUI.Input();
         lblPushPollLabel = new System.Windows.Forms.Label();
         txtPushPollMs = new AntdUI.Input();
         flpPushActions = new System.Windows.Forms.FlowLayoutPanel();
@@ -108,7 +112,7 @@ partial class ClampSettingUserControl
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 325F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 85F));
-        tlpRoot.Size = new System.Drawing.Size(1350, 1650);
+        tlpRoot.Size = new System.Drawing.Size(1350, 1775);
         tlpRoot.TabIndex = 0;
         //
         // grpConnection
@@ -227,6 +231,7 @@ partial class ClampSettingUserControl
         txtIp.Dock = System.Windows.Forms.DockStyle.Fill;
         txtIp.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtIp.Name = "txtIp";
+        txtIp.Placeholder = "10.10.100.100";
         txtIp.TabIndex = 1;
         //
         // lblPortLabel
@@ -559,39 +564,89 @@ partial class ClampSettingUserControl
         tlpPush.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
         tlpPush.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 188F));
         tlpPush.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-        tlpPush.Controls.Add(lblPushAddrLabel, 0, 0);
-        tlpPush.Controls.Add(txtPushAddress, 1, 0);
+        tlpPush.Controls.Add(lblPushAddrSt1, 0, 0);
+        tlpPush.Controls.Add(txtPushAddrSt1, 1, 0);
         tlpPush.Controls.Add(lblPushPollLabel, 2, 0);
         tlpPush.Controls.Add(txtPushPollMs, 3, 0);
-        tlpPush.Controls.Add(flpPushActions, 0, 1);
+        tlpPush.Controls.Add(lblPushAddrSt2, 0, 1);
+        tlpPush.Controls.Add(txtPushAddrSt2, 1, 1);
+        tlpPush.Controls.Add(lblPushAddrSt3, 0, 2);
+        tlpPush.Controls.Add(txtPushAddrSt3, 1, 2);
+        tlpPush.Controls.Add(flpPushActions, 0, 3);
         tlpPush.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpPush.Name = "tlpPush";
-        tlpPush.RowCount = 2;
+        tlpPush.RowCount = 4;
+        tlpPush.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 58F));
+        tlpPush.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 58F));
         tlpPush.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 58F));
         tlpPush.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 72F));
         tlpPush.TabIndex = 0;
         //
-        // lblPushAddrLabel
+        // lblPushAddrSt1
         //
-        lblPushAddrLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblPushAddrLabel.Font = new System.Drawing.Font("Segoe UI", 14F);
-        lblPushAddrLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-        lblPushAddrLabel.Name = "lblPushAddrLabel";
-        lblPushAddrLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
-        lblPushAddrLabel.TabIndex = 0;
-        lblPushAddrLabel.Text = "Address ปุ่มกด:";
-        lblPushAddrLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        lblPushAddrSt1.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblPushAddrSt1.Font = new System.Drawing.Font("Segoe UI", 14F);
+        lblPushAddrSt1.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblPushAddrSt1.Name = "lblPushAddrSt1";
+        lblPushAddrSt1.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
+        lblPushAddrSt1.TabIndex = 0;
+        lblPushAddrSt1.Text = "Address ปุ่มกด ST1:";
+        lblPushAddrSt1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
-        // txtPushAddress
+        // txtPushAddrSt1
         //
-        txtPushAddress.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtPushAddress.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtPushAddress.Font = new System.Drawing.Font("Segoe UI", 12.5F);
-        txtPushAddress.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
-        txtPushAddress.Name = "txtPushAddress";
-        txtPushAddress.PlaceholderText = "เช่น M800";
-        txtPushAddress.Radius = 4;
-        txtPushAddress.TabIndex = 1;
+        txtPushAddrSt1.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtPushAddrSt1.Dock = System.Windows.Forms.DockStyle.Fill;
+        txtPushAddrSt1.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        txtPushAddrSt1.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
+        txtPushAddrSt1.Name = "txtPushAddrSt1";
+        txtPushAddrSt1.PlaceholderText = "เช่น M800";
+        txtPushAddrSt1.Radius = 4;
+        txtPushAddrSt1.TabIndex = 1;
+        //
+        // lblPushAddrSt2
+        //
+        lblPushAddrSt2.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblPushAddrSt2.Font = new System.Drawing.Font("Segoe UI", 14F);
+        lblPushAddrSt2.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblPushAddrSt2.Name = "lblPushAddrSt2";
+        lblPushAddrSt2.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
+        lblPushAddrSt2.TabIndex = 4;
+        lblPushAddrSt2.Text = "Address ปุ่มกด ST2:";
+        lblPushAddrSt2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        //
+        // txtPushAddrSt2
+        //
+        txtPushAddrSt2.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtPushAddrSt2.Dock = System.Windows.Forms.DockStyle.Fill;
+        txtPushAddrSt2.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        txtPushAddrSt2.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
+        txtPushAddrSt2.Name = "txtPushAddrSt2";
+        txtPushAddrSt2.PlaceholderText = "เช่น M801";
+        txtPushAddrSt2.Radius = 4;
+        txtPushAddrSt2.TabIndex = 5;
+        //
+        // lblPushAddrSt3
+        //
+        lblPushAddrSt3.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblPushAddrSt3.Font = new System.Drawing.Font("Segoe UI", 14F);
+        lblPushAddrSt3.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblPushAddrSt3.Name = "lblPushAddrSt3";
+        lblPushAddrSt3.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
+        lblPushAddrSt3.TabIndex = 6;
+        lblPushAddrSt3.Text = "Address ปุ่มกด ST3:";
+        lblPushAddrSt3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        //
+        // txtPushAddrSt3
+        //
+        txtPushAddrSt3.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtPushAddrSt3.Dock = System.Windows.Forms.DockStyle.Fill;
+        txtPushAddrSt3.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        txtPushAddrSt3.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
+        txtPushAddrSt3.Name = "txtPushAddrSt3";
+        txtPushAddrSt3.PlaceholderText = "เช่น M802";
+        txtPushAddrSt3.Radius = 4;
+        txtPushAddrSt3.TabIndex = 7;
         //
         // lblPushPollLabel
         //
@@ -734,7 +789,7 @@ partial class ClampSettingUserControl
         BackColor = System.Drawing.Color.White;
         Controls.Add(tlpRoot);
         Name = "ClampSettingUserControl";
-        Size = new System.Drawing.Size(1350, 1650);
+        Size = new System.Drawing.Size(1350, 1775);
 
         tlpRoot.ResumeLayout(false);
         grpConnection.ResumeLayout(false);
@@ -802,8 +857,12 @@ partial class ClampSettingUserControl
 
     private System.Windows.Forms.GroupBox grpPushButton;
     private System.Windows.Forms.TableLayoutPanel tlpPush;
-    private System.Windows.Forms.Label lblPushAddrLabel;
-    private AntdUI.Input txtPushAddress;
+    private System.Windows.Forms.Label lblPushAddrSt1;
+    private System.Windows.Forms.Label lblPushAddrSt2;
+    private System.Windows.Forms.Label lblPushAddrSt3;
+    private AntdUI.Input txtPushAddrSt1;
+    private AntdUI.Input txtPushAddrSt2;
+    private AntdUI.Input txtPushAddrSt3;
     private System.Windows.Forms.Label lblPushPollLabel;
     private AntdUI.Input txtPushPollMs;
     private System.Windows.Forms.FlowLayoutPanel flpPushActions;

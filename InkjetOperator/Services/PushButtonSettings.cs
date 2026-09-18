@@ -22,8 +22,30 @@ public sealed class PushButtonSettings
 
     public bool Enabled { get; set; }
 
-    /// <summary>ที่อยู่บิตที่ PLC ใช้บอกว่ามีการกดปุ่ม เช่น M800</summary>
-    public string Address { get; set; } = "";
+    /// <summary>ที่อยู่บิตของปุ่มกดที่ ST1 เช่น M800</summary>
+    public string AddressSt1 { get; set; } = "";
+
+    /// <summary>ที่อยู่บิตของปุ่มกดที่ ST2</summary>
+    public string AddressSt2 { get; set; } = "";
+
+    /// <summary>ที่อยู่บิตของปุ่มกดที่ ST3</summary>
+    public string AddressSt3 { get; set; } = "";
+
+    /// <summary>
+    /// ที่อยู่ของสถานีที่เครื่องนี้เป็น — ตัวเฝ้าปุ่มกดใช้ตัวนี้ตัวเดียว
+    ///
+    /// แต่ละเครื่องสนใจแค่ปุ่มของสถานีตัวเอง ที่ต้องเก็บครบสามตัวเพราะตั้งค่า
+    /// ทีเดียวแล้วก๊อป Setting.config ไปใช้ได้ทุกเครื่องโดยไม่ต้องแก้ทีละที่
+    /// </summary>
+    public string Address => AddressFor(StationService.Current);
+
+    /// <summary>ที่อยู่ของสถานีที่ระบุ — 1, 2 หรือ 3</summary>
+    public string AddressFor(int station) => station switch
+    {
+        1 => AddressSt1.Trim(),
+        2 => AddressSt2.Trim(),
+        _ => AddressSt3.Trim(),
+    };
 
     /// <summary>ทุกกี่มิลลิวินาทีจะอ่านบิตหนึ่งครั้ง</summary>
     public int PollMs { get; set; } = DefaultPollMs;
@@ -35,19 +57,29 @@ public sealed class PushButtonSettings
         int.TryParse(CustomSettingsManager.Read("CLAMP_PLC_PORT", "5012"), out int p) ? p : 5012;
 
     /// <summary>พร้อมใช้จริงไหม — เปิดไว้ กรอกที่อยู่แล้ว และรู้ว่าจะไปคุยกับ PLC ตัวไหน</summary>
-    public bool IsReady => Enabled && Address.Trim().Length > 0 && Ip.Length > 0;
+    public bool IsReady => Enabled && Address.Length > 0 && Ip.Length > 0;
 
     public static PushButtonSettings Load() => new()
     {
         Enabled = CustomSettingsManager.Read("PUSHBTN_ENABLED", "0").Trim() == "1",
-        Address = CustomSettingsManager.Read("PUSHBTN_ADDRESS", "").Trim(),
+        AddressSt1 = CustomSettingsManager.Read("PUSHBTN_ADDRESS_ST1", "").Trim(),
+        AddressSt2 = CustomSettingsManager.Read("PUSHBTN_ADDRESS_ST2", "").Trim(),
+
+        // ค่าที่ตั้งไว้ก่อนแยกเป็นสามช่องคือปุ่มของ ST3 เพราะตอนนั้นมีสถานีเดียว
+        // ที่อ่านปุ่มกด รับช่วงมาให้เอง คนที่ตั้งค่าไว้แล้วจะได้ไม่ต้องกรอกใหม่
+        AddressSt3 = CustomSettingsManager.Read("PUSHBTN_ADDRESS_ST3", "").Trim() is { Length: > 0 } st3
+            ? st3
+            : CustomSettingsManager.Read("PUSHBTN_ADDRESS", "").Trim(),
+
         PollMs = Clamp(CustomSettingsManager.Read("PUSHBTN_POLL_MS", "")),
     };
 
     public void Save()
     {
         CustomSettingsManager.Write("PUSHBTN_ENABLED", Enabled ? "1" : "0");
-        CustomSettingsManager.Write("PUSHBTN_ADDRESS", Address.Trim().ToUpperInvariant());
+        CustomSettingsManager.Write("PUSHBTN_ADDRESS_ST1", AddressSt1.Trim().ToUpperInvariant());
+        CustomSettingsManager.Write("PUSHBTN_ADDRESS_ST2", AddressSt2.Trim().ToUpperInvariant());
+        CustomSettingsManager.Write("PUSHBTN_ADDRESS_ST3", AddressSt3.Trim().ToUpperInvariant());
         CustomSettingsManager.Write("PUSHBTN_POLL_MS", Clamp(PollMs.ToString()).ToString());
     }
 
@@ -61,18 +93,37 @@ public sealed class PushButtonSettings
     {
         if (!Enabled) return null;
 
-        var address = Address.Trim();
-        if (address.Length == 0)
-            return "เปิดใช้งานปุ่มกดหน้างานแล้ว แต่ยังไม่ได้กรอก address";
+        // ตรวจทุกช่องที่กรอกมา ไม่ใช่เฉพาะของสถานีตัวเอง — คนตั้งค่าอาจกรอกครบ
+        // สามช่องที่เครื่องเดียวแล้วก๊อปไฟล์ตั้งค่าไปใช้ต่อ กรอกผิดต้องรู้ตั้งแต่ตรงนี้
+        foreach (var (station, address) in Addresses())
+        {
+            if (address.Length == 0) continue;
+            if (CheckOne(station, address) is string problem) return problem;
+        }
 
-        // ต้องเป็นอุปกรณ์ชนิดบิต — D กับ W เป็น word อ่านเป็นบิตไม่ได้
-        if (!address.StartsWith("M", StringComparison.OrdinalIgnoreCase))
-            return $"address ของปุ่มกดต้องเป็น M เท่านั้น เช่น M800 (กรอกมาว่า \"{address}\")";
-
-        if (!McProtocolService.TryParseAddress(address, out _, out _, out string error))
-            return error;
+        if (AddressFor(StationService.Current).Length == 0)
+            return $"เปิดใช้งานปุ่มกดหน้างานแล้ว แต่ยังไม่ได้กรอก address ของ ST{StationService.Current}";
 
         return null;
+    }
+
+    /// <summary>ที่อยู่ทั้งสามช่องพร้อมเลขสถานี</summary>
+    public IEnumerable<(int Station, string Address)> Addresses()
+    {
+        yield return (1, AddressSt1.Trim());
+        yield return (2, AddressSt2.Trim());
+        yield return (3, AddressSt3.Trim());
+    }
+
+    private static string? CheckOne(int station, string address)
+    {
+        // ต้องเป็นอุปกรณ์ชนิดบิต — D กับ W เป็น word อ่านเป็นบิตไม่ได้
+        if (!address.StartsWith("M", StringComparison.OrdinalIgnoreCase))
+            return $"address ปุ่มกดของ ST{station} ต้องเป็น M เท่านั้น เช่น M800 (กรอกมาว่า \"{address}\")";
+
+        return McProtocolService.TryParseAddress(address, out _, out _, out string error)
+            ? null
+            : $"ST{station}: {error}";
     }
 
     private static int Clamp(string text)

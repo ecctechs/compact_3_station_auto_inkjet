@@ -109,7 +109,9 @@ public partial class ClampSettingUserControl : UserControl
 
         _push = PushButtonSettings.Load();
         chkPushEnabled.Checked = _push.Enabled;
-        txtPushAddress.Text = _push.Address;
+        txtPushAddrSt1.Text = _push.AddressSt1;
+        txtPushAddrSt2.Text = _push.AddressSt2;
+        txtPushAddrSt3.Text = _push.AddressSt3;
         txtPushPollMs.Text = _push.PollMs.ToString();
         lblPushStatus.Text = "";
 
@@ -119,17 +121,33 @@ public partial class ClampSettingUserControl : UserControl
     }
 
     /// <summary>
-    /// อ่านบิตปุ่มกดหนึ่งครั้งให้เห็นกับตาว่าต่อติดและที่อยู่ถูกต้อง
+    /// อ่านบิตปุ่มกดของทุกสถานีที่กรอกไว้ ให้เห็นกับตาว่าต่อติดและที่อยู่ถูก
     ///
+    /// <para>
     /// ใช้ค่าที่พิมพ์อยู่ในช่อง ไม่ใช่ค่าที่บันทึกไว้ จะได้ลองก่อนกด Save ได้
+    /// </para>
+    /// <para>
+    /// อ่านทีเดียวครบทุกสถานี เพราะตอนติดตั้งหน้างานคนตั้งค่าอยู่ที่เครื่องเดียว
+    /// และต้องรู้ว่าสามปุ่มต่อถูกขาครบ ไม่ใช่ไล่กดทีละสถานี
+    /// </para>
     /// </summary>
     private async Task TestPushButtonAsync()
     {
         var probe = new PushButtonSettings
         {
             Enabled = true,
-            Address = txtPushAddress.Text,
+            AddressSt1 = txtPushAddrSt1.Text,
+            AddressSt2 = txtPushAddrSt2.Text,
+            AddressSt3 = txtPushAddrSt3.Text,
         };
+
+        var filled = probe.Addresses().Where(a => a.Address.Length > 0).ToList();
+        if (filled.Count == 0)
+        {
+            lblPushStatus.ForeColor = Red;
+            lblPushStatus.Text = "ยังไม่ได้กรอก address ของสถานีไหนเลย";
+            return;
+        }
 
         if (probe.Validate() is string problem)
         {
@@ -150,15 +168,30 @@ public partial class ClampSettingUserControl : UserControl
         lblPushStatus.Text = "กำลังอ่าน...";
         try
         {
-            var (ok, on, error) = await McProtocolService.ReadBitAsync(
-                probe.Ip, probe.Port, probe.Address.Trim());
+            var lines = new List<string>();
+            bool allOk = true;
 
-            if (IsDisposed) return;
+            foreach (var (station, address) in filled)
+            {
+                var (ok, on, error) = await McProtocolService.ReadBitAsync(
+                    probe.Ip, probe.Port, address);
 
-            lblPushStatus.ForeColor = ok ? Green : Red;
-            lblPushStatus.Text = ok
-                ? $"{probe.Address.Trim().ToUpperInvariant()} = {(on ? "1 (กำลังกดอยู่)" : "0 (ยังไม่กด)")}"
-                : error;
+                if (IsDisposed) return;
+
+                if (ok)
+                {
+                    var state = on ? "1 (กำลังกดอยู่)" : "0 (ยังไม่กด)";
+                    lines.Add($"ST{station} {address.ToUpperInvariant()} = {state}");
+                }
+                else
+                {
+                    allOk = false;
+                    lines.Add($"ST{station} {address.ToUpperInvariant()}: {error}");
+                }
+            }
+
+            lblPushStatus.ForeColor = allOk ? Green : Red;
+            lblPushStatus.Text = string.Join("   ·   ", lines);
         }
         finally
         {
@@ -238,7 +271,9 @@ public partial class ClampSettingUserControl : UserControl
 
         // 4. ปุ่มกดหน้างาน — ปุ่มทดสอบไม่ล็อก เพราะแค่อ่านค่า ไม่เปลี่ยนอะไร
         chkPushEnabled.Enabled = _unlocked;
-        txtPushAddress.Enabled = _unlocked;
+        txtPushAddrSt1.Enabled = _unlocked;
+        txtPushAddrSt2.Enabled = _unlocked;
+        txtPushAddrSt3.Enabled = _unlocked;
         txtPushPollMs.Enabled = _unlocked;
 
         btnSave.Enabled = _unlocked;
@@ -279,7 +314,9 @@ public partial class ClampSettingUserControl : UserControl
         }
 
         _push.Enabled = chkPushEnabled.Checked;
-        _push.Address = txtPushAddress.Text;
+        _push.AddressSt1 = txtPushAddrSt1.Text;
+        _push.AddressSt2 = txtPushAddrSt2.Text;
+        _push.AddressSt3 = txtPushAddrSt3.Text;
         _push.PollMs = int.TryParse(txtPushPollMs.Text.Trim(), out int ms) ? ms : _push.PollMs;
 
         if (_push.Validate() is string pushProblem)
@@ -294,6 +331,9 @@ public partial class ClampSettingUserControl : UserControl
         // Clamp คืนค่าที่ถูกปัดให้อยู่ในช่วงที่ใช้ได้จริง สะท้อนกลับให้เห็นบนหน้าจอ
         _push = PushButtonSettings.Load();
         txtPushPollMs.Text = _push.PollMs.ToString();
+        txtPushAddrSt1.Text = _push.AddressSt1;
+        txtPushAddrSt2.Text = _push.AddressSt2;
+        txtPushAddrSt3.Text = _push.AddressSt3;
         ResetColors();
         _ = CheckStatusAsync();
 
