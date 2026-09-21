@@ -67,6 +67,10 @@ public partial class PlcSettingUserControl : UserControl
         btnSave.Click += BtnSave_Click;
         btnCancel.Click += BtnCancel_Click;
         btnAddRow.Click += BtnAddRow_Click;
+
+        // เพิ่มแถวใน register map เป็นเรื่องของคนที่รู้ว่า PLC ตัวนี้มี address อะไรบ้าง
+        // ไม่ใช่ของคนคุมเครื่อง แถวที่เพิ่มผิดคือส่งค่าไปทับ register อื่นตอนเริ่มงาน
+        btnAddRow.Visible = StationService.IsDevMode;
         btnReadAll.Click += async (_, _) => await ReadAllAsync();
         btnUnlock.Click += (_, _) => ToggleLock();
         btnCheckStatus.Click += async (_, _) => await CheckStatusAsync();
@@ -126,7 +130,7 @@ public partial class PlcSettingUserControl : UserControl
     private void ApplyLockState()
     {
         btnUnlock.Text = _unlocked ? "🔓 Lock" : "🔒 Unlock";
-        btnAddRow.Enabled = _unlocked;
+        btnAddRow.Enabled = _unlocked && StationService.IsDevMode;
         btnSave.Enabled = _unlocked;
         btnCancel.Enabled = _unlocked;
         btnPlcName.Enabled = _unlocked;
