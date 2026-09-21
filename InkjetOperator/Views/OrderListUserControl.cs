@@ -329,6 +329,9 @@ public partial class OrderListUserControl : UserControl
         var (rows, error) = await _api.GetMachineQueueAsync();
         if (error != null || IsDisposed) return;
 
+        // เก็บไว้ให้แผง Processing ใช้ต่อ จะได้ไม่ต้องยิงถามคิวซ้ำอีกรอบ
+        _queueRows = rows;
+
         foreach (var (machine, label, queueLabel, button) in StationSlots())
         {
             var holder = rows.FirstOrDefault(r => r.Machine == machine && r.State == "active");
@@ -377,6 +380,9 @@ public partial class OrderListUserControl : UserControl
         var next = $"คิวถัดไป: {JobName(waiting[0].PrintJobsId)}";
         return waiting.Count == 1 ? next : $"{next}   (รอทั้งหมด {waiting.Count} ใบ)";
     }
+
+    /// <summary>คิวของทุกเครื่องจากรอบล่าสุด — ว่างแปลว่ายังไม่เคยอ่านสำเร็จ</summary>
+    private List<MachineQueueRow> _queueRows = [];
 
     /// <summary>สีของเครื่องที่ไม่ว่าง หรือว่างแต่ยังมีงานค้างคิวอยู่</summary>
     private static readonly Color WaitingColor = Color.FromArgb(214, 108, 0);
@@ -2126,18 +2132,24 @@ public partial class OrderListUserControl : UserControl
     }
 
     /// <summary>
-    /// แผงขวา — งานที่กำลังผลิตอยู่จริง ไม่เกี่ยวกับแถวที่เลือก
-    /// เกณฑ์คือ status = Process ถ้ามีหลายงานเอาอันที่แก้ล่าสุด
+    /// แผงขวา — งานที่อยู่ในเครื่องของสถานีนี้ ไม่เกี่ยวกับแถวที่เลือกในตาราง
+    ///
+    /// <para>
+    /// ยึดตามเครื่องที่สถานีนี้คุมอยู่ (ST1 ดู MK · ST3 ดู UV2) ไม่ใช่ตามงานที่ขยับล่าสุด
+    /// เพราะพอมีงานเดินพร้อมกันหลายใบ งานที่เพิ่งกดเริ่มจะแย่งแผงไปทันที ทั้งที่เครื่อง
+    /// ตรงหน้ายังพิมพ์ใบเดิมอยู่ คนที่ยืนอยู่หน้าเครื่องต้องเห็นของเครื่องตัวเอง
+    /// </para>
+    /// <para>
+    /// คิวยังไม่มีข้อมูล (อ่านไม่สำเร็จ หรือเป็นงานที่เริ่มไว้ก่อนมีระบบคิว) ค่อยตกกลับ
+    /// ไปใช้เกณฑ์เดิมคือ Process ที่แก้ล่าสุด
+    /// </para>
+    /// <para>
     /// โหลดใหม่เฉพาะตอนเปลี่ยนตัวหรือ updated_at ขยับ ไม่ใช่ทุกรอบ poll
+    /// </para>
     /// </summary>
     private async Task UpdateProcessingAsync()
     {
-        var job = _showHistory
-            ? null
-            : _allJobs
-                .Where(j => string.Equals(j.Status, "Process", StringComparison.OrdinalIgnoreCase))
-                .OrderByDescending(j => j.UpdatedAt ?? DateTime.MinValue)
-                .FirstOrDefault();
+        var job = _showHistory ? null : JobInMyMachine() ?? NewestProcessJob();
 
         if (job == null)
         {
@@ -2162,6 +2174,27 @@ public partial class OrderListUserControl : UserControl
 
         ShowProcessingSides(Find(sides, "Plate"), Find(sides, "Shim"));
     }
+
+    /// <summary>งานที่ถือเครื่องของสถานีนี้อยู่ตอนนี้ — null เมื่อเครื่องว่างหรือยังไม่รู้คิว</summary>
+    private PrintJob? JobInMyMachine()
+    {
+        var machine = MachineOfThisStation();
+
+        var holder = _queueRows.FirstOrDefault(r =>
+            r.State == "active"
+            && string.Equals(r.Machine, machine, StringComparison.OrdinalIgnoreCase));
+
+        return holder == null
+            ? null
+            : _allJobs.FirstOrDefault(j => j.Id == holder.PrintJobsId);
+    }
+
+    /// <summary>เกณฑ์สำรองแบบเดิม — งานที่เดินอยู่และแก้ล่าสุด</summary>
+    private PrintJob? NewestProcessJob() =>
+        _allJobs
+            .Where(j => string.Equals(j.Status, "Process", StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(j => j.UpdatedAt ?? DateTime.MinValue)
+            .FirstOrDefault();
 
     private static MarkingRefSide? Find(List<MarkingRefSide> sides, string side) =>
         sides.FirstOrDefault(s => s.Side == side);
