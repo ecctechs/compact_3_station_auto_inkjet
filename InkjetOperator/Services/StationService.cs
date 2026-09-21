@@ -37,7 +37,7 @@ public static class StationService
     /// </summary>
     public static string ProgramTitle => Level switch
     {
-        0 => $"{ProductName} - Scanbarcode",
+        0 => $"{ProductName} - Scan barcode",
         1 => $"{ProductName} - Station 1",
         3 => $"{ProductName} - Station 3",
         _ => ProductName,
