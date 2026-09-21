@@ -163,7 +163,7 @@ partial class OrderListUserControl
         tlpTableInner.RowCount = 3;
         tlpTableInner.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpTableInner.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpTableInner.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 110F));
+        tlpTableInner.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
         tlpTableInner.Size = new System.Drawing.Size(1282, 878);
         tlpTableInner.TabIndex = 0;
         //
@@ -273,6 +273,8 @@ partial class OrderListUserControl
         // tlpStationBar - แถบบอกว่าแต่ละสถานีถืองานอะไรอยู่ พร้อมปุ่มจำลองปุ่มกดหน้างาน
         //   โผล่เฉพาะโหมดทดสอบ โหมดใช้งานจริงถูกยุบความสูงเหลือ 0 จากโค้ด
         //
+        tlpStationBar.AutoSize = true;
+        tlpStationBar.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
         tlpStationBar.BackColor = System.Drawing.Color.White;
         tlpStationBar.ColumnCount = 3;
         tlpStationBar.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33.34F));
@@ -293,7 +295,7 @@ partial class OrderListUserControl
         tlpStationBar.RowCount = 3;
         tlpStationBar.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
         tlpStationBar.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
-        tlpStationBar.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpStationBar.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
         tlpStationBar.Size = new System.Drawing.Size(1282, 110);
         tlpStationBar.TabIndex = 2;
         //
@@ -364,7 +366,7 @@ partial class OrderListUserControl
         //
         btnSimPushMk.BorderWidth = 2F;
         btnSimPushMk.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnSimPushMk.Dock = System.Windows.Forms.DockStyle.Fill;
+        btnSimPushMk.Dock = System.Windows.Forms.DockStyle.Top;
         btnSimPushMk.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
         btnSimPushMk.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnSimPushMk.Margin = new System.Windows.Forms.Padding(3, 0, 3, 4);
@@ -379,7 +381,7 @@ partial class OrderListUserControl
         //
         btnSimPushUv1.BorderWidth = 2F;
         btnSimPushUv1.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnSimPushUv1.Dock = System.Windows.Forms.DockStyle.Fill;
+        btnSimPushUv1.Dock = System.Windows.Forms.DockStyle.Top;
         btnSimPushUv1.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
         btnSimPushUv1.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnSimPushUv1.Margin = new System.Windows.Forms.Padding(3, 0, 3, 4);
@@ -394,7 +396,7 @@ partial class OrderListUserControl
         //
         btnSimPushUv2.BorderWidth = 2F;
         btnSimPushUv2.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnSimPushUv2.Dock = System.Windows.Forms.DockStyle.Fill;
+        btnSimPushUv2.Dock = System.Windows.Forms.DockStyle.Top;
         btnSimPushUv2.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
         btnSimPushUv2.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         btnSimPushUv2.Margin = new System.Windows.Forms.Padding(3, 0, 3, 4);

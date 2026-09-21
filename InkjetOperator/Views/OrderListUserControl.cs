@@ -221,16 +221,17 @@ public partial class OrderListUserControl : UserControl
         // แถบสถานีเห็นทุกโหมด — คนหน้างานต้องรู้ว่าเครื่องไหนว่างและมีอะไรรออยู่
         // ส่วนปุ่มจำลองการกดปุ่มหน้างานเหลือเฉพาะโหมดทดสอบเหมือนเดิม
         //
-        // โหมดใช้งานจริงยุบเฉพาะแถวของปุ่ม แล้วหดความสูงของทั้งแถบลงตามกัน
-        // ไม่ใช่แค่ซ่อนปุ่ม ไม่งั้นตารางจะเสียพื้นที่ไปเปล่า ๆ กับแถวที่ไม่มีอะไรแสดง
+        // ซ่อนปุ่มอย่างเดียวพอ ความสูงของแถบวัดจากของที่แสดงอยู่จริง
+        //
+        // ห้ามล็อกความสูงเป็นตัวเลขตายตัวจากตรงนี้ ค่าที่ designer ตั้งไว้จะถูกสเกล
+        // ตาม DPI ของจอให้เอง แต่ค่าที่เขียนทับจากโค้ดไม่ถูกสเกลด้วย พอไปอยู่บนจอ 4K
+        // ที่สเกล 200% แถวป้ายสองแถวบนโตขึ้นเท่าตัวจนกินความสูงที่ล็อกไว้จนหมด
+        // แถวปุ่มเลยเหลือเกือบศูนย์ ปุ่มถูกบีบจนอ่านไม่ออก
         bool dev = StationService.IsDevMode;
 
         btnSimPushMk.Visible = dev;
         btnSimPushUv1.Visible = dev;
         btnSimPushUv2.Visible = dev;
-
-        tlpStationBar.RowStyles[2].Height = dev ? 50F : 0F;
-        tlpTableInner.RowStyles[2].Height = dev ? 110F : 64F;
 
         btnSimPushMk.Click += async (_, _) => await OnPushButtonPressedAsync("MK");
         btnSimPushUv1.Click += async (_, _) => await OnPushButtonPressedAsync("UV1");
