@@ -18,6 +18,12 @@ const machineSchema = z.object({
   machine: machineName,
 });
 
+// ปล่อยเครื่อง — บอกได้ว่าให้ถือเครื่องไว้ให้รอบถัดไปของงานเดิมไหม
+const releaseSchema = z.object({
+  machine: machineName,
+  hold_for_next_round: z.boolean().optional(),
+});
+
 // ระบุงานได้ = หยิบเฉพาะแถวของงานใบนั้น ไม่ระบุ = หยิบใบที่รอมาก่อนสุด
 const claimSchema = z.object({
   machine: machineName,
@@ -30,4 +36,10 @@ const updateQueueSchema = z.object({
   sent: z.boolean().optional(),
 });
 
-module.exports = { enqueueSchema, machineSchema, claimSchema, updateQueueSchema };
+module.exports = {
+  enqueueSchema,
+  machineSchema,
+  releaseSchema,
+  claimSchema,
+  updateQueueSchema,
+};

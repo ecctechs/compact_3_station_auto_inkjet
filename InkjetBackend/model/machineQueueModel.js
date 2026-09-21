@@ -43,6 +43,14 @@ const MachineQueue = sequelize.define(
       type: DataTypes.STRING,
       defaultValue: "pending",
     },
+    // เวลาที่ใช้เรียงลำดับคิว — แยกจาก created_at เพราะต้องขยับได้
+    //
+    // ทุกรอบของงานเดียวกันถูกสร้างพร้อมกันตอนกดเริ่มงาน created_at จึงเท่ากันหมด
+    // ตัวเลือก "ปล่อยเครื่อง" ต้องดันรอบถัดไปไปต่อท้ายคิว ซึ่งขยับ created_at ไม่ได้
+    queued_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
     // เวลาที่ส่งเข้าเครื่องจริง และเวลาที่ปล่อยเครื่อง
     sent_at: {
       type: DataTypes.DATE,

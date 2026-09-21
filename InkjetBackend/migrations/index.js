@@ -3,6 +3,7 @@ const ensureUvJobDataColumns = require("./ensureUvJobDataColumns");
 const ensureIaiPerJob = require("./ensureIaiPerJob");
 const ensureRemoteStartColumns = require("./ensureRemoteStartColumns");
 const ensureJobNumberColumns = require("./ensureJobNumberColumns");
+const ensureMachineQueueColumns = require("./ensureMachineQueueColumns");
 
 // รันหลัง sequelize.sync() — ปรับ schema ที่ sync() แก้ให้ไม่ได้ (constraint / rename / add column)
 // ทุกตัวต้อง idempotent
@@ -12,4 +13,5 @@ module.exports = async function runMigrations() {
   await ensureIaiPerJob();
   await ensureRemoteStartColumns();
   await ensureJobNumberColumns();
+  await ensureMachineQueueColumns();
 };

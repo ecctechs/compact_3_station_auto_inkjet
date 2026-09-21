@@ -6,6 +6,7 @@ const validate = require("../middleware/validate");
 const {
   enqueueSchema,
   machineSchema,
+  releaseSchema,
   claimSchema,
   updateQueueSchema,
 } = require("../validation/machineQueueSchema");
@@ -26,7 +27,7 @@ Route.post(
 
 Route.post(
   RouteName + "/release",
-  validate(machineSchema),
+  validate(releaseSchema),
   MachineQueueController.release
 );
 

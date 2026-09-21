@@ -290,7 +290,11 @@ public partial class OrderListUserControl : UserControl
         try
         {
             var machine = machineOverride ?? MachineOfThisStation();
-            var (ok, error) = await _api.ReleaseMachineAsync(machine);
+
+            // งานที่เข้าเครื่องเดิมหลายรอบจะถือเครื่องไว้ให้รอบถัดไปหรือไม่
+            // เป็นตัวเลือกที่ Setting → ตัวเลือกหน้างาน ค่าเริ่มต้นคือถือไว้
+            var (ok, error) = await _api.ReleaseMachineAsync(
+                machine, StationService.HoldForNextRound);
             if (IsDisposed) return;
 
             if (!ok)

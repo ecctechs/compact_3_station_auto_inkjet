@@ -59,6 +59,20 @@ public static class StationService
         CustomSettingsManager.Read(ManualRemoteSendKey, "0") == "1";
 
     /// <summary>
+    /// คีย์ใน Setting.config ที่บอกว่างานเข้าเครื่องเดิมหลายรอบจะถือเครื่องไว้ไหม
+    ///
+    /// <para>
+    /// ใช้กับ marking 22 ที่ชิ้นงานเข้าเครื่อง MK สองรอบ โดยมีการเอาออกไปติด shim
+    /// นอกไลน์คั่นกลาง ค่าเริ่มต้นคือถือเครื่องไว้ ตามที่ตกลงกับหัวหน้างาน
+    /// </para>
+    /// </summary>
+    public const string HoldForNextRoundKey = "MK_HOLD_FOR_ROUND2";
+
+    /// <summary>ถือเครื่องไว้ให้รอบถัดไปของงานเดิมไหม — ค่าเริ่มต้นคือถือ</summary>
+    public static bool HoldForNextRound =>
+        CustomSettingsManager.Read(HoldForNextRoundKey, "1") == "1";
+
+    /// <summary>
     /// โหมดทดสอบไหม — <c>MENU_LEVEL</c> 99
     ///
     /// ใช้เปิดเครื่องมือที่มีไว้ลองของเท่านั้น เช่นปุ่มส่งตรงเข้าเครื่องกับปุ่มจำลอง

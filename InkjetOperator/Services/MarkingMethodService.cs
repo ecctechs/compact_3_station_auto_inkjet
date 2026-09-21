@@ -51,6 +51,14 @@ public static class MarkingMethodService
             return new MarkingPlan(true, MarkingMachine.None, MarkingMachine.None, []);
 
         var steps = new List<string>();
+
+        // 22 = เข้าเครื่อง MK สองรอบ ไม่ใช่รอบเดียว
+        //
+        // รอบแรกพ่นลงเหล็ก (plate) แล้วเอาชิ้นงานออกนอกไลน์ไปติด shim จากนั้นเอากลับมา
+        // พ่นรอบสองลงบน shim เป็นงานพิเศษที่ทำนาน ๆ ที แต่ถ้านับเป็นรอบเดียวเหมือนเดิม
+        // โปรแกรมจะบอกว่างานจบตั้งแต่พ่น plate เสร็จ ทั้งที่ยังไม่ได้พ่น shim
+        if (shimDigit == '2' && plateDigit == '2') steps.Add("MK");
+
         if (shimDigit == '2' || plateDigit == '2') steps.Add("MK");
         if (plateDigit == '1') steps.Add("UV1");
         if (shimDigit == '1') steps.Add("UV2");
@@ -113,12 +121,30 @@ public static class MarkingMethodService
     public static List<string> MissingSteps(
         string? markingMethod, IEnumerable<Models.CommandResult>? commands)
     {
-        var sent = (commands ?? [])
-            .Where(c => c.Success)
-            .Select(c => c.Command)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // นับจำนวนครั้ง ไม่ใช่ดูว่าเคยส่งไหม
+        //
+        // งาน 22 ต้องเข้าเครื่อง MK สองรอบ ถ้าดูแค่ "เคยส่ง MK ไหม" พอจบรอบแรก
+        // ก็จะถือว่าครบแล้ว ทั้งที่ยังเหลืออีกรอบ
+        var sent = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var command in commands ?? [])
+        {
+            if (!command.Success || command.Command == null) continue;
+            sent[command.Command] = sent.TryGetValue(command.Command, out int n) ? n + 1 : 1;
+        }
 
-        return Resolve(markingMethod).Steps.Where(step => !sent.Contains(step)).ToList();
+        var missing = new List<string>();
+        foreach (var step in Resolve(markingMethod).Steps)
+        {
+            if (sent.TryGetValue(step, out int left) && left > 0)
+            {
+                sent[step] = left - 1;
+                continue;
+            }
+
+            missing.Add(step);
+        }
+
+        return missing;
     }
 
     /// <summary>

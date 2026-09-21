@@ -24,8 +24,15 @@ partial class StationOptionsUserControl
         tlpRemoteSend = new System.Windows.Forms.TableLayoutPanel();
         chkManualRemoteSend = new AntdUI.Checkbox();
         lblRemoteSendHelp = new AntdUI.Label();
+        pnlHoldRound = new AntdUI.Panel();
+        tlpHoldRound = new System.Windows.Forms.TableLayoutPanel();
+        lblHoldRoundHeading = new AntdUI.Label();
+        chkHoldRound = new AntdUI.Checkbox();
+        lblHoldRoundHelp = new AntdUI.Label();
         tlpOptionsRoot.SuspendLayout();
         pnlRemoteSend.SuspendLayout();
+        pnlHoldRound.SuspendLayout();
+        tlpHoldRound.SuspendLayout();
         tlpRemoteSend.SuspendLayout();
         SuspendLayout();
         //
@@ -35,13 +42,15 @@ partial class StationOptionsUserControl
         tlpOptionsRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpOptionsRoot.Controls.Add(lblOptionsTitle, 0, 0);
         tlpOptionsRoot.Controls.Add(pnlRemoteSend, 0, 1);
+        tlpOptionsRoot.Controls.Add(pnlHoldRound, 0, 2);
         tlpOptionsRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpOptionsRoot.Location = new System.Drawing.Point(32, 32);
         tlpOptionsRoot.Margin = new System.Windows.Forms.Padding(0);
         tlpOptionsRoot.Name = "tlpOptionsRoot";
-        tlpOptionsRoot.RowCount = 3;
+        tlpOptionsRoot.RowCount = 4;
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 66F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 210F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 252F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpOptionsRoot.Size = new System.Drawing.Size(1216, 736);
         tlpOptionsRoot.TabIndex = 0;
@@ -91,6 +100,70 @@ partial class StationOptionsUserControl
         tlpRemoteSend.Size = new System.Drawing.Size(1168, 162);
         tlpRemoteSend.TabIndex = 0;
         //
+        // pnlHoldRound
+        //
+        pnlHoldRound.Back = System.Drawing.Color.White;
+        pnlHoldRound.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlHoldRound.BorderWidth = 2F;
+        pnlHoldRound.Controls.Add(tlpHoldRound);
+        pnlHoldRound.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlHoldRound.Margin = new System.Windows.Forms.Padding(0, 16, 0, 0);
+        pnlHoldRound.Name = "pnlHoldRound";
+        pnlHoldRound.Padding = new System.Windows.Forms.Padding(24);
+        pnlHoldRound.Radius = 10;
+        pnlHoldRound.Size = new System.Drawing.Size(1216, 236);
+        pnlHoldRound.TabIndex = 2;
+        //
+        // tlpHoldRound
+        //
+        tlpHoldRound.ColumnCount = 1;
+        tlpHoldRound.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpHoldRound.Controls.Add(lblHoldRoundHeading, 0, 0);
+        tlpHoldRound.Controls.Add(chkHoldRound, 0, 1);
+        tlpHoldRound.Controls.Add(lblHoldRoundHelp, 0, 2);
+        tlpHoldRound.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpHoldRound.Margin = new System.Windows.Forms.Padding(0);
+        tlpHoldRound.Name = "tlpHoldRound";
+        tlpHoldRound.RowCount = 3;
+        tlpHoldRound.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
+        tlpHoldRound.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpHoldRound.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpHoldRound.Size = new System.Drawing.Size(1168, 188);
+        tlpHoldRound.TabIndex = 0;
+        //
+        // lblHoldRoundHeading
+        //
+        lblHoldRoundHeading.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblHoldRoundHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        lblHoldRoundHeading.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblHoldRoundHeading.Margin = new System.Windows.Forms.Padding(0);
+        lblHoldRoundHeading.Name = "lblHoldRoundHeading";
+        lblHoldRoundHeading.Size = new System.Drawing.Size(1168, 42);
+        lblHoldRoundHeading.TabIndex = 0;
+        lblHoldRoundHeading.Text = "งานที่เข้าเครื่องเดิมสองรอบ (marking 22)";
+        //
+        // chkHoldRound
+        //
+        chkHoldRound.Dock = System.Windows.Forms.DockStyle.Fill;
+        chkHoldRound.Font = new System.Drawing.Font("Segoe UI", 15F);
+        chkHoldRound.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        chkHoldRound.Margin = new System.Windows.Forms.Padding(0, 0, 0, 12);
+        chkHoldRound.Name = "chkHoldRound";
+        chkHoldRound.Size = new System.Drawing.Size(1168, 32);
+        chkHoldRound.TabIndex = 1;
+        chkHoldRound.Text = "ถือเครื่องไว้ให้รอบสอง ห้ามงานอื่นแทรก";
+        //
+        // lblHoldRoundHelp
+        //
+        lblHoldRoundHelp.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblHoldRoundHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblHoldRoundHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
+        lblHoldRoundHelp.Margin = new System.Windows.Forms.Padding(0);
+        lblHoldRoundHelp.Name = "lblHoldRoundHelp";
+        lblHoldRoundHelp.Size = new System.Drawing.Size(1168, 102);
+        lblHoldRoundHelp.TabIndex = 2;
+        lblHoldRoundHelp.Text = "ก. ถือเครื่องไว้ (ค่าเริ่มต้น ตามที่ตกลงกับหัวหน้างาน) — พ่นรอบแรกเสร็จแล้วกดปุ่มหน้างาน เครื่องยังเป็นของงานใบนี้อยู่ งานใบอื่นที่รอคิวเครื่องนี้แทรกไม่ได้ จนกว่าชิ้นงานจะกลับมาพ่นรอบสองเสร็จ เครื่องจะจอดรอระหว่างที่คนเอางานออกไปติด shim นอกไลน์\r\nข. ปล่อยเครื่อง (ติ๊กออก) — กดปุ่มหน้างานแล้วเครื่องว่างทันที งานใบอื่นแทรกเข้ามาทำได้ เครื่องไม่จอดเปล่า แต่พอชิ้นงานกลับมา รอบสองต้องไปต่อท้ายคิว อาจค้างกลางไลน์นานกว่าที่คิด\r\nมีผลเฉพาะงานที่เข้าเครื่องเดิมมากกว่าหนึ่งรอบ (marking 22) งานอื่นไม่เกี่ยว";
+        //
         // lblRemoteSendHeading
         //
         lblRemoteSendHeading.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -138,6 +211,8 @@ partial class StationOptionsUserControl
         Padding = new System.Windows.Forms.Padding(32);
         Size = new System.Drawing.Size(1280, 800);
         tlpOptionsRoot.ResumeLayout(false);
+        tlpHoldRound.ResumeLayout(false);
+        pnlHoldRound.ResumeLayout(false);
         pnlRemoteSend.ResumeLayout(false);
         tlpRemoteSend.ResumeLayout(false);
         ResumeLayout(false);
@@ -149,6 +224,11 @@ partial class StationOptionsUserControl
     private AntdUI.Label lblOptionsTitle;
     private AntdUI.Panel pnlRemoteSend;
     private AntdUI.Label lblRemoteSendHeading;
+    private AntdUI.Panel pnlHoldRound;
+    private System.Windows.Forms.TableLayoutPanel tlpHoldRound;
+    private AntdUI.Label lblHoldRoundHeading;
+    private AntdUI.Checkbox chkHoldRound;
+    private AntdUI.Label lblHoldRoundHelp;
     private System.Windows.Forms.TableLayoutPanel tlpRemoteSend;
     private AntdUI.Checkbox chkManualRemoteSend;
     private AntdUI.Label lblRemoteSendHelp;

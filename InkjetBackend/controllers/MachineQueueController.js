@@ -130,7 +130,7 @@ class MachineQueueController {
       const next = await MachineQueue.findOne({
         where,
         order: [
-          ["created_at", "ASC"],
+          [sequelize.literal('COALESCE("queued_at", "created_at")'), "ASC"],
           ["id", "ASC"],
         ],
         transaction: t,
@@ -168,7 +168,7 @@ class MachineQueueController {
   static async release(req, res) {
     const t = await sequelize.transaction();
     try {
-      const { machine } = req.body;
+      const { machine, hold_for_next_round } = req.body;
 
       const holder = await MachineQueue.findOne({
         where: { machine, state: ACTIVE },
@@ -188,15 +188,55 @@ class MachineQueueController {
       // ทำตรงนี้เพราะการกดปุ่มหน้างานคือจังหวะเดียวที่งานใหม่มีสิทธิ์เข้าเครื่อง
       // ถ้าปล่อยให้ฝั่งโปรแกรมไล่หยิบคิวเองเป็นรอบ ๆ งานที่ไม่มีใครกดก็จะถูกส่ง
       // ออกไปเงียบ ๆ ได้ ซึ่งเคยเกิดมาแล้วและกลายเป็นพิมพ์งานที่ไม่มีใครสั่ง
-      const next = await MachineQueue.findOne({
-        where: { machine, state: PENDING },
-        order: [
-          ["created_at", "ASC"],
-          ["id", "ASC"],
-        ],
-        transaction: t,
-        lock: t.LOCK.UPDATE,
-      });
+      // งานที่เข้าเครื่องเดิมหลายรอบ (marking 22) เลือกได้ว่าจะถือเครื่องไว้ไหม
+      //
+      // ถือไว้ = รอบถัดไปของงานเดิมได้เครื่องต่อทันที งานใบอื่นที่รอคิวแทรกไม่ได้
+      // จนกว่าชิ้นงานจะกลับมาจากการติด shim นอกไลน์แล้วพ่นรอบสองเสร็จ
+      //
+      // ไม่ถือ = ใครรอมาก่อนได้ก่อนตามปกติ รอบสองไปต่อท้ายคิว
+      let next = null;
+
+      // รอบถัดไปของงานเดิม ถ้ามี
+      const sameJobNextRound = holder
+        ? await MachineQueue.findOne({
+            where: {
+              machine,
+              state: PENDING,
+              print_jobs_id: holder.print_jobs_id,
+              round: holder.round + 1,
+            },
+            transaction: t,
+            lock: t.LOCK.UPDATE,
+          })
+        : null;
+
+      if (sameJobNextRound) {
+        if (hold_for_next_round) {
+          next = sameJobNextRound;
+        } else {
+          // ดันไปต่อท้ายคิวจริง ๆ
+          //
+          // แถวของรอบสองถูกสร้างพร้อมรอบแรกตั้งแต่ตอนกดเริ่มงาน มันจึงเก่ากว่าทุกใบ
+          // ที่เข้าคิวมาทีหลังเสมอ ถ้าไม่เลื่อนเวลา การเรียงแบบใครมาก่อนได้ก่อนจะยก
+          // เครื่องให้รอบสองอยู่ดี กลายเป็นว่าเลือก "ปล่อยเครื่อง" แล้วไม่มีอะไรต่างเลย
+          await sameJobNextRound.update(
+            { queued_at: new Date() },
+            { transaction: t }
+          );
+        }
+      }
+
+      if (!next) {
+        next = await MachineQueue.findOne({
+          where: { machine, state: PENDING },
+          order: [
+            [sequelize.literal('COALESCE("queued_at", "created_at")'), "ASC"],
+            ["id", "ASC"],
+          ],
+          transaction: t,
+          lock: t.LOCK.UPDATE,
+        });
+      }
 
       if (next) await next.update({ state: ACTIVE }, { transaction: t });
 

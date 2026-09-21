@@ -510,12 +510,15 @@ public class ApiClient
     }
 
     /// <summary>ปล่อยเครื่อง — คนกดปุ่มหน้างานแล้ว แปลว่าพิมพ์ชิ้นเดิมเสร็จ</summary>
-    public async Task<(bool ok, string? error)> ReleaseMachineAsync(string machine)
+    public async Task<(bool ok, string? error)> ReleaseMachineAsync(
+        string machine, bool holdForNextRound = false)
     {
         try
         {
             var response = await _http.PostAsJsonAsync(
-                "/machine-queue/release", new { machine }, JsonOptions);
+                "/machine-queue/release",
+                new { machine, hold_for_next_round = holdForNextRound },
+                JsonOptions);
             var body = await response.Content.ReadAsStringAsync();
 
             return response.IsSuccessStatusCode
