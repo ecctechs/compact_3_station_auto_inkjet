@@ -9,4 +9,6 @@ Route.get(RouteName + "/getSizeMap", SystemController.getSizeMap);
 
 Route.get(RouteName + "/getTranslations", SystemController.getTranslations);
 
+Route.post(RouteName + "/resetRuntime", SystemController.resetRuntime);
+
 module.exports = Route;

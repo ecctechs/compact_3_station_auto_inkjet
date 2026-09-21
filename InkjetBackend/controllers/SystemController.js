@@ -1,4 +1,5 @@
 const ResponseManager = require("../middleware/ResponseManager");
+const sequelize = require("../database");
 
 /**
  * Size conversion dict — ported from rs232_connector.py lines 8-22.
@@ -66,6 +67,58 @@ const TRANSLATIONS = {
 };
 
 class SystemController {
+  /**
+   * POST /system/resetRuntime
+   *
+   * ล้างร่องรอยการเดินงานทั้งหมด ให้ทุกใบกลับไปเป็นรอเริ่ม — เครื่องมือสำหรับทดสอบ
+   *
+   * ลบคิวเครื่องทุกแถว ลบประวัติคำสั่งที่ส่งเข้าเครื่องทุกแถว และตั้งสถานะทุกงาน
+   * กลับเป็น Waiting พร้อมล้างธงคำขอที่ ST3 ฝากไว้
+   *
+   * ธงคำขอต้องล้างด้วย ไม่งั้นพอรีเซ็ตเสร็จ ST1 จะเห็นใบที่ค้างธงอยู่แล้วยิงเข้า
+   * เครื่องทันทีโดยไม่มีใครกด ซึ่งไม่ใช่สภาพเริ่มต้น
+   *
+   * ทำในทรานแซกชันเดียว ล้มกลางทางแล้วต้องไม่เหลือสภาพล้างไปได้ครึ่งเดียว
+   *
+   * ไม่แตะข้อมูลของงาน — pattern, uv_job_data, plan_routing, iai อยู่ครบเหมือนเดิม
+   * ลบเฉพาะสิ่งที่บอกว่า "เดินไปถึงไหนแล้ว"
+   */
+  static async resetRuntime(req, res) {
+    const t = await sequelize.transaction();
+    try {
+      // sequelize.query คืน [ผลลัพธ์, ข้อมูลกำกับ] จำนวนแถวที่โดนอยู่ในตัวหลัง
+      // ไม่ใช่ตัวแรก หยิบผิดตัวจะรายงานว่าลบ 0 แถวทั้งที่ลบไปจริง
+      const [, queue] = await sequelize.query("DELETE FROM machine_queues", {
+        transaction: t,
+      });
+
+      const [, commands] = await sequelize.query("DELETE FROM print_job_commands", {
+        transaction: t,
+      });
+
+      const [, meta] = await sequelize.query(
+        `UPDATE print_jobs
+            SET status = 'Waiting',
+                remote_start = '0',
+                remote_program = NULL,
+                remote_step = NULL,
+                remote_error = NULL`,
+        { transaction: t }
+      );
+
+      await t.commit();
+
+      return ResponseManager.SuccessResponse(req, res, 200, {
+        jobs: meta?.rowCount ?? 0,
+        queue_removed: queue?.rowCount ?? 0,
+        commands_removed: commands?.rowCount ?? 0,
+      });
+    } catch (err) {
+      await t.rollback();
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
   static async ping(req, res) {
     return ResponseManager.SuccessResponse(req, res, 200, { status: "ok" });
   }

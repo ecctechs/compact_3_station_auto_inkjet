@@ -582,6 +582,20 @@ public class MachineQueueItem
     public string? ProgramName { get; set; }
 }
 
+/// <summary>จำนวนแถวที่ถูกล้างตอนรีเซ็ตกลับเป็นค่าเริ่มต้น</summary>
+public class ResetRuntimeResult
+{
+    /// <summary>จำนวนงานที่ถูกตั้งสถานะกลับเป็นรอเริ่ม</summary>
+    [JsonPropertyName("jobs")]
+    public int Jobs { get; set; }
+
+    [JsonPropertyName("queue_removed")]
+    public int QueueRemoved { get; set; }
+
+    [JsonPropertyName("commands_removed")]
+    public int CommandsRemoved { get; set; }
+}
+
 /// <summary>ผลของการขอหยิบงานถัดไปมาถือเครื่อง</summary>
 public class MachineClaimResult
 {

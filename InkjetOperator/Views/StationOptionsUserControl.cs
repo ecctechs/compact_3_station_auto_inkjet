@@ -6,9 +6,9 @@ namespace InkjetOperator.Views;
 /// สวิตช์เปิด/ปิดของที่ไม่ได้เปิดไว้ตลอด — หน้านี้เห็นเฉพาะโหมดทดสอบ
 ///
 /// <para>
-/// มีสองรายการ — ปุ่มสำรอง "ขอให้ ST1 ส่ง" ในหน้า Order Detail ของ ST3 ซึ่งเป็น
-/// ทางออกตอนปุ่มกดหน้างานหรือ PLC ใช้ไม่ได้ และการถือเครื่องไว้ระหว่างรอบของงาน
-/// ที่เข้าเครื่องเดิมสองรอบ
+/// มีสามรายการ — ปุ่มสำรอง "ขอให้ ST1 ส่ง" ในหน้า Order Detail ของ ST3 ซึ่งเป็น
+/// ทางออกตอนปุ่มกดหน้างานหรือ PLC ใช้ไม่ได้ · การถือเครื่องไว้ระหว่างรอบของงาน
+/// ที่เข้าเครื่องเดิมสองรอบ · และปุ่มรีเซ็ตทุกอย่างกลับเป็นค่าเริ่มต้นสำหรับทดสอบ
 /// </para>
 /// <para>
 /// เซฟทันทีที่กด ไม่มีปุ่ม Save — มีช่องเดียวและเป็นค่า เปิด/ปิด กดแล้วลืมกดเซฟ
@@ -26,6 +26,65 @@ public partial class StationOptionsUserControl : UserControl
 
         chkHoldRound.Checked = StationService.HoldForNextRound;
         chkHoldRound.CheckedChanged += HoldRound_CheckedChanged;
+
+        btnResetRuntime.Click += async (_, _) => await ResetRuntimeAsync();
+    }
+
+    /// <summary>
+    /// ล้างร่องรอยการเดินงานทั้งหมด ให้ทุกใบกลับไปเป็นรอเริ่ม
+    ///
+    /// <para>
+    /// ถามยืนยันก่อนเสมอ และบอกให้ครบว่าอะไรจะหายอะไรจะอยู่ เพราะย้อนกลับไม่ได้
+    /// และมีผลกับทุกเครื่องที่ต่ออยู่กับ backend เดียวกัน ไม่ใช่แค่เครื่องที่กด
+    /// </para>
+    /// </summary>
+    private async Task ResetRuntimeAsync()
+    {
+        if (!Confirm.Ask(this, "รีเซ็ตกลับเป็นค่าเริ่มต้น",
+                "จะล้างของพวกนี้ทิ้งทั้งหมด" + Environment.NewLine
+                + "  · คิวเครื่องทุกแถว" + Environment.NewLine
+                + "  · ประวัติคำสั่งที่ส่งเข้าเครื่องทุกแถว" + Environment.NewLine
+                + "  · ธงคำขอที่ ST3 ฝากไว้" + Environment.NewLine + Environment.NewLine
+                + "แล้วตั้งสถานะทุกงานกลับเป็นรอเริ่ม" + Environment.NewLine + Environment.NewLine
+                + "ตัวงาน ข้อมูล pattern ข้อความ UV แผนการผลิต และค่าแคลมป์ ยังอยู่ครบ"
+                + Environment.NewLine + Environment.NewLine
+                + "ย้อนกลับไม่ได้ และมีผลกับทุกเครื่องที่ต่อ backend เดียวกัน"
+                + Environment.NewLine + Environment.NewLine + "ยืนยันหรือไม่?"))
+            return;
+
+        btnResetRuntime.Enabled = false;
+        var originalText = btnResetRuntime.Text;
+        btnResetRuntime.Text = "กำลังล้าง...";
+        try
+        {
+            var api = new ApiClient(
+                $"http://{CustomSettingsManager.Read("PC_IP", "127.0.0.1")}:3000");
+
+            var (result, error) = await api.ResetRuntimeAsync();
+            if (IsDisposed) return;
+
+            if (result == null)
+            {
+                Notify.ErrorModal(this, "รีเซ็ตไม่สำเร็จ",
+                    "ยังไม่มีอะไรถูกล้าง" + Environment.NewLine + Environment.NewLine
+                    + (error ?? "ติดต่อ backend ไม่ได้"));
+                return;
+            }
+
+            Notify.SuccessDetail(this, "รีเซ็ตเรียบร้อย",
+                $"ตั้งสถานะกลับเป็นรอเริ่ม {result.Jobs} งาน" + Environment.NewLine
+                + $"ลบคิวเครื่อง {result.QueueRemoved} แถว" + Environment.NewLine
+                + $"ลบประวัติคำสั่ง {result.CommandsRemoved} แถว" + Environment.NewLine + Environment.NewLine
+                + "กลับไปหน้า Order List แล้วตารางจะอัปเดตเองในรอบถัดไป");
+        }
+        finally
+        {
+            if (!IsDisposed)
+            {
+                btnResetRuntime.Text = originalText;
+                btnResetRuntime.Enabled = true;
+            }
+        }
     }
 
     /// <summary>

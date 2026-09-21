@@ -29,9 +29,16 @@ partial class StationOptionsUserControl
         lblHoldRoundHeading = new AntdUI.Label();
         chkHoldRound = new AntdUI.Checkbox();
         lblHoldRoundHelp = new AntdUI.Label();
+        pnlReset = new AntdUI.Panel();
+        tlpReset = new System.Windows.Forms.TableLayoutPanel();
+        lblResetHeading = new AntdUI.Label();
+        btnResetRuntime = new AntdUI.Button();
+        lblResetHelp = new AntdUI.Label();
         tlpOptionsRoot.SuspendLayout();
         pnlRemoteSend.SuspendLayout();
         pnlHoldRound.SuspendLayout();
+        pnlReset.SuspendLayout();
+        tlpReset.SuspendLayout();
         tlpHoldRound.SuspendLayout();
         tlpRemoteSend.SuspendLayout();
         SuspendLayout();
@@ -43,14 +50,16 @@ partial class StationOptionsUserControl
         tlpOptionsRoot.Controls.Add(lblOptionsTitle, 0, 0);
         tlpOptionsRoot.Controls.Add(pnlRemoteSend, 0, 1);
         tlpOptionsRoot.Controls.Add(pnlHoldRound, 0, 2);
+        tlpOptionsRoot.Controls.Add(pnlReset, 0, 3);
         tlpOptionsRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpOptionsRoot.Location = new System.Drawing.Point(32, 32);
         tlpOptionsRoot.Margin = new System.Windows.Forms.Padding(0);
         tlpOptionsRoot.Name = "tlpOptionsRoot";
-        tlpOptionsRoot.RowCount = 4;
+        tlpOptionsRoot.RowCount = 5;
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 66F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 210F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 252F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 214F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpOptionsRoot.Size = new System.Drawing.Size(1216, 736);
         tlpOptionsRoot.TabIndex = 0;
@@ -164,6 +173,72 @@ partial class StationOptionsUserControl
         lblHoldRoundHelp.TabIndex = 2;
         lblHoldRoundHelp.Text = "ก. ถือเครื่องไว้ (ค่าเริ่มต้น ตามที่ตกลงกับหัวหน้างาน) — พ่นรอบแรกเสร็จแล้วกดปุ่มหน้างาน เครื่องยังเป็นของงานใบนี้อยู่ งานใบอื่นที่รอคิวเครื่องนี้แทรกไม่ได้ จนกว่าชิ้นงานจะกลับมาพ่นรอบสองเสร็จ เครื่องจะจอดรอระหว่างที่คนเอางานออกไปติด shim นอกไลน์\r\nข. ปล่อยเครื่อง (ติ๊กออก) — กดปุ่มหน้างานแล้วเครื่องว่างทันที งานใบอื่นแทรกเข้ามาทำได้ เครื่องไม่จอดเปล่า แต่พอชิ้นงานกลับมา รอบสองต้องไปต่อท้ายคิว อาจค้างกลางไลน์นานกว่าที่คิด\r\nมีผลเฉพาะงานที่เข้าเครื่องเดิมมากกว่าหนึ่งรอบ (marking 22) งานอื่นไม่เกี่ยว";
         //
+        // pnlReset
+        //
+        pnlReset.Back = System.Drawing.Color.White;
+        pnlReset.BorderColor = System.Drawing.Color.FromArgb(245, 34, 45);
+        pnlReset.BorderWidth = 2F;
+        pnlReset.Controls.Add(tlpReset);
+        pnlReset.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlReset.Margin = new System.Windows.Forms.Padding(0, 16, 0, 0);
+        pnlReset.Name = "pnlReset";
+        pnlReset.Padding = new System.Windows.Forms.Padding(24);
+        pnlReset.Radius = 10;
+        pnlReset.Size = new System.Drawing.Size(1216, 198);
+        pnlReset.TabIndex = 3;
+        //
+        // tlpReset
+        //
+        tlpReset.ColumnCount = 1;
+        tlpReset.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpReset.Controls.Add(lblResetHeading, 0, 0);
+        tlpReset.Controls.Add(lblResetHelp, 0, 1);
+        tlpReset.Controls.Add(btnResetRuntime, 0, 2);
+        tlpReset.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpReset.Margin = new System.Windows.Forms.Padding(0);
+        tlpReset.Name = "tlpReset";
+        tlpReset.RowCount = 3;
+        tlpReset.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
+        tlpReset.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpReset.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
+        tlpReset.Size = new System.Drawing.Size(1168, 150);
+        tlpReset.TabIndex = 0;
+        //
+        // lblResetHeading
+        //
+        lblResetHeading.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblResetHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        lblResetHeading.ForeColor = System.Drawing.Color.FromArgb(245, 34, 45);
+        lblResetHeading.Margin = new System.Windows.Forms.Padding(0);
+        lblResetHeading.Name = "lblResetHeading";
+        lblResetHeading.Size = new System.Drawing.Size(1168, 42);
+        lblResetHeading.TabIndex = 0;
+        lblResetHeading.Text = "รีเซ็ตกลับเป็นค่าเริ่มต้น";
+        //
+        // lblResetHelp
+        //
+        lblResetHelp.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblResetHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblResetHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
+        lblResetHelp.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
+        lblResetHelp.Name = "lblResetHelp";
+        lblResetHelp.Size = new System.Drawing.Size(1168, 44);
+        lblResetHelp.TabIndex = 1;
+        lblResetHelp.Text = "ล้างทุกอย่างที่บอกว่างานเดินไปถึงไหนแล้ว แล้วให้ทุกใบกลับไปเป็นรอเริ่ม ใช้ตอนทดสอบเมื่ออยากเริ่มนับหนึ่งใหม่ทั้งกระดาน\r\nลบ: คิวเครื่องทุกแถว · ประวัติคำสั่งที่ส่งเข้าเครื่องทุกแถว · ธงคำขอที่ ST3 ฝากไว้\r\nไม่แตะ: ตัวงาน ข้อมูล pattern ข้อความ UV แผนการผลิต และค่าแคลมป์ ยังอยู่ครบเหมือนเดิม\r\nย้อนกลับไม่ได้ และมีผลกับทุกเครื่องที่ต่ออยู่กับ backend เดียวกัน ไม่ใช่แค่เครื่องนี้";
+        //
+        // btnResetRuntime
+        //
+        btnResetRuntime.Anchor = System.Windows.Forms.AnchorStyles.Left;
+        btnResetRuntime.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        btnResetRuntime.ForeColor = System.Drawing.Color.White;
+        btnResetRuntime.Margin = new System.Windows.Forms.Padding(0);
+        btnResetRuntime.Name = "btnResetRuntime";
+        btnResetRuntime.Radius = 8;
+        btnResetRuntime.Size = new System.Drawing.Size(300, 52);
+        btnResetRuntime.TabIndex = 2;
+        btnResetRuntime.Text = "รีเซ็ตกลับเป็นค่าเริ่มต้น";
+        btnResetRuntime.Type = AntdUI.TTypeMini.Error;
+        //
         // lblRemoteSendHeading
         //
         lblRemoteSendHeading.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -211,6 +286,8 @@ partial class StationOptionsUserControl
         Padding = new System.Windows.Forms.Padding(32);
         Size = new System.Drawing.Size(1280, 800);
         tlpOptionsRoot.ResumeLayout(false);
+        tlpReset.ResumeLayout(false);
+        pnlReset.ResumeLayout(false);
         tlpHoldRound.ResumeLayout(false);
         pnlHoldRound.ResumeLayout(false);
         pnlRemoteSend.ResumeLayout(false);
@@ -229,6 +306,11 @@ partial class StationOptionsUserControl
     private AntdUI.Label lblHoldRoundHeading;
     private AntdUI.Checkbox chkHoldRound;
     private AntdUI.Label lblHoldRoundHelp;
+    private AntdUI.Panel pnlReset;
+    private System.Windows.Forms.TableLayoutPanel tlpReset;
+    private AntdUI.Label lblResetHeading;
+    private AntdUI.Button btnResetRuntime;
+    private AntdUI.Label lblResetHelp;
     private System.Windows.Forms.TableLayoutPanel tlpRemoteSend;
     private AntdUI.Checkbox chkManualRemoteSend;
     private AntdUI.Label lblRemoteSendHelp;

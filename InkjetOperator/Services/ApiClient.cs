@@ -127,6 +127,32 @@ public class ApiClient
         }
     }
 
+    /// <summary>
+    /// ล้างร่องรอยการเดินงานทั้งหมด ให้ทุกใบกลับไปเป็นรอเริ่ม — เครื่องมือทดสอบ
+    ///
+    /// <para>
+    /// ลบคิวเครื่อง ลบประวัติคำสั่ง และตั้งสถานะทุกงานเป็นรอเริ่ม ข้อมูลของงานเอง
+    /// (pattern, ข้อความ UV, แผน, ค่าแคลมป์) ไม่ถูกแตะ
+    /// </para>
+    /// </summary>
+    public async Task<(ResetRuntimeResult? result, string? error)> ResetRuntimeAsync()
+    {
+        try
+        {
+            var response = await _http.PostAsync("/system/resetRuntime", null);
+            var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return (null, $"[{(int)response.StatusCode}] {body}");
+
+            var wrapper = System.Text.Json.JsonSerializer
+                .Deserialize<ApiResponse<ResetRuntimeResult>>(body, JsonOptions);
+            return (wrapper?.Data, null);
+        }
+        catch (Exception ex)
+        {
+            return (null, ex.Message);
+        }
+    }
+
     public async Task<(bool ok, string? error)> CreateUvJobDataAsync(CreateUvJobRequest request)
     {
         try
