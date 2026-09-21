@@ -1079,30 +1079,41 @@ public partial class OrderListUserControl : UserControl
         var (rows, _) = await _api!.GetMachineQueueAsync();
         if (IsDisposed) return;
 
-        var mine = rows
+        // เครื่องละครั้งเดียว ไม่ใช่แถวละครั้ง
+        //
+        // งานที่เข้าเครื่องเดิมหลายรอบ (marking 22) จองไว้หลายแถวบนเครื่องเดียวกัน
+        // ถ้าวนตามแถว พอรอบแรกส่งไม่ผ่านแล้วแถวถูกคืนเป็นรอคิว เครื่องจะว่างอีกครั้ง
+        // การวนรอบถัดไปก็ขอเครื่องได้และได้แถวเดิมกลับมา กลายเป็นส่งซ้ำเข้าเครื่องจริง
+        // สองครั้งจากการกดครั้งเดียว
+        //
+        // การกดเริ่มงานหนึ่งครั้งควรส่งได้อย่างมากเครื่องละหนึ่งรอบอยู่แล้ว รอบถัดไป
+        // ของเครื่องเดิมต้องรอคนกดปุ่มหน้างานเสมอ
+        var machines = rows
             .Where(r => r.PrintJobsId == jobId && r.State == "pending")
             .OrderBy(r => r.Round)
+            .Select(r => r.Machine)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         var lines = new List<Notify.ResultLine>();
 
-        foreach (var row in mine)
+        foreach (var machine in machines)
         {
             // ขอเฉพาะแถวของงานใบนี้ — กดเริ่มงานใบไหนต้องได้ใบนั้น ห้ามไปหยิบ
             // ใบอื่นที่บังเอิญรออยู่ในคิวเครื่องเดียวกันมาส่งแทน
-            var (claim, claimError) = await _api.ClaimMachineAsync(row.Machine, jobId);
+            var (claim, claimError) = await _api.ClaimMachineAsync(machine, jobId);
             if (IsDisposed) return;
 
             if (claimError != null)
             {
-                lines.Add(Notify.Bad($"{row.Machine}: {claimError}"));
+                lines.Add(Notify.Bad($"{machine}: {claimError}"));
                 continue;
             }
 
             if (claim?.Claimed == null)
             {
                 // เครื่องไม่ว่าง — ไม่ใช่ความผิดพลาด แถวยังรออยู่ในคิวเหมือนเดิม
-                lines.Add(Notify.Careful($"{row.Machine}: เครื่องไม่ว่าง เข้าคิวรอไว้แล้ว"));
+                lines.Add(Notify.Careful($"{machine}: เครื่องไม่ว่าง เข้าคิวรอไว้แล้ว"));
                 continue;
             }
 
