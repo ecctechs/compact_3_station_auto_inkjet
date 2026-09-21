@@ -199,6 +199,28 @@ public static class JobSendService
         ];
 
     /// <summary>ลำดับคำสั่งของเครื่อง MK — คืน null เมื่อสำเร็จ</summary>
+    /// <summary>
+    /// ค่าของบล็อกที่เครื่องรับไม่ได้ — คืนข้อความบอกว่าช่องไหนผิด หรือ null เมื่อผ่านหมด
+    ///
+    /// <para>
+    /// Scale คือตัวคูณขนาดตัวอักษร ค่า 0 แปลว่าไม่มีขนาด เครื่องจึงปฏิเสธด้วย ER,F1,22
+    /// ช่องที่ไม่ได้กรอกไว้เลยไม่นับ เพราะตัวส่งใส่ 1 ให้อยู่แล้ว
+    /// </para>
+    /// </summary>
+    private static string? InvalidBlock(InkjetConfigDto config, string label)
+    {
+        foreach (var block in config.TextBlocks.OrderBy(b => b.BlockNumber))
+        {
+            if (block.Scale is int scale && scale < 1)
+            {
+                return $"{label}: Block {block.BlockNumber} มี Scale = {scale} "
+                     + "ซึ่งเครื่องไม่รับ — แก้เป็น 1 ขึ้นไปที่หน้า Order Detail";
+            }
+        }
+
+        return null;
+    }
+
     /// <summary>คำเตือนทั้งหมดรวมเป็นบรรทัดเดียว — ไม่มีเลยคืน null</summary>
     private static string? Note(List<string> notes) =>
         notes.Count == 0 ? null : string.Join(" · ", notes);
@@ -243,6 +265,13 @@ public static class JobSendService
             var fw = await adapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
             if (!fw.Success)
                 return (Reject(label, $"เปลี่ยนไปโปรแกรม {config.ProgramNumber}", fw), Note(notes));
+
+            // ตรวจค่าที่เครื่องไม่รับก่อนเริ่มส่ง
+            //
+            // เครื่องตอบ ER,F1,22 เมื่อค่าใน F1 อยู่นอกช่วงที่รับได้ เช่น Scale เป็น 0
+            // ถ้าปล่อยให้ไปเจอตอนส่ง บล็อกก่อนหน้าจะถูกเขียนลงเครื่องไปแล้วครึ่งทาง
+            // และคนอ่านก็ได้แต่รหัสมาเดาเอง
+            if (InvalidBlock(config, label) is string bad) return (bad, Note(notes));
 
             // ส่งครบทุกช่องเสมอ ช่องที่งานนี้ไม่ได้ใช้ก็ส่งข้อความว่างไปทับ —
             // กฎเดียวกับโปรแกรมเดิม ถ้าข้ามไปเฉย ๆ ข้อความของงานก่อนหน้าจะค้าง
