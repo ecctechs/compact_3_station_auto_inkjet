@@ -251,6 +251,11 @@ internal static class Notify
         machines.Select(m => m switch
         {
             { Ok: true, Suspended: true } => Ok($"{m.Name} — ไม่มีงาน สั่งหยุดพิมพ์แล้ว"),
+
+            // ส่งข้อมูลเข้าเครื่องครบ แต่คำสั่งคุมการพิมพ์ไม่ผ่าน ต้องให้เห็น
+            // ไม่งั้นเครื่องอาจไม่ได้เริ่มพิมพ์เองทั้งที่ข้อมูลใหม่เข้าไปแล้ว
+            { Ok: true, Note: not null } => Careful($"{m.Name} — ส่งสำเร็จ · {m.Note}"),
+
             { Ok: true } => Ok($"{m.Name} — ส่งสำเร็จ"),
             { Suspended: true } => Careful(
                 $"{m.Name} — ไม่มีงานอยู่แล้ว แต่สั่งหยุดพิมพ์ไม่ได้ · ไปดูว่าเครื่องหยุดจริงไหม\n{m.Error}"),

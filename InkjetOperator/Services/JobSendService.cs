@@ -29,7 +29,12 @@ public enum SendStatus
 /// งานนี้ไม่มีโปรแกรมให้เครื่องนี้ จึงสั่งหยุดพิมพ์แทนการส่งข้อมูล — ไม่ใช่ความล้มเหลว
 /// แต่ก็ไม่ใช่การส่งงาน ผู้เรียกต้องแยกข้อความให้คนอ่านรู้ว่าเครื่องนี้ไม่ได้รับงาน
 /// </param>
-public sealed record MkMachineResult(string Name, string? Error, bool Suspended = false)
+/// <param name="Note">
+/// คำเตือนที่ไม่ได้ทำให้การส่งล้มเหลว เช่นเครื่องไม่ยอมรับคำสั่งหยุด/เริ่มพิมพ์
+/// ข้อมูลของงานยังเข้าเครื่องครบ แต่ต้องให้คนหน้างานเห็นว่ามีอะไรผิดปกติ
+/// </param>
+public sealed record MkMachineResult(
+    string Name, string? Error, bool Suspended = false, string? Note = null)
 {
     public bool Ok => Error == null;
 }
@@ -119,9 +124,9 @@ public static class JobSendService
                 continue;
             }
 
-            var error = await SendToOneMkAsync(ip, config!, label);
+            var (error, note) = await SendToOneMkAsync(ip, config!, label);
             if (error == null) anySent = true; else workFailed = true;
-            machines.Add(new MkMachineResult(name, error));
+            machines.Add(new MkMachineResult(name, error, Note: note));
         }
 
         if (machines.Count == 0)
@@ -194,6 +199,10 @@ public static class JobSendService
         ];
 
     /// <summary>ลำดับคำสั่งของเครื่อง MK — คืน null เมื่อสำเร็จ</summary>
+    /// <summary>คำเตือนทั้งหมดรวมเป็นบรรทัดเดียว — ไม่มีเลยคืน null</summary>
+    private static string? Note(List<string> notes) =>
+        notes.Count == 0 ? null : string.Join(" · ", notes);
+
     /// <summary>
     /// ข้อความบอกว่าขั้นไหนไม่ผ่าน พร้อมคำตอบดิบจากเครื่อง
     ///
@@ -208,7 +217,8 @@ public static class JobSendService
             : $"{label}: {step} — เครื่องปฏิเสธ ({reply})";
     }
 
-    private static async Task<string?> SendToOneMkAsync(string ip, InkjetConfigDto config, string label)
+    private static async Task<(string? Error, string? Note)> SendToOneMkAsync(
+        string ip, InkjetConfigDto config, string label)
     {
         var tcp = new TcpManager();
         try
@@ -217,12 +227,22 @@ public static class JobSendService
                 .WaitAsync(TimeSpan.FromSeconds(ConnectTimeoutSeconds));
             var adapter = new MkCompactAdapter(tcp);
 
+            // คำสั่งหยุด/เริ่มพิมพ์ไม่ผ่าน ไม่ล้มทั้งการส่ง
+            //
+            // เครื่องตอบ ER,SR,01 เมื่อสั่งหยุดตอนที่มันไม่ได้อยู่ในสภาพที่หยุดได้
+            // เช่นหยุดอยู่แล้ว ซึ่งไม่ได้แปลว่าข้อมูลของงานส่งเข้าไปไม่ได้ ของเดิม
+            // ตัดจบตั้งแต่บรรทัดนี้ คำสั่งที่เหลือจึงไม่เคยถูกส่งเลยสักตัว แล้วก็ไม่มีใคร
+            // รู้ว่าคำสั่งที่เป็นตัวงานจริง ๆ ผ่านหรือไม่
+            //
+            // ตัวที่ตัดสินว่างานเข้าเครื่องหรือไม่คือ FW / FS / F1 / FM ซึ่งยังล้มได้อยู่
+            var notes = new List<string>();
+
             var sr = await adapter.SuspendAsync();
-            if (!sr.Success) return Reject(label, "Suspend", sr);
+            if (!sr.Success) notes.Add(Reject(label, "สั่งหยุดพิมพ์", sr));
 
             var fw = await adapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
             if (!fw.Success)
-                return Reject(label, $"เปลี่ยนไปโปรแกรม {config.ProgramNumber}", fw);
+                return (Reject(label, $"เปลี่ยนไปโปรแกรม {config.ProgramNumber}", fw), Note(notes));
 
             // ส่งครบทุกช่องเสมอ ช่องที่งานนี้ไม่ได้ใช้ก็ส่งข้อความว่างไปทับ —
             // กฎเดียวกับโปรแกรมเดิม ถ้าข้ามไปเฉย ๆ ข้อความของงานก่อนหน้าจะค้าง
@@ -233,23 +253,23 @@ public static class JobSendService
                     ?? new TextBlockDto { BlockNumber = slot, Text = "" };
 
                 var fb = await adapter.SendTextBlockAsync(block, slot);
-                if (!fb.Success) return Reject(label, $"ส่ง Block {slot}", fb);
+                if (!fb.Success) return (Reject(label, $"ส่ง Block {slot}", fb), Note(notes));
             }
 
             // FM ต้องมาหลัง FS/F1 ตามสเปกของเครื่อง (FW -> FS/F1 -> FM)
             // ถ้าส่ง FM ก่อน Block ทิศทางที่ตั้งไว้จะถูก Block ที่ตามมาเขียนทับ
             // ปุ่ม ABC จะกดแล้วเครื่องพิมพ์หัวตั้งเหมือนเดิม
             var fm = await adapter.SendConfigAsync(config);
-            if (!fm.Success) return Reject(label, "ส่ง Config", fm);
+            if (!fm.Success) return (Reject(label, "ส่ง Config", fm), Note(notes));
 
             var sq = await adapter.ResumeAsync();
-            if (!sq.Success) return Reject(label, "Resume", sq);
+            if (!sq.Success) notes.Add(Reject(label, "สั่งเริ่มพิมพ์", sq));
 
-            return null;
+            return (null, Note(notes));
         }
         catch (Exception ex)
         {
-            return $"{label}: {ex.Message}";
+            return ($"{label}: {ex.Message}", null);
         }
         finally
         {
