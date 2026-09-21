@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using InkjetOperator.Managers;
 using InkjetOperator.Models;
@@ -81,13 +81,27 @@ public class MkCompactAdapter : IInkjetAdapter
         return "";
     }
 
+    /// <summary>
+    /// คำตอบที่แปลว่าเครื่องไม่รับคำสั่ง — ขึ้นต้นด้วย ER แล้วตามด้วยคำสั่งกับรหัส
+    ///
+    /// <para>
+    /// ยิงคำสั่งที่เครื่องไม่รู้จักเข้าไปจะได้ <c>ER,test,00</c> กลับมา ซึ่งเป็นคำตอบ
+    /// ที่ไม่ว่าง การนับว่า "ตอบกลับมา = สำเร็จ" จึงทำให้คำสั่งที่เครื่องปฏิเสธถูก
+    /// รายงานว่าส่งสำเร็จ แล้วงานก็ไม่เข้าเครื่องโดยไม่มีอะไรบอก
+    /// </para>
+    /// </summary>
+    private static bool IsRejected(string response) =>
+        response.StartsWith("ER", StringComparison.OrdinalIgnoreCase);
+
     private CommandResult MakeResult(string command, string response, int? ordinal = null)
     {
         return new CommandResult
         {
             Command = command,
             Response = response,
-            Success = response != "", // empty = connection problem (rs232_connector.py line 33)
+
+            // ว่าง = ต่อไม่ติดหรือเครื่องเงียบ · ขึ้นต้น ER = เครื่องรับคำสั่งแล้วปฏิเสธ
+            Success = response != "" && !IsRejected(response),
             SentAt = DateTime.UtcNow.ToString("o"),
             Ordinal = ordinal,
         };

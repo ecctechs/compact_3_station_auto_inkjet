@@ -194,6 +194,20 @@ public static class JobSendService
         ];
 
     /// <summary>ลำดับคำสั่งของเครื่อง MK — คืน null เมื่อสำเร็จ</summary>
+    /// <summary>
+    /// ข้อความบอกว่าขั้นไหนไม่ผ่าน พร้อมคำตอบดิบจากเครื่อง
+    ///
+    /// ต้องแนบคำตอบมาด้วยเสมอ เพราะเครื่องตอบเป็นรหัส เช่น ER,FW,00 ซึ่งบอกได้ว่า
+    /// ติดที่อะไร ถ้าบอกแค่ "ไม่สำเร็จ" คนหน้างานได้แต่เดา
+    /// </summary>
+    private static string Reject(string label, string step, CommandResult result)
+    {
+        var reply = (result.Response ?? "").Trim();
+        return reply.Length == 0
+            ? $"{label}: {step} — เครื่องไม่ตอบ"
+            : $"{label}: {step} — เครื่องปฏิเสธ ({reply})";
+    }
+
     private static async Task<string?> SendToOneMkAsync(string ip, InkjetConfigDto config, string label)
     {
         var tcp = new TcpManager();
@@ -204,10 +218,11 @@ public static class JobSendService
             var adapter = new MkCompactAdapter(tcp);
 
             var sr = await adapter.SuspendAsync();
-            if (!sr.Success) return $"{label}: Suspend ไม่สำเร็จ";
+            if (!sr.Success) return Reject(label, "Suspend", sr);
 
             var fw = await adapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
-            if (!fw.Success) return $"{label}: เปลี่ยนโปรแกรมไม่สำเร็จ";
+            if (!fw.Success)
+                return Reject(label, $"เปลี่ยนไปโปรแกรม {config.ProgramNumber}", fw);
 
             // ส่งครบทุกช่องเสมอ ช่องที่งานนี้ไม่ได้ใช้ก็ส่งข้อความว่างไปทับ —
             // กฎเดียวกับโปรแกรมเดิม ถ้าข้ามไปเฉย ๆ ข้อความของงานก่อนหน้าจะค้าง
@@ -218,17 +233,17 @@ public static class JobSendService
                     ?? new TextBlockDto { BlockNumber = slot, Text = "" };
 
                 var fb = await adapter.SendTextBlockAsync(block, slot);
-                if (!fb.Success) return $"{label}: ส่ง Block {slot} ไม่สำเร็จ";
+                if (!fb.Success) return Reject(label, $"ส่ง Block {slot}", fb);
             }
 
             // FM ต้องมาหลัง FS/F1 ตามสเปกของเครื่อง (FW -> FS/F1 -> FM)
             // ถ้าส่ง FM ก่อน Block ทิศทางที่ตั้งไว้จะถูก Block ที่ตามมาเขียนทับ
             // ปุ่ม ABC จะกดแล้วเครื่องพิมพ์หัวตั้งเหมือนเดิม
             var fm = await adapter.SendConfigAsync(config);
-            if (!fm.Success) return $"{label}: ส่ง Config ไม่สำเร็จ";
+            if (!fm.Success) return Reject(label, "ส่ง Config", fm);
 
             var sq = await adapter.ResumeAsync();
-            if (!sq.Success) return $"{label}: Resume ไม่สำเร็จ";
+            if (!sq.Success) return Reject(label, "Resume", sq);
 
             return null;
         }
