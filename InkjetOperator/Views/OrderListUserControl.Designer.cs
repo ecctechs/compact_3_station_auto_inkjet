@@ -43,6 +43,9 @@ partial class OrderListUserControl
         lblStationMk = new AntdUI.Label();
         lblStationUv1 = new AntdUI.Label();
         lblStationUv2 = new AntdUI.Label();
+        lblQueueMk = new AntdUI.Label();
+        lblQueueUv1 = new AntdUI.Label();
+        lblQueueUv2 = new AntdUI.Label();
         btnSimPushMk = new AntdUI.Button();
         btnSimPushUv1 = new AntdUI.Button();
         btnSimPushUv2 = new AntdUI.Button();
@@ -160,7 +163,7 @@ partial class OrderListUserControl
         tlpTableInner.RowCount = 3;
         tlpTableInner.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpTableInner.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpTableInner.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 86F));
+        tlpTableInner.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 110F));
         tlpTableInner.Size = new System.Drawing.Size(1282, 878);
         tlpTableInner.TabIndex = 0;
         //
@@ -278,18 +281,21 @@ partial class OrderListUserControl
         tlpStationBar.Controls.Add(lblStationMk, 0, 0);
         tlpStationBar.Controls.Add(lblStationUv1, 1, 0);
         tlpStationBar.Controls.Add(lblStationUv2, 2, 0);
-        tlpStationBar.Controls.Add(btnSimPushMk, 0, 1);
-        tlpStationBar.Controls.Add(btnSimPushUv1, 1, 1);
-        tlpStationBar.Controls.Add(btnSimPushUv2, 2, 1);
+        tlpStationBar.Controls.Add(lblQueueMk, 0, 1);
+        tlpStationBar.Controls.Add(lblQueueUv1, 1, 1);
+        tlpStationBar.Controls.Add(lblQueueUv2, 2, 1);
+        tlpStationBar.Controls.Add(btnSimPushMk, 0, 2);
+        tlpStationBar.Controls.Add(btnSimPushUv1, 1, 2);
+        tlpStationBar.Controls.Add(btnSimPushUv2, 2, 2);
         tlpStationBar.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpStationBar.Margin = new System.Windows.Forms.Padding(0, 4, 0, 0);
         tlpStationBar.Name = "tlpStationBar";
-        tlpStationBar.RowCount = 2;
+        tlpStationBar.RowCount = 3;
         tlpStationBar.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
+        tlpStationBar.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
         tlpStationBar.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpStationBar.Size = new System.Drawing.Size(1282, 82);
+        tlpStationBar.Size = new System.Drawing.Size(1282, 110);
         tlpStationBar.TabIndex = 2;
-        tlpStationBar.Visible = false;
         //
         // lblStationMk
         //
@@ -321,6 +327,39 @@ partial class OrderListUserControl
         lblStationUv2.TabIndex = 2;
         lblStationUv2.Text = "UV2";
         //
+        // lblQueueMk
+        //
+        lblQueueMk.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblQueueMk.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblQueueMk.ForeColor = System.Drawing.Color.FromArgb(110, 110, 110);
+        lblQueueMk.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblQueueMk.Name = "lblQueueMk";
+        lblQueueMk.Size = new System.Drawing.Size(421, 28);
+        lblQueueMk.TabIndex = 3;
+        lblQueueMk.Text = "";
+        //
+        // lblQueueUv1
+        //
+        lblQueueUv1.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblQueueUv1.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblQueueUv1.ForeColor = System.Drawing.Color.FromArgb(110, 110, 110);
+        lblQueueUv1.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblQueueUv1.Name = "lblQueueUv1";
+        lblQueueUv1.Size = new System.Drawing.Size(421, 28);
+        lblQueueUv1.TabIndex = 4;
+        lblQueueUv1.Text = "";
+        //
+        // lblQueueUv2
+        //
+        lblQueueUv2.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblQueueUv2.Font = new System.Drawing.Font("Segoe UI", 10F);
+        lblQueueUv2.ForeColor = System.Drawing.Color.FromArgb(110, 110, 110);
+        lblQueueUv2.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblQueueUv2.Name = "lblQueueUv2";
+        lblQueueUv2.Size = new System.Drawing.Size(421, 28);
+        lblQueueUv2.TabIndex = 5;
+        lblQueueUv2.Text = "";
+        //
         // btnSimPushMk
         //
         btnSimPushMk.BorderWidth = 2F;
@@ -332,7 +371,7 @@ partial class OrderListUserControl
         btnSimPushMk.Name = "btnSimPushMk";
         btnSimPushMk.Radius = 6;
         btnSimPushMk.Size = new System.Drawing.Size(421, 46);
-        btnSimPushMk.TabIndex = 3;
+        btnSimPushMk.TabIndex = 6;
         btnSimPushMk.Text = "จำลองกดปุ่ม MK";
         btnSimPushMk.Type = AntdUI.TTypeMini.Default;
         //
@@ -347,7 +386,7 @@ partial class OrderListUserControl
         btnSimPushUv1.Name = "btnSimPushUv1";
         btnSimPushUv1.Radius = 6;
         btnSimPushUv1.Size = new System.Drawing.Size(421, 46);
-        btnSimPushUv1.TabIndex = 4;
+        btnSimPushUv1.TabIndex = 7;
         btnSimPushUv1.Text = "จำลองกดปุ่ม UV1";
         btnSimPushUv1.Type = AntdUI.TTypeMini.Default;
         //
@@ -362,7 +401,7 @@ partial class OrderListUserControl
         btnSimPushUv2.Name = "btnSimPushUv2";
         btnSimPushUv2.Radius = 6;
         btnSimPushUv2.Size = new System.Drawing.Size(421, 46);
-        btnSimPushUv2.TabIndex = 5;
+        btnSimPushUv2.TabIndex = 8;
         btnSimPushUv2.Text = "จำลองกดปุ่ม UV2";
         btnSimPushUv2.Type = AntdUI.TTypeMini.Default;
         //
@@ -685,6 +724,9 @@ partial class OrderListUserControl
     private AntdUI.Label lblStationMk;
     private AntdUI.Label lblStationUv1;
     private AntdUI.Label lblStationUv2;
+    private AntdUI.Label lblQueueMk;
+    private AntdUI.Label lblQueueUv1;
+    private AntdUI.Label lblQueueUv2;
     private AntdUI.Button btnSimPushMk;
     private AntdUI.Button btnSimPushUv1;
     private AntdUI.Button btnSimPushUv2;

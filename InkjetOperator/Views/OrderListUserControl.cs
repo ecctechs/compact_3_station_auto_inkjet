@@ -218,13 +218,19 @@ public partial class OrderListUserControl : UserControl
 
         _pushButton.Pressed += async (_, _) => await OnPushButtonPressedAsync();
 
-        // แถบสถานีกับปุ่มจำลอง — designer ซ่อนไว้ ที่นี่คือที่เดียวที่เปิดให้เห็น
+        // แถบสถานีเห็นทุกโหมด — คนหน้างานต้องรู้ว่าเครื่องไหนว่างและมีอะไรรออยู่
+        // ส่วนปุ่มจำลองการกดปุ่มหน้างานเหลือเฉพาะโหมดทดสอบเหมือนเดิม
         //
-        // โหมดใช้งานจริงต้องยุบความสูงของแถวด้วย ไม่ใช่แค่ซ่อนแผง ไม่งั้นตารางจะเสีย
-        // พื้นที่ไป 86px เปล่า ๆ ทั้งที่ไม่มีอะไรแสดง
+        // โหมดใช้งานจริงยุบเฉพาะแถวของปุ่ม แล้วหดความสูงของทั้งแถบลงตามกัน
+        // ไม่ใช่แค่ซ่อนปุ่ม ไม่งั้นตารางจะเสียพื้นที่ไปเปล่า ๆ กับแถวที่ไม่มีอะไรแสดง
         bool dev = StationService.IsDevMode;
-        tlpStationBar.Visible = dev;
-        tlpTableInner.RowStyles[2].Height = dev ? 86F : 0F;
+
+        btnSimPushMk.Visible = dev;
+        btnSimPushUv1.Visible = dev;
+        btnSimPushUv2.Visible = dev;
+
+        tlpStationBar.RowStyles[2].Height = dev ? 50F : 0F;
+        tlpTableInner.RowStyles[2].Height = dev ? 110F : 64F;
 
         btnSimPushMk.Click += async (_, _) => await OnPushButtonPressedAsync("MK");
         btnSimPushUv1.Click += async (_, _) => await OnPushButtonPressedAsync("UV1");
@@ -313,46 +319,69 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private async Task RefreshStationBarAsync()
     {
-        if (_api == null || !tlpStationBar.Visible || IsDisposed) return;
+        if (_api == null || IsDisposed) return;
 
         var (rows, error) = await _api.GetMachineQueueAsync();
         if (error != null || IsDisposed) return;
 
-        foreach (var (machine, label, button) in StationSlots())
+        foreach (var (machine, label, queueLabel, button) in StationSlots())
         {
             var holder = rows.FirstOrDefault(r => r.Machine == machine && r.State == "active");
-            int waiting = rows.Count(r => r.Machine == machine && r.State == "pending");
 
-            var queue = waiting > 0 ? $"  (รออีก {waiting})" : "";
+            // เรียงตามลำดับที่จะได้เครื่อง — ตัวแรกในรายการคือคิวที่ 1
+            var waiting = rows
+                .Where(r => r.Machine == machine && r.State == "pending")
+                .OrderBy(r => r.Id)
+                .ToList();
 
             // ปุ่มกดได้ตราบใดที่ยังมีอะไรให้ขยับ — ถืออยู่ก็ปล่อย ว่างแต่มีคนรอก็ยกให้คิว
             //
             // ปุ่มจริงหน้าเครื่องกดได้ตลอดเวลาอยู่แล้ว และสภาพ "ว่างแต่มีงานรออยู่"
             // เกิดได้จริง เช่นปล่อยเครื่องไปแล้วแต่การยกให้คิวถัดไปไม่สำเร็จ
             // ถ้าปุ่มกดไม่ได้ตอนนั้น จะไม่มีทางดันคิวให้เดินต่อได้เลย
-            button.Enabled = holder != null || waiting > 0;
+            button.Enabled = holder != null || waiting.Count > 0;
 
             if (holder == null)
             {
-                label.Text = $"● {machine} — ว่าง{queue}";
-                label.ForeColor = waiting > 0 ? Color.FromArgb(214, 108, 0) : DesignTokens.SuccessText;
-                continue;
+                label.Text = $"● {machine} — ว่าง";
+                label.ForeColor = waiting.Count > 0 ? WaitingColor : DesignTokens.SuccessText;
+            }
+            else
+            {
+                // ถึงคิวแล้วแต่ยังไม่ได้ส่ง กับส่งเข้าเครื่องไปแล้ว เป็นคนละสภาพกัน
+                var what = holder.SentAt == null ? "รอ ST1 ส่ง" : "กำลังพิมพ์";
+
+                label.Text = $"● {machine} — {JobName(holder.PrintJobsId)} · {what}";
+                label.ForeColor = WaitingColor;
             }
 
-            // ถึงคิวแล้วแต่ยังไม่ได้ส่ง กับส่งเข้าเครื่องไปแล้ว เป็นคนละสภาพกัน
-            var what = holder.SentAt == null ? "รอ ST1 ส่ง" : "กำลังพิมพ์";
-
-            label.Text = $"● {machine} — {JobName(holder.PrintJobsId)} · {what}{queue}";
-            label.ForeColor = Color.FromArgb(214, 108, 0);
+            queueLabel.Text = QueueLine(waiting);
         }
     }
 
-    /// <summary>สามช่องของแถบสถานี — ชื่อเครื่อง ป้ายสถานะ และปุ่มจำลองของเครื่องนั้น</summary>
-    private IEnumerable<(string Machine, AntdUI.Label Label, AntdUI.Button Button)> StationSlots()
+    /// <summary>
+    /// บรรทัดบอกคิวของเครื่องหนึ่ง — ใบถัดไปคือใบไหน และมีทั้งหมดกี่ใบ
+    ///
+    /// บอกชื่องานของใบถัดไปด้วย ไม่ใช่แค่จำนวน เพราะคนหน้างานต้องรู้ว่าเดี๋ยวจะได้
+    /// ชิ้นงานของล็อตไหนมาเข้าเครื่องต่อ จะได้เตรียมของถูกใบ
+    /// </summary>
+    private string QueueLine(List<MachineQueueRow> waiting)
     {
-        yield return ("MK", lblStationMk, btnSimPushMk);
-        yield return ("UV1", lblStationUv1, btnSimPushUv1);
-        yield return ("UV2", lblStationUv2, btnSimPushUv2);
+        if (waiting.Count == 0) return "ไม่มีคิวรอ";
+
+        var next = $"คิวถัดไป: {JobName(waiting[0].PrintJobsId)}";
+        return waiting.Count == 1 ? next : $"{next}   (รอทั้งหมด {waiting.Count} ใบ)";
+    }
+
+    /// <summary>สีของเครื่องที่ไม่ว่าง หรือว่างแต่ยังมีงานค้างคิวอยู่</summary>
+    private static readonly Color WaitingColor = Color.FromArgb(214, 108, 0);
+
+    /// <summary>สามช่องของแถบสถานี — ชื่อเครื่อง ป้ายสถานะ ป้ายคิว และปุ่มจำลอง</summary>
+    private IEnumerable<(string Machine, AntdUI.Label Label, AntdUI.Label Queue, AntdUI.Button Button)> StationSlots()
+    {
+        yield return ("MK", lblStationMk, lblQueueMk, btnSimPushMk);
+        yield return ("UV1", lblStationUv1, lblQueueUv1, btnSimPushUv1);
+        yield return ("UV2", lblStationUv2, lblQueueUv2, btnSimPushUv2);
     }
 
     private static bool SentAlready(ResolvedJobResponse resolved, string step) =>
