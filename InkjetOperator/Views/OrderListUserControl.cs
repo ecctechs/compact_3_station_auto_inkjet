@@ -457,7 +457,7 @@ public partial class OrderListUserControl : UserControl
 
             // ผูก DataSource ใหม่ทีไร ตารางจะรีเซ็ตทั้งลำดับที่เรียงไว้และตำแหน่ง scroll
             // รอบ poll ที่ข้อมูลไม่เปลี่ยนจึงไม่ต้องผูกใหม่ ไม่งั้นทุก 5 วิจะกระตุกทีนึง
-            var signature = BuildSignature(jobs);
+            var signature = BuildSignature(jobs) + QueueSignature();
             if (!force && signature == _lastSignature) return;
 
             _lastSignature = signature;
@@ -473,6 +473,18 @@ public partial class OrderListUserControl : UserControl
         {
             _refreshing = false;
         }
+    }
+
+    /// <summary>
+    /// ย่อสภาพคิวให้เหลือข้อความเดียว — ช่องสถานะเอาคิวมาแสดงด้วย ถ้าไม่นับรวม
+    /// รอบที่มีแต่คิวเปลี่ยนจะไม่วาดตารางใหม่ แล้วสถานะจะค้างอยู่ของเก่า
+    /// </summary>
+    private string QueueSignature()
+    {
+        var sb = new System.Text.StringBuilder(_queueRows.Count * 16);
+        foreach (var r in _queueRows.OrderBy(r => r.Id))
+            sb.Append(r.Id).Append(r.State).Append('|');
+        return sb.ToString();
     }
 
     /// <summary>ย่อทุกอย่างที่ตารางวาดให้เหลือข้อความเดียว ไว้เทียบว่ารอบนี้มีอะไรเปลี่ยนไหม</summary>
@@ -1995,7 +2007,7 @@ public partial class OrderListUserControl : UserControl
         return label.Length == 0 ? Dash : label;
     }
 
-    private static OrderRow ToRow(PrintJob job, bool isHistory)
+    private OrderRow ToRow(PrintJob job, bool isHistory)
     {
         var plan = MarkingMethodService.Resolve(job.PlanRouting?.MarkingMethod);
 
@@ -2004,6 +2016,18 @@ public partial class OrderListUserControl : UserControl
             job.Status,
             MarkingMethodService.FinishedIncomplete(
                 job.Status, job.PlanRouting?.MarkingMethod, job.Commands));
+        // งานใบเดียวแตะได้หลายเครื่อง บางเครื่องเดินแล้วบางเครื่องยังรอคิวอยู่
+        //
+        // คำเดียวในช่องนี้บอกได้แค่ว่า "เดินอยู่" ซึ่งจริงแต่ไม่ครบ พอเห็นสองใบขึ้น
+        // Working พร้อมกันจะดูเหมือนผิด ทั้งที่ใบหนึ่งทำไปแล้วครึ่งเดียว
+        var waiting = PendingMachines(job.Id);
+        if (waiting.Count > 0)
+        {
+            statusLabel = string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase)
+                ? $"{statusLabel} · รอ {string.Join(" ", waiting)}"
+                : $"รอคิว {string.Join(" ", waiting)}";
+        }
+
         var statusText = new AntdUI.CellText(statusLabel) { Fore = statusColor };
 
         var buttons = new List<AntdUI.CellButton>();
@@ -2174,6 +2198,14 @@ public partial class OrderListUserControl : UserControl
 
         ShowProcessingSides(Find(sides, "Plate"), Find(sides, "Shim"));
     }
+
+    /// <summary>เครื่องที่งานใบนี้จองไว้แล้วแต่ยังไม่ถึงคิว เรียงตามลำดับที่จะได้เครื่อง</summary>
+    private List<string> PendingMachines(int jobId) =>
+        _queueRows
+            .Where(r => r.PrintJobsId == jobId && r.State == "pending")
+            .OrderBy(r => r.Id)
+            .Select(r => r.Machine)
+            .ToList();
 
     /// <summary>งานที่ถือเครื่องของสถานีนี้อยู่ตอนนี้ — null เมื่อเครื่องว่างหรือยังไม่รู้คิว</summary>
     private PrintJob? JobInMyMachine()
