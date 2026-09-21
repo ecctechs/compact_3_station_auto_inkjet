@@ -2039,6 +2039,12 @@ public partial class OrderListUserControl : UserControl
                 : $"รอคิว {string.Join(" ", waiting)}";
         }
 
+        // งานที่พ่น plate เสร็จแล้วและกำลังรอเอาไปติด shim นอกไลน์
+        //
+        // ช่วงนี้กินเวลานานและชิ้นงานไม่ได้อยู่ในไลน์ คนหน้าจอต้องแยกออกจากงานที่
+        // เครื่องกำลังพ่นอยู่จริง ไม่งั้นเห็นแค่ว่ากำลังทำ แล้วนึกว่าเครื่องเดินอยู่
+        if (WaitingForShim(job)) statusLabel = "รอติด shim";
+
         var statusText = new AntdUI.CellText(statusLabel) { Fore = statusColor };
 
         var buttons = new List<AntdUI.CellButton>();
@@ -2209,6 +2215,17 @@ public partial class OrderListUserControl : UserControl
 
         ShowProcessingSides(Find(sides, "Plate"), Find(sides, "Shim"));
     }
+
+    /// <summary>
+    /// งานนี้พ่นรอบแรกเสร็จแล้วและกำลังรอติด shim อยู่นอกไลน์ไหม
+    ///
+    /// <para>
+    /// ใช้กับงานที่เข้าเครื่องเดิมสองรอบ (marking 22) รู้ได้จากแถวคิวที่ยังไม่ปล่อย
+    /// ของรอบที่สองขึ้นไป — แถวของรอบแรกจะถูกปิดไปแล้วตอนคนกดปุ่มหน้างาน
+    /// </para>
+    /// </summary>
+    private bool WaitingForShim(PrintJob job) =>
+        _queueRows.Any(r => r.PrintJobsId == job.Id && r.Round >= 2 && r.State == "active");
 
     /// <summary>เครื่องที่งานใบนี้จองไว้แล้วแต่ยังไม่ถึงคิว เรียงตามลำดับที่จะได้เครื่อง</summary>
     private List<string> PendingMachines(int jobId) =>
