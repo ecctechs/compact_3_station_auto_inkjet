@@ -71,13 +71,12 @@ public partial class InkjetSettingUserControl : UserControl
 
     private void BtnSave_Click(object? sender, EventArgs e)
     {
+        // หัวพ่นสองตัวใช้ IP เดียวกันได้
+        //
+        // เดิมกันไว้เพราะคิดว่าเป็นคนละเครื่องต้องคนละที่อยู่ แต่หน้างานมีกรณีที่ทั้งสอง
+        // หัวอยู่หลังที่อยู่เดียวกัน และการกันไว้ทำให้ตั้งค่าไม่ได้เลย
         var ip058 = txtMk058Ip.Text.Trim();
         var ip059 = txtMk059Ip.Text.Trim();
-        if (!string.IsNullOrEmpty(ip058) && !string.IsNullOrEmpty(ip059) && ip058 == ip059)
-        {
-            Notify.WarnModal(this, "แจ้งเตือน", "MK058 and MK059 IP addresses must not be the same.");
-            return;
-        }
 
         var f1 = txtUv1Folder.Text.Trim();
         var f2 = txtUv2Folder.Text.Trim();
