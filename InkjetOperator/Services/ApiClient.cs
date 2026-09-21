@@ -96,6 +96,37 @@ public class ApiClient
         }
     }
 
+    /// <summary>
+    /// แก้ข้อความของแถว UV แถวเดียว — ส่งเฉพาะช่องที่เปลี่ยน
+    ///
+    /// <para>
+    /// ใช้ตอนคนหน้างานพิมพ์ทับข้อความในตาราง UV ที่หน้า Order Detail
+    /// ไม่แตะ machine หรือ program_name ของแถวนั้น
+    /// </para>
+    /// </summary>
+    public async Task<(bool ok, string? error)> UpdateUvTextsAsync(
+        int rowId, IReadOnlyDictionary<string, string?> texts)
+    {
+        try
+        {
+            var content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(texts, JsonOptions),
+                System.Text.Encoding.UTF8,
+                "application/json");
+
+            var response = await _http.PatchAsync($"/uv-job/{rowId}", content);
+            var body = await response.Content.ReadAsStringAsync();
+
+            return response.IsSuccessStatusCode
+                ? (true, null)
+                : (false, $"[{(int)response.StatusCode}] {body}");
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
+    }
+
     public async Task<(bool ok, string? error)> CreateUvJobDataAsync(CreateUvJobRequest request)
     {
         try

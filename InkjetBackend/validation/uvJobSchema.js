@@ -19,4 +19,13 @@ const createUvJobSchema = z.object({
   items: z.array(uvJobItemSchema).min(1),
 });
 
-module.exports = { createUvJobSchema };
+// แก้ข้อความอย่างเดียว ช่องที่ไม่ส่งมาคือไม่แตะ
+const updateUvTextSchema = z.object({
+  text1: z.string().nullable().optional(),
+  text2: z.string().nullable().optional(),
+  text3: z.string().nullable().optional(),
+  text4: z.string().nullable().optional(),
+  text5: z.string().nullable().optional(),
+});
+
+module.exports = { createUvJobSchema, updateUvTextSchema };

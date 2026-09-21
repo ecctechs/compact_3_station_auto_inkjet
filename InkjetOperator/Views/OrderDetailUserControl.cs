@@ -149,6 +149,11 @@ public partial class OrderDetailUserControl : UserControl
         tblMk2Blocks.EditMode = AntdUI.TEditMode.Click;
         tblUv1Texts.Columns = BuildUvColumns();
         tblUv2Texts.Columns = BuildUvColumns();
+
+        // ข้อความของ UV แก้ได้ทุกช่อง — คลิกที่ช่องแล้วพิมพ์ทับได้เลย
+        // ส่วนอื่นของฝั่ง UV ยังล็อกไว้เหมือนเดิม
+        tblUv1Texts.EditMode = AntdUI.TEditMode.Click;
+        tblUv2Texts.EditMode = AntdUI.TEditMode.Click;
     }
 
     private static AntdUI.ColumnCollection BuildBlockColumns() =>
@@ -164,8 +169,9 @@ public partial class OrderDetailUserControl : UserControl
 
     private static AntdUI.ColumnCollection BuildUvColumns() =>
     [
-        new AntdUI.Column("Field", "Field", AntdUI.ColumnAlign.Center) { Width = "30%" },
-        new AntdUI.Column("Value", "Value", AntdUI.ColumnAlign.Left) { Width = "70%" },
+        // ชื่อช่องเป็นตัวชี้ว่าแถวนี้คือข้อความที่เท่าไร แก้ไม่ได้
+        new AntdUI.Column("Field", "Field", AntdUI.ColumnAlign.Center) { Width = "30%", Editable = false },
+        new AntdUI.Column("Value", "Value", AntdUI.ColumnAlign.Left) { Width = "70%", Editable = true },
     ];
 
     /// <summary>
@@ -480,15 +486,102 @@ public partial class OrderDetailUserControl : UserControl
                 return;
             }
 
+            // ข้อความ UV อยู่คนละตารางกับ pattern จึงต้องบันทึกแยก
+            var uvError = await SaveUvTextsAsync();
+            if (IsDisposed) return;
+
             // วาดใหม่จากค่าที่บันทึกแล้ว ช่องที่เว้นว่างไว้จะได้กลับมาเป็นขีด
             FillMkSection(_pattern!);
             FillConveyor(_pattern!);
+
+            if (uvError != null)
+            {
+                Notify.ErrorModal(this, "บันทึกข้อความ UV ไม่สำเร็จ",
+                    "ค่าฝั่ง MK บันทึกแล้ว แต่ข้อความ UV ยังไม่ได้ลงฐานข้อมูล"
+                    + Environment.NewLine + Environment.NewLine + uvError);
+                return;
+            }
+
             Notify.Success(this, "บันทึกค่าเรียบร้อย");
         }
         finally
         {
             if (!IsDisposed) btnSavePattern.Enabled = true;
         }
+    }
+
+    /// <summary>
+    /// บันทึกข้อความ UV ที่ถูกแก้ — คืนข้อความปัญหา หรือ null เมื่อไม่มีอะไรผิด
+    ///
+    /// <para>
+    /// ส่งเฉพาะช่องที่ค่าต่างไปจากที่วาดไว้ตอนเปิดหน้า และส่งเฉพาะแถวที่มีการแก้จริง
+    /// แถวที่ไม่ได้แตะจะไม่ถูกเขียนทับ กันการเผลอลบข้อความของเครื่องที่ไม่ได้ยุ่งด้วย
+    /// </para>
+    /// <para>
+    /// ช่องที่ลบจนว่างหรือใส่ขีดไว้ ถือว่าตั้งใจล้างข้อความนั้น ส่งเป็นค่าว่างไป
+    /// ไม่ใช่ข้ามไปเฉย ๆ ไม่งั้นลบข้อความทิ้งไม่ได้เลย
+    /// </para>
+    /// </summary>
+    private async Task<string?> SaveUvTextsAsync()
+    {
+        if (_api == null) return null;
+
+        var problems = new List<string>();
+
+        foreach (var (table, machine) in new[]
+                 {
+                     (tblUv1Texts, "UV1"),
+                     (tblUv2Texts, "UV2"),
+                 })
+        {
+            var row = _uvData.FirstOrDefault(r =>
+                string.Equals(r.Machine, machine, StringComparison.OrdinalIgnoreCase));
+
+            if (row == null) continue;
+            if (table.DataSource is not List<UvTextRow> edited) continue;
+            if (table.Tag is not List<string> original) continue;
+
+            var changed = new Dictionary<string, string?>();
+            for (int i = 0; i < edited.Count && i < original.Count; i++)
+            {
+                var now = (edited[i].Value ?? "").Trim();
+                if (now == Dash) now = "";
+
+                var before = (original[i] ?? "").Trim();
+                if (before == Dash) before = "";
+
+                if (now == before) continue;
+                changed[$"text{i + 1}"] = now.Length == 0 ? null : now;
+            }
+
+            if (changed.Count == 0) continue;
+
+            var (ok, error) = await _api.UpdateUvTextsAsync(row.Id, changed);
+            if (IsDisposed) return null;
+
+            if (!ok)
+            {
+                problems.Add($"{machine}: {error}");
+                continue;
+            }
+
+            // เขียนกลับลงข้อมูลในมือด้วย ไม่งั้นกดส่งต่อทันทีจะส่งข้อความเก่าเข้าเครื่อง
+            foreach (var (field, value) in changed)
+            {
+                switch (field)
+                {
+                    case "text1": row.Text1 = value; break;
+                    case "text2": row.Text2 = value; break;
+                    case "text3": row.Text3 = value; break;
+                    case "text4": row.Text4 = value; break;
+                    case "text5": row.Text5 = value; break;
+                }
+            }
+
+            table.Tag = edited.Select(r => r.Value).ToList();
+        }
+
+        return problems.Count == 0 ? null : string.Join(Environment.NewLine, problems);
     }
 
     /// <summary>
@@ -1902,6 +1995,9 @@ public partial class OrderDetailUserControl : UserControl
         var rows = values
             .Select((v, i) => new UvTextRow { Field = $"Text{i + 1}", Value = OrDash(v) })
             .ToList();
+
+        // จำค่าที่วาดไว้ เพื่อให้ตอนบันทึกรู้ว่าแถวไหนถูกแก้จริง ไม่ใช่เขียนทับทั้งห้าช่อง
+        table.Tag = rows.Select(r => r.Value).ToList();
 
         table.DataSource = null;
         table.DataSource = uv == null ? null : rows;
