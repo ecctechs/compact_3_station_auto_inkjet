@@ -1,4 +1,4 @@
-using Microsoft.Data.Sqlite;
+﻿using Microsoft.Data.Sqlite;
 
 namespace InkjetOperator.Services;
 
@@ -27,9 +27,21 @@ public static class CpiWriteService
             var sets = new List<string>();
             var cmd = conn.CreateCommand();
 
+            // ช่องที่มีค่าจะส่ง แต่ตารางปลายทางไม่มีคอลัมน์นั้น
+            //
+            // เดิมข้ามเงียบ ๆ แล้วรายงานว่าสำเร็จ ซึ่งแปลว่าข้อความที่คนหน้างานพิมพ์
+            // หายไปเฉย ๆ โดยไม่มีใครรู้ ถ้าชื่อคอลัมน์ของ CPI ที่หน้างานต่างไปแม้แต่
+            // ตัวเดียว จะรู้ตัวก็ต่อเมื่อชิ้นงานออกมาผิด
+            var skipped = new List<string>();
+
             void AddCol(string col, string? val)
             {
-                if (!existingCols.Contains(col)) return;
+                if (!existingCols.Contains(col))
+                {
+                    if (!string.IsNullOrWhiteSpace(val)) skipped.Add(col);
+                    return;
+                }
+
                 sets.Add($"{col} = @{col}");
                 cmd.Parameters.AddWithValue($"@{col}", (object?)val ?? DBNull.Value);
             }
@@ -48,9 +60,17 @@ public static class CpiWriteService
             cmd.CommandText = $"UPDATE {table} SET {string.Join(", ", sets)} WHERE id = 1";
             var affected = await cmd.ExecuteNonQueryAsync();
 
-            return affected > 0
-                ? (true, $"เขียน CPI.db3 ({table}) สำเร็จ")
-                : (false, $"ไม่พบแถว id=1 ในตาราง {table}");
+            if (affected == 0) return (false, $"ไม่พบแถว id=1 ในตาราง {table}");
+
+            // มีช่องที่มีค่าแต่ลงไม่ได้ = ยังไม่ถือว่าสำเร็จ ต้องให้คนหน้างานเห็น
+            if (skipped.Count > 0)
+            {
+                return (false,
+                    $"ตาราง {table} ไม่มีคอลัมน์ {string.Join(", ", skipped)} — "
+                    + "ข้อความในช่องนั้นไม่ได้ถูกส่งเข้าเครื่อง");
+            }
+
+            return (true, $"เขียน CPI.db3 ({table}) สำเร็จ");
         }
         catch (Exception ex)
         {
