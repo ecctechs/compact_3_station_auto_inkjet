@@ -73,6 +73,23 @@ public static class JobSendService
 
     /// <summary>จำนวนช่องข้อความต่อเครื่องหนึ่งตัว — ตรงกับที่ PrintData.db3 เก็บไว้</summary>
     private const int MkBlockCount = 5;
+
+    /// <summary>
+    /// ช่องข้อความช่องแรกในเครื่อง — ข้อมูลเก็บเป็นบล็อก 1-5 แต่เครื่องใช้ช่อง 6-10
+    ///
+    /// <para>
+    /// ยกมาจากโปรแกรมเดิม (PySocketClient/csv_extractor.py) ที่ส่งด้วย <c>str(i+6)</c>
+    /// เมื่อ i วน 0 ถึง 4 การส่งไปที่ช่อง 1-5 เครื่องรับคำสั่งโดยไม่ฟ้อง แต่เป็นคนละช่อง
+    /// กับที่โปรแกรมในเครื่องใช้พิมพ์จริง ข้อความที่ส่งไปจึงไม่มีผลกับงานที่พ่นออกมา
+    /// </para>
+    /// </summary>
+    private const int MkFirstDeviceBlock = 6;
+
+    /// <summary>
+    /// เว้นจังหวะก่อนส่งข้อความแต่ละช่อง — โปรแกรมเดิมหน่วง 30 ms ทุกครั้ง
+    /// ยกมาทั้งค่าและตำแหน่ง เพราะจังหวะนี้พิสูจน์กับเครื่องจริงมาแล้วว่าใช้ได้
+    /// </summary>
+    private const int MkBlockGapMs = 30;
     private const int UvDefaultPort = 10086;
     private const int ConnectTimeoutSeconds = 3;
 
@@ -249,18 +266,21 @@ public static class JobSendService
                 .WaitAsync(TimeSpan.FromSeconds(ConnectTimeoutSeconds));
             var adapter = new MkCompactAdapter(tcp);
 
-            // คำสั่งหยุด/เริ่มพิมพ์ไม่ผ่าน ไม่ล้มทั้งการส่ง
+            // ลำดับคำสั่งยกมาจากโปรแกรมเดิมทั้งชุด — SQ ก่อน แล้วค่อย FW / FS+F1 / FM
             //
-            // เครื่องตอบ ER,SR,01 เมื่อสั่งหยุดตอนที่มันไม่ได้อยู่ในสภาพที่หยุดได้
-            // เช่นหยุดอยู่แล้ว ซึ่งไม่ได้แปลว่าข้อมูลของงานส่งเข้าไปไม่ได้ ของเดิม
-            // ตัดจบตั้งแต่บรรทัดนี้ คำสั่งที่เหลือจึงไม่เคยถูกส่งเลยสักตัว แล้วก็ไม่มีใคร
-            // รู้ว่าคำสั่งที่เป็นตัวงานจริง ๆ ผ่านหรือไม่
+            // เครื่องที่มีงานจะถูกสั่ง "เริ่มพิมพ์" ก่อนเปลี่ยนโปรแกรม ไม่ใช่สั่งหยุด
+            // ส่วนการสั่งหยุดเป็นของเครื่องที่งานนี้ไม่ได้ใช้เท่านั้น (ดู StopOneMkAsync)
+            // และไม่มีการสั่งเริ่มพิมพ์ปิดท้ายอีกครั้ง
             //
-            // ตัวที่ตัดสินว่างานเข้าเครื่องหรือไม่คือ FW / FS / F1 / FM ซึ่งยังล้มได้อยู่
+            // ของเดิมสั่งหยุดก่อนแล้วปิดท้ายด้วยสั่งเริ่ม ซึ่งเครื่องหน้างานปฏิเสธทั้งคู่
+            // (ER,SR,01 · ER,SQ,01) เพราะสั่งผิดจังหวะกับสภาพของเครื่อง
+            //
+            // คำสั่งคุมการพิมพ์ไม่ผ่านไม่ล้มทั้งการส่ง ตัวที่ตัดสินว่างานเข้าเครื่องหรือไม่
+            // คือ FW / FS / F1 / FM
             var notes = new List<string>();
 
-            var sr = await adapter.SuspendAsync();
-            if (!sr.Success) notes.Add(Reject(label, "สั่งหยุดพิมพ์", sr));
+            var sq = await adapter.ResumeAsync();
+            if (!sq.Success) notes.Add(Reject(label, "สั่งเริ่มพิมพ์", sq));
 
             var fw = await adapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
             if (!fw.Success)
@@ -281,7 +301,10 @@ public static class JobSendService
                 var block = config.TextBlocks.FirstOrDefault(b => b.BlockNumber == slot)
                     ?? new TextBlockDto { BlockNumber = slot, Text = "" };
 
-                var fb = await adapter.SendTextBlockAsync(block, slot);
+                await Task.Delay(MkBlockGapMs);
+
+                int deviceBlock = slot + MkFirstDeviceBlock - 1;
+                var fb = await adapter.SendTextBlockAsync(block, deviceBlock);
                 if (!fb.Success) return (Reject(label, $"ส่ง Block {slot}", fb), Note(notes));
             }
 
@@ -290,9 +313,6 @@ public static class JobSendService
             // ปุ่ม ABC จะกดแล้วเครื่องพิมพ์หัวตั้งเหมือนเดิม
             var fm = await adapter.SendConfigAsync(config);
             if (!fm.Success) return (Reject(label, "ส่ง Config", fm), Note(notes));
-
-            var sq = await adapter.ResumeAsync();
-            if (!sq.Success) notes.Add(Reject(label, "สั่งเริ่มพิมพ์", sq));
 
             return (null, Note(notes));
         }
