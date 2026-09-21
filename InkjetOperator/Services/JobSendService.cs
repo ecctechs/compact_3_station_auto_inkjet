@@ -279,8 +279,15 @@ public static class JobSendService
             // คือ FW / FS / F1 / FM
             var notes = new List<string>();
 
-            var sq = await adapter.ResumeAsync();
-            if (!sq.Success) notes.Add(Reject(label, "สั่งเริ่มพิมพ์", sq));
+            // ไม่รายงานผลของคำสั่งนี้
+            //
+            // เครื่องชุดนี้ตอบ ER,SQ,01 ทุกครั้ง คือรู้จักคำสั่งแต่ไม่ให้สั่งเริ่มพิมพ์
+            // จากระยะไกล ซึ่งเป็นสภาพปกติของมัน ไม่ใช่ความผิดพลาดของงาน โปรแกรมเดิม
+            // ก็สั่งตัวนี้ทุกครั้งและไม่เคยดูคำตอบเลย งานก็พิมพ์ออกมาได้ตามปกติ
+            //
+            // ถ้าเครื่องเงียบไปจริง ๆ (สายหลุด) คำสั่งที่เป็นตัวงานถัดจากนี้จะฟ้องเอง
+            // จึงไม่ต้องกันไว้ตรงนี้ซ้ำ
+            await adapter.ResumeAsync();
 
             var fw = await adapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
             if (!fw.Success)
