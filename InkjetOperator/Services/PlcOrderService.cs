@@ -121,8 +121,7 @@ public static class PlcOrderService
     /// ตำแหน่งเริ่มต้นของหัวพิมพ์ — งานจบแล้วให้เลื่อนกลับมาที่นี่
     ///
     /// <para>
-    /// ค่านี้ไม่ได้ตั้งที่ไหน เพราะหัวหน้างานยืนยันว่าตำแหน่งเริ่มต้นคือ 0 เสมอ
-    /// และโปรแกรมเดิมก็เขียน 0 ลงช่องตำแหน่งทุกครั้งที่ส่งงาน ไม่เคยส่งค่าอื่นเลย
+    /// ไม่ได้ทำเป็นค่าตั้งได้ เพราะหัวหน้างานยืนยันว่าตำแหน่งเริ่มต้นคือ 0 เสมอ
     /// </para>
     /// </summary>
     private const int HomePosition = 0;
@@ -149,11 +148,16 @@ public static class PlcOrderService
         var mk1 = CustomSettingsManager.Read("MK058_NAME", "MK-058");
         var mk2 = CustomSettingsManager.Read("MK059_NAME", "MK-059");
 
+        // เขียนทับช่องเดียวกับที่ส่งตำแหน่งของงานเข้าไป ไม่ใช่ช่องใหม่
+        //
+        // ช่องที่คนหน้างานกรอกและโปรแกรมส่งจริงคือ Servo Post Act. ส่วนช่องที่ชื่อ
+        // Position ตรง ๆ ไม่เคยถูกใช้เลย — ในฐานข้อมูลเป็นค่าว่างทุกแถว และหน้าจอ
+        // ของโปรแกรมเดิมก็ปิดช่องนั้นทิ้งไว้ เหลือให้กรอกแต่ Post Act.
         var fields = new List<PlcField>();
-        Add(fields, map, $"{mk1} Position", $"{mk1} ตำแหน่งเริ่มต้น", HomePosition);
-        Add(fields, map, $"{mk2} Position", $"{mk2} ตำแหน่งเริ่มต้น", HomePosition);
+        Add(fields, map, $"{mk1} PostAct", $"{mk1} ตำแหน่งเริ่มต้น", HomePosition);
+        Add(fields, map, $"{mk2} PostAct", $"{mk2} ตำแหน่งเริ่มต้น", HomePosition);
 
-        // ไม่มีแถวไหนตั้ง address ไว้ = ยังใช้ความสามารถนี้ไม่ได้ ไม่ต้องยิงอะไรออกไป
+        // ไม่มีแถวไหนตั้ง address ไว้ = ตารางยังไม่ครบ ไม่ต้องยิงอะไรออกไป
         if (fields.All(f => f.Address == null)) return [];
 
         return await SendAsync(fields);
