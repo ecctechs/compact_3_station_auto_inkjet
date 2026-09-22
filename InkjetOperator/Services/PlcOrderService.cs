@@ -117,6 +117,48 @@ public static class PlcOrderService
         return results;
     }
 
+    /// <summary>
+    /// ตำแหน่งเริ่มต้นของหัวพิมพ์ — งานจบแล้วให้เลื่อนกลับมาที่นี่
+    ///
+    /// <para>
+    /// ค่านี้ไม่ได้ตั้งที่ไหน เพราะหัวหน้างานยืนยันว่าตำแหน่งเริ่มต้นคือ 0 เสมอ
+    /// และโปรแกรมเดิมก็เขียน 0 ลงช่องตำแหน่งทุกครั้งที่ส่งงาน ไม่เคยส่งค่าอื่นเลย
+    /// </para>
+    /// </summary>
+    private const int HomePosition = 0;
+
+    /// <summary>
+    /// เลื่อนหัวพิมพ์ทั้งสองตัวกลับตำแหน่งเริ่มต้น — ใช้ตอนเครื่องว่างและไม่มีงานรอคิว
+    ///
+    /// <para>
+    /// เขียนเลข 0 ลงช่องตำแหน่งของแต่ละหัว ซึ่งเป็น address เดิมที่ใช้ส่งค่าของงาน
+    /// อยู่แล้ว ไม่ใช่คำสั่งใหม่ของ PLC
+    /// </para>
+    /// <para>
+    /// หา address จากตาราง register map ด้วยชื่อแถวที่ลงท้ายว่า Position เหมือนกับ
+    /// ค่าอื่น ๆ ไม่ได้ฝัง address ไว้ในโค้ด แถวไหนไม่มีในตารางก็ข้ามไป — รายการที่
+    /// คืนกลับมาว่างแปลว่ายังไม่ได้ตั้ง address ของช่องตำแหน่งไว้เลย
+    /// </para>
+    /// </summary>
+    public static async Task<List<BlockResult>> ResetPositionAsync(ApiClient? api)
+    {
+        var map = api == null
+            ? new List<PlcRegisterMap>()
+            : await api.GetAllPlcSettingsAsync();
+
+        var mk1 = CustomSettingsManager.Read("MK058_NAME", "MK-058");
+        var mk2 = CustomSettingsManager.Read("MK059_NAME", "MK-059");
+
+        var fields = new List<PlcField>();
+        Add(fields, map, $"{mk1} Position", $"{mk1} ตำแหน่งเริ่มต้น", HomePosition);
+        Add(fields, map, $"{mk2} Position", $"{mk2} ตำแหน่งเริ่มต้น", HomePosition);
+
+        // ไม่มีแถวไหนตั้ง address ไว้ = ยังใช้ความสามารถนี้ไม่ได้ ไม่ต้องยิงอะไรออกไป
+        if (fields.All(f => f.Address == null)) return [];
+
+        return await SendAsync(fields);
+    }
+
     private static void AddServo(
         List<PlcField> fields, List<PlcRegisterMap> map, string machine, ServoConfigDto? servo)
     {

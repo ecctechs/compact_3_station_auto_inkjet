@@ -293,17 +293,28 @@ public partial class OrderListUserControl : UserControl
 
             // งานที่เข้าเครื่องเดิมหลายรอบจะถือเครื่องไว้ให้รอบถัดไปหรือไม่
             // เป็นตัวเลือกที่ Setting → ตัวเลือกหน้างาน ค่าเริ่มต้นคือถือไว้
-            var (ok, error) = await _api.ReleaseMachineAsync(
+            var (release, error) = await _api.ReleaseMachineAsync(
                 machine, StationService.HoldForNextRound);
             if (IsDisposed) return;
 
-            if (!ok)
+            if (release == null)
             {
                 Notify.Warn(this, $"ปล่อยเครื่อง {machine} ไม่สำเร็จ — {error}");
                 return;
             }
 
-            Notify.Success(this, $"{machine} ว่างแล้ว · งานถัดไปในคิวจะถูกส่งให้");
+            if (release.Next != null)
+            {
+                Notify.Success(this, $"{machine} ว่างแล้ว · งานถัดไปในคิวจะถูกส่งให้");
+                return;
+            }
+
+            // ไม่มีใครรอคิว — เลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้น
+            //
+            // มีคิวรออยู่ไม่ต้องเลื่อน เพราะงานถัดไปเขียนตำแหน่งของมันทับอยู่แล้ว
+            // การเลื่อนกลับก่อนแล้วเลื่อนไปใหม่คือขยับหัวสองรอบโดยไม่ได้อะไร
+            Notify.Success(this, $"{machine} ว่างแล้ว · ไม่มีงานรอคิว");
+            await ResetHeadPositionAsync(machine);
         }
         finally
         {
@@ -393,6 +404,36 @@ public partial class OrderListUserControl : UserControl
         yield return ("MK", lblStationMk, lblQueueMk, btnSimPushMk);
         yield return ("UV1", lblStationUv1, lblQueueUv1, btnSimPushUv1);
         yield return ("UV2", lblStationUv2, lblQueueUv2, btnSimPushUv2);
+    }
+
+    /// <summary>
+    /// เลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้นหลังปล่อยเครื่องแล้วไม่มีงานรอคิว
+    ///
+    /// <para>
+    /// ทำเฉพาะเครื่อง MK เพราะช่องตำแหน่งของหัวพ่นอยู่บน PLC ตัวหลัก ส่วน UV ใช้
+    /// ชุดแคลมป์คนละตัวและยังไม่ได้ตั้ง address ไว้
+    /// </para>
+    /// <para>
+    /// ยังไม่ได้ตั้ง address ของช่องตำแหน่งก็ไม่ทำอะไรและไม่ฟ้อง เพราะเป็นสภาพปกติ
+    /// ของหน้างานที่ยังไม่ได้กรอกตาราง register map ให้ครบ
+    /// </para>
+    /// </summary>
+    private async Task ResetHeadPositionAsync(string machine)
+    {
+        if (!string.Equals(machine, "MK", StringComparison.OrdinalIgnoreCase)) return;
+
+        var results = await PlcOrderService.ResetPositionAsync(_api);
+        if (IsDisposed || results.Count == 0) return;
+
+        var failed = results.Where(r => r.Error != null).ToList();
+        if (failed.Count == 0)
+        {
+            Notify.Success(this, "เลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้นแล้ว");
+            return;
+        }
+
+        Notify.Warn(this, "เลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้นไม่สำเร็จ — "
+            + string.Join(" · ", failed.Select(r => $"{r.Name} {r.Error}")));
     }
 
     private static bool SentAlready(ResolvedJobResponse resolved, string step) =>
