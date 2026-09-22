@@ -2076,15 +2076,15 @@ public partial class OrderListUserControl : UserControl
         if (waiting.Count > 0)
         {
             statusLabel = string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase)
-                ? $"{statusLabel} · รอ {string.Join(" ", waiting)}"
-                : $"รอคิว {string.Join(" ", waiting)}";
+                ? $"{statusLabel} · wait {string.Join(" ", waiting)}"
+                : $"Queued {string.Join(" ", waiting)}";
         }
 
         // งานที่พ่น plate เสร็จแล้วและกำลังรอเอาไปติด shim นอกไลน์
         //
         // ช่วงนี้กินเวลานานและชิ้นงานไม่ได้อยู่ในไลน์ คนหน้าจอต้องแยกออกจากงานที่
         // เครื่องกำลังพ่นอยู่จริง ไม่งั้นเห็นแค่ว่ากำลังทำ แล้วนึกว่าเครื่องเดินอยู่
-        if (WaitingForShim(job)) statusLabel = "รอติด shim";
+        if (WaitingForShim(job)) statusLabel = "Waiting shim";
 
         var statusText = new AntdUI.CellText(statusLabel) { Fore = statusColor };
 

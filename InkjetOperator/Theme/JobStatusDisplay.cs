@@ -46,7 +46,7 @@ internal static class JobStatusDisplay
     /// </para>
     /// </summary>
     public static (string Text, Color Fore) Resolve(string? status, bool finishedIncomplete) =>
-        finishedIncomplete ? ("จบไม่ครบ", DesignTokens.Warning) : Resolve(status);
+        finishedIncomplete ? ("Incomplete", DesignTokens.Warning) : Resolve(status);
 
     public static string Text(string? status) => Resolve(status).Text;
 
