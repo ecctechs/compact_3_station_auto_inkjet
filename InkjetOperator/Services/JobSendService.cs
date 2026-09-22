@@ -224,14 +224,71 @@ public static class JobSendService
     /// ช่องที่ไม่ได้กรอกไว้เลยไม่นับ เพราะตัวส่งใส่ 1 ให้อยู่แล้ว
     /// </para>
     /// </summary>
-    private static string? InvalidBlock(InkjetConfigDto config, string label)
+    /// <summary>
+    /// ช่วงค่าที่เครื่องรับได้ ยกมาจากโปรแกรมเดิมทั้งชุด
+    ///
+    /// <para>
+    /// โปรแกรมเดิม (PySocketClient/csv_extractor.py) ตรวจก่อนส่งทุกครั้งและฟ้องเป็น
+    /// ข้อความบอกช่วงที่ถูกต้อง ของเราไม่เคยตรวจเลย ค่าที่เกินช่วงจึงหลุดไปถึงเครื่อง
+    /// แล้วได้รหัสกลับมาแบบเดาไม่ออก เช่น ER,F1,22 ตอนที่ Scale เป็น 0
+    /// </para>
+    /// </summary>
+    private static readonly (string Name, int Min, int Max)[] MachineRanges =
+    [
+        ("Width", 10, 500),
+        ("Height", 50, 200),
+        ("Trigger Delay", 1, 9999),
+    ];
+
+    private static readonly (string Name, int Min, int Max)[] BlockRanges =
+    [
+        ("X", 0, 4095),
+        ("Y", 0, 31),
+        ("Size", 0, 22),
+        ("Scale", 1, 10),
+    ];
+
+    /// <summary>
+    /// ค่าที่เครื่องรับไม่ได้ — คืนข้อความบอกว่าช่องไหนผิด หรือ null เมื่อผ่านหมด
+    ///
+    /// <para>
+    /// ตรวจเฉพาะช่องที่กรอกค่าไว้แล้ว ช่องที่ยังว่างไม่นับว่าผิด เพราะงานเก่าจำนวนมาก
+    /// ไม่เคยกรอกค่าพวกนี้และส่งเข้าเครื่องได้มาตลอด การบังคับให้กรอกครบตอนนี้จะทำให้
+    /// งานที่เคยส่งได้กลับส่งไม่ได้
+    /// </para>
+    /// </summary>
+    private static string? InvalidConfig(InkjetConfigDto config, string label)
     {
+        foreach (var (name, min, max) in MachineRanges)
+        {
+            int? value = name switch
+            {
+                "Width" => config.Width,
+                "Height" => config.Height,
+                _ => config.TriggerDelay,
+            };
+
+            if (value is int v && (v < min || v > max))
+                return $"{label}: {name} = {v} อยู่นอกช่วง {min}-{max} ที่เครื่องรับได้";
+        }
+
         foreach (var block in config.TextBlocks.OrderBy(b => b.BlockNumber))
         {
-            if (block.Scale is int scale && scale < 1)
+            foreach (var (name, min, max) in BlockRanges)
             {
-                return $"{label}: Block {block.BlockNumber} มี Scale = {scale} "
-                     + "ซึ่งเครื่องไม่รับ — แก้เป็น 1 ขึ้นไปที่หน้า Order Detail";
+                int? value = name switch
+                {
+                    "X" => block.X,
+                    "Y" => block.Y,
+                    "Size" => block.Size,
+                    _ => block.Scale,
+                };
+
+                if (value is int v && (v < min || v > max))
+                {
+                    return $"{label}: Block {block.BlockNumber} มี {name} = {v} "
+                         + $"อยู่นอกช่วง {min}-{max} — แก้ที่หน้า Order Detail";
+                }
             }
         }
 
@@ -259,6 +316,13 @@ public static class JobSendService
     private static async Task<(string? Error, string? Note)> SendToOneMkAsync(
         string ip, InkjetConfigDto config, string label)
     {
+        // ตรวจช่วงค่าก่อนแตะเครื่อง ชุดเดียวกับที่โปรแกรมเดิมตรวจ
+        //
+        // ตรวจตั้งแต่ยังไม่ต่อสาย เพราะค่าที่ผิดไม่มีเหตุให้ต้องไปรบกวนเครื่องเลย
+        // ถ้าปล่อยไปเจอตอนส่ง บล็อกก่อนหน้าจะถูกเขียนลงเครื่องไปแล้วครึ่งทาง และ
+        // คนอ่านก็ได้แต่รหัสจากเครื่องมาเดาเอง เช่น ER,F1,22 ตอนที่ Scale เป็น 0
+        if (InvalidConfig(config, label) is string bad) return (bad, null);
+
         var tcp = new TcpManager();
         try
         {
@@ -292,13 +356,6 @@ public static class JobSendService
             var fw = await adapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
             if (!fw.Success)
                 return (Reject(label, $"เปลี่ยนไปโปรแกรม {config.ProgramNumber}", fw), Note(notes));
-
-            // ตรวจค่าที่เครื่องไม่รับก่อนเริ่มส่ง
-            //
-            // เครื่องตอบ ER,F1,22 เมื่อค่าใน F1 อยู่นอกช่วงที่รับได้ เช่น Scale เป็น 0
-            // ถ้าปล่อยให้ไปเจอตอนส่ง บล็อกก่อนหน้าจะถูกเขียนลงเครื่องไปแล้วครึ่งทาง
-            // และคนอ่านก็ได้แต่รหัสมาเดาเอง
-            if (InvalidBlock(config, label) is string bad) return (bad, Note(notes));
 
             // ส่งครบทุกช่องเสมอ ช่องที่งานนี้ไม่ได้ใช้ก็ส่งข้อความว่างไปทับ —
             // กฎเดียวกับโปรแกรมเดิม ถ้าข้ามไปเฉย ๆ ข้อความของงานก่อนหน้าจะค้าง
