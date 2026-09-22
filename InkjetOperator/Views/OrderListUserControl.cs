@@ -1137,6 +1137,7 @@ public partial class OrderListUserControl : UserControl
             .ToList();
 
         var lines = new List<Notify.ResultLine>();
+        bool anySent = false;
 
         foreach (var machine in machines)
         {
@@ -1186,6 +1187,8 @@ public partial class OrderListUserControl : UserControl
             {
                 // บันทึกไม่ลงต้องฟ้อง ไม่ใช่ปล่อยเงียบ — แถวจะค้างเป็น "ยังไม่ได้ส่ง"
                 // แล้วรอบ poll จะส่งซ้ำเข้าเครื่องทุก 5 วินาทีโดยไม่มีใครรู้ว่าทำไม
+                anySent = true;
+
                 var (marked, markError) = await _api.UpdateMachineQueueAsync(claimed.Id, sent: true);
                 if (!marked)
                     lines.Add(Notify.Bad($"{claimed.Machine}: ส่งเข้าเครื่องแล้วแต่บันทึกคิวไม่ได้ · {markError}"));
@@ -1197,6 +1200,21 @@ public partial class OrderListUserControl : UserControl
         }
 
         if (IsDisposed) return;
+
+        // กดแล้วไม่มีเครื่องไหนรับงานไปได้เลย และงานนี้ก็ไม่เคยพิมพ์อะไรมาก่อน
+        // ให้ล้างการจองทิ้ง ไม่เหลือร่องรอยไว้ในคิว
+        //
+        // เครื่องต่อไม่ติดไม่ใช่การเข้าคิว ไม่มีอะไรถูกส่งไปไหนทั้งนั้น การทิ้งแถวไว้
+        // ทำให้งานไปกินที่ในคิวของเครื่องโดยไม่ได้ทำอะไร และหน้าจอก็ดูเหมือนกำลังรอคิว
+        // ทั้งที่ความจริงต้องไปแก้ที่เครื่องแล้วกดใหม่
+        //
+        // งานที่พิมพ์ไปแล้วบางเครื่องไม่เข้าเงื่อนไขนี้ การจองของเครื่องที่เหลือต้องอยู่ต่อ
+        // ไม่งั้นขั้นที่ยังไม่ได้ทำจะหายไปจากคิวโดยไม่มีทางเอากลับมา
+        if (!anySent && !PrintedBefore(resolved))
+        {
+            await _api.ClearMachineQueueAsync(jobId);
+            if (IsDisposed) return;
+        }
 
         if (lines.Count > 0) Notify.Result(this, title, lines);
         if (!IsDisposed) await RefreshDataAsync(force: true);
@@ -2283,6 +2301,10 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private bool WaitingForShim(PrintJob job) =>
         _queueRows.Any(r => r.PrintJobsId == job.Id && r.Round >= 2 && r.State == "active");
+
+    /// <summary>งานนี้เคยส่งเข้าเครื่องสำเร็จมาก่อนไหม — ดูจากประวัติคำสั่งที่บันทึกไว้</summary>
+    private static bool PrintedBefore(ResolvedJobResponse resolved) =>
+        resolved.Commands?.Any(c => c.Success) == true;
 
     /// <summary>เครื่องนี้มีงานถืออยู่ตอนนี้ไหม — ไม่มี แปลว่าว่าง ไม่มีอะไรขวางคิว</summary>
     private bool BusyNow(string machine) =>
