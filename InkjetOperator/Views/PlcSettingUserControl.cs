@@ -71,6 +71,11 @@ public partial class PlcSettingUserControl : UserControl
         // เพิ่มแถวใน register map เป็นเรื่องของคนที่รู้ว่า PLC ตัวนี้มี address อะไรบ้าง
         // ไม่ใช่ของคนคุมเครื่อง แถวที่เพิ่มผิดคือส่งค่าไปทับ register อื่นตอนเริ่มงาน
         btnAddRow.Visible = StationService.IsDevMode;
+
+        // ปุ่มทดสอบเลื่อนหัวพิมพ์กลับตำแหน่ง 0 — ของจริงทำเองตอนปล่อยเครื่องแล้วไม่มีคิว
+        // ปุ่มนี้มีไว้ลองที่หน้างานโดยไม่ต้องรันงานจริงให้ครบวง
+        btnResetPosition.Visible = StationService.IsDevMode;
+        btnResetPosition.Click += async (_, _) => await ResetPositionAsync();
         btnReadAll.Click += async (_, _) => await ReadAllAsync();
         btnUnlock.Click += (_, _) => ToggleLock();
         btnCheckStatus.Click += async (_, _) => await CheckStatusAsync();
@@ -227,6 +232,69 @@ public partial class PlcSettingUserControl : UserControl
     {
         tblPlcMap.DataSource = null;
         tblPlcMap.DataSource = _rows;
+    }
+
+    /// <summary>
+    /// ทดสอบเลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้น — เขียน 0 ลงช่องเดียวกับที่ส่งค่าของงาน
+    ///
+    /// <para>
+    /// ถามยืนยันก่อน เพราะเป็นการเขียนค่าลง PLC ของเครื่องที่อาจกำลังเดินอยู่
+    /// และบอกให้ครบว่าจะเขียนอะไรลง register ไหน แบบเดียวกับปุ่ม Write ในตาราง
+    /// </para>
+    /// </summary>
+    private async Task ResetPositionAsync()
+    {
+        if (!Confirm.Ask(this, "รีเซ็ตตำแหน่งหัวพิมพ์",
+                "จะเขียนค่า 0 ลงช่องตำแหน่งของหัวพ่นทั้งสองตัว"
+                + Environment.NewLine + Environment.NewLine
+                + "ช่องเดียวกับที่ส่งตำแหน่งของงานเข้าไป (Servo Post Act.)"
+                + Environment.NewLine + Environment.NewLine + "ยืนยันหรือไม่?"))
+            return;
+
+        btnResetPosition.Enabled = false;
+        var originalText = btnResetPosition.Text;
+        btnResetPosition.Text = "กำลังส่ง...";
+        try
+        {
+            var results = await PlcOrderService.ResetPositionAsync(_api);
+            if (IsDisposed) return;
+
+            if (results.Count == 0)
+            {
+                Warn("ตาราง register map ยังไม่มีแถวของหัวพ่น — ไม่มี address ให้เขียน");
+                return;
+            }
+
+            foreach (var r in results)
+            {
+                if (r.Error != null)
+                {
+                    Log($"❌ {r.Name} = {r.Value} — {r.Error}");
+                    continue;
+                }
+
+                Log(r.ReadBack == r.Value
+                    ? $"{r.Name} = {r.Value}"
+                    : $"⚠ {r.Name} = {r.Value} · อ่านกลับได้ {r.ReadBack?.ToString() ?? "ไม่ได้"}");
+            }
+
+            var failed = results.Where(r => r.Error != null).ToList();
+            if (failed.Count > 0)
+            {
+                Warn("รีเซ็ตไม่สำเร็จ — " + string.Join(" · ", failed.Select(r => r.Error)));
+                return;
+            }
+
+            Notify.Success(this, "รีเซ็ตตำแหน่งหัวพิมพ์เป็น 0 แล้ว");
+        }
+        finally
+        {
+            if (!IsDisposed)
+            {
+                btnResetPosition.Text = originalText;
+                btnResetPosition.Enabled = true;
+            }
+        }
     }
 
     private void BtnAddRow_Click(object? sender, EventArgs e)

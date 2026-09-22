@@ -33,6 +33,7 @@ partial class PlcSettingUserControl
         btnUnlock = new AntdUI.Button();
         btnReadAll = new AntdUI.Button();
         btnAddRow = new AntdUI.Button();
+        btnResetPosition = new AntdUI.Button();
         tblPlcMap = new AntdUI.Table();
         grpLog = new System.Windows.Forms.GroupBox();
         txtLog = new System.Windows.Forms.TextBox();
@@ -333,12 +334,29 @@ partial class PlcSettingUserControl
         flpActions.Controls.Add(btnSave);
         flpActions.Controls.Add(btnCancel);
         flpActions.Controls.Add(btnCheckStatus);
+        flpActions.Controls.Add(btnResetPosition);
         flpActions.Dock = System.Windows.Forms.DockStyle.Fill;
         flpActions.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
         flpActions.Margin = new System.Windows.Forms.Padding(0);
         flpActions.Name = "flpActions";
         flpActions.TabIndex = 3;
         flpActions.WrapContents = false;
+        //
+        // btnResetPosition - ทดสอบเลื่อนหัวพิมพ์กลับตำแหน่ง 0 เห็นเฉพาะโหมดทดสอบ
+        //   designer ซ่อนไว้เป็นค่าตั้งต้น โค้ดเป็นที่เดียวที่เปิดให้เห็น
+        //
+        btnResetPosition.BorderWidth = 2F;
+        btnResetPosition.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnResetPosition.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        btnResetPosition.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnResetPosition.Margin = new System.Windows.Forms.Padding(3, 3, 24, 3);
+        btnResetPosition.Name = "btnResetPosition";
+        btnResetPosition.Radius = 8;
+        btnResetPosition.Size = new System.Drawing.Size(300, 55);
+        btnResetPosition.TabIndex = 4;
+        btnResetPosition.Text = "รีเซ็ตตำแหน่งหัวพิมพ์เป็น 0";
+        btnResetPosition.Type = AntdUI.TTypeMini.Default;
+        btnResetPosition.Visible = false;
         //
         // btnSave
         //
@@ -424,6 +442,7 @@ partial class PlcSettingUserControl
     private AntdUI.Button btnUnlock;
     private AntdUI.Button btnReadAll;
     private AntdUI.Button btnAddRow;
+    private AntdUI.Button btnResetPosition;
     private AntdUI.Table tblPlcMap;
     private System.Windows.Forms.GroupBox grpLog;
     private System.Windows.Forms.TextBox txtLog;
