@@ -536,7 +536,7 @@ public class ApiClient
     }
 
     /// <summary>ปล่อยเครื่อง — คนกดปุ่มหน้างานแล้ว แปลว่าพิมพ์ชิ้นเดิมเสร็จ</summary>
-    public async Task<(bool ok, string? error)> ReleaseMachineAsync(
+    public async Task<(ReleaseResult? result, string? error)> ReleaseMachineAsync(
         string machine, bool holdForNextRound = false)
     {
         try
@@ -546,14 +546,16 @@ public class ApiClient
                 new { machine, hold_for_next_round = holdForNextRound },
                 JsonOptions);
             var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return (null, $"[{(int)response.StatusCode}] {body}");
 
-            return response.IsSuccessStatusCode
-                ? (true, null)
-                : (false, $"[{(int)response.StatusCode}] {body}");
+            var wrapper = System.Text.Json.JsonSerializer
+                .Deserialize<ApiResponse<ReleaseResult>>(body, JsonOptions);
+
+            return (wrapper?.Data ?? new ReleaseResult(), null);
         }
         catch (Exception ex)
         {
-            return (false, ex.Message);
+            return (null, ex.Message);
         }
     }
 

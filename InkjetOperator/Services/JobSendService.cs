@@ -187,6 +187,70 @@ public static class JobSendService
     /// พิมพ์ของงานเก่าทับ ต้องสั่งหยุดให้ชัดเจนเท่านั้น
     /// </para>
     /// </summary>
+    /// <summary>
+    /// สลับหัวพ่นทุกตัวไปโปรแกรมพัก — ใช้ตอนเครื่องว่างและไม่มีงานรอคิว
+    ///
+    /// <para>
+    /// เบอร์โปรแกรมพักตั้งที่หน้า Inkjet Setting แยกกันคนละหัว เว้นว่างไว้แปลว่า
+    /// ไม่ใช้ความสามารถนี้กับหัวนั้น หัวที่ยังไม่ได้ตั้ง IP ก็ข้ามไปเหมือนกัน
+    /// </para>
+    /// <para>
+    /// ส่งแค่คำสั่งเปลี่ยนโปรแกรม ไม่แตะข้อความและไม่สั่งอะไรให้ขยับ จึงปลอดภัยกับ
+    /// คนที่ยังยืนอยู่หน้าเครื่องตอนเพิ่งกดปุ่มปล่อยเครื่อง
+    /// </para>
+    /// <para>
+    /// คืนรายการผลของหัวที่ลงมือส่งจริง — หัวที่ข้ามไปไม่อยู่ในรายการ
+    /// </para>
+    /// </summary>
+    public static async Task<List<MkMachineResult>> ResetToDefaultProgramAsync()
+    {
+        using var busy = MachineBusy.Hold();
+
+        var machines = new List<MkMachineResult>();
+
+        foreach (var (ipKey, nameKey, fallbackName, _, label) in MkMachines)
+        {
+            var ip = CustomSettingsManager.Read(ipKey).Trim();
+            var raw = CustomSettingsManager.Read($"{ipKey[..5]}_DEFAULT_PROGRAM").Trim();
+
+            if (ip.Length == 0 || raw.Length == 0) continue;
+            if (!int.TryParse(raw, out int program) || program < 1) continue;
+
+            var name = CustomSettingsManager.Read(nameKey, fallbackName);
+            machines.Add(new MkMachineResult(name, await SwitchProgramAsync(ip, program, label)));
+        }
+
+        return machines;
+    }
+
+    /// <summary>เปลี่ยนโปรแกรมของหัวเดียว ไม่แตะข้อความหรือค่าอื่น</summary>
+    private static async Task<string?> SwitchProgramAsync(string ip, int program, string label)
+    {
+        var tcp = new TcpManager();
+        try
+        {
+            await tcp.ConnectAsync(ip, MkPort)
+                .WaitAsync(TimeSpan.FromSeconds(ConnectTimeoutSeconds));
+
+            var adapter = new MkCompactAdapter(tcp);
+
+            // ลำดับเดียวกับตอนส่งงาน — สั่งเริ่มพิมพ์ก่อนแล้วค่อยเปลี่ยนโปรแกรม
+            // ผลของคำสั่งแรกไม่เอามารายงาน เครื่องชุดนี้ปฏิเสธเป็นปกติ
+            await adapter.ResumeAsync();
+
+            var fw = await adapter.ChangeProgramAsync(program);
+            return fw.Success ? null : Reject(label, $"เปลี่ยนไปโปรแกรมพัก {program}", fw);
+        }
+        catch (Exception ex)
+        {
+            return $"{label}: {ex.Message}";
+        }
+        finally
+        {
+            tcp.Disconnect();
+        }
+    }
+
     private static async Task<string?> StopOneMkAsync(string ip, string label)
     {
         var tcp = new TcpManager();

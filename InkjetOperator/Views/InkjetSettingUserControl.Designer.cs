@@ -30,6 +30,10 @@ partial class InkjetSettingUserControl
         btnMk059Name = new AntdUI.Button();
         lblMk059IpLabel = new System.Windows.Forms.Label();
         txtMk059Ip = new IpAddressInput();
+        lblMk058DefaultLabel = new System.Windows.Forms.Label();
+        txtMk058Default = new AntdUI.Input();
+        lblMk059DefaultLabel = new System.Windows.Forms.Label();
+        txtMk059Default = new AntdUI.Input();
 
         grpUv = new System.Windows.Forms.GroupBox();
         tlpUv = new System.Windows.Forms.TableLayoutPanel();
@@ -93,7 +97,7 @@ partial class InkjetSettingUserControl
         tlpRoot.Name = "tlpRoot";
         tlpRoot.Padding = new System.Windows.Forms.Padding(16);
         tlpRoot.RowCount = 4;
-        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 304F));
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 420F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 164F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 85F));
@@ -130,18 +134,24 @@ partial class InkjetSettingUserControl
         tlpMk.Controls.Add(btnMk058Name, 2, 0);
         tlpMk.Controls.Add(lblMk058IpLabel, 1, 1);
         tlpMk.Controls.Add(txtMk058Ip, 3, 1);
-        tlpMk.Controls.Add(lblMk059Status, 0, 2);
-        tlpMk.Controls.Add(lblMk059Badge, 1, 2);
-        tlpMk.Controls.Add(btnMk059Name, 2, 2);
-        tlpMk.Controls.Add(lblMk059IpLabel, 1, 3);
-        tlpMk.Controls.Add(txtMk059Ip, 3, 3);
+        tlpMk.Controls.Add(lblMk058DefaultLabel, 1, 2);
+        tlpMk.Controls.Add(txtMk058Default, 3, 2);
+        tlpMk.Controls.Add(lblMk059Status, 0, 3);
+        tlpMk.Controls.Add(lblMk059Badge, 1, 3);
+        tlpMk.Controls.Add(btnMk059Name, 2, 3);
+        tlpMk.Controls.Add(lblMk059IpLabel, 1, 4);
+        tlpMk.Controls.Add(txtMk059Ip, 3, 4);
+        tlpMk.Controls.Add(lblMk059DefaultLabel, 1, 5);
+        tlpMk.Controls.Add(txtMk059Default, 3, 5);
         tlpMk.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpMk.Name = "tlpMk";
-        tlpMk.RowCount = 4;
-        tlpMk.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 25F));
-        tlpMk.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 25F));
-        tlpMk.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 25F));
-        tlpMk.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 25F));
+        tlpMk.RowCount = 6;
+        tlpMk.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 16.67F));
+        tlpMk.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 16.67F));
+        tlpMk.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 16.66F));
+        tlpMk.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 16.67F));
+        tlpMk.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 16.67F));
+        tlpMk.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 16.66F));
         tlpMk.TabIndex = 0;
         //
         // lblMk058Status
@@ -199,6 +209,54 @@ partial class InkjetSettingUserControl
         txtMk058Ip.Name = "txtMk058Ip";
         tlpMk.SetColumnSpan(txtMk058Ip, 3);
         txtMk058Ip.TabIndex = 4;
+        //
+        // lblMk058DefaultLabel
+        //
+        lblMk058DefaultLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk058DefaultLabel.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        lblMk058DefaultLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMk058DefaultLabel.Name = "lblMk058DefaultLabel";
+        tlpMk.SetColumnSpan(lblMk058DefaultLabel, 2);
+        lblMk058DefaultLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
+        lblMk058DefaultLabel.TabIndex = 20;
+        lblMk058DefaultLabel.Text = "โปรแกรมพัก:";
+        lblMk058DefaultLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        //
+        // txtMk058Default — เบอร์โปรแกรมที่ให้เครื่องสลับไปตอนไม่มีงานรอคิว
+        //
+        txtMk058Default.Dock = System.Windows.Forms.DockStyle.Fill;
+        txtMk058Default.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtMk058Default.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        txtMk058Default.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
+        txtMk058Default.Name = "txtMk058Default";
+        txtMk058Default.PlaceholderText = "เว้นว่าง = ไม่สลับโปรแกรมตอนเครื่องว่าง";
+        txtMk058Default.Radius = 4;
+        tlpMk.SetColumnSpan(txtMk058Default, 3);
+        txtMk058Default.TabIndex = 21;
+        //
+        // lblMk059DefaultLabel
+        //
+        lblMk059DefaultLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk059DefaultLabel.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        lblMk059DefaultLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMk059DefaultLabel.Name = "lblMk059DefaultLabel";
+        tlpMk.SetColumnSpan(lblMk059DefaultLabel, 2);
+        lblMk059DefaultLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
+        lblMk059DefaultLabel.TabIndex = 22;
+        lblMk059DefaultLabel.Text = "โปรแกรมพัก:";
+        lblMk059DefaultLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        //
+        // txtMk059Default — เบอร์โปรแกรมที่ให้เครื่องสลับไปตอนไม่มีงานรอคิว
+        //
+        txtMk059Default.Dock = System.Windows.Forms.DockStyle.Fill;
+        txtMk059Default.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtMk059Default.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        txtMk059Default.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
+        txtMk059Default.Name = "txtMk059Default";
+        txtMk059Default.PlaceholderText = "เว้นว่าง = ไม่สลับโปรแกรมตอนเครื่องว่าง";
+        txtMk059Default.Radius = 4;
+        tlpMk.SetColumnSpan(txtMk059Default, 3);
+        txtMk059Default.TabIndex = 23;
         //
         // lblMk059Status
         //
@@ -755,6 +813,10 @@ partial class InkjetSettingUserControl
     private AntdUI.Button btnMk059Name;
     private System.Windows.Forms.Label lblMk059IpLabel;
     private IpAddressInput txtMk059Ip;
+    private System.Windows.Forms.Label lblMk058DefaultLabel;
+    private AntdUI.Input txtMk058Default;
+    private System.Windows.Forms.Label lblMk059DefaultLabel;
+    private AntdUI.Input txtMk059Default;
 
     private System.Windows.Forms.GroupBox grpUv;
     private System.Windows.Forms.TableLayoutPanel tlpUv;

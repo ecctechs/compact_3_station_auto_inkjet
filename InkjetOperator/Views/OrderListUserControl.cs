@@ -293,17 +293,28 @@ public partial class OrderListUserControl : UserControl
 
             // งานที่เข้าเครื่องเดิมหลายรอบจะถือเครื่องไว้ให้รอบถัดไปหรือไม่
             // เป็นตัวเลือกที่ Setting → ตัวเลือกหน้างาน ค่าเริ่มต้นคือถือไว้
-            var (ok, error) = await _api.ReleaseMachineAsync(
+            var (release, error) = await _api.ReleaseMachineAsync(
                 machine, StationService.HoldForNextRound);
             if (IsDisposed) return;
 
-            if (!ok)
+            if (release == null)
             {
                 Notify.Warn(this, $"ปล่อยเครื่อง {machine} ไม่สำเร็จ — {error}");
                 return;
             }
 
-            Notify.Success(this, $"{machine} ว่างแล้ว · งานถัดไปในคิวจะถูกส่งให้");
+            if (release.Next != null)
+            {
+                Notify.Success(this, $"{machine} ว่างแล้ว · งานถัดไปในคิวจะถูกส่งให้");
+                return;
+            }
+
+            // ไม่มีใครรอคิว — สลับหัวพ่นไปโปรแกรมพักตามที่ตั้งไว้
+            //
+            // มีคิวรออยู่ไม่ต้องสลับ เพราะงานถัดไปเขียนโปรแกรมของมันทับอยู่แล้ว
+            // การสลับไปพักก่อนแล้วสลับกลับคือเปลี่ยนโปรแกรมสองรอบโดยไม่ได้อะไร
+            Notify.Success(this, $"{machine} ว่างแล้ว · ไม่มีงานรอคิว");
+            await RestToDefaultProgramAsync(machine);
         }
         finally
         {
@@ -393,6 +404,36 @@ public partial class OrderListUserControl : UserControl
         yield return ("MK", lblStationMk, lblQueueMk, btnSimPushMk);
         yield return ("UV1", lblStationUv1, lblQueueUv1, btnSimPushUv1);
         yield return ("UV2", lblStationUv2, lblQueueUv2, btnSimPushUv2);
+    }
+
+    /// <summary>
+    /// สลับหัวพ่นไปโปรแกรมพักหลังปล่อยเครื่องแล้วไม่มีงานรอคิว
+    ///
+    /// <para>
+    /// ทำเฉพาะเครื่อง MK เพราะโปรแกรมพักตั้งไว้ต่อหัวพ่นที่หน้า Inkjet Setting
+    /// ยังไม่ได้ตั้งค่าไว้ก็ไม่ทำอะไร ไม่ต้องฟ้อง เพราะเป็นความสามารถที่เลือกใช้ได้
+    /// </para>
+    /// <para>
+    /// ล้มเหลวแค่เตือน ไม่ใช่เรื่องใหญ่ถึงขั้นต้องหยุดอะไร งานที่พิมพ์ไปแล้วเสร็จ
+    /// เรียบร้อยและเครื่องก็ว่างแล้วจริง
+    /// </para>
+    /// </summary>
+    private async Task RestToDefaultProgramAsync(string machine)
+    {
+        if (!string.Equals(machine, "MK", StringComparison.OrdinalIgnoreCase)) return;
+
+        var machines = await JobSendService.ResetToDefaultProgramAsync();
+        if (IsDisposed || machines.Count == 0) return;
+
+        var failed = machines.Where(m => !m.Ok).ToList();
+        if (failed.Count == 0)
+        {
+            Notify.Success(this, $"สลับไปโปรแกรมพักแล้ว — {string.Join(" · ", machines.Select(m => m.Name))}");
+            return;
+        }
+
+        Notify.Warn(this, "สลับไปโปรแกรมพักไม่สำเร็จ — "
+            + string.Join(" · ", failed.Select(m => m.Error)));
     }
 
     private static bool SentAlready(ResolvedJobResponse resolved, string step) =>

@@ -53,6 +53,8 @@ public partial class InkjetSettingUserControl : UserControl
         lblMk058Badge.Text = CustomSettingsManager.Read("MK058_NAME", "MK-058");
         lblMk059Badge.Text = CustomSettingsManager.Read("MK059_NAME", "MK-059");
 
+        txtMk058Default.Text = CustomSettingsManager.Read("MK058_DEFAULT_PROGRAM");
+        txtMk059Default.Text = CustomSettingsManager.Read("MK059_DEFAULT_PROGRAM");
         txtUv1Ip.Text = CustomSettingsManager.Read("UV001_IP");
         txtUv1Port.Text = CustomSettingsManager.Read("UV001_PORT");
         txtUv2Ip.Text = CustomSettingsManager.Read("UV002_IP");
@@ -78,6 +80,24 @@ public partial class InkjetSettingUserControl : UserControl
         var ip058 = txtMk058Ip.Text.Trim();
         var ip059 = txtMk059Ip.Text.Trim();
 
+        foreach (var (box, head) in new[]
+                 {
+                     (txtMk058Default, "MK058"),
+                     (txtMk059Default, "MK059"),
+                 })
+        {
+            var text = box.Text.Trim();
+            if (text.Length == 0) continue;   // เว้นว่าง = ไม่ใช้ความสามารถนี้
+
+            if (!int.TryParse(text, out int number) || number < 1)
+            {
+                Notify.WarnModal(this, "แจ้งเตือน",
+                    $"โปรแกรมพักของ {head} ต้องเป็นเลขโปรแกรมที่มีอยู่ในเครื่อง\n"
+                    + $"กรอกมาว่า \"{text}\"");
+                return;
+            }
+        }
+
         var f1 = txtUv1Folder.Text.Trim();
         var f2 = txtUv2Folder.Text.Trim();
         if (!string.IsNullOrEmpty(f1) && !Directory.Exists(f1))
@@ -93,6 +113,8 @@ public partial class InkjetSettingUserControl : UserControl
 
         CustomSettingsManager.Write("MK058_COM", ip058);
         CustomSettingsManager.Write("MK059_COM", ip059);
+        CustomSettingsManager.Write("MK058_DEFAULT_PROGRAM", txtMk058Default.Text.Trim());
+        CustomSettingsManager.Write("MK059_DEFAULT_PROGRAM", txtMk059Default.Text.Trim());
         CustomSettingsManager.Write("UV001_IP", txtUv1Ip.Text.Trim());
         CustomSettingsManager.Write("UV001_PORT", txtUv1Port.Text.Trim());
         CustomSettingsManager.Write("UV002_IP", txtUv2Ip.Text.Trim());
