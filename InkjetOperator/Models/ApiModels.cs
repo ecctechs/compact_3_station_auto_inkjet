@@ -596,20 +596,6 @@ public class ResetRuntimeResult
     public int CommandsRemoved { get; set; }
 }
 
-/// <summary>ผลของการปล่อยเครื่อง</summary>
-public class ReleaseResult
-{
-    /// <summary>แถวที่เพิ่งถูกปล่อย — null เมื่อไม่มีใครถือเครื่องอยู่</summary>
-    [JsonPropertyName("released")]
-    public MachineQueueRow? Released { get; set; }
-
-    /// <summary>
-    /// งานที่ได้เครื่องต่อทันที — null แปลว่าไม่มีใครรอคิว เครื่องว่างจริง
-    /// </summary>
-    [JsonPropertyName("next")]
-    public MachineQueueRow? Next { get; set; }
-}
-
 /// <summary>ผลของการขอหยิบงานถัดไปมาถือเครื่อง</summary>
 public class MachineClaimResult
 {
