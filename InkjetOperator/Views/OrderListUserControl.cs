@@ -2075,9 +2075,25 @@ public partial class OrderListUserControl : UserControl
         var waiting = PendingMachines(job.Id);
         if (waiting.Count > 0)
         {
-            statusLabel = string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase)
-                ? $"{statusLabel} · wait {string.Join(" ", waiting)}"
-                : $"Queued {string.Join(" ", waiting)}";
+            // แยก "ต่อแถวรอเครื่องที่ไม่ว่าง" ออกจาก "เครื่องว่างแต่ยังไม่ได้ส่ง"
+            //
+            // สองอย่างนี้หน้าตาเหมือนกันในตารางคิว (แถวรอเหมือนกัน) แต่คนละเรื่องกัน
+            // สำหรับคนหน้างาน — อย่างแรกต้องรอให้เขากดปุ่มปล่อยเครื่อง อย่างที่สอง
+            // ไม่มีอะไรมาขวางเลย แค่ส่งไม่ผ่าน เช่นเครื่องยังไม่ได้เปิด ต้องกดใหม่
+            //
+            // ถ้าใช้คำว่า Queued กับทั้งสองอย่าง คนจะนั่งรอเครื่องที่ว่างอยู่แล้ว
+            var blocked = waiting.Where(BusyNow).ToList();
+            var idle = waiting.Where(m => !BusyNow(m)).ToList();
+
+            if (blocked.Count > 0)
+            {
+                statusLabel = string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase)
+                    ? $"{statusLabel} · wait {string.Join(" ", blocked)}"
+                    : $"Queued {string.Join(" ", blocked)}";
+            }
+
+            if (idle.Count > 0)
+                statusLabel = $"Not sent {string.Join(" ", idle)}";
         }
 
         // งานที่พ่น plate เสร็จแล้วและกำลังรอเอาไปติด shim นอกไลน์
@@ -2267,6 +2283,11 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private bool WaitingForShim(PrintJob job) =>
         _queueRows.Any(r => r.PrintJobsId == job.Id && r.Round >= 2 && r.State == "active");
+
+    /// <summary>เครื่องนี้มีงานถืออยู่ตอนนี้ไหม — ไม่มี แปลว่าว่าง ไม่มีอะไรขวางคิว</summary>
+    private bool BusyNow(string machine) =>
+        _queueRows.Any(r => r.State == "active"
+            && string.Equals(r.Machine, machine, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>เครื่องที่งานใบนี้จองไว้แล้วแต่ยังไม่ถึงคิว เรียงตามลำดับที่จะได้เครื่อง</summary>
     private List<string> PendingMachines(int jobId) =>
