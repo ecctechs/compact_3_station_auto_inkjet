@@ -1,14 +1,14 @@
-﻿namespace InkjetOperator.Views;
+namespace InkjetOperator.Views;
 
 partial class MainShellForm
 {
     /// <summary>
-    /// Required designer variable.
+    /// เก็บส่วนประกอบที่ Designer ดูแล
     /// </summary>
     private System.ComponentModel.IContainer components = null;
 
     /// <summary>
-    /// Clean up any resources being used.
+    /// คืนทรัพยากรของหน้าจอเมื่อเลิกใช้งาน
     /// </summary>
     protected override void Dispose(bool disposing)
     {
@@ -22,8 +22,7 @@ partial class MainShellForm
     #region Windows Form Designer generated code
 
     /// <summary>
-    /// Required method for Designer support - do not modify
-    /// the contents of this method with the code editor.
+    /// Designer ใช้สร้างและจัดหน้าจอ ควรปรับ Layout ผ่าน Designer
     /// </summary>
     private void InitializeComponent()
     {
@@ -42,13 +41,14 @@ partial class MainShellForm
         orderListPage = new OrderListUserControl();
         editPatternPage = new EditPatternUserControl();
         settingPage = new SettingUserControl();
+        // พักการจัดหน้าจอไว้ก่อน จนกว่าจะตั้งค่าทุกส่วนครบ
         tlpShellRoot.SuspendLayout();
         tlpMenuBar.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)picLogo).BeginInit();
         pnlContent.SuspendLayout();
         SuspendLayout();
         // 
-        // titleBar
+        // titleBar — แถบชื่อโปรแกรมและปุ่มหน้าต่าง
         // 
         titleBar.BackColor = Color.FromArgb(36, 71, 101);
         titleBar.Dock = DockStyle.Fill;
@@ -60,7 +60,7 @@ partial class MainShellForm
         titleBar.TabIndex = 0;
         titleBar.TitleText = "Compact Inkjet";
         // 
-        // tlpShellRoot
+        // tlpShellRoot — โครงหลัก: แถบชื่อ เมนู และพื้นที่แสดงหน้า
         // 
         tlpShellRoot.BackColor = Color.White;
         tlpShellRoot.ColumnCount = 1;
@@ -78,7 +78,7 @@ partial class MainShellForm
         tlpShellRoot.Size = new Size(1194, 739);
         tlpShellRoot.TabIndex = 0;
         // 
-        // tlpMenuBar
+        // tlpMenuBar — แถบเมนู พร้อมโลโก้และปุ่มภาษา
         // 
         tlpMenuBar.BackColor = Color.White;
         tlpMenuBar.ColumnCount = 7;
@@ -105,7 +105,7 @@ partial class MainShellForm
         tlpMenuBar.Size = new Size(1920, 64);
         tlpMenuBar.TabIndex = 0;
         // 
-        // btnInputOrder
+        // btnInputOrder — ปุ่มเปิดหน้ารับ Barcode
         // 
         btnInputOrder.DefaultBack = Color.FromArgb(91, 155, 213);
         btnInputOrder.DefaultBorderColor = Color.FromArgb(36, 71, 101);
@@ -121,7 +121,7 @@ partial class MainShellForm
         btnInputOrder.Text = "Input Order";
         btnInputOrder.Click += btnInputOrder_Click;
         // 
-        // btnOrderList
+        // btnOrderList — ปุ่มเปิดรายการงาน
         // 
         btnOrderList.DefaultBack = Color.FromArgb(176, 176, 176);
         btnOrderList.DefaultBorderColor = Color.FromArgb(36, 71, 101);
@@ -137,7 +137,7 @@ partial class MainShellForm
         btnOrderList.Text = "Order List";
         btnOrderList.Click += btnOrderList_Click;
         // 
-        // btnEditPattern
+        // btnEditPattern — ปุ่มแก้ Pattern (ซ่อนตอนรัน)
         // 
         btnEditPattern.DefaultBack = Color.FromArgb(176, 176, 176);
         btnEditPattern.DefaultBorderColor = Color.FromArgb(36, 71, 101);
@@ -153,7 +153,7 @@ partial class MainShellForm
         btnEditPattern.Text = "Edit Pattern";
         btnEditPattern.Click += btnEditPattern_Click;
         // 
-        // btnSetting
+        // btnSetting — ปุ่มเปิดหน้าตั้งค่า
         // 
         btnSetting.DefaultBack = Color.FromArgb(176, 176, 176);
         btnSetting.DefaultBorderColor = Color.FromArgb(36, 71, 101);
@@ -169,7 +169,7 @@ partial class MainShellForm
         btnSetting.Text = "Setting";
         btnSetting.Click += btnSetting_Click;
         // 
-        // picLogo
+        // picLogo — รูปโลโก้ ย่อขยายตามกรอบ
         // 
         picLogo.BackColor = Color.Transparent;
         picLogo.Dock = DockStyle.Fill;
@@ -182,7 +182,7 @@ partial class MainShellForm
         picLogo.TabIndex = 4;
         picLogo.TabStop = false;
         // 
-        // btnLang
+        // btnLang — ปุ่มสลับภาษา
         // 
         btnLang.DefaultBack = Color.FromArgb(26, 26, 26);
         btnLang.DefaultBorderColor = Color.FromArgb(26, 26, 26);
@@ -197,13 +197,9 @@ partial class MainShellForm
         btnLang.TabIndex = 5;
         btnLang.Text = "EN";
         // 
-        // pnlContent
+        // pnlContent — พื้นที่รวมทุกหน้า สลับหน้าด้วย BringToFront
         // 
-        // แต่ละหน้ากำหนด MinimumSize ของตัวเองไว้แล้ว แต่เดิมไม่มีผลเพราะที่วาง
-        // ไม่ได้เปิดการเลื่อน พอหน้าต่างเตี้ยลง (เช่นคีย์บอร์ดสัมผัสเด้งขึ้นมาบน
-        // Panel PC) ทุกอย่างถูกบีบจนช่องกรอกแบนติดกัน
-        //
-        // เปิด AutoScroll แล้วหน้าจะหยุดหดที่ MinimumSize และขึ้นแถบเลื่อนแทน
+        // พื้นที่ไม่พอให้เลื่อนแทนการบีบหน้าให้เล็กกว่า MinimumSize
         pnlContent.AutoScroll = true;
         pnlContent.BackColor = Color.FromArgb(91, 155, 213);
         pnlContent.Controls.Add(scanBarcodePage);
@@ -217,7 +213,7 @@ partial class MainShellForm
         pnlContent.Size = new Size(1920, 928);
         pnlContent.TabIndex = 1;
         // 
-        // scanBarcodePage
+        // scanBarcodePage — หน้ารับ Barcode
         // 
         scanBarcodePage.Dock = DockStyle.Fill;
         scanBarcodePage.Location = new Point(0, 0);
@@ -227,7 +223,7 @@ partial class MainShellForm
         scanBarcodePage.Size = new Size(1920, 928);
         scanBarcodePage.TabIndex = 0;
         // 
-        // orderListPage
+        // orderListPage — หน้ารายการงาน
         // 
         orderListPage.Dock = DockStyle.Fill;
         orderListPage.Location = new Point(0, 0);
@@ -237,7 +233,7 @@ partial class MainShellForm
         orderListPage.Size = new Size(1920, 928);
         orderListPage.TabIndex = 1;
         // 
-        // editPatternPage
+        // editPatternPage — หน้าแก้ Pattern
         // 
         editPatternPage.Dock = DockStyle.Fill;
         editPatternPage.Location = new Point(0, 0);
@@ -247,7 +243,7 @@ partial class MainShellForm
         editPatternPage.Size = new Size(1920, 928);
         editPatternPage.TabIndex = 2;
         // 
-        // settingPage
+        // settingPage — หน้าตั้งค่า
         // 
         settingPage.Dock = DockStyle.Fill;
         settingPage.Location = new Point(0, 0);
@@ -257,7 +253,7 @@ partial class MainShellForm
         settingPage.Size = new Size(1920, 928);
         settingPage.TabIndex = 3;
         // 
-        // MainShellForm
+        // MainShellForm — ขนาด ฟอนต์ และตำแหน่งเริ่มต้นของหน้าหลัก
         // 
         AutoScaleDimensions = new SizeF(96F, 96F);
         AutoScaleMode = AutoScaleMode.Dpi;
@@ -269,6 +265,7 @@ partial class MainShellForm
         StartPosition = FormStartPosition.CenterScreen;
         Text = "Compact Inkjet";
         WindowState = FormWindowState.Maximized;
+        // ตั้งค่าครบแล้ว ให้แต่ละส่วนจัดหน้าจอตามค่าที่กำหนด
         tlpShellRoot.ResumeLayout(false);
         tlpMenuBar.ResumeLayout(false);
         ((System.ComponentModel.ISupportInitialize)picLogo).EndInit();

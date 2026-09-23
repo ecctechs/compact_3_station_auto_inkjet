@@ -1,52 +1,39 @@
-﻿using InkjetOperator.Theme;
+using InkjetOperator.Theme;
 
 namespace InkjetOperator.Views;
-
-/// <summary>
-/// Application main window (shell): top menu bar + content host. The pages are
-/// placed in pnlContent (Dock=Fill) at design time; menu buttons switch between
-/// them by z-order (BringToFront) and update the active-tab colour. The Input
-/// Order tab shows the Scan Barcode page. Only navigation/tab-state code lives
-/// here — no other business logic, no runtime control creation, no custom paint.
-/// </summary>
+// หน้าหลักรวมเมนูและหน้าต่าง ๆ ที่สร้างไว้ใน Designer
+// กดเมนูเพื่อดึงหน้านั้นมาไว้ด้านหน้า ไม่ได้สร้างหน้าใหม่
 public partial class MainShellForm : AntdUI.Window
 {
+    // สีเมนูที่เลือกและเมนูอื่น
     private static readonly System.Drawing.Color ActiveTab = DesignTokens.PrimaryBlue;
     private static readonly System.Drawing.Color InactiveTab = DesignTokens.Inactive;
 
+    // เก็บเฉพาะปุ่มเมนูที่โหมดนี้แสดง
     private AntdUI.Button[] _visibleTabs = [];
 
+    // เตรียมหน้าจอ เมนู ชื่อสถานี และผูกปุ่มกับงานที่ต้องทำ
     public MainShellForm()
     {
+        // สร้างปุ่มและจัดหน้าจอตามไฟล์ Designer
         InitializeComponent();
+         //เลือกเมนูตาม MENU_LEVEL 
         ApplyMenuLevel();
         ApplyProgramTitle();
+        // เมื่อหน้าหลักโหลด ให้เตรียมช่องสแกนและตรวจการเชื่อมต่อ
         Load += MainShellForm_Load;
-
-        // จอหน้างานเป็น Full HD และใช้เต็มจอตลอด
-        // พับหน้าจอลงแถบงานได้ตามปกติ แต่ย่อให้เล็กกว่าเต็มจอไม่ได้ เพราะเลย์เอาต์
-        // ออกแบบไว้ที่ 1920x1080 — ถ้ามีอะไรคืนขนาด (เช่น Win+Down) จะดันกลับเต็มจอ
+        // พับลงแถบงานหรือปิดโปรแกรมได้; เปลี่ยนขนาดแล้วให้กลับเต็มจอ
         titleBar.MinimizeRequested += (_, _) => Min();
         titleBar.CloseRequested += (_, _) => Close();
         Resize += (_, _) => StayMaximized();
-
-        // แถบหัวเป็นของเราเอง ไม่ได้ใช้กรอบของ Windows ไอคอนตรงนี้จึงไม่ได้โผล่
-        // ที่มุมหน้าต่าง แต่ไปโผล่ที่แถบงานกับหน้า Alt-Tab
-        // ดึงจากไอคอนของ .exe เองแทนการฝังไฟล์ซ้ำอีกชุด
+        // ใช้ไอคอนจาก EXE บนแถบงาน; ถ้าอ่านไม่ได้ก็เปิดโปรแกรมต่อ
         try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
+        // กดปุ่มภาษาเพื่อสลับไทย/อังกฤษ
         btnLang.Click += (_, _) => ToggleLanguage();
         ApplyLanguage();
     }
-
-    /// <summary>
-    /// ตั้งชื่อโปรแกรมตามสถานีของเครื่อง ทั้งแถบหัวบนจอและชื่อที่แถบงานกับ Alt-Tab
-    ///
-    /// <para>
-    /// ตั้งทั้งสองที่เพราะคนละหน้าที่ — แถบหัวบอกคนที่ยืนอยู่หน้าเครื่อง ส่วนชื่อที่
-    /// แถบงานใช้ตอนเปิดหลายเครื่องหรือรีโมตเข้ามาดู จะได้รู้ว่าหน้าต่างไหนของสถานีไหน
-    /// </para>
-    /// </summary>
+    // แสดงชื่อสถานีทั้งแถบหัวและชื่อหน้าต่างของ Windows
     private void ApplyProgramTitle()
     {
         var title = Services.StationService.ProgramTitle;
@@ -54,67 +41,42 @@ public partial class MainShellForm : AntdUI.Window
         titleBar.TitleText = title;
         Text = title;
     }
-
-    /// <summary>
-    /// สลับภาษาทั้งหน้าต่าง — หน้าที่สร้างทีหลัง (หน้าย่อยของ Setting, dialog)
-    /// จะแปลตัวเองตอนถูกสร้าง จึงไม่ต้องตามไปไล่ที่นี่
-    /// </summary>
+    // เปลี่ยนภาษาที่จำไว้ แล้วอัปเดตข้อความบนหน้าจอ
     private void ToggleLanguage()
     {
         Services.LanguageService.Toggle();
         ApplyLanguage();
     }
 
+    // แปลข้อความในหน้าหลักและหน้าที่อยู่ข้างใน
     private void ApplyLanguage()
     {
         Services.LanguageService.Apply(this);
-
-        // ปุ่มบอก "ภาษาที่ใช้อยู่ตอนนี้" กดเพื่อสลับไปอีกภาษา
+        // ปุ่มแสดงภาษาที่กำลังใช้อยู่
         btnLang.Text = Services.LanguageService.IsThai ? "ไทย" : "EN";
     }
-
-    /// <summary>
-    /// หน้าต่างต้องเต็มจอเสมอตอนแสดงผล ถ้าถูกคืนขนาดก็ดันกลับไปเต็มจอทันที
-    /// แต่ตอนพับลงแถบงานต้องปล่อยไว้ ไม่งั้นผู้ใช้พับหน้าจอไม่ได้
-    /// ใช้ <c>MaxRestore</c> ของ AntdUI เพราะการเซ็ต <see cref="Form.WindowState"/>
-    /// ตรง ๆ ไม่ได้อัปเดตธงภายในของไลบรารีและกรอบหน้าต่างจะเพี้ยน
-    /// </summary>
-    /// <summary>
-    /// ขยายเต็มจอต้องได้ขนาดจอเต็ม ไม่ใช่แค่พื้นที่ทำงาน
-    /// เหตุผลอยู่ที่ <see cref="FullScreenMaximize"/>
-    /// </summary>
+    // ให้ตัวช่วยปรับขนาดเต็มจอ ก่อนส่งข้อความให้หน้าต่างจัดการต่อ
     protected override void WndProc(ref Message m)
     {
         FullScreenMaximize.Handle(this, ref m);
         base.WndProc(ref m);
     }
-
-    /// <summary>กำลังบังคับขนาดอยู่ — กันไม่ให้ Resize ที่เกิดจากการบังคับวนกลับมาซ้ำ</summary>
+    // กัน Resize เรียกซ้ำระหว่างที่เรากำลังปรับขนาด
     private bool _forcingFullScreen;
 
+    // รักษาหน้าต่างให้เต็มจอ แต่ยังพับลงแถบงานได้
     private void StayMaximized()
     {
+        // ถ้ากำลังปรับขนาดอยู่ ไม่ต้องเริ่มซ้ำ
         if (_forcingFullScreen) return;
-
-        // พับลงแถบงานอยู่ ต้องปล่อยไว้เฉย ๆ ไม่งั้นหน้าต่างจะเด้งกลับขึ้นมาทันที
-        // จนผู้ใช้พับหน้าจอไม่ได้เลย
+        // ตอนพับหน้าต่าง ห้ามสั่งให้เด้งกลับขึ้นมา
         if (WindowState == FormWindowState.Minimized) return;
-
-        // ขยายอยู่และไม่เล็กกว่าพื้นที่ทำงาน = ปกติดี ไม่ต้องแตะ
-        //
-        // เทียบกับพื้นที่ทำงาน ไม่ใช่ขนาดจอ เพราะกรอบหน้าต่างของ AntdUI ปรับ
-        // non-client area เอง ขนาดจริงตอนขยายจึงไม่เท่าขนาดจอพอดี ถ้าไปเทียบกับ
-        // ขนาดจอตรง ๆ เงื่อนไขจะไม่มีวันเป็นจริง แล้วสั่งขยายซ้ำทุกครั้งที่หน้าต่างขยับ
+        // เทียบพื้นที่ทำงาน เพราะกรอบ AntdUI อาจมีขนาดไม่เท่าจอพอดี
         var work = Screen.FromHandle(Handle).WorkingArea;
+        // เต็มพื้นที่อยู่แล้วก็ไม่ต้องปรับใหม่
         if (WindowState == FormWindowState.Maximized
             && Bounds.Width >= work.Width && Bounds.Height >= work.Height) return;
-
-        // ต้องแวะ Normal ก่อนเสมอ สั่ง Maximized ทับตอนที่สถานะเป็น Maximized อยู่แล้ว
-        // Windows มองว่าไม่มีอะไรเปลี่ยน จึงไม่คำนวณขนาดใหม่ให้
-        //
-        // เจอจริงตอนคืนจากการพับ — สถานะกลับมาเป็น Maximized แต่ขนาดเป็นขนาดที่
-        // จำไว้ก่อนขยาย (1920x1080) การตั้ง Bounds ตรง ๆ ก็ไม่ช่วย เพราะ WinForms
-        // เก็บค่าไว้เป็นขนาดตอนคืนสถานะแทนที่จะเอาไปใช้จริง
+        // สลับผ่าน Normal เพื่อให้ Windows คำนวณขนาด Maximized ใหม่
         _forcingFullScreen = true;
         try
         {
@@ -123,63 +85,70 @@ public partial class MainShellForm : AntdUI.Window
         }
         finally
         {
+            // จบการปรับขนาดแล้ว เปิดให้รับ Resize รอบถัดไป
             _forcingFullScreen = false;
         }
     }
 
-
+    // ทำตอนหน้าหลักโหลด: เตรียมสแกนและตรวจสถานะตามโหมด
     private async void MainShellForm_Load(object? sender, EventArgs e)
     {
-        // หน้า Scan Barcode เป็นหน้าแรกของสถานีบาร์โค้ด วางเคอร์เซอร์ให้ตั้งแต่เปิด
-        // โปรแกรม พนักงานจะได้ยิงสแกนเนอร์ได้เลยโดยไม่ต้องแตะจอก่อน
+        // ถ้าหน้าสแกนแสดงอยู่ ให้วางเคอร์เซอร์พร้อมรับ Barcode
         if (scanBarcodePage.Visible) scanBarcodePage.FocusBarcode();
 
+        // อ่าน MENU_LEVEL; ถ้าไม่มีใช้ 1 แต่ถ้าแปลงเลขไม่ได้ level จะเป็น 0
         var raw = Services.CustomSettingsManager.Read("MENU_LEVEL", "1");
         int.TryParse(raw, out var level);
+        // ตรวจสถานะตอนเปิดเฉพาะโหมดตามเงื่อนไขนี้ โดยรอแบบ async
         if (level <= 1 || level == 9)
             await settingPage.CheckAllStatusAsync();
     }
-
-    /// <summary>Position of Edit Pattern in the tab / page / visibility arrays.</summary>
+    // Edit Pattern อยู่ลำดับที่ 3 ในชุดเมนู (นับจาก 0 จึงเป็น 2)
     private const int EditPatternTab = 2;
 
+    // อ่านโหมดเครื่อง แล้วกำหนดเมนูและหน้าเริ่มต้น
     private void ApplyMenuLevel()
     {
+        // อ่าน MENU_LEVEL; ถ้าไม่มีใช้ 1 แต่ถ้าแปลงเลขไม่ได้ level จะเป็น 0
         var raw = Services.CustomSettingsManager.Read("MENU_LEVEL", "1");
         int.TryParse(raw, out var level);
 
+        // ลำดับปุ่มต้องตรงกับลำดับหน้าและค่า visible ด้านล่าง
         var allTabs = new[] { btnInputOrder, btnOrderList, btnEditPattern, btnSetting };
         var allPages = new Control[] { scanBarcodePage, orderListPage, editPatternPage, settingPage };
 
+        // true = แสดง, false = ซ่อน; เรียง Scan / Order List / Edit Pattern / Setting
         bool[] visible = level switch
         {
+            // โหมด 0: รับ Barcode และตั้งค่า
             0 => [true, false, false, true],
+            // โหมด 1: รายการงานและตั้งค่า (Edit Pattern ถูกซ่อนอีกทีด้านล่าง)
             1 => [false, true, true, true],
-            // ST3 ใช้หน้า Order List หน้าเดียวกับ ST1 แต่กรองงานคนละชุด
-            // (กฎอยู่ที่ MarkingMethodService — ST3 เห็นเฉพาะ marking 10 / 11 / 12
-            //  รวมถึงรหัสที่ลงท้ายด้วย 3 ซึ่งเดินเส้นทางเดียวกับ 1 เช่น 32 เท่ากับ 12)
-            3 => [false, true, false, true],    // ST3 — Order List + Setting
-            9 => [false, false, false, true],   // โหมดทดสอบหน้างาน — เข้าได้เฉพาะ Setting
+            // ST3 ใช้หน้า Order List ร่วมกับ ST1; กรองงานในหน้ารายการ
+            3 => [false, true, false, true], // ST3: รายการงานและตั้งค่า
+            9 => [false, false, false, true], // โหมดทดสอบ: ตั้งค่าเท่านั้น
+            // โหมดอื่นเปิดทุกเมนูก่อน แล้วใช้กฎซ่อนด้านล่าง
             _ => [true, true, true, true],
         };
-
-        // Edit Pattern is hidden at every menu level. Kept as one override rather
-        // than edited into each arm above, so the page comes back by deleting this
-        // line - the tab, the page and the per-level table are all still intact.
+        // ซ่อน Edit Pattern ทุกโหมด โดยยังเก็บหน้าและโค้ดไว้
         visible[EditPatternTab] = false;
 
+        // แสดงหรือซ่อนปุ่มพร้อมหน้าที่คู่กัน
         for (int i = 0; i < allTabs.Length; i++)
         {
             allTabs[i].Visible = visible[i];
             allPages[i].Visible = visible[i];
+            // ใช้ความกว้างตายตัวทั้งเมนูที่แสดงและเมนูที่ซ่อน
             tlpMenuBar.ColumnStyles[i].SizeType = visible[i]
                 ? System.Windows.Forms.SizeType.Absolute : System.Windows.Forms.SizeType.Absolute;
-            // แท็บชิดกันเป็นแถบเดียว กว้างพอดีข้อความที่ 17pt ไม่เว้นร่อง
+            // เมนูที่แสดงกว้าง 250; เมนูที่ซ่อนยุบช่องเหลือ 0
             tlpMenuBar.ColumnStyles[i].Width = visible[i] ? 250F : 0F;
         }
 
+        // เก็บปุ่มที่แสดงไว้ใช้เปลี่ยนสีเวลาเลือกเมนู
         _visibleTabs = allTabs.Where((_, i) => visible[i]).ToArray();
 
+        // เปิดหน้าแรกที่โหมดนี้อนุญาตให้เห็น
         if (_visibleTabs.Length > 0)
         {
             var firstTab = _visibleTabs[0];
@@ -189,6 +158,7 @@ public partial class MainShellForm : AntdUI.Window
         }
     }
 
+    // เปลี่ยนสีให้เห็นว่าตอนนี้เลือกเมนูไหน
     private void SetActiveTab(AntdUI.Button active)
     {
         foreach (var b in _visibleTabs)
@@ -198,6 +168,7 @@ public partial class MainShellForm : AntdUI.Window
         }
     }
 
+    // เปิดหน้ารับ Barcode แล้ววางเคอร์เซอร์พร้อมสแกน
     private void btnInputOrder_Click(object sender, EventArgs e)
     {
         scanBarcodePage.BringToFront();
@@ -205,18 +176,21 @@ public partial class MainShellForm : AntdUI.Window
         scanBarcodePage.FocusBarcode();
     }
 
+    // เปิดหน้ารายการงานและเปลี่ยนสีเมนู
     private void btnOrderList_Click(object sender, EventArgs e)
     {
         orderListPage.BringToFront();
         SetActiveTab(btnOrderList);
     }
 
+    // เปิดหน้าแก้ Pattern; ปัจจุบันปุ่มนี้ถูกซ่อนทุกโหมด
     private void btnEditPattern_Click(object sender, EventArgs e)
     {
         editPatternPage.BringToFront();
         SetActiveTab(btnEditPattern);
     }
 
+    // เปิดหน้าตั้งค่าและเปลี่ยนสีเมนู
     private void btnSetting_Click(object sender, EventArgs e)
     {
         settingPage.BringToFront();
