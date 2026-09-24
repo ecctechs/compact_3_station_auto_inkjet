@@ -948,10 +948,17 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
+        // เลือกโปรแกรม UV ให้เสร็จตรงนี้ ก่อนจะสรุปให้ดูและก่อนจองคิว
+        //
+        // กล่องเลือกรุ่นย่อยกับกล่องยืนยัน default ต้องเด้งที่จอของคนที่กดเริ่ม
+        // ไม่ใช่ไปเด้งตอนส่งจริงซึ่งเกิดที่ ST1 เสมอ
+        var uvPicks = PickUvPrograms(plan, resolved);
+        if (uvPicks == null || IsDisposed) return;
+
         // สรุปให้ดูก่อนว่าจะส่งอะไรเข้าเครื่องไหนบ้าง แล้วค่อยลงมือ
         //
         // ถามก่อนจอง ไม่ใช่หลังจอง — กดยกเลิกแล้วต้องไม่มีอะไรค้างอยู่ในคิวเลย
-        if (!await ConfirmStartAsync(jobId, resolved, plan)) return;
+        if (!await ConfirmStartAsync(jobId, resolved, plan, uvPicks)) return;
         if (IsDisposed) return;
 
         // จองทุกเครื่องที่แผนของงานนี้ต้องใช้ ในคราวเดียว
@@ -959,7 +966,8 @@ public partial class OrderListUserControl : UserControl
         // จองก่อนส่งเสมอ เพราะการจองคือสิ่งที่บอกว่างานนี้มีสิทธิ์ในเครื่องไหนบ้าง
         // เครื่องที่ว่างจะถูกส่งต่อทันทีข้างล่าง ส่วนเครื่องที่ไม่ว่างก็รออยู่ในคิว
         // จนกว่าคนหน้างานจะกดปุ่มปล่อยเครื่อง
-        var (queued, queueError) = await _api.EnqueueMachinesAsync(jobId, QueueItemsFor(plan.Steps));
+        var (queued, queueError) = await _api.EnqueueMachinesAsync(
+            jobId, QueueItemsFor(plan.Steps, uvPicks));
         if (IsDisposed) return;
 
         if (!queued)
@@ -993,18 +1001,21 @@ public partial class OrderListUserControl : UserControl
     /// อ่านคิวก่อนจอง แถวที่เห็นตอนนี้จึงเป็นของงานใบอื่นล้วน ๆ ไม่ใช่ของใบที่กำลังกด
     /// </para>
     /// </summary>
-    private async Task<bool> ConfirmStartAsync(int jobId, ResolvedJobResponse resolved, MarkingPlan plan)
+    private async Task<bool> ConfirmStartAsync(
+        int jobId, ResolvedJobResponse resolved, MarkingPlan plan,
+        Dictionary<string, string> uvPicks)
     {
         var (rows, _) = await _api!.GetMachineQueueAsync();
         if (IsDisposed) return false;
 
         return Confirm.Ask(this, "ยืนยันเริ่มงาน",
-            BuildStartPreview(jobId, resolved, plan, rows));
+            BuildStartPreview(jobId, resolved, plan, rows, uvPicks));
     }
 
     /// <summary>ข้อความสรุปที่โชว์ในกล่องยืนยัน — แยกไว้ให้ทดสอบข้อความได้โดยไม่ต้องเปิดกล่อง</summary>
     private string BuildStartPreview(
-        int jobId, ResolvedJobResponse resolved, MarkingPlan plan, List<MachineQueueRow> rows)
+        int jobId, ResolvedJobResponse resolved, MarkingPlan plan, List<MachineQueueRow> rows,
+        Dictionary<string, string> uvPicks)
     {
         var body = new List<string>
         {
@@ -1022,7 +1033,7 @@ public partial class OrderListUserControl : UserControl
                 : $"ไม่ว่าง ({JobName(holder.PrintJobsId)} ค้างอยู่) · เข้าคิวรอปุ่มกดหน้างาน";
 
             body.Add($"[ {step} · ST{station} ]  {state}");
-            body.AddRange(StepPreviewLines(step, resolved).Select(line => "      " + line));
+            body.AddRange(StepPreviewLines(step, resolved, uvPicks).Select(line => "      " + line));
             body.Add("");
         }
 
@@ -1030,7 +1041,8 @@ public partial class OrderListUserControl : UserControl
     }
 
     /// <summary>ข้อมูลที่จะถูกส่งเข้าเครื่องของขั้นตอนหนึ่ง เขียนให้อ่านจากที่ไกล ๆ ได้</summary>
-    private static List<string> StepPreviewLines(string step, ResolvedJobResponse resolved)
+    private static List<string> StepPreviewLines(
+        string step, ResolvedJobResponse resolved, Dictionary<string, string> uvPicks)
     {
         var lines = new List<string>();
 
@@ -1070,10 +1082,77 @@ public partial class OrderListUserControl : UserControl
         lines.Add($"{uvName}: โปรแกรม {OrDash(uv.ProgramName)}");
         lines.Add($"Lot: {OrDash(uv.Lot)}      Name: {OrDash(uv.ErpMfg)}");
 
-        // รุ่นย่อยของโปรแกรมยังไม่รู้ตอนนี้ กล่องให้เลือกจะเด้งตอนส่งจริง
-        lines.Add("(ถ้ามีรุ่นย่อยให้เลือก จะถามอีกครั้งตอนส่ง)");
+        // บอกชื่อไฟล์ที่จะโหลดเข้าเครื่องจริง ซึ่งเลือกไปแล้วก่อนมาถึงกล่องนี้
+        //
+        // ขั้นที่ยังไม่รู้ต้องบอกสาเหตุให้ตรง ไม่ใช่บอกแค่ว่าจะถามทีหลัง — คนที่ ST3
+        // จะได้รู้ว่าต้องไปตั้งโฟลเดอร์ที่เครื่องตัวเอง ไม่ใช่รอให้กล่องเด้งเอง
+        if (uvPicks.TryGetValue(step, out var chosen))
+            lines.Add($"จะโหลดไฟล์ {chosen}.uvdx เข้าเครื่อง");
+        else if (UvSettingsManager.GetDocumentFolder(uvNumber) == null)
+            lines.Add($"(เครื่องนี้ยังไม่ได้ตั้งโฟลเดอร์ UV{uvNumber} — ถ้ามีรุ่นย่อย กล่องเลือกจะไปเด้งที่ ST1 ตอนส่ง)");
+        else
+            lines.Add("(ยังไม่รู้รุ่นย่อย — เครื่องที่ต่อสายจะถามตอนส่ง)");
 
         return lines;
+    }
+
+    /// <summary>UV1 หรือ UV2 คืนเลขเครื่อง · ขั้นอื่น (MK) คืน null</summary>
+    private static int? UvNumberOf(string step) =>
+        string.Equals(step, "UV1", StringComparison.OrdinalIgnoreCase) ? 1
+        : string.Equals(step, "UV2", StringComparison.OrdinalIgnoreCase) ? 2
+        : null;
+
+    /// <summary>
+    /// เลือกโปรแกรม UV ของทุกขั้นในแผนตั้งแต่ตอนกดเริ่มงาน — null = คนกดยกเลิก
+    ///
+    /// <para>
+    /// เดิมกล่องเลือกรุ่นย่อยกับกล่องยืนยันโปรแกรม default จะเด้งตอนส่งเข้าเครื่องจริง
+    /// ซึ่งเกิดที่จอ ST1 เสมอ เพราะสายของเครื่องต่ออยู่ที่นั่นที่เดียว งานที่ ST3 กดเริ่ม
+    /// จึงไปค้างรอคนตอบที่จอซึ่งคนกดไม่ได้ยืนอยู่ และงานที่เข้าคิวรอปุ่มกดหน้างาน
+    /// ก็เด้งขึ้นตอนที่ไม่มีใครเฝ้า
+    /// </para>
+    /// <para>
+    /// เลือกตรงนี้ทีเดียวจบทุกเครื่องที่แผนต้องใช้ แล้วฝากชื่อที่เลือกไว้กับแถวคิว
+    /// ตอนส่งจริงจึงไม่ต้องถามอะไรอีก ไม่ว่าจะส่งทันทีหรือส่งทีหลังหลังกดปุ่มหน้างาน
+    /// </para>
+    /// <para>
+    /// ขั้นที่หาโฟลเดอร์ document ของเครื่องไม่เจอจะไม่ถูกเลือกไว้ตรงนี้ เพราะไม่รู้ว่า
+    /// โปรแกรมนั้นมีรุ่นย่อยกี่รุ่น การเดาแล้วฝากชื่อดิบให้ ST1 ส่งเลยอันตรายกว่า
+    /// การปล่อยให้ ST1 ถามเองเหมือนเดิม กล่องสรุปจะบอกไว้ว่าขั้นไหนเข้าข่ายนี้
+    /// </para>
+    /// </summary>
+    private Dictionary<string, string>? PickUvPrograms(MarkingPlan plan, ResolvedJobResponse resolved)
+    {
+        var picks = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var step in plan.Steps.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            if (UvNumberOf(step) is not int uvNumber) continue;
+
+            var uvRow = resolved.UvJobData?.FirstOrDefault(r =>
+                string.Equals(r.Machine, step, StringComparison.OrdinalIgnoreCase));
+
+            // ไม่มีชื่อโปรแกรมมาให้ = ไม่มีอะไรให้เลือก ปล่อยไปตามทางเดิม
+            // ตอนส่งจริงเป็นคนบอกเองว่าข้อมูลของเครื่องนี้ไม่ครบ
+            if (string.IsNullOrWhiteSpace(uvRow?.ProgramName)) continue;
+
+            var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber);
+            if (docFolder == null) continue;
+
+            var pick = UvProgramResolver.Resolve(uvRow.ProgramName, docFolder, this);
+            if (pick.Program == null) return null;
+
+            var uvName = UvSettingsManager.Read(
+                uvNumber == 1 ? "UV1_NAME" : "UV2_NAME", $"UV-00{uvNumber}");
+
+            if (pick.IsDefault &&
+                !UvProgramResolver.ConfirmDefault(uvRow.ProgramName, uvName, this))
+                return null;
+
+            picks[step] = pick.Program;
+        }
+
+        return picks;
     }
 
     /// <summary>ช่องว่างให้ขึ้นขีดแทน จะได้ไม่เห็นเป็นบรรทัดแหว่ง</summary>
@@ -1093,7 +1172,8 @@ public partial class OrderListUserControl : UserControl
     /// เครื่องเดียวกันที่โผล่ซ้ำในแผนได้รอบเพิ่มขึ้นทีละหนึ่ง — marking 22 เข้า MK
     /// สองรอบ จึงได้ MK รอบ 1 กับ MK รอบ 2 ซึ่งเป็นคนละคิวกัน
     /// </summary>
-    private static List<MachineQueueItem> QueueItemsFor(List<string> steps)
+    private static List<MachineQueueItem> QueueItemsFor(
+        List<string> steps, Dictionary<string, string> uvPicks)
     {
         var rounds = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var items = new List<MachineQueueItem>();
@@ -1101,7 +1181,15 @@ public partial class OrderListUserControl : UserControl
         foreach (var step in steps)
         {
             rounds[step] = rounds.TryGetValue(step, out int used) ? used + 1 : 1;
-            items.Add(new MachineQueueItem { Machine = step, Round = rounds[step] });
+            items.Add(new MachineQueueItem
+            {
+                Machine = step,
+                Round = rounds[step],
+
+                // ชื่อที่คนเลือกไว้ตอนกดเริ่ม — ตอนส่งจริงจะถูกส่งเป็น forcedProgram
+                // ซึ่งข้ามทั้งกล่องเลือกรุ่นย่อยและกล่องยืนยัน default ไปเลย
+                ProgramName = uvPicks.GetValueOrDefault(step),
+            });
         }
 
         return items;
