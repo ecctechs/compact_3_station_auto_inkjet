@@ -1221,11 +1221,18 @@ public partial class OrderListUserControl : UserControl
         //
         // การกดเริ่มงานหนึ่งครั้งควรส่งได้อย่างมากเครื่องละหนึ่งรอบอยู่แล้ว รอบถัดไป
         // ของเครื่องเดิมต้องรอคนกดปุ่มหน้างานเสมอ
+        // เรียงตามลำดับที่ชิ้นงานเดินผ่านเครื่องจริง ไม่ใช่ตามที่ backend คืนมา
+        //
+        // backend เรียงตามชื่อเครื่อง ซึ่งตอนนี้บังเอิญตรงกับลำดับของแผน (MK < UV1 < UV2)
+        // แต่ลำดับที่ต้องใช้คือลำดับของแผน ถ้าวันหนึ่งชื่อเครื่องเปลี่ยนหรือแผนสลับลำดับ
+        // การพึ่งการเรียงตามตัวอักษรจะพากันผิดแบบเงียบ ๆ
+        var planSteps = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod).Steps;
+
         var machines = rows
             .Where(r => r.PrintJobsId == jobId && r.State == "pending")
-            .OrderBy(r => r.Round)
             .Select(r => r.Machine)
             .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(m => PlanOrderOf(planSteps, m))
             .ToList();
 
         var lines = new List<Notify.ResultLine>();
@@ -1288,6 +1295,25 @@ public partial class OrderListUserControl : UserControl
             else
             {
                 await _api.UpdateMachineQueueAsync(claimed.Id, state: "pending");
+
+                // ส่งเครื่องนี้ไม่ผ่าน = หยุดทั้งการกดครั้งนี้ ไม่ส่งเครื่องที่เหลือต่อ
+                //
+                // เครื่องเรียงตามลำดับที่ชิ้นงานเดินผ่าน เครื่องที่เหลือจึงเป็นเครื่องที่
+                // อยู่หลังเครื่องที่เพิ่งพัง การโหลดโปรแกรมใส่เครื่องหลังไว้ทั้งที่เครื่อง
+                // หน้ายังไม่ได้รับงาน ทำให้งานกลายเป็น "เริ่มไปแล้วครึ่งหนึ่ง" ซึ่งกด
+                // เริ่มใหม่ไม่ได้ (สถานะเป็น Process) และไม่มีทางสั่งเครื่องหน้าซ้ำด้วย
+                //
+                // หยุดตรงนี้แทน ทุกอย่างจึงกลับไปเป็น Waiting และกดเริ่มใหม่ได้ทั้งใบ
+                var skipped = machines
+                    .SkipWhile(m => !string.Equals(m, machine, StringComparison.OrdinalIgnoreCase))
+                    .Skip(1)
+                    .ToList();
+
+                if (skipped.Count > 0)
+                    lines.Add(Notify.Careful(
+                        $"ยังไม่ได้ส่ง {string.Join(" ", skipped)} — ต้องแก้ที่ {machine} ให้ได้ก่อน"));
+
+                break;
             }
         }
 
@@ -1326,14 +1352,6 @@ public partial class OrderListUserControl : UserControl
     /// ไว้ให้เสร็จแล้ว — การส่งรอบนั้นจะไม่เด้งหน้าต่างใด ๆ ที่จอ ST1
     /// </para>
     /// </summary>
-    /// <param name="isFirstStep">
-    /// ส่งไม่สำเร็จแล้วจะคืนสถานะเป็น Waiting ได้เฉพาะขั้นแรกเท่านั้น
-    /// <para>
-    /// ขั้นหลัง ๆ มีขั้นก่อนหน้าที่พ่นลงชิ้นงานไปแล้ว ถ้าตีกลับเป็น Waiting
-    /// งานจะกลายเป็นกดเริ่มใหม่ได้ แล้วการกดเริ่มจะส่งขั้นแรกซ้ำ = พ่นซ้ำของจริง
-    /// ปล่อยให้คงเป็น Working ไว้ คนหน้างานกดปุ่มส่งขั้นเดิมใหม่ได้เลย
-    /// </para>
-    /// </param>
     /// <summary>
     /// ผลการส่งหนึ่งขั้น — <paramref name="Sent"/> คือ "ข้อมูลเข้าเครื่องแล้วจริงไหม"
     ///
@@ -1347,7 +1365,7 @@ public partial class OrderListUserControl : UserControl
 
     private async Task<StepSendResult> SendStepAsync(
         int jobId, string step, ResolvedJobResponse resolved,
-        string? forcedProgram = null, bool isFirstStep = true)
+        string? forcedProgram = null)
     {
         await _api!.UpdateJobStatusAsync(jobId, "Process");
 
@@ -1361,10 +1379,8 @@ public partial class OrderListUserControl : UserControl
 
             bool ok = mk.Status == SendStatus.Ok;
 
-            if (ok)
-                await _api.SaveSendStepAsync(jobId, "MK");
-            else if (isFirstStep)
-                await _api.UpdateJobStatusAsync(jobId, "Waiting");
+            if (ok) await _api.SaveSendStepAsync(jobId, "MK");
+            else await UndoStartedStatusAsync(jobId, resolved);
 
             return new StepSendResult(ok, lines);
         }
@@ -1385,7 +1401,7 @@ public partial class OrderListUserControl : UserControl
                 [Notify.Ok($"{uv.MachineName} — ส่งสำเร็จ ({uv.ProgramFile}.uvdx)")]);
         }
 
-        if (isFirstStep) await _api.UpdateJobStatusAsync(jobId, "Waiting");
+        await UndoStartedStatusAsync(jobId, resolved);
 
         return new StepSendResult(false, uv.Status switch
         {
@@ -1472,7 +1488,7 @@ public partial class OrderListUserControl : UserControl
         // แต่ตอนนี้ยังไม่มีใครแตะเครื่องเลย ยังไม่รู้ด้วยซ้ำว่า ST1 ต่อ UV ได้ไหม
         //
         // งานคงเป็น Waiting ไว้จนกว่า ST1 จะต่อเครื่องติดและส่งสำเร็จจริง
-        // (SendStepAsync เป็นคนตั้ง Working และตีกลับเป็น Waiting เองถ้าขั้นแรกส่งไม่ผ่าน)
+        // (SendStepAsync เป็นคนตั้ง Process และถอนคืนเองถ้าส่งไม่ผ่านและงานยังไม่เคยพิมพ์)
         var (ok, err) = await _api!.SetRemoteStartAsync(
             jobId, requested: true, pick.Program, step: step);
         if (IsDisposed) return;
@@ -1849,9 +1865,7 @@ public partial class OrderListUserControl : UserControl
         await _api.ClaimRemoteStartAsync(jobId, program, step);
         if (IsDisposed) return;
 
-        // ขั้นแรกหรือไม่ ตัดสินจากแผนของงาน ไม่ใช่จากว่าใครเป็นคนขอ
-        var lines = (await SendStepAsync(
-            jobId, step, resolved, program, isFirstStep: plan.Steps.IndexOf(step) == 0)).Lines;
+        var lines = (await SendStepAsync(jobId, step, resolved, program)).Lines;
 
         // ล้มเหลวแล้วฝากสาเหตุกลับไปให้ ST3 ด้วย — คนที่กดเริ่มงานอยู่ที่นั่น
         // ไม่ได้เห็นจอนี้ ถ้าไม่ฝากไว้เขาจะเห็นแค่งานเด้งกลับเป็น Waiting เฉย ๆ
@@ -1881,7 +1895,7 @@ public partial class OrderListUserControl : UserControl
     /// ST3 หยิบสาเหตุที่ ST1 ส่งไม่สำเร็จมาแสดงที่จอตัวเอง แล้วล้างทิ้งทันที
     ///
     /// ล้างทันทีที่แสดง จึงไม่ต้องจำว่าเคยแสดงใบไหนไปแล้ว และไม่เด้งซ้ำตอนเปิดโปรแกรมใหม่
-    /// ตัวงานเองถูก SendStepAsync ตีกลับเป็น Waiting ไว้แล้ว กดเริ่มใหม่ได้เลย
+    /// งานที่ยังไม่เคยพิมพ์อะไรเลยถูกถอนสถานะกลับเป็น Waiting ไว้แล้ว กดเริ่มใหม่ได้เลย
     /// </summary>
     private async Task ShowRemoteErrorsAsync()
     {
@@ -2393,6 +2407,40 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private bool WaitingForShim(PrintJob job) =>
         _queueRows.Any(r => r.PrintJobsId == job.Id && r.Round >= 2 && r.State == "active");
+
+    /// <summary>ลำดับของเครื่องในแผน — เครื่องที่ไม่อยู่ในแผนไปต่อท้าย</summary>
+    private static int PlanOrderOf(List<string> planSteps, string machine)
+    {
+        int index = planSteps.FindIndex(step =>
+            string.Equals(step, machine, StringComparison.OrdinalIgnoreCase));
+
+        return index < 0 ? int.MaxValue : index;
+    }
+
+    /// <summary>
+    /// ส่งไม่ผ่าน — ถอนสถานะ "เริ่มแล้ว" ทิ้ง เฉพาะงานที่ยังไม่เคยพิมพ์อะไรเลย
+    ///
+    /// <para>
+    /// ก่อนส่งทุกครั้งสถานะถูกตั้งเป็น Process ไว้ กันไม่ให้อีกสถานีกดเริ่มซ้ำระหว่างที่
+    /// เครื่องกำลังรับข้อมูลอยู่ พอส่งไม่ผ่านก็ต้องถอนคืน ไม่งั้นงานที่ยังไม่ได้เริ่มเลย
+    /// จะค้างเป็น "กำลังผลิต" และกดเริ่มใหม่ไม่ได้อีกเลย
+    /// </para>
+    /// <para>
+    /// งานที่เคยพ่นลงชิ้นงานไปแล้วบางขั้นห้ามถอน ถ้าตีกลับเป็น Waiting งานจะกดเริ่ม
+    /// ใหม่ได้ แล้วการกดเริ่มจะส่งขั้นแรกซ้ำ = พ่นซ้ำลงของจริง ปล่อยให้คงเป็น Process
+    /// ไว้ ขั้นที่ยังขาดใช้ปุ่มกดหน้างานสั่งต่อได้
+    /// </para>
+    /// <para>
+    /// เดิมตรงนี้ตัดสินจากพารามิเตอร์ว่าเป็นขั้นแรกของแผนไหม ซึ่งผู้เรียกสองในสามที่
+    /// ไม่เคยส่งค่ามาเลย ทุกขั้นจึงถือเป็นขั้นแรกหมด งาน marking 11 ที่ส่ง UV1 สำเร็จ
+    /// แล้ว UV2 ไม่ผ่าน จะถูกตีกลับเป็น Waiting ทั้งที่ UV1 พ่นไปแล้วจริง
+    /// </para>
+    /// </summary>
+    private async Task UndoStartedStatusAsync(int jobId, ResolvedJobResponse resolved)
+    {
+        if (PrintedBefore(resolved)) return;
+        await _api!.UpdateJobStatusAsync(jobId, "Waiting");
+    }
 
     /// <summary>งานนี้เคยส่งเข้าเครื่องสำเร็จมาก่อนไหม — ดูจากประวัติคำสั่งที่บันทึกไว้</summary>
     private static bool PrintedBefore(ResolvedJobResponse resolved) =>
