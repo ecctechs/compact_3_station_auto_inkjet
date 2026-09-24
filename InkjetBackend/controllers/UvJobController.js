@@ -6,18 +6,18 @@ class UvJobController {
    * POST /uv-job/create
    * Replaces all uv_job_data rows for the given print_jobs_id, then bulk-inserts new ones.
    */
-  static async create(req, res) {
-    try {
-      const { print_jobs_id, items } = req.body;
+  static async create(req, res) { // Flow 10: รับ /uv-job/create
+    try { // ลองบันทึกหรืออ่านข้อมูลตามคำขอ
+      const { print_jobs_id, items } = req.body; // รับ Job ID และรายการ UV
 
-      await UvJobData.destroy({ where: { print_jobs_id } });
+      await UvJobData.destroy({ where: { print_jobs_id } }); // ล้าง UV เดิมของ Job นี้ก่อนใส่ชุดใหม่
 
-      const rows = items.map((item) => ({ ...item, print_jobs_id }));
-      const created = await UvJobData.bulkCreate(rows);
+      const rows = items.map((item) => ({ ...item, print_jobs_id })); // ใส่ Job ID ให้ทุกรายการ UV
+      const created = await UvJobData.bulkCreate(rows); // บันทึกรายการ UV ทั้งชุด
 
-      return ResponseManager.SuccessResponse(req, res, 201, created);
-    } catch (err) {
-      return ResponseManager.CatchResponse(req, res, err.message);
+      return ResponseManager.SuccessResponse(req, res, 201, created); // ส่งรายการที่บันทึกแล้วกลับให้ C#
+    } catch (err) { // ทำงานไม่สำเร็จให้ส่งสาเหตุคืน
+      return ResponseManager.CatchResponse(req, res, err.message); // ส่งข้อความผิดพลาดกลับไป C#
     }
   }
 

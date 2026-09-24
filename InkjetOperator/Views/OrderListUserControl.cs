@@ -444,79 +444,79 @@ public partial class OrderListUserControl : UserControl
         resolved.Commands?.Any(c => c.Success &&
             string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true;
 
-    private void StartPolling()
+    private void StartPolling() // Flow 14: ตั้งรอบอ่านงานของ Station
     {
-        _pollTimer = new System.Windows.Forms.Timer { Interval = 5000 };
-        _pollTimer.Tick += async (_, _) => await RefreshDataAsync();
-        _pollTimer.Start();
+        _pollTimer = new System.Windows.Forms.Timer { Interval = 5000 }; // ตั้งรอบอ่านทุก 5 วินาที
+        _pollTimer.Tick += async (_, _) => await RefreshDataAsync(); // ครบเวลาแล้วไปอ่านรายการงาน
+        _pollTimer.Start(); // เริ่มนับรอบ
     }
 
-    private async Task RefreshDataAsync(bool force = false)
+    private async Task RefreshDataAsync(bool force = false) // อ่าน Backend แล้วอัปเดตรายการบนหน้านี้
     {
-        if (_api == null) return;
+        if (_api == null) return; // ยังไม่มีตัวเรียก Backend ให้ข้าม
 
         // ระหว่างส่งงานห้ามผูก DataSource ใหม่ ไม่งั้นแถวขยับใต้มือผู้ใช้
         // และกล่องเลือกรุ่นย่อยของ UV อาจถูกวาดทับ
-        if (_sending) return;
+        if (_sending) return; // กำลังส่งเครื่องอยู่ ยังไม่เปลี่ยนรายการบนจอ
 
         // รอบก่อนยังไม่จบก็ข้ามรอบนี้ไป — นาฬิกาเดินทุก 5 วิ แต่ถ้า backend ช้า
         // หรือต่อไม่ติด คำขอหนึ่งรออยู่ได้ถึง 10 วิ ไม่กันไว้รอบใหม่จะทับกันไป
         // เรื่อย ๆ จนมีคำขอค้างพร้อมกันหลายชุด แล้วเด้งกล่องผิดพลาดตามมาเป็นพรวด
-        if (_refreshing) return;
+        if (_refreshing) return; // รอบก่อนยังไม่จบ ไม่เริ่มซ้อน
 
-        _refreshing = true;
-        try
+        _refreshing = true; // จองรอบอ่านข้อมูลไว้
+        try // เริ่มอ่านงานและอัปเดตหน้า Order List และดักข้อผิดพลาดไว้
         {
-            DateTime? fromUtc = null, toUtc = null;
-            if (_showHistory && TryGetDateRange(out var from, out var to))
+            DateTime? fromUtc = null, toUtc = null; // เริ่มจากไม่กรองช่วงเวลา
+            if (_showHistory && TryGetDateRange(out var from, out var to)) // หน้า History มีช่วงวันที่ที่เลือกไว้
             {
-                fromUtc = ToUtcFromThai(from);
-                toUtc = ToUtcFromThai(to);
+                fromUtc = ToUtcFromThai(from); // แปลงเวลาเริ่มเป็น UTC
+                toUtc = ToUtcFromThai(to); // แปลงเวลาสิ้นสุดเป็น UTC
             }
 
-            var (jobs, error) = await _api.GetAllJobsAsync(100, fromUtc, toUtc);
-            if (IsDisposed) return;
-            if (error != null)
+            var (jobs, error) = await _api.GetAllJobsAsync(100, fromUtc, toUtc); // อ่านงานจาก Backend รวมงานที่ Barcode เพิ่งสร้าง
+            if (IsDisposed) return; // หน้าถูกปิดแล้วให้หยุดรอบนี้
+            if (error != null) // อ่านรายการงานไม่สำเร็จ
             {
-                tblOrders.EmptyText = $"Error: {error}";
-                return;
+                tblOrders.EmptyText = $"Error: {error}"; // แสดงสาเหตุในตาราง
+                return; // อ่านงานไม่ได้ จึงไม่อัปเดตรายการรอบนี้
             }
-            _allJobs = jobs;
+            _allJobs = jobs; // เก็บงานที่ Backend ส่งกลับ
 
             // ทำก่อนเช็ค signature เพราะคำขอจาก ST3 ไม่ได้เปลี่ยนอะไรที่ตารางวาด
             // ถ้าไปทำหลังจากนั้น รอบที่หน้าจอไม่มีอะไรเปลี่ยนจะข้ามคำขอไปเลย
-            await RecoverAbandonedRemoteStartsAsync();
-            if (IsDisposed) return;
+            await RecoverAbandonedRemoteStartsAsync(); // ตรวจคำขอเริ่มงานที่ค้างอยู่
+            if (IsDisposed) return; // หน้าถูกปิดแล้วให้หยุดรอบนี้
 
-            await ProcessRemoteStartsAsync();
-            if (IsDisposed) return;
+            await ProcessRemoteStartsAsync(); // จัดการคำขอเริ่มงานจากอีก Station
+            if (IsDisposed) return; // หน้าถูกปิดแล้วให้หยุดรอบนี้
 
-            await ProcessMachineQueueAsync();
-            if (IsDisposed) return;
+            await ProcessMachineQueueAsync(); // จัดการงานที่รอคิวเครื่อง
+            if (IsDisposed) return; // หน้าถูกปิดแล้วให้หยุดรอบนี้
 
-            await RefreshStationBarAsync();
-            if (IsDisposed) return;
+            await RefreshStationBarAsync(); // อัปเดตสถานะงานของ Station
+            if (IsDisposed) return; // หน้าถูกปิดแล้วให้หยุดรอบนี้
 
-            await ShowRemoteErrorsAsync();
-            if (IsDisposed) return;
+            await ShowRemoteErrorsAsync(); // แสดงข้อผิดพลาดที่อีก Station ส่งกลับ
+            if (IsDisposed) return; // หน้าถูกปิดแล้วให้หยุดรอบนี้
 
             // ผูก DataSource ใหม่ทีไร ตารางจะรีเซ็ตทั้งลำดับที่เรียงไว้และตำแหน่ง scroll
             // รอบ poll ที่ข้อมูลไม่เปลี่ยนจึงไม่ต้องผูกใหม่ ไม่งั้นทุก 5 วิจะกระตุกทีนึง
-            var signature = BuildSignature(jobs) + QueueSignature();
-            if (!force && signature == _lastSignature) return;
+            var signature = BuildSignature(jobs) + QueueSignature(); // รวมข้อมูลไว้เทียบว่ารายการเปลี่ยนหรือยัง
+            if (!force && signature == _lastSignature) return; // ข้อมูลเดิมและไม่ได้บังคับ ไม่วาดตารางใหม่
 
-            _lastSignature = signature;
-            RebindTable();
-            await UpdateProcessingAsync();
+            _lastSignature = signature; // จำข้อมูลรอบนี้ไว้เทียบครั้งหน้า
+            RebindTable(); // กรองงานของ Station แล้วใส่ตาราง
+            await UpdateProcessingAsync(); // อัปเดตส่วนแสดงงานที่กำลังทำ
         }
-        catch (Exception ex)
+        catch (Exception ex) // จัดการปัญหาระหว่างอ่านงานและอัปเดตหน้า Order List
         {
-            if (!IsDisposed)
-                tblOrders.EmptyText = $"Error: {ex.Message}";
+            if (!IsDisposed) // ยังมีหน้าจอให้แสดงข้อผิดพลาด
+                tblOrders.EmptyText = $"Error: {ex.Message}"; // แสดงข้อความที่ทำให้รอบอ่านล้มเหลว
         }
-        finally
+        finally // จบรอบอ่านแล้ว ต้องเปิดให้รอบถัดไปทำงานได้
         {
-            _refreshing = false;
+            _refreshing = false; // ปลดให้รอบถัดไปอ่านข้อมูลได้
         }
     }
 
@@ -595,38 +595,38 @@ public partial class OrderListUserControl : UserControl
         : string.Equals(job.Status, "Waiting", StringComparison.OrdinalIgnoreCase) ? 1
         : 2;
 
-    private void RebindTable()
+    private void RebindTable() // เลือกรายการที่ Station นี้ต้องเห็น
     {
-        var statuses = _showHistory ? HistoryStatuses : ActiveStatuses;
-        int station = StationService.Current;
+        var statuses = _showHistory ? HistoryStatuses : ActiveStatuses; // เลือกกลุ่มสถานะตามแท็บที่เปิด
+        int station = StationService.Current; // อ่านว่าเครื่องนี้เป็น Station ใด
 
         // ST1 เห็นประวัติทั้งสาย รวมงานที่ ST3 ทำจนจบซึ่งตัวเองไม่เคยเห็นในแท็บ List
         // เพราะเป็นจอที่ใช้ตามงานทั้งกระบวนการ
         //
         // ส่วน ST3 ไม่มีแท็บ History ให้กดอยู่แล้ว เงื่อนไข IsSt3 ตรงนี้จึงเป็นแค่
         // ตัวกันไว้ เผื่อวันหลังเปิดแท็บคืนให้ ST3 จะได้ยังกรองเฉพาะงานของตัวเอง
-        bool showEveryStation = _showHistory && !StationService.IsSt3;
+        bool showEveryStation = _showHistory && !StationService.IsSt3; // History ของ ST1 ดูงานได้ทุก Station
 
-        var filtered = _allJobs
-            .Where(j => statuses.Contains(j.Status, StringComparer.OrdinalIgnoreCase))
-            .Where(j => showEveryStation
-                || MarkingMethodService.VisibleAt(station, j.PlanRouting?.MarkingMethod))
-            .OrderBy(StatusRank)
-            .ThenByDescending(j => j.CreatedAt ?? DateTime.MinValue)
-            .ToList();
+        var filtered = _allJobs // เริ่มกรองจากงานที่ Backend ส่งมา
+            .Where(j => statuses.Contains(j.Status, StringComparer.OrdinalIgnoreCase)) // เก็บงานที่สถานะตรงกับแท็บ
+            .Where(j => showEveryStation // ถ้าไม่ได้ดูประวัติทุก Station ให้เช็กวิธีพิมพ์
+                || MarkingMethodService.VisibleAt(station, j.PlanRouting?.MarkingMethod)) // เก็บงานที่กฎอนุญาตให้ Station นี้เห็น
+            .OrderBy(StatusRank) // เรียงตามกลุ่มสถานะ
+            .ThenByDescending(j => j.CreatedAt ?? DateTime.MinValue) // ในสถานะเดียวกันให้งานใหม่อยู่ก่อน
+            .ToList(); // เก็บผลกรองเป็นรายการ
 
-        bool dateFiltered = _showHistory && TryGetDateRange(out _, out _);
+        bool dateFiltered = _showHistory && TryGetDateRange(out _, out _); // จำว่ากำลังใช้ตัวกรองวันที่หรือไม่
 
-        var rows = filtered.Select(j => ToRow(j, _showHistory)).ToList();
-        tblOrders.EmptyText = _allJobs.Count == 0
-            ? "No orders"
-            : dateFiltered && rows.Count == 0
-                ? "ไม่มีงานในช่วงวันที่ที่เลือก"
-                : $"No orders (total {_allJobs.Count}, filter: {string.Join("/", statuses.Select(JobStatusDisplay.Text))})";
-        tblOrders.DataSource = null;
-        tblOrders.DataSource = rows;
-        ReapplySort();
-        RestoreSelection();
+        var rows = filtered.Select(j => ToRow(j, _showHistory)).ToList(); // แปลง Job เป็นแถวบนตาราง
+        tblOrders.EmptyText = _allJobs.Count == 0 // เลือกข้อความเมื่อไม่มีแถวให้แสดง
+            ? "No orders" // Backend ไม่มีรายการงาน
+            : dateFiltered && rows.Count == 0 // มีตัวกรองวันที่แต่ไม่พบงาน
+                ? "ไม่มีงานในช่วงวันที่ที่เลือก" // แจ้งว่าช่วงวันที่นี้ไม่มีงาน
+                : $"No orders (total {_allJobs.Count}, filter: {string.Join("/", statuses.Select(JobStatusDisplay.Text))})"; // แสดงจำนวนงานและสถานะที่ใช้กรอง
+        tblOrders.DataSource = null; // ถอดรายการเดิมออกก่อน
+        tblOrders.DataSource = rows; // แสดงงานที่กรองแล้วบน Order List
+        ReapplySort(); // คืนลำดับเรียงที่ผู้ใช้เลือกไว้
+        RestoreSelection(); // คืนแถวที่ผู้ใช้เลือกไว้
     }
 
     /// <summary>

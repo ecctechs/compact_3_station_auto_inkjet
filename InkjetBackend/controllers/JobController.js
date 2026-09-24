@@ -32,97 +32,97 @@ class JobController {
    * POST /job/create
    * Creates a print_jobs record. Pattern + UV data are created by separate calls.
    */
-  static async create(req, res) {
-    try {
-      const { barcode_raw, created_by, order_no, customer_name, type, qty, st_status } =
-        req.body;
+  static async create(req, res) { // Flow 8: รับ /job/create จากหน้าสแกน
+    try { // ลองบันทึกหรืออ่านข้อมูลตามคำขอ
+      const { barcode_raw, created_by, order_no, customer_name, type, qty, st_status } = // รับข้อมูลหัวงานที่ C# ส่งมา
+        req.body; // อ่านจาก JSON ในคำขอ
 
       // เลขงานประจำวันต้องไม่ซ้ำกัน สองคนสแกนพร้อมกันแล้วอ่าน MAX ได้เลขเดียวกันไม่ได้
       // advisory lock กันไว้ทั้งการอ่านเลขและการ insert ให้เป็นคิวเดียว
       // ปลดเองตอน transaction จบ ไม่ว่าจะ commit หรือ rollback
-      const job = await sequelize.transaction(async (t) => {
-        await sequelize.query(
-          "SELECT pg_advisory_xact_lock(hashtext('print_jobs_job_no'))",
-          { transaction: t }
+      const job = await sequelize.transaction(async (t) => { // สร้าง Job และเลขงานในธุรกรรมเดียวกัน
+        await sequelize.query( // ล็อกการออกเลขงาน ไม่ให้สองคำขอได้เลขซ้ำ
+          "SELECT pg_advisory_xact_lock(hashtext('print_jobs_job_no'))", // ใช้ล็อกร่วมสำหรับเลขงานรายวัน
+          { transaction: t } // ใช้ธุรกรรมเดียวกันกับคำสั่งก่อนหน้า
         );
 
         // คืนวันที่เป็นข้อความ 'YYYY-MM-DD' ไม่ใช่ชนิด date — ถ้าปล่อยเป็น date
         // ไดรเวอร์จะแปลงเป็น JS Date ตาม time zone ของ node แล้ววันอาจเลื่อนไปหนึ่งวัน
-        const [[{ job_date, next_no }]] = await sequelize.query(
+        const [[{ job_date, next_no }]] = await sequelize.query( // อ่านวันที่ไทยและเลขงานถัดไปของวัน
           `SELECT to_char(${THAI_TODAY}, 'YYYY-MM-DD') AS job_date,
                   COALESCE(MAX(job_no), 0) + 1 AS next_no
              FROM print_jobs
             WHERE job_date = ${THAI_TODAY}`,
-          { transaction: t }
+          { transaction: t } // ใช้ธุรกรรมเดียวกันกับคำสั่งก่อนหน้า
         );
 
-        return PrintJob.create(
+        return PrintJob.create( // สร้างแถว print_jobs
           {
-            barcode_raw,
-            lot_number: barcode_raw,
-            pattern_no_erp: barcode_raw,
-            job_no: Number(next_no),
-            job_date,
-            order_no,
-            customer_name,
-            type,
-            qty,
-            created_by,
-            st_status: st_status || "0",
+            barcode_raw, // เก็บ Barcode ที่สแกน
+            lot_number: barcode_raw, // ใช้ Barcode เป็นเลข Lot
+            pattern_no_erp: barcode_raw, // ใช้ Barcode อ้างอิง Pattern ERP
+            job_no: Number(next_no), // ใช้เลขงานถัดไปที่เพิ่งคำนวณ
+            job_date, // เก็บวันรับงานตามเวลาไทย
+            order_no, // เก็บ Order No ที่ส่งมา
+            customer_name, // เก็บชื่อลูกค้า
+            type, // เก็บรหัสวิธีพิมพ์จากหน้าสแกน
+            qty, // เก็บ Qty ล่าสุดที่ผู้ใช้ยืนยัน
+            created_by, // เก็บชื่อผู้สร้างงาน
+            st_status: st_status || "0", // ไม่มีสถานะ Station ให้เริ่มที่ 0
           },
-          { transaction: t }
+          { transaction: t } // ใช้ธุรกรรมเดียวกันกับคำสั่งก่อนหน้า
         );
       });
 
-      return ResponseManager.SuccessResponse(req, res, 201, job);
-    } catch (err) {
-      return ResponseManager.CatchResponse(req, res, err.message);
+      return ResponseManager.SuccessResponse(req, res, 201, job); // ส่ง Job รวม ID ใหม่กลับไปบันทึก Pattern ต่อ
+    } catch (err) { // ทำงานไม่สำเร็จให้ส่งสาเหตุคืน
+      return ResponseManager.CatchResponse(req, res, err.message); // ส่งข้อความผิดพลาดกลับไป C#
     }
   }
 
-  static async getAll(req, res) {
-    try {
-      const { status, page, limit, from, to } = req.query;
-      const where = {};
+  static async getAll(req, res) { // Flow 14: ส่งรายการงานให้ Order List
+    try { // ลองบันทึกหรืออ่านข้อมูลตามคำขอ
+      const { status, page, limit, from, to } = req.query; // รับสถานะ จำนวนแถว และช่วงวันที่ที่ขอ
+      const where = {}; // เตรียมเงื่อนไขค้นงาน
 
-      if (status) {
-        where.status = status;
+      if (status) { // ผู้เรียกระบุสถานะที่ต้องการ
+        where.status = status; // กรองเฉพาะสถานะนั้น
       }
 
       // ตัวกรองวันที่ของหน้า History — ส่งมาเป็น ISO (UTC) ที่ฝั่ง client
       // ขยายเป็นทั้งวันตามเวลาไทยไว้แล้ว ที่นี่จึงกรองตรง ๆ ไม่ตีความเพิ่ม
-      const fromAt = from ? new Date(from) : null;
-      const toAt = to ? new Date(to) : null;
-      if (fromAt && !isNaN(fromAt) && toAt && !isNaN(toAt)) {
-        where.created_at = { [Op.between]: [fromAt, toAt] };
-      } else if (fromAt && !isNaN(fromAt)) {
-        where.created_at = { [Op.gte]: fromAt };
-      } else if (toAt && !isNaN(toAt)) {
-        where.created_at = { [Op.lte]: toAt };
+      const fromAt = from ? new Date(from) : null; // อ่านเวลาเริ่ม ถ้าไม่ได้ส่งมาก็ไม่กรอง
+      const toAt = to ? new Date(to) : null; // อ่านเวลาสิ้นสุด
+      if (fromAt && !isNaN(fromAt) && toAt && !isNaN(toAt)) { // มีวันที่ใช้ได้ครบทั้งสองฝั่ง
+        where.created_at = { [Op.between]: [fromAt, toAt] }; // ค้นงานที่สร้างในช่วงนี้
+      } else if (fromAt && !isNaN(fromAt)) { // มีเฉพาะวันเริ่ม
+        where.created_at = { [Op.gte]: fromAt }; // ค้นตั้งแต่เวลาเริ่มเป็นต้นไป
+      } else if (toAt && !isNaN(toAt)) { // มีเฉพาะวันสิ้นสุด
+        where.created_at = { [Op.lte]: toAt }; // ค้นไม่เกินเวลาสิ้นสุด
       }
 
-      const offset = (page - 1) * limit;
+      const offset = (page - 1) * limit; // คำนวณแถวเริ่มของหน้าที่ขอ
 
       // commands + plan_routing มาด้วยเลย เพราะหน้า Order List ต้องรู้ว่างานส่งครบยัง
       // จึงจะระบายสีปุ่มจบงานได้ — ถ้าไม่ include ต้องยิง getResolved ทีละแถวทุกรอบ poll
-      const { count, rows } = await PrintJob.findAndCountAll({
-        where,
-        include: [
-          { model: PrintJobCommand, as: "commands" },
-          { model: PlanRouting, as: "plan_routing" },
+      const { count, rows } = await PrintJob.findAndCountAll({ // อ่านงานพร้อมจำนวนทั้งหมดที่ตรงเงื่อนไข
+        where, // ใช้ตัวกรองที่เตรียมไว้
+        include: [ // แนบข้อมูลประกอบให้ Order List ใช้
+          { model: PrintJobCommand, as: "commands" }, // แนบประวัติคำสั่งของ Job
+          { model: PlanRouting, as: "plan_routing" }, // แนบแผนงานเพื่อกรองตาม Station
         ],
-        order: [["created_at", "DESC"]],
-        offset,
-        limit,
-        distinct: true,
+        order: [["created_at", "DESC"]], // เรียงงานใหม่ก่อน
+        offset, // เริ่มอ่านจากแถวของหน้าที่ขอ
+        limit, // จำกัดจำนวนงานในคำตอบ
+        distinct: true, // นับ Job ไม่ซ้ำจากการเชื่อมตาราง
       });
 
-      return ResponseManager.SuccessResponse(req, res, 200, {
-        data: rows,
-        total: count,
+      return ResponseManager.SuccessResponse(req, res, 200, { // ส่งรายการกลับไปให้ C#
+        data: rows, // แนบงานของหน้าที่ขอ
+        total: count, // แนบจำนวนงานทั้งหมดที่ตรงเงื่อนไข
       });
-    } catch (err) {
-      return ResponseManager.CatchResponse(req, res, err.message);
+    } catch (err) { // ทำงานไม่สำเร็จให้ส่งสาเหตุคืน
+      return ResponseManager.CatchResponse(req, res, err.message); // ส่งข้อความผิดพลาดกลับไป C#
     }
   }
 

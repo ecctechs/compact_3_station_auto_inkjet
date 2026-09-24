@@ -11,7 +11,7 @@ static class Program
     private const string SingleInstanceName = "CompactInkjet.Operator.SingleInstance";
 
     [STAThread]
-    static void Main()
+    static void Main() // Flow 1: จุดเริ่มโปรแกรม
     {
         // เปิดได้ทีละตัวเท่านั้น
         //
@@ -24,11 +24,11 @@ static class Program
         // ทับตัวแรกอีก
         //
         // ปล่อยล็อกตอน Main จบ ไม่ว่าจะปิดตามปกติหรือหลุดกลางคัน
-        using var single = new Mutex(initiallyOwned: true, SingleInstanceName, out bool isFirst);
-        if (!isFirst)
+        using var single = new Mutex(initiallyOwned: true, SingleInstanceName, out bool isFirst); // กันเปิดโปรแกรมซ้อนกัน
+        if (!isFirst) // มีโปรแกรมตัวเดิมเปิดอยู่แล้ว
         {
-            BringRunningInstanceToFront();
-            return;
+            BringRunningInstanceToFront(); // แสดงตัวเดิมแทนการเปิดซ้ำ
+            return; // ใช้โปรแกรมตัวเดิม จึงไม่เปิดหน้าหลักซ้ำ
         }
 
         // Must be the very first call. It applies <ApplicationHighDpiMode>,
@@ -37,24 +37,24 @@ static class Program
         // Process DPI awareness can only be set before the first window exists,
         // and AntdUI caches Config.Dpi the first time anything reads it - so this
         // has to happen before ConfigureAntdUi() touches the library.
-        ApplicationConfiguration.Initialize();
+        ApplicationConfiguration.Initialize(); // ตั้งค่าพื้นฐาน WinForms ก่อนสร้างหน้าจอ
 
-        UseGregorianYears();
-        Services.LanguageService.Init();
-        ConfigureAntdUi();
+        UseGregorianYears(); // ตั้งการแสดงปีเป็น ค.ศ.
+        Services.LanguageService.Init(); // โหลดภาษาที่เลือกไว้
+        ConfigureAntdUi(); // ตั้งค่าชุดคอนโทรล AntdUI
 
         // Load local transform patterns (patterns.xml next to the exe).
-        string patternsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "patterns.xml");
-        PatternStore.Load(patternsPath);
-        PatternStore.SeedDefaults(patternsPath);
+        string patternsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "patterns.xml"); // หาไฟล์รูปแบบแปลงข้อความข้าง EXE
+        PatternStore.Load(patternsPath); // โหลดรูปแบบแปลงข้อความ
+        PatternStore.SeedDefaults(patternsPath); // เติมรูปแบบเริ่มต้นที่ยังไม่มี
 
-        WarnIfSettingsReadOnly();
-        StartBackendIfNeeded();
+        WarnIfSettingsReadOnly(); // เตือนถ้าไฟล์ตั้งค่าเขียนไม่ได้
+        StartBackendIfNeeded(); // เปิด Backend ตามค่าที่ตั้งไว้
 
-        StartHealthMonitorIfDevMode();
+        StartHealthMonitorIfDevMode(); // เปิดตัวเฝ้าสถานะเฉพาะโหมดทดสอบ
 
-        Application.Run(new Views.MainShellForm());
-        HealthMonitor.Stop();
+        Application.Run(new Views.MainShellForm()); // เปิดหน้าหลัก ให้ ApplyMenuLevel() เลือกหน้าตามโหมด
+        HealthMonitor.Stop(); // ปิดตัวเฝ้าสถานะเมื่อโปรแกรมจบ
     }
 
     /// <summary>

@@ -192,52 +192,52 @@ public static class ClampService
     }
 
     /// <summary>หาค่าของแกนหนึ่งจาก MainTable</summary>
-    public static ClampLookup Lookup(string dbPath, string programName, ClampAxis axis)
+    public static ClampLookup Lookup(string dbPath, string programName, ClampAxis axis) // Flow 12: ค้นระยะของแกนนี้จากไฟล์แคลมป์
     {
-        string program = (programName ?? "").Trim();
-        if (program.Length == 0)
-            return new ClampLookup(false, 0, axis.Column, "ยังไม่ได้ระบุชื่อโปรแกรม");
+        string program = (programName ?? "").Trim(); // ตัดช่องว่างจากชื่อโปรแกรม
+        if (program.Length == 0) // ไม่มีชื่อโปรแกรมให้ค้น
+            return new ClampLookup(false, 0, axis.Column, "ยังไม่ได้ระบุชื่อโปรแกรม"); // คืนว่าไม่พบพร้อมสาเหตุ
 
-        if (string.IsNullOrWhiteSpace(dbPath))
-            return new ClampLookup(false, 0, axis.Column, "ยังไม่ได้ตั้ง path ของ mydatabase.db3");
+        if (string.IsNullOrWhiteSpace(dbPath)) // ยังไม่ได้ตั้งที่อยู่ไฟล์
+            return new ClampLookup(false, 0, axis.Column, "ยังไม่ได้ตั้ง path ของ mydatabase.db3"); // คืนว่าอ่านไม่ได้เพราะไม่มีที่อยู่ไฟล์
 
-        if (!File.Exists(dbPath))
-            return new ClampLookup(false, 0, axis.Column, $"ไม่พบไฟล์ฐานข้อมูล:\n{dbPath}");
+        if (!File.Exists(dbPath)) // มีที่อยู่แต่หาไฟล์ไม่พบ
+            return new ClampLookup(false, 0, axis.Column, $"ไม่พบไฟล์ฐานข้อมูล:\n{dbPath}"); // ส่งที่อยู่ไฟล์ที่หาไม่พบกลับไป
 
-        var columns = ReadColumns(dbPath);
-        if (columns.Count > 0 && !columns.Contains(axis.Column))
-            return new ClampLookup(false, 0, axis.Column,
-                $"ฐานข้อมูลนี้ไม่มีคอลัมน์ {axis.Column}");
+        var columns = ReadColumns(dbPath); // อ่านรายชื่อคอลัมน์ที่มีในไฟล์นี้
+        if (columns.Count > 0 && !columns.Contains(axis.Column)) // ตรวจว่าไฟล์รองรับแกนที่ต้องการ
+            return new ClampLookup(false, 0, axis.Column, // คืนว่าไม่พบค่าของแกนนี้
+                $"ฐานข้อมูลนี้ไม่มีคอลัมน์ {axis.Column}"); // ระบุคอลัมน์ที่ไม่มี
 
-        try
+        try // เริ่มค้นระยะแคลมป์จากฐานข้อมูล และดักข้อผิดพลาดไว้
         {
-            using var conn = new SqliteConnection(SqlitePath.ReadOnly(dbPath));
-            conn.Open();
+            using var conn = new SqliteConnection(SqlitePath.ReadOnly(dbPath)); // เปิดไฟล์แคลมป์แบบอ่านอย่างเดียว
+            conn.Open(); // เปิดการเชื่อมต่อ SQLite
 
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText =
-                $"SELECT {axis.Column} FROM MainTable WHERE {axis.NameColumn} = @p LIMIT 1";
-            cmd.Parameters.AddWithValue("@p", program);
+            using var cmd = conn.CreateCommand(); // เตรียมคำสั่งค้นข้อมูล
+            cmd.CommandText = // เตรียมค้นค่าแกนตามชื่อโปรแกรม
+                $"SELECT {axis.Column} FROM MainTable WHERE {axis.NameColumn} = @p LIMIT 1"; // อ่านค่าแกนจาก MainTable แถวแรกที่ตรง
+            cmd.Parameters.AddWithValue("@p", program); // ส่งชื่อโปรแกรมเป็นเงื่อนไขค้น
 
-            object? raw = cmd.ExecuteScalar();
-            if (raw is null or DBNull)
-                return new ClampLookup(false, 0, axis.Column,
-                    $"ไม่พบ \"{program}\" ใน {axis.NameColumn}");
+            object? raw = cmd.ExecuteScalar(); // อ่านค่าช่องเดียวที่ค้นได้
+            if (raw is null or DBNull) // ไม่พบแถวหรือค่าใน DB เป็น null
+                return new ClampLookup(false, 0, axis.Column, // คืนว่าไม่พบค่าของแกนนี้
+                    $"ไม่พบ \"{program}\" ใน {axis.NameColumn}"); // แจ้งชื่อโปรแกรมที่ค้นไม่พบ
 
             // เก็บเป็น TEXT ค่าว่างแปลว่ายังไม่ได้ setup
-            string text = raw.ToString()?.Trim() ?? "";
-            if (text.Length == 0)
-                return new ClampLookup(false, 0, axis.Column, $"{axis.Column} ยังไม่ได้ setup");
+            string text = raw.ToString()?.Trim() ?? ""; // แปลงค่าดิบเป็นข้อความและตัดช่องว่าง
+            if (text.Length == 0) // พบแถวแต่ยังไม่ได้ใส่ค่า
+                return new ClampLookup(false, 0, axis.Column, $"{axis.Column} ยังไม่ได้ setup"); // คืนว่าแกนนี้ยังไม่มีค่าตั้ง
 
-            if (!double.TryParse(text, out double value))
-                return new ClampLookup(false, 0, axis.Column,
-                    $"{axis.Column} = \"{text}\" ไม่ใช่ตัวเลข");
+            if (!double.TryParse(text, out double value)) // ตรวจว่าค่าที่อ่านเป็นตัวเลข
+                return new ClampLookup(false, 0, axis.Column, // คืนว่าไม่พบค่าของแกนนี้
+                    $"{axis.Column} = \"{text}\" ไม่ใช่ตัวเลข"); // บอกค่าที่แปลงเป็นตัวเลขไม่ได้
 
-            return new ClampLookup(true, ClampMm(value), axis.Column, "");
+            return new ClampLookup(true, ClampMm(value), axis.Column, ""); // คืนค่าที่ปรับให้อยู่ในช่วงระยะที่รองรับ
         }
-        catch (Exception ex)
+        catch (Exception ex) // จัดการปัญหาระหว่างค้นระยะแคลมป์จากฐานข้อมูล
         {
-            return new ClampLookup(false, 0, axis.Column, ex.Message);
+            return new ClampLookup(false, 0, axis.Column, ex.Message); // อ่านไม่ได้ ส่งสาเหตุกลับให้ผู้เรียก
         }
     }
 

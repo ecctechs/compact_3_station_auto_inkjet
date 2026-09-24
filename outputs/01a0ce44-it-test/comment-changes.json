@@ -1,0 +1,4448 @@
+[
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 8,
+    "before": "    private ApiClient? _api;",
+    "comment": "ตัวเรียก Backend"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 9,
+    "before": "    private SqliteDataService? _sqlite;",
+    "comment": "ตัวอ่านข้อมูลต้นทาง"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 15,
+    "before": "    private string? _loadedBarcode;",
+    "comment": "จำ Barcode ที่โหลดข้อมูลแล้ว"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 23,
+    "before": "    private string? _customerName;",
+    "comment": "เก็บชื่อลูกค้าไว้ส่งตอนสร้าง Job"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 32,
+    "before": "    private const int AutoLookupDelayMs = 600;",
+    "comment": "หยุดพิมพ์ 600 ms แล้วค้นให้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 34,
+    "before": "    private System.Windows.Forms.Timer? _autoLookupTimer;",
+    "comment": "ตัวจับเวลาหลังพิมพ์ Barcode"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 36,
+    "before": "    public ScanBarcodeUserControl()",
+    "comment": "เตรียมหน้าสแกนและผูกปุ่ม"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 38,
+    "before": "        InitializeComponent();",
+    "comment": "สร้างหน้าจอจาก Designer"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 39,
+    "before": "        btnConfirm.Click += BtnConfirm_Click;",
+    "comment": "กด OK ไปตรวจและสร้างงาน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 40,
+    "before": "        btnClear.Click += BtnClear_Click;",
+    "comment": "กด Clear ไปล้างหน้าจอ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 41,
+    "before": "        btnEditQty.Click += BtnEditQty_Click;",
+    "comment": "กดดินสอไปแก้ Qty"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 42,
+    "before": "        txtBarcode.KeyDown += TxtBarcode_KeyDown;",
+    "comment": "กด Enter ไปค้น Lot"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 43,
+    "before": "        txtBarcode.TextChanged += TxtBarcode_TextChanged;",
+    "comment": "ข้อความเปลี่ยนให้เริ่มจับเวลาใหม่"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 47,
+    "before": "        _autoLookupTimer = new System.Windows.Forms.Timer { Interval = AutoLookupDelayMs };",
+    "comment": "ตั้งเวลาค้นอัตโนมัติ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 48,
+    "before": "        _autoLookupTimer.Tick += AutoLookupTimer_Tick;",
+    "comment": "ครบเวลาแล้วเรียกค้น Lot"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 50,
+    "before": "        Disposed += (_, _) =>",
+    "comment": "เลิกใช้หน้าแล้วหยุดตัวจับเวลา"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 52,
+    "before": "            _autoLookupTimer?.Stop();",
+    "comment": "หยุดเวลาที่กำลังนับอยู่"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 53,
+    "before": "            _autoLookupTimer?.Dispose();",
+    "comment": "คืนทรัพยากรของตัวจับเวลา"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 68,
+    "before": "    public void FocusBarcode()",
+    "comment": "วางเคอร์เซอร์ให้พร้อมสแกน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 70,
+    "before": "        if (!IsHandleCreated) return;",
+    "comment": "หน้าจอยังไม่พร้อมให้ข้ามก่อน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 71,
+    "before": "        BeginInvoke(() =>",
+    "comment": "รอให้ฝั่งหน้าจอพร้อมแล้วค่อยทำ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 73,
+    "before": "            if (IsDisposed || !txtBarcode.Visible) return;",
+    "comment": "หน้าปิดหรือช่องสแกนซ่อนอยู่ให้ข้าม"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 74,
+    "before": "            txtBarcode.Focus();",
+    "comment": "กลับมารับ Barcode ที่ช่องเดิม"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 78,
+    "before": "    private (ApiClient api, SqliteDataService sqlite) GetServices()",
+    "comment": "เตรียมทางไป Backend และ SQLite"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 80,
+    "before": "        var pcIp = CustomSettingsManager.Read(\"PC_IP\", \"127.0.0.1\");",
+    "comment": "อ่าน IP ของ Backend"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 81,
+    "before": "        _api = new ApiClient($\"http://{pcIp}:3000\");",
+    "comment": "ต่อ Backend ที่พอร์ต 3000"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 83,
+    "before": "        _sqlite = OpenSourceDb();",
+    "comment": "เตรียมตัวอ่าน PrintData.db3"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 85,
+    "before": "        return (_api, _sqlite);",
+    "comment": "ส่งตัวเรียกทั้งสองกลับไปใช้งาน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 89,
+    "before": "    private static SqliteDataService OpenSourceDb() =>",
+    "comment": "อ่านที่อยู่ไฟล์ฐานข้อมูลต้นทาง"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 90,
+    "before": "        new(CustomSettingsManager.Read(\"DB_PATH\", \"\"));",
+    "comment": "ใช้ DB_PATH ที่ตั้งไว้ใน Setting"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 98,
+    "before": "    private void TxtBarcode_KeyDown(object? sender, KeyEventArgs e)",
+    "comment": "Flow 2: รับปุ่ม Enter จากช่อง Barcode"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 100,
+    "before": "        if (e.KeyCode != Keys.Enter) return;",
+    "comment": "ปุ่มอื่นไม่ต้องค้นข้อมูล"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 103,
+    "before": "        e.Handled = true;",
+    "comment": "รับปุ่มนี้ไว้จัดการเอง"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 104,
+    "before": "        e.SuppressKeyPress = true;",
+    "comment": "ไม่ส่ง Enter ต่อให้ช่องข้อความ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 106,
+    "before": "        LoadLot(quiet: false);",
+    "comment": "ค้นข้อมูล Lot จาก Barcode และแจ้งเตือนถ้าไม่พบ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 113,
+    "before": "    private void AutoLookupTimer_Tick(object? sender, EventArgs e) => LoadLot(quiet: true);",
+    "comment": "ครบ 600 ms ค้นให้โดยไม่เด้งเตือน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 119,
+    "before": "    private void TxtBarcode_TextChanged(object? sender, EventArgs e)",
+    "comment": "รับ Barcode ที่กำลังพิมพ์หรือสแกน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 123,
+    "before": "        _autoLookupTimer?.Stop();",
+    "comment": "หยุดเวลาที่กำลังนับอยู่"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 125,
+    "before": "        if (_loadedBarcode != null && txtBarcode.Text.Trim() != _loadedBarcode)",
+    "comment": "ถ้าเปลี่ยนจาก Lot ที่เคยโหลด"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 126,
+    "before": "            ClearLotInfo();",
+    "comment": "ล้างข้อมูล Lot ที่แสดงอยู่"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 128,
+    "before": "        if (txtBarcode.Text.Trim().Length > 0) _autoLookupTimer?.Start();",
+    "comment": "มีข้อความแล้วเริ่มนับ 600 ms ใหม่"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 140,
+    "before": "    private bool LoadLot(bool quiet)",
+    "comment": "Flow 3: ค้น Lot แล้วเติมข้อมูลบนจอ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 142,
+    "before": "        _autoLookupTimer?.Stop();",
+    "comment": "หยุดเวลาที่กำลังนับอยู่"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 144,
+    "before": "        var barcode = txtBarcode.Text.Trim();",
+    "comment": "อ่าน Barcode และตัดช่องว่างหัวท้าย"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 145,
+    "before": "        if (string.IsNullOrWhiteSpace(barcode))",
+    "comment": "ถ้า Barcode ว่างหรือมีแต่ช่องว่าง"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 147,
+    "before": "            if (!quiet) ShowWarning(\"กรุณาสแกนหรือพิมพ์ Barcode\");",
+    "comment": "ถ้ากด Enter หรือ OK ให้เตือนว่าต้องกรอก Barcode ก่อน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 148,
+    "before": "            return false;",
+    "comment": "ยังไม่มี Barcode จึงไม่ค้นข้อมูลต่อ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 151,
+    "before": "        var sqlite = OpenSourceDb();",
+    "comment": "เตรียมอ่านฐานข้อมูลตาม DB_PATH"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 152,
+    "before": "        if (!sqlite.CanConnect())",
+    "comment": "ลองเปิดไฟล์ SQLite ก่อนอ่านงาน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 154,
+    "before": "            if (!quiet)",
+    "comment": "รอบค้นอัตโนมัติไม่เด้งกล่องเตือน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 155,
+    "before": "                ShowError(\"ไม่สามารถเชื่อมต่อ PrintData.db3 ได้\\nกรุณาตรวจสอบ Database Path ใน Setting\");",
+    "comment": "แจ้งว่าเปิดฐานข้อมูลต้นทางไม่ได้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 156,
+    "before": "            return false;",
+    "comment": "เปิดฐานข้อมูลไม่ได้ จึงยังโหลด Lot ไม่ได้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 159,
+    "before": "        var lot = sqlite.GetLotSummary(barcode);",
+    "comment": "อ่าน Order No, Qty, วิธีพิมพ์และลูกค้า"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 160,
+    "before": "        if (lot == null)",
+    "comment": "ไม่พบหัวงานของ Barcode นี้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 162,
+    "before": "            if (quiet) return false;",
+    "comment": "ค้นอัตโนมัติไม่พบให้จบเงียบ ๆ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 164,
+    "before": "            ClearLotInfo();",
+    "comment": "ล้างข้อมูล Lot ที่แสดงอยู่"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 165,
+    "before": "            ShowWarning($\"ไม่พบข้อมูลใน print_data สำหรับ barcode: {barcode}\");",
+    "comment": "บอก Barcode ที่ค้นไม่พบ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 166,
+    "before": "            txtBarcode.Focus();",
+    "comment": "กลับมารับ Barcode ที่ช่องเดิม"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 167,
+    "before": "            return false;",
+    "comment": "ไม่พบ Lot นี้ จึงไม่มีข้อมูลให้แสดง"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 172,
+    "before": "        _loadedBarcode = barcode;",
+    "comment": "จำว่าโหลดข้อมูลของ Barcode นี้แล้ว"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 173,
+    "before": "        _customerName = lot.Customer;",
+    "comment": "เก็บลูกค้าไว้ส่งไปกับ Job"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 174,
+    "before": "        txtErpMfg.Text = lot.ErpMfg ?? \"\";",
+    "comment": "แสดง Order No ถ้าไม่มีให้เว้นว่าง"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 175,
+    "before": "        txtMarkingMethod.Text = lot.MarkingMethod ?? \"\";",
+    "comment": "แสดงวิธีพิมพ์ของ Lot"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 176,
+    "before": "        txtQty.Text = lot.Qty?.ToString() ?? \"\";",
+    "comment": "แสดงจำนวนจากฐานข้อมูล"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 177,
+    "before": "        btnEditQty.Enabled = true;",
+    "comment": "เปิดให้แก้จำนวนได้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 178,
+    "before": "        return true;",
+    "comment": "โหลดข้อมูลบนจอครบแล้ว ให้ผู้ใช้ตรวจต่อ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 188,
+    "before": "    private void BtnEditQty_Click(object? sender, EventArgs e)",
+    "comment": "Flow 4: แก้จำนวนก่อนสร้างงาน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 190,
+    "before": "        using var dlg = new InputDialog(\"Edit Qty\", \"Qty:\", txtQty.Text.Trim());",
+    "comment": "เปิดกล่องแก้ Qty โดยใส่ค่าเดิมไว้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 191,
+    "before": "        if (dlg.ShowDialog(this) != DialogResult.OK) return;",
+    "comment": "ยกเลิกแล้วใช้ค่าเดิม"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 193,
+    "before": "        if (!int.TryParse(dlg.Value, out var qty) || qty <= 0)",
+    "comment": "รับเฉพาะจำนวนเต็มที่มากกว่า 0"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 195,
+    "before": "            ShowWarning(\"Qty ต้องเป็นตัวเลขจำนวนเต็มที่มากกว่า 0\");",
+    "comment": "แจ้งว่าจำนวนใช้ไม่ได้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 196,
+    "before": "            return;",
+    "comment": "จำนวนไม่ถูกต้อง จึงยังใช้ Qty เดิมบนจอ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 199,
+    "before": "        txtQty.Text = qty.ToString();",
+    "comment": "เปลี่ยนค่าบนจอ ยังไม่บันทึก DB"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 202,
+    "before": "    private async void BtnConfirm_Click(object? sender, EventArgs e)",
+    "comment": "Flow 5: ผู้ใช้กด OK"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 204,
+    "before": "        if (!ValidateForm()) return;",
+    "comment": "ตรวจข้อมูลไม่ผ่านให้หยุดก่อน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 206,
+    "before": "        btnConfirm.Loading = true;",
+    "comment": "แสดงว่ากำลังสร้างงาน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 207,
+    "before": "        btnConfirm.Enabled = false;",
+    "comment": "กันกด OK ซ้ำระหว่างบันทึก"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 208,
+    "before": "        try",
+    "comment": "เริ่มสร้างงานจาก Barcode ที่ผู้ใช้ยืนยัน และดักข้อผิดพลาดไว้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 210,
+    "before": "            await ProcessBarcodeAsync(txtBarcode.Text.Trim());",
+    "comment": "ไปสร้างงานและรอให้จบ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 212,
+    "before": "        finally",
+    "comment": "ไม่ว่าสร้างงานได้หรือไม่ ต้องเปิดปุ่ม OK กลับมา"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 214,
+    "before": "            btnConfirm.Loading = false;",
+    "comment": "ปิดสถานะกำลังทำงาน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 215,
+    "before": "            btnConfirm.Enabled = true;",
+    "comment": "เปิดปุ่มให้ใช้งานต่อ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 219,
+    "before": "    private bool ValidateForm()",
+    "comment": "ตรวจ Barcode และ Qty ก่อนสร้างงาน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 221,
+    "before": "        if (string.IsNullOrWhiteSpace(txtBarcode.Text))",
+    "comment": "ยังไม่ได้กรอก Barcode"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 223,
+    "before": "            ShowWarning(\"กรุณาสแกนหรือพิมพ์ Barcode\");",
+    "comment": "แจ้งให้กรอก Barcode ก่อน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 224,
+    "before": "            txtBarcode.Focus();",
+    "comment": "กลับมารับ Barcode ที่ช่องเดิม"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 225,
+    "before": "            return false;",
+    "comment": "ยังไม่ได้กรอก Barcode จึงไม่สร้างงาน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 230,
+    "before": "        if (_loadedBarcode != txtBarcode.Text.Trim())",
+    "comment": "ข้อมูลบนจอยังไม่ใช่ของ Barcode นี้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 232,
+    "before": "            if (!LoadLot(quiet: false)) return false;",
+    "comment": "โหลด Lot ก่อน หาไม่เจอให้หยุด"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 236,
+    "before": "            Notify.Info(this, \"ดึงข้อมูลแล้ว — ตรวจสอบแล้วกด OK อีกครั้งเพื่อลงทะเบียน\");",
+    "comment": "ให้ตรวจค่าที่เพิ่งโหลดแล้วกด OK ใหม่"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 237,
+    "before": "            return false;",
+    "comment": "รอให้ตรวจข้อมูลที่เพิ่งโหลด แล้วกด OK ใหม่"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 241,
+    "before": "        var qtyText = txtQty.Text.Trim();",
+    "comment": "อ่าน Qty ล่าสุดบนหน้าจอ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 242,
+    "before": "        if (!int.TryParse(qtyText, out var qty) || qty <= 0)",
+    "comment": "จำนวนต้องเป็นจำนวนเต็มมากกว่า 0"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 244,
+    "before": "            ShowWarning(\"Qty ต้องเป็นตัวเลขจำนวนเต็มที่มากกว่า 0\\nกดปุ่มดินสอเพื่อแก้ไข Qty\");",
+    "comment": "ให้แก้จำนวนด้วยปุ่มดินสอ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 245,
+    "before": "            return false;",
+    "comment": "Qty ไม่ถูกต้อง จึงยังไม่ให้สร้างงาน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 248,
+    "before": "        return true;",
+    "comment": "Barcode ตรงกับข้อมูลบนจอและ Qty ใช้ได้ ให้สร้างงานต่อ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 251,
+    "before": "    private async Task ProcessBarcodeAsync(string barcode)",
+    "comment": "Flow 6–13: คุมลำดับสร้างงานทั้งหมด"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 253,
+    "before": "        var (api, sqlite) = GetServices();",
+    "comment": "เตรียม Backend และฐานข้อมูลต้นทาง"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 256,
+    "before": "        if (!sqlite.CanConnect())",
+    "comment": "ลองเปิดไฟล์ SQLite ก่อนอ่านงาน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 258,
+    "before": "            ShowError(\"ไม่สามารถเชื่อมต่อ PrintData.db3 ได้\\nกรุณาตรวจสอบ Database Path ใน Setting\");",
+    "comment": "แจ้งว่าเปิดฐานข้อมูลต้นทางไม่ได้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 259,
+    "before": "            return;",
+    "comment": "อ่านฐานข้อมูลต้นทางไม่ได้ จึงไม่ส่งงานไป Backend"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 262,
+    "before": "        if (!await api.PingAsync())",
+    "comment": "ตรวจว่า Backend ตอบกลับหรือไม่"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 264,
+    "before": "            ShowError(\"ไม่สามารถเชื่อมต่อ Backend ได้\\nกรุณาตรวจสอบ Backend Setting\");",
+    "comment": "แจ้งว่าเรียก Backend ไม่ได้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 265,
+    "before": "            return;",
+    "comment": "Backend ไม่พร้อม จึงยังไม่สร้าง Job"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 270,
+    "before": "        if (!ConfirmClampDatabase()) return;",
+    "comment": "ผู้ใช้ไม่ทำต่อเมื่อไฟล์แคลมป์ไม่พร้อม ให้หยุด"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 273,
+    "before": "        var patternTemplate = sqlite.GetPatternDetail(barcode, 0);",
+    "comment": "Flow 7: อ่าน Pattern โดยยังไม่มี Job ID"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 274,
+    "before": "        if (patternTemplate == null)",
+    "comment": "ไม่พบข้อมูลตั้งค่าพิมพ์ของ Lot"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 276,
+    "before": "            ShowWarning($\"ไม่พบข้อมูลใน inkjet_data สำหรับ barcode: {barcode}\");",
+    "comment": "แจ้งว่าไม่มี Pattern ให้สร้างงาน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 277,
+    "before": "            return;",
+    "comment": "ไม่มี Pattern ของ Lot นี้ จึงหยุดก่อนสร้าง Job"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 280,
+    "before": "        var uvItems = sqlite.GetUvDetail(barcode);",
+    "comment": "อ่านชื่อโปรแกรมและข้อความ UV"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 281,
+    "before": "        var planRouting = sqlite.GetPlanRouting(barcode, 0);",
+    "comment": "อ่านแผนงานของ Lot"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 284,
+    "before": "        var jobRequest = new CreateJobRequest",
+    "comment": "เตรียมข้อมูลหัวงานส่ง Backend"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 286,
+    "before": "            BarcodeRaw = barcode,",
+    "comment": "Barcode ที่ผู้ใช้กำลังลงทะเบียน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 287,
+    "before": "            CreatedBy = \"operator\",",
+    "comment": "ระบุผู้สร้างงานเป็น operator"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 288,
+    "before": "            OrderNo = txtErpMfg.Text.Trim(),",
+    "comment": "ใช้ Order No ที่แสดงบนจอ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 291,
+    "before": "            CustomerName = _customerName,",
+    "comment": "ใช้ลูกค้าที่อ่านมาตอนโหลด Lot"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 294,
+    "before": "            Type = txtMarkingMethod.Text.Trim(),",
+    "comment": "ใช้วิธีพิมพ์ที่แสดงบนจอ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 295,
+    "before": "            Qty = int.TryParse(txtQty.Text.Trim(), out var q) ? q : null,",
+    "comment": "ใช้ Qty ล่าสุด รวมค่าที่ผู้ใช้แก้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 296,
+    "before": "            StStatus = \"0\",",
+    "comment": "ตั้งสถานะ Station เริ่มต้นเป็น 0"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 299,
+    "before": "        var (job, jobErr) = await api.CreateJobAsync(jobRequest);",
+    "comment": "Flow 8: สร้าง Job แล้วรับ Job ID กลับมา"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 300,
+    "before": "        if (job == null)",
+    "comment": "Backend สร้าง Job ไม่สำเร็จ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 302,
+    "before": "            ShowError($\"สร้าง Job ไม่สำเร็จ\\n{jobErr}\");",
+    "comment": "แจ้งสาเหตุแล้วหยุดสร้างข้อมูลส่วนอื่น"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 303,
+    "before": "            return;",
+    "comment": "สร้าง Job ไม่ได้ จึงไม่บันทึก Pattern และข้อมูลส่วนอื่น"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 307,
+    "before": "        patternTemplate.JobId = job.Id;",
+    "comment": "ผูก Pattern กับ Job ที่เพิ่งสร้าง"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 308,
+    "before": "        var (pattern, patErr) = await api.CreatePatternAsync(patternTemplate);",
+    "comment": "Flow 9: บันทึก Pattern"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 309,
+    "before": "        if (pattern == null)",
+    "comment": "บันทึก Pattern ไม่สำเร็จ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 311,
+    "before": "            await api.DeleteJobAsync(job.Id);",
+    "comment": "พยายามลบ Job โดยตรงนี้ไม่ได้ตรวจผลลบ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 312,
+    "before": "            ShowError($\"สร้าง Pattern ไม่สำเร็จ — Job ถูกลบแล้ว\\n{patErr}\");",
+    "comment": "แสดงข้อความเดิม แม้ยังไม่ได้ยืนยันผลลบ Job"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 313,
+    "before": "            return;",
+    "comment": "Pattern ไม่สำเร็จ จึงไม่บันทึก UV และ Routing ต่อ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 317,
+    "before": "        if (uvItems.Count > 0)",
+    "comment": "มีข้อมูล UV จึงบันทึก ถ้าไม่มีให้ข้าม"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 319,
+    "before": "            var uvRequest = new CreateUvJobRequest",
+    "comment": "เตรียมข้อมูล UV ของงานนี้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 321,
+    "before": "                PrintJobsId = job.Id,",
+    "comment": "ผูกข้อมูล UV กับ Job เดียวกัน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 322,
+    "before": "                Items = uvItems,",
+    "comment": "ใส่รายการ UV ที่อ่านจากต้นทาง"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 324,
+    "before": "            var (uvOk, uvErr) = await api.CreateUvJobDataAsync(uvRequest);",
+    "comment": "Flow 10: ส่งข้อมูล UV ไปบันทึก"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 325,
+    "before": "            if (!uvOk)",
+    "comment": "Backend บันทึก UV ไม่สำเร็จ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 327,
+    "before": "                ShowWarning($\"บันทึก UV Data ไม่สำเร็จ แต่ Job + Pattern สร้างแล้ว\\n{uvErr}\");",
+    "comment": "เตือนแต่ยังทำ Routing ต่อ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 332,
+    "before": "        if (planRouting != null)",
+    "comment": "มีแผนงานต้นทางจึงบันทึก"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 334,
+    "before": "            planRouting.PrintJobsId = job.Id;",
+    "comment": "ผูก Routing กับ Job เดียวกัน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 335,
+    "before": "            var (planOk, planErr) = await api.CreatePlanRoutingAsync(planRouting);",
+    "comment": "Flow 11: ส่งแผนงานไปบันทึก"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 336,
+    "before": "            if (!planOk)",
+    "comment": "Backend บันทึกแผนงานไม่สำเร็จ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 338,
+    "before": "                ShowWarning($\"บันทึก Plan Routing ไม่สำเร็จ แต่ Job + Pattern สร้างแล้ว\\n{planErr}\");",
+    "comment": "เตือนแต่ยังทำ IAI ต่อ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 341,
+    "before": "        else",
+    "comment": "Lot นี้ไม่มีแผนงานจากฐานข้อมูลต้นทาง"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 343,
+    "before": "            ShowWarning($\"ไม่พบข้อมูลใน plan_routing สำหรับ barcode: {barcode}\\nJob ถูกสร้างแล้วแต่ไม่มีข้อมูล marking_method\");",
+    "comment": "แจ้งว่า Job นี้ไม่มี Routing ต้นทาง"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 347,
+    "before": "        await SyncIaiAsync(api, job.Id, uvItems);",
+    "comment": "Flow 12: อ่านและเก็บค่าแคลมป์ของงาน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 349,
+    "before": "        Notify.Success(this,",
+    "comment": "Flow 13: แจ้งว่าจบขั้นตอนสร้างงาน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 350,
+    "before": "            $\"สร้างงาน {Services.JobDisplay.Label(job.OrderNo, job.LotNumber ?? job.BarcodeRaw, job.Id)} สำเร็จ\");",
+    "comment": "ใส่เลขอ้างอิงงานในข้อความ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 352,
+    "before": "        ClearForm();",
+    "comment": "ล้างหน้าสแกน รอรับ Barcode ถัดไป"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 360,
+    "before": "    private static bool ConfirmClampDatabase()",
+    "comment": "ถามผู้ใช้เมื่อไฟล์ข้อมูลแคลมป์ไม่พร้อม"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 362,
+    "before": "        var path = CustomSettingsManager.Read(\"CLAMP_DB_PATH\", \"\");",
+    "comment": "อ่านที่อยู่ mydatabase.db3"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 363,
+    "before": "        bool ready = !string.IsNullOrWhiteSpace(path) && File.Exists(path);",
+    "comment": "ตรวจว่าตั้งที่อยู่และพบไฟล์แล้ว"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 364,
+    "before": "        if (ready) return true;",
+    "comment": "มีไฟล์แล้วให้ทำต่อ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 366,
+    "before": "        var reason = string.IsNullOrWhiteSpace(path)",
+    "comment": "แยกสาเหตุที่ใช้ไฟล์ไม่ได้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 367,
+    "before": "            ? \"ยังไม่ได้เลือกไฟล์ mydatabase.db3\"",
+    "comment": "ยังไม่ได้ตั้งที่อยู่ไฟล์"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 368,
+    "before": "            : $\"ไม่พบไฟล์ที่ตั้งไว้:\\n{path}\";",
+    "comment": "ตั้งแล้วแต่หาไฟล์ไม่พบ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 370,
+    "before": "        return Confirm.Ask(null, \"ยังไม่ได้ตั้งค่า Clamp Database\",",
+    "comment": "คืนคำตอบว่าจะลงทะเบียนต่อหรือไม่"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 371,
+    "before": "            $\"{reason}\\n\\n\" +",
+    "comment": "แสดงสาเหตุให้ผู้ใช้เห็น"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 372,
+    "before": "            \"ระยะแคลมป์ (IAI) ของงานนี้จะถูกบันทึกเป็นค่าว่าง\\n\" +",
+    "comment": "บอกผลถ้าฝืนลงทะเบียนต่อ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 373,
+    "before": "            \"ตั้งค่าได้ที่ Setting → PLC UV Setting → Browse\\n\\n\" +",
+    "comment": "บอกทางไปเลือกไฟล์"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 374,
+    "before": "            \"ต้องการลงทะเบียนต่อไปหรือไม่?\");",
+    "comment": "รอผู้ใช้เลือกทำต่อหรือหยุด"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 386,
+    "before": "    private static async Task SyncIaiAsync(ApiClient api, int jobId, List<UvJobItem> uvItems)",
+    "comment": "อ่านค่า IAI ไปเก็บ ยังไม่สั่ง PLC"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 388,
+    "before": "        var settings = ClampSettings.Load();",
+    "comment": "อ่านไฟล์และแกนที่ตั้งไว้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 389,
+    "before": "        bool canRead = !string.IsNullOrWhiteSpace(settings.DbPath) && File.Exists(settings.DbPath);",
+    "comment": "ตรวจว่ามีไฟล์ให้อ่านค่าแคลมป์"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 391,
+    "before": "        var request = new IaiCreateRequest { PrintJobsId = jobId };",
+    "comment": "เตรียมค่า IAI ผูกกับ Job นี้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 393,
+    "before": "        foreach (var item in uvItems)",
+    "comment": "อ่านชื่อโปรแกรมจากแต่ละรายการ UV"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 395,
+    "before": "            var program = (item.ProgramName ?? \"\").Trim();",
+    "comment": "ตัดช่องว่างจากชื่อโปรแกรม"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 396,
+    "before": "            if (program.Length == 0) continue;",
+    "comment": "ไม่มีชื่อโปรแกรมให้ข้ามรายการนี้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 399,
+    "before": "            bool isPlate = program.StartsWith(\"P-\", StringComparison.OrdinalIgnoreCase);",
+    "comment": "ชื่อขึ้นต้น P- ให้ใช้ฝั่ง Plate"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 400,
+    "before": "            var side = isPlate ? ClampSide.Plate : ClampSide.Shim;",
+    "comment": "ชื่ออื่นใช้ฝั่ง Shim"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 402,
+    "before": "            if (isPlate) request.M1ProgramName = program;",
+    "comment": "เก็บชื่อโปรแกรม Plate"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 403,
+    "before": "            else request.M2ProgramName = program;",
+    "comment": "เก็บชื่อโปรแกรม Shim"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 406,
+    "before": "            foreach (var axis in settings.For(side))",
+    "comment": "ค้นค่าทุกแกนของฝั่งนี้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 408,
+    "before": "                int? value = canRead",
+    "comment": "มีไฟล์จึงลองค้นค่า"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 409,
+    "before": "                    ? ClampService.Lookup(settings.DbPath, program, axis) is { Found: true } hit",
+    "comment": "ค้นระยะตามโปรแกรมและแกน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 410,
+    "before": "                        ? hit.ValueMm",
+    "comment": "พบแล้วใช้ระยะหน่วยมิลลิเมตร"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 411,
+    "before": "                        : null",
+    "comment": "ค้นไม่พบให้เก็บค่าว่าง"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 412,
+    "before": "                    : null;",
+    "comment": "ไม่มีไฟล์ให้เก็บค่าว่าง"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 414,
+    "before": "                switch (axis.Key)",
+    "comment": "ใส่ค่าลงช่องของแกนที่ตรงกัน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 416,
+    "before": "                    case \"IAIP\": request.Iaip = value; break;",
+    "comment": "Plate แกน X"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 417,
+    "before": "                    case \"IAIPZ1\": request.IaipZ1 = value; break;",
+    "comment": "Plate แกน Z1"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 418,
+    "before": "                    case \"IAIPZ2\": request.IaipZ2 = value; break;",
+    "comment": "Plate แกน Z2"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 419,
+    "before": "                    case \"IAI\": request.Iai = value; break;",
+    "comment": "Shim แกน X"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 420,
+    "before": "                    case \"IAIZ1\": request.IaiZ1 = value; break;",
+    "comment": "Shim แกน Z1"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 421,
+    "before": "                    case \"IAIZ2\": request.IaiZ2 = value; break;",
+    "comment": "Shim แกน Z2"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 427,
+    "before": "        if (request.M1ProgramName == null && request.M2ProgramName == null) return;",
+    "comment": "ไม่มีชื่อโปรแกรมทั้งสองฝั่ง ไม่สร้างแถว IAI"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 429,
+    "before": "        await api.CreateIaiAsync(request);",
+    "comment": "บันทึก IAI โดยไม่ได้ตรวจผลที่คืนมา"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 432,
+    "before": "    private void BtnClear_Click(object? sender, EventArgs e)",
+    "comment": "ผู้ใช้กดล้างหน้าจอ"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 434,
+    "before": "        ClearForm();",
+    "comment": "ล้างหน้าสแกน รอรับ Barcode ถัดไป"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 437,
+    "before": "    private void ClearForm()",
+    "comment": "จบที่หน้าสแกนเดิม ไม่เปิดหน้า Station อื่น"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 439,
+    "before": "        txtBarcode.Text = \"\";",
+    "comment": "ล้าง Barcode ในช่องรับงาน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 440,
+    "before": "        ClearLotInfo();",
+    "comment": "ล้างข้อมูล Lot ที่แสดงอยู่"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 441,
+    "before": "        txtBarcode.Focus();",
+    "comment": "กลับมารับ Barcode ที่ช่องเดิม"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 445,
+    "before": "    private void ClearLotInfo()",
+    "comment": "ล้างข้อมูลประกอบของ Lot เดิม"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 447,
+    "before": "        _loadedBarcode = null;",
+    "comment": "ลืม Lot ที่เคยโหลดไว้"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 448,
+    "before": "        _customerName = null;",
+    "comment": "ล้างลูกค้าของ Lot เดิม"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 449,
+    "before": "        txtErpMfg.Text = \"\";",
+    "comment": "ล้าง Order No"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 450,
+    "before": "        txtMarkingMethod.Text = \"\";",
+    "comment": "ล้างวิธีพิมพ์"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 451,
+    "before": "        txtQty.Text = \"\";",
+    "comment": "ล้างจำนวน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 452,
+    "before": "        btnEditQty.Enabled = false;",
+    "comment": "รอโหลด Lot ใหม่ก่อนให้แก้ Qty"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 455,
+    "before": "    private static void ShowWarning(string msg) =>",
+    "comment": "แสดงคำเตือนของ Flow สแกน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 456,
+    "before": "        Notify.WarnModal(null, \"แจ้งเตือน\", msg);",
+    "comment": "เปิดกล่องคำเตือน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 458,
+    "before": "    private static void ShowError(string msg) =>",
+    "comment": "แสดงข้อผิดพลาดของ Flow สแกน"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 459,
+    "before": "        Notify.ErrorModal(null, \"Error\", msg);",
+    "comment": "เปิดกล่องข้อผิดพลาด"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 10,
+    "before": "    public SqliteDataService(string dbPath)",
+    "comment": "รับที่อยู่ไฟล์จาก DB_PATH"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 12,
+    "before": "        _dbPath = dbPath;",
+    "comment": "จำไฟล์ที่จะเปิดอ่าน"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 15,
+    "before": "    public bool CanConnect()",
+    "comment": "ตรวจว่าเปิดฐานข้อมูลต้นทางได้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 17,
+    "before": "        if (!File.Exists(_dbPath)) return false;",
+    "comment": "หาไฟล์ไม่พบให้คืนว่าเชื่อมต่อไม่ได้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 18,
+    "before": "        try",
+    "comment": "เริ่มเปิดไฟล์ฐานข้อมูลต้นทาง และดักข้อผิดพลาดไว้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 20,
+    "before": "            using var conn = Open();",
+    "comment": "เปิด SQLite แบบอ่านอย่างเดียว ใช้เสร็จปิดให้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 21,
+    "before": "            return true;",
+    "comment": "เปิดไฟล์ได้แล้ว หน้าสแกนจึงอ่านข้อมูลต่อได้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 23,
+    "before": "        catch { return false; }",
+    "comment": "เปิดไฟล์ไม่ได้ให้คืน false"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 26,
+    "before": "    public CreatePatternRequest? GetPatternDetail(string barcode, int jobId)",
+    "comment": "Flow 7: อ่านค่าพิมพ์ MK และค่าประกอบ"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 28,
+    "before": "        using var conn = Open();",
+    "comment": "เปิด SQLite แบบอ่านอย่างเดียว ใช้เสร็จปิดให้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 29,
+    "before": "        using var cmd = conn.CreateCommand();",
+    "comment": "เตรียมคำสั่งค้นข้อมูล"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 30,
+    "before": "        cmd.CommandText = \"SELECT * FROM inkjet_data WHERE lot_no = @barcode LIMIT 1\";",
+    "comment": "ค้นแถวตั้งค่าพิมพ์ของ Lot นี้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 31,
+    "before": "        cmd.Parameters.AddWithValue(\"@barcode\", barcode);",
+    "comment": "ใช้ Barcode นี้ค้น lot_no"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 33,
+    "before": "        using var reader = cmd.ExecuteReader();",
+    "comment": "รันคำสั่งแล้วอ่านแถวที่ได้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 34,
+    "before": "        if (!reader.Read()) return null;",
+    "comment": "ไม่พบแถวให้คืน null"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 36,
+    "before": "        var pattern = new CreatePatternRequest",
+    "comment": "เตรียมชุด Pattern ส่ง Backend"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 38,
+    "before": "            Barcode = barcode,",
+    "comment": "เก็บ Barcode ของงาน"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 39,
+    "before": "            JobId = jobId,",
+    "comment": "ใส่ Job ID ที่ผู้เรียกส่งมา"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 43,
+    "before": "        var mk1 = new InkjetConfigDto",
+    "comment": "เตรียมค่าหัวพิมพ์ MK1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 45,
+    "before": "            Ordinal = 1,",
+    "comment": "ระบุหัวพิมพ์ตัวที่ 1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 46,
+    "before": "            ProgramNumber = ReadInt(reader, \"mk1_program_no\"),",
+    "comment": "อ่านเลขโปรแกรม MK1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 47,
+    "before": "            ProgramName = ReadStr(reader, \"program_name\"),",
+    "comment": "อ่านชื่อโปรแกรม MK1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 48,
+    "before": "            Width = ReadInt(reader, \"ความกว้าง\"),",
+    "comment": "อ่านความกว้างข้อความ MK1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 49,
+    "before": "            Height = ReadInt(reader, \"ความสูง\"),",
+    "comment": "อ่านความสูงข้อความ MK1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 50,
+    "before": "            TriggerDelay = ReadInt(reader, \"การหน่วง_ทริกเกอร์\"),",
+    "comment": "อ่านค่าหน่วงทริกเกอร์ MK1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 51,
+    "before": "            Direction = ReadInt(reader, \"ทิศทางของข้อความ\"),",
+    "comment": "อ่านทิศทางข้อความ MK1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 52,
+    "before": "            PosAct = ReadInt(reader, \"pos_act\"),",
+    "comment": "อ่านค่าตำแหน่ง"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 53,
+    "before": "            Delay = ReadInt(reader, \"delay\"),",
+    "comment": "อ่านค่าหน่วง"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 55,
+    "before": "        for (int b = 1; b <= 5; b++)",
+    "comment": "อ่านข้อความพิมพ์ทีละบล็อก รวม 5 บล็อก"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 57,
+    "before": "            var text = ReadStr(reader, $\"mk1_block{b}_text\");",
+    "comment": "อ่านข้อความของบล็อก MK1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 58,
+    "before": "            if (string.IsNullOrEmpty(text)) continue;",
+    "comment": "บล็อกไม่มีข้อความให้ข้าม"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 59,
+    "before": "            mk1.TextBlocks.Add(new TextBlockDto",
+    "comment": "เพิ่มบล็อกให้ MK1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 61,
+    "before": "                BlockNumber = b,",
+    "comment": "ระบุลำดับบล็อก"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 62,
+    "before": "                Text = text,",
+    "comment": "เก็บข้อความที่จะพิมพ์"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 63,
+    "before": "                X = ReadInt(reader, $\"mk1_block{b}_x\"),",
+    "comment": "อ่านตำแหน่ง Xของบล็อก MK1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 64,
+    "before": "                Y = ReadInt(reader, $\"mk1_block{b}_y\"),",
+    "comment": "อ่านตำแหน่ง Yของบล็อก MK1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 65,
+    "before": "                Size = ReadInt(reader, $\"mk1_block{b}_size\"),",
+    "comment": "อ่านขนาดข้อความของบล็อก MK1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 66,
+    "before": "                Scale = ReadInt(reader, $\"mk1_block{b}_สเกลด้านข้าง\"),",
+    "comment": "อ่านสเกลด้านข้างของบล็อก MK1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 69,
+    "before": "        pattern.InkjetConfigs.Add(mk1);",
+    "comment": "รวม MK1 ไว้ใน Pattern"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 72,
+    "before": "        var mk2 = new InkjetConfigDto",
+    "comment": "เตรียมค่าหัวพิมพ์ MK2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 74,
+    "before": "            Ordinal = 2,",
+    "comment": "ระบุหัวพิมพ์ตัวที่ 2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 75,
+    "before": "            ProgramNumber = ReadInt(reader, \"mk2_program_no\"),",
+    "comment": "อ่านเลขโปรแกรม MK2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 76,
+    "before": "            ProgramName = ReadStr(reader, \"program_name3\"),",
+    "comment": "อ่านชื่อโปรแกรม MK2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 77,
+    "before": "            Width = ReadInt(reader, \"ความกว้าง14\"),",
+    "comment": "อ่านความกว้างข้อความ MK2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 78,
+    "before": "            Height = ReadInt(reader, \"ความสูง13\"),",
+    "comment": "อ่านความสูงข้อความ MK2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 79,
+    "before": "            TriggerDelay = ReadInt(reader, \"การหน่วง_ทริกเกอร์12\"),",
+    "comment": "อ่านค่าหน่วงทริกเกอร์ MK2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 80,
+    "before": "            Direction = ReadInt(reader, \"ทิศทางของข้อความ15\"),",
+    "comment": "อ่านทิศทางข้อความ MK2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 82,
+    "before": "        for (int b = 1; b <= 5; b++)",
+    "comment": "อ่านข้อความพิมพ์ทีละบล็อก รวม 5 บล็อก"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 84,
+    "before": "            var text = ReadStr(reader, $\"mk2_block{b}_text\");",
+    "comment": "อ่านข้อความของบล็อก MK2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 85,
+    "before": "            if (string.IsNullOrEmpty(text)) continue;",
+    "comment": "บล็อกไม่มีข้อความให้ข้าม"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 86,
+    "before": "            mk2.TextBlocks.Add(new TextBlockDto",
+    "comment": "เพิ่มบล็อกให้ MK2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 88,
+    "before": "                BlockNumber = b,",
+    "comment": "ระบุลำดับบล็อก"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 89,
+    "before": "                Text = text,",
+    "comment": "เก็บข้อความที่จะพิมพ์"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 90,
+    "before": "                X = ReadInt(reader, $\"mk2_block{b}_x\"),",
+    "comment": "อ่านตำแหน่ง Xของบล็อก MK2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 91,
+    "before": "                Y = ReadInt(reader, $\"mk2_block{b}_y\"),",
+    "comment": "อ่านตำแหน่ง Yของบล็อก MK2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 92,
+    "before": "                Size = ReadInt(reader, $\"mk2_block{b}_size\"),",
+    "comment": "อ่านขนาดข้อความของบล็อก MK2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 93,
+    "before": "                Scale = ReadInt(reader, $\"mk2_block{b}_สเกลด้านข้าง\"),",
+    "comment": "อ่านสเกลด้านข้างของบล็อก MK2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 96,
+    "before": "        pattern.InkjetConfigs.Add(mk2);",
+    "comment": "รวม MK2 ไว้ใน Pattern"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 99,
+    "before": "        pattern.ConveyorSpeeds = new ConveyorSpeedDto",
+    "comment": "เตรียมค่าความเร็วสายพาน"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 101,
+    "before": "            Speed1 = ReadInt(reader, \"สายพาน1_inkjet\"),",
+    "comment": "อ่านความเร็วสายพาน 1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 102,
+    "before": "            Speed2 = ReadInt(reader, \"สายพาน2_feed_เข้า_inkjet\"),",
+    "comment": "อ่านความเร็วสายพาน 2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 103,
+    "before": "            Speed3 = ReadInt(reader, \"สายพาน3\"),",
+    "comment": "อ่านความเร็วสายพาน 3"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 107,
+    "before": "        pattern.ServoConfigs = new List<ServoConfigDto>",
+    "comment": "เตรียมค่าของ Servo ทั้งสองตัว"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 109,
+    "before": "            new() { Ordinal = 1, PostAct = ReadDouble(reader, \"pos_act\"), Delay = ReadDouble(reader, \"delay\") },",
+    "comment": "อ่านตำแหน่งและค่าหน่วง Servo 1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 110,
+    "before": "            new() { Ordinal = 2, PostAct = ReadDouble(reader, \"pos_act_16\"), Delay = ReadDouble(reader, \"delay17\") },",
+    "comment": "อ่านตำแหน่งและค่าหน่วง Servo 2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 113,
+    "before": "        return pattern;",
+    "comment": "คืน Pattern ให้หน้าสแกนไปบันทึก"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 122,
+    "before": "    public LotSummary? GetLotSummary(string barcode)",
+    "comment": "Flow 3: อ่านหัวงานมาแสดงบนหน้าสแกน"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 124,
+    "before": "        using var conn = Open();",
+    "comment": "เปิด SQLite แบบอ่านอย่างเดียว ใช้เสร็จปิดให้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 125,
+    "before": "        using var cmd = conn.CreateCommand();",
+    "comment": "เตรียมคำสั่งค้นข้อมูล"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 126,
+    "before": "        cmd.CommandText = \"SELECT erp_mfg, qty FROM print_data WHERE lot_no = @barcode LIMIT 1\";",
+    "comment": "หา Order No และ Qty จาก Lot"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 127,
+    "before": "        cmd.Parameters.AddWithValue(\"@barcode\", barcode);",
+    "comment": "ใช้ Barcode นี้ค้น lot_no"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 129,
+    "before": "        using var reader = cmd.ExecuteReader();",
+    "comment": "รันคำสั่งแล้วอ่านแถวที่ได้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 130,
+    "before": "        if (!reader.Read()) return null;",
+    "comment": "ไม่พบแถวให้คืน null"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 132,
+    "before": "        return new LotSummary",
+    "comment": "คืนข้อมูลที่ใช้แสดงบนจอ"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 134,
+    "before": "            LotNo = barcode,",
+    "comment": "เก็บ Lot ที่ค้น"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 135,
+    "before": "            ErpMfg = ReadStr(reader, \"erp_mfg\"),",
+    "comment": "อ่าน Order No"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 137,
+    "before": "            MarkingMethod = GetPlanRouting(barcode, 0)?.MarkingMethod,",
+    "comment": "อ่านวิธีพิมพ์จาก plan_routing"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 138,
+    "before": "            Customer = GetCustomer(barcode),",
+    "comment": "อ่านลูกค้าเก็บไว้ไปกับงาน"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 146,
+    "before": "    private string? GetCustomer(string barcode)",
+    "comment": "อ่านลูกค้าจากข้อมูลตั้งค่าพิมพ์"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 148,
+    "before": "        try",
+    "comment": "เริ่มอ่านชื่อลูกค้าของ Lot และดักข้อผิดพลาดไว้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 150,
+    "before": "            using var conn = Open();",
+    "comment": "เปิด SQLite แบบอ่านอย่างเดียว ใช้เสร็จปิดให้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 151,
+    "before": "            using var cmd = conn.CreateCommand();",
+    "comment": "เตรียมคำสั่งค้นข้อมูล"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 152,
+    "before": "            cmd.CommandText = \"SELECT customer FROM inkjet_data WHERE lot_no = @barcode LIMIT 1\";",
+    "comment": "ค้นชื่อลูกค้าของ Lot"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 153,
+    "before": "            cmd.Parameters.AddWithValue(\"@barcode\", barcode);",
+    "comment": "ใช้ Barcode นี้ค้น lot_no"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 155,
+    "before": "            using var reader = cmd.ExecuteReader();",
+    "comment": "รันคำสั่งแล้วอ่านแถวที่ได้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 156,
+    "before": "            return reader.Read() ? ReadStr(reader, \"customer\") : null;",
+    "comment": "มีแถวให้อ่านลูกค้า ไม่มีให้คืนค่าว่าง"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 158,
+    "before": "        catch",
+    "comment": "จัดการปัญหาระหว่างอ่านชื่อลูกค้าของ Lot"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 160,
+    "before": "            return null;",
+    "comment": "อ่านชื่อลูกค้าไม่ได้ ให้หัวงานใช้ค่าว่าง"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 168,
+    "before": "    public List<UvJobItem> GetUvDetail(string barcode)",
+    "comment": "Flow 7: อ่านข้อมูล UV1 และ UV2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 170,
+    "before": "        var items = new List<UvJobItem>();",
+    "comment": "เตรียมรายการ UV ของ Lot"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 171,
+    "before": "        using var conn = Open();",
+    "comment": "เปิด SQLite แบบอ่านอย่างเดียว ใช้เสร็จปิดให้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 172,
+    "before": "        using var cmd = conn.CreateCommand();",
+    "comment": "เตรียมคำสั่งค้นข้อมูล"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 173,
+    "before": "        cmd.CommandText = \"SELECT * FROM print_data WHERE lot_no = @barcode\";",
+    "comment": "ค้นทุกแถวของ Lot นี้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 174,
+    "before": "        cmd.Parameters.AddWithValue(\"@barcode\", barcode);",
+    "comment": "ใช้ Barcode นี้ค้น lot_no"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 176,
+    "before": "        using var reader = cmd.ExecuteReader();",
+    "comment": "รันคำสั่งแล้วอ่านแถวที่ได้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 177,
+    "before": "        while (reader.Read())",
+    "comment": "อ่านทีละแถวที่ค้นพบ"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 179,
+    "before": "            var lot = ReadStr(reader, \"lot_no\") ?? barcode;",
+    "comment": "ใช้ Lot จากแถว ถ้าไม่มีใช้ Barcode เดิม"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 180,
+    "before": "            var erpMfg = ReadStr(reader, \"erp_mfg\");",
+    "comment": "อ่าน Order No ของแถวนี้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 183,
+    "before": "            AddIfHasData(items, BuildUv(reader, \"UV1\", \"MK063\", \"m1_\", lot, erpMfg, qty));",
+    "comment": "เก็บข้อมูล m1 เป็นงาน UV1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 184,
+    "before": "            AddIfHasData(items, BuildUv(reader, \"UV2\", \"MK067\", \"m2_\", lot, erpMfg, qty));",
+    "comment": "เก็บข้อมูล m2 เป็นงาน UV2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 186,
+    "before": "        return items;",
+    "comment": "คืนรายการ UV ให้หน้าสแกน"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 191,
+    "before": "    private static UvJobItem BuildUv(",
+    "comment": "รวมค่าของเครื่อง UV หนึ่งรายการ"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 192,
+    "before": "        SqliteDataReader r, string machine, string table, string prefix,",
+    "comment": "รับแถวข้อมูล เครื่อง และคำนำหน้าคอลัมน์"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 193,
+    "before": "        string lot, string? erpMfg, int? qty)",
+    "comment": "รับ Lot, Order No และ Qty ต้นทาง"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 195,
+    "before": "        return new UvJobItem",
+    "comment": "คืนข้อมูล UV ที่ประกอบแล้ว"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 197,
+    "before": "            Machine = machine,",
+    "comment": "ระบุ UV1 หรือ UV2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 198,
+    "before": "            TableName = table,",
+    "comment": "ระบุ MK063 หรือ MK067"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 199,
+    "before": "            ProgramName = ReadStr(r, $\"{prefix}program_name\"),",
+    "comment": "อ่านชื่อโปรแกรมของฝั่งนี้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 200,
+    "before": "            Lot = lot,",
+    "comment": "เก็บ Lot ของงาน"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 201,
+    "before": "            ErpMfg = erpMfg,",
+    "comment": "เก็บ Order No ของงาน"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 202,
+    "before": "            Qty = qty,",
+    "comment": "ใช้ Qty ต้นทาง ไม่ใช่ค่าที่แก้บนจอ"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 203,
+    "before": "            Text1 = ReadStr(r, $\"{prefix}block_text1\"),",
+    "comment": "อ่านข้อความ UV ช่อง 1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 204,
+    "before": "            Text2 = ReadStr(r, $\"{prefix}block_text2\"),",
+    "comment": "อ่านข้อความ UV ช่อง 2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 205,
+    "before": "            Text3 = ReadStr(r, $\"{prefix}block_text3\"),",
+    "comment": "อ่านข้อความ UV ช่อง 3"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 206,
+    "before": "            Text4 = ReadStr(r, $\"{prefix}block_text4\"),",
+    "comment": "อ่านข้อความ UV ช่อง 4"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 207,
+    "before": "            Text5 = ReadStr(r, $\"{prefix}block_text5\"),",
+    "comment": "อ่านข้อความ UV ช่อง 5"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 211,
+    "before": "    private static void AddIfHasData(List<UvJobItem> items, UvJobItem item)",
+    "comment": "ข้ามเครื่อง UV ที่ไม่มีข้อมูลใช้งาน"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 213,
+    "before": "        bool hasData =",
+    "comment": "มีชื่อโปรแกรมหรือข้อความอย่างใดอย่างหนึ่งก็เก็บ"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 214,
+    "before": "            !string.IsNullOrWhiteSpace(item.ProgramName) ||",
+    "comment": "ตรวจว่ามีชื่อโปรแกรม"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 215,
+    "before": "            !string.IsNullOrWhiteSpace(item.Text1) ||",
+    "comment": "ตรวจว่ามีข้อความช่อง 1"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 216,
+    "before": "            !string.IsNullOrWhiteSpace(item.Text2) ||",
+    "comment": "ตรวจว่ามีข้อความช่อง 2"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 217,
+    "before": "            !string.IsNullOrWhiteSpace(item.Text3) ||",
+    "comment": "ตรวจว่ามีข้อความช่อง 3"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 218,
+    "before": "            !string.IsNullOrWhiteSpace(item.Text4) ||",
+    "comment": "ตรวจว่ามีข้อความช่อง 4"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 219,
+    "before": "            !string.IsNullOrWhiteSpace(item.Text5);",
+    "comment": "ตรวจว่ามีข้อความช่อง 5"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 221,
+    "before": "        if (hasData) items.Add(item);",
+    "comment": "เพิ่มเฉพาะรายการที่มีข้อมูล"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 228,
+    "before": "    public CreatePlanRoutingRequest? GetPlanRouting(string barcode, int jobId)",
+    "comment": "อ่านวิธีพิมพ์และลำดับกระบวนการ"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 230,
+    "before": "        try",
+    "comment": "เริ่มอ่านแผนงานของ Lot และดักข้อผิดพลาดไว้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 232,
+    "before": "            using var conn = Open();",
+    "comment": "เปิด SQLite แบบอ่านอย่างเดียว ใช้เสร็จปิดให้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 233,
+    "before": "            using var cmd = conn.CreateCommand();",
+    "comment": "เตรียมคำสั่งค้นข้อมูล"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 234,
+    "before": "            cmd.CommandText = \"SELECT * FROM plan_routing WHERE lot_no = @barcode LIMIT 1\";",
+    "comment": "ค้นแผนงานของ Lot นี้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 235,
+    "before": "            cmd.Parameters.AddWithValue(\"@barcode\", barcode);",
+    "comment": "ใช้ Barcode นี้ค้น lot_no"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 237,
+    "before": "            using var reader = cmd.ExecuteReader();",
+    "comment": "รันคำสั่งแล้วอ่านแถวที่ได้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 238,
+    "before": "            if (!reader.Read()) return null;",
+    "comment": "ไม่พบแถวให้คืน null"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 240,
+    "before": "            return new CreatePlanRoutingRequest",
+    "comment": "เตรียม Routing สำหรับส่ง Backend"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 242,
+    "before": "                PrintJobsId = jobId,",
+    "comment": "ระบุ Job ที่จะผูก Routing"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 243,
+    "before": "                LotNo = ReadStr(reader, \"lot_no\") ?? barcode,",
+    "comment": "อ่าน Lot ถ้าไม่มีใช้ Barcode เดิม"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 244,
+    "before": "                ErpMfg = ReadStr(reader, \"erp_mfg\"),",
+    "comment": "อ่าน Order No"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 245,
+    "before": "                MarkingMethod = ReadStr(reader, \"marking_method\"),",
+    "comment": "อ่านรหัสวิธีพิมพ์"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 246,
+    "before": "                ProcessSequence = ReadStr(reader, \"process_sequence\"),",
+    "comment": "อ่านลำดับกระบวนการตามต้นทาง"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 249,
+    "before": "        catch",
+    "comment": "จัดการปัญหาระหว่างอ่านแผนงานของ Lot"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 251,
+    "before": "            return null;",
+    "comment": "อ่านแผนงานไม่ได้ ให้ผู้เรียกจัดการกรณีไม่มี Routing"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 255,
+    "before": "    private SqliteConnection Open()",
+    "comment": "ทุกคำสั่งอ่าน DB3 ใช้การเปิดแบบนี้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 257,
+    "before": "        var conn = new SqliteConnection(SqlitePath.ReadOnly(_dbPath));",
+    "comment": "ตั้ง SQLite ให้อ่านอย่างเดียว"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 258,
+    "before": "        conn.Open();",
+    "comment": "เปิดการเชื่อมต่อไฟล์"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 259,
+    "before": "        return conn;",
+    "comment": "ส่งการเชื่อมต่อกลับให้ผู้เรียก"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 262,
+    "before": "    private static string? ReadStr(SqliteDataReader r, string col)",
+    "comment": "อ่านคอลัมน์เป็นข้อความ"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 264,
+    "before": "        try",
+    "comment": "เริ่มอ่านข้อความจากคอลัมน์ และดักข้อผิดพลาดไว้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 266,
+    "before": "            int idx = r.GetOrdinal(col);",
+    "comment": "หาตำแหน่งคอลัมน์ตามชื่อ"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 267,
+    "before": "            return r.IsDBNull(idx) ? null : r.GetString(idx);",
+    "comment": "ค่าว่างคืน null ถ้ามีให้อ่านข้อความ"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 269,
+    "before": "        catch { return null; }",
+    "comment": "ไม่มีคอลัมน์หรือแปลงไม่ได้ให้คืนค่าว่าง"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 272,
+    "before": "    private static int? ReadInt(SqliteDataReader r, string col)",
+    "comment": "อ่านคอลัมน์เป็นจำนวนเต็ม"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 274,
+    "before": "        try",
+    "comment": "เริ่มอ่านจำนวนเต็มจากคอลัมน์ และดักข้อผิดพลาดไว้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 276,
+    "before": "            int idx = r.GetOrdinal(col);",
+    "comment": "หาตำแหน่งคอลัมน์ตามชื่อ"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 277,
+    "before": "            if (r.IsDBNull(idx)) return null;",
+    "comment": "ค่าว่างใน DB ให้คืน null"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 278,
+    "before": "            var val = r.GetValue(idx);",
+    "comment": "อ่านค่าดิบในคอลัมน์"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 279,
+    "before": "            return Convert.ToInt32(val);",
+    "comment": "แปลงค่าที่อ่านเป็นจำนวนเต็ม"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 281,
+    "before": "        catch { return null; }",
+    "comment": "ไม่มีคอลัมน์หรือแปลงไม่ได้ให้คืนค่าว่าง"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 284,
+    "before": "    private static double? ReadDouble(SqliteDataReader r, string col)",
+    "comment": "อ่านคอลัมน์เป็นเลขทศนิยม"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 286,
+    "before": "        try",
+    "comment": "เริ่มอ่านเลขทศนิยมจากคอลัมน์ และดักข้อผิดพลาดไว้"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 288,
+    "before": "            int idx = r.GetOrdinal(col);",
+    "comment": "หาตำแหน่งคอลัมน์ตามชื่อ"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 289,
+    "before": "            if (r.IsDBNull(idx)) return null;",
+    "comment": "ค่าว่างใน DB ให้คืน null"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 290,
+    "before": "            var val = r.GetValue(idx);",
+    "comment": "อ่านค่าดิบในคอลัมน์"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 291,
+    "before": "            return Convert.ToDouble(val);",
+    "comment": "แปลงค่าที่อ่านเป็นเลขทศนิยม"
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 293,
+    "before": "        catch { return null; }",
+    "comment": "ไม่มีคอลัมน์หรือแปลงไม่ได้ให้คืนค่าว่าง"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 45,
+    "before": "    public ApiClient(string baseUrl)",
+    "comment": "เตรียมตัวส่งคำขอไป Backend"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 47,
+    "before": "        _baseUrl = baseUrl.TrimEnd('/');",
+    "comment": "ตัดเครื่องหมายท้าย URL ก่อนใช้งาน"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 48,
+    "before": "        _http = new HttpClient(SharedHandler, disposeHandler: false)",
+    "comment": "ใช้ชุดการเชื่อมต่อร่วมกับตัวเรียกอื่น"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 50,
+    "before": "            BaseAddress = new Uri(_baseUrl),",
+    "comment": "กำหนด IP และพอร์ตปลายทาง"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 51,
+    "before": "            Timeout = TimeSpan.FromSeconds(10),",
+    "comment": "รอคำตอบแต่ละครั้งไม่เกิน 10 วินาที"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 55,
+    "before": "    public async Task<bool> PingAsync()",
+    "comment": "ตรวจ Backend ก่อนสร้างงาน"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 57,
+    "before": "        try",
+    "comment": "เริ่มตรวจว่า Backend พร้อมรับงาน และดักข้อผิดพลาดไว้"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 59,
+    "before": "            var response = await _http.GetAsync(\"/system/ping\");",
+    "comment": "ถามว่า Backend พร้อมหรือไม่"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 60,
+    "before": "            return response.IsSuccessStatusCode;",
+    "comment": "ตอบรหัสสำเร็จถือว่าเชื่อมต่อได้"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 62,
+    "before": "        catch { return false; }",
+    "comment": "เรียกไม่ได้ให้คืนว่าไม่พร้อม"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 65,
+    "before": "    public async Task<(PrintJob? job, string? error)> CreateJobAsync(CreateJobRequest request)",
+    "comment": "Flow 8: ส่งหัวงานไปสร้าง Job"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 67,
+    "before": "        try",
+    "comment": "เริ่มส่งข้อมูลไปสร้าง Job และดักข้อผิดพลาดไว้"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 69,
+    "before": "            var response = await _http.PostAsJsonAsync(\"/job/create\", request, JsonOptions);",
+    "comment": "ส่ง JSON ไป JobController.create()"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 70,
+    "before": "            var body = await response.Content.ReadAsStringAsync();",
+    "comment": "อ่านคำตอบจาก Backend"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 71,
+    "before": "            if (!response.IsSuccessStatusCode)",
+    "comment": "ถ้า Backend ตอบว่าไม่สำเร็จ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 72,
+    "before": "                return (null, $\"[{(int)response.StatusCode}] {body}\");",
+    "comment": "คืนรหัสและข้อความผิดพลาด"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 73,
+    "before": "            var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PrintJob>>(body, JsonOptions);",
+    "comment": "แปลงคำตอบเป็น Job รวม ID ที่สร้างใหม่"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 74,
+    "before": "            return (wrapper?.Data, null);",
+    "comment": "คืนข้อมูลที่ Backend ส่งกลับ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 76,
+    "before": "        catch (Exception ex)",
+    "comment": "จัดการปัญหาระหว่างส่งข้อมูลไปสร้าง Job"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 78,
+    "before": "            return (null, ex.Message);",
+    "comment": "คืนสาเหตุให้หน้าจอแสดง"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 82,
+    "before": "    public async Task<(PatternDetail? pattern, string? error)> CreatePatternAsync(CreatePatternRequest request)",
+    "comment": "Flow 9: ส่ง Pattern ของ Job"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 84,
+    "before": "        try",
+    "comment": "เริ่มส่ง Pattern ไปบันทึก และดักข้อผิดพลาดไว้"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 86,
+    "before": "            var response = await _http.PostAsJsonAsync(\"/pattern/create\", request, JsonOptions);",
+    "comment": "ส่ง JSON ไป PatternController.create()"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 87,
+    "before": "            var body = await response.Content.ReadAsStringAsync();",
+    "comment": "อ่านคำตอบจาก Backend"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 88,
+    "before": "            if (!response.IsSuccessStatusCode)",
+    "comment": "ถ้า Backend ตอบว่าไม่สำเร็จ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 89,
+    "before": "                return (null, $\"[{(int)response.StatusCode}] {body}\");",
+    "comment": "คืนรหัสและข้อความผิดพลาด"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 90,
+    "before": "            var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PatternDetail>>(body, JsonOptions);",
+    "comment": "แปลงคำตอบเป็น Pattern ที่บันทึกแล้ว"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 91,
+    "before": "            return (wrapper?.Data, null);",
+    "comment": "คืนข้อมูลที่ Backend ส่งกลับ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 93,
+    "before": "        catch (Exception ex)",
+    "comment": "จัดการปัญหาระหว่างส่ง Pattern ไปบันทึก"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 95,
+    "before": "            return (null, ex.Message);",
+    "comment": "คืนสาเหตุให้หน้าจอแสดง"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 156,
+    "before": "    public async Task<(bool ok, string? error)> CreateUvJobDataAsync(CreateUvJobRequest request)",
+    "comment": "Flow 10: ส่งข้อมูล UV ของ Job"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 158,
+    "before": "        try",
+    "comment": "เริ่มส่งข้อมูล UV ไปบันทึก และดักข้อผิดพลาดไว้"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 160,
+    "before": "            var response = await _http.PostAsJsonAsync(\"/uv-job/create\", request, JsonOptions);",
+    "comment": "ส่ง JSON ไป UvJobController.create()"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 161,
+    "before": "            var body = await response.Content.ReadAsStringAsync();",
+    "comment": "อ่านคำตอบจาก Backend"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 162,
+    "before": "            if (!response.IsSuccessStatusCode)",
+    "comment": "ถ้า Backend ตอบว่าไม่สำเร็จ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 163,
+    "before": "                return (false, $\"[{(int)response.StatusCode}] {body}\");",
+    "comment": "คืนว่าไม่สำเร็จพร้อมสาเหตุ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 164,
+    "before": "            return (true, null);",
+    "comment": "บันทึกสำเร็จ ไม่มีข้อความผิดพลาด"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 166,
+    "before": "        catch (Exception ex)",
+    "comment": "จัดการปัญหาระหว่างส่งข้อมูล UV ไปบันทึก"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 168,
+    "before": "            return (false, ex.Message);",
+    "comment": "คืนว่าไม่สำเร็จพร้อมข้อความ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 204,
+    "before": "    public async Task<(bool ok, string? error)> CreateIaiAsync(IaiCreateRequest request)",
+    "comment": "Flow 12: ส่งค่าแคลมป์ไปเก็บ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 206,
+    "before": "        try",
+    "comment": "เริ่มส่งค่าแคลมป์ไปบันทึก และดักข้อผิดพลาดไว้"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 208,
+    "before": "            var response = await _http.PostAsJsonAsync(\"/iai/create\", request, JsonOptions);",
+    "comment": "ส่ง JSON ไป IaiController.create()"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 209,
+    "before": "            var body = await response.Content.ReadAsStringAsync();",
+    "comment": "อ่านคำตอบจาก Backend"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 210,
+    "before": "            if (!response.IsSuccessStatusCode)",
+    "comment": "ถ้า Backend ตอบว่าไม่สำเร็จ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 211,
+    "before": "                return (false, $\"[{(int)response.StatusCode}] {body}\");",
+    "comment": "คืนว่าไม่สำเร็จพร้อมสาเหตุ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 212,
+    "before": "            return (true, null);",
+    "comment": "บันทึกสำเร็จ ไม่มีข้อความผิดพลาด"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 214,
+    "before": "        catch (Exception ex)",
+    "comment": "จัดการปัญหาระหว่างส่งค่าแคลมป์ไปบันทึก"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 216,
+    "before": "            return (false, ex.Message);",
+    "comment": "คืนว่าไม่สำเร็จพร้อมข้อความ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 239,
+    "before": "    public async Task<(bool ok, string? error)> CreatePlanRoutingAsync(CreatePlanRoutingRequest request)",
+    "comment": "Flow 11: ส่งแผนงานของ Job"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 241,
+    "before": "        try",
+    "comment": "เริ่มส่งแผนงานไปบันทึก และดักข้อผิดพลาดไว้"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 243,
+    "before": "            var response = await _http.PostAsJsonAsync(\"/plan-routing/create\", request, JsonOptions);",
+    "comment": "ส่ง JSON ไป PlanRoutingController.create()"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 244,
+    "before": "            var body = await response.Content.ReadAsStringAsync();",
+    "comment": "อ่านคำตอบจาก Backend"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 245,
+    "before": "            if (!response.IsSuccessStatusCode)",
+    "comment": "ถ้า Backend ตอบว่าไม่สำเร็จ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 246,
+    "before": "                return (false, $\"[{(int)response.StatusCode}] {body}\");",
+    "comment": "คืนว่าไม่สำเร็จพร้อมสาเหตุ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 247,
+    "before": "            return (true, null);",
+    "comment": "บันทึกสำเร็จ ไม่มีข้อความผิดพลาด"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 249,
+    "before": "        catch (Exception ex)",
+    "comment": "จัดการปัญหาระหว่างส่งแผนงานไปบันทึก"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 251,
+    "before": "            return (false, ex.Message);",
+    "comment": "คืนว่าไม่สำเร็จพร้อมข้อความ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 255,
+    "before": "    public async Task<bool> DeleteJobAsync(int jobId)",
+    "comment": "ลบ Job เมื่อสร้าง Pattern ไม่สำเร็จ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 257,
+    "before": "        try",
+    "comment": "เริ่มขอลบ Job ที่ไม่มี Pattern และดักข้อผิดพลาดไว้"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 259,
+    "before": "            var response = await _http.DeleteAsync($\"/job/remove/{jobId}\");",
+    "comment": "ขอลบ Job ตาม ID"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 260,
+    "before": "            response.EnsureSuccessStatusCode();",
+    "comment": "ถ้ารหัสตอบไม่สำเร็จให้เข้า catch"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 261,
+    "before": "            return true;",
+    "comment": "Backend ยืนยันว่าลบ Job แล้ว"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 263,
+    "before": "        catch (Exception ex)",
+    "comment": "จัดการปัญหาระหว่างขอลบ Job ที่ไม่มี Pattern"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 265,
+    "before": "            Console.WriteLine(\"DeleteJob error: \" + ex.Message);",
+    "comment": "เขียนสาเหตุลบไม่ได้ลง Console"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 266,
+    "before": "            return false;",
+    "comment": "ลบ Job ไม่สำเร็จ แจ้งผลให้ผู้เรียกทราบ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 275,
+    "before": "    public async Task<(List<PrintJob> jobs, string? error)> GetAllJobsAsync(",
+    "comment": "Flow 14: อ่านรายการงานจาก Backend"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 276,
+    "before": "        int limit = 100, DateTime? fromUtc = null, DateTime? toUtc = null)",
+    "comment": "กำหนดจำนวนแถวและช่วงเวลาที่ต้องการ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 278,
+    "before": "        try",
+    "comment": "เริ่มอ่านรายการงานจาก Backend และดักข้อผิดพลาดไว้"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 280,
+    "before": "            var url = $\"/job/getAll?page=1&limit={limit}\";",
+    "comment": "ขอรายการงานหน้าแรกตามจำนวนที่กำหนด"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 281,
+    "before": "            if (fromUtc.HasValue) url += $\"&from={Uri.EscapeDataString(fromUtc.Value.ToString(\"o\"))}\";",
+    "comment": "แนบเวลาเริ่มถ้ามีตัวกรอง"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 282,
+    "before": "            if (toUtc.HasValue) url += $\"&to={Uri.EscapeDataString(toUtc.Value.ToString(\"o\"))}\";",
+    "comment": "แนบเวลาสิ้นสุดถ้ามีตัวกรอง"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 284,
+    "before": "            var response = await _http.GetAsync(url);",
+    "comment": "อ่านรายการจาก JobController.getAll()"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 285,
+    "before": "            var body = await response.Content.ReadAsStringAsync();",
+    "comment": "อ่านคำตอบจาก Backend"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 286,
+    "before": "            if (!response.IsSuccessStatusCode)",
+    "comment": "ถ้า Backend ตอบว่าไม่สำเร็จ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 287,
+    "before": "                return (new(), $\"[{(int)response.StatusCode}] {body}\");",
+    "comment": "อ่านไม่ได้ คืนรายการว่างพร้อมสาเหตุ"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 288,
+    "before": "            var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PaginatedResult<PrintJob>>>(body, JsonOptions);",
+    "comment": "แปลง JSON เป็นชุดรายการงาน"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 289,
+    "before": "            var jobs = wrapper?.Data?.Data ?? new();",
+    "comment": "ดึงรายการออกมา ถ้าไม่มีใช้รายการว่าง"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 290,
+    "before": "            return (jobs, null);",
+    "comment": "ส่งรายการไปแสดงที่ Order List"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 292,
+    "before": "        catch (Exception ex)",
+    "comment": "จัดการปัญหาระหว่างอ่านรายการงานจาก Backend"
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 294,
+    "before": "            return (new(), ex.Message);",
+    "comment": "คืนรายการว่างพร้อมข้อผิดพลาด"
+  },
+  {
+    "file": "InkjetOperator/Program.cs",
+    "line": 14,
+    "before": "    static void Main()",
+    "comment": "Flow 1: จุดเริ่มโปรแกรม"
+  },
+  {
+    "file": "InkjetOperator/Program.cs",
+    "line": 27,
+    "before": "        using var single = new Mutex(initiallyOwned: true, SingleInstanceName, out bool isFirst);",
+    "comment": "กันเปิดโปรแกรมซ้อนกัน"
+  },
+  {
+    "file": "InkjetOperator/Program.cs",
+    "line": 28,
+    "before": "        if (!isFirst)",
+    "comment": "มีโปรแกรมตัวเดิมเปิดอยู่แล้ว"
+  },
+  {
+    "file": "InkjetOperator/Program.cs",
+    "line": 30,
+    "before": "            BringRunningInstanceToFront();",
+    "comment": "แสดงตัวเดิมแทนการเปิดซ้ำ"
+  },
+  {
+    "file": "InkjetOperator/Program.cs",
+    "line": 31,
+    "before": "            return;",
+    "comment": "ใช้โปรแกรมตัวเดิม จึงไม่เปิดหน้าหลักซ้ำ"
+  },
+  {
+    "file": "InkjetOperator/Program.cs",
+    "line": 40,
+    "before": "        ApplicationConfiguration.Initialize();",
+    "comment": "ตั้งค่าพื้นฐาน WinForms ก่อนสร้างหน้าจอ"
+  },
+  {
+    "file": "InkjetOperator/Program.cs",
+    "line": 42,
+    "before": "        UseGregorianYears();",
+    "comment": "ตั้งการแสดงปีเป็น ค.ศ."
+  },
+  {
+    "file": "InkjetOperator/Program.cs",
+    "line": 43,
+    "before": "        Services.LanguageService.Init();",
+    "comment": "โหลดภาษาที่เลือกไว้"
+  },
+  {
+    "file": "InkjetOperator/Program.cs",
+    "line": 44,
+    "before": "        ConfigureAntdUi();",
+    "comment": "ตั้งค่าชุดคอนโทรล AntdUI"
+  },
+  {
+    "file": "InkjetOperator/Program.cs",
+    "line": 47,
+    "before": "        string patternsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, \"patterns.xml\");",
+    "comment": "หาไฟล์รูปแบบแปลงข้อความข้าง EXE"
+  },
+  {
+    "file": "InkjetOperator/Program.cs",
+    "line": 48,
+    "before": "        PatternStore.Load(patternsPath);",
+    "comment": "โหลดรูปแบบแปลงข้อความ"
+  },
+  {
+    "file": "InkjetOperator/Program.cs",
+    "line": 49,
+    "before": "        PatternStore.SeedDefaults(patternsPath);",
+    "comment": "เติมรูปแบบเริ่มต้นที่ยังไม่มี"
+  },
+  {
+    "file": "InkjetOperator/Program.cs",
+    "line": 51,
+    "before": "        WarnIfSettingsReadOnly();",
+    "comment": "เตือนถ้าไฟล์ตั้งค่าเขียนไม่ได้"
+  },
+  {
+    "file": "InkjetOperator/Program.cs",
+    "line": 52,
+    "before": "        StartBackendIfNeeded();",
+    "comment": "เปิด Backend ตามค่าที่ตั้งไว้"
+  },
+  {
+    "file": "InkjetOperator/Program.cs",
+    "line": 54,
+    "before": "        StartHealthMonitorIfDevMode();",
+    "comment": "เปิดตัวเฝ้าสถานะเฉพาะโหมดทดสอบ"
+  },
+  {
+    "file": "InkjetOperator/Program.cs",
+    "line": 56,
+    "before": "        Application.Run(new Views.MainShellForm());",
+    "comment": "เปิดหน้าหลัก ให้ ApplyMenuLevel() เลือกหน้าตามโหมด"
+  },
+  {
+    "file": "InkjetOperator/Program.cs",
+    "line": 57,
+    "before": "        HealthMonitor.Stop();",
+    "comment": "ปิดตัวเฝ้าสถานะเมื่อโปรแกรมจบ"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 21,
+    "before": "        ApplyMenuLevel();",
+    "comment": "ไปเลือกเมนูและหน้าเริ่มต้นตามโหมด"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 22,
+    "before": "        ApplyProgramTitle();",
+    "comment": "แสดงชื่อสถานีบนหน้าหลัก"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 24,
+    "before": "        Load += MainShellForm_Load;",
+    "comment": "หน้าโหลดแล้วเตรียมช่อง Barcode"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 94,
+    "before": "    private async void MainShellForm_Load(object? sender, EventArgs e)",
+    "comment": "เตรียมหน้าจอหลังเปิดหน้าหลัก"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 97,
+    "before": "        if (scanBarcodePage.Visible) scanBarcodePage.FocusBarcode();",
+    "comment": "หน้าสแกนแสดงอยู่ให้พร้อมรับ Barcode"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 100,
+    "before": "        var raw = Services.CustomSettingsManager.Read(\"MENU_LEVEL\", \"1\");",
+    "comment": "อ่านโหมดเครื่อง ค่าเริ่มต้นคือ 1"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 101,
+    "before": "        int.TryParse(raw, out var level);",
+    "comment": "แปลงเป็นเลข ถ้าแปลงไม่ได้จะได้ 0"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 103,
+    "before": "        if (level <= 1 || level == 9)",
+    "comment": "โหมดกลุ่มนี้ตรวจการเชื่อมต่อตอนเปิด"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 104,
+    "before": "            await settingPage.CheckAllStatusAsync();",
+    "comment": "รอหน้า Setting ตรวจสถานะ"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 110,
+    "before": "    private void ApplyMenuLevel()",
+    "comment": "Flow 1: เลือกหน้าแรกของเครื่องนี้"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 113,
+    "before": "        var raw = Services.CustomSettingsManager.Read(\"MENU_LEVEL\", \"1\");",
+    "comment": "อ่านโหมดเครื่อง ค่าเริ่มต้นคือ 1"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 114,
+    "before": "        int.TryParse(raw, out var level);",
+    "comment": "แปลงเป็นเลข ถ้าแปลงไม่ได้จะได้ 0"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 117,
+    "before": "        var allTabs = new[] { btnInputOrder, btnOrderList, btnEditPattern, btnSetting };",
+    "comment": "เรียงปุ่มเมนูให้ตรงกับหน้า"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 118,
+    "before": "        var allPages = new Control[] { scanBarcodePage, orderListPage, editPatternPage, settingPage };",
+    "comment": "จับคู่หน้าจอกับปุ่มตามลำดับ"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 121,
+    "before": "        bool[] visible = level switch",
+    "comment": "เลือกเมนูที่แสดงตามโหมด"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 124,
+    "before": "            0 => [true, false, false, true],",
+    "comment": "Mode 0 แสดง Scan Barcode และ Setting"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 126,
+    "before": "            1 => [false, true, true, true],",
+    "comment": "Mode 1 เปิดชุดเมนูของ Station 1"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 131,
+    "before": "            _ => [true, true, true, true],",
+    "comment": "โหมดอื่นให้แสดงทุกเมนูก่อน"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 134,
+    "before": "        visible[EditPatternTab] = false;",
+    "comment": "ซ่อน Edit Pattern ทุกโหมด"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 137,
+    "before": "        for (int i = 0; i < allTabs.Length; i++)",
+    "comment": "กำหนดการแสดงปุ่มและหน้าทีละคู่"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 139,
+    "before": "            allTabs[i].Visible = visible[i];",
+    "comment": "แสดงหรือซ่อนปุ่มเมนู"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 140,
+    "before": "            allPages[i].Visible = visible[i];",
+    "comment": "แสดงหรือซ่อนหน้าของปุ่มนั้น"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 142,
+    "before": "            tlpMenuBar.ColumnStyles[i].SizeType = visible[i]",
+    "comment": "ตั้งรูปแบบความกว้างช่องเมนู"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 143,
+    "before": "                ? System.Windows.Forms.SizeType.Absolute : System.Windows.Forms.SizeType.Absolute;",
+    "comment": "ทั้งสองกรณีใช้ความกว้างตายตัว"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 145,
+    "before": "            tlpMenuBar.ColumnStyles[i].Width = visible[i] ? 250F : 0F;",
+    "comment": "ปุ่มที่ซ่อนให้ยุบช่องเหลือ 0"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 149,
+    "before": "        _visibleTabs = allTabs.Where((_, i) => visible[i]).ToArray();",
+    "comment": "เก็บเฉพาะเมนูที่แสดงจริง"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 152,
+    "before": "        if (_visibleTabs.Length > 0)",
+    "comment": "มีเมนูให้เปิดอย่างน้อยหนึ่งหน้า"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 154,
+    "before": "            var firstTab = _visibleTabs[0];",
+    "comment": "เลือกปุ่มแรกที่แสดง"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 155,
+    "before": "            var firstPage = allPages[Array.IndexOf(allTabs, firstTab)];",
+    "comment": "หาหน้าของปุ่มแรก"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 156,
+    "before": "            firstPage.BringToFront();",
+    "comment": "Mode 0 จะดึงหน้าสแกนมาไว้ด้านหน้า"
+  },
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 157,
+    "before": "            SetActiveTab(firstTab);",
+    "comment": "ทำสีปุ่มให้ตรงกับหน้าที่เปิด"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 447,
+    "before": "    private void StartPolling()",
+    "comment": "Flow 14: ตั้งรอบอ่านงานของ Station"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 449,
+    "before": "        _pollTimer = new System.Windows.Forms.Timer { Interval = 5000 };",
+    "comment": "ตั้งรอบอ่านทุก 5 วินาที"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 450,
+    "before": "        _pollTimer.Tick += async (_, _) => await RefreshDataAsync();",
+    "comment": "ครบเวลาแล้วไปอ่านรายการงาน"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 451,
+    "before": "        _pollTimer.Start();",
+    "comment": "เริ่มนับรอบ"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 454,
+    "before": "    private async Task RefreshDataAsync(bool force = false)",
+    "comment": "อ่าน Backend แล้วอัปเดตรายการบนหน้านี้"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 456,
+    "before": "        if (_api == null) return;",
+    "comment": "ยังไม่มีตัวเรียก Backend ให้ข้าม"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 460,
+    "before": "        if (_sending) return;",
+    "comment": "กำลังส่งเครื่องอยู่ ยังไม่เปลี่ยนรายการบนจอ"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 465,
+    "before": "        if (_refreshing) return;",
+    "comment": "รอบก่อนยังไม่จบ ไม่เริ่มซ้อน"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 467,
+    "before": "        _refreshing = true;",
+    "comment": "จองรอบอ่านข้อมูลไว้"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 468,
+    "before": "        try",
+    "comment": "เริ่มอ่านงานและอัปเดตหน้า Order List และดักข้อผิดพลาดไว้"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 470,
+    "before": "            DateTime? fromUtc = null, toUtc = null;",
+    "comment": "เริ่มจากไม่กรองช่วงเวลา"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 471,
+    "before": "            if (_showHistory && TryGetDateRange(out var from, out var to))",
+    "comment": "หน้า History มีช่วงวันที่ที่เลือกไว้"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 473,
+    "before": "                fromUtc = ToUtcFromThai(from);",
+    "comment": "แปลงเวลาเริ่มเป็น UTC"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 474,
+    "before": "                toUtc = ToUtcFromThai(to);",
+    "comment": "แปลงเวลาสิ้นสุดเป็น UTC"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 477,
+    "before": "            var (jobs, error) = await _api.GetAllJobsAsync(100, fromUtc, toUtc);",
+    "comment": "อ่านงานจาก Backend รวมงานที่ Barcode เพิ่งสร้าง"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 478,
+    "before": "            if (IsDisposed) return;",
+    "comment": "หน้าถูกปิดแล้วให้หยุดรอบนี้"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 479,
+    "before": "            if (error != null)",
+    "comment": "อ่านรายการงานไม่สำเร็จ"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 481,
+    "before": "                tblOrders.EmptyText = $\"Error: {error}\";",
+    "comment": "แสดงสาเหตุในตาราง"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 482,
+    "before": "                return;",
+    "comment": "อ่านงานไม่ได้ จึงไม่อัปเดตรายการรอบนี้"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 484,
+    "before": "            _allJobs = jobs;",
+    "comment": "เก็บงานที่ Backend ส่งกลับ"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 488,
+    "before": "            await RecoverAbandonedRemoteStartsAsync();",
+    "comment": "ตรวจคำขอเริ่มงานที่ค้างอยู่"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 489,
+    "before": "            if (IsDisposed) return;",
+    "comment": "หน้าถูกปิดแล้วให้หยุดรอบนี้"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 491,
+    "before": "            await ProcessRemoteStartsAsync();",
+    "comment": "จัดการคำขอเริ่มงานจากอีก Station"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 492,
+    "before": "            if (IsDisposed) return;",
+    "comment": "หน้าถูกปิดแล้วให้หยุดรอบนี้"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 494,
+    "before": "            await ProcessMachineQueueAsync();",
+    "comment": "จัดการงานที่รอคิวเครื่อง"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 495,
+    "before": "            if (IsDisposed) return;",
+    "comment": "หน้าถูกปิดแล้วให้หยุดรอบนี้"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 497,
+    "before": "            await RefreshStationBarAsync();",
+    "comment": "อัปเดตสถานะงานของ Station"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 498,
+    "before": "            if (IsDisposed) return;",
+    "comment": "หน้าถูกปิดแล้วให้หยุดรอบนี้"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 500,
+    "before": "            await ShowRemoteErrorsAsync();",
+    "comment": "แสดงข้อผิดพลาดที่อีก Station ส่งกลับ"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 501,
+    "before": "            if (IsDisposed) return;",
+    "comment": "หน้าถูกปิดแล้วให้หยุดรอบนี้"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 505,
+    "before": "            var signature = BuildSignature(jobs) + QueueSignature();",
+    "comment": "รวมข้อมูลไว้เทียบว่ารายการเปลี่ยนหรือยัง"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 506,
+    "before": "            if (!force && signature == _lastSignature) return;",
+    "comment": "ข้อมูลเดิมและไม่ได้บังคับ ไม่วาดตารางใหม่"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 508,
+    "before": "            _lastSignature = signature;",
+    "comment": "จำข้อมูลรอบนี้ไว้เทียบครั้งหน้า"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 509,
+    "before": "            RebindTable();",
+    "comment": "กรองงานของ Station แล้วใส่ตาราง"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 510,
+    "before": "            await UpdateProcessingAsync();",
+    "comment": "อัปเดตส่วนแสดงงานที่กำลังทำ"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 512,
+    "before": "        catch (Exception ex)",
+    "comment": "จัดการปัญหาระหว่างอ่านงานและอัปเดตหน้า Order List"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 514,
+    "before": "            if (!IsDisposed)",
+    "comment": "ยังมีหน้าจอให้แสดงข้อผิดพลาด"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 515,
+    "before": "                tblOrders.EmptyText = $\"Error: {ex.Message}\";",
+    "comment": "แสดงข้อความที่ทำให้รอบอ่านล้มเหลว"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 517,
+    "before": "        finally",
+    "comment": "จบรอบอ่านแล้ว ต้องเปิดให้รอบถัดไปทำงานได้"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 519,
+    "before": "            _refreshing = false;",
+    "comment": "ปลดให้รอบถัดไปอ่านข้อมูลได้"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 598,
+    "before": "    private void RebindTable()",
+    "comment": "เลือกรายการที่ Station นี้ต้องเห็น"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 600,
+    "before": "        var statuses = _showHistory ? HistoryStatuses : ActiveStatuses;",
+    "comment": "เลือกกลุ่มสถานะตามแท็บที่เปิด"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 601,
+    "before": "        int station = StationService.Current;",
+    "comment": "อ่านว่าเครื่องนี้เป็น Station ใด"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 608,
+    "before": "        bool showEveryStation = _showHistory && !StationService.IsSt3;",
+    "comment": "History ของ ST1 ดูงานได้ทุก Station"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 610,
+    "before": "        var filtered = _allJobs",
+    "comment": "เริ่มกรองจากงานที่ Backend ส่งมา"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 611,
+    "before": "            .Where(j => statuses.Contains(j.Status, StringComparer.OrdinalIgnoreCase))",
+    "comment": "เก็บงานที่สถานะตรงกับแท็บ"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 612,
+    "before": "            .Where(j => showEveryStation",
+    "comment": "ถ้าไม่ได้ดูประวัติทุก Station ให้เช็กวิธีพิมพ์"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 613,
+    "before": "                || MarkingMethodService.VisibleAt(station, j.PlanRouting?.MarkingMethod))",
+    "comment": "เก็บงานที่กฎอนุญาตให้ Station นี้เห็น"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 614,
+    "before": "            .OrderBy(StatusRank)",
+    "comment": "เรียงตามกลุ่มสถานะ"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 615,
+    "before": "            .ThenByDescending(j => j.CreatedAt ?? DateTime.MinValue)",
+    "comment": "ในสถานะเดียวกันให้งานใหม่อยู่ก่อน"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 616,
+    "before": "            .ToList();",
+    "comment": "เก็บผลกรองเป็นรายการ"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 618,
+    "before": "        bool dateFiltered = _showHistory && TryGetDateRange(out _, out _);",
+    "comment": "จำว่ากำลังใช้ตัวกรองวันที่หรือไม่"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 620,
+    "before": "        var rows = filtered.Select(j => ToRow(j, _showHistory)).ToList();",
+    "comment": "แปลง Job เป็นแถวบนตาราง"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 621,
+    "before": "        tblOrders.EmptyText = _allJobs.Count == 0",
+    "comment": "เลือกข้อความเมื่อไม่มีแถวให้แสดง"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 622,
+    "before": "            ? \"No orders\"",
+    "comment": "Backend ไม่มีรายการงาน"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 623,
+    "before": "            : dateFiltered && rows.Count == 0",
+    "comment": "มีตัวกรองวันที่แต่ไม่พบงาน"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 624,
+    "before": "                ? \"ไม่มีงานในช่วงวันที่ที่เลือก\"",
+    "comment": "แจ้งว่าช่วงวันที่นี้ไม่มีงาน"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 625,
+    "before": "                : $\"No orders (total {_allJobs.Count}, filter: {string.Join(\"/\", statuses.Select(JobStatusDisplay.Text))})\";",
+    "comment": "แสดงจำนวนงานและสถานะที่ใช้กรอง"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 626,
+    "before": "        tblOrders.DataSource = null;",
+    "comment": "ถอดรายการเดิมออกก่อน"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 627,
+    "before": "        tblOrders.DataSource = rows;",
+    "comment": "แสดงงานที่กรองแล้วบน Order List"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 628,
+    "before": "        ReapplySort();",
+    "comment": "คืนลำดับเรียงที่ผู้ใช้เลือกไว้"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 629,
+    "before": "        RestoreSelection();",
+    "comment": "คืนแถวที่ผู้ใช้เลือกไว้"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 195,
+    "before": "    public static ClampLookup Lookup(string dbPath, string programName, ClampAxis axis)",
+    "comment": "Flow 12: ค้นระยะของแกนนี้จากไฟล์แคลมป์"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 197,
+    "before": "        string program = (programName ?? \"\").Trim();",
+    "comment": "ตัดช่องว่างจากชื่อโปรแกรม"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 198,
+    "before": "        if (program.Length == 0)",
+    "comment": "ไม่มีชื่อโปรแกรมให้ค้น"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 199,
+    "before": "            return new ClampLookup(false, 0, axis.Column, \"ยังไม่ได้ระบุชื่อโปรแกรม\");",
+    "comment": "คืนว่าไม่พบพร้อมสาเหตุ"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 201,
+    "before": "        if (string.IsNullOrWhiteSpace(dbPath))",
+    "comment": "ยังไม่ได้ตั้งที่อยู่ไฟล์"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 202,
+    "before": "            return new ClampLookup(false, 0, axis.Column, \"ยังไม่ได้ตั้ง path ของ mydatabase.db3\");",
+    "comment": "คืนว่าอ่านไม่ได้เพราะไม่มีที่อยู่ไฟล์"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 204,
+    "before": "        if (!File.Exists(dbPath))",
+    "comment": "มีที่อยู่แต่หาไฟล์ไม่พบ"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 205,
+    "before": "            return new ClampLookup(false, 0, axis.Column, $\"ไม่พบไฟล์ฐานข้อมูล:\\n{dbPath}\");",
+    "comment": "ส่งที่อยู่ไฟล์ที่หาไม่พบกลับไป"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 207,
+    "before": "        var columns = ReadColumns(dbPath);",
+    "comment": "อ่านรายชื่อคอลัมน์ที่มีในไฟล์นี้"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 208,
+    "before": "        if (columns.Count > 0 && !columns.Contains(axis.Column))",
+    "comment": "ตรวจว่าไฟล์รองรับแกนที่ต้องการ"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 209,
+    "before": "            return new ClampLookup(false, 0, axis.Column,",
+    "comment": "คืนว่าไม่พบค่าของแกนนี้"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 210,
+    "before": "                $\"ฐานข้อมูลนี้ไม่มีคอลัมน์ {axis.Column}\");",
+    "comment": "ระบุคอลัมน์ที่ไม่มี"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 212,
+    "before": "        try",
+    "comment": "เริ่มค้นระยะแคลมป์จากฐานข้อมูล และดักข้อผิดพลาดไว้"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 214,
+    "before": "            using var conn = new SqliteConnection(SqlitePath.ReadOnly(dbPath));",
+    "comment": "เปิดไฟล์แคลมป์แบบอ่านอย่างเดียว"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 215,
+    "before": "            conn.Open();",
+    "comment": "เปิดการเชื่อมต่อ SQLite"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 217,
+    "before": "            using var cmd = conn.CreateCommand();",
+    "comment": "เตรียมคำสั่งค้นข้อมูล"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 218,
+    "before": "            cmd.CommandText =",
+    "comment": "เตรียมค้นค่าแกนตามชื่อโปรแกรม"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 219,
+    "before": "                $\"SELECT {axis.Column} FROM MainTable WHERE {axis.NameColumn} = @p LIMIT 1\";",
+    "comment": "อ่านค่าแกนจาก MainTable แถวแรกที่ตรง"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 220,
+    "before": "            cmd.Parameters.AddWithValue(\"@p\", program);",
+    "comment": "ส่งชื่อโปรแกรมเป็นเงื่อนไขค้น"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 222,
+    "before": "            object? raw = cmd.ExecuteScalar();",
+    "comment": "อ่านค่าช่องเดียวที่ค้นได้"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 223,
+    "before": "            if (raw is null or DBNull)",
+    "comment": "ไม่พบแถวหรือค่าใน DB เป็น null"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 224,
+    "before": "                return new ClampLookup(false, 0, axis.Column,",
+    "comment": "คืนว่าไม่พบค่าของแกนนี้"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 225,
+    "before": "                    $\"ไม่พบ \\\"{program}\\\" ใน {axis.NameColumn}\");",
+    "comment": "แจ้งชื่อโปรแกรมที่ค้นไม่พบ"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 228,
+    "before": "            string text = raw.ToString()?.Trim() ?? \"\";",
+    "comment": "แปลงค่าดิบเป็นข้อความและตัดช่องว่าง"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 229,
+    "before": "            if (text.Length == 0)",
+    "comment": "พบแถวแต่ยังไม่ได้ใส่ค่า"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 230,
+    "before": "                return new ClampLookup(false, 0, axis.Column, $\"{axis.Column} ยังไม่ได้ setup\");",
+    "comment": "คืนว่าแกนนี้ยังไม่มีค่าตั้ง"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 232,
+    "before": "            if (!double.TryParse(text, out double value))",
+    "comment": "ตรวจว่าค่าที่อ่านเป็นตัวเลข"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 233,
+    "before": "                return new ClampLookup(false, 0, axis.Column,",
+    "comment": "คืนว่าไม่พบค่าของแกนนี้"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 234,
+    "before": "                    $\"{axis.Column} = \\\"{text}\\\" ไม่ใช่ตัวเลข\");",
+    "comment": "บอกค่าที่แปลงเป็นตัวเลขไม่ได้"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 236,
+    "before": "            return new ClampLookup(true, ClampMm(value), axis.Column, \"\");",
+    "comment": "คืนค่าที่ปรับให้อยู่ในช่วงระยะที่รองรับ"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 238,
+    "before": "        catch (Exception ex)",
+    "comment": "จัดการปัญหาระหว่างค้นระยะแคลมป์จากฐานข้อมูล"
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 240,
+    "before": "            return new ClampLookup(false, 0, axis.Column, ex.Message);",
+    "comment": "อ่านไม่ได้ ส่งสาเหตุกลับให้ผู้เรียก"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 35,
+    "before": "  static async create(req, res) {",
+    "comment": "Flow 8: รับ /job/create จากหน้าสแกน"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 36,
+    "before": "    try {",
+    "comment": "ลองบันทึกหรืออ่านข้อมูลตามคำขอ"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 37,
+    "before": "      const { barcode_raw, created_by, order_no, customer_name, type, qty, st_status } =",
+    "comment": "รับข้อมูลหัวงานที่ C# ส่งมา"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 38,
+    "before": "        req.body;",
+    "comment": "อ่านจาก JSON ในคำขอ"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 43,
+    "before": "      const job = await sequelize.transaction(async (t) => {",
+    "comment": "สร้าง Job และเลขงานในธุรกรรมเดียวกัน"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 44,
+    "before": "        await sequelize.query(",
+    "comment": "ล็อกการออกเลขงาน ไม่ให้สองคำขอได้เลขซ้ำ"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 45,
+    "before": "          \"SELECT pg_advisory_xact_lock(hashtext('print_jobs_job_no'))\",",
+    "comment": "ใช้ล็อกร่วมสำหรับเลขงานรายวัน"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 46,
+    "before": "          { transaction: t }",
+    "comment": "ใช้ธุรกรรมเดียวกันกับคำสั่งก่อนหน้า"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 51,
+    "before": "        const [[{ job_date, next_no }]] = await sequelize.query(",
+    "comment": "อ่านวันที่ไทยและเลขงานถัดไปของวัน"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 56,
+    "before": "          { transaction: t }",
+    "comment": "ใช้ธุรกรรมเดียวกันกับคำสั่งก่อนหน้า"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 59,
+    "before": "        return PrintJob.create(",
+    "comment": "สร้างแถว print_jobs"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 61,
+    "before": "            barcode_raw,",
+    "comment": "เก็บ Barcode ที่สแกน"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 62,
+    "before": "            lot_number: barcode_raw,",
+    "comment": "ใช้ Barcode เป็นเลข Lot"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 63,
+    "before": "            pattern_no_erp: barcode_raw,",
+    "comment": "ใช้ Barcode อ้างอิง Pattern ERP"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 64,
+    "before": "            job_no: Number(next_no),",
+    "comment": "ใช้เลขงานถัดไปที่เพิ่งคำนวณ"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 65,
+    "before": "            job_date,",
+    "comment": "เก็บวันรับงานตามเวลาไทย"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 66,
+    "before": "            order_no,",
+    "comment": "เก็บ Order No ที่ส่งมา"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 67,
+    "before": "            customer_name,",
+    "comment": "เก็บชื่อลูกค้า"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 68,
+    "before": "            type,",
+    "comment": "เก็บรหัสวิธีพิมพ์จากหน้าสแกน"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 69,
+    "before": "            qty,",
+    "comment": "เก็บ Qty ล่าสุดที่ผู้ใช้ยืนยัน"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 70,
+    "before": "            created_by,",
+    "comment": "เก็บชื่อผู้สร้างงาน"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 71,
+    "before": "            st_status: st_status || \"0\",",
+    "comment": "ไม่มีสถานะ Station ให้เริ่มที่ 0"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 73,
+    "before": "          { transaction: t }",
+    "comment": "ใช้ธุรกรรมเดียวกันกับคำสั่งก่อนหน้า"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 77,
+    "before": "      return ResponseManager.SuccessResponse(req, res, 201, job);",
+    "comment": "ส่ง Job รวม ID ใหม่กลับไปบันทึก Pattern ต่อ"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 78,
+    "before": "    } catch (err) {",
+    "comment": "ทำงานไม่สำเร็จให้ส่งสาเหตุคืน"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 79,
+    "before": "      return ResponseManager.CatchResponse(req, res, err.message);",
+    "comment": "ส่งข้อความผิดพลาดกลับไป C#"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 83,
+    "before": "  static async getAll(req, res) {",
+    "comment": "Flow 14: ส่งรายการงานให้ Order List"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 84,
+    "before": "    try {",
+    "comment": "ลองบันทึกหรืออ่านข้อมูลตามคำขอ"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 85,
+    "before": "      const { status, page, limit, from, to } = req.query;",
+    "comment": "รับสถานะ จำนวนแถว และช่วงวันที่ที่ขอ"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 86,
+    "before": "      const where = {};",
+    "comment": "เตรียมเงื่อนไขค้นงาน"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 88,
+    "before": "      if (status) {",
+    "comment": "ผู้เรียกระบุสถานะที่ต้องการ"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 89,
+    "before": "        where.status = status;",
+    "comment": "กรองเฉพาะสถานะนั้น"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 94,
+    "before": "      const fromAt = from ? new Date(from) : null;",
+    "comment": "อ่านเวลาเริ่ม ถ้าไม่ได้ส่งมาก็ไม่กรอง"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 95,
+    "before": "      const toAt = to ? new Date(to) : null;",
+    "comment": "อ่านเวลาสิ้นสุด"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 96,
+    "before": "      if (fromAt && !isNaN(fromAt) && toAt && !isNaN(toAt)) {",
+    "comment": "มีวันที่ใช้ได้ครบทั้งสองฝั่ง"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 97,
+    "before": "        where.created_at = { [Op.between]: [fromAt, toAt] };",
+    "comment": "ค้นงานที่สร้างในช่วงนี้"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 98,
+    "before": "      } else if (fromAt && !isNaN(fromAt)) {",
+    "comment": "มีเฉพาะวันเริ่ม"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 99,
+    "before": "        where.created_at = { [Op.gte]: fromAt };",
+    "comment": "ค้นตั้งแต่เวลาเริ่มเป็นต้นไป"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 100,
+    "before": "      } else if (toAt && !isNaN(toAt)) {",
+    "comment": "มีเฉพาะวันสิ้นสุด"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 101,
+    "before": "        where.created_at = { [Op.lte]: toAt };",
+    "comment": "ค้นไม่เกินเวลาสิ้นสุด"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 104,
+    "before": "      const offset = (page - 1) * limit;",
+    "comment": "คำนวณแถวเริ่มของหน้าที่ขอ"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 108,
+    "before": "      const { count, rows } = await PrintJob.findAndCountAll({",
+    "comment": "อ่านงานพร้อมจำนวนทั้งหมดที่ตรงเงื่อนไข"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 109,
+    "before": "        where,",
+    "comment": "ใช้ตัวกรองที่เตรียมไว้"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 110,
+    "before": "        include: [",
+    "comment": "แนบข้อมูลประกอบให้ Order List ใช้"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 111,
+    "before": "          { model: PrintJobCommand, as: \"commands\" },",
+    "comment": "แนบประวัติคำสั่งของ Job"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 112,
+    "before": "          { model: PlanRouting, as: \"plan_routing\" },",
+    "comment": "แนบแผนงานเพื่อกรองตาม Station"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 114,
+    "before": "        order: [[\"created_at\", \"DESC\"]],",
+    "comment": "เรียงงานใหม่ก่อน"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 115,
+    "before": "        offset,",
+    "comment": "เริ่มอ่านจากแถวของหน้าที่ขอ"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 116,
+    "before": "        limit,",
+    "comment": "จำกัดจำนวนงานในคำตอบ"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 117,
+    "before": "        distinct: true,",
+    "comment": "นับ Job ไม่ซ้ำจากการเชื่อมตาราง"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 120,
+    "before": "      return ResponseManager.SuccessResponse(req, res, 200, {",
+    "comment": "ส่งรายการกลับไปให้ C#"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 121,
+    "before": "        data: rows,",
+    "comment": "แนบงานของหน้าที่ขอ"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 122,
+    "before": "        total: count,",
+    "comment": "แนบจำนวนงานทั้งหมดที่ตรงเงื่อนไข"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 124,
+    "before": "    } catch (err) {",
+    "comment": "ทำงานไม่สำเร็จให้ส่งสาเหตุคืน"
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 125,
+    "before": "      return ResponseManager.CatchResponse(req, res, err.message);",
+    "comment": "ส่งข้อความผิดพลาดกลับไป C#"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 95,
+    "before": "  static async create(req, res) {",
+    "comment": "Flow 9: รับ /pattern/create"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 96,
+    "before": "    const t = await sequelize.transaction();",
+    "comment": "เตรียมบันทึก Pattern และตารางลูกพร้อมกัน"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 97,
+    "before": "    try {",
+    "comment": "ลองบันทึกหรืออ่านข้อมูลตามคำขอ"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 98,
+    "before": "      const { barcode, description, job_id, inkjet_configs, conveyor_speeds, servo_configs } = req.body;",
+    "comment": "แยกข้อมูล Pattern ที่ C# ส่งมา"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 100,
+    "before": "      const pattern = await Pattern.create(",
+    "comment": "สร้างหัว Pattern ก่อน"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 101,
+    "before": "        { barcode, description, job_id },",
+    "comment": "ผูกหัว Pattern กับ Job"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 102,
+    "before": "        { transaction: t }",
+    "comment": "ใช้ธุรกรรมเดียวกันกับคำสั่งก่อนหน้า"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 105,
+    "before": "      if (inkjet_configs) {",
+    "comment": "มีข้อมูล MK ให้บันทึกด้วย"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 106,
+    "before": "        for (const cfg of inkjet_configs) {",
+    "comment": "บันทึกค่าหัวพิมพ์ทีละตัว"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 107,
+    "before": "          const { text_blocks, ...cfgData } = cfg;",
+    "comment": "แยกข้อความออกจากค่าหัวพิมพ์"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 108,
+    "before": "          const config = await InkjetConfig.create(",
+    "comment": "สร้างค่าตั้งหัวพิมพ์"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 109,
+    "before": "            { ...cfgData, pattern_id: pattern.id },",
+    "comment": "ผูกหัวพิมพ์กับ Pattern ที่สร้าง"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 110,
+    "before": "            { transaction: t }",
+    "comment": "ใช้ธุรกรรมเดียวกันกับคำสั่งก่อนหน้า"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 113,
+    "before": "          if (text_blocks) {",
+    "comment": "มีข้อความพิมพ์ให้บันทึกต่อ"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 114,
+    "before": "            for (const block of text_blocks) {",
+    "comment": "บันทึกข้อความทีละบล็อก"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 115,
+    "before": "              await TextBlock.create(",
+    "comment": "สร้างแถวข้อความพิมพ์"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 116,
+    "before": "                { ...block, inkjet_config_id: config.id },",
+    "comment": "ผูกข้อความกับค่าหัวพิมพ์ตัวนี้"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 117,
+    "before": "                { transaction: t }",
+    "comment": "ใช้ธุรกรรมเดียวกันกับคำสั่งก่อนหน้า"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 124,
+    "before": "      if (conveyor_speeds) {",
+    "comment": "มีค่าความเร็วสายพานให้เก็บ"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 125,
+    "before": "        await ConveyorSpeed.create(",
+    "comment": "บันทึกความเร็วสายพาน"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 126,
+    "before": "          { ...conveyor_speeds, pattern_id: pattern.id },",
+    "comment": "ผูกความเร็วกับ Pattern นี้"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 127,
+    "before": "          { transaction: t }",
+    "comment": "ใช้ธุรกรรมเดียวกันกับคำสั่งก่อนหน้า"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 131,
+    "before": "      if (servo_configs) {",
+    "comment": "มีค่า Servo ให้เก็บ"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 132,
+    "before": "        for (const servo of servo_configs) {",
+    "comment": "อ่านค่า Servo ทีละตัว"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 133,
+    "before": "          await ServoConfig.create(",
+    "comment": "บันทึกค่า Servo"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 134,
+    "before": "            { ...servo, pattern_id: pattern.id },",
+    "comment": "ผูก Servo กับ Pattern นี้"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 135,
+    "before": "            { transaction: t }",
+    "comment": "ใช้ธุรกรรมเดียวกันกับคำสั่งก่อนหน้า"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 140,
+    "before": "      await t.commit();",
+    "comment": "ยืนยันข้อมูลทั้งหมดในธุรกรรมนี้"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 142,
+    "before": "      const result = await Pattern.findByPk(pattern.id, {",
+    "comment": "อ่าน Pattern ที่บันทึกกลับมา"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 143,
+    "before": "        include: PATTERN_INCLUDE,",
+    "comment": "รวมค่าหัวพิมพ์ ข้อความ สายพาน และ Servo"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 146,
+    "before": "      return ResponseManager.SuccessResponse(req, res, 201, result);",
+    "comment": "ส่ง Pattern กลับให้หน้าสแกนทำขั้นถัดไป"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 147,
+    "before": "    } catch (err) {",
+    "comment": "ทำงานไม่สำเร็จให้ส่งสาเหตุคืน"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 148,
+    "before": "      await t.rollback();",
+    "comment": "ยกเลิกข้อมูลในธุรกรรมนี้เมื่อพลาด"
+  },
+  {
+    "file": "InkjetBackend/controllers/PatternController.js",
+    "line": 149,
+    "before": "      return ResponseManager.CatchResponse(req, res, err.message);",
+    "comment": "ส่งข้อความผิดพลาดกลับไป C#"
+  },
+  {
+    "file": "InkjetBackend/controllers/UvJobController.js",
+    "line": 9,
+    "before": "  static async create(req, res) {",
+    "comment": "Flow 10: รับ /uv-job/create"
+  },
+  {
+    "file": "InkjetBackend/controllers/UvJobController.js",
+    "line": 10,
+    "before": "    try {",
+    "comment": "ลองบันทึกหรืออ่านข้อมูลตามคำขอ"
+  },
+  {
+    "file": "InkjetBackend/controllers/UvJobController.js",
+    "line": 11,
+    "before": "      const { print_jobs_id, items } = req.body;",
+    "comment": "รับ Job ID และรายการ UV"
+  },
+  {
+    "file": "InkjetBackend/controllers/UvJobController.js",
+    "line": 13,
+    "before": "      await UvJobData.destroy({ where: { print_jobs_id } });",
+    "comment": "ล้าง UV เดิมของ Job นี้ก่อนใส่ชุดใหม่"
+  },
+  {
+    "file": "InkjetBackend/controllers/UvJobController.js",
+    "line": 15,
+    "before": "      const rows = items.map((item) => ({ ...item, print_jobs_id }));",
+    "comment": "ใส่ Job ID ให้ทุกรายการ UV"
+  },
+  {
+    "file": "InkjetBackend/controllers/UvJobController.js",
+    "line": 16,
+    "before": "      const created = await UvJobData.bulkCreate(rows);",
+    "comment": "บันทึกรายการ UV ทั้งชุด"
+  },
+  {
+    "file": "InkjetBackend/controllers/UvJobController.js",
+    "line": 18,
+    "before": "      return ResponseManager.SuccessResponse(req, res, 201, created);",
+    "comment": "ส่งรายการที่บันทึกแล้วกลับให้ C#"
+  },
+  {
+    "file": "InkjetBackend/controllers/UvJobController.js",
+    "line": 19,
+    "before": "    } catch (err) {",
+    "comment": "ทำงานไม่สำเร็จให้ส่งสาเหตุคืน"
+  },
+  {
+    "file": "InkjetBackend/controllers/UvJobController.js",
+    "line": 20,
+    "before": "      return ResponseManager.CatchResponse(req, res, err.message);",
+    "comment": "ส่งข้อความผิดพลาดกลับไป C#"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 9,
+    "before": "  static async create(req, res) {",
+    "comment": "Flow 11: รับ /plan-routing/create"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 10,
+    "before": "    try {",
+    "comment": "ลองบันทึกหรืออ่านข้อมูลตามคำขอ"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 11,
+    "before": "      const {",
+    "comment": "แยกแผนงานจากคำขอ"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 12,
+    "before": "        print_jobs_id,",
+    "comment": "รหัส Job ที่ใช้ผูกข้อมูล"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 13,
+    "before": "        lot_no,",
+    "comment": "เลข Lot"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 14,
+    "before": "        erp_mfg,",
+    "comment": "Order No จากต้นทาง"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 15,
+    "before": "        marking_method,",
+    "comment": "รหัสวิธีพิมพ์"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 16,
+    "before": "        process_sequence,",
+    "comment": "ลำดับกระบวนการ"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 17,
+    "before": "      } = req.body;",
+    "comment": "ใช้ข้อมูล JSON ที่ C# ส่งมา"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 19,
+    "before": "      await PlanRouting.destroy({ where: { print_jobs_id } });",
+    "comment": "ล้างแผนงานเดิมของ Job นี้"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 21,
+    "before": "      const created = await PlanRouting.create({",
+    "comment": "สร้างแผนงานชุดใหม่"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 22,
+    "before": "        print_jobs_id,",
+    "comment": "รหัส Job ที่ใช้ผูกข้อมูล"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 23,
+    "before": "        lot_no: lot_no ?? null,",
+    "comment": "เก็บ Lot ไม่มีค่าให้ใช้ null"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 24,
+    "before": "        erp_mfg: erp_mfg ?? null,",
+    "comment": "เก็บ Order No ไม่มีค่าให้ใช้ null"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 25,
+    "before": "        marking_method: marking_method ?? null,",
+    "comment": "เก็บวิธีพิมพ์ ไม่มีค่าให้ใช้ null"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 26,
+    "before": "        process_sequence: process_sequence ?? null,",
+    "comment": "เก็บลำดับกระบวนการ ไม่มีค่าให้ใช้ null"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 29,
+    "before": "      return ResponseManager.SuccessResponse(req, res, 201, created);",
+    "comment": "ส่งแผนงานที่บันทึกแล้วกลับไป"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 30,
+    "before": "    } catch (err) {",
+    "comment": "ทำงานไม่สำเร็จให้ส่งสาเหตุคืน"
+  },
+  {
+    "file": "InkjetBackend/controllers/PlanRoutingController.js",
+    "line": 31,
+    "before": "      return ResponseManager.CatchResponse(req, res, err.message);",
+    "comment": "ส่งข้อความผิดพลาดกลับไป C#"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 7,
+    "before": "const toInt = (v) => {",
+    "comment": "แปลงระยะที่รับมาเป็นจำนวนเต็ม"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 8,
+    "before": "  if (v === null || v === undefined || v === \"\") return null;",
+    "comment": "ไม่มีค่าให้คงเป็น null"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 9,
+    "before": "  const n = Number(v);",
+    "comment": "แปลงค่าที่รับเป็นตัวเลข"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 10,
+    "before": "  return Number.isFinite(n) ? Math.round(n) : null;",
+    "comment": "ปัดเป็นจำนวนเต็ม แปลงไม่ได้ให้ค่าว่าง"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 13,
+    "before": "const pick = (body) => ({",
+    "comment": "เลือกเฉพาะชื่อโปรแกรมและระยะแคลมป์"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 14,
+    "before": "  m1_program_name: body.m1_program_name ?? null,",
+    "comment": "เก็บชื่อโปรแกรม Plate"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 15,
+    "before": "  iaip: toInt(body.iaip),",
+    "comment": "ระยะ Plate แกน X"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 16,
+    "before": "  iaip_z1: toInt(body.iaip_z1),",
+    "comment": "ระยะ Plate แกน Z1"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 17,
+    "before": "  iaip_z2: toInt(body.iaip_z2),",
+    "comment": "ระยะ Plate แกน Z2"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 18,
+    "before": "  m2_program_name: body.m2_program_name ?? null,",
+    "comment": "เก็บชื่อโปรแกรม Shim"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 19,
+    "before": "  iai: toInt(body.iai),",
+    "comment": "ระยะ Shim แกน X"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 20,
+    "before": "  iai_z1: toInt(body.iai_z1),",
+    "comment": "ระยะ Shim แกน Z1"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 21,
+    "before": "  iai_z2: toInt(body.iai_z2),",
+    "comment": "ระยะ Shim แกน Z2"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 32,
+    "before": "  static async create(req, res) {",
+    "comment": "Flow 12: รับ /iai/create"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 33,
+    "before": "    try {",
+    "comment": "ลองบันทึกหรืออ่านข้อมูลตามคำขอ"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 34,
+    "before": "      const jobId = Number(req.body.print_jobs_id);",
+    "comment": "อ่าน Job ID ที่จะเก็บค่าแคลมป์"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 35,
+    "before": "      if (!Number.isInteger(jobId) || jobId <= 0) {",
+    "comment": "Job ID ต้องเป็นจำนวนเต็มมากกว่า 0"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 36,
+    "before": "        return ResponseManager.ErrorResponse(",
+    "comment": "ปฏิเสธคำขอที่ไม่มี Job ID ถูกต้อง"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 37,
+    "before": "          req,",
+    "comment": "แนบคำขอเดิมให้ตัวตอบกลับ"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 38,
+    "before": "          res,",
+    "comment": "ใช้ช่องตอบกลับของคำขอนี้"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 39,
+    "before": "          400,",
+    "comment": "ตอบว่าเนื้อหาคำขอไม่ถูกต้อง"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 40,
+    "before": "          \"print_jobs_id is required\"",
+    "comment": "ระบุว่าต้องส่ง Job ID"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 44,
+    "before": "      const payload = { print_jobs_id: jobId, ...pick(req.body) };",
+    "comment": "รวม Job ID กับค่า IAI ที่เลือกไว้"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 46,
+    "before": "      const existing = await IaiClampSetting.findOne({",
+    "comment": "ค้นว่า Job นี้มีค่า IAI แล้วหรือยัง"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 47,
+    "before": "        where: { print_jobs_id: jobId },",
+    "comment": "หาเฉพาะ Job ที่รับมา"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 50,
+    "before": "      let row;",
+    "comment": "เก็บแถวที่จะส่งกลับ"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 51,
+    "before": "      let created = false;",
+    "comment": "เริ่มจากยังไม่ได้สร้างแถวใหม่"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 53,
+    "before": "      if (existing) {",
+    "comment": "Job นี้เคยเก็บค่า IAI แล้ว"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 54,
+    "before": "        await existing.update(payload);",
+    "comment": "อัปเดตแถวเดิม"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 55,
+    "before": "        row = existing;",
+    "comment": "ใช้แถวเดิมเป็นผลลัพธ์"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 56,
+    "before": "      } else {",
+    "comment": "ยังไม่มีค่า IAI ของ Job นี้"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 57,
+    "before": "        row = await IaiClampSetting.create(payload);",
+    "comment": "สร้างแถว IAI ใหม่"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 58,
+    "before": "        created = true;",
+    "comment": "จำว่าครั้งนี้สร้างแถวใหม่"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 61,
+    "before": "      return ResponseManager.SuccessResponse(req, res, created ? 201 : 200, row);",
+    "comment": "คืน 201 เมื่อสร้างใหม่ หรือ 200 เมื่อแก้แถวเดิม"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 62,
+    "before": "    } catch (err) {",
+    "comment": "ทำงานไม่สำเร็จให้ส่งสาเหตุคืน"
+  },
+  {
+    "file": "InkjetBackend/controllers/IaiController.js",
+    "line": 63,
+    "before": "      return ResponseManager.CatchResponse(req, res, err.message);",
+    "comment": "ส่งข้อความผิดพลาดกลับไป C#"
+  }
+]

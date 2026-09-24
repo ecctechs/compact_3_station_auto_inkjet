@@ -1,0 +1,57 @@
+[
+  {
+    "file": "InkjetOperator/Views/MainShellForm.cs",
+    "line": 110,
+    "needle": "private void ApplyMenuLevel()"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 140,
+    "needle": "private bool LoadLot("
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 219,
+    "needle": "private bool ValidateForm()"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 251,
+    "needle": "private async Task ProcessBarcodeAsync("
+  },
+  {
+    "file": "InkjetOperator/Services/SqliteDataService.cs",
+    "line": 26,
+    "needle": "public CreatePatternRequest? GetPatternDetail("
+  },
+  {
+    "file": "InkjetOperator/Services/ApiClient.cs",
+    "line": 65,
+    "needle": "public async Task<(PrintJob? job,"
+  },
+  {
+    "file": "InkjetOperator/Views/ScanBarcodeUserControl.cs",
+    "line": 386,
+    "needle": "private static async Task SyncIaiAsync("
+  },
+  {
+    "file": "InkjetBackend/controllers/JobController.js",
+    "line": 35,
+    "needle": "static async create(req, res)"
+  },
+  {
+    "file": "InkjetBackend/model/jobModel.js",
+    "line": 47,
+    "needle": "defaultValue: \"Waiting\""
+  },
+  {
+    "file": "InkjetOperator/Services/ClampService.cs",
+    "line": 195,
+    "needle": "public static ClampLookup Lookup("
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 454,
+    "needle": "private async Task RefreshDataAsync("
+  }
+]

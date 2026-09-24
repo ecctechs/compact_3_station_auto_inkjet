@@ -42,57 +42,57 @@ public class ApiClient
         MaxConnectionsPerServer = 8,
     };
 
-    public ApiClient(string baseUrl)
+    public ApiClient(string baseUrl) // เตรียมตัวส่งคำขอไป Backend
     {
-        _baseUrl = baseUrl.TrimEnd('/');
-        _http = new HttpClient(SharedHandler, disposeHandler: false)
+        _baseUrl = baseUrl.TrimEnd('/'); // ตัดเครื่องหมายท้าย URL ก่อนใช้งาน
+        _http = new HttpClient(SharedHandler, disposeHandler: false) // ใช้ชุดการเชื่อมต่อร่วมกับตัวเรียกอื่น
         {
-            BaseAddress = new Uri(_baseUrl),
-            Timeout = TimeSpan.FromSeconds(10),
+            BaseAddress = new Uri(_baseUrl), // กำหนด IP และพอร์ตปลายทาง
+            Timeout = TimeSpan.FromSeconds(10), // รอคำตอบแต่ละครั้งไม่เกิน 10 วินาที
         };
     }
 
-    public async Task<bool> PingAsync()
+    public async Task<bool> PingAsync() // ตรวจ Backend ก่อนสร้างงาน
     {
-        try
+        try // เริ่มตรวจว่า Backend พร้อมรับงาน และดักข้อผิดพลาดไว้
         {
-            var response = await _http.GetAsync("/system/ping");
-            return response.IsSuccessStatusCode;
+            var response = await _http.GetAsync("/system/ping"); // ถามว่า Backend พร้อมหรือไม่
+            return response.IsSuccessStatusCode; // ตอบรหัสสำเร็จถือว่าเชื่อมต่อได้
         }
-        catch { return false; }
+        catch { return false; } // เรียกไม่ได้ให้คืนว่าไม่พร้อม
     }
 
-    public async Task<(PrintJob? job, string? error)> CreateJobAsync(CreateJobRequest request)
+    public async Task<(PrintJob? job, string? error)> CreateJobAsync(CreateJobRequest request) // Flow 8: ส่งหัวงานไปสร้าง Job
     {
-        try
+        try // เริ่มส่งข้อมูลไปสร้าง Job และดักข้อผิดพลาดไว้
         {
-            var response = await _http.PostAsJsonAsync("/job/create", request, JsonOptions);
-            var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
-                return (null, $"[{(int)response.StatusCode}] {body}");
-            var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PrintJob>>(body, JsonOptions);
-            return (wrapper?.Data, null);
+            var response = await _http.PostAsJsonAsync("/job/create", request, JsonOptions); // ส่ง JSON ไป JobController.create()
+            var body = await response.Content.ReadAsStringAsync(); // อ่านคำตอบจาก Backend
+            if (!response.IsSuccessStatusCode) // ถ้า Backend ตอบว่าไม่สำเร็จ
+                return (null, $"[{(int)response.StatusCode}] {body}"); // คืนรหัสและข้อความผิดพลาด
+            var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PrintJob>>(body, JsonOptions); // แปลงคำตอบเป็น Job รวม ID ที่สร้างใหม่
+            return (wrapper?.Data, null); // คืนข้อมูลที่ Backend ส่งกลับ
         }
-        catch (Exception ex)
+        catch (Exception ex) // จัดการปัญหาระหว่างส่งข้อมูลไปสร้าง Job
         {
-            return (null, ex.Message);
+            return (null, ex.Message); // คืนสาเหตุให้หน้าจอแสดง
         }
     }
 
-    public async Task<(PatternDetail? pattern, string? error)> CreatePatternAsync(CreatePatternRequest request)
+    public async Task<(PatternDetail? pattern, string? error)> CreatePatternAsync(CreatePatternRequest request) // Flow 9: ส่ง Pattern ของ Job
     {
-        try
+        try // เริ่มส่ง Pattern ไปบันทึก และดักข้อผิดพลาดไว้
         {
-            var response = await _http.PostAsJsonAsync("/pattern/create", request, JsonOptions);
-            var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
-                return (null, $"[{(int)response.StatusCode}] {body}");
-            var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PatternDetail>>(body, JsonOptions);
-            return (wrapper?.Data, null);
+            var response = await _http.PostAsJsonAsync("/pattern/create", request, JsonOptions); // ส่ง JSON ไป PatternController.create()
+            var body = await response.Content.ReadAsStringAsync(); // อ่านคำตอบจาก Backend
+            if (!response.IsSuccessStatusCode) // ถ้า Backend ตอบว่าไม่สำเร็จ
+                return (null, $"[{(int)response.StatusCode}] {body}"); // คืนรหัสและข้อความผิดพลาด
+            var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PatternDetail>>(body, JsonOptions); // แปลงคำตอบเป็น Pattern ที่บันทึกแล้ว
+            return (wrapper?.Data, null); // คืนข้อมูลที่ Backend ส่งกลับ
         }
-        catch (Exception ex)
+        catch (Exception ex) // จัดการปัญหาระหว่างส่ง Pattern ไปบันทึก
         {
-            return (null, ex.Message);
+            return (null, ex.Message); // คืนสาเหตุให้หน้าจอแสดง
         }
     }
 
@@ -153,19 +153,19 @@ public class ApiClient
         }
     }
 
-    public async Task<(bool ok, string? error)> CreateUvJobDataAsync(CreateUvJobRequest request)
+    public async Task<(bool ok, string? error)> CreateUvJobDataAsync(CreateUvJobRequest request) // Flow 10: ส่งข้อมูล UV ของ Job
     {
-        try
+        try // เริ่มส่งข้อมูล UV ไปบันทึก และดักข้อผิดพลาดไว้
         {
-            var response = await _http.PostAsJsonAsync("/uv-job/create", request, JsonOptions);
-            var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
-                return (false, $"[{(int)response.StatusCode}] {body}");
-            return (true, null);
+            var response = await _http.PostAsJsonAsync("/uv-job/create", request, JsonOptions); // ส่ง JSON ไป UvJobController.create()
+            var body = await response.Content.ReadAsStringAsync(); // อ่านคำตอบจาก Backend
+            if (!response.IsSuccessStatusCode) // ถ้า Backend ตอบว่าไม่สำเร็จ
+                return (false, $"[{(int)response.StatusCode}] {body}"); // คืนว่าไม่สำเร็จพร้อมสาเหตุ
+            return (true, null); // บันทึกสำเร็จ ไม่มีข้อความผิดพลาด
         }
-        catch (Exception ex)
+        catch (Exception ex) // จัดการปัญหาระหว่างส่งข้อมูล UV ไปบันทึก
         {
-            return (false, ex.Message);
+            return (false, ex.Message); // คืนว่าไม่สำเร็จพร้อมข้อความ
         }
     }
 
@@ -201,19 +201,19 @@ public class ApiClient
     }
 
     /// <summary>บันทึกระยะแคลมป์ของงาน — job เดิมเรียกซ้ำจะทับแถวเดิม ไม่สร้างซ้ำ</summary>
-    public async Task<(bool ok, string? error)> CreateIaiAsync(IaiCreateRequest request)
+    public async Task<(bool ok, string? error)> CreateIaiAsync(IaiCreateRequest request) // Flow 12: ส่งค่าแคลมป์ไปเก็บ
     {
-        try
+        try // เริ่มส่งค่าแคลมป์ไปบันทึก และดักข้อผิดพลาดไว้
         {
-            var response = await _http.PostAsJsonAsync("/iai/create", request, JsonOptions);
-            var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
-                return (false, $"[{(int)response.StatusCode}] {body}");
-            return (true, null);
+            var response = await _http.PostAsJsonAsync("/iai/create", request, JsonOptions); // ส่ง JSON ไป IaiController.create()
+            var body = await response.Content.ReadAsStringAsync(); // อ่านคำตอบจาก Backend
+            if (!response.IsSuccessStatusCode) // ถ้า Backend ตอบว่าไม่สำเร็จ
+                return (false, $"[{(int)response.StatusCode}] {body}"); // คืนว่าไม่สำเร็จพร้อมสาเหตุ
+            return (true, null); // บันทึกสำเร็จ ไม่มีข้อความผิดพลาด
         }
-        catch (Exception ex)
+        catch (Exception ex) // จัดการปัญหาระหว่างส่งค่าแคลมป์ไปบันทึก
         {
-            return (false, ex.Message);
+            return (false, ex.Message); // คืนว่าไม่สำเร็จพร้อมข้อความ
         }
     }
 
@@ -236,34 +236,34 @@ public class ApiClient
         }
     }
 
-    public async Task<(bool ok, string? error)> CreatePlanRoutingAsync(CreatePlanRoutingRequest request)
+    public async Task<(bool ok, string? error)> CreatePlanRoutingAsync(CreatePlanRoutingRequest request) // Flow 11: ส่งแผนงานของ Job
     {
-        try
+        try // เริ่มส่งแผนงานไปบันทึก และดักข้อผิดพลาดไว้
         {
-            var response = await _http.PostAsJsonAsync("/plan-routing/create", request, JsonOptions);
-            var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
-                return (false, $"[{(int)response.StatusCode}] {body}");
-            return (true, null);
+            var response = await _http.PostAsJsonAsync("/plan-routing/create", request, JsonOptions); // ส่ง JSON ไป PlanRoutingController.create()
+            var body = await response.Content.ReadAsStringAsync(); // อ่านคำตอบจาก Backend
+            if (!response.IsSuccessStatusCode) // ถ้า Backend ตอบว่าไม่สำเร็จ
+                return (false, $"[{(int)response.StatusCode}] {body}"); // คืนว่าไม่สำเร็จพร้อมสาเหตุ
+            return (true, null); // บันทึกสำเร็จ ไม่มีข้อความผิดพลาด
         }
-        catch (Exception ex)
+        catch (Exception ex) // จัดการปัญหาระหว่างส่งแผนงานไปบันทึก
         {
-            return (false, ex.Message);
+            return (false, ex.Message); // คืนว่าไม่สำเร็จพร้อมข้อความ
         }
     }
 
-    public async Task<bool> DeleteJobAsync(int jobId)
+    public async Task<bool> DeleteJobAsync(int jobId) // ลบ Job เมื่อสร้าง Pattern ไม่สำเร็จ
     {
-        try
+        try // เริ่มขอลบ Job ที่ไม่มี Pattern และดักข้อผิดพลาดไว้
         {
-            var response = await _http.DeleteAsync($"/job/remove/{jobId}");
-            response.EnsureSuccessStatusCode();
-            return true;
+            var response = await _http.DeleteAsync($"/job/remove/{jobId}"); // ขอลบ Job ตาม ID
+            response.EnsureSuccessStatusCode(); // ถ้ารหัสตอบไม่สำเร็จให้เข้า catch
+            return true; // Backend ยืนยันว่าลบ Job แล้ว
         }
-        catch (Exception ex)
+        catch (Exception ex) // จัดการปัญหาระหว่างขอลบ Job ที่ไม่มี Pattern
         {
-            Console.WriteLine("DeleteJob error: " + ex.Message);
-            return false;
+            Console.WriteLine("DeleteJob error: " + ex.Message); // เขียนสาเหตุลบไม่ได้ลง Console
+            return false; // ลบ Job ไม่สำเร็จ แจ้งผลให้ผู้เรียกทราบ
         }
     }
 
@@ -272,26 +272,26 @@ public class ApiClient
     /// ต้องกรองที่นั่น ไม่ใช่กรองในหน้าจอ เพราะ endpoint คืนมาแค่ limit แถวล่าสุด
     /// งานเก่ากว่านั้นจะไม่ถูกส่งมาให้กรองตั้งแต่แรก
     /// </summary>
-    public async Task<(List<PrintJob> jobs, string? error)> GetAllJobsAsync(
-        int limit = 100, DateTime? fromUtc = null, DateTime? toUtc = null)
+    public async Task<(List<PrintJob> jobs, string? error)> GetAllJobsAsync( // Flow 14: อ่านรายการงานจาก Backend
+        int limit = 100, DateTime? fromUtc = null, DateTime? toUtc = null) // กำหนดจำนวนแถวและช่วงเวลาที่ต้องการ
     {
-        try
+        try // เริ่มอ่านรายการงานจาก Backend และดักข้อผิดพลาดไว้
         {
-            var url = $"/job/getAll?page=1&limit={limit}";
-            if (fromUtc.HasValue) url += $"&from={Uri.EscapeDataString(fromUtc.Value.ToString("o"))}";
-            if (toUtc.HasValue) url += $"&to={Uri.EscapeDataString(toUtc.Value.ToString("o"))}";
+            var url = $"/job/getAll?page=1&limit={limit}"; // ขอรายการงานหน้าแรกตามจำนวนที่กำหนด
+            if (fromUtc.HasValue) url += $"&from={Uri.EscapeDataString(fromUtc.Value.ToString("o"))}"; // แนบเวลาเริ่มถ้ามีตัวกรอง
+            if (toUtc.HasValue) url += $"&to={Uri.EscapeDataString(toUtc.Value.ToString("o"))}"; // แนบเวลาสิ้นสุดถ้ามีตัวกรอง
 
-            var response = await _http.GetAsync(url);
-            var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
-                return (new(), $"[{(int)response.StatusCode}] {body}");
-            var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PaginatedResult<PrintJob>>>(body, JsonOptions);
-            var jobs = wrapper?.Data?.Data ?? new();
-            return (jobs, null);
+            var response = await _http.GetAsync(url); // อ่านรายการจาก JobController.getAll()
+            var body = await response.Content.ReadAsStringAsync(); // อ่านคำตอบจาก Backend
+            if (!response.IsSuccessStatusCode) // ถ้า Backend ตอบว่าไม่สำเร็จ
+                return (new(), $"[{(int)response.StatusCode}] {body}"); // อ่านไม่ได้ คืนรายการว่างพร้อมสาเหตุ
+            var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PaginatedResult<PrintJob>>>(body, JsonOptions); // แปลง JSON เป็นชุดรายการงาน
+            var jobs = wrapper?.Data?.Data ?? new(); // ดึงรายการออกมา ถ้าไม่มีใช้รายการว่าง
+            return (jobs, null); // ส่งรายการไปแสดงที่ Order List
         }
-        catch (Exception ex)
+        catch (Exception ex) // จัดการปัญหาระหว่างอ่านรายการงานจาก Backend
         {
-            return (new(), ex.Message);
+            return (new(), ex.Message); // คืนรายการว่างพร้อมข้อผิดพลาด
         }
     }
 
