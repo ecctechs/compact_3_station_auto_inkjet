@@ -1,0 +1,3422 @@
+[
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 195,
+    "old": "        _api = new ApiClient($\"http://{CustomSettingsManager.Read(\"PC_IP\", \"127.0.0.1\")}:3000\");\r\n",
+    "new": "        _api = new ApiClient($\"http://{CustomSettingsManager.Read(\"PC_IP\", \"127.0.0.1\")}:3000\"); // ชี้ไป Backend กลางตาม IP ที่ตั้งไว้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 196,
+    "old": "        _ = RefreshDataAsync();\r\n",
+    "new": "        _ = RefreshDataAsync(); // อ่านรายการงานทันทีที่เปิดหน้า\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 197,
+    "old": "        StartPolling();\r\n",
+    "new": "        StartPolling(); // เริ่มอ่านงานซ้ำทุก 5 วินาที\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 198,
+    "old": "        _pushButton.Start();\r\n",
+    "new": "        _pushButton.Start(); // เริ่มฟังปุ่มหน้างานจาก PLC\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 287,
+    "old": "        if (_api == null || _pushHandling || IsDisposed) return;\r\n",
+    "new": "        if (_api == null || _pushHandling || IsDisposed) return; // ยังไม่พร้อมหรือกำลังปล่อยเครื่องอยู่ ให้ข้ามการกดครั้งนี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 289,
+    "old": "        _pushHandling = true;\r\n",
+    "new": "        _pushHandling = true; // กันปุ่มหน้างานสั่งปล่อยเครื่องซ้อน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 292,
+    "old": "            var machine = machineOverride ?? MachineOfThisStation();\r\n",
+    "new": "            var machine = machineOverride ?? MachineOfThisStation(); // ใช้เครื่องที่ทดสอบระบุมา หรือ MK ของ ST1 / UV2 ของ ST3\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 296,
+    "old": "            var (release, error) = await _api.ReleaseMachineAsync(\r\n",
+    "new": "            var (release, error) = await _api.ReleaseMachineAsync( // ขอปล่อยคิวปัจจุบันและรับคิวถัดไปจาก Backend\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 297,
+    "old": "                machine, StationService.HoldForNextRound);\r\n",
+    "new": "                machine, StationService.HoldForNextRound); // กำหนดว่าจะให้รอบถัดไปของงานเดิมถือเครื่องต่อหรือไม่\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 298,
+    "old": "            if (IsDisposed) return;\r\n",
+    "new": "            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตจอต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 300,
+    "old": "            if (release == null)\r\n",
+    "new": "            if (release == null) // Backend ไม่คืนผลการปล่อยเครื่อง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 302,
+    "old": "                Notify.Warn(this, $\"ปล่อยเครื่อง {machine} ไม่สำเร็จ — {error}\");\r\n",
+    "new": "                Notify.Warn(this, $\"ปล่อยเครื่อง {machine} ไม่สำเร็จ — {error}\"); // บอกเหตุที่ปล่อยเครื่องไม่ได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 303,
+    "old": "                return;\r\n",
+    "new": "                return; // ยังปล่อยไม่สำเร็จ จึงไม่รีเซ็ตหัวพิมพ์\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 309,
+    "old": "            if (release.Next != null)\r\n",
+    "new": "            if (release.Next != null) // มีงานถัดไปได้รับสิทธิ์ใช้เครื่องแล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 311,
+    "old": "                Notify.Success(this, $\"{machine} ว่างแล้ว · งานถัดไปในคิวจะถูกส่งให้\");\r\n",
+    "new": "                Notify.Success(this, $\"{machine} ว่างแล้ว · งานถัดไปในคิวจะถูกส่งให้\"); // แจ้งว่าคิวถัดไปพร้อมให้ ST1 ส่งข้อมูล\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 319,
+    "old": "                Notify.Success(this, $\"{machine} ว่างแล้ว · ไม่มีงานรอคิว\");\r\n",
+    "new": "                Notify.Success(this, $\"{machine} ว่างแล้ว · ไม่มีงานรอคิว\"); // แจ้งว่าเครื่องไม่มีคิวรอแล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 320,
+    "old": "                await ResetHeadPositionAsync(machine);\r\n",
+    "new": "                await ResetHeadPositionAsync(machine); // ขอให้ PLC พาหัวพิมพ์กลับตำแหน่งเริ่มต้น\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 325,
+    "old": "            _pushHandling = false;\r\n",
+    "new": "            _pushHandling = false; // เปิดรับการกดปุ่มหน้างานครั้งถัดไป\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 328,
+    "old": "        if (!IsDisposed) await RefreshDataAsync(force: true);\r\n",
+    "new": "        if (!IsDisposed) await RefreshDataAsync(force: true); // อ่านคิวใหม่ทันที เพื่อให้ ST1 ส่งงานที่เพิ่งได้สิทธิ์\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 668,
+    "old": "        if (e.Record is not OrderRow row) return;\r\n",
+    "new": "        if (e.Record is not OrderRow row) return; // รับเฉพาะปุ่มในแถวงานที่อ่านได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 669,
+    "old": "        if (_api == null || _rowBusy) return;\r\n",
+    "new": "        if (_api == null || _rowBusy) return; // Backend ยังไม่พร้อมหรือปุ่มก่อนหน้ายังทำไม่จบ ให้ข้าม\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 671,
+    "old": "        _rowBusy = true;\r\n",
+    "new": "        _rowBusy = true; // กันการกดปุ่มในตารางซ้อนกัน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 674,
+    "old": "            await HandleRowButtonAsync(e.Btn?.Id, row);\r\n",
+    "new": "            await HandleRowButtonAsync(e.Btn?.Id, row); // แยกไปทำตามปุ่มที่กดและ Job ของแถวนั้น\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 678,
+    "old": "            _rowBusy = false;\r\n",
+    "new": "            _rowBusy = false; // เปิดให้กดปุ่มในตารางได้อีกครั้ง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 690,
+    "old": "        var task = _api!.GetResolvedJobAsync(jobId);\r\n",
+    "new": "        var task = _api!.GetResolvedJobAsync(jobId); // ขอข้อมูล Job พร้อม Pattern, UV และประวัติส่งจาก Backend\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 691,
+    "old": "        if (await Task.WhenAny(task, Task.Delay(SlowLoadMs)) == task) return await task;\r\n",
+    "new": "        if (await Task.WhenAny(task, Task.Delay(SlowLoadMs)) == task) return await task; // ถ้าอ่านทันภายในเวลาที่กำหนด ใช้ข้อมูลได้เลยโดยไม่ขึ้นหน้ารอ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 693,
+    "old": "        ShowSending(busyText);\r\n",
+    "new": "        ShowSending(busyText); // ขึ้นข้อความรอเมื่ออ่านรายละเอียดช้า\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 696,
+    "old": "            return await task;\r\n",
+    "new": "            return await task; // รอข้อมูลชุดเดิมให้จบ ไม่ยิงคำขอซ้ำ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 700,
+    "old": "            if (!IsDisposed) ShowSending(null);\r\n",
+    "new": "            if (!IsDisposed) ShowSending(null); // ปิดข้อความรอเมื่ออ่านเสร็จ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 706,
+    "old": "        if (buttonId == \"detail\")\r\n",
+    "new": "        if (buttonId == \"detail\") // ปุ่มรายละเอียดเปิดข้อมูลของแถวที่เลือก\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 708,
+    "old": "            var resolved = await LoadJobAsync(row.Id, $\"กำลังโหลดข้อมูล · {JobName(row.Id)}\");\r\n",
+    "new": "            var resolved = await LoadJobAsync(row.Id, $\"กำลังโหลดข้อมูล · {JobName(row.Id)}\"); // อ่านรายละเอียดล่าสุดก่อนเปิดหน้าต่าง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 709,
+    "old": "            if (IsDisposed) return;\r\n",
+    "new": "            if (IsDisposed) return; // หน้ารายการถูกปิดแล้ว จึงไม่เปิด Detail ต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 710,
+    "old": "            if (resolved == null)\r\n",
+    "new": "            if (resolved == null) // ไม่มีข้อมูลให้เปิดดู\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 712,
+    "old": "                Notify.WarnModal(this, \"แจ้งเตือน\", $\"ไม่สามารถโหลด Detail ของ {JobName(row.Id)} ได้\");\r\n",
+    "new": "                Notify.WarnModal(this, \"แจ้งเตือน\", $\"ไม่สามารถโหลด Detail ของ {JobName(row.Id)} ได้\"); // แจ้งว่าอ่านรายละเอียดงานไม่ได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 713,
+    "old": "                return;\r\n",
+    "new": "                return; // หยุดก่อนเปิดหน้าต่างที่ไม่มีข้อมูล\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 715,
+    "old": "            await ShowDetailDialogAsync(resolved);\r\n",
+    "new": "            await ShowDetailDialogAsync(resolved); // เปิด Order Detail แล้วรอให้ผู้ใช้ปิด\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 717,
+    "old": "        else if (buttonId == \"start\")\r\n",
+    "new": "        else if (buttonId == \"start\") // ปุ่มเริ่มงานเข้าลำดับตรวจแผนและจองเครื่อง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 719,
+    "old": "            await StartJobAsync(row.Id);\r\n",
+    "new": "            await StartJobAsync(row.Id); // เริ่ม Job ของแถวที่กด\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 721,
+    "old": "        else if (buttonId == \"complete\")\r\n",
+    "new": "        else if (buttonId == \"complete\") // ปุ่มจบงานเข้าลำดับตรวจขั้นที่ส่งแล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 723,
+    "old": "            await CompleteJobAsync(row.Id);\r\n",
+    "new": "            await CompleteJobAsync(row.Id); // ตรวจและบันทึกจบ Job ที่เลือก\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 725,
+    "old": "        else if (buttonId == \"cancel\")\r\n",
+    "new": "        else if (buttonId == \"cancel\") // ปุ่มยกเลิกเข้าลำดับยืนยันยกเลิกงาน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 727,
+    "old": "            await CancelJobAsync(row.Id);\r\n",
+    "new": "            await CancelJobAsync(row.Id); // ยกเลิก Job ของแถวที่กด\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 729,
+    "old": "        else if (buttonId == \"restore\")\r\n",
+    "new": "        else if (buttonId == \"restore\") // ปุ่มพิมพ์ใหม่ใน History นำงานเดิมกลับมารอ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 731,
+    "old": "            await RestoreJobAsync(row.Id);\r\n",
+    "new": "            await RestoreJobAsync(row.Id); // คืน Job เดิมเป็น Waiting\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 780,
+    "old": "        if (_api == null) return;\r\n",
+    "new": "        if (_api == null) return; // ยังไม่มีตัวเชื่อม Backend จึงนำงานกลับไม่ได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 782,
+    "old": "        if (!Confirm.Ask(this, \"ยืนยันนำกลับมาพิมพ์ใหม่\",\r\n",
+    "new": "        if (!Confirm.Ask(this, \"ยืนยันนำกลับมาพิมพ์ใหม่\", // ให้ผู้ใช้ยืนยันก่อนเปลี่ยนงานใน History กลับมารอ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 786,
+    "old": "            return;\r\n",
+    "new": "            return; // ผู้ใช้ไม่ยืนยัน จึงเก็บสถานะเดิมไว้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 788,
+    "old": "        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, \"Waiting\");\r\n",
+    "new": "        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, \"Waiting\"); // เปลี่ยน Job เดิมเป็นรอเริ่ม โดยไม่ได้สร้าง Job ใหม่\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 789,
+    "old": "        if (IsDisposed) return;\r\n",
+    "new": "        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตจอต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 791,
+    "old": "        if (!ok)\r\n",
+    "new": "        if (!ok) // Backend เปลี่ยนสถานะไม่สำเร็จ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 793,
+    "old": "            Notify.ErrorModal(this, \"นำกลับมาไม่สำเร็จ\", err ?? \"ไม่สามารถเปลี่ยนสถานะได้\");\r\n",
+    "new": "            Notify.ErrorModal(this, \"นำกลับมาไม่สำเร็จ\", err ?? \"ไม่สามารถเปลี่ยนสถานะได้\"); // แสดงเหตุที่นำงานกลับมารอไม่ได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 794,
+    "old": "            return;\r\n",
+    "new": "            return; // หยุดก่อนแจ้งว่านำงานกลับสำเร็จ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 799,
+    "old": "        await _api.SetRemoteStartAsync(jobId, requested: false);\r\n",
+    "new": "        await _api.SetRemoteStartAsync(jobId, requested: false); // ล้างคำขอส่งจาก ST3 ที่อาจค้างอยู่\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 800,
+    "old": "        if (IsDisposed) return;\r\n",
+    "new": "        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตจอต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 802,
+    "old": "        Notify.Success(this, $\"{JobName(jobId)} กลับไปอยู่ในรายการงานแล้ว\");\r\n",
+    "new": "        Notify.Success(this, $\"{JobName(jobId)} กลับไปอยู่ในรายการงานแล้ว\"); // แจ้งว่างานกลับมาอยู่ในรายการรอแล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 803,
+    "old": "        await RefreshDataAsync(force: true);\r\n",
+    "new": "        await RefreshDataAsync(force: true); // อ่านรายการใหม่ให้เห็นสถานะ Waiting\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 817,
+    "old": "        if (_api == null) return;\r\n",
+    "new": "        if (_api == null) return; // ยังไม่มีตัวเชื่อม Backend จึงยกเลิกงานไม่ได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 819,
+    "old": "        if (!Confirm.Ask(this, \"ยืนยันยกเลิกงาน\",\r\n",
+    "new": "        if (!Confirm.Ask(this, \"ยืนยันยกเลิกงาน\", // ให้ผู้ใช้ยืนยันก่อนย้ายงานออกจากรายการผลิต\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 824,
+    "old": "            return;\r\n",
+    "new": "            return; // ผู้ใช้ไม่ยืนยัน จึงยังเก็บงานไว้ตามเดิม\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 827,
+    "old": "        await _api.ClearMachineQueueAsync(jobId);\r\n",
+    "new": "        await _api.ClearMachineQueueAsync(jobId); // ล้างคิวเครื่องของ Job ที่กำลังยกเลิก\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 829,
+    "old": "        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, \"Cancel\");\r\n",
+    "new": "        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, \"Cancel\"); // บันทึกสถานะยกเลิกใน Backend\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 830,
+    "old": "        if (IsDisposed) return;\r\n",
+    "new": "        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตจอต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 832,
+    "old": "        if (!ok)\r\n",
+    "new": "        if (!ok) // Backend บันทึกยกเลิกไม่สำเร็จ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 834,
+    "old": "            Notify.ErrorModal(this, \"ยกเลิกงานไม่สำเร็จ\", err ?? \"ไม่สามารถบันทึกสถานะยกเลิกได้\");\r\n",
+    "new": "            Notify.ErrorModal(this, \"ยกเลิกงานไม่สำเร็จ\", err ?? \"ไม่สามารถบันทึกสถานะยกเลิกได้\"); // แสดงเหตุที่เปลี่ยนสถานะไม่ได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 835,
+    "old": "            return;\r\n",
+    "new": "            return; // หยุดก่อนแจ้งว่ายกเลิกสำเร็จ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 840,
+    "old": "        await _api.SetRemoteStartAsync(jobId, requested: false);\r\n",
+    "new": "        await _api.SetRemoteStartAsync(jobId, requested: false); // ล้างคำขอส่งที่ค้าง ไม่ให้ ST1 หยิบคำขอเดิมต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 841,
+    "old": "        if (IsDisposed) return;\r\n",
+    "new": "        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตจอต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 843,
+    "old": "        Notify.Success(this, $\"ยกเลิก {JobName(jobId)} แล้ว\");\r\n",
+    "new": "        Notify.Success(this, $\"ยกเลิก {JobName(jobId)} แล้ว\"); // แจ้งผลยกเลิก Job ที่เลือก\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 844,
+    "old": "        await RefreshDataAsync(force: true);\r\n",
+    "new": "        await RefreshDataAsync(force: true); // อ่านรายการใหม่ให้งานที่ยกเลิกหายจาก List\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 911,
+    "old": "        if (_api == null || _sending) return;\r\n",
+    "new": "        if (_api == null || _sending) return; // ยังไม่พร้อมหรือกำลังส่งเข้าเครื่องอยู่ ให้ข้ามการเริ่มซ้ำ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 914,
+    "old": "        var resolved = await LoadJobAsync(jobId, $\"กำลังโหลดข้อมูล · {JobName(jobId)}\");\r\n",
+    "new": "        var resolved = await LoadJobAsync(jobId, $\"กำลังโหลดข้อมูล · {JobName(jobId)}\"); // อ่าน Job ล่าสุด เพราะข้อมูลในตารางอาจยังไม่อัปเดต\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 915,
+    "old": "        if (IsDisposed) return;\r\n",
+    "new": "        if (IsDisposed) return; // หน้าถูกปิดแล้ว จึงไม่เริ่มส่งงานต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 916,
+    "old": "        if (resolved == null)\r\n",
+    "new": "        if (resolved == null) // อ่านข้อมูล Job ไม่ได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 918,
+    "old": "            Notify.WarnModal(this, \"แจ้งเตือน\", $\"ไม่สามารถโหลดข้อมูล {JobName(jobId)} ได้\");\r\n",
+    "new": "            Notify.WarnModal(this, \"แจ้งเตือน\", $\"ไม่สามารถโหลดข้อมูล {JobName(jobId)} ได้\"); // แจ้งผู้ใช้ว่าโหลดงานไม่สำเร็จ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 919,
+    "old": "            return;\r\n",
+    "new": "            return; // ไม่มีรายละเอียดงาน จึงยังจองเครื่องไม่ได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 922,
+    "old": "        var method = resolved.PlanRouting?.MarkingMethod;\r\n",
+    "new": "        var method = resolved.PlanRouting?.MarkingMethod; // อ่านรหัสวิธีพิมพ์จาก Routing ของงาน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 923,
+    "old": "        int station = StationService.Current;\r\n",
+    "new": "        int station = StationService.Current; // ดูว่าจอนี้ทำงานเป็น Station ใด\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 925,
+    "old": "        if (!MarkingMethodService.CanStartAt(station, method))\r\n",
+    "new": "        if (!MarkingMethodService.CanStartAt(station, method)) // ตรวจว่างานรหัสนี้เริ่มที่ Station ปัจจุบันได้หรือไม่\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 927,
+    "old": "            Notify.WarnModal(this, \"เริ่มงานที่สถานีนี้ไม่ได้\",\r\n",
+    "new": "            Notify.WarnModal(this, \"เริ่มงานที่สถานีนี้ไม่ได้\", // บอกผู้ใช้ให้ไปเริ่มที่ Station ที่รับผิดชอบ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 932,
+    "old": "            return;\r\n",
+    "new": "            return; // ผิด Station จึงไม่สร้างคิวเครื่อง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 935,
+    "old": "        var plan = MarkingMethodService.Resolve(method);\r\n",
+    "new": "        var plan = MarkingMethodService.Resolve(method); // แปลงรหัสวิธีพิมพ์เป็นลำดับ MK / UV1 / UV2\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 936,
+    "old": "        if (plan.NoCase)\r\n",
+    "new": "        if (plan.NoCase) // รหัสนี้ไม่มีแผนพิมพ์ที่ระบบรองรับ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 938,
+    "old": "            Notify.WarnModal(this, \"แจ้งเตือน\",\r\n",
+    "new": "            Notify.WarnModal(this, \"แจ้งเตือน\", // แจ้งให้ตรวจรหัสวิธีพิมพ์ของงาน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 940,
+    "old": "            return;\r\n",
+    "new": "            return; // ไม่มีแผนที่ใช้ได้ จึงไม่ส่งเข้าเครื่อง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 945,
+    "old": "        if (plan.Steps.Count == 0)\r\n",
+    "new": "        if (plan.Steps.Count == 0) // ไม่มีขั้นส่งเครื่อง เช่น marking 00\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 947,
+    "old": "            await StartWithoutSendingAsync(jobId, method);\r\n",
+    "new": "            await StartWithoutSendingAsync(jobId, method); // เปลี่ยนเป็นกำลังผลิตอย่างเดียวสำหรับงานไม่มีขั้นส่ง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 948,
+    "old": "            return;\r\n",
+    "new": "            return; // งานนี้ไม่ต้องจองหรือส่งเครื่องต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 954,
+    "old": "        if (!await ConfirmStartAsync(jobId, resolved, plan)) return;\r\n",
+    "new": "        if (!await ConfirmStartAsync(jobId, resolved, plan)) return; // ให้ยืนยันแผนก่อนสร้างคิว ถ้ายกเลิกก็หยุดตรงนี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 955,
+    "old": "        if (IsDisposed) return;\r\n",
+    "new": "        if (IsDisposed) return; // หน้าถูกปิดแล้ว จึงไม่จองเครื่องต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 962,
+    "old": "        var (queued, queueError) = await _api.EnqueueMachinesAsync(jobId, QueueItemsFor(plan.Steps));\r\n",
+    "new": "        var (queued, queueError) = await _api.EnqueueMachinesAsync(jobId, QueueItemsFor(plan.Steps)); // จองทุกเครื่องพร้อมเลขรอบ เช่น marking 22 มี MK สองรอบ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 963,
+    "old": "        if (IsDisposed) return;\r\n",
+    "new": "        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตจอต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 965,
+    "old": "        if (!queued)\r\n",
+    "new": "        if (!queued) // Backend สร้างคิวไม่สำเร็จ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 967,
+    "old": "            Notify.ErrorModal(this, \"จองเครื่องไม่สำเร็จ\",\r\n",
+    "new": "            Notify.ErrorModal(this, \"จองเครื่องไม่สำเร็จ\", // แจ้งเหตุที่งานยังเข้าคิวไม่ได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 970,
+    "old": "            return;\r\n",
+    "new": "            return; // ยังไม่มีคิว จึงไม่ขอสิทธิ์ส่งเครื่อง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 974,
+    "old": "        if (station == StationService.St3)\r\n",
+    "new": "        if (station == StationService.St3) // ST3 จบขั้นเริ่มงานที่การจองคิว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 976,
+    "old": "            Notify.Success(this, $\"{JobName(jobId)} เข้าคิวแล้ว · ST1 จะส่งให้\");\r\n",
+    "new": "            Notify.Success(this, $\"{JobName(jobId)} เข้าคิวแล้ว · ST1 จะส่งให้\"); // แจ้งว่าเข้าคิวแล้ว ยังไม่ใช่ผลส่งข้อมูลเข้าเครื่อง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 977,
+    "old": "            await RefreshDataAsync(force: true);\r\n",
+    "new": "            await RefreshDataAsync(force: true); // อ่านสถานะล่าสุดกลับมาแสดง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 978,
+    "old": "            return;\r\n",
+    "new": "            return; // ST3 ไม่เรียกส่งเข้าเครื่องจากปุ่มเริ่มนี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 981,
+    "old": "        await SendQueuedForJobAsync(jobId, resolved, $\"เริ่มงาน {JobName(jobId)}\");\r\n",
+    "new": "        await SendQueuedForJobAsync(jobId, resolved, $\"เริ่มงาน {JobName(jobId)}\"); // ST1 ขอสิทธิ์เครื่องแล้วส่งข้อมูลของ Job ที่กด\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1124,
+    "old": "        var (rows, _) = await _api!.GetMachineQueueAsync();\r\n",
+    "new": "        var (rows, _) = await _api!.GetMachineQueueAsync(); // อ่านคิวทั้งหมดเพื่อหาคิวของ Job นี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1125,
+    "old": "        if (IsDisposed) return;\r\n",
+    "new": "        if (IsDisposed) return; // หน้าถูกปิดแล้ว จึงไม่ส่งงานต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1136,
+    "old": "        var machines = rows\r\n",
+    "new": "        var machines = rows // เตรียมรายชื่อเครื่องที่จะขอใช้ครั้งนี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1137,
+    "old": "            .Where(r => r.PrintJobsId == jobId && r.State == \"pending\")\r\n",
+    "new": "            .Where(r => r.PrintJobsId == jobId && r.State == \"pending\") // เอาเฉพาะคิวที่ยังรอของ Job นี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1138,
+    "old": "            .OrderBy(r => r.Round)\r\n",
+    "new": "            .OrderBy(r => r.Round) // ให้รอบแรกของเครื่องมาก่อนรอบถัดไป\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1139,
+    "old": "            .Select(r => r.Machine)\r\n",
+    "new": "            .Select(r => r.Machine) // ใช้ชื่อเครื่องเป็นตัวขอสิทธิ์\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1140,
+    "old": "            .Distinct(StringComparer.OrdinalIgnoreCase)\r\n",
+    "new": "            .Distinct(StringComparer.OrdinalIgnoreCase) // หนึ่งการกดเริ่มขอเครื่องละหนึ่งครั้ง แม้มีหลายรอบ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1141,
+    "old": "            .ToList();\r\n",
+    "new": "            .ToList(); // เก็บชุดเครื่องที่จะวนส่งในครั้งนี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1143,
+    "old": "        var lines = new List<Notify.ResultLine>();\r\n",
+    "new": "        var lines = new List<Notify.ResultLine>(); // รวมผลของแต่ละเครื่องไว้แสดงพร้อมกัน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1144,
+    "old": "        bool anySent = false;\r\n",
+    "new": "        bool anySent = false; // เริ่มจากยังไม่มีเครื่องไหนรับข้อมูลสำเร็จ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1146,
+    "old": "        foreach (var machine in machines)\r\n",
+    "new": "        foreach (var machine in machines) // ขอใช้และส่งทีละเครื่องในแผน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1150,
+    "old": "            var (claim, claimError) = await _api.ClaimMachineAsync(machine, jobId);\r\n",
+    "new": "            var (claim, claimError) = await _api.ClaimMachineAsync(machine, jobId); // ขอสิทธิ์เฉพาะคิวของ Job นี้ ไม่หยิบงานอื่น\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1151,
+    "old": "            if (IsDisposed) return;\r\n",
+    "new": "            if (IsDisposed) return; // หน้าถูกปิดแล้ว จึงไม่ส่งงานต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1153,
+    "old": "            if (claimError != null)\r\n",
+    "new": "            if (claimError != null) // ขอสิทธิ์เครื่องแล้ว Backend แจ้งข้อผิดพลาด\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1155,
+    "old": "                lines.Add(Notify.Bad($\"{machine}: {claimError}\"));\r\n",
+    "new": "                lines.Add(Notify.Bad($\"{machine}: {claimError}\")); // เก็บเหตุที่ขอใช้เครื่องนี้ไม่ได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1156,
+    "old": "                continue;\r\n",
+    "new": "                continue; // ข้ามเครื่องนี้แล้วลองเครื่องอื่นในแผน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1159,
+    "old": "            if (claim?.Claimed == null)\r\n",
+    "new": "            if (claim?.Claimed == null) // ยังไม่ได้สิทธิ์ใช้เครื่อง เช่น เครื่องกำลังมีงาน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1162,
+    "old": "                lines.Add(Notify.Careful($\"{machine}: เครื่องไม่ว่าง เข้าคิวรอไว้แล้ว\"));\r\n",
+    "new": "                lines.Add(Notify.Careful($\"{machine}: เครื่องไม่ว่าง เข้าคิวรอไว้แล้ว\")); // เก็บคำเตือนว่าเครื่องยังไม่ว่าง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1163,
+    "old": "                continue;\r\n",
+    "new": "                continue; // ยังไม่มีสิทธิ์ จึงไม่ส่งข้อมูลทับเครื่องนี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1166,
+    "old": "            var claimed = claim.Claimed;\r\n",
+    "new": "            var claimed = claim.Claimed; // ใช้แถวคิวที่ Backend ให้สิทธิ์มา\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1168,
+    "old": "            _sending = true;\r\n",
+    "new": "            _sending = true; // กันรอบอ่านงานเข้ามาส่งซ้อนระหว่างส่งเครื่อง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1169,
+    "old": "            ShowSending($\"กำลังส่งไปที่ {claimed.Machine}\");\r\n",
+    "new": "            ShowSending($\"กำลังส่งไปที่ {claimed.Machine}\"); // แสดงว่าเครื่องใดกำลังรับข้อมูล\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1170,
+    "old": "            StepSendResult sent;\r\n",
+    "new": "            StepSendResult sent; // เก็บทั้งผลส่งจริงและข้อความแจ้งผู้ใช้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1173,
+    "old": "                sent = await SendStepAsync(jobId, claimed.Machine, resolved, claimed.ProgramName);\r\n",
+    "new": "                sent = await SendStepAsync(jobId, claimed.Machine, resolved, claimed.ProgramName); // ส่งตามเครื่องและโปรแกรมที่อยู่ในคิว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1177,
+    "old": "                _sending = false;\r\n",
+    "new": "                _sending = false; // คืนสิทธิ์ให้รอบอ่านงานทำต่อได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1178,
+    "old": "                if (!IsDisposed) ShowSending(null);\r\n",
+    "new": "                if (!IsDisposed) ShowSending(null); // ปิดข้อความกำลังส่งเมื่อหน้าจอยังเปิดอยู่\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1181,
+    "old": "            if (IsDisposed) return;\r\n",
+    "new": "            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่สรุปผลบนจอ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1182,
+    "old": "            lines.AddRange(sent.Lines);\r\n",
+    "new": "            lines.AddRange(sent.Lines); // รวมผลส่งของเครื่องนี้เข้ารายการสรุป\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1190,
+    "old": "            if (sent.Sent)\r\n",
+    "new": "            if (sent.Sent) // ดูผลรับข้อมูล ไม่ใช้สีคำเตือนมาตัดสินว่าส่งล้มเหลว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1194,
+    "old": "                anySent = true;\r\n",
+    "new": "                anySent = true; // จำว่ามีอย่างน้อยหนึ่งเครื่องรับข้อมูลแล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1196,
+    "old": "                var (marked, markError) = await _api.UpdateMachineQueueAsync(claimed.Id, sent: true);\r\n",
+    "new": "                var (marked, markError) = await _api.UpdateMachineQueueAsync(claimed.Id, sent: true); // บันทึกว่าคิวนี้ส่งแล้ว เพื่อไม่ให้รอบอ่านงานส่งซ้ำ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1197,
+    "old": "                if (!marked)\r\n",
+    "new": "                if (!marked) // ข้อมูลเข้าเครื่องแล้ว แต่บันทึกผลคิวไม่ได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1198,
+    "old": "                    lines.Add(Notify.Bad($\"{claimed.Machine}: ส่งเข้าเครื่องแล้วแต่บันทึกคิวไม่ได้ · {markError}\"));\r\n",
+    "new": "                    lines.Add(Notify.Bad($\"{claimed.Machine}: ส่งเข้าเครื่องแล้วแต่บันทึกคิวไม่ได้ · {markError}\")); // แจ้งจุดที่เสี่ยงส่งซ้ำในรอบอ่านงานถัดไป\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1202,
+    "old": "                await _api.UpdateMachineQueueAsync(claimed.Id, state: \"pending\");\r\n",
+    "new": "                await _api.UpdateMachineQueueAsync(claimed.Id, state: \"pending\"); // ส่งไม่สำเร็จ คืนแถวนี้กลับไปรอคิว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1206,
+    "old": "        if (IsDisposed) return;\r\n",
+    "new": "        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตจอต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1217,
+    "old": "        if (!anySent && !PrintedBefore(resolved))\r\n",
+    "new": "        if (!anySent && !PrintedBefore(resolved)) // ไม่มีเครื่องรับข้อมูลครั้งนี้ และไม่มีประวัติส่งสำเร็จเดิม\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1219,
+    "old": "            await _api.ClearMachineQueueAsync(jobId);\r\n",
+    "new": "            await _api.ClearMachineQueueAsync(jobId); // ล้างคิวทั้ง Job ตามเงื่อนไขข้างบน รวมกรณีเครื่องไม่ว่างทั้งหมด\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1220,
+    "old": "            if (IsDisposed) return;\r\n",
+    "new": "            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตจอต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1223,
+    "old": "        if (lines.Count > 0) Notify.Result(this, title, lines);\r\n",
+    "new": "        if (lines.Count > 0) Notify.Result(this, title, lines); // แสดงผลรวมทั้งเครื่องที่ส่งได้และเครื่องที่มีปัญหา\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1224,
+    "old": "        if (!IsDisposed) await RefreshDataAsync(force: true);\r\n",
+    "new": "        if (!IsDisposed) await RefreshDataAsync(force: true); // อ่านงานและคิวใหม่หลังจบรอบส่ง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1264,
+    "old": "        await _api!.UpdateJobStatusAsync(jobId, \"Process\");\r\n",
+    "new": "        await _api!.UpdateJobStatusAsync(jobId, \"Process\"); // ขอเปลี่ยนงานเป็น Process ก่อนเริ่มส่งข้อมูล\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1266,
+    "old": "        if (step == \"MK\")\r\n",
+    "new": "        if (step == \"MK\") // แยกทางส่งเครื่อง Inkjet MK\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1268,
+    "old": "            var mk = await JobSendService.SendMkAsync(resolved.Pattern);\r\n",
+    "new": "            var mk = await JobSendService.SendMkAsync(resolved.Pattern); // ส่ง Pattern ไปยังหัว MK ที่ตั้งค่าไว้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1269,
+    "old": "            var lines = Notify.MkLines(mk.Machines);\r\n",
+    "new": "            var lines = Notify.MkLines(mk.Machines); // แปลงผลแต่ละหัวเป็นข้อความสรุป\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1271,
+    "old": "            if (lines.Count == 0)\r\n",
+    "new": "            if (lines.Count == 0) // ไม่มีผลของหัว MK ให้แสดง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1272,
+    "old": "                lines.Add(Notify.Careful(\"ไม่มีเครื่อง MK ที่ตั้งค่า IP ไว้\"));\r\n",
+    "new": "                lines.Add(Notify.Careful(\"ไม่มีเครื่อง MK ที่ตั้งค่า IP ไว้\")); // เตือนให้ตรวจ IP ของหัว MK\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1274,
+    "old": "            bool ok = mk.Status == SendStatus.Ok;\r\n",
+    "new": "            bool ok = mk.Status == SendStatus.Ok; // ใช้ผลรวมการส่ง MK เป็นตัวตัดสินความสำเร็จ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1276,
+    "old": "            if (ok)\r\n",
+    "new": "            if (ok) // MK รับชุดข้อมูลสำเร็จแล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1277,
+    "old": "                await _api.SaveSendStepAsync(jobId, \"MK\");\r\n",
+    "new": "                await _api.SaveSendStepAsync(jobId, \"MK\"); // บันทึกประวัติส่ง MK ของ Job นี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1278,
+    "old": "            else if (isFirstStep)\r\n",
+    "new": "            else if (isFirstStep) // ส่งไม่ผ่านและยังเป็นขั้นแรกของการส่งครั้งนี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1279,
+    "old": "                await _api.UpdateJobStatusAsync(jobId, \"Waiting\");\r\n",
+    "new": "                await _api.UpdateJobStatusAsync(jobId, \"Waiting\"); // คืนงานไปรอเริ่มเมื่อขั้นแรกส่งไม่ผ่าน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1281,
+    "old": "            return new StepSendResult(ok, lines);\r\n",
+    "new": "            return new StepSendResult(ok, lines); // ส่งผล MK กลับให้ตัวคุมคิวบันทึกต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1284,
+    "old": "        int uvNumber = step == \"UV1\" ? 1 : 2;\r\n",
+    "new": "        int uvNumber = step == \"UV1\" ? 1 : 2; // เลือกชุดตั้งค่าของ UV1 หรือ UV2\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1285,
+    "old": "        var uv = await JobSendService.SendUvAsync(this, uvNumber, resolved.UvJobData, forcedProgram);\r\n",
+    "new": "        var uv = await JobSendService.SendUvAsync(this, uvNumber, resolved.UvJobData, forcedProgram); // ส่งข้อมูล UV โดยใช้โปรแกรมที่ฝากมา ถ้ามี\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1287,
+    "old": "        if (uv.Status == SendStatus.Ok)\r\n",
+    "new": "        if (uv.Status == SendStatus.Ok) // UV ส่งผ่านครบตามเงื่อนไขใน Service\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1289,
+    "old": "            await _api.SaveSendStepAsync(jobId, step, new\r\n",
+    "new": "            await _api.SaveSendStepAsync(jobId, step, new // บันทึกประวัติส่ง UV พร้อมชื่อโปรแกรมที่ใช้จริง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1291,
+    "old": "                requested = resolved.UvJobData.FirstOrDefault(r => r.Machine == step)?.ProgramName ?? \"\",\r\n",
+    "new": "                requested = resolved.UvJobData.FirstOrDefault(r => r.Machine == step)?.ProgramName ?? \"\", // เก็บชื่อโปรแกรมต้นทางไว้เทียบกับที่เลือกใช้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1292,
+    "old": "                program = uv.ProgramFile,\r\n",
+    "new": "                program = uv.ProgramFile, // เก็บโปรแกรมที่ส่งเข้าเครื่องจริง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1293,
+    "old": "                is_default = uv.UsedDefault,\r\n",
+    "new": "                is_default = uv.UsedDefault, // เก็บว่าใช้โปรแกรมสำรองหรือไม่\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1296,
+    "old": "            return new StepSendResult(true,\r\n",
+    "new": "            return new StepSendResult(true, // แจ้งตัวคุมคิวว่า UV ส่งข้อมูลสำเร็จ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1300,
+    "old": "        if (isFirstStep) await _api.UpdateJobStatusAsync(jobId, \"Waiting\");\r\n",
+    "new": "        if (isFirstStep) await _api.UpdateJobStatusAsync(jobId, \"Waiting\"); // ส่ง UV ไม่ผ่านในขั้นแรก ให้คืนสถานะรอเริ่ม\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1302,
+    "old": "        return new StepSendResult(false, uv.Status switch\r\n",
+    "new": "        return new StepSendResult(false, uv.Status switch // แยกเหตุที่ส่ง UV ไม่สำเร็จให้จอแสดง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1305,
+    "old": "            SendStatus.Cancelled => [],\r\n",
+    "new": "            SendStatus.Cancelled => [], // ผู้ใช้ยกเลิกเลือกโปรแกรม จึงไม่ต้องเด้งข้อความผิดพลาด\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1306,
+    "old": "            SendStatus.Unreachable =>\r\n",
+    "new": "            SendStatus.Unreachable => // ต่อ UV ไม่ได้ ให้รายงานปลายทางที่ติดต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1308,
+    "old": "            _ => [Notify.Bad($\"{uv.MachineName} — {uv.FailReason}\")],\r\n",
+    "new": "            _ => [Notify.Bad($\"{uv.MachineName} — {uv.FailReason}\")], // ปัญหาอื่นใช้เหตุที่ Service ส่งกลับมา\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1353,
+    "old": "        int machineStation = JobStationService.StationOf(step) ?? 0;\r\n",
+    "new": "        int machineStation = JobStationService.StationOf(step) ?? 0; // หา Station เจ้าของเครื่องที่กำลังฝากส่ง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1354,
+    "old": "        if (StationOwner(machineStation, jobId) is { } busyJob)\r\n",
+    "new": "        if (StationOwner(machineStation, jobId) is { } busyJob) // ตรวจว่ามี Job อื่นครอง Station นั้นอยู่หรือไม่\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1356,
+    "old": "            Notify.WarnModal(this, \"สถานีไม่ว่าง\",\r\n",
+    "new": "            Notify.WarnModal(this, \"สถานีไม่ว่าง\", // แจ้งงานที่ต้องจัดการก่อนฝากส่ง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1358,
+    "old": "            return;\r\n",
+    "new": "            return; // Station ยังติดงานอื่น จึงไม่ตั้งคำขอใหม่\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1361,
+    "old": "        int uvNumber = step == \"UV1\" ? 1 : 2;\r\n",
+    "new": "        int uvNumber = step == \"UV1\" ? 1 : 2; // เลือกชุดโปรแกรมของ UV1 หรือ UV2\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1362,
+    "old": "        var uvRow = resolved.UvJobData.FirstOrDefault(r => r.Machine == step);\r\n",
+    "new": "        var uvRow = resolved.UvJobData.FirstOrDefault(r => r.Machine == step); // อ่านข้อมูล UV ของขั้นที่ต้องส่ง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1364,
+    "old": "        var pick = UvProgramResolver.Resolve(\r\n",
+    "new": "        var pick = UvProgramResolver.Resolve( // หาโปรแกรมจริงหรือให้ผู้ใช้เลือกรุ่นย่อยก่อนฝากส่ง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1365,
+    "old": "            uvRow?.ProgramName, UvSettingsManager.GetDocumentFolder(uvNumber), this);\r\n",
+    "new": "            uvRow?.ProgramName, UvSettingsManager.GetDocumentFolder(uvNumber), this); // ค้นจากโฟลเดอร์ UV ของจอที่กำลังส่งคำขอ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1369,
+    "old": "        var uvName = UvSettingsManager.Read(\r\n",
+    "new": "        var uvName = UvSettingsManager.Read( // อ่านชื่อเครื่องไว้แสดงตอนยืนยัน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1372,
+    "old": "        if (pick.IsDefault &&\r\n",
+    "new": "        if (pick.IsDefault && // ถ้าต้องใช้โปรแกรมสำรอง ต้องให้ผู้ใช้รับทราบก่อน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1373,
+    "old": "            !UvProgramResolver.ConfirmDefault(uvRow?.ProgramName ?? \"\", uvName, this))\r\n",
+    "new": "            !UvProgramResolver.ConfirmDefault(uvRow?.ProgramName ?? \"\", uvName, this)) // ยืนยันว่าใช้โปรแกรมสำรองแทนชื่อจากงานได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1374,
+    "old": "            return;\r\n",
+    "new": "            return; // ผู้ใช้ไม่ยอมรับโปรแกรมสำรอง จึงไม่ฝากส่ง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1376,
+    "old": "        if (askFirst &&!Confirm.Ask(this, \"ยืนยันเริ่มงาน\",\r\n",
+    "new": "        if (askFirst &&!Confirm.Ask(this, \"ยืนยันเริ่มงาน\", // ถามยืนยัน Job และโปรแกรมที่จะให้ ST1 ส่ง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1381,
+    "old": "            return;\r\n",
+    "new": "            return; // ผู้ใช้ยกเลิก จึงยังไม่สร้างคำขอ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1388,
+    "old": "        var (ok, err) = await _api!.SetRemoteStartAsync(\r\n",
+    "new": "        var (ok, err) = await _api!.SetRemoteStartAsync( // บันทึกคำขอส่งไว้ใน Backend กลาง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1389,
+    "old": "            jobId, requested: true, pick.Program, step: step);\r\n",
+    "new": "            jobId, requested: true, pick.Program, step: step); // ฝากทั้ง Job, โปรแกรม และขั้น UV ที่ต้องการให้ ST1 ส่ง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1390,
+    "old": "        if (IsDisposed) return;\r\n",
+    "new": "        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่แสดงผลต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1392,
+    "old": "        if (!ok)\r\n",
+    "new": "        if (!ok) // Backend รับคำขอไม่สำเร็จ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1394,
+    "old": "            await _api.UpdateJobStatusAsync(jobId, \"Waiting\");\r\n",
+    "new": "            await _api.UpdateJobStatusAsync(jobId, \"Waiting\"); // คืนงานเป็น Waiting เมื่อฝากคำขอไม่ได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1395,
+    "old": "            Notify.ErrorModal(this, \"ส่งคำขอไม่สำเร็จ\", err ?? \"ไม่สามารถฝากคำขอไว้ที่ ST1 ได้\");\r\n",
+    "new": "            Notify.ErrorModal(this, \"ส่งคำขอไม่สำเร็จ\", err ?? \"ไม่สามารถฝากคำขอไว้ที่ ST1 ได้\"); // แจ้งเหตุที่ ST1 ยังไม่ได้รับคำขอ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1396,
+    "old": "            await RefreshDataAsync(force: true);\r\n",
+    "new": "            await RefreshDataAsync(force: true); // อ่านสถานะล่าสุดให้ตรงกับ Backend\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1397,
+    "old": "            return;\r\n",
+    "new": "            return; // ไม่มีคำขอสำเร็จ จึงไม่รอผลจาก ST1\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1405,
+    "old": "        _sending = true;\r\n",
+    "new": "        _sending = true; // กันการกดส่งซ้ำระหว่างรอ ST1\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1406,
+    "old": "        ShowSending($\"กำลังส่งไปที่ ST1 · {JobName(jobId)}\");\r\n",
+    "new": "        ShowSending($\"กำลังส่งไปที่ ST1 · {JobName(jobId)}\"); // บอกผู้ใช้ว่ากำลังรอให้ ST1 ส่ง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1409,
+    "old": "            await ShowRemoteOutcomeAsync(jobId, step);\r\n",
+    "new": "            await ShowRemoteOutcomeAsync(jobId, step); // ติดตามประวัติส่งและข้อผิดพลาดที่ ST1 ฝากกลับมา\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1413,
+    "old": "            _sending = false;\r\n",
+    "new": "            _sending = false; // เปิดให้ใช้งานปุ่มส่งได้อีกครั้งหลังจบรอบรอ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1414,
+    "old": "            ShowSending(null);\r\n",
+    "new": "            ShowSending(null); // ปิดข้อความรอ ST1\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1417,
+    "old": "        if (!IsDisposed) await RefreshDataAsync(force: true);\r\n",
+    "new": "        if (!IsDisposed) await RefreshDataAsync(force: true); // อ่านงานใหม่หลังจบการติดตามคำขอ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1478,
+    "old": "        var deadline = DateTime.UtcNow + RemoteOutcomeWait;\r\n",
+    "new": "        var deadline = DateTime.UtcNow + RemoteOutcomeWait; // กำหนดเวลาสูงสุดที่หน้าจอจะรอผลรอบนี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1480,
+    "old": "        while (DateTime.UtcNow < deadline)\r\n",
+    "new": "        while (DateTime.UtcNow < deadline) // ติดตามผลจนสำเร็จ มีปัญหา หรือครบเวลารอ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1482,
+    "old": "            await Task.Delay(700);\r\n",
+    "new": "            await Task.Delay(700); // เว้น 700 ms ก่อนอ่านผลครั้งถัดไป\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1483,
+    "old": "            if (IsDisposed) return;\r\n",
+    "new": "            if (IsDisposed) return; // หน้าถูกปิดแล้ว จึงหยุดรอผล\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1485,
+    "old": "            var job = await _api!.GetJobByIdAsync(jobId);\r\n",
+    "new": "            var job = await _api!.GetJobByIdAsync(jobId); // อ่าน Job ล่าสุดรวมประวัติส่งและ remote_error\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1486,
+    "old": "            if (IsDisposed) return;\r\n",
+    "new": "            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตจอต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1487,
+    "old": "            if (job == null) continue;\r\n",
+    "new": "            if (job == null) continue; // อ่าน Job ไม่ได้ในรอบนี้ ให้ลองใหม่ภายในเวลาที่เหลือ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1489,
+    "old": "            var failure = job.RemoteError?.Trim();\r\n",
+    "new": "            var failure = job.RemoteError?.Trim(); // อ่านเหตุที่ ST1 ส่งไม่สำเร็จ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1490,
+    "old": "            if (!string.IsNullOrEmpty(failure))\r\n",
+    "new": "            if (!string.IsNullOrEmpty(failure)) // มีข้อผิดพลาดที่ ST1 ฝากกลับมา\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1492,
+    "old": "                await _api.SetRemoteStartAsync(jobId, requested: false);\r\n",
+    "new": "                await _api.SetRemoteStartAsync(jobId, requested: false); // ล้างธงคำขอหลังรับข้อผิดพลาดแล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1493,
+    "old": "                if (IsDisposed) return;\r\n",
+    "new": "                if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตจอต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1495,
+    "old": "                Notify.Result(this, $\"เริ่มงาน {JobName(jobId)}\", [Notify.Bad(failure)]);\r\n",
+    "new": "                Notify.Result(this, $\"เริ่มงาน {JobName(jobId)}\", [Notify.Bad(failure)]); // แสดงเหตุที่ ST1 ส่งไม่ผ่านให้คนที่ ST3 เห็น\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1496,
+    "old": "                return;\r\n",
+    "new": "                return; // ได้ผลล้มเหลวแล้ว จึงหยุดรอรอบนี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1499,
+    "old": "            bool sent = job.Commands?.Any(c => c.Success &&\r\n",
+    "new": "            bool sent = job.Commands?.Any(c => c.Success && // ค้นประวัติส่งสำเร็จของขั้นที่ขอ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1500,
+    "old": "                string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true;\r\n",
+    "new": "                string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true; // เทียบชื่อขั้นเพื่อไม่ใช้ผลของเครื่องอื่น\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1501,
+    "old": "            if (!sent) continue;\r\n",
+    "new": "            if (!sent) continue; // ยังไม่มีประวัติสำเร็จของขั้นนี้ ให้รอต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1503,
+    "old": "            var uvName = UvSettingsManager.Read(step == \"UV1\" ? \"UV1_NAME\" : \"UV2_NAME\", step);\r\n",
+    "new": "            var uvName = UvSettingsManager.Read(step == \"UV1\" ? \"UV1_NAME\" : \"UV2_NAME\", step); // ใช้ชื่อ UV ที่ตั้งไว้แสดงผล\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1504,
+    "old": "            Notify.Result(this, $\"เริ่มงาน {JobName(jobId)}\", [Notify.Ok($\"{uvName} — ส่งสำเร็จ\")]);\r\n",
+    "new": "            Notify.Result(this, $\"เริ่มงาน {JobName(jobId)}\", [Notify.Ok($\"{uvName} — ส่งสำเร็จ\")]); // แจ้งว่าพบประวัติส่งสำเร็จจาก ST1 แล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1505,
+    "old": "            return;\r\n",
+    "new": "            return; // ได้ผลสำเร็จแล้ว จึงหยุดรอ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1510,
+    "old": "        var final = await _api!.GetJobByIdAsync(jobId);\r\n",
+    "new": "        var final = await _api!.GetJobByIdAsync(jobId); // ครบเวลารอแล้ว อ่านสถานะอีกครั้งก่อนตัดสิน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1511,
+    "old": "        if (IsDisposed) return;\r\n",
+    "new": "        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตจอต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1513,
+    "old": "        if (final?.RemoteStart == RemoteSending)\r\n",
+    "new": "        if (final?.RemoteStart == RemoteSending) // ST1 รับคำขอไปแล้วแต่ยังไม่จบการส่ง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1515,
+    "old": "            Notify.WarnModal(this, \"ST1 กำลังส่งอยู่\",\r\n",
+    "new": "            Notify.WarnModal(this, \"ST1 กำลังส่งอยู่\", // แจ้งให้รอโดยไม่กดซ้ำ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1519,
+    "old": "            return;\r\n",
+    "new": "            return; // คงคำขอที่ ST1 กำลังส่งไว้ ไม่คืนเป็น Waiting\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1525,
+    "old": "        await _api.SetRemoteStartAsync(jobId, requested: false);\r\n",
+    "new": "        await _api.SetRemoteStartAsync(jobId, requested: false); // ล้างคำขอที่ยังไม่มีสถานะกำลังส่งเมื่อหมดเวลา\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1526,
+    "old": "        await _api.UpdateJobStatusAsync(jobId, \"Waiting\");\r\n",
+    "new": "        await _api.UpdateJobStatusAsync(jobId, \"Waiting\"); // คืนงานให้รอเริ่มใหม่\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1527,
+    "old": "        if (IsDisposed) return;\r\n",
+    "new": "        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตจอต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1529,
+    "old": "        Notify.WarnModal(this, \"ST1 ไม่รับคำขอ\",\r\n",
+    "new": "        Notify.WarnModal(this, \"ST1 ไม่รับคำขอ\", // แจ้งให้ตรวจการเปิดโปรแกรมและ Backend ที่ ST1\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1595,
+    "old": "        if (_api == null || StationService.IsSt3 || _sending) return;\r\n",
+    "new": "        if (_api == null || StationService.IsSt3 || _sending) return; // ให้ ST1 ส่งคิวเท่านั้น และไม่แทรกตอนมีการส่งอื่น\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1597,
+    "old": "        var (rows, error) = await _api.GetMachineQueueAsync();\r\n",
+    "new": "        var (rows, error) = await _api.GetMachineQueueAsync(); // อ่านสถานะคิวจาก Backend กลาง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1598,
+    "old": "        if (error != null || IsDisposed) return;\r\n",
+    "new": "        if (error != null || IsDisposed) return; // อ่านคิวไม่ได้หรือปิดหน้าแล้ว จึงไม่ส่งต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1608,
+    "old": "        var ready = rows\r\n",
+    "new": "        var ready = rows // เตรียมคิวที่พร้อมให้ส่งในรอบนี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1609,
+    "old": "            .Where(r => r.State == \"active\" && r.SentAt == null)\r\n",
+    "new": "            .Where(r => r.State == \"active\" && r.SentAt == null) // เอาเฉพาะคิวที่ได้สิทธิ์แล้วและยังไม่บันทึกว่าส่งสำเร็จ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1610,
+    "old": "            .OrderBy(r => r.Id)\r\n",
+    "new": "            .OrderBy(r => r.Id) // ไล่คิวที่ได้สิทธิ์ตามเลขรายการ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1611,
+    "old": "            .ToList();\r\n",
+    "new": "            .ToList(); // เก็บชุดคิวสำหรับรอบอ่านงานนี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1613,
+    "old": "        foreach (var row in ready)\r\n",
+    "new": "        foreach (var row in ready) // ส่งแต่ละคิวที่ได้สิทธิ์แล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1615,
+    "old": "            await SendClaimedAsync(row);\r\n",
+    "new": "            await SendClaimedAsync(row); // อ่านรายละเอียด Job แล้วส่งเข้าเครื่องตามแถวคิว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1616,
+    "old": "            if (IsDisposed) return;\r\n",
+    "new": "            if (IsDisposed) return; // หน้าถูกปิดแล้ว หยุดส่งรายการถัดไป\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1625,
+    "old": "        var resolved = await _api!.GetResolvedJobAsync(claimed.PrintJobsId);\r\n",
+    "new": "        var resolved = await _api!.GetResolvedJobAsync(claimed.PrintJobsId); // อ่านรายละเอียดล่าสุดของ Job ที่อยู่ในคิว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1626,
+    "old": "        if (resolved == null || IsDisposed)\r\n",
+    "new": "        if (resolved == null || IsDisposed) // ไม่มีข้อมูล Job หรือหน้าถูกปิดแล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1629,
+    "old": "            if (_api != null) await _api.UpdateMachineQueueAsync(claimed.Id, state: \"pending\");\r\n",
+    "new": "            if (_api != null) await _api.UpdateMachineQueueAsync(claimed.Id, state: \"pending\"); // คืนคิวไปรอ เพื่อไม่ถือเครื่องไว้ทั้งที่ยังส่งไม่ได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1630,
+    "old": "            return;\r\n",
+    "new": "            return; // ไม่มีข้อมูลพร้อมส่ง จึงหยุดที่คิวนี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1633,
+    "old": "        _sending = true;\r\n",
+    "new": "        _sending = true; // กันการส่งซ้อนขณะทำคิวนี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1634,
+    "old": "        ShowSending($\"กำลังส่งไปที่ {claimed.Machine} · {JobName(claimed.PrintJobsId)}\");\r\n",
+    "new": "        ShowSending($\"กำลังส่งไปที่ {claimed.Machine} · {JobName(claimed.PrintJobsId)}\"); // แสดงชื่อเครื่องและงานที่กำลังส่ง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1635,
+    "old": "        StepSendResult sent;\r\n",
+    "new": "        StepSendResult sent; // เก็บผลส่งสำหรับอัปเดตคิว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1638,
+    "old": "            sent = await SendStepAsync(\r\n",
+    "new": "            sent = await SendStepAsync( // ส่งข้อมูลของขั้นที่แถวคิวระบุ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1639,
+    "old": "                claimed.PrintJobsId, claimed.Machine, resolved, claimed.ProgramName);\r\n",
+    "new": "                claimed.PrintJobsId, claimed.Machine, resolved, claimed.ProgramName); // ใช้ Job, เครื่อง และโปรแกรมจากคิวที่ได้รับสิทธิ์\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1643,
+    "old": "            _sending = false;\r\n",
+    "new": "            _sending = false; // เปิดให้รอบอ่านงานทำงานต่อได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1644,
+    "old": "            if (!IsDisposed) ShowSending(null);\r\n",
+    "new": "            if (!IsDisposed) ShowSending(null); // ปิดข้อความกำลังส่ง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1647,
+    "old": "        if (IsDisposed) return;\r\n",
+    "new": "        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่แสดงผลต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1651,
+    "old": "        if (sent.Sent)\r\n",
+    "new": "        if (sent.Sent) // เครื่องรับข้อมูลสำเร็จแล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1654,
+    "old": "            var (marked, markError) = await _api.UpdateMachineQueueAsync(claimed.Id, sent: true);\r\n",
+    "new": "            var (marked, markError) = await _api.UpdateMachineQueueAsync(claimed.Id, sent: true); // ทำเครื่องหมายว่าคิวส่งแล้ว เพื่อกันส่งซ้ำในรอบถัดไป\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1655,
+    "old": "            if (!marked)\r\n",
+    "new": "            if (!marked) // บันทึกผลคิวไม่สำเร็จทั้งที่เครื่องรับข้อมูลแล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1656,
+    "old": "                sent.Lines.Add(Notify.Bad($\"{claimed.Machine}: ส่งเข้าเครื่องแล้วแต่บันทึกคิวไม่ได้ · {markError}\"));\r\n",
+    "new": "                sent.Lines.Add(Notify.Bad($\"{claimed.Machine}: ส่งเข้าเครื่องแล้วแต่บันทึกคิวไม่ได้ · {markError}\")); // แจ้งความเสี่ยงที่คิวเดิมจะถูกส่งซ้ำ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1660,
+    "old": "            await _api.UpdateMachineQueueAsync(claimed.Id, state: \"pending\");\r\n",
+    "new": "            await _api.UpdateMachineQueueAsync(claimed.Id, state: \"pending\"); // ส่งไม่ผ่าน คืนคิวไปรอ ไม่ลองยิงซ้ำเองทันที\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1663,
+    "old": "        if (sent.Lines.Count > 0)\r\n",
+    "new": "        if (sent.Lines.Count > 0) // มีข้อความผลส่งให้ผู้ใช้ดู\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1664,
+    "old": "            Notify.Result(this, $\"ส่ง {claimed.Machine} · {JobName(claimed.PrintJobsId)}\", sent.Lines);\r\n",
+    "new": "            Notify.Result(this, $\"ส่ง {claimed.Machine} · {JobName(claimed.PrintJobsId)}\", sent.Lines); // แสดงผลส่งของ Job และเครื่องนี้ที่จอ ST1\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1670,
+    "old": "        if (_api == null || StationService.IsSt3 || _sending) return;\r\n",
+    "new": "        if (_api == null || StationService.IsSt3 || _sending) return; // ให้ ST1 รับคำขอ และไม่แทรกการส่งที่กำลังทำอยู่\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1672,
+    "old": "        var pending = _allJobs\r\n",
+    "new": "        var pending = _allJobs // เตรียม Job ที่มีคำขอจาก ST3\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1673,
+    "old": "            .Where(j => j.RemoteStart == RemotePending && !_remoteInFlight.Contains(j.Id))\r\n",
+    "new": "            .Where(j => j.RemoteStart == RemotePending && !_remoteInFlight.Contains(j.Id)) // เลือกธงรอส่งที่โปรแกรมนี้ยังไม่ได้กำลังจัดการ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1674,
+    "old": "            .Select(j => j.Id)\r\n",
+    "new": "            .Select(j => j.Id) // ใช้เลข Job ไปอ่านข้อมูลล่าสุดอีกที\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1675,
+    "old": "            .ToList();\r\n",
+    "new": "            .ToList(); // เก็บชุดคำขอสำหรับรอบนี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1677,
+    "old": "        foreach (var jobId in pending)\r\n",
+    "new": "        foreach (var jobId in pending) // จัดการคำขอทีละ Job\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1679,
+    "old": "            _remoteInFlight.Add(jobId);\r\n",
+    "new": "            _remoteInFlight.Add(jobId); // จำว่าโปรแกรมนี้กำลังจัดการ Job นี้อยู่\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1680,
+    "old": "            _sending = true;\r\n",
+    "new": "            _sending = true; // กันงานส่งอื่นเข้ามาซ้อน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1683,
+    "old": "                await RunRemoteStartAsync(jobId);\r\n",
+    "new": "                await RunRemoteStartAsync(jobId); // ตรวจคำขอแล้วส่งขั้นที่ ST3 ระบุ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1687,
+    "old": "                _sending = false;\r\n",
+    "new": "                _sending = false; // เปิดให้ทำงานส่งอื่นต่อได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1688,
+    "old": "                _remoteInFlight.Remove(jobId);\r\n",
+    "new": "                _remoteInFlight.Remove(jobId); // เอา Job ออกจากชุดที่โปรแกรมนี้กำลังจัดการ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1691,
+    "old": "            if (IsDisposed) return;\r\n",
+    "new": "            if (IsDisposed) return; // หน้าถูกปิดแล้ว หยุดรับคำขอถัดไป\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1701,
+    "old": "        var resolved = await _api!.GetResolvedJobAsync(jobId);\r\n",
+    "new": "        var resolved = await _api!.GetResolvedJobAsync(jobId); // อ่าน Job ล่าสุดก่อนรับคำขอจาก ST3\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1709,
+    "old": "        var status = resolved.Job.Status;\r\n",
+    "new": "        var status = resolved.Job.Status; // ตรวจสถานะจริงของ Job จาก Backend\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1710,
+    "old": "        bool live = string.Equals(status, \"Waiting\", StringComparison.OrdinalIgnoreCase)\r\n",
+    "new": "        bool live = string.Equals(status, \"Waiting\", StringComparison.OrdinalIgnoreCase) // รับคำขอของงานที่ยังรอเริ่ม\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1711,
+    "old": "                 || string.Equals(status, \"Process\", StringComparison.OrdinalIgnoreCase);\r\n",
+    "new": "                 || string.Equals(status, \"Process\", StringComparison.OrdinalIgnoreCase); // หรือของงานที่กำลังผลิตและมีขั้นถัดไป\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1713,
+    "old": "        if (!live)\r\n",
+    "new": "        if (!live) // งานถูกจบหรือยกเลิกไปแล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1715,
+    "old": "            await _api.SetRemoteStartAsync(jobId, requested: false);\r\n",
+    "new": "            await _api.SetRemoteStartAsync(jobId, requested: false); // ล้างคำขอที่ไม่ควรส่งต่อแล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1716,
+    "old": "            return;\r\n",
+    "new": "            return; // ไม่ส่งเครื่องให้ Job ที่ไม่ได้กำลังทำงาน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1719,
+    "old": "        var plan = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod);\r\n",
+    "new": "        var plan = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod); // อ่านแผนเครื่องที่ Job นี้ใช้จริง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1728,
+    "old": "        var requested = _allJobs.FirstOrDefault(j => j.Id == jobId)?.RemoteStep;\r\n",
+    "new": "        var requested = _allJobs.FirstOrDefault(j => j.Id == jobId)?.RemoteStep; // อ่านชื่อขั้นที่ ST3 ฝากมา\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1729,
+    "old": "        var step = string.IsNullOrWhiteSpace(requested)\r\n",
+    "new": "        var step = string.IsNullOrWhiteSpace(requested) // ดูว่าคำขอระบุขั้นมาหรือไม่\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1730,
+    "old": "            ? plan.Steps.FirstOrDefault()\r\n",
+    "new": "            ? plan.Steps.FirstOrDefault() // คำขอเก่าที่ไม่ระบุขั้น ใช้ขั้นแรกในแผน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1731,
+    "old": "            : plan.Steps.FirstOrDefault(x =>\r\n",
+    "new": "            : plan.Steps.FirstOrDefault(x => // คำขอที่ระบุขั้นต้องหาขั้นนั้นในแผน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1732,
+    "old": "                string.Equals(x, requested.Trim(), StringComparison.OrdinalIgnoreCase));\r\n",
+    "new": "                string.Equals(x, requested.Trim(), StringComparison.OrdinalIgnoreCase)); // เทียบชื่อเครื่องโดยไม่สนตัวพิมพ์ใหญ่เล็ก\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1735,
+    "old": "        if (step == null)\r\n",
+    "new": "        if (step == null) // ไม่พบขั้นที่ขอในแผนของ Job\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1737,
+    "old": "            await _api.SetRemoteStartAsync(jobId, requested: false,\r\n",
+    "new": "            await _api.SetRemoteStartAsync(jobId, requested: false, // ล้างคำขอที่ส่งต่อไม่ได้ พร้อมฝากเหตุถ้ามี\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1741,
+    "old": "            return;\r\n",
+    "new": "            return; // ไม่มีขั้นที่ถูกต้อง จึงไม่ส่งเครื่อง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1746,
+    "old": "        if (resolved.Commands?.Any(c => c.Success &&\r\n",
+    "new": "        if (resolved.Commands?.Any(c => c.Success && // ตรวจประวัติที่อ่านสดว่าขั้นนี้ส่งสำเร็จแล้วหรือไม่\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1747,
+    "old": "                string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true)\r\n",
+    "new": "                string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true) // เทียบกับขั้นที่ขอ เพื่อกันการส่งขั้นเดิมซ้ำ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1749,
+    "old": "            await _api.SetRemoteStartAsync(jobId, requested: false);\r\n",
+    "new": "            await _api.SetRemoteStartAsync(jobId, requested: false); // ล้างคำขอของขั้นที่มีประวัติสำเร็จแล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1750,
+    "old": "            return;\r\n",
+    "new": "            return; // เคยส่งขั้นนี้แล้ว จึงไม่ส่งซ้ำ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1754,
+    "old": "        int machineStation = JobStationService.StationOf(step) ?? 0;\r\n",
+    "new": "        int machineStation = JobStationService.StationOf(step) ?? 0; // หา Station เจ้าของเครื่องในขั้นที่ขอ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1755,
+    "old": "        if (StationOwner(machineStation, jobId) != null) return;\r\n",
+    "new": "        if (StationOwner(machineStation, jobId) != null) return; // ยังมี Job อื่นครอง Station ให้คงคำขอไว้รอรอบหน้า\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1757,
+    "old": "        var program = _allJobs.FirstOrDefault(j => j.Id == jobId)?.RemoteProgram;\r\n",
+    "new": "        var program = _allJobs.FirstOrDefault(j => j.Id == jobId)?.RemoteProgram; // ใช้ชื่อโปรแกรมที่ ST3 เลือกฝากไว้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1761,
+    "old": "        await _api.ClaimRemoteStartAsync(jobId, program, step);\r\n",
+    "new": "        await _api.ClaimRemoteStartAsync(jobId, program, step); // เปลี่ยนธงเป็นกำลังส่ง เพื่อให้ ST3 รู้ว่ารับแล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1762,
+    "old": "        if (IsDisposed) return;\r\n",
+    "new": "        if (IsDisposed) return; // หน้าถูกปิดแล้ว จึงไม่ส่งเครื่องต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1765,
+    "old": "        var lines = (await SendStepAsync(\r\n",
+    "new": "        var lines = (await SendStepAsync( // ส่งขั้นที่ขอผ่านทางส่ง MK / UV ร่วมกัน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1766,
+    "old": "            jobId, step, resolved, program, isFirstStep: plan.Steps.IndexOf(step) == 0)).Lines;\r\n",
+    "new": "            jobId, step, resolved, program, isFirstStep: plan.Steps.IndexOf(step) == 0)).Lines; // ระบุว่าเป็นขั้นแรกหรือไม่ เพื่อเลือกการคืน Waiting เมื่อผิดพลาด\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1770,
+    "old": "        bool failed = lines.Any(l => l.Kind == Notify.ResultKind.Error);\r\n",
+    "new": "        bool failed = lines.Any(l => l.Kind == Notify.ResultKind.Error); // ดูว่าผลส่งมีข้อความผิดพลาดหรือไม่\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1771,
+    "old": "        var failure = failed\r\n",
+    "new": "        var failure = failed // เตรียมเหตุที่ต้องส่งกลับให้ ST3\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1772,
+    "old": "            ? string.Join(\" · \", lines.Where(l => l.Kind == Notify.ResultKind.Error).Select(l => l.Text))\r\n",
+    "new": "            ? string.Join(\" · \", lines.Where(l => l.Kind == Notify.ResultKind.Error).Select(l => l.Text)) // รวมเหตุจากเครื่องเป็นข้อความเดียว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1773,
+    "old": "            : null;\r\n",
+    "new": "            : null; // ไม่มีข้อผิดพลาดให้ฝากกลับ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1775,
+    "old": "        await _api.SetRemoteStartAsync(jobId, requested: false, failure: failure);\r\n",
+    "new": "        await _api.SetRemoteStartAsync(jobId, requested: false, failure: failure); // ล้างธงคำขอและเก็บเหตุที่ส่งไม่สำเร็จ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1777,
+    "old": "        if (IsDisposed || lines.Count == 0) return;\r\n",
+    "new": "        if (IsDisposed || lines.Count == 0) return; // ไม่มีจอหรือไม่มีข้อความให้รายงาน จึงจบการรับคำขอ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1781,
+    "old": "        var text = $\"{JobName(jobId)} — {lines[0].Text} (คำขอจาก ST3)\";\r\n",
+    "new": "        var text = $\"{JobName(jobId)} — {lines[0].Text} (คำขอจาก ST3)\"; // ระบุ Job และผลส่งว่าเป็นคำขอจาก ST3\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1783,
+    "old": "        if (failed) Notify.Warn(this, text);\r\n",
+    "new": "        if (failed) Notify.Warn(this, text); // แจ้งเตือนแบบไม่ค้างรอคนปิดที่ ST1\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1784,
+    "old": "        else Notify.Success(this, text);\r\n",
+    "new": "        else Notify.Success(this, text); // แจ้งส่งสำเร็จแบบไม่หยุดรอบอ่านงาน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1841,
+    "old": "        if (_api == null) return;\r\n",
+    "new": "        if (_api == null) return; // ยังไม่มีตัวเชื่อม Backend จึงจบงานไม่ได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1844,
+    "old": "        var resolved = await LoadJobAsync(jobId, $\"กำลังโหลดข้อมูล · {JobName(jobId)}\");\r\n",
+    "new": "        var resolved = await LoadJobAsync(jobId, $\"กำลังโหลดข้อมูล · {JobName(jobId)}\"); // อ่านประวัติส่งล่าสุดก่อนตัดสินว่าจบงานได้หรือไม่\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1845,
+    "old": "        if (IsDisposed) return;\r\n",
+    "new": "        if (IsDisposed) return; // หน้าถูกปิดแล้ว จึงไม่ดำเนินการต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1846,
+    "old": "        if (resolved == null)\r\n",
+    "new": "        if (resolved == null) // ไม่มีรายละเอียดงานให้ตรวจ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1848,
+    "old": "            Notify.WarnModal(this, \"แจ้งเตือน\", $\"ไม่สามารถโหลดข้อมูล {JobName(jobId)} ได้\");\r\n",
+    "new": "            Notify.WarnModal(this, \"แจ้งเตือน\", $\"ไม่สามารถโหลดข้อมูล {JobName(jobId)} ได้\"); // แจ้งว่าอ่านงานที่จะจบไม่สำเร็จ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1849,
+    "old": "            return;\r\n",
+    "new": "            return; // ยังตรวจงานไม่ได้ จึงไม่เปลี่ยนเป็น Success\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1852,
+    "old": "        var method = resolved.PlanRouting?.MarkingMethod;\r\n",
+    "new": "        var method = resolved.PlanRouting?.MarkingMethod; // อ่านวิธีพิมพ์เพื่อหาว่างานต้องจบที่ Station ใด\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1853,
+    "old": "        if (!MarkingMethodService.CanCompleteAt(StationService.Current, method))\r\n",
+    "new": "        if (!MarkingMethodService.CanCompleteAt(StationService.Current, method)) // ตรวจสิทธิ์จบงานของ Station ปัจจุบัน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1855,
+    "old": "            Notify.WarnModal(this, \"จบงานที่สถานีนี้ไม่ได้\",\r\n",
+    "new": "            Notify.WarnModal(this, \"จบงานที่สถานีนี้ไม่ได้\", // แจ้งให้ไปจบงานที่ Station ที่รับผิดชอบ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1858,
+    "old": "            return;\r\n",
+    "new": "            return; // ผิด Station จึงไม่บันทึกจบงาน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1861,
+    "old": "        var steps = CheckSteps(method, resolved.Commands);\r\n",
+    "new": "        var steps = CheckSteps(method, resolved.Commands); // เทียบแผนกับประวัติส่ง รวมจำนวนรอบของเครื่องเดิม\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1864,
+    "old": "        bool manual = !steps.Complete;\r\n",
+    "new": "        bool manual = !steps.Complete; // ถ้าประวัติยังไม่ครบ ต้องจบแบบยืนยันด้วยมือ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1865,
+    "old": "        if (manual)\r\n",
+    "new": "        if (manual) // แยกไปเตือนขั้นที่ยังขาด\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1867,
+    "old": "            var list = string.Join(\", \", steps.Missing);\r\n",
+    "new": "            var list = string.Join(\", \", steps.Missing); // รวมชื่อขั้นที่ยังไม่มีประวัติครบ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1868,
+    "old": "            if (!Confirm.Ask(this, \"งานยังส่งไม่ครบ\",\r\n",
+    "new": "            if (!Confirm.Ask(this, \"งานยังส่งไม่ครบ\", // ให้ยืนยันว่าจะจบทั้งที่ส่งยังไม่ครบ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1871,
+    "old": "                return;\r\n",
+    "new": "                return; // ผู้ใช้ไม่ยืนยัน จึงคงงานไว้ให้ทำต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1873,
+    "old": "        else if (!Confirm.Ask(this, \"ยืนยันจบงาน\",\r\n",
+    "new": "        else if (!Confirm.Ask(this, \"ยืนยันจบงาน\", // ส่งครบแล้วก็ยังต้องยืนยันจบ Job\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1876,
+    "old": "            return;\r\n",
+    "new": "            return; // ผู้ใช้ยกเลิกการจบงาน จึงเก็บสถานะเดิม\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1879,
+    "old": "        if (manual)\r\n",
+    "new": "        if (manual) // เป็นการจบทั้งที่ประวัติส่งยังไม่ครบ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1880,
+    "old": "            await _api.SaveSendStepAsync(jobId, \"MANUAL_COMPLETE\");\r\n",
+    "new": "            await _api.SaveSendStepAsync(jobId, \"MANUAL_COMPLETE\"); // บันทึกร่องรอยว่าผู้ใช้ยืนยันจบด้วยมือ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1883,
+    "old": "        await _api.ClearMachineQueueAsync(jobId);\r\n",
+    "new": "        await _api.ClearMachineQueueAsync(jobId); // ล้างคิวของงานที่กำลังจบเพื่อไม่กันเครื่องไว้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1885,
+    "old": "        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, \"Success\");\r\n",
+    "new": "        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, \"Success\"); // บันทึกสถานะจบงานใน Backend\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1886,
+    "old": "        if (ok)\r\n",
+    "new": "        if (ok) // Backend ยืนยันว่าบันทึก Success ได้แล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1888,
+    "old": "            Notify.Success(this, manual\r\n",
+    "new": "            Notify.Success(this, manual // แจ้งผลโดยแยกจบตามปกติกับจบด้วยมือ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1891,
+    "old": "            await RefreshDataAsync();\r\n",
+    "new": "            await RefreshDataAsync(); // อ่านรายการใหม่ให้งานที่จบออกจาก List\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1895,
+    "old": "            Notify.ErrorModal(this, \"จบงานไม่สำเร็จ\", err ?? \"ไม่สามารถบันทึกสถานะจบงานได้\");\r\n",
+    "new": "            Notify.ErrorModal(this, \"จบงานไม่สำเร็จ\", err ?? \"ไม่สามารถบันทึกสถานะจบงานได้\"); // แจ้งเหตุที่ยังบันทึกจบงานไม่ได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1945,
+    "old": "        string? requestedStep;\r\n",
+    "new": "        string? requestedStep; // เก็บขั้นที่ผู้ใช้ขอให้ ST1 ส่งจากหน้า Detail\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1947,
+    "old": "        using (var dlg = new OrderDetailDialog())\r\n",
+    "new": "        using (var dlg = new OrderDetailDialog()) // เปิดหน้าต่างรายละเอียดเฉพาะ Job นี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1950,
+    "old": "            dlg.TitleText = $\"{OrderDetailUserControl.JobTitle(resolved.Job)} — Order Detail\";\r\n",
+    "new": "            dlg.TitleText = $\"{OrderDetailUserControl.JobTitle(resolved.Job)} — Order Detail\"; // ตั้งหัวหน้าต่างให้บอกงานที่กำลังดู\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1951,
+    "old": "            dlg.Text = dlg.TitleText;\r\n",
+    "new": "            dlg.Text = dlg.TitleText; // ใช้ชื่อเดียวกันที่แถบหน้าต่าง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1952,
+    "old": "            dlg.LoadDetail(resolved, _api);\r\n",
+    "new": "            dlg.LoadDetail(resolved, _api); // เติมรายละเอียดงานและตัวเชื่อม Backend ให้หน้ารายละเอียด\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1953,
+    "old": "            dlg.ShowDialog(this);\r\n",
+    "new": "            dlg.ShowDialog(this); // รอให้ผู้ใช้ดูรายละเอียดหรือกดขอส่งแล้วปิดหน้าต่าง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1954,
+    "old": "            requestedStep = dlg.RemoteStartStep;\r\n",
+    "new": "            requestedStep = dlg.RemoteStartStep; // รับขั้นที่ผู้ใช้กดขอให้ ST1 ส่ง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1957,
+    "old": "        if (requestedStep == null || _api == null || IsDisposed) return;\r\n",
+    "new": "        if (requestedStep == null || _api == null || IsDisposed) return; // ปิดเฉย ๆ หรือหน้าหลักไม่พร้อม จึงไม่ฝากคำขอ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1959,
+    "old": "        await RequestRemoteStartFromDetailAsync(resolved.Job.Id);\r\n",
+    "new": "        await RequestRemoteStartFromDetailAsync(resolved.Job.Id); // อ่านข้อมูลสดและตรวจขั้นอีกครั้งก่อนฝากส่ง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1973,
+    "old": "        var resolved = await LoadJobAsync(jobId, $\"กำลังตรวจสอบงาน · {JobName(jobId)}\");\r\n",
+    "new": "        var resolved = await LoadJobAsync(jobId, $\"กำลังตรวจสอบงาน · {JobName(jobId)}\"); // อ่านประวัติใหม่ เผื่อมีคนส่งไปแล้วระหว่างเปิด Detail\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1974,
+    "old": "        if (resolved == null || IsDisposed) return;\r\n",
+    "new": "        if (resolved == null || IsDisposed) return; // อ่านงานไม่ได้หรือปิดหน้าแล้ว จึงไม่สร้างคำขอ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1976,
+    "old": "        var steps = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod).Steps;\r\n",
+    "new": "        var steps = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod).Steps; // อ่านขั้นที่งานนี้ต้องส่งจากวิธีพิมพ์\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1977,
+    "old": "        int next = steps.FindIndex(step => !SentAlready(resolved, step));\r\n",
+    "new": "        int next = steps.FindIndex(step => !SentAlready(resolved, step)); // หาขั้นแรกที่ยังไม่มีประวัติส่งสำเร็จ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1980,
+    "old": "        if (next <= 0)\r\n",
+    "new": "        if (next <= 0) // ไม่มีขั้นค้าง หรือยังเป็นขั้นแรกที่ต้องเริ่มจาก List\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1982,
+    "old": "            Notify.WarnModal(this, \"ไม่มีขั้นที่ต้องส่ง\",\r\n",
+    "new": "            Notify.WarnModal(this, \"ไม่มีขั้นที่ต้องส่ง\", // แจ้งว่าไม่มีขั้นถัดไปให้ฝากส่งจาก Detail\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1985,
+    "old": "            return;\r\n",
+    "new": "            return; // ไม่ส่งคำขอซ้ำหรือข้ามขั้นเริ่มงาน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1988,
+    "old": "        await RequestRemoteStartAsync(jobId, steps[next], resolved, askFirst: true);\r\n",
+    "new": "        await RequestRemoteStartAsync(jobId, steps[next], resolved, askFirst: true); // ให้เลือกโปรแกรมและยืนยันก่อนฝากขั้นถัดไปให้ ST1\r\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 114,
+    "old": "        using var busy = MachineBusy.Hold();\n",
+    "new": "        using var busy = MachineBusy.Hold(); // พักการอ่านสถานะเครื่องระหว่างส่งข้อมูล MK\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 116,
+    "old": "        var machines = new List<MkMachineResult>();\n",
+    "new": "        var machines = new List<MkMachineResult>(); // รวมผลแต่ละหัวเพื่อส่งกลับหน้า Order List\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 117,
+    "old": "        bool anySent = false;\n",
+    "new": "        bool anySent = false; // ยังไม่มีหัวที่รับข้อมูลสำเร็จในรอบนี้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 118,
+    "old": "        bool workFailed = false;\n",
+    "new": "        bool workFailed = false; // จำว่ามีหัวที่ต้องใช้แต่ส่งไม่ผ่านหรือไม่\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 120,
+    "old": "        foreach (var (ipKey, nameKey, fallbackName, ordinal, label) in MkMachines)\n",
+    "new": "        foreach (var (ipKey, nameKey, fallbackName, ordinal, label) in MkMachines) // ตรวจหัว MK ทีละตัวตามชุดตั้งค่า\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 122,
+    "old": "            var name = CustomSettingsManager.Read(nameKey, fallbackName);\n",
+    "new": "            var name = CustomSettingsManager.Read(nameKey, fallbackName); // อ่านชื่อหัวพิมพ์ไว้รายงานผล\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 123,
+    "old": "            var ip = CustomSettingsManager.Read(ipKey);\n",
+    "new": "            var ip = CustomSettingsManager.Read(ipKey); // อ่าน IP ของหัวที่จะติดต่อ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 124,
+    "old": "            var config = pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);\n",
+    "new": "            var config = pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal); // หา Config ของหัวนี้จาก Pattern งาน\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 126,
+    "old": "            if (!HasProgram(config))\n",
+    "new": "            if (!HasProgram(config)) // หัวนี้ไม่มีโปรแกรมที่ต้องใช้กับงาน\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 129,
+    "old": "                if (string.IsNullOrWhiteSpace(ip)) continue;\n",
+    "new": "                if (string.IsNullOrWhiteSpace(ip)) continue; // หัวที่ไม่ใช้และไม่มี IP ไม่ต้องติดต่อ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 131,
+    "old": "                machines.Add(new MkMachineResult(\n",
+    "new": "                machines.Add(new MkMachineResult( // เก็บผลหยุดหัวที่ไม่ได้ใช้แยกจากหัวที่ต้องส่งงาน\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 132,
+    "old": "                    name, await StopOneMkAsync(ip, label), Suspended: true));\n",
+    "new": "                    name, await StopOneMkAsync(ip, label), Suspended: true)); // สั่งหยุดหัวที่ไม่ได้ใช้ แต่ไม่นับเป็นหัวทำงานล้มเหลว\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 133,
+    "old": "                continue;\n",
+    "new": "                continue; // หัวนี้ไม่ใช้พิมพ์ จึงไปตรวจหัวถัดไป\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 136,
+    "old": "            if (string.IsNullOrWhiteSpace(ip))\n",
+    "new": "            if (string.IsNullOrWhiteSpace(ip)) // ต้องใช้หัวนี้แต่ยังไม่มี IP\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 138,
+    "old": "                workFailed = true;\n",
+    "new": "                workFailed = true; // นับว่ามีหัวที่ต้องทำงานแต่ส่งไม่ได้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 139,
+    "old": "                machines.Add(new MkMachineResult(\n",
+    "new": "                machines.Add(new MkMachineResult( // เก็บเหตุที่หัวนี้ยังรับงานไม่ได้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 141,
+    "old": "                continue;\n",
+    "new": "                continue; // ไม่มี IP จึงยังส่งข้อมูลหัวนี้ไม่ได้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 144,
+    "old": "            var (error, note) = await SendToOneMkAsync(ip, config!, label);\n",
+    "new": "            var (error, note) = await SendToOneMkAsync(ip, config!, label); // ส่งโปรแกรม ข้อความ และค่าพิมพ์ให้หัวนี้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 145,
+    "old": "            if (error == null) anySent = true; else workFailed = true;\n",
+    "new": "            if (error == null) anySent = true; else workFailed = true; // รวมผลว่ามีหัวรับข้อมูลและมีหัวที่ส่งล้มเหลวหรือไม่\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 146,
+    "old": "            machines.Add(new MkMachineResult(name, error, Note: note));\n",
+    "new": "            machines.Add(new MkMachineResult(name, error, Note: note)); // เก็บผลของหัวนี้ไว้แสดงพร้อมหัวอื่น\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 149,
+    "old": "        if (machines.Count == 0)\n",
+    "new": "        if (machines.Count == 0) // ไม่มีหัว MK ที่ได้ติดต่อเลย\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 150,
+    "old": "            return new MkSendResult(SendStatus.NotConfigured, machines);\n",
+    "new": "            return new MkSendResult(SendStatus.NotConfigured, machines); // แจ้งกลับว่ายังไม่มีชุดหัวที่พร้อมส่ง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 154,
+    "old": "        if (!anySent)\n",
+    "new": "        if (!anySent) // ไม่มีหัวทำงานที่รับข้อมูลสำเร็จ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 155,
+    "old": "            return new MkSendResult(SendStatus.NotConfigured, machines);\n",
+    "new": "            return new MkSendResult(SendStatus.NotConfigured, machines); // แจ้งว่ารอบนี้ยังไม่มีหัวส่งงานได้ พร้อมรายละเอียดแต่ละหัว\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 166,
+    "old": "        return new MkSendResult(\n",
+    "new": "        return new MkSendResult( // สรุปผล MK ทั้งชุดกลับไปยังตัวคุมคิว\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 167,
+    "old": "            workFailed ? SendStatus.Failed : SendStatus.Ok,\n",
+    "new": "            workFailed ? SendStatus.Failed : SendStatus.Ok, // หัวที่ต้องใช้ล้มเหลวแม้เพียงหัวเดียว ให้ผลรวมไม่สำเร็จ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 168,
+    "old": "            machines);\n",
+    "new": "            machines); // ส่งรายละเอียดทุกหัวกลับไปแสดง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 324,
+    "old": "        if (InvalidConfig(config, label) is string bad) return (bad, null);\n",
+    "new": "        if (InvalidConfig(config, label) is string bad) return (bad, null); // ตรวจค่าพิมพ์ก่อนเชื่อมต่อ ป้องกันส่งไปได้เพียงบางส่วน\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 326,
+    "old": "        var tcp = new TcpManager();\n",
+    "new": "        var tcp = new TcpManager(); // เตรียมช่อง TCP สำหรับหัว MK นี้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 329,
+    "old": "            await tcp.ConnectAsync(ip, MkPort)\n",
+    "new": "            await tcp.ConnectAsync(ip, MkPort) // เชื่อมต่อ IP หัว MK ที่พอร์ตของเครื่อง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 330,
+    "old": "                .WaitAsync(TimeSpan.FromSeconds(ConnectTimeoutSeconds));\n",
+    "new": "                .WaitAsync(TimeSpan.FromSeconds(ConnectTimeoutSeconds)); // จำกัดเวลารอเชื่อมต่อ ไม่ให้ค้างไม่สิ้นสุด\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 331,
+    "old": "            var adapter = new MkCompactAdapter(tcp);\n",
+    "new": "            var adapter = new MkCompactAdapter(tcp); // ใช้ชุดคำสั่งของเครื่อง MK ผ่าน TCP ที่เปิดไว้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 344,
+    "old": "            var notes = new List<string>();\n",
+    "new": "            var notes = new List<string>(); // เก็บคำเตือนประกอบผลส่งของหัวนี้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 354,
+    "old": "            await adapter.ResumeAsync();\n",
+    "new": "            await adapter.ResumeAsync(); // ส่ง SQ ก่อนเปลี่ยนโปรแกรม โดยโค้ดนี้ไม่ใช้ผลตอบ SQ ตัดสิน\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 356,
+    "old": "            var fw = await adapter.ChangeProgramAsync(config.ProgramNumber ?? 1);\n",
+    "new": "            var fw = await adapter.ChangeProgramAsync(config.ProgramNumber ?? 1); // ส่ง FW เลือกโปรแกรม ถ้าไม่มีเลขให้ใช้ 1\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 357,
+    "old": "            if (!fw.Success)\n",
+    "new": "            if (!fw.Success) // เครื่องไม่รับคำสั่งเปลี่ยนโปรแกรม\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 358,
+    "old": "                return (Reject(label, $\"เปลี่ยนไปโปรแกรม {config.ProgramNumber}\", fw), Note(notes));\n",
+    "new": "                return (Reject(label, $\"เปลี่ยนไปโปรแกรม {config.ProgramNumber}\", fw), Note(notes)); // หยุดส่งหัวนี้พร้อมเหตุที่เปลี่ยนโปรแกรมไม่ได้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 363,
+    "old": "            for (int slot = 1; slot <= MkBlockCount; slot++)\n",
+    "new": "            for (int slot = 1; slot <= MkBlockCount; slot++) // ส่งครบทุกช่องข้อความ รวมช่องที่งานนี้ไม่ได้ใช้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 365,
+    "old": "                var block = config.TextBlocks.FirstOrDefault(b => b.BlockNumber == slot)\n",
+    "new": "                var block = config.TextBlocks.FirstOrDefault(b => b.BlockNumber == slot) // หาข้อความของช่องปัจจุบันจาก Pattern\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 366,
+    "old": "                    ?? new TextBlockDto { BlockNumber = slot, Text = \"\" };\n",
+    "new": "                    ?? new TextBlockDto { BlockNumber = slot, Text = \"\" }; // ไม่มีข้อความให้ส่งค่าว่างทับ เพื่อไม่เหลือข้อความงานเก่า\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 368,
+    "old": "                await Task.Delay(MkBlockGapMs);\n",
+    "new": "                await Task.Delay(MkBlockGapMs); // เว้นจังหวะก่อนส่งช่องถัดไป\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 370,
+    "old": "                int deviceBlock = slot + MkFirstDeviceBlock - 1;\n",
+    "new": "                int deviceBlock = slot + MkFirstDeviceBlock - 1; // แปลงเลขช่องในงานเป็นเลขช่องที่เครื่องใช้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 371,
+    "old": "                var fb = await adapter.SendTextBlockAsync(block, deviceBlock);\n",
+    "new": "                var fb = await adapter.SendTextBlockAsync(block, deviceBlock); // ส่งข้อความและค่าบล็อกด้วย FS / F1\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 372,
+    "old": "                if (!fb.Success) return (Reject(label, $\"ส่ง Block {slot}\", fb), Note(notes));\n",
+    "new": "                if (!fb.Success) return (Reject(label, $\"ส่ง Block {slot}\", fb), Note(notes)); // เครื่องไม่รับบล็อกนี้ ให้หยุดก่อนส่งช่องอื่น\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 378,
+    "old": "            var fm = await adapter.SendConfigAsync(config);\n",
+    "new": "            var fm = await adapter.SendConfigAsync(config); // ส่ง FM หลังครบทุกบล็อก เพื่อไม่ให้ค่าถูกบล็อกเขียนทับ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 379,
+    "old": "            if (!fm.Success) return (Reject(label, \"ส่ง Config\", fm), Note(notes));\n",
+    "new": "            if (!fm.Success) return (Reject(label, \"ส่ง Config\", fm), Note(notes)); // ส่งค่าพิมพ์ไม่ผ่าน ให้รายงานจุดที่หยุด\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 381,
+    "old": "            return (null, Note(notes));\n",
+    "new": "            return (null, Note(notes)); // หัวนี้รับข้อมูลครบ ให้ตัวคุม MK รวมผลต่อ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 385,
+    "old": "            return ($\"{label}: {ex.Message}\", null);\n",
+    "new": "            return ($\"{label}: {ex.Message}\", null); // ส่งเหตุการเชื่อมต่อหรือข้อผิดพลาดกลับไปแสดง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 389,
+    "old": "            tcp.Disconnect();\n",
+    "new": "            tcp.Disconnect(); // ปิด TCP ของหัวนี้ทุกครั้งเมื่อจบรอบส่ง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 411,
+    "old": "        using var busy = MachineBusy.Hold();\n",
+    "new": "        using var busy = MachineBusy.Hold(); // พักการอ่านสถานะเครื่องระหว่างส่งข้อมูล UV\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 413,
+    "old": "        string stepName = uvNumber == 1 ? \"UV1\" : \"UV2\";\n",
+    "new": "        string stepName = uvNumber == 1 ? \"UV1\" : \"UV2\"; // ระบุว่าจะใช้ข้อมูลของ UV1 หรือ UV2\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 414,
+    "old": "        string table = uvNumber == 1 ? \"MK063\" : \"MK067\";\n",
+    "new": "        string table = uvNumber == 1 ? \"MK063\" : \"MK067\"; // UV1 เขียน MK063 ส่วน UV2 เขียน MK067 ใน CPI.db3\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 416,
+    "old": "        var uvName = uvNumber == 1\n",
+    "new": "        var uvName = uvNumber == 1 // อ่านชื่อเครื่อง UV สำหรับแสดงผล\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 417,
+    "old": "            ? UvSettingsManager.Read(\"UV1_NAME\", \"UV-001\")\n",
+    "new": "            ? UvSettingsManager.Read(\"UV1_NAME\", \"UV-001\") // ใช้ชื่อ UV1 ที่ตั้งไว้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 418,
+    "old": "            : UvSettingsManager.Read(\"UV2_NAME\", \"UV-002\");\n",
+    "new": "            : UvSettingsManager.Read(\"UV2_NAME\", \"UV-002\"); // ใช้ชื่อ UV2 ที่ตั้งไว้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 420,
+    "old": "        var done = new List<string>();\n",
+    "new": "        var done = new List<string>(); // เก็บรายการขั้นที่ทำไปแล้วไว้รายงาน\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 422,
+    "old": "        var uvRow = uvData.FirstOrDefault(r => r.Machine == stepName);\n",
+    "new": "        var uvRow = uvData.FirstOrDefault(r => r.Machine == stepName); // หาแถวข้อมูลของ UV ที่ต้องส่ง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 423,
+    "old": "        if (uvRow == null)\n",
+    "new": "        if (uvRow == null) // Job ยังไม่มีข้อมูลของเครื่องนี้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 424,
+    "old": "            return Blocked(uvName, $\"ยังไม่มีข้อมูล {stepName} ของงานที่เลือก\");\n",
+    "new": "            return Blocked(uvName, $\"ยังไม่มีข้อมูล {stepName} ของงานที่เลือก\"); // หยุดก่อนส่ง เพราะไม่มีข้อมูล UV ของงาน\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 426,
+    "old": "        var cpiPath = UvSettingsManager.GetCpiPath(uvNumber);\n",
+    "new": "        var cpiPath = UvSettingsManager.GetCpiPath(uvNumber); // หาไฟล์ CPI.db3 ตามชุดตั้งค่าของ UV\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 427,
+    "old": "        if (cpiPath == null)\n",
+    "new": "        if (cpiPath == null) // หาไฟล์ CPI ไม่พบหรือยังไม่ตั้งโฟลเดอร์\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 428,
+    "old": "            return Blocked(uvName, $\"ยังไม่ได้ตั้งค่าโฟลเดอร์ UV{uvNumber} หรือไม่พบ CPI.db3\");\n",
+    "new": "            return Blocked(uvName, $\"ยังไม่ได้ตั้งค่าโฟลเดอร์ UV{uvNumber} หรือไม่พบ CPI.db3\"); // แจ้งให้แก้ตำแหน่ง CPI ก่อนส่ง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 430,
+    "old": "        var ip = CustomSettingsManager.Read($\"UV00{uvNumber}_IP\");\n",
+    "new": "        var ip = CustomSettingsManager.Read($\"UV00{uvNumber}_IP\"); // อ่าน IP ของเครื่อง UV ที่เลือก\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 431,
+    "old": "        if (string.IsNullOrWhiteSpace(ip))\n",
+    "new": "        if (string.IsNullOrWhiteSpace(ip)) // ยังไม่มี IP สำหรับติดต่อเครื่อง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 432,
+    "old": "            return Blocked(uvName, $\"ยังไม่ได้ตั้งค่า IP ของ UV{uvNumber}\");\n",
+    "new": "            return Blocked(uvName, $\"ยังไม่ได้ตั้งค่า IP ของ UV{uvNumber}\"); // หยุดก่อนเริ่ม TCP และบอกให้ตั้ง IP\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 434,
+    "old": "        int port = int.TryParse(CustomSettingsManager.Read($\"UV00{uvNumber}_PORT\"), out var p)\n",
+    "new": "        int port = int.TryParse(CustomSettingsManager.Read($\"UV00{uvNumber}_PORT\"), out var p) // อ่านพอร์ต UV จากค่าตั้ง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 435,
+    "old": "            ? p\n",
+    "new": "            ? p // ใช้พอร์ตที่ผู้ใช้ตั้งไว้เมื่ออ่านได้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 436,
+    "old": "            : UvDefaultPort;\n",
+    "new": "            : UvDefaultPort; // อ่านพอร์ตไม่ได้ ใช้พอร์ตมาตรฐานของระบบ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 438,
+    "old": "        if (!await CanConnectAsync(ip, port))\n",
+    "new": "        if (!await CanConnectAsync(ip, port)) // ลองเชื่อมต่อปลายทางก่อนแก้ข้อมูล CPI\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 439,
+    "old": "            return new UvSendResult(SendStatus.Unreachable, uvName, done, Ip: ip, Port: port);\n",
+    "new": "            return new UvSendResult(SendStatus.Unreachable, uvName, done, Ip: ip, Port: port); // แจ้ง IP และพอร์ตที่ติดต่อไม่ได้กลับไปยังหน้า Order List\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 441,
+    "old": "        UvProgramPick pick;\n",
+    "new": "        UvProgramPick pick; // เก็บผลเลือกโปรแกรมและการใช้โปรแกรมสำรอง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 442,
+    "old": "        if (string.IsNullOrWhiteSpace(forcedProgram))\n",
+    "new": "        if (string.IsNullOrWhiteSpace(forcedProgram)) // ยังไม่มีโปรแกรมที่ ST3 เลือกฝากมา\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 444,
+    "old": "            var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber);\n",
+    "new": "            var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber); // หาโฟลเดอร์เก็บไฟล์โปรแกรมของ UV นี้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 445,
+    "old": "            pick = UvProgramResolver.Resolve(uvRow.ProgramName, docFolder, owner);\n",
+    "new": "            pick = UvProgramResolver.Resolve(uvRow.ProgramName, docFolder, owner); // ค้นโปรแกรมตามชื่อในงาน หรือเปิดให้เลือกรุ่นย่อย\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 450,
+    "old": "            pick = new UvProgramPick(forcedProgram.Trim(), false);\n",
+    "new": "            pick = new UvProgramPick(forcedProgram.Trim(), false); // ใช้โปรแกรมที่ผู้ขอส่งเลือกไว้แล้ว ไม่ถามเลือกซ้ำ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 453,
+    "old": "        var programFile = pick.Program;\n",
+    "new": "        var programFile = pick.Program; // อ่านชื่อโปรแกรมที่ได้จากการเลือก\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 454,
+    "old": "        if (programFile == null)\n",
+    "new": "        if (programFile == null) // ผู้ใช้ยังไม่ได้เลือกโปรแกรมที่จะส่ง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 455,
+    "old": "            return new UvSendResult(SendStatus.Cancelled, uvName, done);\n",
+    "new": "            return new UvSendResult(SendStatus.Cancelled, uvName, done); // จบการส่งแบบยกเลิก โดยยังไม่แตะ CPI\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 457,
+    "old": "        if (pick.IsDefault &&\n",
+    "new": "        if (pick.IsDefault && // ได้โปรแกรมสำรองแทนชื่อเดิมในงาน\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 458,
+    "old": "            !UvProgramResolver.ConfirmDefault(uvRow.ProgramName ?? \"\", uvName, owner as Control))\n",
+    "new": "            !UvProgramResolver.ConfirmDefault(uvRow.ProgramName ?? \"\", uvName, owner as Control)) // ให้ผู้ใช้ยืนยันก่อนใช้โปรแกรมสำรอง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 459,
+    "old": "            return new UvSendResult(SendStatus.Cancelled, uvName, done);\n",
+    "new": "            return new UvSendResult(SendStatus.Cancelled, uvName, done); // ไม่ยืนยันโปรแกรมสำรอง จึงหยุดก่อนเขียน CPI\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 463,
+    "old": "            var uvTcp = new UvTcpService();\n",
+    "new": "            var uvTcp = new UvTcpService(); // เตรียมชุดคำสั่ง TCP ของ UV\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 466,
+    "old": "            var (stopOk, _) = await uvTcp.StopAsync(ip, port);\n",
+    "new": "            var (stopOk, _) = await uvTcp.StopAsync(ip, port); // ขอหยุด UV ก่อนเขียนข้อมูล โดยผลหยุดไม่ใช้บล็อกขั้นถัดไป\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 467,
+    "old": "            done.Add(stopOk ? \"สั่งหยุดเครื่อง\" : \"สั่งหยุดเครื่อง (ไม่ตอบรับ — ทำต่อ)\");\n",
+    "new": "            done.Add(stopOk ? \"สั่งหยุดเครื่อง\" : \"สั่งหยุดเครื่อง (ไม่ตอบรับ — ทำต่อ)\"); // เก็บว่าคำสั่งหยุดได้รับคำตอบหรือไม่\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 470,
+    "old": "            var (writeOk, writeMsg) = await CpiWriteService.WriteAsync(\n",
+    "new": "            var (writeOk, writeMsg) = await CpiWriteService.WriteAsync( // เขียนข้อมูลพิมพ์ของ Job ลงฐานข้อมูล CPI\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 471,
+    "old": "                cpiPath, table,\n",
+    "new": "                cpiPath, table, // ระบุไฟล์และตารางของ UV ที่เลือก\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 472,
+    "old": "                uvRow.Lot, uvRow.ErpMfg,\n",
+    "new": "                uvRow.Lot, uvRow.ErpMfg, // เขียน Lot และชื่อ ERP ของงานนี้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 473,
+    "old": "                uvRow.Text1, uvRow.Text2, uvRow.Text3, uvRow.Text4, uvRow.Text5);\n",
+    "new": "                uvRow.Text1, uvRow.Text2, uvRow.Text3, uvRow.Text4, uvRow.Text5); // เขียนข้อความพิมพ์ทั้งห้าช่องของงาน\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 475,
+    "old": "            if (!writeOk)\n",
+    "new": "            if (!writeOk) // เขียน CPI ไม่สำเร็จ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 476,
+    "old": "                return Stopped(uvName, done, $\"เขียน CPI.db3 ({table}) — {writeMsg}\");\n",
+    "new": "                return Stopped(uvName, done, $\"เขียน CPI.db3 ({table}) — {writeMsg}\"); // หยุดก่อนโหลดโปรแกรม เพื่อไม่เริ่มด้วยข้อมูลที่เขียนไม่ครบ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 478,
+    "old": "            done.Add($\"เขียน CPI.db3 ({table})\"\n",
+    "new": "            done.Add($\"เขียน CPI.db3 ({table})\" // เก็บผลเขียน CPI ไว้ในรายงานการส่ง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 483,
+    "old": "            var (tcpOk, tcpLog) = await uvTcp.LoadAndStartAsync(ip, port, programFile);\n",
+    "new": "            var (tcpOk, tcpLog) = await uvTcp.LoadAndStartAsync(ip, port, programFile); // ส่งคำสั่งโหลดไฟล์โปรแกรมแล้วเริ่ม UV\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 484,
+    "old": "            if (!tcpOk)\n",
+    "new": "            if (!tcpOk) // ชุดคำสั่งโหลดและเริ่มไม่สำเร็จ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 485,
+    "old": "                return Stopped(uvName, done, tcpLog.Trim());\n",
+    "new": "                return Stopped(uvName, done, tcpLog.Trim()); // ส่งบันทึกเหตุจาก UV กลับไปแสดง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 487,
+    "old": "            done.Add($\"โหลดโปรแกรม {programFile}.uvdx\");\n",
+    "new": "            done.Add($\"โหลดโปรแกรม {programFile}.uvdx\"); // เก็บชื่อโปรแกรมที่สั่งโหลดไว้ในผลส่ง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 488,
+    "old": "            done.Add(\"สั่งเริ่มพิมพ์\");\n",
+    "new": "            done.Add(\"สั่งเริ่มพิมพ์\"); // เก็บว่าผ่านขั้นสั่งเริ่มพิมพ์แล้ว\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 490,
+    "old": "            return new UvSendResult(\n",
+    "new": "            return new UvSendResult( // แจ้งตัวคุมคิวว่าการส่ง UV ผ่านตามเงื่อนไข Service\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 491,
+    "old": "                SendStatus.Ok, uvName, done,\n",
+    "new": "                SendStatus.Ok, uvName, done, // ส่งผลสำเร็จพร้อมรายการขั้นที่ทำไป\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 492,
+    "old": "                ProgramFile: programFile, UsedDefault: pick.IsDefault, Ip: ip, Port: port);\n",
+    "new": "                ProgramFile: programFile, UsedDefault: pick.IsDefault, Ip: ip, Port: port); // เก็บโปรแกรมจริง การใช้สำรอง และปลายทางที่ส่ง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/JobSendService.cs",
+    "line": 496,
+    "old": "            return Stopped(uvName, done, ex.Message);\n",
+    "new": "            return Stopped(uvName, done, ex.Message); // รายงานข้อผิดพลาดพร้อมขั้นที่ทำสำเร็จไปก่อนหน้า\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 77,
+    "old": "        _settings = PushButtonSettings.Load();\n",
+    "new": "        _settings = PushButtonSettings.Load(); // อ่าน IP, พอร์ต และบิตปุ่มหน้างานที่ตั้งไว้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 78,
+    "old": "        if (!_settings.IsReady || _settings.Validate() != null) return;\n",
+    "new": "        if (!_settings.IsReady || _settings.Validate() != null) return; // ค่าปุ่มยังไม่พร้อมหรือไม่ถูกต้อง จึงยังไม่เริ่มอ่าน PLC\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 80,
+    "old": "        _failures = 0;\n",
+    "new": "        _failures = 0; // เริ่มนับปัญหาการอ่าน PLC ใหม่\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 81,
+    "old": "        _resync = true;\n",
+    "new": "        _resync = true; // รอบแรกต้องจำค่าปุ่มก่อน ไม่ถือว่าปุ่มค้างคือการกดใหม่\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 82,
+    "old": "        _timer.Interval = _settings.PollMs;\n",
+    "new": "        _timer.Interval = _settings.PollMs; // ใช้ความถี่อ่านปุ่มตามค่าตั้ง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 83,
+    "old": "        _timer.Start();\n",
+    "new": "        _timer.Start(); // เริ่มจับเวลาสำหรับอ่านบิตปุ่มซ้ำ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 88,
+    "old": "        _timer.Stop();\n",
+    "new": "        _timer.Stop(); // หยุดอ่านปุ่มเมื่อหน้าไม่ต้องใช้งานแล้ว\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 89,
+    "old": "        _resync = true;\n",
+    "new": "        _resync = true; // เมื่อกลับมาอ่าน ให้จำสถานะเริ่มต้นใหม่\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 96,
+    "old": "        if (_reading) return;\n",
+    "new": "        if (_reading) return; // รอบก่อนยังอ่านไม่เสร็จ จึงไม่เปิดคำขอ PLC ซ้อน\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 98,
+    "old": "        if (ShouldWatch?.Invoke() == false)\n",
+    "new": "        if (ShouldWatch?.Invoke() == false) // หน้า Order List ยังไม่พร้อมรับปุ่ม เช่น กำลังส่งเครื่อง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 102,
+    "old": "            _resync = true;\n",
+    "new": "            _resync = true; // กลับมาเมื่อไรต้องอ่านค่าตั้งต้นใหม่\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 103,
+    "old": "            return;\n",
+    "new": "            return; // พักอ่านปุ่มจนกว่าหน้ารายการพร้อม\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 106,
+    "old": "        _reading = true;\n",
+    "new": "        _reading = true; // กันรอบเวลาถัดไปเข้ามาอ่านซ้อน\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 109,
+    "old": "            var (ok, on, error) = await McProtocolService.ReadBitAsync(\n",
+    "new": "            var (ok, on, error) = await McProtocolService.ReadBitAsync( // อ่านบิตปุ่มจาก PLC ผ่าน MC Protocol\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 110,
+    "old": "                _settings.Ip, _settings.Port, _settings.Address);\n",
+    "new": "                _settings.Ip, _settings.Port, _settings.Address); // ใช้ปลายทางและตำแหน่งบิตจากค่าตั้งหน้างาน\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 112,
+    "old": "            if (!ok)\n",
+    "new": "            if (!ok) // PLC ไม่คืนค่าบิตที่อ่านได้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 114,
+    "old": "                OnFailure(error);\n",
+    "new": "                OnFailure(error); // นับการอ่านล้มเหลวและแจ้งเมื่อครบเกณฑ์\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 115,
+    "old": "                return;\n",
+    "new": "                return; // ยังไม่มีค่าปุ่มใหม่ จึงไม่สร้างเหตุการณ์กด\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 118,
+    "old": "            OnSuccess();\n",
+    "new": "            OnSuccess(); // คืนความถี่อ่านตามปกติถ้าเพิ่งเชื่อมต่อกลับมาได้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 120,
+    "old": "            if (_resync)\n",
+    "new": "            if (_resync) // เป็นรอบเริ่มต้นหรือเพิ่งกลับจากพักอ่าน\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 122,
+    "old": "                _lastOn = on;\n",
+    "new": "                _lastOn = on; // จำค่าปุ่มตอนนี้ไว้เป็นฐานเทียบ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 123,
+    "old": "                _resync = false;\n",
+    "new": "                _resync = false; // รอบถัดไปเริ่มตรวจการเปลี่ยนบิตได้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 124,
+    "old": "                return;\n",
+    "new": "                return; // จำค่าอย่างเดียวในรอบแรก ไม่ปล่อยเครื่องทันที\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 127,
+    "old": "            bool rising = on && !_lastOn;\n",
+    "new": "            bool rising = on && !_lastOn; // นับเป็นการกดเฉพาะตอนบิตเปลี่ยนจาก 0 เป็น 1\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 128,
+    "old": "            _lastOn = on;\n",
+    "new": "            _lastOn = on; // จำค่ารอบนี้สำหรับเทียบกับรอบหน้า\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 130,
+    "old": "            if (rising) Pressed?.Invoke(this, EventArgs.Empty);\n",
+    "new": "            if (rising) Pressed?.Invoke(this, EventArgs.Empty); // ส่งเหตุการณ์ให้ Order List ไปปล่อยคิวเครื่อง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 134,
+    "old": "            _reading = false;\n",
+    "new": "            _reading = false; // เปิดให้รอบเวลาถัดไปอ่าน PLC ได้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 140,
+    "old": "        _failures++;\n",
+    "new": "        _failures++; // นับจำนวนครั้งที่อ่าน PLC ไม่สำเร็จติดกัน\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 141,
+    "old": "        if (_failures != FailuresBeforeTrouble) return;\n",
+    "new": "        if (_failures != FailuresBeforeTrouble) return; // ยังไม่ถึงจังหวะแจ้งปัญหา จึงไม่แจ้งซ้ำทุกรอบ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 144,
+    "old": "        _timer.Interval = RetryMs;\n",
+    "new": "        _timer.Interval = RetryMs; // ลดความถี่เป็นช่วงลองเชื่อมต่อใหม่\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 145,
+    "old": "        Trouble?.Invoke(this, error);\n",
+    "new": "        Trouble?.Invoke(this, error); // แจ้งปัญหาปุ่มให้หน้ารายการแสดง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 150,
+    "old": "        if (_failures == 0) return;\n",
+    "new": "        if (_failures == 0) return; // อ่านได้ต่อเนื่องอยู่แล้ว ไม่ต้องรีเซ็ตสถานะเชื่อมต่อ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 152,
+    "old": "        bool wasTrouble = _failures >= FailuresBeforeTrouble;\n",
+    "new": "        bool wasTrouble = _failures >= FailuresBeforeTrouble; // จำว่าเคยแจ้งปัญหาการเชื่อมต่อไว้หรือไม่\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 153,
+    "old": "        _failures = 0;\n",
+    "new": "        _failures = 0; // อ่านได้แล้ว เริ่มนับความผิดพลาดใหม่\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 154,
+    "old": "        _timer.Interval = _settings.PollMs;\n",
+    "new": "        _timer.Interval = _settings.PollMs; // กลับไปใช้ความถี่อ่านตามค่าตั้ง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 157,
+    "old": "        _resync = true;\n",
+    "new": "        _resync = true; // จำค่าปุ่มใหม่ เพื่อไม่ตีความบิตช่วงสายหลุดเป็นการกด\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 159,
+    "old": "        if (wasTrouble) Trouble?.Invoke(this, null);\n",
+    "new": "        if (wasTrouble) Trouble?.Invoke(this, null); // ล้างข้อความปัญหาเมื่อกลับมาอ่าน PLC ได้แล้ว\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 164,
+    "old": "        _timer.Stop();\n",
+    "new": "        _timer.Stop(); // หยุดรอบอ่าน PLC ก่อนปิดตัวฟังปุ่ม\n"
+  },
+  {
+    "file": "InkjetOperator/Services/PushButtonWatcher.cs",
+    "line": 165,
+    "old": "        _timer.Dispose();\n",
+    "new": "        _timer.Dispose(); // คืนทรัพยากรตัวจับเวลาของปุ่ม\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 45,
+    "old": "        var code = Code(markingMethod);\n",
+    "new": "        var code = Code(markingMethod); // ทำรหัสให้เป็นรูปเดียวกันก่อนเลือกเครื่อง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 46,
+    "old": "        var shimDigit = code.Length >= 2 ? code[0] : '0';\n",
+    "new": "        var shimDigit = code.Length >= 2 ? code[0] : '0'; // หลักแรกคือวิธีพิมพ์ฝั่ง Shim\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 47,
+    "old": "        var plateDigit = code.Length >= 2 ? code[1] : '0';\n",
+    "new": "        var plateDigit = code.Length >= 2 ? code[1] : '0'; // หลักที่สองคือวิธีพิมพ์ฝั่ง Plate\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 50,
+    "old": "        if (shimDigit == '2' && plateDigit == '1')\n",
+    "new": "        if (shimDigit == '2' && plateDigit == '1') // Shim ใช้ MK แต่ Plate ใช้ UV เป็นคู่ที่ไม่รองรับ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 51,
+    "old": "            return new MarkingPlan(true, MarkingMachine.None, MarkingMachine.None, []);\n",
+    "new": "            return new MarkingPlan(true, MarkingMachine.None, MarkingMachine.None, []); // แจ้งตัวเรียกว่าคู่นี้ไม่มีแผนให้ส่งเครื่อง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 53,
+    "old": "        var steps = new List<string>();\n",
+    "new": "        var steps = new List<string>(); // เก็บลำดับเครื่องที่ต้องส่งตามวิธีพิมพ์\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 60,
+    "old": "        if (shimDigit == '2' && plateDigit == '2') steps.Add(\"MK\");\n",
+    "new": "        if (shimDigit == '2' && plateDigit == '2') steps.Add(\"MK\"); // 22 เพิ่มรอบ MK อีกหนึ่งรอบ เพื่อแยก Plate กับ Shim\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 62,
+    "old": "        if (shimDigit == '2' || plateDigit == '2') steps.Add(\"MK\");\n",
+    "new": "        if (shimDigit == '2' || plateDigit == '2') steps.Add(\"MK\"); // มีฝั่งใดใช้ MK ให้เพิ่มขั้น MK\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 63,
+    "old": "        if (plateDigit == '1') steps.Add(\"UV1\");\n",
+    "new": "        if (plateDigit == '1') steps.Add(\"UV1\"); // Plate ใช้ UV ให้ส่งผ่าน UV1\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 64,
+    "old": "        if (shimDigit == '1') steps.Add(\"UV2\");\n",
+    "new": "        if (shimDigit == '1') steps.Add(\"UV2\"); // Shim ใช้ UV ให้ส่งผ่าน UV2\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 66,
+    "old": "        var plate = plateDigit switch\n",
+    "new": "        var plate = plateDigit switch // ระบุเครื่องของฝั่ง Plate สำหรับแสดงแผน\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 68,
+    "old": "            '1' => MarkingMachine.Uv1,\n",
+    "new": "            '1' => MarkingMachine.Uv1, // Plate รหัส 1 ใช้ UV1\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 69,
+    "old": "            '2' => MarkingMachine.Mk,\n",
+    "new": "            '2' => MarkingMachine.Mk, // Plate รหัส 2 ใช้ MK\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 70,
+    "old": "            _ => MarkingMachine.None,\n",
+    "new": "            _ => MarkingMachine.None, // รหัสอื่นไม่ระบุเครื่องพิมพ์ฝั่ง Plate\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 72,
+    "old": "        var shim = shimDigit switch\n",
+    "new": "        var shim = shimDigit switch // ระบุเครื่องของฝั่ง Shim สำหรับแสดงแผน\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 74,
+    "old": "            '1' => MarkingMachine.Uv2,\n",
+    "new": "            '1' => MarkingMachine.Uv2, // Shim รหัส 1 ใช้ UV2\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 75,
+    "old": "            '2' => MarkingMachine.Mk,\n",
+    "new": "            '2' => MarkingMachine.Mk, // Shim รหัส 2 ใช้ MK\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 76,
+    "old": "            _ => MarkingMachine.None,\n",
+    "new": "            _ => MarkingMachine.None, // รหัสอื่นไม่ระบุเครื่องพิมพ์ฝั่ง Shim\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 79,
+    "old": "        return new MarkingPlan(false, plate, shim, steps);\n",
+    "new": "        return new MarkingPlan(false, plate, shim, steps); // ส่งทั้งเครื่องแต่ละฝั่งและลำดับขั้นกลับให้หน้ารายการ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 103,
+    "old": "        var code = Code(markingMethod);\n",
+    "new": "        var code = Code(markingMethod); // เทียบรหัสหลังแปลง 3 เป็น 1 แล้ว\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 104,
+    "old": "        return station == StationService.St3\n",
+    "new": "        return station == StationService.St3 // แยกกฎแสดงงานของ ST3 ออกจาก ST1\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 105,
+    "old": "            ? St3Codes.Contains(code)\n",
+    "new": "            ? St3Codes.Contains(code) // ST3 เห็นเฉพาะ 10 / 11 / 12\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 106,
+    "old": "            : code != \"10\";\n",
+    "new": "            : code != \"10\"; // ST1 เห็นทุกงานยกเว้น 10\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 128,
+    "old": "        var sent = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);\n",
+    "new": "        var sent = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase); // นับประวัติสำเร็จแยกตามเครื่อง เพื่อรองรับ MK หลายรอบ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 129,
+    "old": "        foreach (var command in commands ?? [])\n",
+    "new": "        foreach (var command in commands ?? []) // อ่านประวัติส่งทั้งหมดของ Job\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 131,
+    "old": "            if (!command.Success || command.Command == null) continue;\n",
+    "new": "            if (!command.Success || command.Command == null) continue; // ไม่นับคำสั่งที่ไม่สำเร็จหรือไม่มีชื่อขั้น\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 132,
+    "old": "            sent[command.Command] = sent.TryGetValue(command.Command, out int n) ? n + 1 : 1;\n",
+    "new": "            sent[command.Command] = sent.TryGetValue(command.Command, out int n) ? n + 1 : 1; // เพิ่มจำนวนครั้งที่ส่งเครื่องนี้สำเร็จ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 135,
+    "old": "        var missing = new List<string>();\n",
+    "new": "        var missing = new List<string>(); // เก็บขั้นที่ยังขาดประวัติสำเร็จ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 136,
+    "old": "        foreach (var step in Resolve(markingMethod).Steps)\n",
+    "new": "        foreach (var step in Resolve(markingMethod).Steps) // เทียบประวัติกับทุกขั้นในแผน รวมชื่อเครื่องที่ซ้ำ\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 138,
+    "old": "            if (sent.TryGetValue(step, out int left) && left > 0)\n",
+    "new": "            if (sent.TryGetValue(step, out int left) && left > 0) // ยังมีประวัติของเครื่องนี้เหลือให้จับคู่กับขั้นนี้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 140,
+    "old": "                sent[step] = left - 1;\n",
+    "new": "                sent[step] = left - 1; // ใช้ประวัติไปหนึ่งครั้ง ไม่เอาไปนับซ้ำกับรอบถัดไป\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 141,
+    "old": "                continue;\n",
+    "new": "                continue; // ขั้นนี้มีประวัติรองรับแล้ว ไปตรวจขั้นถัดไป\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 144,
+    "old": "            missing.Add(step);\n",
+    "new": "            missing.Add(step); // ยังไม่มีประวัติรองรับขั้นนี้ ให้แสดงว่ายังขาด\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 147,
+    "old": "        return missing;\n",
+    "new": "        return missing; // ส่งขั้นที่ยังขาดกลับไปเตือนก่อนจบงาน\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 166,
+    "old": "        Code(markingMethod) == \"10\"\n",
+    "new": "        Code(markingMethod) == \"10\" // 10 เป็นงานที่เริ่มจาก UV2 อย่างเดียว\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 167,
+    "old": "            ? station == StationService.St3\n",
+    "new": "            ? station == StationService.St3 // จึงให้เริ่มจาก ST3\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 168,
+    "old": "            : station == StationService.St1;\n",
+    "new": "            : station == StationService.St1; // วิธีพิมพ์อื่นให้เริ่มจาก ST1\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 177,
+    "old": "        !St3Codes.Contains(Code(markingMethod)) || station == StationService.St3;\n",
+    "new": "        !St3Codes.Contains(Code(markingMethod)) || station == StationService.St3; // งานที่ผ่าน ST3 ต้องจบที่ ST3 ส่วนรหัสอื่นไม่จำกัดด้วยกฎนี้\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 193,
+    "old": "        var code = (markingMethod ?? \"\").Trim();\n",
+    "new": "        var code = (markingMethod ?? \"\").Trim(); // ตัดช่องว่างของรหัสจากฐานข้อมูล\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 194,
+    "old": "        if (code.Length < 2) return code;\n",
+    "new": "        if (code.Length < 2) return code; // รหัสไม่ครบสองหลัก ยังไม่แปลงเลขแต่ละฝั่ง\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 196,
+    "old": "        return $\"{Same(code[0])}{Same(code[1])}\";\n",
+    "new": "        return $\"{Same(code[0])}{Same(code[1])}\"; // แปลงเลขของ Shim และ Plate ให้ใช้กฎเดียวกัน\n"
+  },
+  {
+    "file": "InkjetOperator/Services/MarkingMethodService.cs",
+    "line": 198,
+    "old": "        static char Same(char digit) => digit == '3' ? '1' : digit;\n",
+    "new": "        static char Same(char digit) => digit == '3' ? '1' : digit; // รหัส 3 ใช้เส้นทางเครื่องเดียวกับรหัส 1\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderDetailUserControl.cs",
+    "line": 1003,
+    "old": "        if (_currentStep <= 0 || _currentStep >= _sendSteps.Count) return null;\n",
+    "new": "        if (_currentStep <= 0 || _currentStep >= _sendSteps.Count) return null; // ต้องผ่านขั้นแรกแล้ว และยังมีขั้นถัดไปค้างอยู่\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderDetailUserControl.cs",
+    "line": 1004,
+    "old": "        if (!string.Equals(_jobStatus, \"Process\", StringComparison.OrdinalIgnoreCase)) return null;\n",
+    "new": "        if (!string.Equals(_jobStatus, \"Process\", StringComparison.OrdinalIgnoreCase)) return null; // ฝากส่งขั้นถัดไปได้เฉพาะงานที่กำลังผลิต\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderDetailUserControl.cs",
+    "line": 1006,
+    "old": "        return _sendSteps[_currentStep];\n",
+    "new": "        return _sendSteps[_currentStep]; // ส่งชื่อเครื่องในขั้นถัดไปให้ปุ่มฝากส่ง\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderDetailUserControl.cs",
+    "line": 1017,
+    "old": "        if (NextRemoteStep() is not string step) return;\n",
+    "new": "        if (NextRemoteStep() is not string step) return; // ไม่มีขั้นถัดไปที่ฝากส่งได้ จึงไม่ส่ง event\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderDetailUserControl.cs",
+    "line": 1019,
+    "old": "        RemoteStartRequested?.Invoke(this, step);\n",
+    "new": "        RemoteStartRequested?.Invoke(this, step); // ฝากชื่อขั้นให้ OrderDetailDialog รับไว้\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderDetailUserControl.cs",
+    "line": 1020,
+    "old": "        CloseRequested?.Invoke(this, EventArgs.Empty);\n",
+    "new": "        CloseRequested?.Invoke(this, EventArgs.Empty); // ปิด Detail เพื่อให้ Order List เปิดกล่องยืนยันและรอผล\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderDetailUserControl.cs",
+    "line": 1030,
+    "old": "        var remoteStep = NextRemoteStep();\n",
+    "new": "        var remoteStep = NextRemoteStep(); // ตรวจว่างานมีขั้นถัดไปให้ ST1 ส่งหรือไม่\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderDetailUserControl.cs",
+    "line": 1038,
+    "old": "        bool showRemote = remoteStep != null\n",
+    "new": "        bool showRemote = remoteStep != null // มีขั้นถัดไปจึงพิจารณาแสดงปุ่มสำรอง\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderDetailUserControl.cs",
+    "line": 1039,
+    "old": "            && StationService.ManualRemoteSendEnabled\n",
+    "new": "            && StationService.ManualRemoteSendEnabled // ต้องเปิดตัวเลือกฝากส่งด้วยมือไว้ก่อน\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderDetailUserControl.cs",
+    "line": 1040,
+    "old": "            && (StationService.IsSt3 || _isDevMode);\n",
+    "new": "            && (StationService.IsSt3 || _isDevMode); // ให้เห็นเฉพาะ ST3 หรือโหมดทดสอบ\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderDetailUserControl.cs",
+    "line": 1042,
+    "old": "        btnRemoteSend.Visible = showRemote;\n",
+    "new": "        btnRemoteSend.Visible = showRemote; // แสดงปุ่มตามเงื่อนไขที่ตรวจไว้\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderDetailUserControl.cs",
+    "line": 1043,
+    "old": "        btnRemoteSend.Enabled = showRemote;\n",
+    "new": "        btnRemoteSend.Enabled = showRemote; // เปิดให้กดด้วยเงื่อนไขเดียวกัน ไม่อ่าน Visible กลับมา\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderDetailUserControl.cs",
+    "line": 1044,
+    "old": "        if (remoteStep != null) btnRemoteSend.Text = $\"ขอให้ ST1 ส่ง {remoteStep}\";\n",
+    "new": "        if (remoteStep != null) btnRemoteSend.Text = $\"ขอให้ ST1 ส่ง {remoteStep}\"; // ใส่ชื่อเครื่องที่ขอให้ ST1 ส่งบนปุ่ม\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 427,
+    "old": "        if (!string.Equals(machine, \"MK\", StringComparison.OrdinalIgnoreCase)) return;\r\n",
+    "new": "        if (!string.Equals(machine, \"MK\", StringComparison.OrdinalIgnoreCase)) return; // รีเซ็ตตำแหน่งเฉพาะ MK; UV1 / UV2 ข้ามขั้นนี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 429,
+    "old": "        var results = await PlcOrderService.ResetPositionAsync(_api);\r\n",
+    "new": "        var results = await PlcOrderService.ResetPositionAsync(_api); // สั่ง PLC คืนตำแหน่งหัว MK ผ่านค่าในระบบ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 430,
+    "old": "        if (IsDisposed || results.Count == 0) return;\r\n",
+    "new": "        if (IsDisposed || results.Count == 0) return; // หน้าปิดแล้วหรือไม่มีผลเครื่องให้รายงาน จึงจบการรีเซ็ต\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 432,
+    "old": "        var failed = results.Where(r => r.Error != null).ToList();\r\n",
+    "new": "        var failed = results.Where(r => r.Error != null).ToList(); // เลือกเฉพาะหัวที่รีเซ็ตไม่ได้มาแจ้ง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 433,
+    "old": "        if (failed.Count == 0)\r\n",
+    "new": "        if (failed.Count == 0) // ทุกหัวที่มีผลตอบกลับไม่มีข้อผิดพลาด\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 435,
+    "old": "            Notify.Success(this, \"เลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้นแล้ว\");\r\n",
+    "new": "            Notify.Success(this, \"เลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้นแล้ว\"); // แจ้งว่าคำสั่งคืนตำแหน่งหัว MK สำเร็จ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 436,
+    "old": "            return;\r\n",
+    "new": "            return; // รีเซ็ตผ่านแล้ว ไม่แสดงคำเตือนต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 439,
+    "old": "        Notify.Warn(this, \"เลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้นไม่สำเร็จ — \"\r\n",
+    "new": "        Notify.Warn(this, \"เลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้นไม่สำเร็จ — \" // แจ้งหัวที่ยังคืนตำแหน่งไม่ได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 998,
+    "old": "        var (rows, _) = await _api!.GetMachineQueueAsync();\r\n",
+    "new": "        var (rows, _) = await _api!.GetMachineQueueAsync(); // อ่านคิวไว้สรุปให้ผู้ใช้ดูก่อนเริ่มงาน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 999,
+    "old": "        if (IsDisposed) return false;\r\n",
+    "new": "        if (IsDisposed) return false; // หน้าถูกปิดแล้ว จึงไม่เปิดกล่องยืนยัน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1001,
+    "old": "        return Confirm.Ask(this, \"ยืนยันเริ่มงาน\",\r\n",
+    "new": "        return Confirm.Ask(this, \"ยืนยันเริ่มงาน\", // ให้ผู้ใช้ยืนยันก่อนสร้างคิวเครื่อง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1002,
+    "old": "            BuildStartPreview(jobId, resolved, plan, rows));\r\n",
+    "new": "            BuildStartPreview(jobId, resolved, plan, rows)); // แสดงแผนเครื่องและคิวที่เกี่ยวข้องกับ Job นี้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1098,
+    "old": "        var rounds = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);\r\n",
+    "new": "        var rounds = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase); // นับเลขรอบแยกตามเครื่อง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1099,
+    "old": "        var items = new List<MachineQueueItem>();\r\n",
+    "new": "        var items = new List<MachineQueueItem>(); // เตรียมรายการคิวที่จะส่งไป Backend\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1101,
+    "old": "        foreach (var step in steps)\r\n",
+    "new": "        foreach (var step in steps) // สร้างคิวตามทุกขั้นในแผน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1103,
+    "old": "            rounds[step] = rounds.TryGetValue(step, out int used) ? used + 1 : 1;\r\n",
+    "new": "            rounds[step] = rounds.TryGetValue(step, out int used) ? used + 1 : 1; // เครื่องเดิมปรากฏซ้ำให้เป็นรอบถัดไป เช่น MK รอบ 2\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1104,
+    "old": "            items.Add(new MachineQueueItem { Machine = step, Round = rounds[step] });\r\n",
+    "new": "            items.Add(new MachineQueueItem { Machine = step, Round = rounds[step] }); // เก็บชื่อเครื่องพร้อมเลขรอบที่ต้องจอง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1107,
+    "old": "        return items;\r\n",
+    "new": "        return items; // ส่งชุดคิวให้ EnqueueMachinesAsync บันทึก\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1320,
+    "old": "        if (!Confirm.Ask(this, \"ยืนยันเริ่มงาน\",\r\n",
+    "new": "        if (!Confirm.Ask(this, \"ยืนยันเริ่มงาน\", // ยืนยันเริ่มงานที่ไม่มีขั้นส่งเครื่อง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1324,
+    "old": "            return;\r\n",
+    "new": "            return; // ผู้ใช้ยกเลิก จึงไม่เปลี่ยนงานเป็น Process\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1326,
+    "old": "        var (ok, err) = await _api!.UpdateJobStatusAsync(jobId, \"Process\");\r\n",
+    "new": "        var (ok, err) = await _api!.UpdateJobStatusAsync(jobId, \"Process\"); // บันทึกว่างานเริ่มผลิตแล้ว โดยไม่ส่งคำสั่งเครื่อง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1327,
+    "old": "        if (IsDisposed) return;\r\n",
+    "new": "        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตจอต่อ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1329,
+    "old": "        if (ok) Notify.Success(this, $\"เริ่มงาน {JobName(jobId)} แล้ว\");\r\n",
+    "new": "        if (ok) Notify.Success(this, $\"เริ่มงาน {JobName(jobId)} แล้ว\"); // แจ้งว่าบันทึกเริ่มงานได้แล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1330,
+    "old": "        else Notify.ErrorModal(this, \"เริ่มงานไม่สำเร็จ\", err ?? \"ไม่สามารถเปลี่ยนสถานะได้\");\r\n",
+    "new": "        else Notify.ErrorModal(this, \"เริ่มงานไม่สำเร็จ\", err ?? \"ไม่สามารถเปลี่ยนสถานะได้\"); // แจ้งเหตุที่บันทึกเริ่มงานไม่ได้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1332,
+    "old": "        await RefreshDataAsync(force: true);\r\n",
+    "new": "        await RefreshDataAsync(force: true); // อ่านสถานะล่าสุดกลับมาแสดงในรายการ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1800,
+    "old": "        if (_api == null || !StationService.IsSt3 || _showingRemoteError) return;\r\n",
+    "new": "        if (_api == null || !StationService.IsSt3 || _showingRemoteError) return; // แสดงเหตุส่งไม่ผ่านที่ ST3 เท่านั้น และไม่เปิดกล่องซ้อน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1802,
+    "old": "        var failed = _allJobs.FirstOrDefault(j => !string.IsNullOrWhiteSpace(j.RemoteError));\r\n",
+    "new": "        var failed = _allJobs.FirstOrDefault(j => !string.IsNullOrWhiteSpace(j.RemoteError)); // หางานที่ ST1 ฝากเหตุส่งไม่สำเร็จไว้\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1803,
+    "old": "        if (failed == null) return;\r\n",
+    "new": "        if (failed == null) return; // ไม่มีเหตุผิดพลาดค้างให้แสดง\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1805,
+    "old": "        var message = failed.RemoteError!;\r\n",
+    "new": "        var message = failed.RemoteError!; // เก็บข้อความไว้ก่อนล้างค่าที่ Backend\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1808,
+    "old": "        await _api.SetRemoteStartAsync(failed.Id, requested: false);\r\n",
+    "new": "        await _api.SetRemoteStartAsync(failed.Id, requested: false); // ล้างธงและข้อความค้างก่อนเปิดกล่อง เพื่อไม่แจ้งซ้ำ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1809,
+    "old": "        if (IsDisposed) return;\r\n",
+    "new": "        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่เปิดกล่องแจ้งเตือน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1811,
+    "old": "        _showingRemoteError = true;\r\n",
+    "new": "        _showingRemoteError = true; // กันรอบอ่านงานเปิดข้อความผิดพลาดซ้อน\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1814,
+    "old": "            Notify.ErrorModal(this, \"ST1 ส่งงานไม่สำเร็จ\",\r\n",
+    "new": "            Notify.ErrorModal(this, \"ST1 ส่งงานไม่สำเร็จ\", // แสดงเหตุที่ ST1 ส่งไม่ได้ให้คนที่ ST3 ทราบ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1820,
+    "old": "            _showingRemoteError = false;\r\n",
+    "new": "            _showingRemoteError = false; // เปิดให้แจ้งปัญหางานถัดไปได้เมื่อปิดกล่องแล้ว\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1912,
+    "old": "        var need = MarkingMethodService.MissingSteps(markingMethod, commands);\r\n",
+    "new": "        var need = MarkingMethodService.MissingSteps(markingMethod, commands); // ตรวจขั้นที่ยังขาด โดยนับประวัติให้ครบจำนวนรอบ\r\n"
+  },
+  {
+    "file": "InkjetOperator/Views/OrderListUserControl.cs",
+    "line": 1913,
+    "old": "        return new StepStatus(need.Count == 0, need);\r\n",
+    "new": "        return new StepStatus(need.Count == 0, need); // ส่งทั้งผลว่าครบหรือยังและชื่อขั้นที่ขาดให้ปุ่มจบงาน\r\n"
+  }
+]

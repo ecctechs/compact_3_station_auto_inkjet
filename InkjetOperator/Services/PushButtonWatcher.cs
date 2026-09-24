@@ -74,94 +74,94 @@ public sealed class PushButtonWatcher : IDisposable
     {
         Stop();
 
-        _settings = PushButtonSettings.Load();
-        if (!_settings.IsReady || _settings.Validate() != null) return;
+        _settings = PushButtonSettings.Load(); // อ่าน IP, พอร์ต และบิตปุ่มหน้างานที่ตั้งไว้
+        if (!_settings.IsReady || _settings.Validate() != null) return; // ค่าปุ่มยังไม่พร้อมหรือไม่ถูกต้อง จึงยังไม่เริ่มอ่าน PLC
 
-        _failures = 0;
-        _resync = true;
-        _timer.Interval = _settings.PollMs;
-        _timer.Start();
+        _failures = 0; // เริ่มนับปัญหาการอ่าน PLC ใหม่
+        _resync = true; // รอบแรกต้องจำค่าปุ่มก่อน ไม่ถือว่าปุ่มค้างคือการกดใหม่
+        _timer.Interval = _settings.PollMs; // ใช้ความถี่อ่านปุ่มตามค่าตั้ง
+        _timer.Start(); // เริ่มจับเวลาสำหรับอ่านบิตปุ่มซ้ำ
     }
 
     public void Stop()
     {
-        _timer.Stop();
-        _resync = true;
+        _timer.Stop(); // หยุดอ่านปุ่มเมื่อหน้าไม่ต้องใช้งานแล้ว
+        _resync = true; // เมื่อกลับมาอ่าน ให้จำสถานะเริ่มต้นใหม่
     }
 
     private async Task TickAsync()
     {
         // กันอ่านซ้อน — รอบก่อนอาจยังคุยกับ PLC ไม่เสร็จ หรือคนที่รับ Pressed
         // ไปกำลังเปิดหน้าต่างค้างอยู่
-        if (_reading) return;
+        if (_reading) return; // รอบก่อนยังอ่านไม่เสร็จ จึงไม่เปิดคำขอ PLC ซ้อน
 
-        if (ShouldWatch?.Invoke() == false)
+        if (ShouldWatch?.Invoke() == false) // หน้า Order List ยังไม่พร้อมรับปุ่ม เช่น กำลังส่งเครื่อง
         {
             // ระหว่างพัก บิตอาจถูกกดและปล่อยไปแล้ว หรือยังค้างอยู่ ค่าที่จำไว้จึง
             // เชื่อไม่ได้ ต้องไปเริ่มจำใหม่ตอนกลับมา
-            _resync = true;
-            return;
+            _resync = true; // กลับมาเมื่อไรต้องอ่านค่าตั้งต้นใหม่
+            return; // พักอ่านปุ่มจนกว่าหน้ารายการพร้อม
         }
 
-        _reading = true;
+        _reading = true; // กันรอบเวลาถัดไปเข้ามาอ่านซ้อน
         try
         {
-            var (ok, on, error) = await McProtocolService.ReadBitAsync(
-                _settings.Ip, _settings.Port, _settings.Address);
+            var (ok, on, error) = await McProtocolService.ReadBitAsync( // อ่านบิตปุ่มจาก PLC ผ่าน MC Protocol
+                _settings.Ip, _settings.Port, _settings.Address); // ใช้ปลายทางและตำแหน่งบิตจากค่าตั้งหน้างาน
 
-            if (!ok)
+            if (!ok) // PLC ไม่คืนค่าบิตที่อ่านได้
             {
-                OnFailure(error);
-                return;
+                OnFailure(error); // นับการอ่านล้มเหลวและแจ้งเมื่อครบเกณฑ์
+                return; // ยังไม่มีค่าปุ่มใหม่ จึงไม่สร้างเหตุการณ์กด
             }
 
-            OnSuccess();
+            OnSuccess(); // คืนความถี่อ่านตามปกติถ้าเพิ่งเชื่อมต่อกลับมาได้
 
-            if (_resync)
+            if (_resync) // เป็นรอบเริ่มต้นหรือเพิ่งกลับจากพักอ่าน
             {
-                _lastOn = on;
-                _resync = false;
-                return;
+                _lastOn = on; // จำค่าปุ่มตอนนี้ไว้เป็นฐานเทียบ
+                _resync = false; // รอบถัดไปเริ่มตรวจการเปลี่ยนบิตได้
+                return; // จำค่าอย่างเดียวในรอบแรก ไม่ปล่อยเครื่องทันที
             }
 
-            bool rising = on && !_lastOn;
-            _lastOn = on;
+            bool rising = on && !_lastOn; // นับเป็นการกดเฉพาะตอนบิตเปลี่ยนจาก 0 เป็น 1
+            _lastOn = on; // จำค่ารอบนี้สำหรับเทียบกับรอบหน้า
 
-            if (rising) Pressed?.Invoke(this, EventArgs.Empty);
+            if (rising) Pressed?.Invoke(this, EventArgs.Empty); // ส่งเหตุการณ์ให้ Order List ไปปล่อยคิวเครื่อง
         }
         finally
         {
-            _reading = false;
+            _reading = false; // เปิดให้รอบเวลาถัดไปอ่าน PLC ได้
         }
     }
 
     private void OnFailure(string error)
     {
-        _failures++;
-        if (_failures != FailuresBeforeTrouble) return;
+        _failures++; // นับจำนวนครั้งที่อ่าน PLC ไม่สำเร็จติดกัน
+        if (_failures != FailuresBeforeTrouble) return; // ยังไม่ถึงจังหวะแจ้งปัญหา จึงไม่แจ้งซ้ำทุกรอบ
 
         // แจ้งครั้งเดียวตอนข้ามเส้น ไม่ใช่ทุกรอบ ไม่งั้นจอจะเต็มไปด้วยข้อความเดิม
-        _timer.Interval = RetryMs;
-        Trouble?.Invoke(this, error);
+        _timer.Interval = RetryMs; // ลดความถี่เป็นช่วงลองเชื่อมต่อใหม่
+        Trouble?.Invoke(this, error); // แจ้งปัญหาปุ่มให้หน้ารายการแสดง
     }
 
     private void OnSuccess()
     {
-        if (_failures == 0) return;
+        if (_failures == 0) return; // อ่านได้ต่อเนื่องอยู่แล้ว ไม่ต้องรีเซ็ตสถานะเชื่อมต่อ
 
-        bool wasTrouble = _failures >= FailuresBeforeTrouble;
-        _failures = 0;
-        _timer.Interval = _settings.PollMs;
+        bool wasTrouble = _failures >= FailuresBeforeTrouble; // จำว่าเคยแจ้งปัญหาการเชื่อมต่อไว้หรือไม่
+        _failures = 0; // อ่านได้แล้ว เริ่มนับความผิดพลาดใหม่
+        _timer.Interval = _settings.PollMs; // กลับไปใช้ความถี่อ่านตามค่าตั้ง
 
         // กลับมาแล้วต้องเริ่มจำค่าใหม่ ช่วงที่อ่านไม่ได้อาจมีคนกดไปแล้วก็ได้
-        _resync = true;
+        _resync = true; // จำค่าปุ่มใหม่ เพื่อไม่ตีความบิตช่วงสายหลุดเป็นการกด
 
-        if (wasTrouble) Trouble?.Invoke(this, null);
+        if (wasTrouble) Trouble?.Invoke(this, null); // ล้างข้อความปัญหาเมื่อกลับมาอ่าน PLC ได้แล้ว
     }
 
     public void Dispose()
     {
-        _timer.Stop();
-        _timer.Dispose();
+        _timer.Stop(); // หยุดรอบอ่าน PLC ก่อนปิดตัวฟังปุ่ม
+        _timer.Dispose(); // คืนทรัพยากรตัวจับเวลาของปุ่ม
     }
 }

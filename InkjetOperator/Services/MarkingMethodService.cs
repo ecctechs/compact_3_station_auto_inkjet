@@ -42,41 +42,41 @@ public static class MarkingMethodService
 {
     public static MarkingPlan Resolve(string? markingMethod)
     {
-        var code = Code(markingMethod);
-        var shimDigit = code.Length >= 2 ? code[0] : '0';
-        var plateDigit = code.Length >= 2 ? code[1] : '0';
+        var code = Code(markingMethod); // ทำรหัสให้เป็นรูปเดียวกันก่อนเลือกเครื่อง
+        var shimDigit = code.Length >= 2 ? code[0] : '0'; // หลักแรกคือวิธีพิมพ์ฝั่ง Shim
+        var plateDigit = code.Length >= 2 ? code[1] : '0'; // หลักที่สองคือวิธีพิมพ์ฝั่ง Plate
 
         // Shim=MK + Plate=UV ไม่มีอยู่จริงตามสเปกของสายการผลิต
-        if (shimDigit == '2' && plateDigit == '1')
-            return new MarkingPlan(true, MarkingMachine.None, MarkingMachine.None, []);
+        if (shimDigit == '2' && plateDigit == '1') // Shim ใช้ MK แต่ Plate ใช้ UV เป็นคู่ที่ไม่รองรับ
+            return new MarkingPlan(true, MarkingMachine.None, MarkingMachine.None, []); // แจ้งตัวเรียกว่าคู่นี้ไม่มีแผนให้ส่งเครื่อง
 
-        var steps = new List<string>();
+        var steps = new List<string>(); // เก็บลำดับเครื่องที่ต้องส่งตามวิธีพิมพ์
 
         // 22 = เข้าเครื่อง MK สองรอบ ไม่ใช่รอบเดียว
         //
         // รอบแรกพ่นลงเหล็ก (plate) แล้วเอาชิ้นงานออกนอกไลน์ไปติด shim จากนั้นเอากลับมา
         // พ่นรอบสองลงบน shim เป็นงานพิเศษที่ทำนาน ๆ ที แต่ถ้านับเป็นรอบเดียวเหมือนเดิม
         // โปรแกรมจะบอกว่างานจบตั้งแต่พ่น plate เสร็จ ทั้งที่ยังไม่ได้พ่น shim
-        if (shimDigit == '2' && plateDigit == '2') steps.Add("MK");
+        if (shimDigit == '2' && plateDigit == '2') steps.Add("MK"); // 22 เพิ่มรอบ MK อีกหนึ่งรอบ เพื่อแยก Plate กับ Shim
 
-        if (shimDigit == '2' || plateDigit == '2') steps.Add("MK");
-        if (plateDigit == '1') steps.Add("UV1");
-        if (shimDigit == '1') steps.Add("UV2");
+        if (shimDigit == '2' || plateDigit == '2') steps.Add("MK"); // มีฝั่งใดใช้ MK ให้เพิ่มขั้น MK
+        if (plateDigit == '1') steps.Add("UV1"); // Plate ใช้ UV ให้ส่งผ่าน UV1
+        if (shimDigit == '1') steps.Add("UV2"); // Shim ใช้ UV ให้ส่งผ่าน UV2
 
-        var plate = plateDigit switch
+        var plate = plateDigit switch // ระบุเครื่องของฝั่ง Plate สำหรับแสดงแผน
         {
-            '1' => MarkingMachine.Uv1,
-            '2' => MarkingMachine.Mk,
-            _ => MarkingMachine.None,
+            '1' => MarkingMachine.Uv1, // Plate รหัส 1 ใช้ UV1
+            '2' => MarkingMachine.Mk, // Plate รหัส 2 ใช้ MK
+            _ => MarkingMachine.None, // รหัสอื่นไม่ระบุเครื่องพิมพ์ฝั่ง Plate
         };
-        var shim = shimDigit switch
+        var shim = shimDigit switch // ระบุเครื่องของฝั่ง Shim สำหรับแสดงแผน
         {
-            '1' => MarkingMachine.Uv2,
-            '2' => MarkingMachine.Mk,
-            _ => MarkingMachine.None,
+            '1' => MarkingMachine.Uv2, // Shim รหัส 1 ใช้ UV2
+            '2' => MarkingMachine.Mk, // Shim รหัส 2 ใช้ MK
+            _ => MarkingMachine.None, // รหัสอื่นไม่ระบุเครื่องพิมพ์ฝั่ง Shim
         };
 
-        return new MarkingPlan(false, plate, shim, steps);
+        return new MarkingPlan(false, plate, shim, steps); // ส่งทั้งเครื่องแต่ละฝั่งและลำดับขั้นกลับให้หน้ารายการ
     }
 
     // ── งานไหนเป็นของสถานีไหน ──────────────────────────────
@@ -100,10 +100,10 @@ public static class MarkingMethodService
     /// </summary>
     public static bool VisibleAt(int station, string? markingMethod)
     {
-        var code = Code(markingMethod);
-        return station == StationService.St3
-            ? St3Codes.Contains(code)
-            : code != "10";
+        var code = Code(markingMethod); // เทียบรหัสหลังแปลง 3 เป็น 1 แล้ว
+        return station == StationService.St3 // แยกกฎแสดงงานของ ST3 ออกจาก ST1
+            ? St3Codes.Contains(code) // ST3 เห็นเฉพาะ 10 / 11 / 12
+            : code != "10"; // ST1 เห็นทุกงานยกเว้น 10
     }
 
     /// <summary>
@@ -125,26 +125,26 @@ public static class MarkingMethodService
         //
         // งาน 22 ต้องเข้าเครื่อง MK สองรอบ ถ้าดูแค่ "เคยส่ง MK ไหม" พอจบรอบแรก
         // ก็จะถือว่าครบแล้ว ทั้งที่ยังเหลืออีกรอบ
-        var sent = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        foreach (var command in commands ?? [])
+        var sent = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase); // นับประวัติสำเร็จแยกตามเครื่อง เพื่อรองรับ MK หลายรอบ
+        foreach (var command in commands ?? []) // อ่านประวัติส่งทั้งหมดของ Job
         {
-            if (!command.Success || command.Command == null) continue;
-            sent[command.Command] = sent.TryGetValue(command.Command, out int n) ? n + 1 : 1;
+            if (!command.Success || command.Command == null) continue; // ไม่นับคำสั่งที่ไม่สำเร็จหรือไม่มีชื่อขั้น
+            sent[command.Command] = sent.TryGetValue(command.Command, out int n) ? n + 1 : 1; // เพิ่มจำนวนครั้งที่ส่งเครื่องนี้สำเร็จ
         }
 
-        var missing = new List<string>();
-        foreach (var step in Resolve(markingMethod).Steps)
+        var missing = new List<string>(); // เก็บขั้นที่ยังขาดประวัติสำเร็จ
+        foreach (var step in Resolve(markingMethod).Steps) // เทียบประวัติกับทุกขั้นในแผน รวมชื่อเครื่องที่ซ้ำ
         {
-            if (sent.TryGetValue(step, out int left) && left > 0)
+            if (sent.TryGetValue(step, out int left) && left > 0) // ยังมีประวัติของเครื่องนี้เหลือให้จับคู่กับขั้นนี้
             {
-                sent[step] = left - 1;
-                continue;
+                sent[step] = left - 1; // ใช้ประวัติไปหนึ่งครั้ง ไม่เอาไปนับซ้ำกับรอบถัดไป
+                continue; // ขั้นนี้มีประวัติรองรับแล้ว ไปตรวจขั้นถัดไป
             }
 
-            missing.Add(step);
+            missing.Add(step); // ยังไม่มีประวัติรองรับขั้นนี้ ให้แสดงว่ายังขาด
         }
 
-        return missing;
+        return missing; // ส่งขั้นที่ยังขาดกลับไปเตือนก่อนจบงาน
     }
 
     /// <summary>
@@ -163,9 +163,9 @@ public static class MarkingMethodService
     /// (11 กับ 12 นั้น ST3 เห็นงานได้แต่กดเริ่มไม่ได้ ต้องให้ ST1 เริ่ม)
     /// </summary>
     public static bool CanStartAt(int station, string? markingMethod) =>
-        Code(markingMethod) == "10"
-            ? station == StationService.St3
-            : station == StationService.St1;
+        Code(markingMethod) == "10" // 10 เป็นงานที่เริ่มจาก UV2 อย่างเดียว
+            ? station == StationService.St3 // จึงให้เริ่มจาก ST3
+            : station == StationService.St1; // วิธีพิมพ์อื่นให้เริ่มจาก ST1
 
     /// <summary>
     /// สถานีนี้กดจบงาน marking นี้ได้ไหม
@@ -174,7 +174,7 @@ public static class MarkingMethodService
     /// ST1 เห็น 11 กับ 12 ในตารางและกดเริ่มได้ แต่คนที่รู้ว่างานจบจริงคือคนที่ ST3
     /// </summary>
     public static bool CanCompleteAt(int station, string? markingMethod) =>
-        !St3Codes.Contains(Code(markingMethod)) || station == StationService.St3;
+        !St3Codes.Contains(Code(markingMethod)) || station == StationService.St3; // งานที่ผ่าน ST3 ต้องจบที่ ST3 ส่วนรหัสอื่นไม่จำกัดด้วยกฎนี้
 
     /// <summary>
     /// รหัสในรูปมาตรฐานที่ใช้เทียบทุกกฎในไฟล์นี้ — ตัดช่องว่าง และแปลง 3 เป็น 1
@@ -190,12 +190,12 @@ public static class MarkingMethodService
     /// </summary>
     private static string Code(string? markingMethod)
     {
-        var code = (markingMethod ?? "").Trim();
-        if (code.Length < 2) return code;
+        var code = (markingMethod ?? "").Trim(); // ตัดช่องว่างของรหัสจากฐานข้อมูล
+        if (code.Length < 2) return code; // รหัสไม่ครบสองหลัก ยังไม่แปลงเลขแต่ละฝั่ง
 
-        return $"{Same(code[0])}{Same(code[1])}";
+        return $"{Same(code[0])}{Same(code[1])}"; // แปลงเลขของ Shim และ Plate ให้ใช้กฎเดียวกัน
 
-        static char Same(char digit) => digit == '3' ? '1' : digit;
+        static char Same(char digit) => digit == '3' ? '1' : digit; // รหัส 3 ใช้เส้นทางเครื่องเดียวกับรหัส 1
     }
 
     /// <summary>

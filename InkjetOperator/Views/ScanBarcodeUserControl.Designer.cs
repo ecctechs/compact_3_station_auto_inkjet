@@ -71,7 +71,7 @@ partial class ScanBarcodeUserControl
         tlpScanBarcodeRoot.Controls.Add(flpActions, 0, 7);
         tlpScanBarcodeRoot.Dock = DockStyle.Fill;
         tlpScanBarcodeRoot.Location = new Point(0, 0);
-        tlpScanBarcodeRoot.Margin = new Padding(4, 4, 4, 4);
+        tlpScanBarcodeRoot.Margin = new Padding(4);
         tlpScanBarcodeRoot.Name = "tlpScanBarcodeRoot";
         tlpScanBarcodeRoot.RowCount = 9;
         tlpScanBarcodeRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 8.04F));
@@ -124,7 +124,7 @@ partial class ScanBarcodeUserControl
         pnlBarcodeContainer.Location = new Point(611, 0);
         pnlBarcodeContainer.Margin = new Padding(0);
         pnlBarcodeContainer.Name = "pnlBarcodeContainer";
-        pnlBarcodeContainer.Padding = new Padding(24, 24, 24, 24);
+        pnlBarcodeContainer.Padding = new Padding(24);
         pnlBarcodeContainer.Radius = 24;
         pnlBarcodeContainer.Size = new Size(840, 270);
         pnlBarcodeContainer.TabIndex = 0;
@@ -135,7 +135,7 @@ partial class ScanBarcodeUserControl
         picBarcode.Dock = DockStyle.Fill;
         picBarcode.Image = (Image)resources.GetObject("picBarcode.Image");
         picBarcode.Location = new Point(29, 29);
-        picBarcode.Margin = new Padding(4, 4, 4, 4);
+        picBarcode.Margin = new Padding(4);
         picBarcode.Name = "picBarcode";
         picBarcode.Size = new Size(782, 212);
         picBarcode.SizeMode = PictureBoxSizeMode.Zoom;
@@ -169,7 +169,7 @@ partial class ScanBarcodeUserControl
         pnlOrderInformation.Location = new Point(453, 0);
         pnlOrderInformation.Margin = new Padding(0);
         pnlOrderInformation.Name = "pnlOrderInformation";
-        pnlOrderInformation.Padding = new Padding(48, 48, 48, 48);
+        pnlOrderInformation.Padding = new Padding(48);
         pnlOrderInformation.Radius = 22;
         pnlOrderInformation.Size = new Size(1154, 580);
         pnlOrderInformation.TabIndex = 0;
@@ -190,7 +190,7 @@ partial class ScanBarcodeUserControl
         tlpOrderInformation.Controls.Add(tlpQty, 1, 3);
         tlpOrderInformation.Dock = DockStyle.Fill;
         tlpOrderInformation.Location = new Point(54, 54);
-        tlpOrderInformation.Margin = new Padding(4, 4, 4, 4);
+        tlpOrderInformation.Margin = new Padding(4);
         tlpOrderInformation.Name = "tlpOrderInformation";
         tlpOrderInformation.RowCount = 4;
         tlpOrderInformation.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
@@ -344,6 +344,7 @@ partial class ScanBarcodeUserControl
         btnEditQty.Size = new Size(112, 74);
         btnEditQty.TabIndex = 1;
         btnEditQty.Type = AntdUI.TTypeMini.Primary;
+        btnEditQty.Click += btnEditQty_Click_1;
         // 
         // flpActions
         // 
@@ -391,7 +392,7 @@ partial class ScanBarcodeUserControl
         AutoScaleDimensions = new SizeF(144F, 144F);
         AutoScaleMode = AutoScaleMode.Dpi;
         Controls.Add(tlpScanBarcodeRoot);
-        Margin = new Padding(4, 4, 4, 4);
+        Margin = new Padding(4);
         MinimumSize = new Size(1230, 1020);
         Name = "ScanBarcodeUserControl";
         Size = new Size(2062, 1612);

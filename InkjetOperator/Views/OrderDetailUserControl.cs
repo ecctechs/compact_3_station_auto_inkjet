@@ -1000,10 +1000,10 @@ public partial class OrderDetailUserControl : UserControl
     /// </summary>
     private string? NextRemoteStep()
     {
-        if (_currentStep <= 0 || _currentStep >= _sendSteps.Count) return null;
-        if (!string.Equals(_jobStatus, "Process", StringComparison.OrdinalIgnoreCase)) return null;
+        if (_currentStep <= 0 || _currentStep >= _sendSteps.Count) return null; // ต้องผ่านขั้นแรกแล้ว และยังมีขั้นถัดไปค้างอยู่
+        if (!string.Equals(_jobStatus, "Process", StringComparison.OrdinalIgnoreCase)) return null; // ฝากส่งขั้นถัดไปได้เฉพาะงานที่กำลังผลิต
 
-        return _sendSteps[_currentStep];
+        return _sendSteps[_currentStep]; // ส่งชื่อเครื่องในขั้นถัดไปให้ปุ่มฝากส่ง
     }
 
     /// <summary>
@@ -1014,10 +1014,10 @@ public partial class OrderDetailUserControl : UserControl
     /// </summary>
     private void RequestRemoteStart()
     {
-        if (NextRemoteStep() is not string step) return;
+        if (NextRemoteStep() is not string step) return; // ไม่มีขั้นถัดไปที่ฝากส่งได้ จึงไม่ส่ง event
 
-        RemoteStartRequested?.Invoke(this, step);
-        CloseRequested?.Invoke(this, EventArgs.Empty);
+        RemoteStartRequested?.Invoke(this, step); // ฝากชื่อขั้นให้ OrderDetailDialog รับไว้
+        CloseRequested?.Invoke(this, EventArgs.Empty); // ปิด Detail เพื่อให้ Order List เปิดกล่องยืนยันและรอผล
     }
 
     private void ApplyStepButtons()
@@ -1027,7 +1027,7 @@ public partial class OrderDetailUserControl : UserControl
         //
         // โชว์เฉพาะเครื่องของ ST3 เพราะขั้นที่สองของงานสองสถานีเป็นของ ST3 ที่เดียว
         // (เปิดให้โหมดทดสอบเห็นด้วย ไว้ลองก่อนเอาไปเปิดใช้จริงที่หน้างาน)
-        var remoteStep = NextRemoteStep();
+        var remoteStep = NextRemoteStep(); // ตรวจว่างานมีขั้นถัดไปให้ ST1 ส่งหรือไม่
 
         // เก็บเป็นตัวแปรแล้วใช้ค่านั้นทั้งสองที่ ห้ามอ่าน .Visible กลับมาใช้ต่อ
         //
@@ -1035,13 +1035,13 @@ public partial class OrderDetailUserControl : UserControl
         // ไม่ใช่ค่าที่เพิ่งเซ็ตลงไป และหน้านี้ถูกเติมข้อมูลตั้งแต่ก่อนกล่องจะ ShowDialog
         // (OrderDetailDialog.LoadDetail มาก่อน dlg.ShowDialog เสมอ) ผลคือ Enabled
         // ถูกตั้งเป็น false ค้างไว้ พอกล่องเปิดขึ้นมาปุ่มจึงโผล่มาแบบกดไม่ได้
-        bool showRemote = remoteStep != null
-            && StationService.ManualRemoteSendEnabled
-            && (StationService.IsSt3 || _isDevMode);
+        bool showRemote = remoteStep != null // มีขั้นถัดไปจึงพิจารณาแสดงปุ่มสำรอง
+            && StationService.ManualRemoteSendEnabled // ต้องเปิดตัวเลือกฝากส่งด้วยมือไว้ก่อน
+            && (StationService.IsSt3 || _isDevMode); // ให้เห็นเฉพาะ ST3 หรือโหมดทดสอบ
 
-        btnRemoteSend.Visible = showRemote;
-        btnRemoteSend.Enabled = showRemote;
-        if (remoteStep != null) btnRemoteSend.Text = $"ขอให้ ST1 ส่ง {remoteStep}";
+        btnRemoteSend.Visible = showRemote; // แสดงปุ่มตามเงื่อนไขที่ตรวจไว้
+        btnRemoteSend.Enabled = showRemote; // เปิดให้กดด้วยเงื่อนไขเดียวกัน ไม่อ่าน Visible กลับมา
+        if (remoteStep != null) btnRemoteSend.Text = $"ขอให้ ST1 ส่ง {remoteStep}"; // ใส่ชื่อเครื่องที่ขอให้ ST1 ส่งบนปุ่ม
 
         // ปุ่มส่งมือเหลือไว้เฉพาะโหมดทดสอบ
         //

@@ -457,4 +457,9 @@ public partial class ScanBarcodeUserControl : UserControl
 
     private static void ShowError(string msg) => // แสดงข้อผิดพลาดของ Flow สแกน
         Notify.ErrorModal(null, "Error", msg); // เปิดกล่องข้อผิดพลาด
+
+    private void btnEditQty_Click_1(object sender, EventArgs e)
+    {
+
+    }
 }
