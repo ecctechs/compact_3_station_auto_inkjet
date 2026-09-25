@@ -207,6 +207,19 @@ public partial class PlcSettingUserControl : UserControl
         RebindTable();
     }
 
+    /// <summary>
+    /// แถวตั้งต้นตอนตารางยังว่าง — ต้องตรงกับค่าที่ส่งจริงใน PlcOrderService
+    ///
+    /// <para>
+    /// เดิมมี 11 แถวตามผังของโปรแกรมเก่า คือหัวละ 4 ช่อง (Position, PostAct, Delay,
+    /// Trigger) และสายพาน 3 ตัว แต่ Position กับ Trigger ไม่เคยถูกส่งค่าอื่นนอกจาก 0
+    /// และหน้างานมีสายพานเดียว ตอนนี้จึงเหลือ 5 แถวที่ใช้จริง
+    /// </para>
+    /// <para>
+    /// ถ้าเพิ่มแถวที่นี่ ต้องไปเพิ่มใน PlcOrderService.BuildPlanAsync ด้วย ไม่งั้นแถวนั้น
+    /// จะโผล่บนหน้าจอแต่ไม่มีใครส่งค่าให้เลย
+    /// </para>
+    /// </summary>
     private static List<PlcRow> DefaultRows()
     {
         var mk1 = CustomSettingsManager.Read("MK058_NAME", "MK-058");
@@ -214,17 +227,11 @@ public partial class PlcSettingUserControl : UserControl
 
         return
         [
-            new PlcRow { AddressStart = "0",  AddressStop = "0",  PlcStart = "D0",  PlcStop = "D0",  ListName = $"{mk1} Position",  DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
             new PlcRow { AddressStart = "1",  AddressStop = "1",  PlcStart = "D1",  PlcStop = "D1",  ListName = $"{mk1} PostAct",   DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
             new PlcRow { AddressStart = "2",  AddressStop = "2",  PlcStart = "D2",  PlcStop = "D2",  ListName = $"{mk1} Delay",     DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
-            new PlcRow { AddressStart = "3",  AddressStop = "3",  PlcStart = "D3",  PlcStop = "D3",  ListName = $"{mk1} Trigger",   DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
-            new PlcRow { AddressStart = "5",  AddressStop = "5",  PlcStart = "D5",  PlcStop = "D5",  ListName = $"{mk2} Position",  DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
             new PlcRow { AddressStart = "6",  AddressStop = "6",  PlcStart = "D6",  PlcStop = "D6",  ListName = $"{mk2} PostAct",   DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
             new PlcRow { AddressStart = "7",  AddressStop = "7",  PlcStart = "D7",  PlcStop = "D7",  ListName = $"{mk2} Delay",     DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
-            new PlcRow { AddressStart = "8",  AddressStop = "8",  PlcStart = "D8",  PlcStop = "D8",  ListName = $"{mk2} Trigger",   DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
-            new PlcRow { AddressStart = "10", AddressStop = "10", PlcStart = "D10", PlcStop = "D10", ListName = "Conveyor Speed 1",  DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
-            new PlcRow { AddressStart = "11", AddressStop = "11", PlcStart = "D11", PlcStop = "D11", ListName = "Conveyor Speed 2",  DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
-            new PlcRow { AddressStart = "12", AddressStop = "12", PlcStart = "D12", PlcStop = "D12", ListName = "Conveyor Speed 3",  DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
+            new PlcRow { AddressStart = "10", AddressStop = "10", PlcStart = "D10", PlcStop = "D10", ListName = "Conveyor Speed 1", DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
         ];
     }
 
