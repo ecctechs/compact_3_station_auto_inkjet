@@ -1249,6 +1249,10 @@ public partial class OrderListUserControl : UserControl
         var lines = new List<Notify.ResultLine>();
         bool anySent = false;
 
+        // เครื่องไม่ว่าง = เข้าคิวจริง ไม่ใช่ส่งไม่ผ่าน ต้องแยกจากกันให้ชัด
+        // ไม่งั้นการจองที่ถูกต้องจะถูกล้างทิ้งตอนจบ แล้วงานจะหายไปจากคิวเงียบ ๆ
+        bool anyQueued = false;
+
         foreach (var machine in machines)
         {
             // ขอเฉพาะแถวของงานใบนี้ — กดเริ่มงานใบไหนต้องได้ใบนั้น ห้ามไปหยิบ
@@ -1265,6 +1269,7 @@ public partial class OrderListUserControl : UserControl
             if (claim?.Claimed == null)
             {
                 // เครื่องไม่ว่าง — ไม่ใช่ความผิดพลาด แถวยังรออยู่ในคิวเหมือนเดิม
+                anyQueued = true;
                 lines.Add(Notify.Careful($"{machine}: เครื่องไม่ว่าง เข้าคิวรอไว้แล้ว"));
                 continue;
             }
@@ -1339,7 +1344,10 @@ public partial class OrderListUserControl : UserControl
         //
         // งานที่พิมพ์ไปแล้วบางเครื่องไม่เข้าเงื่อนไขนี้ การจองของเครื่องที่เหลือต้องอยู่ต่อ
         // ไม่งั้นขั้นที่ยังไม่ได้ทำจะหายไปจากคิวโดยไม่มีทางเอากลับมา
-        if (!anySent && !PrintedBefore(resolved))
+        //
+        // เครื่องไม่ว่างก็ไม่เข้าเงื่อนไขนี้เหมือนกัน นั่นคือการเข้าคิวที่ถูกต้อง งานต้อง
+        // รออยู่ในคิวจนกว่าจะมีคนกดปุ่มหน้างานปล่อยเครื่อง ไม่ใช่โดนล้างทิ้ง
+        if (!anySent && !anyQueued && !PrintedBefore(resolved))
         {
             await _api.ClearMachineQueueAsync(jobId);
             if (IsDisposed) return;
