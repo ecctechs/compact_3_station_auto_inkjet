@@ -47,6 +47,7 @@ partial class OrderListUserControl
         lblQueueUv1 = new AntdUI.Label();
         lblQueueUv2 = new AntdUI.Label();
         btnSimPushMk = new AntdUI.Button();
+        btnSimPushDelay = new AntdUI.Button();
         btnSimPushUv1 = new AntdUI.Button();
         btnSimPushUv2 = new AntdUI.Button();
         tblOrders = new AntdUI.Table();
@@ -289,12 +290,15 @@ partial class OrderListUserControl
         tlpStationBar.Controls.Add(btnSimPushMk, 0, 2);
         tlpStationBar.Controls.Add(btnSimPushUv1, 1, 2);
         tlpStationBar.Controls.Add(btnSimPushUv2, 2, 2);
+        tlpStationBar.Controls.Add(btnSimPushDelay, 0, 3);
+        tlpStationBar.SetColumnSpan(btnSimPushDelay, 3);
         tlpStationBar.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpStationBar.Margin = new System.Windows.Forms.Padding(0, 4, 0, 0);
         tlpStationBar.Name = "tlpStationBar";
-        tlpStationBar.RowCount = 3;
+        tlpStationBar.RowCount = 4;
         tlpStationBar.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
         tlpStationBar.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
+        tlpStationBar.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
         tlpStationBar.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
         tlpStationBar.Size = new System.Drawing.Size(1282, 110);
         tlpStationBar.TabIndex = 2;
@@ -361,6 +365,22 @@ partial class OrderListUserControl
         lblQueueUv2.Size = new System.Drawing.Size(421, 28);
         lblQueueUv2.TabIndex = 5;
         lblQueueUv2.Text = "";
+        //
+        // btnSimPushDelay - จำลองการกดปุ่มหน้างานแบบหน่วงเวลา เห็นเฉพาะโหมดทดสอบ
+        //   designer ซ่อนไว้เป็นค่าตั้งต้น โค้ดเป็นที่เดียวที่เปิดให้เห็น
+        //
+        btnSimPushDelay.BorderWidth = 2F;
+        btnSimPushDelay.DefaultBorderColor = System.Drawing.Color.FromArgb(217, 119, 6);
+        btnSimPushDelay.Dock = System.Windows.Forms.DockStyle.Top;
+        btnSimPushDelay.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        btnSimPushDelay.ForeColor = System.Drawing.Color.FromArgb(217, 119, 6);
+        btnSimPushDelay.Margin = new System.Windows.Forms.Padding(3, 4, 3, 0);
+        btnSimPushDelay.Name = "btnSimPushDelay";
+        btnSimPushDelay.Radius = 8;
+        btnSimPushDelay.TabIndex = 9;
+        btnSimPushDelay.Text = "จำลองกดปุ่มหน้างาน อีก 5 วินาที";
+        btnSimPushDelay.Type = AntdUI.TTypeMini.Default;
+        btnSimPushDelay.Visible = false;
         //
         // btnSimPushMk
         //
@@ -730,6 +750,7 @@ partial class OrderListUserControl
     private AntdUI.Label lblQueueUv1;
     private AntdUI.Label lblQueueUv2;
     private AntdUI.Button btnSimPushMk;
+    private AntdUI.Button btnSimPushDelay;
     private AntdUI.Button btnSimPushUv1;
     private AntdUI.Button btnSimPushUv2;
     private AntdUI.Table tblOrders;

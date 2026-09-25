@@ -213,10 +213,24 @@ public partial class OrderListUserControl : UserControl
         // ปุ่มบอกว่า "เครื่องว่างแล้ว" ซึ่งกดได้ตลอดที่เครื่องถืองานอยู่ จึงเฝ้าไว้
         // ตลอดที่หน้านี้เปิด ไม่ต้องรอว่ามีงานในคิวไหม กดตอนไม่มีอะไรถือเครื่องอยู่
         // ก็ไม่เกิดอะไรขึ้น backend คืน released เป็นค่าว่างเฉย ๆ
-        _pushButton.ShouldWatch = () =>
-            !_sending && !_pushHandling && !_showingRemoteError && Visible;
+        // เฝ้าตลอดที่หน้านี้เปิดอยู่ ไม่หยุดอ่านตอนไม่ว่าง
+        //
+        // เดิมหยุดอ่านตอนกำลังส่งงาน ผลคือการกดที่เกิดในช่วงนั้นหายไปเงียบ ๆ เพราะ
+        // พอกลับมาอ่าน ค่าแรกถูกใช้เป็นค่าตั้งต้นเฉย ๆ ไม่นับเป็นการกด คนหน้างาน
+        // กดแล้วไม่มีอะไรเกิดขึ้นและไม่รู้ว่าต้องกดใหม่
+        _pushButton.ShouldWatch = () => Visible;
+
+        // ลงมือได้ก็ต่อเมื่อหน้าจอว่างจริง ๆ
+        //
+        // นาฬิกาของ WinForms ยังเดินตอนมีกล่อง modal เปิดค้าง เพราะ WinForms รัน
+        // message loop ซ้อนให้ ถ้าไม่กันไว้ การกดปุ่มหน้างานจะไปปล่อยเครื่องและส่ง
+        // งานใบถัดไปเข้าเครื่องอยู่หลังกล่องที่ยังไม่มีใครตอบ แล้วสิ่งที่กล่องสรุปไว้
+        // ก็ไม่ตรงกับความจริงอีกต่อไป
+        _pushButton.CanAct = () =>
+            !_sending && !_pushHandling && !_showingRemoteError && !AnyDialogOpen();
 
         _pushButton.Pressed += async (_, _) => await OnPushButtonPressedAsync();
+        _pushButton.BlockedPress += (_, _) => ShowBlockedPress();
 
         // แถบสถานีเห็นทุกโหมด — คนหน้างานต้องรู้ว่าเครื่องไหนว่างและมีอะไรรออยู่
         // ส่วนปุ่มจำลองการกดปุ่มหน้างานเหลือเฉพาะโหมดทดสอบเหมือนเดิม
@@ -228,6 +242,9 @@ public partial class OrderListUserControl : UserControl
         // ที่สเกล 200% แถวป้ายสองแถวบนโตขึ้นเท่าตัวจนกินความสูงที่ล็อกไว้จนหมด
         // แถวปุ่มเลยเหลือเกือบศูนย์ ปุ่มถูกบีบจนอ่านไม่ออก
         bool dev = StationService.IsDevMode;
+
+        btnSimPushDelay.Visible = dev;
+        btnSimPushDelay.Click += (_, _) => StartDelayedPushTest();
 
         btnSimPushMk.Visible = dev;
         btnSimPushUv1.Visible = dev;
@@ -282,6 +299,71 @@ public partial class OrderListUserControl : UserControl
     /// เพราะลำดับคิวถูกกำหนดไว้ก่อนแล้วตั้งแต่ตอนกดเริ่มงาน
     /// </para>
     /// </summary>
+    /// <summary>หน่วงเวลากี่วินาทีก่อนจำลองการกดปุ่มหน้างาน</summary>
+    private const int DelayedPushSeconds = 5;
+
+    /// <summary>
+    /// จำลองการกดปุ่มหน้างานแบบหน่วงเวลา — โหมดทดสอบเท่านั้น
+    ///
+    /// <para>
+    /// ปุ่มจำลองสามปุ่มข้างบนเรียกตัวจัดการโดยตรง จึงข้ามด่านที่กันการกดตอนจอไม่ว่าง
+    /// ไปทั้งหมด และต่อให้ไม่ข้าม พอมีกล่องเปิดค้างก็กดปุ่มบนจอไม่ได้อยู่แล้ว ทดสอบ
+    /// เคส "กดปุ่มหน้างานตอนจอมีกล่องค้าง" ด้วยปุ่มพวกนั้นไม่ได้เลย
+    /// </para>
+    /// <para>
+    /// ตัวนี้หน่วงเวลาไว้ก่อน คนทดสอบจึงมีเวลาไปเปิดกล่องยืนยันให้ค้างไว้ แล้วดูว่า
+    /// พอถึงเวลาเกิดอะไรขึ้น และเดินผ่านด่านเดียวกับปุ่มจริงทุกประการ ผลที่เห็นจึง
+    /// เชื่อถือได้เท่ากับไปยืนกดปุ่มจริงที่หน้าเครื่อง
+    /// </para>
+    /// </summary>
+    private void StartDelayedPushTest()
+    {
+        Notify.Success(this, $"จะจำลองการกดปุ่มหน้างานในอีก {DelayedPushSeconds} วินาที");
+
+        var timer = new System.Windows.Forms.Timer { Interval = DelayedPushSeconds * 1000 };
+        timer.Tick += async (_, _) =>
+        {
+            timer.Stop();
+            timer.Dispose();
+            if (IsDisposed) return;
+
+            // ด่านชุดเดียวกับที่ตัวเฝ้าปุ่มจริงใช้ ไม่ได้เขียนเงื่อนไขซ้ำ
+            if (_pushButton.CanAct?.Invoke() == false)
+            {
+                ShowBlockedPress();
+                return;
+            }
+
+            await OnPushButtonPressedAsync();
+        };
+        timer.Start();
+    }
+
+    /// <summary>
+    /// มีหน้าต่างแบบ modal เปิดค้างอยู่ไหม
+    ///
+    /// <para>
+    /// ถามจากหน้าต่างที่เปิดอยู่จริง ไม่ใช้ตัวนับ <c>AntdUI.Modal.ModalCount</c> เพราะ
+    /// ตัวนับนั้นบวกก่อนเปิดแล้วลบหลังปิด ถ้ามี exception ในกล่อง บรรทัดที่ลบจะไม่ได้
+    /// ทำงานและตัวนับจะค้างอยู่ตลอดไป ปุ่มกดหน้างานก็จะตายทั้งวันโดยไม่มีใครรู้สาเหตุ
+    /// </para>
+    /// <para>
+    /// รายการนี้ Windows เป็นคนลบหน้าต่างออกให้เองตอนมันปิด ไม่ว่าจะปิดปกติหรือปิด
+    /// เพราะพัง จึงกลับมาทำงานได้เองเสมอ
+    /// </para>
+    /// </summary>
+    private static bool AnyDialogOpen() =>
+        Application.OpenForms.Cast<Form>().Any(f => f.Modal && f.Visible);
+
+    /// <summary>
+    /// บอกคนหน้างานว่าการกดไม่ผ่านเพราะจอไม่ว่าง ให้กดใหม่
+    ///
+    /// ใช้ข้อความลอย ไม่ใช่กล่องที่ต้องกดปิด เพราะตอนนี้อาจมีกล่องอื่นเปิดค้างอยู่แล้ว
+    /// การเปิดกล่องซ้อนจะยิ่งทำให้จอตันหนักกว่าเดิม
+    /// </summary>
+    private void ShowBlockedPress() =>
+        Notify.Warn(this, "มีคนกดปุ่มหน้างาน — ระบบกำลังทำงานอื่นอยู่ กรุณากดอีกครั้ง");
+
     private async Task OnPushButtonPressedAsync(string? machineOverride = null)
     {
         if (_api == null || _pushHandling || IsDisposed) return;

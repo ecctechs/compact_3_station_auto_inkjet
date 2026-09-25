@@ -1,4 +1,4 @@
-namespace InkjetOperator.Services;
+﻿namespace InkjetOperator.Services;
 
 /// <summary>
 /// เฝ้าดูบิตของปุ่มกดหน้างาน แล้วบอกเมื่อมีคนกด
@@ -52,6 +52,16 @@ public sealed class PushButtonWatcher : IDisposable
     public event EventHandler<string?>? Trouble;
 
     /// <summary>
+    /// มีคนกดปุ่มหน้างานตอนที่หน้าจอไม่ว่าง — การกดนั้นถูกทิ้ง ไม่ได้ลงมือทำอะไร
+    ///
+    /// <para>
+    /// ต้องแยกจาก <see cref="Pressed"/> เพื่อให้ผู้เรียกบอกคนหน้างานได้ว่าให้กดใหม่
+    /// ไม่งั้นการกดจะหายเงียบ ๆ แล้วคนกดยืนรอโดยไม่รู้ว่าต้องทำอะไรต่อ
+    /// </para>
+    /// </summary>
+    public event EventHandler? BlockedPress;
+
+    /// <summary>
     /// ตอนนี้ควรเฝ้าอยู่ไหม — คืน false แล้วจะข้ามรอบนั้นไปโดยไม่แตะ PLC
     ///
     /// <para>
@@ -60,6 +70,17 @@ public sealed class PushButtonWatcher : IDisposable
     /// </para>
     /// </summary>
     public Func<bool>? ShouldWatch { get; set; }
+
+    /// <summary>
+    /// ตอนนี้ลงมือได้ไหม — false = ยังอ่านบิตต่อ แต่การกดที่เจอจะถูกทิ้งและแจ้งแทน
+    ///
+    /// <para>
+    /// ต่างจาก <see cref="ShouldWatch"/> ตรงที่ตัวนั้นหยุดอ่านไปเลย ซึ่งทำให้การกด
+    /// ที่เกิดในช่วงนั้นหายไปโดยไม่มีใครรู้ ตัวนี้ยังอ่านอยู่จึงรู้ว่ามีคนกด แล้วเลือก
+    /// ที่จะไม่ลงมือ — ใช้ตอนมีกล่องเปิดค้างหรือกำลังส่งงานอยู่
+    /// </para>
+    /// </summary>
+    public Func<bool>? CanAct { get; set; }
 
     public bool Running => _timer.Enabled;
 
@@ -127,7 +148,14 @@ public sealed class PushButtonWatcher : IDisposable
             bool rising = on && !_lastOn;
             _lastOn = on;
 
-            if (rising) Pressed?.Invoke(this, EventArgs.Empty);
+            if (!rising) return;
+
+            // จอไม่ว่าง — ไม่ลงมือ แต่ต้องบอกให้รู้ว่ามีคนกด
+            //
+            // ห้ามเก็บไว้ทำทีหลัง เพราะคนกดอาจเดินออกไปแล้ว พอมีคนมาปิดกล่องอีก
+            // สิบวินาทีต่อมา เครื่องจะขยับเองตอนไม่มีใครยืนอยู่ตรงนั้น
+            if (CanAct?.Invoke() == false) BlockedPress?.Invoke(this, EventArgs.Empty);
+            else Pressed?.Invoke(this, EventArgs.Empty);
         }
         finally
         {
