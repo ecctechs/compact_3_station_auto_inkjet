@@ -416,13 +416,20 @@ public partial class OrderListUserControl : UserControl
                 Notify.Success(this, $"{machine} ว่างแล้ว · ไม่มีงานรอคิว");
                 await ResetHeadPositionAsync(machine);
             }
+
+            // รีเฟรชอยู่ในนี้ ไม่ใช่นอก try
+            //
+            // บรรทัดนี้คือตัวที่ไปหยิบงานที่เพิ่งถูกยกให้มาส่งเข้าเครื่อง ถ้าปล่อยธงกัน
+            // การกดซ้ำก่อนถึงตรงนี้ การกดครั้งที่สองจะแทรกเข้ามาได้ในช่วงที่ถาม
+            // backend อยู่สามรอบก่อนเริ่มคุยกับเครื่อง ตอนนั้น MachineBusy ก็ยังไม่ถูก
+            // จอง การกดครั้งนั้นจะไปปล่อยแถวที่เพิ่งถูกยกให้ทั้งที่ยังไม่ได้ส่ง
+            // งานนั้นจะถูกข้ามไปเฉย ๆ กดรัว ๆ ตอนมีสามคิวจึงข้ามไปคิวสุดท้ายได้
+            if (!IsDisposed) await RefreshDataAsync(force: true);
         }
         finally
         {
             _pushHandling = false;
         }
-
-        if (!IsDisposed) await RefreshDataAsync(force: true);
     }
 
     /// <summary>
