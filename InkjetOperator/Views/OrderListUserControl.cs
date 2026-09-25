@@ -1261,6 +1261,11 @@ public partial class OrderListUserControl : UserControl
         // ไม่งั้นการจองที่ถูกต้องจะถูกล้างทิ้งตอนจบ แล้วงานจะหายไปจากคิวเงียบ ๆ
         bool anyQueued = false;
 
+        // ตั้งค่าที่ PLC ก่อนป้อนงานเข้าเครื่อง — ตำแหน่งหัวพ่นกับความเร็วสายพาน
+        // ต้องพร้อมก่อนชิ้นงานวิ่งผ่าน ไม่ใช่ตั้งทีหลัง
+        await SendJobPlcAsync(resolved, lines);
+        if (IsDisposed) return;
+
         foreach (var machine in machines)
         {
             // ขอเฉพาะแถวของงานใบนี้ — กดเริ่มงานใบไหนต้องได้ใบนั้น ห้ามไปหยิบ
@@ -2431,6 +2436,55 @@ public partial class OrderListUserControl : UserControl
             + "แก้แล้วกดเริ่มงานใหม่ได้เลย");
 
         return true;
+    }
+
+    /// <summary>
+    /// ส่งค่าของงานเข้า PLC ตอนกดเริ่มงาน — ตำแหน่งหัวพ่นและความเร็วสายพาน
+    ///
+    /// <para>
+    /// ไม่ตรวจว่าช่องไหนว่าง ส่งไปตามที่มี ช่องว่างจะกลายเป็น 0 ตามเดิม ต่างจากปุ่ม
+    /// ทดสอบในหน้า Order Detail ที่ตั้งใจให้ฟ้องก่อน เพราะปุ่มนั้นคนกดเพื่อลองค่า
+    /// ส่วนตรงนี้คือทางเดินของงานจริงซึ่งต้องไม่ถูกขวาง
+    /// </para>
+    /// <para>
+    /// ส่งไม่ผ่านก็ไม่หยุดการส่งเข้าเครื่อง แค่แจ้งเป็นคำเตือนไปในกล่องสรุปผลเดียวกัน
+    /// PLC กับเครื่องพิมพ์เป็นคนละสายกัน ตัวหนึ่งล่มไม่ได้แปลว่าอีกตัวทำงานไม่ได้
+    /// </para>
+    /// <para>
+    /// เอาเฉพาะหัวที่งานนี้ใช้ หัวที่ไม่ได้ใช้ไม่ต้องไปเขียนทับค่าใน PLC
+    /// </para>
+    /// </summary>
+    private async Task SendJobPlcAsync(ResolvedJobResponse resolved, List<Notify.ResultLine> lines)
+    {
+        var plan = await PlcOrderService.BuildPlanAsync(_api, resolved.Pattern, usedHeadsOnly: true);
+        if (IsDisposed || plan.Count == 0) return;
+
+        ShowSending("กำลังตั้งค่าที่ PLC");
+        List<PlcOrderService.BlockResult> results;
+        try
+        {
+            results = await PlcOrderService.SendAsync(plan);
+        }
+        finally
+        {
+            if (!IsDisposed) ShowSending(null);
+        }
+
+        if (IsDisposed) return;
+
+        foreach (var r in results)
+        {
+            if (r.Error != null)
+            {
+                lines.Add(Notify.Careful($"PLC {r.Name} — {r.Error}"));
+                continue;
+            }
+
+            // เขียนผ่านแต่ค่าไม่เข้าก็ต้องเห็น ไม่ใช่รายงานว่าสำเร็จ
+            if (r.ReadBack != r.Value)
+                lines.Add(Notify.Careful(
+                    $"PLC {r.Name} = {r.Value} · อ่านกลับได้ {r.ReadBack?.ToString() ?? "ไม่ได้"}"));
+        }
     }
 
     /// <summary>ลำดับของเครื่องในแผน — เครื่องที่ไม่อยู่ในแผนไปต่อท้าย</summary>
