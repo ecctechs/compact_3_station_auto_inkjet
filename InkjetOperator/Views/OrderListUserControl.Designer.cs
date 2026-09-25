@@ -377,6 +377,10 @@ partial class OrderListUserControl
         btnSimPushDelay.Margin = new System.Windows.Forms.Padding(3, 4, 3, 0);
         btnSimPushDelay.Name = "btnSimPushDelay";
         btnSimPushDelay.Radius = 8;
+        // ต้องกำหนดขนาดเหมือนปุ่มอีกสามตัว ไม่งั้นแถว AutoSize วัดความสูงได้ศูนย์
+        // แล้วปุ่มจะมองไม่เห็นทั้งที่ Visible เป็น true — ค่าที่ตั้งจาก designer
+        // ถูกสเกลตาม DPI ให้เอง ต่างจากค่าที่เขียนทับจากโค้ด
+        btnSimPushDelay.Size = new System.Drawing.Size(421, 40);
         btnSimPushDelay.TabIndex = 9;
         btnSimPushDelay.Text = "จำลองกดปุ่มหน้างาน อีก 5 วินาที";
         btnSimPushDelay.Type = AntdUI.TTypeMini.Default;
