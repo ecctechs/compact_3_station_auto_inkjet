@@ -227,7 +227,8 @@ public partial class OrderListUserControl : UserControl
         // งานใบถัดไปเข้าเครื่องอยู่หลังกล่องที่ยังไม่มีใครตอบ แล้วสิ่งที่กล่องสรุปไว้
         // ก็ไม่ตรงกับความจริงอีกต่อไป
         _pushButton.CanAct = () =>
-            !_sending && !_pushHandling && !_showingRemoteError && !AnyDialogOpen();
+            !_sending && !_pushHandling && !_showingRemoteError
+            && !MachineBusy.Active && !AnyDialogOpen();
 
         _pushButton.Pressed += async (_, _) => await OnPushButtonPressedAsync();
         _pushButton.BlockedPress += (_, _) => ShowBlockedPress();
@@ -351,9 +352,16 @@ public partial class OrderListUserControl : UserControl
     /// รายการนี้ Windows เป็นคนลบหน้าต่างออกให้เองตอนมันปิด ไม่ว่าจะปิดปกติหรือปิด
     /// เพราะพัง จึงกลับมาทำงานได้เองเสมอ
     /// </para>
+    /// <para>
+    /// ยกเว้นหน้า Order Detail ซึ่งเป็น modal ในทางเทคนิคแต่เป็นหน้าจอในทางใช้งาน
+    /// คนเปิดค้างไว้ดูรายละเอียดหรือแก้ค่าได้เป็นสิบนาที ถ้านับรวมด้วยไลน์จะหยุด
+    /// ทั้งช่วงนั้น ส่วนกล่องยืนยันที่เด้งซ้อนขึ้นมาบนหน้านั้นยังนับตามปกติ
+    /// เพราะเป็นการตัดสินใจสั้น ๆ ที่ต้องตอบก่อนอย่างอื่นจะเดินต่อ
+    /// </para>
     /// </summary>
     private static bool AnyDialogOpen() =>
-        Application.OpenForms.Cast<Form>().Any(f => f.Modal && f.Visible);
+        Application.OpenForms.Cast<Form>().Any(f =>
+            f.Modal && f.Visible && f is not OrderDetailDialog);
 
     /// <summary>
     /// บอกคนหน้างานว่าการกดไม่ผ่านเพราะจอไม่ว่าง ให้กดใหม่
