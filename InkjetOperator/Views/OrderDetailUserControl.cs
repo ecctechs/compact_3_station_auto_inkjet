@@ -1405,7 +1405,29 @@ public partial class OrderDetailUserControl : UserControl
     /// </summary>
     private async Task TestPlcAsync()
     {
-        var plan = await PlcOrderService.BuildPlanAsync(_api, _pattern);
+        // ดึงค่าที่แก้บนจอเข้า pattern ก่อน ไม่งั้นปุ่มนี้จะส่งค่าเก่าที่โหลดมาตอนเปิดหน้า
+        //
+        // ค่าที่พิมพ์ลงช่องอยู่แค่ในคอนโทรล จะเข้ามาอยู่ใน pattern ก็ต่อเมื่อกดบันทึก
+        // คนที่แก้ค่าแล้วกดปุ่มนี้ทันทีจึงเห็นเลขเก่าในกล่องยืนยันและส่งเลขเก่าออกไป
+        // ทั้งที่ตั้งใจจะลองค่าใหม่ ซึ่งเป็นเหตุผลเดียวของปุ่มนี้
+        if (CollectEditedValues() is string invalid)
+        {
+            Notify.WarnModal(this, "ค่าที่กรอกไม่ถูกต้อง", invalid);
+            return;
+        }
+
+        // ช่องว่างของหัวที่งานใช้จริงจะกลายเป็น 0 ตอนส่ง ซึ่งที่ช่อง PostAct มีความหมาย
+        // เป็นคำสั่งเลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้น ไม่ใช่ค่ากลาง ๆ
+        if (PlcOrderService.UnsendableReason(_pattern) is string blank)
+        {
+            Notify.WarnModal(this, "ส่งเข้า PLC ไม่ได้",
+                blank + Environment.NewLine + Environment.NewLine
+                + "กรอกค่าให้ครบแล้วลองใหม่");
+            return;
+        }
+
+        // เอาเฉพาะหัวที่งานนี้ใช้ หัวที่ไม่ได้ใช้ไม่ต้องไปเขียนค่าทับใน PLC
+        var plan = await PlcOrderService.BuildPlanAsync(_api, _pattern, usedHeadsOnly: true);
         if (IsDisposed) return;
 
         if (plan.Count == 0)

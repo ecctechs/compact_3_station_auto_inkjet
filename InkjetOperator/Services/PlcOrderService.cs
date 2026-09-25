@@ -36,7 +36,12 @@ public static class PlcOrderService
     /// ก่อนส่งจริง แถวไหนหาไม่เจอในตาราง map จะได้ <c>Address = null</c> กลับไป
     /// </para>
     /// </summary>
-    public static async Task<List<PlcField>> BuildPlanAsync(ApiClient? api, PatternDetail? pattern)
+    /// <param name="usedHeadsOnly">
+    /// true = ข้ามหัวพ่นที่งานนี้ไม่ได้ใช้ ใช้ตอนจะส่งจริง · false = เอาครบทุกช่อง
+    /// ใช้ตอนติดป้าย address บนหน้าจอ ซึ่งต้องเห็นทุกช่องแม้ช่องที่งานนี้ไม่ได้ใช้
+    /// </param>
+    public static async Task<List<PlcField>> BuildPlanAsync(
+        ApiClient? api, PatternDetail? pattern, bool usedHeadsOnly = false)
     {
         var map = api == null
             ? new List<PlcRegisterMap>()
@@ -48,8 +53,10 @@ public static class PlcOrderService
         var speeds = pattern?.ConveyorSpeeds;
 
         var fields = new List<PlcField>();
-        AddServo(fields, map, mk1, Servo(pattern, 1));
-        AddServo(fields, map, mk2, Servo(pattern, 2));
+        if (!usedHeadsOnly || HasProgram(Inkjet(pattern, 1)))
+            AddServo(fields, map, mk1, Servo(pattern, 1));
+        if (!usedHeadsOnly || HasProgram(Inkjet(pattern, 2)))
+            AddServo(fields, map, mk2, Servo(pattern, 2));
 
         // สายพานตัวเดียว — ตาราง register map เหลือ Conveyor Speed 1 แถวเดียว
         // โปรแกรมเดิมส่งสามตัวรวดเดียว (D10-D12) แต่ของใหม่ตกลงกันว่าเหลือตัวแรก
@@ -177,6 +184,46 @@ public static class PlcOrderService
             string.Equals(r.ListName?.Trim(), listName, StringComparison.OrdinalIgnoreCase));
 
         fields.Add(new PlcField(label, listName, row?.AddressStart, value));
+    }
+
+    /// <summary>งานนี้ใช้หัวพ่นตัวนี้จริงไหม — กฎเดียวกับฝั่งที่ส่งเข้าเครื่อง MK</summary>
+    private static bool HasProgram(InkjetConfigDto? config) =>
+        config != null
+        && (config.ProgramNumber is > 0 || !string.IsNullOrWhiteSpace(config.ProgramName));
+
+    /// <summary>
+    /// เหตุผลที่ยังส่งเข้า PLC ไม่ได้ — null เมื่อส่งได้
+    ///
+    /// <para>
+    /// หัวที่งานนี้ใช้จริงต้องมีทั้ง Servo Post Act. และ Delay ช่องว่างจะถูกแปลงเป็น 0
+    /// ก่อนส่ง ซึ่งที่ช่อง PostAct เลข 0 ไม่ใช่ค่ากลาง ๆ มันคือค่าเดียวกับที่ใช้สั่งเลื่อน
+    /// หัวพิมพ์กลับตำแหน่งเริ่มต้น ปลายทางจึงแยกไม่ออกว่า 0 นี้มาจาก "ตั้งใจให้กลับบ้าน"
+    /// หรือมาจาก "ไม่มีค่าแล้วระบบเติมให้"
+    /// </para>
+    /// <para>
+    /// หัวที่งานไม่ได้ใช้ไม่ต้องมีค่าพวกนี้ เพราะไม่ถูกส่งอยู่แล้ว
+    /// </para>
+    /// </summary>
+    public static string? UnsendableReason(PatternDetail? pattern)
+    {
+        var names = new[]
+        {
+            (Ordinal: 1, Name: CustomSettingsManager.Read("MK058_NAME", "MK-058")),
+            (Ordinal: 2, Name: CustomSettingsManager.Read("MK059_NAME", "MK-059")),
+        };
+
+        foreach (var (ordinal, name) in names)
+        {
+            if (!HasProgram(Inkjet(pattern, ordinal))) continue;
+
+            var servo = Servo(pattern, ordinal);
+            if (servo?.PostAct == null)
+                return $"{name}: ยังไม่ได้กรอก Servo Post Act.";
+            if (servo.Delay == null)
+                return $"{name}: ยังไม่ได้กรอก Delay (mm.)";
+        }
+
+        return null;
     }
 
     private static ServoConfigDto? Servo(PatternDetail? pattern, int ordinal) =>
