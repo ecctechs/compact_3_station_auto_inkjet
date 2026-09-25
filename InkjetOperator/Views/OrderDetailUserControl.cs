@@ -68,6 +68,7 @@ public partial class OrderDetailUserControl : UserControl
     {
         InitializeComponent();
         ConfigureColumns();
+        ConfigureNumericInputs();
 
         var rawLevel = CustomSettingsManager.Read("MENU_LEVEL", "1");
         _isDevMode = int.TryParse(rawLevel, out var lvl) && lvl == 99;
@@ -154,6 +155,36 @@ public partial class OrderDetailUserControl : UserControl
         // ส่วนอื่นของฝั่ง UV ยังล็อกไว้เหมือนเดิม
         tblUv1Texts.EditMode = AntdUI.TEditMode.Click;
         tblUv2Texts.EditMode = AntdUI.TEditMode.Click;
+
+        // X Y Size Scale เป็นตัวเลขล้วน ส่วนช่อง Text ของบล็อกและของ UV พิมพ์อะไรก็ได้
+        NumericInput.DigitsOnlyColumns(tblMk1Blocks, "X", "Y", "Size", "Scale");
+        NumericInput.DigitsOnlyColumns(tblMk2Blocks, "X", "Y", "Size", "Scale");
+    }
+
+    /// <summary>
+    /// ช่องที่รับได้แต่ตัวเลข — ผูกครั้งเดียวตอนสร้างหน้า
+    ///
+    /// <para>
+    /// Width Height Trigger Delay และความเร็วสายพาน เก็บเป็นจำนวนเต็ม ส่วน
+    /// Servo Post Act. กับ Delay เก็บเป็นทศนิยม จึงยอมให้ใส่จุดได้จุดเดียว
+    /// </para>
+    /// <para>
+    /// ค่า IAI ทั้งหกช่องเป็นจำนวนเต็มมิลลิเมตร ปุ่ม Send กับ Upload ตรวจซ้ำอยู่แล้ว
+    /// ตรงนี้กันไม่ให้พิมพ์ผิดตั้งแต่แรกเฉย ๆ
+    /// </para>
+    /// </summary>
+    private void ConfigureNumericInputs()
+    {
+        NumericInput.DigitsOnly(
+            txtMk1Width, txtMk1Height, txtMk1Trigger,
+            txtMk2Width, txtMk2Height, txtMk2Trigger,
+            txtConveyor1, txtConveyor2, txtConveyor3,
+            txtIaiAdj1Value, txtIaiAdj1Z1Value, txtIaiAdj1Z2Value,
+            txtIaiAdj2Value, txtIaiAdj2Z1Value, txtIaiAdj2Z2Value);
+
+        NumericInput.DecimalOnly(
+            txtMk1PosAct, txtMk1Delay,
+            txtMk2PosAct, txtMk2Delay);
     }
 
     private static AntdUI.ColumnCollection BuildBlockColumns() =>
