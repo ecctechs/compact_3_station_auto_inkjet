@@ -111,7 +111,8 @@ public static class JobSendService
     public static async Task<MkSendResult> SendMkAsync(PatternDetail pattern)
     {
         // กันไฟสถานะตามหน้าจอไม่ให้เปิดซ็อกเก็ตไปแย่งคิวเครื่องระหว่างส่งงานจริง
-        using var busy = MachineBusy.Hold();
+        // บอกชื่อเครื่องไปด้วย เพื่อให้ปุ่มกดหน้างานของเครื่องอื่นไม่ถูกขวางไปด้วย
+        using var busy = MachineBusy.Hold("MK");
 
         var machines = new List<MkMachineResult>();
         bool anySent = false;
@@ -510,9 +511,10 @@ public static class JobSendService
         IWin32Window? owner, int uvNumber, List<UvJobDataDto> uvData,
         string? forcedProgram = null)
     {
-        using var busy = MachineBusy.Hold();
-
         string stepName = uvNumber == 1 ? "UV1" : "UV2";
+
+        using var busy = MachineBusy.Hold(stepName);
+
         string table = uvNumber == 1 ? "MK063" : "MK067";
 
         var uvName = uvNumber == 1

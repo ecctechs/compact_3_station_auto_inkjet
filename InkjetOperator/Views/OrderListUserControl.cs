@@ -230,10 +230,9 @@ public partial class OrderListUserControl : UserControl
         // อย่างแย่สุดคืองานเข้าคิวแทนที่จะส่งทันที ซึ่งเป็นความสับสนไม่ใช่ความเสียหาย
         // และการกันไว้มีราคาคือถ้ามีคนเปิดกล่องค้างแล้วเดินหนี ไลน์จะหยุดทั้งช่วงนั้น
         //
-        // กล่องเลือกรุ่นย่อย UV ที่เปิดจากในตัวส่งงานยังบล็อกอยู่ เพราะช่วงนั้นจอง
-        // MachineBusy ไว้ ไม่ได้อาศัยเงื่อนไขเรื่องกล่อง
-        _pushButton.CanAct = () =>
-            !_sending && !_pushHandling && !_showingRemoteError && !MachineBusy.Active;
+        // กล่องเลือกรุ่นย่อย UV ที่เปิดจากในตัวส่งงานยังบล็อกเครื่องนั้นอยู่ เพราะช่วงนั้น
+        // จอง MachineBusy ของ UV ไว้ ไม่ได้อาศัยเงื่อนไขเรื่องกล่อง
+        _pushButton.CanAct = () => CanReleaseNow(MachineOfThisStation());
 
         _pushButton.Pressed += async (_, _) => await OnPushButtonPressedAsync();
         _pushButton.BlockedPress += (_, _) => ShowBlockedPress();
@@ -343,7 +342,8 @@ public partial class OrderListUserControl : UserControl
             if (IsDisposed) return;
 
             // ด่านชุดเดียวกับที่ตัวเฝ้าปุ่มจริงใช้ ไม่ได้เขียนเงื่อนไขซ้ำ
-            if (_pushButton.CanAct?.Invoke() == false)
+            // ถามด้วยชื่อเครื่องของปุ่มนี้ ไม่ใช่เครื่องของสถานีที่เปิดโปรแกรมอยู่
+            if (!CanReleaseNow(machine))
             {
                 ShowBlockedPress();
                 return;
@@ -353,6 +353,22 @@ public partial class OrderListUserControl : UserControl
         };
         timer.Start();
     }
+
+    /// <summary>
+    /// ปล่อยเครื่องนี้ตอนนี้ได้ไหม — false = กำลังคุยกับเครื่องตัวนี้อยู่
+    ///
+    /// <para>
+    /// ดูรายเครื่อง ไม่ใช่ธงกลาง การส่งงานเข้า MK ไม่มีเหตุให้ขวางการปล่อย UV2
+    /// คนละสายคนละพอร์ต กดพร้อมกันได้ เดิมใช้ธงกลางจึงขวางกันหมดทั้งที่ไม่เกี่ยวกัน
+    /// </para>
+    /// <para>
+    /// ที่ต้องกันคือการแทรกกลางการส่งของ<b>เครื่องเดียวกัน</b> ซึ่งจะทำให้แถวคิวของงาน
+    /// ที่กำลังถูกส่งถูกปิดทิ้งกลางทาง แล้วโปรแกรมของใบถัดไปถูกเขียนทับลงหัวพ่นที่
+    /// เพิ่งรับงานแรกไป
+    /// </para>
+    /// </summary>
+    private bool CanReleaseNow(string machine) =>
+        !_pushHandling && !_showingRemoteError && !MachineBusy.IsBusy(machine);
 
     /// <summary>
     /// บอกคนหน้างานว่าการกดไม่ผ่านเพราะจอไม่ว่าง ให้กดใหม่
