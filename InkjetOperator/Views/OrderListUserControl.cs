@@ -244,8 +244,13 @@ public partial class OrderListUserControl : UserControl
         // แถวปุ่มเลยเหลือเกือบศูนย์ ปุ่มถูกบีบจนอ่านไม่ออก
         bool dev = StationService.IsDevMode;
 
-        btnSimPushDelay.Visible = dev;
-        btnSimPushDelay.Click += (_, _) => StartDelayedPushTest();
+        btnSimDelayMk.Visible = dev;
+        btnSimDelayUv1.Visible = dev;
+        btnSimDelayUv2.Visible = dev;
+
+        btnSimDelayMk.Click += (_, _) => StartDelayedPushTest("MK");
+        btnSimDelayUv1.Click += (_, _) => StartDelayedPushTest("UV1");
+        btnSimDelayUv2.Click += (_, _) => StartDelayedPushTest("UV2");
 
         btnSimPushMk.Visible = dev;
         btnSimPushUv1.Visible = dev;
@@ -316,10 +321,14 @@ public partial class OrderListUserControl : UserControl
     /// พอถึงเวลาเกิดอะไรขึ้น และเดินผ่านด่านเดียวกับปุ่มจริงทุกประการ ผลที่เห็นจึง
     /// เชื่อถือได้เท่ากับไปยืนกดปุ่มจริงที่หน้าเครื่อง
     /// </para>
+    /// <para>
+    /// แยกเป็นปุ่มละเครื่อง เพราะปุ่มจริงของแต่ละสถานีปล่อยคนละเครื่องกัน ทดสอบ
+    /// ด้วยปุ่มเดียวจะได้แค่เครื่องของสถานีที่เปิดโปรแกรมอยู่
+    /// </para>
     /// </summary>
-    private void StartDelayedPushTest()
+    private void StartDelayedPushTest(string machine)
     {
-        Notify.Success(this, $"จะจำลองการกดปุ่มหน้างานในอีก {DelayedPushSeconds} วินาที");
+        Notify.Success(this, $"จะจำลองการกดปุ่ม {machine} ในอีก {DelayedPushSeconds} วินาที");
 
         var timer = new System.Windows.Forms.Timer { Interval = DelayedPushSeconds * 1000 };
         timer.Tick += async (_, _) =>
@@ -335,7 +344,7 @@ public partial class OrderListUserControl : UserControl
                 return;
             }
 
-            await OnPushButtonPressedAsync();
+            await OnPushButtonPressedAsync(machine);
         };
         timer.Start();
     }

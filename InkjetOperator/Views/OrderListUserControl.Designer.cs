@@ -47,7 +47,9 @@ partial class OrderListUserControl
         lblQueueUv1 = new AntdUI.Label();
         lblQueueUv2 = new AntdUI.Label();
         btnSimPushMk = new AntdUI.Button();
-        btnSimPushDelay = new AntdUI.Button();
+        btnSimDelayMk = new AntdUI.Button();
+        btnSimDelayUv1 = new AntdUI.Button();
+        btnSimDelayUv2 = new AntdUI.Button();
         btnSimPushUv1 = new AntdUI.Button();
         btnSimPushUv2 = new AntdUI.Button();
         tblOrders = new AntdUI.Table();
@@ -290,8 +292,9 @@ partial class OrderListUserControl
         tlpStationBar.Controls.Add(btnSimPushMk, 0, 2);
         tlpStationBar.Controls.Add(btnSimPushUv1, 1, 2);
         tlpStationBar.Controls.Add(btnSimPushUv2, 2, 2);
-        tlpStationBar.Controls.Add(btnSimPushDelay, 0, 3);
-        tlpStationBar.SetColumnSpan(btnSimPushDelay, 3);
+        tlpStationBar.Controls.Add(btnSimDelayMk, 0, 3);
+        tlpStationBar.Controls.Add(btnSimDelayUv1, 1, 3);
+        tlpStationBar.Controls.Add(btnSimDelayUv2, 2, 3);
         tlpStationBar.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpStationBar.Margin = new System.Windows.Forms.Padding(0, 4, 0, 0);
         tlpStationBar.Name = "tlpStationBar";
@@ -366,25 +369,59 @@ partial class OrderListUserControl
         lblQueueUv2.TabIndex = 5;
         lblQueueUv2.Text = "";
         //
-        // btnSimPushDelay - จำลองการกดปุ่มหน้างานแบบหน่วงเวลา เห็นเฉพาะโหมดทดสอบ
+        // btnSimDelayMk - จำลองกดปุ่มหน้างานแบบหน่วงเวลา เห็นเฉพาะโหมดทดสอบ
         //   designer ซ่อนไว้เป็นค่าตั้งต้น โค้ดเป็นที่เดียวที่เปิดให้เห็น
         //
-        btnSimPushDelay.BorderWidth = 2F;
-        btnSimPushDelay.DefaultBorderColor = System.Drawing.Color.FromArgb(217, 119, 6);
-        btnSimPushDelay.Dock = System.Windows.Forms.DockStyle.Top;
-        btnSimPushDelay.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
-        btnSimPushDelay.ForeColor = System.Drawing.Color.FromArgb(217, 119, 6);
-        btnSimPushDelay.Margin = new System.Windows.Forms.Padding(3, 4, 3, 0);
-        btnSimPushDelay.Name = "btnSimPushDelay";
-        btnSimPushDelay.Radius = 8;
-        // ต้องกำหนดขนาดเหมือนปุ่มอีกสามตัว ไม่งั้นแถว AutoSize วัดความสูงได้ศูนย์
-        // แล้วปุ่มจะมองไม่เห็นทั้งที่ Visible เป็น true — ค่าที่ตั้งจาก designer
-        // ถูกสเกลตาม DPI ให้เอง ต่างจากค่าที่เขียนทับจากโค้ด
-        btnSimPushDelay.Size = new System.Drawing.Size(421, 40);
-        btnSimPushDelay.TabIndex = 9;
-        btnSimPushDelay.Text = "จำลองกดปุ่มหน้างาน อีก 5 วินาที";
-        btnSimPushDelay.Type = AntdUI.TTypeMini.Default;
-        btnSimPushDelay.Visible = false;
+        btnSimDelayMk.BorderWidth = 2F;
+        btnSimDelayMk.DefaultBorderColor = System.Drawing.Color.FromArgb(217, 119, 6);
+        btnSimDelayMk.Dock = System.Windows.Forms.DockStyle.Top;
+        btnSimDelayMk.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        btnSimDelayMk.ForeColor = System.Drawing.Color.FromArgb(217, 119, 6);
+        btnSimDelayMk.Margin = new System.Windows.Forms.Padding(3, 4, 3, 0);
+        btnSimDelayMk.Name = "btnSimDelayMk";
+        btnSimDelayMk.Radius = 8;
+        // ต้องกำหนดขนาด ไม่งั้นแถว AutoSize วัดความสูงได้ศูนย์แล้วปุ่มจะมองไม่เห็น
+        btnSimDelayMk.Size = new System.Drawing.Size(421, 40);
+        btnSimDelayMk.TabIndex = 9;
+        btnSimDelayMk.Text = "MK หน่วง 5 วิ";
+        btnSimDelayMk.Type = AntdUI.TTypeMini.Default;
+        btnSimDelayMk.Visible = false;
+        //
+        // btnSimDelayUv1 - จำลองกดปุ่มหน้างานแบบหน่วงเวลา เห็นเฉพาะโหมดทดสอบ
+        //   designer ซ่อนไว้เป็นค่าตั้งต้น โค้ดเป็นที่เดียวที่เปิดให้เห็น
+        //
+        btnSimDelayUv1.BorderWidth = 2F;
+        btnSimDelayUv1.DefaultBorderColor = System.Drawing.Color.FromArgb(217, 119, 6);
+        btnSimDelayUv1.Dock = System.Windows.Forms.DockStyle.Top;
+        btnSimDelayUv1.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        btnSimDelayUv1.ForeColor = System.Drawing.Color.FromArgb(217, 119, 6);
+        btnSimDelayUv1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 0);
+        btnSimDelayUv1.Name = "btnSimDelayUv1";
+        btnSimDelayUv1.Radius = 8;
+        // ต้องกำหนดขนาด ไม่งั้นแถว AutoSize วัดความสูงได้ศูนย์แล้วปุ่มจะมองไม่เห็น
+        btnSimDelayUv1.Size = new System.Drawing.Size(421, 40);
+        btnSimDelayUv1.TabIndex = 10;
+        btnSimDelayUv1.Text = "UV1 หน่วง 5 วิ";
+        btnSimDelayUv1.Type = AntdUI.TTypeMini.Default;
+        btnSimDelayUv1.Visible = false;
+        //
+        // btnSimDelayUv2 - จำลองกดปุ่มหน้างานแบบหน่วงเวลา เห็นเฉพาะโหมดทดสอบ
+        //   designer ซ่อนไว้เป็นค่าตั้งต้น โค้ดเป็นที่เดียวที่เปิดให้เห็น
+        //
+        btnSimDelayUv2.BorderWidth = 2F;
+        btnSimDelayUv2.DefaultBorderColor = System.Drawing.Color.FromArgb(217, 119, 6);
+        btnSimDelayUv2.Dock = System.Windows.Forms.DockStyle.Top;
+        btnSimDelayUv2.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        btnSimDelayUv2.ForeColor = System.Drawing.Color.FromArgb(217, 119, 6);
+        btnSimDelayUv2.Margin = new System.Windows.Forms.Padding(3, 4, 3, 0);
+        btnSimDelayUv2.Name = "btnSimDelayUv2";
+        btnSimDelayUv2.Radius = 8;
+        // ต้องกำหนดขนาด ไม่งั้นแถว AutoSize วัดความสูงได้ศูนย์แล้วปุ่มจะมองไม่เห็น
+        btnSimDelayUv2.Size = new System.Drawing.Size(421, 40);
+        btnSimDelayUv2.TabIndex = 11;
+        btnSimDelayUv2.Text = "UV2 หน่วง 5 วิ";
+        btnSimDelayUv2.Type = AntdUI.TTypeMini.Default;
+        btnSimDelayUv2.Visible = false;
         //
         // btnSimPushMk
         //
@@ -754,7 +791,9 @@ partial class OrderListUserControl
     private AntdUI.Label lblQueueUv1;
     private AntdUI.Label lblQueueUv2;
     private AntdUI.Button btnSimPushMk;
-    private AntdUI.Button btnSimPushDelay;
+    private AntdUI.Button btnSimDelayMk;
+    private AntdUI.Button btnSimDelayUv1;
+    private AntdUI.Button btnSimDelayUv2;
     private AntdUI.Button btnSimPushUv1;
     private AntdUI.Button btnSimPushUv2;
     private AntdUI.Table tblOrders;
