@@ -20,11 +20,16 @@ class MachineQueueController {
       const where = { state: { [Op.in]: [PENDING, ACTIVE] } };
       if (req.query.machine) where.machine = req.query.machine;
 
+      // เรียงชุดเดียวกับที่ release ใช้เลือกคิวถัดไป
+      //
+      // เดิมเรียงด้วย created_at ซึ่งไม่เท่ากับลำดับจริงเมื่อมีการดันแถวไปต่อท้ายคิว
+      // (เลือก "ปล่อยเครื่อง" ของงานที่เข้าเครื่องเดิมหลายรอบ จะเลื่อน queued_at)
+      // ผลคือเลข Q ที่หน้า Order Detail บอก จะไม่ตรงกับตัวที่ได้เครื่องไปจริง
       const rows = await MachineQueue.findAll({
         where,
         order: [
           ["machine", "ASC"],
-          ["created_at", "ASC"],
+          [sequelize.literal('COALESCE("queued_at", "created_at")'), "ASC"],
           ["id", "ASC"],
         ],
       });

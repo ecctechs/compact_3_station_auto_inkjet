@@ -1499,9 +1499,45 @@ public partial class OrderDetailUserControl : UserControl
                 job.Status, resolved.PlanRouting?.MarkingMethod, resolved.Commands));
         txtJobStatus.Text = OrDash(jobStatus.Text);
         txtJobStatus.ForeColor = jobStatus.Fore;
+        _baseStatusText = jobStatus.Text;
+
+        // ต่อท้ายว่างานรออะไรอยู่ ต้องถามคิวจาก backend จึงทำแยกไม่ให้หน่วงการเปิดหน้า
+        _ = ShowStageAsync(job.Id);
 
         var marking = resolved.PlanRouting?.MarkingMethod;
         txtMarkingMethod.Text = string.IsNullOrWhiteSpace(marking) ? "ไม่ระบุ" : marking;
+    }
+
+    /// <summary>คำสถานะล้วน ๆ ก่อนต่อวงเล็บ — เก็บไว้เพื่อไม่ต่อซ้ำทับของเดิม</summary>
+    private string _baseStatusText = "";
+
+    /// <summary>
+    /// ต่อท้ายสถานะว่างานนี้กำลังทำด้านไหน หรือรออยู่คิวที่เท่าไร
+    ///
+    /// <para>
+    /// เช่น <c>Working (Mark Plate)</c> · <c>Working (Mark Shim)</c> · <c>Waiting (Q2)</c>
+    /// กติกาอยู่ที่ <see cref="Services.JobStageService"/> ที่เดียว หน้า Order List
+    /// โชว์คำสถานะคำเดียวล้วน ๆ ไม่มีวงเล็บ
+    /// </para>
+    /// <para>
+    /// ถามคิวไม่ได้ก็ปล่อยคำเดิมไว้ ไม่ต้องฟ้อง — วงเล็บเป็นข้อมูลเสริม ไม่ใช่สิ่งที่
+    /// ขาดแล้วอ่านหน้านี้ไม่รู้เรื่อง
+    /// </para>
+    /// </summary>
+    private async Task ShowStageAsync(int jobId)
+    {
+        if (_api == null) return;
+
+        var (rows, error) = await _api.GetMachineQueueAsync();
+        if (error != null || IsDisposed) return;
+
+        // งานเปลี่ยนไปแล้วระหว่างรอคำตอบ อย่าเขียนทับของงานใบใหม่
+        if (jobId != _jobId) return;
+
+        var stage = Services.JobStageService.Describe(jobId, _markingMethod, rows);
+        if (stage == null || _baseStatusText.Length == 0) return;
+
+        txtJobStatus.Text = $"{_baseStatusText} ({stage})";
     }
 
     private void FillMkSection(PatternDetail pattern)

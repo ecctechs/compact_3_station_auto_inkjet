@@ -2211,39 +2211,10 @@ public partial class OrderListUserControl : UserControl
             job.Status,
             MarkingMethodService.FinishedIncomplete(
                 job.Status, job.PlanRouting?.MarkingMethod, job.Commands));
-        // งานใบเดียวแตะได้หลายเครื่อง บางเครื่องเดินแล้วบางเครื่องยังรอคิวอยู่
+        // ไม่ต่อท้ายอะไรตรงนี้ — ตารางต้องอ่านจากที่ไกล ๆ จึงเหลือคำสถานะคำเดียวล้วน ๆ
         //
-        // คำเดียวในช่องนี้บอกได้แค่ว่า "เดินอยู่" ซึ่งจริงแต่ไม่ครบ พอเห็นสองใบขึ้น
-        // Working พร้อมกันจะดูเหมือนผิด ทั้งที่ใบหนึ่งทำไปแล้วครึ่งเดียว
-        var waiting = PendingMachines(job.Id);
-        if (waiting.Count > 0)
-        {
-            // แยก "ต่อแถวรอเครื่องที่ไม่ว่าง" ออกจาก "เครื่องว่างแต่ยังไม่ได้ส่ง"
-            //
-            // สองอย่างนี้หน้าตาเหมือนกันในตารางคิว (แถวรอเหมือนกัน) แต่คนละเรื่องกัน
-            // สำหรับคนหน้างาน — อย่างแรกต้องรอให้เขากดปุ่มปล่อยเครื่อง อย่างที่สอง
-            // ไม่มีอะไรมาขวางเลย แค่ส่งไม่ผ่าน เช่นเครื่องยังไม่ได้เปิด ต้องกดใหม่
-            //
-            // ถ้าใช้คำว่า Queued กับทั้งสองอย่าง คนจะนั่งรอเครื่องที่ว่างอยู่แล้ว
-            var blocked = waiting.Where(BusyNow).ToList();
-            var idle = waiting.Where(m => !BusyNow(m)).ToList();
-
-            if (blocked.Count > 0)
-            {
-                statusLabel = string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase)
-                    ? $"{statusLabel} · wait {string.Join(" ", blocked)}"
-                    : $"Queued {string.Join(" ", blocked)}";
-            }
-
-            if (idle.Count > 0)
-                statusLabel = $"Not sent {string.Join(" ", idle)}";
-        }
-
-        // งานที่พ่น plate เสร็จแล้วและกำลังรอเอาไปติด shim นอกไลน์
-        //
-        // ช่วงนี้กินเวลานานและชิ้นงานไม่ได้อยู่ในไลน์ คนหน้าจอต้องแยกออกจากงานที่
-        // เครื่องกำลังพ่นอยู่จริง ไม่งั้นเห็นแค่ว่ากำลังทำ แล้วนึกว่าเครื่องเดินอยู่
-        if (WaitingForShim(job)) statusLabel = "Waiting shim";
+        // รายละเอียดว่างานรออะไรอยู่ (คิวที่เท่าไร หรือกำลังทำด้านไหน) ไปโชว์ที่หน้า
+        // Order Detail ซึ่งเปิดดูทีละงานอยู่แล้ว ดู JobStageService
 
         var statusText = new AntdUI.CellText(statusLabel) { Fore = statusColor };
 
@@ -2417,17 +2388,6 @@ public partial class OrderListUserControl : UserControl
     }
 
     /// <summary>
-    /// งานนี้พ่นรอบแรกเสร็จแล้วและกำลังรอติด shim อยู่นอกไลน์ไหม
-    ///
-    /// <para>
-    /// ใช้กับงานที่เข้าเครื่องเดิมสองรอบ (marking 22) รู้ได้จากแถวคิวที่ยังไม่ปล่อย
-    /// ของรอบที่สองขึ้นไป — แถวของรอบแรกจะถูกปิดไปแล้วตอนคนกดปุ่มหน้างาน
-    /// </para>
-    /// </summary>
-    private bool WaitingForShim(PrintJob job) =>
-        _queueRows.Any(r => r.PrintJobsId == job.Id && r.Round >= 2 && r.State == "active");
-
-    /// <summary>
     /// มีเครื่องที่ต่อไม่ติดไหม — true = บอกผู้ใช้ไปแล้ว ห้ามเริ่มงานนี้
     ///
     /// <para>
@@ -2502,19 +2462,6 @@ public partial class OrderListUserControl : UserControl
     /// <summary>งานนี้เคยส่งเข้าเครื่องสำเร็จมาก่อนไหม — ดูจากประวัติคำสั่งที่บันทึกไว้</summary>
     private static bool PrintedBefore(ResolvedJobResponse resolved) =>
         resolved.Commands?.Any(c => c.Success) == true;
-
-    /// <summary>เครื่องนี้มีงานถืออยู่ตอนนี้ไหม — ไม่มี แปลว่าว่าง ไม่มีอะไรขวางคิว</summary>
-    private bool BusyNow(string machine) =>
-        _queueRows.Any(r => r.State == "active"
-            && string.Equals(r.Machine, machine, StringComparison.OrdinalIgnoreCase));
-
-    /// <summary>เครื่องที่งานใบนี้จองไว้แล้วแต่ยังไม่ถึงคิว เรียงตามลำดับที่จะได้เครื่อง</summary>
-    private List<string> PendingMachines(int jobId) =>
-        _queueRows
-            .Where(r => r.PrintJobsId == jobId && r.State == "pending")
-            .OrderBy(r => r.Id)
-            .Select(r => r.Machine)
-            .ToList();
 
     /// <summary>งานที่ถือเครื่องของสถานีนี้อยู่ตอนนี้ — null เมื่อเครื่องว่างหรือยังไม่รู้คิว</summary>
     private PrintJob? JobInMyMachine()
