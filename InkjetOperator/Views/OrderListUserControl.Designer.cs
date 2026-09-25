@@ -309,6 +309,7 @@ partial class OrderListUserControl
         // lblStationMk
         //
         lblStationMk.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblStationMk.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
         lblStationMk.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
         lblStationMk.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
         lblStationMk.Name = "lblStationMk";
@@ -319,6 +320,7 @@ partial class OrderListUserControl
         // lblStationUv1
         //
         lblStationUv1.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblStationUv1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
         lblStationUv1.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
         lblStationUv1.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
         lblStationUv1.Name = "lblStationUv1";
@@ -329,6 +331,7 @@ partial class OrderListUserControl
         // lblStationUv2
         //
         lblStationUv2.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblStationUv2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
         lblStationUv2.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
         lblStationUv2.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
         lblStationUv2.Name = "lblStationUv2";
@@ -339,6 +342,7 @@ partial class OrderListUserControl
         // lblQueueMk
         //
         lblQueueMk.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblQueueMk.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
         lblQueueMk.Font = new System.Drawing.Font("Segoe UI", 10F);
         lblQueueMk.ForeColor = System.Drawing.Color.FromArgb(110, 110, 110);
         lblQueueMk.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
@@ -350,6 +354,7 @@ partial class OrderListUserControl
         // lblQueueUv1
         //
         lblQueueUv1.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblQueueUv1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
         lblQueueUv1.Font = new System.Drawing.Font("Segoe UI", 10F);
         lblQueueUv1.ForeColor = System.Drawing.Color.FromArgb(110, 110, 110);
         lblQueueUv1.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
@@ -361,6 +366,7 @@ partial class OrderListUserControl
         // lblQueueUv2
         //
         lblQueueUv2.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblQueueUv2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
         lblQueueUv2.Font = new System.Drawing.Font("Segoe UI", 10F);
         lblQueueUv2.ForeColor = System.Drawing.Color.FromArgb(110, 110, 110);
         lblQueueUv2.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
