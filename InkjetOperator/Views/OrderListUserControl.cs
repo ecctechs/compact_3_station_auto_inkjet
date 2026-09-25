@@ -961,6 +961,17 @@ public partial class OrderListUserControl : UserControl
         if (!await ConfirmStartAsync(jobId, resolved, plan, uvPicks)) return;
         if (IsDisposed) return;
 
+        // ต่อให้ครบทุกเครื่องก่อน ถึงจะจองคิวและเริ่มส่ง
+        //
+        // งานที่ใช้หลายเครื่องต้องต่อได้ครบถึงจะเริ่มได้ ถ้าเริ่มทั้งที่เครื่องหลังต่อไม่ติด
+        // เครื่องหน้าจะรับงานไปพ่นลงชิ้นงานจริงแล้ว ย้อนคืนไม่ได้ และงานจะค้างครึ่งทาง
+        // คือกดเริ่มใหม่ก็ไม่ได้เพราะสถานะเป็นกำลังผลิตไปแล้ว
+        //
+        // ตรวจหลังกล่องยืนยัน ไม่ใช่ก่อน เพราะการไล่ต่อทุกเครื่องกินเวลาหลายวินาที
+        // ไม่ควรให้คนที่แค่เปิดดูแล้วกดยกเลิกต้องรอ
+        if (await BlockedByUnreachableAsync(jobId, plan, resolved)) return;
+        if (IsDisposed) return;
+
         // จองทุกเครื่องที่แผนของงานนี้ต้องใช้ ในคราวเดียว
         //
         // จองก่อนส่งเสมอ เพราะการจองคือสิ่งที่บอกว่างานนี้มีสิทธิ์ในเครื่องไหนบ้าง
@@ -2407,6 +2418,44 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private bool WaitingForShim(PrintJob job) =>
         _queueRows.Any(r => r.PrintJobsId == job.Id && r.Round >= 2 && r.State == "active");
+
+    /// <summary>
+    /// มีเครื่องที่ต่อไม่ติดไหม — true = บอกผู้ใช้ไปแล้ว ห้ามเริ่มงานนี้
+    ///
+    /// <para>
+    /// ไม่แตะทั้งสถานะงานและคิว งานยังเป็น Waiting เหมือนไม่เคยกด พอแก้เรื่องการ
+    /// เชื่อมต่อได้แล้วกดเริ่มใหม่ได้ทันที
+    /// </para>
+    /// </summary>
+    private async Task<bool> BlockedByUnreachableAsync(
+        int jobId, MarkingPlan plan, ResolvedJobResponse resolved)
+    {
+        ShowSending($"กำลังตรวจการเชื่อมต่อ · {JobName(jobId)}");
+        List<JobSendService.UnreachableMachine> bad;
+        try
+        {
+            bad = await JobSendService.UnreachableAsync(
+                plan.Steps, resolved.Pattern, resolved.UvJobData);
+        }
+        finally
+        {
+            if (!IsDisposed) ShowSending(null);
+        }
+
+        if (bad.Count == 0) return false;
+        if (IsDisposed) return true;
+
+        Notify.ErrorModal(this, "เริ่มงานไม่ได้ — ต่อเครื่องไม่ครบ",
+            $"{JobName(jobId)} ต้องใช้ {plan.Steps.Count} ขั้นตอน และต้องต่อได้ครบทุกเครื่อง"
+            + Environment.NewLine + Environment.NewLine
+            + string.Join(Environment.NewLine, bad.Select(m => $"• {m.Name} — {m.Reason}"))
+            + Environment.NewLine + Environment.NewLine
+            + "ยังไม่มีอะไรถูกส่งเข้าเครื่อง และงานยังไม่เข้าคิว"
+            + Environment.NewLine
+            + "แก้แล้วกดเริ่มงานใหม่ได้เลย");
+
+        return true;
+    }
 
     /// <summary>ลำดับของเครื่องในแผน — เครื่องที่ไม่อยู่ในแผนไปต่อท้าย</summary>
     private static int PlanOrderOf(List<string> planSteps, string machine)

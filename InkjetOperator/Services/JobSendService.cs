@@ -168,6 +168,83 @@ public static class JobSendService
             machines);
     }
 
+    /// <summary>เครื่องที่ต่อไม่ติด พร้อมเหตุผล — ชื่อที่คนหน้างานเรียกกัน ไม่ใช่ชื่อขั้นตอน</summary>
+    public sealed record UnreachableMachine(string Name, string Reason);
+
+    /// <summary>
+    /// ลองต่อทุกเครื่องที่แผนของงานนี้ต้องใช้ ก่อนจะลงมือส่งอะไรจริง
+    ///
+    /// <para>
+    /// งานที่ใช้หลายเครื่องต้องต่อได้ครบทุกเครื่องถึงจะเริ่มได้ ถ้าปล่อยให้เริ่มทั้งที่
+    /// เครื่องหลังต่อไม่ติด เครื่องหน้าจะรับงานไปพ่นลงชิ้นงานจริงแล้ว ย้อนคืนไม่ได้
+    /// และงานจะค้างครึ่งทาง — กดเริ่มใหม่ก็ไม่ได้เพราะสถานะเป็นกำลังผลิตไปแล้ว
+    /// </para>
+    /// <para>
+    /// ตรวจเฉพาะหัวพ่นที่งานนี้ใช้จริง หัวที่ไม่มีโปรแกรมจะได้แค่คำสั่งหยุดตอนส่ง
+    /// ต่อไม่ติดก็เป็นแค่คำเตือน ไม่ใช่เหตุให้ทั้งงานเริ่มไม่ได้
+    /// </para>
+    /// </summary>
+    public static async Task<List<UnreachableMachine>> UnreachableAsync(
+        IEnumerable<string> steps, PatternDetail? pattern, List<UvJobDataDto>? uvData)
+    {
+        var bad = new List<UnreachableMachine>();
+
+        foreach (var step in steps.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            if (string.Equals(step, "MK", StringComparison.OrdinalIgnoreCase))
+            {
+                foreach (var (ipKey, nameKey, fallbackName, ordinal, _) in MkMachines)
+                {
+                    var config = pattern?.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
+                    if (!HasProgram(config)) continue;
+
+                    var name = CustomSettingsManager.Read(nameKey, fallbackName);
+                    var ip = CustomSettingsManager.Read(ipKey);
+
+                    if (string.IsNullOrWhiteSpace(ip))
+                        bad.Add(new UnreachableMachine(name, "ยังไม่ได้ตั้ง IP"));
+                    else if (!await CanConnectAsync(ip, MkPort))
+                        bad.Add(new UnreachableMachine(name, $"ต่อไม่ติด ({ip}:{MkPort})"));
+                }
+
+                continue;
+            }
+
+            int uvNumber = string.Equals(step, "UV1", StringComparison.OrdinalIgnoreCase) ? 1 : 2;
+            var uvName = UvSettingsManager.Read(
+                uvNumber == 1 ? "UV1_NAME" : "UV2_NAME", $"UV-00{uvNumber}");
+
+            // ไม่มีข้อมูลของเครื่องนี้ = ส่งไม่ได้อยู่แล้ว ไม่ต้องรอไปเจอตอนส่ง
+            if (uvData?.Any(r => string.Equals(r.Machine, step, StringComparison.OrdinalIgnoreCase)) != true)
+            {
+                bad.Add(new UnreachableMachine(uvName, $"ยังไม่มีข้อมูล {step} ของงานนี้"));
+                continue;
+            }
+
+            if (UvSettingsManager.GetCpiPath(uvNumber) == null)
+            {
+                bad.Add(new UnreachableMachine(uvName, $"ยังไม่ได้ตั้งโฟลเดอร์ UV{uvNumber} หรือไม่พบ CPI.db3"));
+                continue;
+            }
+
+            var uvIp = CustomSettingsManager.Read($"UV00{uvNumber}_IP");
+            if (string.IsNullOrWhiteSpace(uvIp))
+            {
+                bad.Add(new UnreachableMachine(uvName, $"ยังไม่ได้ตั้ง IP ของ UV{uvNumber}"));
+                continue;
+            }
+
+            int uvPort = int.TryParse(CustomSettingsManager.Read($"UV00{uvNumber}_PORT"), out var p)
+                ? p
+                : UvDefaultPort;
+
+            if (!await CanConnectAsync(uvIp, uvPort))
+                bad.Add(new UnreachableMachine(uvName, $"ต่อไม่ติด ({uvIp}:{uvPort})"));
+        }
+
+        return bad;
+    }
+
     /// <summary>งานนี้มีโปรแกรมให้เครื่องนี้จริงไหม — แถวเปล่าที่มีแต่ ordinal ไม่นับ</summary>
     private static bool HasProgram(InkjetConfigDto? config) =>
         config != null
