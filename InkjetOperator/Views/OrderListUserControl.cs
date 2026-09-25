@@ -1351,11 +1351,6 @@ public partial class OrderListUserControl : UserControl
         // ไม่งั้นการจองที่ถูกต้องจะถูกล้างทิ้งตอนจบ แล้วงานจะหายไปจากคิวเงียบ ๆ
         bool anyQueued = false;
 
-        // ตั้งค่าที่ PLC ก่อนป้อนงานเข้าเครื่อง — ตำแหน่งหัวพ่นกับความเร็วสายพาน
-        // ต้องพร้อมก่อนชิ้นงานวิ่งผ่าน ไม่ใช่ตั้งทีหลัง
-        await SendJobPlcAsync(resolved, lines);
-        if (IsDisposed) return;
-
         foreach (var machine in machines)
         {
             // ขอเฉพาะแถวของงานใบนี้ — กดเริ่มงานใบไหนต้องได้ใบนั้น ห้ามไปหยิบ
@@ -1493,11 +1488,24 @@ public partial class OrderListUserControl : UserControl
 
         if (step == "MK")
         {
-            var mk = await JobSendService.SendMkAsync(resolved.Pattern);
-            var lines = Notify.MkLines(mk.Machines);
+            // ตั้งค่าที่ PLC ตรงนี้ ไม่ใช่ตอนกดเริ่มงาน
+            //
+            // ตำแหน่งหัวพ่นกับความเร็วสายพานต้องพร้อมตอนชิ้นงานวิ่งผ่าน เครื่องที่ยัง
+            // ไม่ว่างและได้แค่เข้าคิว ชิ้นงานยังไม่ไปไหน การเขียนค่าลง PLC ตั้งแต่ตอน
+            // กดจึงเร็วเกินไป และไปทับค่าของงานที่เครื่องกำลังทำอยู่ด้วย
+            //
+            // อยู่ตรงนี้จึงได้ทุกทางเข้าเครื่อง ทั้งกดเริ่มงานตอนเครื่องว่าง กดปุ่มหน้างาน
+            // ให้คิวเดินต่อ และคำขอจาก ST3
+            var lines = new List<Notify.ResultLine>();
+            await SendJobPlcAsync(resolved, lines);
 
-            if (lines.Count == 0)
-                lines.Add(Notify.Careful("ไม่มีเครื่อง MK ที่ตั้งค่า IP ไว้"));
+            var mk = await JobSendService.SendMkAsync(resolved.Pattern);
+            var mkLines = Notify.MkLines(mk.Machines);
+
+            if (mkLines.Count == 0)
+                mkLines.Add(Notify.Careful("ไม่มีเครื่อง MK ที่ตั้งค่า IP ไว้"));
+
+            lines.AddRange(mkLines);
 
             bool ok = mk.Status == SendStatus.Ok;
 
@@ -2529,7 +2537,7 @@ public partial class OrderListUserControl : UserControl
     }
 
     /// <summary>
-    /// ส่งค่าของงานเข้า PLC ตอนกดเริ่มงาน — ตำแหน่งหัวพ่นและความเร็วสายพาน
+    /// ส่งค่าของงานเข้า PLC ตอนงานกำลังจะเข้าเครื่อง — ตำแหน่งหัวพ่นและความเร็วสายพาน
     ///
     /// <para>
     /// ไม่ตรวจว่าช่องไหนว่าง ส่งไปตามที่มี ช่องว่างจะกลายเป็น 0 ตามเดิม ต่างจากปุ่ม
@@ -2549,17 +2557,7 @@ public partial class OrderListUserControl : UserControl
         var plan = await PlcOrderService.BuildPlanAsync(_api, resolved.Pattern, usedHeadsOnly: true);
         if (IsDisposed || plan.Count == 0) return;
 
-        ShowSending("กำลังตั้งค่าที่ PLC");
-        List<PlcOrderService.BlockResult> results;
-        try
-        {
-            results = await PlcOrderService.SendAsync(plan);
-        }
-        finally
-        {
-            if (!IsDisposed) ShowSending(null);
-        }
-
+        var results = await PlcOrderService.SendAsync(plan);
         if (IsDisposed) return;
 
         foreach (var r in results)
