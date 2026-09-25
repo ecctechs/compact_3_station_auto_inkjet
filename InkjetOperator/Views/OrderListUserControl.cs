@@ -29,6 +29,8 @@ public partial class OrderListUserControl : UserControl
 
     /// <summary>กำลังดึงข้อมูลรอบ poll อยู่ — กันรอบใหม่ทับรอบเก่าตอน backend ช้า</summary>
     private bool _refreshing;
+    private readonly HashSet<int> _reportedUncertainQueues = [];
+    private bool _queueSendInProgress;
 
     /// <summary>
     /// กำลังทำงานตามปุ่มในแถวอยู่ — กันกดซ้ำระหว่างรออ่านข้อมูลจาก backend
@@ -388,10 +390,18 @@ public partial class OrderListUserControl : UserControl
         {
             var machine = machineOverride ?? MachineOfThisStation();
 
+            var (queue, queueError) = await _api.GetMachineQueueAsync();
+            if (queueError != null)
+            {
+                Notify.Warn(this, $"อ่านคิว {machine} ไม่สำเร็จ — {queueError}");
+                return;
+            }
+            var holder = queue.FirstOrDefault(r => r.Machine == machine && r.State == "active");
+
             // งานที่เข้าเครื่องเดิมหลายรอบจะถือเครื่องไว้ให้รอบถัดไปหรือไม่
             // เป็นตัวเลือกที่ Setting → ตัวเลือกหน้างาน ค่าเริ่มต้นคือถือไว้
             var (release, error) = await _api.ReleaseMachineAsync(
-                machine, StationService.HoldForNextRound);
+                machine, holder?.Id, StationService.HoldForNextRound);
             if (IsDisposed) return;
 
             if (release == null)
@@ -476,7 +486,8 @@ public partial class OrderListUserControl : UserControl
             else
             {
                 // ถึงคิวแล้วแต่ยังไม่ได้ส่ง กับส่งเข้าเครื่องไปแล้ว เป็นคนละสภาพกัน
-                var what = holder.SentAt == null ? "รอ ST1 ส่ง" : "กำลังพิมพ์";
+                var what = holder.NeedsSendReview ? "กำลังส่ง / รอตรวจสอบผล"
+                    : holder.SentAt == null ? "รอ ST1 ส่ง" : "กำลังพิมพ์";
 
                 label.Text = $"● {machine} — {JobName(holder.PrintJobsId)} · {what}";
                 label.ForeColor = WaitingColor;
@@ -632,7 +643,7 @@ public partial class OrderListUserControl : UserControl
     {
         var sb = new System.Text.StringBuilder(_queueRows.Count * 16);
         foreach (var r in _queueRows.OrderBy(r => r.Id))
-            sb.Append(r.Id).Append(r.State).Append('|');
+            sb.Append(r.Id).Append(r.State).Append(r.DispatchState).Append(r.SentAt?.Ticks).Append('|');
         return sb.ToString();
     }
 
@@ -927,9 +938,7 @@ public partial class OrderListUserControl : UserControl
                 + "ยืนยันหรือไม่?"))
             return;
 
-        // ล้างคิวก่อนเปลี่ยนสถานะ งานที่ยกเลิกต้องไม่ถือเครื่องหรือค้างคิวไว้
-        await _api.ClearMachineQueueAsync(jobId);
-
+        // Backend ล้างคิวกับเปลี่ยนสถานะใน Transaction เดียวกัน
         var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Cancel");
         if (IsDisposed) return;
 
@@ -1397,7 +1406,7 @@ public partial class OrderListUserControl : UserControl
             StepSendResult sent;
             try
             {
-                sent = await SendStepAsync(jobId, claimed.Machine, resolved, claimed.ProgramName);
+                sent = await SendQueueStepAsync(claimed, resolved);
             }
             finally
             {
@@ -1414,20 +1423,14 @@ public partial class OrderListUserControl : UserControl
             // หัวพ่นตัวเดียว พอหัวอีกตัวปิดอยู่จนสั่งหยุดไม่ได้ (ขึ้นเป็นคำเตือน) แถวคิว
             // ของ MK จะถูกคืนเป็นรอคิวทั้งที่เครื่องรับงานไปแล้วและกำลังพิมพ์อยู่
             // เครื่องจึงดูเหมือนว่าง งานใบถัดไปเลยแย่งเข้าไปเปลี่ยนโปรแกรมทับได้
-            if (sent.Sent)
+            if (sent.HeldForReview)
             {
-                // บันทึกไม่ลงต้องฟ้อง ไม่ใช่ปล่อยเงียบ — แถวจะค้างเป็น "ยังไม่ได้ส่ง"
-                // แล้วรอบ poll จะส่งซ้ำเข้าเครื่องทุก 5 วินาทีโดยไม่มีใครรู้ว่าทำไม
-                anySent = true;
-
-                var (marked, markError) = await _api.UpdateMachineQueueAsync(claimed.Id, sent: true);
-                if (!marked)
-                    lines.Add(Notify.Bad($"{claimed.Machine}: ส่งเข้าเครื่องแล้วแต่บันทึกคิวไม่ได้ · {markError}"));
+                anyQueued = true; // ห้ามล้างคิวที่อาจส่งเข้าเครื่องแล้ว
+                break;
             }
+            if (sent.Sent) anySent = true;
             else
             {
-                await _api.UpdateMachineQueueAsync(claimed.Id, state: "pending");
-
                 // ส่งเครื่องนี้ไม่ผ่าน = หยุดทั้งการกดครั้งนี้ ไม่ส่งเครื่องที่เหลือต่อ
                 //
                 // เครื่องเรียงตามลำดับที่ชิ้นงานเดินผ่าน เครื่องที่เหลือจึงเป็นเครื่องที่
@@ -1465,7 +1468,8 @@ public partial class OrderListUserControl : UserControl
         // รออยู่ในคิวจนกว่าจะมีคนกดปุ่มหน้างานปล่อยเครื่อง ไม่ใช่โดนล้างทิ้ง
         if (!anySent && !anyQueued && !PrintedBefore(resolved))
         {
-            await _api.ClearMachineQueueAsync(jobId);
+            var (cleared, error) = await _api.ClearMachineQueueAsync(jobId, onlyUnsent: true);
+            if (!cleared) lines.Add(Notify.Bad($"ล้างคิวไม่สำเร็จ: {error}"));
             if (IsDisposed) return;
         }
 
@@ -1496,14 +1500,53 @@ public partial class OrderListUserControl : UserControl
     /// ทั้งที่หัวที่ต้องทำงานรับข้อมูลครบและกำลังพิมพ์อยู่
     /// </para>
     /// </summary>
-    private sealed record StepSendResult(bool Sent, List<Notify.ResultLine> Lines);
+    private sealed record StepSendResult(bool Sent, List<Notify.ResultLine> Lines,
+        bool SafeToRetry = false, object? Detail = null, bool HeldForReview = false);
+
+    private async Task<StepSendResult> SendQueueStepAsync(MachineQueueRow row, ResolvedJobResponse resolved)
+    {
+        if (_queueSendInProgress)
+            return new(false, [Notify.Note($"{row.Machine}: รอการส่งรอบปัจจุบันจบก่อน")], HeldForReview: true);
+        _queueSendInProgress = true;
+        try
+        {
+            var token = Guid.NewGuid().ToString();
+            var (began, beginError) = await _api!.BeginQueueSendAsync(row.Id, token);
+            if (!began)
+                return new(false, [Notify.Bad($"{row.Machine}: ยังไม่ส่ง — {beginError}")], HeldForReview: true);
+
+            StepSendResult result;
+            try
+            {
+                if (IsDisposed) result = new(false, [], SafeToRetry: true);
+                else result = await SendStepAsync(row.PrintJobsId, row.Machine, resolved, row.ProgramName);
+            }
+            catch (Exception ex)
+            {
+                result = new(false, [Notify.Bad($"{row.Machine}: {ex.Message}")]);
+            }
+
+            var outcome = result.Sent ? "sent" : result.SafeToRetry ? "not_sent" : "unknown";
+            var error = string.Join(" · ", result.Lines.Where(l => l.Kind == Notify.ResultKind.Error).Select(l => l.Text));
+            if (error.Length > 4000) error = error[..4000];
+            var recorded = await _api.FinishQueueSendAsync(row.Id, token, outcome, result.Detail, error);
+            // ลองบันทึกผลซ้ำได้ แต่ห้ามเรียกส่งเครื่องซ้ำ
+            if (!recorded.ok)
+                recorded = await _api.FinishQueueSendAsync(row.Id, token, outcome, result.Detail, error);
+
+            bool held = !recorded.ok || outcome == "unknown";
+            if (held)
+                result.Lines.Add(Notify.Bad($"{row.Machine}: ถือคิว {row.Id} ไว้ตรวจผล ห้ามส่งซ้ำหรือปล่อยเครื่อง"
+                    + (recorded.ok ? "" : $" · บันทึกผลไม่ได้: {recorded.error}")));
+            return result with { HeldForReview = held };
+        }
+        finally { _queueSendInProgress = false; }
+    }
 
     private async Task<StepSendResult> SendStepAsync(
         int jobId, string step, ResolvedJobResponse resolved,
         string? forcedProgram = null)
     {
-        await _api!.UpdateJobStatusAsync(jobId, "Process");
-
         if (step == "MK")
         {
             // ตั้งค่าที่ PLC ตรงนี้ ไม่ใช่ตอนกดเริ่มงาน
@@ -1527,9 +1570,6 @@ public partial class OrderListUserControl : UserControl
 
             bool ok = mk.Status == SendStatus.Ok;
 
-            if (ok) await _api.SaveSendStepAsync(jobId, "MK");
-            else await UndoStartedStatusAsync(jobId, resolved);
-
             return new StepSendResult(ok, lines);
         }
 
@@ -1538,18 +1578,16 @@ public partial class OrderListUserControl : UserControl
 
         if (uv.Status == SendStatus.Ok)
         {
-            await _api.SaveSendStepAsync(jobId, step, new
+            var detail = new
             {
                 requested = resolved.UvJobData.FirstOrDefault(r => r.Machine == step)?.ProgramName ?? "",
                 program = uv.ProgramFile,
                 is_default = uv.UsedDefault,
-            });
+            };
 
             return new StepSendResult(true,
-                [Notify.Ok($"{uv.MachineName} — ส่งสำเร็จ ({uv.ProgramFile}.uvdx)")]);
+                [Notify.Ok($"{uv.MachineName} — ส่งสำเร็จ ({uv.ProgramFile}.uvdx)")], Detail: detail);
         }
-
-        await UndoStartedStatusAsync(jobId, resolved);
 
         return new StepSendResult(false, uv.Status switch
         {
@@ -1558,7 +1596,7 @@ public partial class OrderListUserControl : UserControl
             SendStatus.Unreachable =>
                 [Notify.Bad($"{uv.MachineName} — เชื่อมต่อไม่ได้ ({uv.Ip}:{uv.Port})")],
             _ => [Notify.Bad($"{uv.MachineName} — {uv.FailReason}")],
-        });
+        }, SafeToRetry: uv.Status is SendStatus.Cancelled or SendStatus.Unreachable or SendStatus.NotConfigured);
     }
 
     // ── งานที่ไม่ต้องส่งคำสั่ง (marking 00) ─────────────────
@@ -1636,7 +1674,7 @@ public partial class OrderListUserControl : UserControl
         // แต่ตอนนี้ยังไม่มีใครแตะเครื่องเลย ยังไม่รู้ด้วยซ้ำว่า ST1 ต่อ UV ได้ไหม
         //
         // งานคงเป็น Waiting ไว้จนกว่า ST1 จะต่อเครื่องติดและส่งสำเร็จจริง
-        // (SendStepAsync เป็นคนตั้ง Process และถอนคืนเองถ้าส่งไม่ผ่านและงานยังไม่เคยพิมพ์)
+        // Backend ตั้ง Process ตอนบันทึกเริ่มส่ง และถอนคืนเฉพาะกรณีที่ยังไม่ได้ส่งจริง
         var (ok, err) = await _api!.SetRemoteStartAsync(
             jobId, requested: true, pick.Program, step: step);
         if (IsDisposed) return;
@@ -1857,8 +1895,12 @@ public partial class OrderListUserControl : UserControl
         //
         // เดิมตรงนี้ไล่หยิบคิวเองทุก 5 วิ ผลคืองานที่ส่งไม่ผ่านแล้วถูกคืนเป็นรอคิว
         // จะถูกหยิบมายิงใหม่ไม่มีวันจบ และงานใบอื่นที่ไม่มีใครกดก็ถูกส่งออกไปด้วย
+        foreach (var row in rows.Where(r => r.NeedsSendReview))
+            if (_reportedUncertainQueues.Add(row.Id))
+                Notify.Warn(this, $"{row.Machine} คิว {row.Id}: กำลังส่งหรือรอตรวจสอบผล ระบบจะไม่ส่งซ้ำเอง");
+
         var ready = rows
-            .Where(r => r.State == "active" && r.SentAt == null)
+            .Where(r => r.State == "active" && r.SentAt == null && !r.NeedsSendReview)
             .OrderBy(r => r.Id)
             .ToList();
 
@@ -1903,8 +1945,7 @@ public partial class OrderListUserControl : UserControl
         StepSendResult sent;
         try
         {
-            sent = await SendStepAsync(
-                claimed.PrintJobsId, claimed.Machine, resolved, claimed.ProgramName);
+            sent = await SendQueueStepAsync(claimed, resolved);
         }
         finally
         {
@@ -1914,20 +1955,7 @@ public partial class OrderListUserControl : UserControl
 
         if (IsDisposed) return (title, []);
 
-        // ส่งไม่ผ่าน = คืนแถวกลับไปรอคิว แล้วจบตรงนั้น ไม่มีใครมาลองใหม่ให้เอง
-        // ต้องมีคนกดเริ่มงานใบนั้นอีกครั้ง ถึงจะยิงซ้ำ
-        if (sent.Sent)
-        {
-            // เหมือนกับตอนกดเริ่มงาน — บันทึกไม่ลงแปลว่ารอบหน้าจะส่งซ้ำ ต้องให้เห็น
-            var (marked, markError) = await _api.UpdateMachineQueueAsync(claimed.Id, sent: true);
-            if (!marked)
-                sent.Lines.Add(Notify.Bad($"{claimed.Machine}: ส่งเข้าเครื่องแล้วแต่บันทึกคิวไม่ได้ · {markError}"));
-        }
-        else
-        {
-            await _api.UpdateMachineQueueAsync(claimed.Id, state: "pending");
-        }
-
+        // ผลคิวกับประวัติถูกบันทึกพร้อมกันใน SendQueueStepAsync แล้ว
         return ($"ส่ง {claimed.Machine} · {JobName(claimed.PrintJobsId)}", sent.Lines);
     }
 
@@ -2028,7 +2056,17 @@ public partial class OrderListUserControl : UserControl
         await _api.ClaimRemoteStartAsync(jobId, program, step);
         if (IsDisposed) return;
 
-        var lines = (await SendStepAsync(jobId, step, resolved, program)).Lines;
+        // ทางสำรองจาก ST3 ต้องผ่านคิวและบันทึกก่อนส่งเหมือนปุ่มเริ่มงาน
+        var (queued, queueError) = await _api.EnqueueMachinesAsync(jobId,
+            [new MachineQueueItem { Machine = step, Round = 1, ProgramName = program }]);
+        var (claim, claimError) = queued
+            ? await _api.ClaimMachineAsync(step, jobId)
+            : (null, queueError);
+        List<Notify.ResultLine> lines;
+        if (claim?.Claimed is { } row)
+            lines = (await SendQueueStepAsync(row, resolved)).Lines;
+        else
+            lines = [Notify.Bad(claimError ?? "เครื่องยังไม่ว่างหรือคิวถูกส่งแล้ว กรุณาตรวจสถานะงาน")];
 
         // ล้มเหลวแล้วฝากสาเหตุกลับไปให้ ST3 ด้วย — คนที่กดเริ่มงานอยู่ที่นั่น
         // ไม่ได้เห็นจอนี้ ถ้าไม่ฝากไว้เขาจะเห็นแค่งานเด้งกลับเป็น Waiting เฉย ๆ
@@ -2141,15 +2179,12 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        if (manual)
-            await _api.SaveSendStepAsync(jobId, "MANUAL_COMPLETE");
-
-        // จบงานแล้วคิวที่เหลือของงานนี้ไม่มีความหมาย ล้างทิ้งไม่ให้ไปกันเครื่องคนอื่น
-        await _api.ClearMachineQueueAsync(jobId);
-
+        // เปลี่ยนสถานะและล้างคิวพร้อมกัน ฝั่ง Backend จะกันงานที่ยังไม่รู้ผลส่ง
         var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Success");
         if (ok)
         {
+            if (manual && !await _api.SaveSendStepAsync(jobId, "MANUAL_COMPLETE"))
+                Notify.Warn(this, "จบงานแล้ว แต่บันทึกประวัติการยืนยันด้วยมือไม่สำเร็จ");
             Notify.Success(this, manual
                 ? $"{JobName(jobId)} จบงานแล้ว (ยืนยันด้วยมือ)"
                 : $"{JobName(jobId)} จบงานแล้ว");
@@ -2615,31 +2650,6 @@ public partial class OrderListUserControl : UserControl
             string.Equals(step, machine, StringComparison.OrdinalIgnoreCase));
 
         return index < 0 ? int.MaxValue : index;
-    }
-
-    /// <summary>
-    /// ส่งไม่ผ่าน — ถอนสถานะ "เริ่มแล้ว" ทิ้ง เฉพาะงานที่ยังไม่เคยพิมพ์อะไรเลย
-    ///
-    /// <para>
-    /// ก่อนส่งทุกครั้งสถานะถูกตั้งเป็น Process ไว้ กันไม่ให้อีกสถานีกดเริ่มซ้ำระหว่างที่
-    /// เครื่องกำลังรับข้อมูลอยู่ พอส่งไม่ผ่านก็ต้องถอนคืน ไม่งั้นงานที่ยังไม่ได้เริ่มเลย
-    /// จะค้างเป็น "กำลังผลิต" และกดเริ่มใหม่ไม่ได้อีกเลย
-    /// </para>
-    /// <para>
-    /// งานที่เคยพ่นลงชิ้นงานไปแล้วบางขั้นห้ามถอน ถ้าตีกลับเป็น Waiting งานจะกดเริ่ม
-    /// ใหม่ได้ แล้วการกดเริ่มจะส่งขั้นแรกซ้ำ = พ่นซ้ำลงของจริง ปล่อยให้คงเป็น Process
-    /// ไว้ ขั้นที่ยังขาดใช้ปุ่มกดหน้างานสั่งต่อได้
-    /// </para>
-    /// <para>
-    /// เดิมตรงนี้ตัดสินจากพารามิเตอร์ว่าเป็นขั้นแรกของแผนไหม ซึ่งผู้เรียกสองในสามที่
-    /// ไม่เคยส่งค่ามาเลย ทุกขั้นจึงถือเป็นขั้นแรกหมด งาน marking 11 ที่ส่ง UV1 สำเร็จ
-    /// แล้ว UV2 ไม่ผ่าน จะถูกตีกลับเป็น Waiting ทั้งที่ UV1 พ่นไปแล้วจริง
-    /// </para>
-    /// </summary>
-    private async Task UndoStartedStatusAsync(int jobId, ResolvedJobResponse resolved)
-    {
-        if (PrintedBefore(resolved)) return;
-        await _api!.UpdateJobStatusAsync(jobId, "Waiting");
     }
 
     /// <summary>งานนี้เคยส่งเข้าเครื่องสำเร็จมาก่อนไหม — ดูจากประวัติคำสั่งที่บันทึกไว้</summary>

@@ -537,6 +537,13 @@ public class CommandResult
 /// </summary>
 public class MachineQueueRow
 {
+    // เก็บที่ Backend ก่อนส่งจริง ใช้กันส่งซ้ำหลังโปรแกรมหลุด
+    [JsonPropertyName("dispatch_state")]
+    public string? DispatchState { get; set; }
+
+    [JsonIgnore]
+    public bool NeedsSendReview => DispatchState is "sending" or "unknown";
+
     [JsonPropertyName("id")]
     public int Id { get; set; }
 

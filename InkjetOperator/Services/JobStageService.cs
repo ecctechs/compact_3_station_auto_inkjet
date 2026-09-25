@@ -33,6 +33,8 @@ public static class JobStageService
         var mine = all.Where(r => r.PrintJobsId == jobId).ToList();
         if (mine.Count == 0) return null;
 
+        if (mine.Any(r => r.NeedsSendReview)) return "กำลังส่ง / รอตรวจสอบผล";
+
         var plan = MarkingMethodService.Resolve(markingMethod);
 
         // ถือเครื่องอยู่ = ไม่มีใครขวาง บอกด้านที่กำลังทำ

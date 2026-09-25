@@ -537,13 +537,13 @@ public class ApiClient
 
     /// <summary>ปล่อยเครื่อง — คนกดปุ่มหน้างานแล้ว แปลว่าพิมพ์ชิ้นเดิมเสร็จ</summary>
     public async Task<(ReleaseResult? result, string? error)> ReleaseMachineAsync(
-        string machine, bool holdForNextRound = false)
+        string machine, int? expectedHolderId, bool holdForNextRound = false)
     {
         try
         {
             var response = await _http.PostAsJsonAsync(
                 "/machine-queue/release",
-                new { machine, hold_for_next_round = holdForNextRound },
+                new { machine, expected_holder_id = expectedHolderId, hold_for_next_round = holdForNextRound },
                 JsonOptions);
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return (null, $"[{(int)response.StatusCode}] {body}");
@@ -557,6 +557,25 @@ public class ApiClient
         {
             return (null, ex.Message);
         }
+    }
+
+    // ไม่ retry begin-send: ถ้าคำตอบหาย ต้องตรวจผลก่อนแตะเครื่อง
+    public Task<(bool ok, string? error)> BeginQueueSendAsync(int rowId, string token) =>
+        QueueSendRequestAsync(rowId, "begin-send", new { token });
+
+    public Task<(bool ok, string? error)> FinishQueueSendAsync(
+        int rowId, string token, string outcome, object? detail = null, string? error = null) =>
+        QueueSendRequestAsync(rowId, "finish-send", new { token, outcome, detail, error = error ?? "" });
+
+    private async Task<(bool ok, string? error)> QueueSendRequestAsync(int rowId, string action, object payload)
+    {
+        try
+        {
+            using var response = await _http.PostAsJsonAsync($"/machine-queue/{rowId}/{action}", payload, JsonOptions);
+            var body = await response.Content.ReadAsStringAsync();
+            return response.IsSuccessStatusCode ? (true, null) : (false, $"[{(int)response.StatusCode}] {body}");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
     }
 
     /// <summary>แก้แถวในคิว — ใช้ตอนเลือกรุ่นย่อย UV เสร็จ หรือคืนแถวให้ลองส่งใหม่</summary>
@@ -597,11 +616,11 @@ public class ApiClient
     }
 
     /// <summary>ล้างคิวของงานหนึ่งทิ้ง — ยกเลิกงาน จบงาน หรือสั่งพิมพ์ใหม่</summary>
-    public async Task<(bool ok, string? error)> ClearMachineQueueAsync(int jobId)
+    public async Task<(bool ok, string? error)> ClearMachineQueueAsync(int jobId, bool onlyUnsent = false)
     {
         try
         {
-            var response = await _http.DeleteAsync($"/machine-queue/job/{jobId}");
+            var response = await _http.DeleteAsync($"/machine-queue/job/{jobId}" + (onlyUnsent ? "?only_unsent=true" : ""));
             var body = await response.Content.ReadAsStringAsync();
 
             return response.IsSuccessStatusCode
