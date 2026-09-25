@@ -336,6 +336,31 @@ public static class JobSendService
     /// </summary>
     private static string? InvalidConfig(InkjetConfigDto config, string label)
     {
+        // ช่องว่างไม่ส่ง — กฎเดียวกับโปรแกรมเดิมที่ฟ้อง "Width, Height & Delay not complete"
+        //
+        // เดิมตรงนี้เว้นค่าว่างไว้ให้ผ่าน แล้วตัวส่งใส่ค่าแทนให้เอง (Width 200 ·
+        // Height 100 · Trigger Delay 0) เครื่องจึงได้ค่าที่ไม่ใช่ของงานไปพ่นลงชิ้นงาน
+        // จริงโดยไม่มีใครรู้ ผิดแบบเงียบซึ่งย้อนคืนไม่ได้ ต่างจากการฟ้องแล้วให้ไปกรอก
+        // ซึ่งเสียเวลาไม่กี่นาทีและแก้ได้
+        //
+        // Trigger Delay ที่ว่างแล้วกลายเป็น 0 ยิ่งไม่ควรหลุดไป เพราะโปรแกรมเดิมบังคับ
+        // ให้ค่าหลังคูณสิบอยู่ในช่วง 10-99999 เลข 0 จึงเป็นค่าที่ระบบเดิมไม่มีวันส่ง
+        //
+        // ตรวจเฉพาะหัวที่งานนี้ใช้จริง — ผู้เรียกกรองด้วย HasProgram มาแล้ว หัวที่ไม่มี
+        // โปรแกรมได้แค่คำสั่งสั่งหยุด ไม่เคยได้รับ FM จึงไม่ต้องมีค่าพวกนี้
+        foreach (var (name, _, _) in MachineRanges)
+        {
+            bool filled = name switch
+            {
+                "Width" => config.Width.HasValue,
+                "Height" => config.Height.HasValue,
+                _ => config.TriggerDelay.HasValue,
+            };
+
+            if (!filled)
+                return $"{label}: ยังไม่ได้กรอก {name} — กรอกที่หน้า Order Detail ก่อนส่ง";
+        }
+
         foreach (var (name, min, max) in MachineRanges)
         {
             int? value = name switch
