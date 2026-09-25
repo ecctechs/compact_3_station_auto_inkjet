@@ -7,6 +7,7 @@
 #      (ถ้าไม่เปลี่ยน Windows จะไม่ยอมติดตั้งทับ)
 #   4. build ทั้ง solution แบบ Release ด้วย devenv  (MSBuild สร้าง .vdproj ไม่ได้)
 #   5. copy .msi ออกมาพร้อมเลขเวอร์ชันในชื่อไฟล์
+#      (ก่อน copy แก้ .msi ให้ shortcut ชี้ไปที่ InkjetOperator.exe ตรง ๆ ไม่ใช่แบบ advertised)
 #
 # UpgradeCode ไม่ถูกแตะ — ตัวนี้ต้องคงเดิมตลอดอายุโปรแกรม เป็นตัวที่บอก Windows
 # ว่านี่คือโปรแกรมเดียวกัน ถ้าเปลี่ยนจะกลายเป็นคนละตัวแล้วลงซ้อนกัน
@@ -101,6 +102,144 @@ function Set-MsiIcons($msiPath, $icoPath) {
     }
 }
 
+# หา git.exe — ไม่พึ่ง PATH อย่างเดียว
+#
+# เครื่อง build บางเครื่องไม่ได้ลง Git for Windows แยก มีแต่ git ที่ติดมากับ
+# Visual Studio หรือ GitHub Desktop ซึ่งไม่ได้อยู่ใน PATH เรียก git ตรง ๆ จึงพัง
+# ด้วย "The term 'git' is not recognized" ทั้งที่ในเครื่องมี git อยู่แล้ว
+function Find-Git {
+    $cmd = Get-Command git.exe -CommandType Application -ErrorAction SilentlyContinue |
+        Select-Object -First 1
+    if ($cmd) { return $cmd.Source }
+
+    $candidates = @(
+        "$env:ProgramFiles\Git\cmd\git.exe",
+        "${env:ProgramFiles(x86)}\Git\cmd\git.exe",
+        "$env:LOCALAPPDATA\Programs\Git\cmd\git.exe"
+    )
+
+    # GitHub Desktop เก็บไว้ในโฟลเดอร์ตามเวอร์ชัน เอาตัวใหม่สุด
+    $candidates += @(Get-ChildItem "$env:LOCALAPPDATA\GitHubDesktop\app-*\resources\app\git\cmd\git.exe" -ErrorAction SilentlyContinue |
+        Sort-Object { try { [version]($_.FullName -replace '^.*\\app-([\d.]+)\\.*$', '$1') } catch { [version]'0.0' } } -Descending |
+        ForEach-Object FullName)
+
+    # git ที่ติดมากับ Visual Studio
+    $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+    if (Test-Path $vswhere) {
+        foreach ($vs in @(& $vswhere -all -prerelease -property installationPath)) {
+            if ($vs) {
+                $candidates += Join-Path $vs 'Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Git\cmd\git.exe'
+            }
+        }
+    }
+
+    foreach ($c in $candidates) {
+        if ($c -and (Test-Path $c)) { return $c }
+    }
+    return $null
+}
+
+# เรียก git แล้วคืนผลแยก stdout / stderr / exit code
+#
+# ใส่ safe.directory เฉพาะคำสั่งนี้ผ่าน -c ไม่ได้แก้ config ของเครื่อง — ตอนรันแบบ
+# Administrator เจ้าของโฟลเดอร์ไม่ตรงกับคนรัน git จะปฏิเสธด้วย "dubious ownership"
+#
+# ปิด Stop ชั่วคราว เพราะใน PowerShell 5.1 ข้อความใน stderr ของโปรแกรมภายนอก
+# (เช่นคำเตือนเรื่อง CRLF) จะถูกแปลงเป็น error แล้วล้มทั้งสคริปต์
+function Invoke-Git {
+    $ErrorActionPreference = 'Continue'
+    $safe = $root -replace '\\', '/'
+    $all = & $script:git -c "safe.directory=$safe" -C $root @args 2>&1
+    $code = $LASTEXITCODE
+
+    $out = @($all | Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] } | ForEach-Object { "$_" })
+    $err = @($all | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] } | ForEach-Object { "$_" })
+
+    [pscustomobject]@{ Code = $code; Out = $out; Err = ($err -join ' ').Trim() }
+}
+
+# ให้ shortcut ชี้ไปที่ตัว .exe ตรง ๆ ไม่ใช่ shortcut แบบ advertised
+#
+# Setup Project ของ Visual Studio สร้าง shortcut แบบ advertised เสมอและไม่มีช่อง
+# ให้ปิดใน .vdproj — shortcut แบบนั้นชี้ไปที่ตัวติดตั้ง ไม่ใช่ไฟล์โปรแกรม
+# ช่อง Target เป็นสีเทาแก้ไม่ได้ "Open file location" ใช้ไม่ได้ และทุกครั้งที่เปิด
+# Windows Installer จะตรวจไฟล์ก่อน ถ้าเจอไฟล์ตั้งค่าที่ถูกแก้อาจเด้งหน้าต่างซ่อมแซม
+# กลางกะแล้วเขียนทับไฟล์เดิม
+#
+# DISABLEADVTSHORTCUTS=1 เป็นวิธีที่ Windows Installer กำหนดไว้เอง: สร้าง shortcut
+# ธรรมดาที่ชี้ไปยังไฟล์หลัก (KeyPath) ของ component ซึ่งคือ InkjetOperator.exe
+#
+# ต่างจากไอคอน — ถ้าทำไม่สำเร็จ build ต้องล้ม เพราะตัวติดตั้งจะได้ shortcut ผิดแบบ
+function Set-MsiShortcutsToExe($msiPath) {
+    $wi = New-Object -ComObject WindowsInstaller.Installer
+    $db = $null
+    try {
+        $db = $wi.GetType().InvokeMember('OpenDatabase', 'InvokeMethod', $null, $wi,
+            [object[]]@([string]$msiPath, [int]1))
+
+        $run = {
+            param($sql)
+            $v = $db.GetType().InvokeMember('OpenView', 'InvokeMethod', $null, $db, [object[]]@([string]$sql))
+            [void]$v.GetType().InvokeMember('Execute', 'InvokeMethod', $null, $v, $null)
+            [void]$v.GetType().InvokeMember('Close', 'InvokeMethod', $null, $v, $null)
+        }
+
+        $query = {
+            param($sql, $cols)
+            $rows = @()
+            $v = $db.GetType().InvokeMember('OpenView', 'InvokeMethod', $null, $db, [object[]]@([string]$sql))
+            [void]$v.GetType().InvokeMember('Execute', 'InvokeMethod', $null, $v, $null)
+            while ($true) {
+                $rec = $v.GetType().InvokeMember('Fetch', 'InvokeMethod', $null, $v, $null)
+                if (-not $rec) { break }
+                $row = @()
+                for ($i = 1; $i -le $cols; $i++) {
+                    $row += $rec.GetType().InvokeMember('StringData', 'GetProperty', $null, $rec, [object[]]@([int]$i))
+                }
+                $rows += , $row
+            }
+            [void]$v.GetType().InvokeMember('Close', 'InvokeMethod', $null, $v, $null)
+            return , $rows
+        }
+
+        try { & $run 'DELETE FROM `Property` WHERE `Property` = ''DISABLEADVTSHORTCUTS''' } catch { }
+        & $run 'INSERT INTO `Property` (`Property`, `Value`) VALUES (''DISABLEADVTSHORTCUTS'', ''1'')'
+
+        [void]$db.GetType().InvokeMember('Commit', 'InvokeMethod', $null, $db, $null)
+
+        # ตรวจย้อนจากตัวไฟล์จริง ไม่เชื่อแค่ว่าคำสั่งข้างบนไม่ error
+        $prop = & $query 'SELECT `Value` FROM `Property` WHERE `Property` = ''DISABLEADVTSHORTCUTS''' 1
+        if ($prop.Count -ne 1 -or $prop[0][0] -ne '1') { return 'เขียน DISABLEADVTSHORTCUTS ไม่ลง' }
+
+        $shortcuts = & $query 'SELECT `Shortcut`, `Name`, `Component_` FROM `Shortcut`' 3
+        if ($shortcuts.Count -eq 0) { return 'ไม่พบ shortcut ในตัวติดตั้งเลย' }
+
+        $targets = @()
+        foreach ($s in $shortcuts) {
+            $comp = & $query "SELECT ``KeyPath`` FROM ``Component`` WHERE ``Component`` = '$($s[2])'" 1
+            $file = if ($comp.Count -eq 1) {
+                & $query "SELECT ``FileName`` FROM ``File`` WHERE ``File`` = '$($comp[0][0])'" 1
+            } else { @() }
+
+            # FileName เก็บเป็น "ชื่อสั้น|ชื่อยาว" เอาชื่อยาว
+            $name = if ($file.Count -eq 1) { ($file[0][0] -split '\|')[-1] } else { '' }
+            if ($name -ine 'InkjetOperator.exe') {
+                $label = ($s[1] -split '\|')[-1]
+                return "shortcut '$label' ไม่ได้ชี้ไปที่ InkjetOperator.exe (ชี้ไปที่ '$name')"
+            }
+            $targets += ($s[1] -split '\|')[-1]
+        }
+
+        return [pscustomobject]@{ Count = $shortcuts.Count; Names = $targets }
+    }
+    catch { return $_.Exception.Message }
+    finally {
+        if ($db) { [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($db) }
+        [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($wi)
+        [GC]::Collect(); [GC]::WaitForPendingFinalizers()
+    }
+}
+
 try {
     Write-Host ''
     Write-Host '=== Compact Inkjet - build installer ===' -ForegroundColor White
@@ -135,22 +274,38 @@ try {
     # กันสองชั้น บอกให้เห็นว่ากำลัง build จาก commit ไหน และหยุดถ้ามีของที่ยัง
     # ไม่ได้ commit เพราะไฟล์ที่ได้จะไม่ตรงกับ commit ไหนเลย ตามกลับไม่ได้
     $commit = ''
-    $head = git -C $root rev-parse --short HEAD 2>$null
-    if ($LASTEXITCODE -ne 0 -or -not $head) {
+    if (-not (Test-Path (Join-Path $root '.git'))) {
         Note 'ไม่ใช่โฟลเดอร์ git — ข้ามการตรวจว่าตรงกับ commit ไหน'
     }
     else {
-        $commit = $head.Trim()
-        $branch = (git -C $root rev-parse --abbrev-ref HEAD).Trim()
-        $subject = (git -C $root log -1 --pretty=format:'%s').Trim()
-        $when = (git -C $root log -1 --pretty=format:'%ad' --date=format:'%d/%m %H:%M').Trim()
+        # เป็นโฟลเดอร์ git แต่หา git ไม่เจอหรือ git ตอบไม่ได้ ต้องหยุด ห้ามข้ามเงียบ ๆ
+        # เพราะการข้ามคือการปิดด่านกันโค้ดไม่ตรง commit ทิ้งไปทั้งด่าน
+        $script:git = Find-Git
+        if (-not $script:git) {
+            Fail ('หา git ไม่เจอ — ติดตั้ง Git for Windows (https://git-scm.com) ' +
+                  'หรือเปิดสคริปต์จากเครื่องที่มี Visual Studio / GitHub Desktop')
+        }
+        Note "git: $script:git"
+
+        $r = Invoke-Git rev-parse --short HEAD
+        if ($r.Code -ne 0 -or -not $r.Out) {
+            Fail "git อ่าน commit ไม่ได้ — $($r.Err)"
+        }
+
+        $commit = "$($r.Out[0])".Trim()
+        $branch = "$((Invoke-Git rev-parse --abbrev-ref HEAD).Out)".Trim()
+        $subject = "$((Invoke-Git log -1 --pretty=format:%s).Out)".Trim()
+        $when = "$((Invoke-Git log -1 --pretty=format:%ad --date=format:'%d/%m %H:%M').Out)".Trim()
 
         Note "branch $branch"
         Note "commit $commit  $when"
         Note "        $subject"
 
+        $st = Invoke-Git status --porcelain
+        if ($st.Code -ne 0) { Fail "git ตรวจไฟล์ที่ยังไม่ได้ commit ไม่ได้ — $($st.Err)" }
+
         # ไม่นับสองไฟล์นี้ เพราะสคริปต์เองเป็นคนแก้เลขเวอร์ชันในนั้น
-        $dirty = @(git -C $root status --porcelain |
+        $dirty = @($st.Out |
             Where-Object { $_ -and $_ -notmatch 'CompactDemo\.vdproj' -and $_ -notmatch 'InkjetOperator\.csproj' })
 
         if ($dirty.Count -gt 0) {
@@ -296,6 +451,15 @@ try {
         Fail "build ไม่ผ่าน $failed โปรเจค  —  log เต็มอยู่ที่ $log"
     }
 
+    # devenv ข้ามโปรเจคตัวติดตั้งไปเงียบ ๆ ถ้าเครื่องไม่มี extension ที่อ่าน .vdproj ได้
+    # บรรทัดสรุปยังขึ้น "succeeded" ตามปกติเพราะนับแค่ InkjetOperator ตัวเดียว
+    # ถ้าไม่ดักตรงนี้จะไปพังตอนหา .msi ด้วยข้อความที่ไม่บอกสาเหตุ
+    if (-not (Select-String -Path $log -Pattern 'Project: CompactDemo' -Quiet)) {
+        Fail ('devenv ไม่ได้ build ตัวติดตั้ง (CompactDemo.vdproj) เลย — ' +
+              'Visual Studio ตัวนี้ยังไม่มี extension "Microsoft Visual Studio Installer Projects" ' +
+              'ติดตั้งจาก Extensions > Manage Extensions แล้วรันใหม่')
+    }
+
     Good "build ผ่าน ใช้เวลา $([math]::Round(((Get-Date) - $start).TotalMinutes, 1)) นาที"
 
     # ── เก็บผลลัพธ์ ──────────────────────────────────────────
@@ -327,6 +491,10 @@ try {
             Good 'ใส่ไอคอนให้ shortcut และหน้า Programs and Features แล้ว'
         }
     }
+
+    $sc = Set-MsiShortcutsToExe $msi
+    if ($sc -is [string]) { Fail "ตั้ง shortcut ให้ชี้ไปที่ .exe ไม่สำเร็จ: $sc" }
+    Good "shortcut $($sc.Count) อัน ($($sc.Names -join ', ')) ชี้ไปที่ InkjetOperator.exe โดยตรง ไม่ใช่แบบ advertised"
 
     # ใส่เลข commit ในชื่อไฟล์ด้วย — เลขเวอร์ชันอย่างเดียวไม่พอ เพราะมันย้อนกลับได้
     # เวลามีใคร reset แล้ว build ใหม่ จะได้เลขเดิมซ้ำแล้วทับไฟล์เก่าจนแยกไม่ออก
