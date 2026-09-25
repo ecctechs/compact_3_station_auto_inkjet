@@ -1855,9 +1855,22 @@ public partial class OrderListUserControl : UserControl
             .OrderBy(r => r.Id)
             .ToList();
 
+        // ส่งให้ครบทุกแถวก่อน แล้วค่อยรายงาน
+        //
+        // เดิมเปิดกล่องผลอยู่ข้างในลูป แถวถัดไปจึงค้างรอคนมากด OK ก่อน งานที่ถึงคิว
+        // พร้อมกันหลายเครื่องจะถูกส่งทีละเครื่องตามจังหวะที่คนเดินมากดปิดกล่อง
+        var reports = new List<(string Title, List<Notify.ResultLine> Lines)>();
+
         foreach (var row in ready)
         {
-            await SendClaimedAsync(row);
+            var report = await SendClaimedAsync(row);
+            if (IsDisposed) return;
+            if (report.Lines.Count > 0) reports.Add(report);
+        }
+
+        foreach (var (title, lines) in reports)
+        {
+            Notify.Result(this, title, lines);
             if (IsDisposed) return;
         }
     }
@@ -1865,14 +1878,17 @@ public partial class OrderListUserControl : UserControl
     /// <summary>
     /// ส่งงานที่หยิบมาได้เข้าเครื่อง แล้วรายงานผล — ส่งไม่ผ่านคืนแถวกลับเข้าคิว
     /// </summary>
-    private async Task SendClaimedAsync(MachineQueueRow claimed)
+    private async Task<(string Title, List<Notify.ResultLine> Lines)> SendClaimedAsync(
+        MachineQueueRow claimed)
     {
+        var title = $"ส่ง {claimed.Machine} · {JobName(claimed.PrintJobsId)}";
+
         var resolved = await _api!.GetResolvedJobAsync(claimed.PrintJobsId);
         if (resolved == null || IsDisposed)
         {
             // อ่านงานไม่ได้ อย่าถือเครื่องค้างไว้
             if (_api != null) await _api.UpdateMachineQueueAsync(claimed.Id, state: "pending");
-            return;
+            return (title, []);
         }
 
         _sending = true;
@@ -1889,7 +1905,7 @@ public partial class OrderListUserControl : UserControl
             if (!IsDisposed) ShowSending(null);
         }
 
-        if (IsDisposed) return;
+        if (IsDisposed) return (title, []);
 
         // ส่งไม่ผ่าน = คืนแถวกลับไปรอคิว แล้วจบตรงนั้น ไม่มีใครมาลองใหม่ให้เอง
         // ต้องมีคนกดเริ่มงานใบนั้นอีกครั้ง ถึงจะยิงซ้ำ
@@ -1905,8 +1921,7 @@ public partial class OrderListUserControl : UserControl
             await _api.UpdateMachineQueueAsync(claimed.Id, state: "pending");
         }
 
-        if (sent.Lines.Count > 0)
-            Notify.Result(this, $"ส่ง {claimed.Machine} · {JobName(claimed.PrintJobsId)}", sent.Lines);
+        return ($"ส่ง {claimed.Machine} · {JobName(claimed.PrintJobsId)}", sent.Lines);
     }
 
     private async Task ProcessRemoteStartsAsync()
