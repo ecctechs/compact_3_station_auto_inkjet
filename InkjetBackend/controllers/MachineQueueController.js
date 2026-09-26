@@ -43,10 +43,9 @@ class MachineQueueController {
         where: { command: DISPATCH, payload: { queue_id: { [Op.in]: rows.map(r => r.id) } } },
         order: [["id", "ASC"]],
       }) : [];
-      const latest = new Map(attempts.map(a => [a.payload.queue_id, a.payload]));
+      const latest = new Map(attempts.map(a => [a.payload.queue_id, a.payload.outcome]));
       return ResponseManager.SuccessResponse(req, res, 200, rows.map(row => ({
-        ...row.toJSON(), dispatch_state: latest.get(row.id)?.outcome || null,
-        dispatch_token: latest.get(row.id)?.token || null,
+        ...row.toJSON(), dispatch_state: latest.get(row.id) || null,
       })));
     } catch (err) {
       return ResponseManager.CatchResponse(req, res, err.message);
@@ -373,7 +372,6 @@ class MachineQueueController {
           const attempt = await latestDispatch(row.id, t);
           const { token, outcome, detail, error } = req.body;
           if (!attempt || attempt.payload.token !== token) conflict("คำขอนี้ไม่ใช่รอบส่งปัจจุบัน");
-          if (attempt.payload.recovery) conflict("รอบส่งนี้ถูกตรวจและกู้คิวแล้ว ไม่รับผลจากผู้ส่งเดิม");
           if (attempt.payload.outcome === outcome) return { recorded: true };
           if (["sent", "not_sent"].includes(attempt.payload.outcome)) conflict("รอบส่งนี้จบแล้ว");
           if (row.state !== ACTIVE || row.sent_at) conflict("คิวเปลี่ยนระหว่างส่ง");
@@ -402,46 +400,6 @@ class MachineQueueController {
           }
           await attempt.update({ payload: { ...attempt.payload, outcome, error: error || null } }, { transaction: t });
           return { recorded: true };
-      });
-      return ResponseManager.SuccessResponse(req, res, 200, result);
-    } catch (err) { return reportError(req, res, err); }
-  }
-  // การตรวจโดยคน: ไม่ส่งอุปกรณ์ ไม่ปล่อยเครื่อง และไม่ลบหลักฐานเดิม
-  static async recover(req, res) {
-    try {
-      const result = await withQueueLock(async t => {
-        const row = await MachineQueue.findByPk(req.params.id, { transaction: t });
-        if (!row) conflict("ไม่พบคิวที่ตรวจ");
-        const attempt = await latestDispatch(row.id, t);
-        const { expected_token, request_id, outcome, operator, reason } = req.body;
-        if (!attempt || attempt.payload.token !== expected_token) conflict("รอบส่งเปลี่ยนแล้ว กรุณาโหลดคิวใหม่");
-        const previous = attempt.payload.recovery;
-        if (previous) {
-          if (previous.request_id === request_id && attempt.payload.outcome === outcome &&
-              previous.operator === operator && previous.reason === reason) return { recorded: true };
-          conflict("คิวนี้ถูกตรวจโดยคำขออื่นแล้ว กรุณาโหลดใหม่");
-        }
-        if (row.state !== ACTIVE || row.sent_at || !["sending", "unknown"].includes(attempt.payload.outcome))
-          conflict("คิวนี้ไม่ได้รอตรวจผลส่ง");
-        const job = await PrintJob.findByPk(row.print_jobs_id, { transaction: t });
-        if (!job || !["Waiting", "Process"].includes(job.status)) conflict("งานนี้จบหรือยกเลิกแล้ว");
-        const recovery = { request_id, operator, reason, sender_stopped: true,
-          verified_at: new Date().toISOString(), previous_outcome: attempt.payload.outcome };
-        if (outcome === "sent") {
-          await PrintJobCommand.create({ job_id: row.print_jobs_id, command: row.machine,
-            success: true, sent_at: new Date(), payload: { recovery, queue_id: row.id } }, { transaction: t });
-          await row.update({ sent_at: new Date() }, { transaction: t });
-          await job.update({ status: "Process" }, { transaction: t });
-        } else {
-          // ต้องกดเริ่ม/รับคิวตาม flow เดิมอีกครั้ง ไม่เริ่มส่งทันทีหลังตรวจ
-          await row.update({ state: PENDING }, { transaction: t });
-          const successful = await PrintJobCommand.count({ where: { job_id: row.print_jobs_id, success: true }, transaction: t });
-          const unresolved = await PrintJobCommand.count({ where: { job_id: row.print_jobs_id,
-            command: DISPATCH, id: { [Op.ne]: attempt.id }, payload: { outcome: { [Op.in]: ["sending", "unknown"] } } }, transaction: t });
-          if (!successful && !unresolved) await job.update({ status: "Waiting" }, { transaction: t });
-        }
-        await attempt.update({ payload: { ...attempt.payload, outcome, recovery } }, { transaction: t });
-        return { recorded: true };
       });
       return ResponseManager.SuccessResponse(req, res, 200, result);
     } catch (err) { return reportError(req, res, err); }

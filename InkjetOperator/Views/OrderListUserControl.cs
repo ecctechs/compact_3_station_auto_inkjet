@@ -194,8 +194,6 @@ public partial class OrderListUserControl : UserControl
         WirePanels();
 
         WirePushButton();
-        btnRecoverQueue.Visible = !StationService.IsSt3;
-        btnRecoverQueue.Click += async (_, _) => await RecoverSelectedQueueAsync();
 
         Load += OnLoad;
         Disposed += OnDisposed;
@@ -379,7 +377,7 @@ public partial class OrderListUserControl : UserControl
     /// </para>
     /// </summary>
     private bool CanReleaseNow(string machine) =>
-        !_recovering && !_pushHandling.Contains(machine) && !_dispatchingMachines.ContainsKey(machine) && !MachineBusy.IsBusy(machine);
+        !_pushHandling.Contains(machine) && !_dispatchingMachines.ContainsKey(machine) && !MachineBusy.IsBusy(machine);
 
     /// <summary>
     /// บอกคนหน้างานว่าการกดไม่ผ่านเพราะจอไม่ว่าง ให้กดใหม่
@@ -825,7 +823,7 @@ public partial class OrderListUserControl : UserControl
     private async void TblOrders_CellButtonClick(object? sender, AntdUI.TableButtonEventArgs e)
     {
         if (e.Record is not OrderRow row) return;
-        if (_api == null || _rowBusy || _recovering) return;
+        if (_api == null || _rowBusy) return;
 
         _rowBusy = true;
         try
@@ -1005,7 +1003,7 @@ public partial class OrderListUserControl : UserControl
 
     /// <summary>กำลังส่งงานอยู่ — กันทั้งการกดซ้ำและการรีเฟรชตารางทับ</summary>
     private int _sendOperations;
-    private bool _sending => _sendOperations > 0 || _recovering;
+    private bool _sending => _sendOperations > 0;
 
     private void EndSending()
     {
@@ -1627,8 +1625,7 @@ public partial class OrderListUserControl : UserControl
             // อยู่ตรงนี้จึงได้ทุกทางเข้าเครื่อง ทั้งกดเริ่มงานตอนเครื่องว่าง กดปุ่มหน้างาน
             // ให้คิวเดินต่อ และคำขอจาก ST3
             var lines = new List<Notify.ResultLine>();
-            if (!await SendJobPlcAsync(resolved, lines))
-                return new StepSendResult(false, lines, SafeToRetry: true);
+            await SendJobPlcAsync(resolved, lines);
 
             var mk = await JobSendService.SendMkAsync(resolved.Pattern);
             var mkLines = Notify.MkLines(mk.Machines);
@@ -2636,39 +2633,27 @@ public partial class OrderListUserControl : UserControl
     /// เอาเฉพาะหัวที่งานนี้ใช้ หัวที่ไม่ได้ใช้ไม่ต้องไปเขียนทับค่าใน PLC
     /// </para>
     /// </summary>
-    private async Task<bool> SendJobPlcAsync(ResolvedJobResponse resolved, List<Notify.ResultLine> lines)
+    private async Task SendJobPlcAsync(ResolvedJobResponse resolved, List<Notify.ResultLine> lines)
     {
-        if (PlcOrderService.UnsendableReason(resolved.Pattern) is string reason)
-        {
-            lines.Add(Notify.Bad($"ยังไม่ส่ง MK — {reason}"));
-            return false;
-        }
         var plan = await PlcOrderService.BuildPlanAsync(_api, resolved.Pattern, usedHeadsOnly: true);
-        if (IsDisposed) return false;
-        if (plan.Count == 0 || plan.Any(f => f.Address == null))
-        {
-            lines.Add(Notify.Bad("ยังไม่ส่ง MK — ตั้งค่า PLC Address ไม่ครบ: " +
-                string.Join(", ", plan.Where(f => f.Address == null).Select(f => f.Label))));
-            return false;
-        }
+        if (IsDisposed || plan.Count == 0) return;
 
         var results = await PlcOrderService.SendAsync(plan);
-        if (IsDisposed) return false;
+        if (IsDisposed) return;
 
         foreach (var r in results)
         {
             if (r.Error != null)
             {
-                lines.Add(Notify.Bad($"ยังไม่ส่ง MK — PLC {r.Name}: {r.Error}"));
+                lines.Add(Notify.Careful($"PLC {r.Name} — {r.Error}"));
                 continue;
             }
 
             // เขียนผ่านแต่ค่าไม่เข้าก็ต้องเห็น ไม่ใช่รายงานว่าสำเร็จ
             if (r.ReadBack != r.Value)
-                lines.Add(Notify.Bad(
-                    $"ยังไม่ส่ง MK — PLC {r.Name} = {r.Value} · อ่านกลับได้ {r.ReadBack?.ToString() ?? "ไม่ได้"}"));
+                lines.Add(Notify.Careful(
+                    $"PLC {r.Name} = {r.Value} · อ่านกลับได้ {r.ReadBack?.ToString() ?? "ไม่ได้"}"));
         }
-        return PlcOrderService.IsVerified(plan, results);
     }
 
     /// <summary>ลำดับของเครื่องในแผน — เครื่องที่ไม่อยู่ในแผนไปต่อท้าย</summary>

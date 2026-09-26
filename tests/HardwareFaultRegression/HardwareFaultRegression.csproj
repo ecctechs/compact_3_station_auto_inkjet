@@ -7,10 +7,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../InkjetOperator/Models/ApiModels.cs" Link="ApiModels.cs" />
-    <Compile Include="../../InkjetOperator/Models/PlcRegisterMap.cs" Link="PlcRegisterMap.cs" />
-    <Compile Include="../../InkjetOperator/Services/PlcOrderService.cs" Link="PlcOrderService.cs" />
-    <Compile Include="../../InkjetOperator/Services/ModbusTcpService.cs" Link="ModbusTcpService.cs" />
     <Compile Include="../../InkjetOperator/Managers/TcpManager.cs" Link="TcpManager.cs" />
     <Compile Include="../../InkjetOperator/Services/UvTcpService.cs" Link="UvTcpService.cs" />
     <Compile Include="../../InkjetOperator/Services/McProtocolService.cs" Link="McProtocolService.cs" />

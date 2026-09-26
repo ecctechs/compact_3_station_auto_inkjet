@@ -38,14 +38,6 @@ const updateQueueSchema = z.object({
 });
 
 const beginSendSchema = z.object({ token: z.string().uuid() });
-const recoverSchema = z.object({
-  expected_token: z.string().uuid(),
-  request_id: z.string().uuid(),
-  outcome: z.enum(["sent", "not_sent"]),
-  operator: z.string().trim().min(1).max(100),
-  reason: z.string().trim().min(5).max(1000),
-  sender_stopped: z.literal(true),
-});
 const finishSendSchema = z.object({
   token: z.string().uuid(),
   outcome: z.enum(["sent", "not_sent", "unknown"]),
@@ -61,5 +53,4 @@ module.exports = {
   updateQueueSchema,
   beginSendSchema,
   finishSendSchema,
-  recoverSchema,
 };

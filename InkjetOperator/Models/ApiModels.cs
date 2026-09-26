@@ -541,9 +541,6 @@ public class MachineQueueRow
     [JsonPropertyName("dispatch_state")]
     public string? DispatchState { get; set; }
 
-    [JsonPropertyName("dispatch_token")]
-    public string? DispatchToken { get; set; }
-
     [JsonIgnore]
     public bool NeedsSendReview => DispatchState is "sending" or "unknown";
 

@@ -88,46 +88,7 @@ internal static class Program
         await CheckConcurrentReleaseAsync(view, handler);
         await CheckIndependentDispatchAsync(view, handler);
         CheckMachineStatusColumn(view);
-        CheckRecoveryDialog();
-        await CheckPlcGateAsync(view);
         Console.WriteLine("PASS: real OrderList refresh, one queue read, coalesced requests, deferred refresh during sending, immediate queue check after release");
-    }
-
-    private static async Task CheckPlcGateAsync(OrderListUserControl view)
-    {
-        foreach (var pattern in new PatternDetail[] { new(), new() { ConveyorSpeeds = new() { Speed1 = 20 } } })
-        {
-            var task = (Task)typeof(OrderListUserControl).GetMethod("SendStepAsync", Private)!
-                .Invoke(view, [990, "MK", new ResolvedJobResponse { Pattern = pattern }, null])!;
-            await task;
-            var result = task.GetType().GetProperty("Result")!.GetValue(task)!;
-            Check(!(bool)result.GetType().GetProperty("Sent")!.GetValue(result)! &&
-                (bool)result.GetType().GetProperty("SafeToRetry")!.GetValue(result)!,
-                "MK did not stop before printer IO for missing PLC values/map");
-        }
-        Console.WriteLine("PASS: real OrderList stops before MK IO when PLC data or address map is missing");
-    }
-
-    private static void CheckRecoveryDialog()
-    {
-        using var panel = new QueueRecoveryUserControl();
-        panel.SetJob("TEST-LOT\nMK · รอบ 1 · คิว 123");
-        Check(!panel.ValidateRecovery(), "empty recovery form accepted");
-        object FieldValue(string name) => typeof(QueueRecoveryUserControl).GetField(name, Private)!.GetValue(panel)!;
-        ((AntdUI.Input)FieldValue("txtOperator")).Text = "test operator";
-        ((AntdUI.Input)FieldValue("txtReason")).Text = "checked fake printer";
-        ((AntdUI.Radio)FieldValue("radioSent")).Checked = true;
-        Check(!panel.ValidateRecovery(), "recovery accepted without stopped sender confirmation");
-        ((AntdUI.Checkbox)FieldValue("chkStopped")).Checked = true;
-        Check(panel.ValidateRecovery() && panel.Outcome == "sent", "valid recovery form rejected");
-        ((AntdUI.Radio)FieldValue("radioNotSent")).Checked = true;
-        Check(panel.ValidateRecovery() && panel.Outcome == "not_sent", "radio choices are not exclusive");
-        _ = panel.Handle;
-        panel.PerformLayout();
-        using var bitmap = new Bitmap(panel.Width, panel.Height);
-        panel.DrawToBitmap(bitmap, panel.ClientRectangle);
-        bitmap.Save(Path.Combine(Path.GetTempPath(), "compact-recovery-preview.png"));
-        Console.WriteLine("PASS: Designer-created recovery panel, required operator/reason/confirmation, exclusive outcomes");
     }
 
     private static void CheckMachineStatusColumn(OrderListUserControl view)
@@ -327,7 +288,6 @@ internal static class Program
                     body = "{\"data\":{\"data\":[]}}";
                     break;
                 case "/machine-queue/getAll": QueueReads++; body = "{\"data\":[]}"; break;
-                case "/plc-setting/getAll": body = "{\"data\":[]}"; break;
                 case "/machine-queue/release":
                     var payload = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
                     string machine = payload.RootElement.GetProperty("machine").GetString()!;

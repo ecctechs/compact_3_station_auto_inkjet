@@ -37,7 +37,6 @@ partial class OrderListUserControl
         dtpHistoryRange = new AntdUI.DatePickerRange();
         btnSearchDate = new AntdUI.Button();
         btnClearDate = new AntdUI.Button();
-        btnRecoverQueue = new AntdUI.Button();
         tlpStationBar = new System.Windows.Forms.TableLayoutPanel();
         lblStationMk = new AntdUI.Label();
         lblStationUv1 = new AntdUI.Label();
@@ -145,7 +144,6 @@ partial class OrderListUserControl
         flpTabs.BackColor = System.Drawing.Color.White;
         flpTabs.Controls.Add(btnTabList);
         flpTabs.Controls.Add(btnTabHistory);
-        flpTabs.Controls.Add(btnRecoverQueue);
         flpTabs.Controls.Add(lblDateFilter);
         flpTabs.Controls.Add(dtpHistoryRange);
         flpTabs.Controls.Add(btnSearchDate);
@@ -158,12 +156,6 @@ partial class OrderListUserControl
         flpTabs.Size = new System.Drawing.Size(1282, 62);
         flpTabs.TabIndex = 0;
         flpTabs.WrapContents = false;
-        btnRecoverQueue.Text = "ตรวจคิวค้าง";
-        btnRecoverQueue.Name = "btnRecoverQueue";
-        btnRecoverQueue.Size = new System.Drawing.Size(160, 45);
-        btnRecoverQueue.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
-        btnRecoverQueue.Radius = 6;
-        btnRecoverQueue.Type = AntdUI.TTypeMini.Warn;
         //
         // btnTabList
         //
@@ -803,5 +795,4 @@ partial class OrderListUserControl
     private System.Windows.Forms.PictureBox picProcShim;
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnStart;
-    private AntdUI.Button btnRecoverQueue;
 }

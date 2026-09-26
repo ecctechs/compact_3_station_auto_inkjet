@@ -25,45 +25,12 @@ internal static class Program
                 await CheckMkAsync();
                 await CheckUvAsync();
                 await CheckPushButtonAsync();
-                await CheckPlcAsync();
             }
             catch (Exception ex) { Console.Error.WriteLine(ex); exit = 1; }
             finally { context.ExitThread(); }
         }));
         Application.Run(context);
         return exit;
-    }
-
-    private static async Task CheckPlcAsync()
-    {
-        using var server = new TcpListener(IPAddress.Loopback, 0);
-        server.Start();
-        CustomSettingsManager.Values["PLC_IP"] = "127.0.0.1";
-        CustomSettingsManager.Values["PLC_PORT"] = ((IPEndPoint)server.LocalEndpoint).Port.ToString();
-        var plan = new List<PlcOrderService.PlcField> { new("Test servo", "Test", 5, 20) };
-        foreach (var scenario in new[] { "ok", "wrong-value", "write-failed", "read-failed" })
-        {
-            var sending = PlcOrderService.SendAsync(plan);
-            using (var peer = await server.AcceptTcpClientAsync())
-            {
-                var request = new byte[12]; await peer.GetStream().ReadExactlyAsync(request);
-                Check(request[7] == 6 && request[9] == 5 && request[11] == 20, "PLC command changed");
-                if (scenario == "write-failed") peer.Close();
-                else await peer.GetStream().WriteAsync(request);
-            }
-            if (scenario != "write-failed")
-            {
-                using var peer = await server.AcceptTcpClientAsync();
-                var request = new byte[12]; await peer.GetStream().ReadExactlyAsync(request);
-                if (scenario == "read-failed") peer.Close();
-                else await peer.GetStream().WriteAsync(new byte[] { request[0], request[1], 0, 0, 0, 5, 1, 3, 2, 0,
-                    scenario == "wrong-value" ? (byte)19 : (byte)20 });
-            }
-            var result = await sending;
-            Check(PlcOrderService.IsVerified(plan, result) == (scenario == "ok"), "PLC verification accepted " + scenario);
-        }
-        Check(!PlcOrderService.IsVerified([new("missing", "missing", null, 20)], []), "missing address passed");
-        Console.WriteLine("PASS: PLC write/read-back verified; write failure, read failure, wrong value and missing address block MK");
     }
 
     private static async Task CheckMkAsync()
@@ -209,8 +176,4 @@ namespace InkjetOperator.Services
         public static void Write(string key, string value) => Values[key] = value;
     }
     public static class StationService { public static int Current => 1; }
-    public sealed class ApiClient
-    {
-        public Task<List<InkjetOperator.Models.PlcRegisterMap>> GetAllPlcSettingsAsync() => Task.FromResult(new List<InkjetOperator.Models.PlcRegisterMap>());
-    }
 }

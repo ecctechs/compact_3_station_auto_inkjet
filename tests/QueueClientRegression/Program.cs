@@ -33,18 +33,4 @@ Check((await api.FinishQueueSendAsync(id, token, "sent", new { program = "test" 
 Check(error == null && rows.Single().SentAt != null && !rows.Single().NeedsSendReview, "success not read");
 Check((await api.ReleaseMachineAsync("MK", id)).result?.Released?.Id == id, "release failed");
 Check((await api.ReleaseMachineAsync("MK", id)).result == null, "stale release accepted");
-Check((await api.EnqueueMachinesAsync(jobId, [new() { Machine = "UV1" }])).ok, "recovery enqueue failed");
-var recoveryClaim = await api.ReleaseMachineAsync("UV1", null);
-int recoveryId = recoveryClaim.result!.Next!.Id;
-var recoveryToken = Guid.NewGuid().ToString();
-Check((await api.BeginQueueSendAsync(recoveryId, recoveryToken)).ok, "recovery begin failed");
-Check((await api.FinishQueueSendAsync(recoveryId, recoveryToken, "unknown")).ok, "unknown failed");
-(rows, error) = await api.GetMachineQueueAsync();
-Check(rows.Single(r => r.Id == recoveryId).DispatchToken == recoveryToken, "recovery token not deserialized");
-var recoveryRequest = Guid.NewGuid().ToString();
-Check((await api.RecoverQueueAsync(recoveryId, recoveryToken, recoveryRequest, "sent", "tester", "checked mock printer")).ok,
-    "C# recovery serialization failed");
-Check((await api.RecoverQueueAsync(recoveryId, recoveryToken, recoveryRequest, "sent", "tester", "checked mock printer")).ok,
-    "recovery response retry failed");
-Check(!(await api.FinishQueueSendAsync(recoveryId, recoveryToken, "sent")).ok, "old sender overrode recovery");
 Console.WriteLine("PASS: real C# API client, queue lifecycle and marking 11/12/32/22");

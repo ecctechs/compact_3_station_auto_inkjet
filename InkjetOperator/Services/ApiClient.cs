@@ -563,11 +563,6 @@ public class ApiClient
     public Task<(bool ok, string? error)> BeginQueueSendAsync(int rowId, string token) =>
         QueueSendRequestAsync(rowId, "begin-send", new { token });
 
-    public Task<(bool ok, string? error)> RecoverQueueAsync(int rowId, string expectedToken,
-        string requestId, string outcome, string operatorName, string reason) =>
-        QueueSendRequestAsync(rowId, "recover", new { expected_token = expectedToken,
-            request_id = requestId, outcome, @operator = operatorName, reason, sender_stopped = true });
-
     public Task<(bool ok, string? error)> FinishQueueSendAsync(
         int rowId, string token, string outcome, object? detail = null, string? error = null) =>
         QueueSendRequestAsync(rowId, "finish-send", new { token, outcome, detail, error = error ?? "" });
