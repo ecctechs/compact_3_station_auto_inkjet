@@ -53,7 +53,8 @@ public sealed record UvSendResult(
     string? ProgramFile = null,
     bool UsedDefault = false,
     string Ip = "",
-    int Port = 0);
+    int Port = 0,
+    string? StartWarning = null);
 
 /// <summary>
 /// ส่งงานเข้าเครื่อง MK / UV — ตรรกะล้วน ไม่ผูกกับหน้าจอไหน
@@ -589,16 +590,16 @@ public static class JobSendService
                 + $"\n    Name: {Dashed(uvRow.ErpMfg)}");
 
             // 3. โหลดโปรแกรม แล้วสั่งเริ่มพิมพ์
-            var (tcpOk, tcpLog) = await uvTcp.LoadAndStartAsync(ip, port, programFile);
+            var (tcpOk, tcpLog, startWarning) = await uvTcp.LoadAndStartAsync(ip, port, programFile);
             if (!tcpOk)
                 return Stopped(uvName, done, tcpLog.Trim());
 
             done.Add($"โหลดโปรแกรม {programFile}.uvdx");
-            done.Add("สั่งเริ่มพิมพ์");
+            if (startWarning == null) done.Add("เครื่องตอบรับคำสั่งเริ่มพิมพ์");
 
             return new UvSendResult(
                 SendStatus.Ok, uvName, done,
-                ProgramFile: programFile, UsedDefault: pick.IsDefault, Ip: ip, Port: port);
+                ProgramFile: programFile, UsedDefault: pick.IsDefault, Ip: ip, Port: port, StartWarning: startWarning);
         }
         catch (Exception ex)
         {

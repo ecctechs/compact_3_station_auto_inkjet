@@ -36,7 +36,7 @@ public class UvTcpService
         => SendKeyAsync(ip, port, new { KEY = 83 }, "สั่งเริ่มพิมพ์", ReadTimeoutMs);
 
     /// <summary>KEY:85 โหลดโปรแกรม รอให้เครื่องโหลดเสร็จ แล้ว KEY:83 สั่งเริ่มพิมพ์</summary>
-    public async Task<(bool ok, string log)> LoadAndStartAsync(string ip, int port, string programName)
+    public async Task<(bool ok, string log, string? startWarning)> LoadAndStartAsync(string ip, int port, string programName)
     {
         var (loadOk, loadLog) = await SendKeyAsync(
             ip, port,
@@ -44,15 +44,14 @@ public class UvTcpService
             $"โหลดโปรแกรม {programName}.uvdx",
             LoadReadTimeoutMs);
 
-        if (!loadOk) return (false, loadLog);
+        if (!loadOk) return (false, loadLog, null);
 
         await Task.Delay(1000);
 
+        // ส่งข้อมูลสำเร็จตัดสินจาก Load ตาม flow หน้างาน ส่วน Start รายงานแยก
         var (startOk, startLog) = await SendKeyAsync(
             ip, port, new { KEY = 83 }, "สั่งเริ่มพิมพ์", ReadTimeoutMs);
-
-        // โหลดได้อย่างเดียวยังไม่ถือว่าสำเร็จ ถ้าไม่รู้ผล Start ให้คิวรอตรวจ ไม่ส่งซ้ำเอง
-        return (startOk, loadLog + startLog);
+        return (true, loadLog + startLog, startOk ? null : startLog.Trim());
     }
 
     /// <summary>เปิด TCP ใหม่ ส่ง 1 คำสั่ง แล้วอ่านผลกลับ</summary>
@@ -71,24 +70,32 @@ public class UvTcpService
             return (false, $"{label} → เชื่อมต่อ {ip}:{port} ไม่สำเร็จ ({ex.Message})" + Environment.NewLine);
         }
 
-        var stream = client.GetStream();
-        await SendJsonAsync(stream, JsonSerializer.Serialize(command));
+        try
+        {
+            var stream = client.GetStream();
+            await SendJsonAsync(stream, JsonSerializer.Serialize(command));
 
-        var (rs, detail) = await ReadJsonResponseAsync(stream, readTimeoutMs);
-        var ok = rs == 0;
+            var (rs, detail) = await ReadJsonResponseAsync(stream, readTimeoutMs);
+            var ok = rs == 0;
 
-        var log = ok
-            ? $"{label} → สำเร็จ"
-            : $"{label} → ล้มเหลว ({detail})";
+            var log = ok
+                ? $"{label} → สำเร็จ"
+                : $"{label} → ล้มเหลว ({detail})";
 
-        return (ok, log + Environment.NewLine);
+            return (ok, log + Environment.NewLine);
+        }
+        catch (Exception ex)
+        {
+            return (false, $"{label} → ส่งคำสั่งไม่ได้ ({ex.Message})" + Environment.NewLine);
+        }
     }
 
     private static async Task SendJsonAsync(NetworkStream stream, string json)
     {
         var data = Encoding.UTF8.GetBytes(json);
-        await stream.WriteAsync(data);
-        await stream.FlushAsync();
+        using var timeout = new CancellationTokenSource(ReadTimeoutMs);
+        await stream.WriteAsync(data.AsMemory(), timeout.Token);
+        await stream.FlushAsync(timeout.Token);
     }
 
     /// <summary>

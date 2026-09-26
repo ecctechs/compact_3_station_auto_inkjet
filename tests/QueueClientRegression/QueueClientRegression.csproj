@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../InkjetOperator/Services/UvTcpService.cs" Link="UvTcpService.cs" />
     <Compile Include="../../InkjetOperator/Models/ApiModels.cs" Link="ApiModels.cs" />
     <Compile Include="../../InkjetOperator/Models/PlcRegisterMap.cs" Link="PlcRegisterMap.cs" />
     <Compile Include="../../InkjetOperator/Services/ApiClient.cs" Link="ApiClient.cs" />

@@ -58,10 +58,12 @@ public partial class OrderListUserControl
         return tags.Count == 0 ? [new AntdUI.CellTag("ไม่ใช้เครื่องพิมพ์")] : tags.ToArray();
     }
 
+    private static string SentStatus(string machine) => machine == "MK" ? "ส่งแล้ว" : "ส่งข้อมูลแล้ว";
+
     private (string Text, AntdUI.TTypeMini Type) QueueStatus(MachineQueueRow row)
     {
         if (row.State == "done") return ("ปล่อยคิวแล้ว", AntdUI.TTypeMini.Default);
-        if (row.SentAt != null) return ("ส่งแล้ว", AntdUI.TTypeMini.Success);
+        if (row.SentAt != null) return (SentStatus(row.Machine), AntdUI.TTypeMini.Success);
         if (_machineStatus.TryGetValue(row.Id, out var local)) return (local.Text, local.Type);
         // sending จาก Backend อย่างเดียวไม่ยืนยันว่าโปรแกรมต้นทางยังทำงานอยู่
         if (row.NeedsSendReview) return ("กำลังส่ง / รอตรวจสอบ", AntdUI.TTypeMini.Warn);

@@ -79,7 +79,7 @@ internal static class Program
 
     private static async Task CheckUvAsync()
     {
-        foreach (var scenario in new[] { "ok", "reject", "silent", "disconnect", "load-reject" })
+        foreach (var scenario in new[] { "ok", "reject", "silent", "disconnect", "malformed", "load-reject", "load-disconnect", "load-malformed" })
         {
             using var server = new TcpListener(IPAddress.Loopback, 0);
             server.Start();
@@ -90,9 +90,11 @@ internal static class Program
                 var bytes = new byte[1024];
                 int read = await peer.GetStream().ReadAsync(bytes);
                 Check(Encoding.UTF8.GetString(bytes, 0, read).Contains("\"KEY\":85"), "UV load protocol changed");
-                await peer.GetStream().WriteAsync(Encoding.UTF8.GetBytes(scenario == "load-reject" ? "{\"RS\":1}" : "{\"RS\":0}"));
+                if (scenario == "load-disconnect") peer.Close();
+                else await peer.GetStream().WriteAsync(Encoding.UTF8.GetBytes(scenario == "load-reject" ? "{\"RS\":1}" :
+                    scenario == "load-malformed" ? "invalid" : "{\"RS\":0}"));
             }
-            if (scenario != "load-reject")
+            if (!scenario.StartsWith("load-"))
             {
                 using var peer = await server.AcceptTcpClientAsync();
                 var bytes = new byte[1024];
@@ -100,15 +102,17 @@ internal static class Program
                 Check(Encoding.UTF8.GetString(bytes, 0, read).Contains("\"KEY\":83"), "UV start protocol changed");
                 if (scenario == "disconnect") peer.Close();
                 else if (scenario != "silent")
-                    await peer.GetStream().WriteAsync(Encoding.UTF8.GetBytes(scenario == "reject" ? "{\"RS\":1}" : "{\"RS\":0}"));
+                    await peer.GetStream().WriteAsync(Encoding.UTF8.GetBytes(scenario == "reject" ? "{\"RS\":1}" :
+                        scenario == "malformed" ? "invalid" : "{\"RS\":0}"));
                 var result = await operation.WaitAsync(TimeSpan.FromSeconds(6));
-                Check(result.ok == (scenario == "ok"), $"UV {scenario} result incorrect");
-                if (scenario == "reject") Check(result.log.Contains("RS=1"), "UV rejection detail lost");
+                Check(result.ok, $"confirmed Load must count as delivered for UV {scenario}");
+                Check((result.startWarning == null) == (scenario == "ok"), "Start result was hidden or marked confirmed incorrectly");
+                if (scenario == "reject") Check(result.startWarning!.Contains("RS=1"), "UV rejection detail lost");
             }
             else Check(!(await operation).ok, "UV failed load reported success");
             Check(!server.Pending(), "UV retried hardware command automatically");
         }
-        Console.WriteLine("PASS: UV success, explicit rejection, silence, disconnect and failed load; no automatic retry");
+        Console.WriteLine("PASS: UV confirmed Load counts as delivered; Start rejection/silence/disconnect/malformed stay warnings; failed Load blocks; no retry");
     }
 
     private static async Task CheckPushButtonAsync()

@@ -170,6 +170,10 @@ internal static class Program
         nextMk.DispatchState = "not_sent";
         Snapshot(nextMk);
         Check(Tags()[0].Type == AntdUI.TTypeMini.Error, "definite no-send lost its failure status");
+        uv.State = "active";
+        uv.SentAt = DateTime.UtcNow;
+        Snapshot(uv);
+        Check(Tags()[1].Text!.Contains("ส่งข้อมูลแล้ว"), "UV label incorrectly implies confirmed printing");
         Console.WriteLine("PASS: cleared/restored queues discard old status/history, new queue IDs stay separate, backend uncertainty wins, live progress retained");
     }
 

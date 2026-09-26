@@ -33,4 +33,29 @@ Check((await api.FinishQueueSendAsync(id, token, "sent", new { program = "test" 
 Check(error == null && rows.Single().SentAt != null && !rows.Single().NeedsSendReview, "success not read");
 Check((await api.ReleaseMachineAsync("MK", id)).result?.Released?.Id == id, "release failed");
 Check((await api.ReleaseMachineAsync("MK", id)).result == null, "stale release accepted");
+// Same symptom as the field report: Load accepted, Start RS=1, queue must remain releasable.
+Check((await api.EnqueueMachinesAsync(jobId, [new() { Machine = "UV2" }])).ok, "UV enqueue failed");
+var uvClaim = await api.ReleaseMachineAsync("UV2", null);
+int uvId = uvClaim.result!.Next!.Id;
+var uvToken = Guid.NewGuid().ToString();
+Check((await api.BeginQueueSendAsync(uvId, uvToken)).ok, "UV begin failed");
+using (var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0))
+{
+    listener.Start();
+    int port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+    var sending = new UvTcpService().LoadAndStartAsync("127.0.0.1", port, "TEST");
+    foreach (var response in new[] { "{\"RS\":0}", "{\"RS\":1}" })
+    {
+        using var peer = await listener.AcceptTcpClientAsync();
+        await peer.GetStream().ReadAsync(new byte[1024]);
+        await peer.GetStream().WriteAsync(System.Text.Encoding.UTF8.GetBytes(response));
+    }
+    var result = await sending;
+    Check(result.ok && result.startWarning?.Contains("RS=1") == true, "UV Start warning changed delivery result");
+    Check((await api.FinishQueueSendAsync(uvId, uvToken, result.ok ? "sent" : "unknown",
+        new { start_confirmed = false, start_warning = result.startWarning })).ok, "UV result not recorded");
+    (rows, error) = await api.GetMachineQueueAsync();
+    Check(error == null && rows.Single().SentAt != null && !rows.Single().NeedsSendReview, "UV held despite accepted Load");
+    Check((await api.ReleaseMachineAsync("UV2", uvId)).result?.Released?.Id == uvId, "UV could not be released after Start warning");
+}
 Console.WriteLine("PASS: real C# API client, queue lifecycle and marking 11/12/32/22");

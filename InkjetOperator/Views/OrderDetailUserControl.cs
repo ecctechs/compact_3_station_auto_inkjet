@@ -1309,20 +1309,22 @@ public partial class OrderDetailUserControl : UserControl
             done.Add($"เขียน CPI.db3 ({table})\n    Lot: {OrDash(uvRow.Lot)}\n    Name: {OrDash(uvRow.ErpMfg)}");
 
             // 3. โหลดโปรแกรม แล้วสั่งเริ่มพิมพ์
-            var (tcpOk, tcpLog) = await uvTcp.LoadAndStartAsync(ip, port, programFile);
+            var (tcpOk, tcpLog, startWarning) = await uvTcp.LoadAndStartAsync(ip, port, programFile);
             if (!tcpOk)
             {
                 ShowUvFailure(uvName, done, tcpLog.Trim());
                 return;
             }
             done.Add($"โหลดโปรแกรม {programFile}.uvdx");
-            done.Add("สั่งเริ่มพิมพ์");
+            if (startWarning == null) done.Add("เครื่องตอบรับคำสั่งเริ่มพิมพ์");
 
             CompleteSendStep(stepName, new
             {
                 requested = uvRow.ProgramName ?? "",
                 program = programFile,
                 is_default = pick.IsDefault,
+                start_confirmed = startWarning == null,
+                start_warning = startWarning,
             });
 
             // ช่อง Program ยังเป็นชื่อฐานอยู่ ถ้าไม่อัปเดตหน้าจอจะบอกคนละตัวกับที่เครื่องพิมพ์
@@ -1334,11 +1336,13 @@ public partial class OrderDetailUserControl : UserControl
             _chosenUvProgram[stepName] = programFile;
             RefreshFlowRows();
 
-            var summary = $"ส่ง {uvName} สำเร็จ\n\n"
+            var summary = $"ส่งข้อมูล {uvName} สำเร็จ\n\n"
                 + string.Join("\n", done.Select(s => "• " + s))
+                + (startWarning == null ? "" : "\n\n⚠ " + startWarning + "\nตรวจสถานะเริ่มพิมพ์ที่เครื่อง")
                 + (pick.IsDefault ? "\n\n⚠ ใช้ default.uvdx เพราะไม่พบโปรแกรมที่ต้องการ" : "");
 
-            Notify.SuccessDetail(this, $"{uvName} — สำเร็จ", summary);
+            if (startWarning == null) Notify.SuccessDetail(this, $"{uvName} — ส่งข้อมูลแล้ว", summary);
+            else Notify.WarnDetail(this, $"{uvName} — ส่งข้อมูลแล้ว / ตรวจ Start", summary);
         }
         catch (Exception ex)
         {

@@ -500,7 +500,7 @@ public partial class OrderListUserControl : UserControl
             {
                 // ถึงคิวแล้วแต่ยังไม่ได้ส่ง กับส่งเข้าเครื่องไปแล้ว เป็นคนละสภาพกัน
                 var what = holder.NeedsSendReview ? "กำลังส่ง / รอตรวจสอบผล"
-                    : holder.SentAt == null ? "รอ ST1 ส่ง" : "กำลังพิมพ์";
+                    : holder.SentAt == null ? "รอ ST1 ส่ง" : machine == "MK" ? "กำลังพิมพ์" : "ส่งข้อมูลแล้ว";
 
                 label.Text = $"● {machine} — {JobName(holder.PrintJobsId)} · {what}";
                 label.ForeColor = WaitingColor;
@@ -1605,7 +1605,7 @@ public partial class OrderListUserControl : UserControl
         if (held)
             result.Lines.Add(Notify.Bad($"{row.Machine}: ถือคิว {row.Id} ไว้ตรวจผล ห้ามส่งซ้ำหรือปล่อยเครื่อง"
                 + (recorded.ok ? "" : $" · บันทึกผลไม่ได้: {recorded.error}")));
-        SetMachineStatus(row, held ? "ต้องตรวจสอบก่อนส่งซ้ำ" : result.Sent ? "ส่งแล้ว" : "ยังไม่ส่ง / ส่งไม่สำเร็จ",
+        SetMachineStatus(row, held ? "ต้องตรวจสอบก่อนส่งซ้ำ" : result.Sent ? SentStatus(row.Machine) : "ยังไม่ส่ง / ส่งไม่สำเร็จ",
             held ? AntdUI.TTypeMini.Warn : result.Sent ? AntdUI.TTypeMini.Success : AntdUI.TTypeMini.Error);
         return result with { HeldForReview = held };
     }
@@ -1650,10 +1650,15 @@ public partial class OrderListUserControl : UserControl
                 requested = resolved.UvJobData.FirstOrDefault(r => r.Machine == step)?.ProgramName ?? "",
                 program = uv.ProgramFile,
                 is_default = uv.UsedDefault,
+                start_confirmed = uv.StartWarning == null,
+                start_warning = uv.StartWarning,
             };
 
-            return new StepSendResult(true,
-                [Notify.Ok($"{uv.MachineName} — ส่งสำเร็จ ({uv.ProgramFile}.uvdx)")], Detail: detail);
+            var lines = new List<Notify.ResultLine>
+                { Notify.Ok($"{uv.MachineName} — ส่งข้อมูลแล้ว ({uv.ProgramFile}.uvdx)") };
+            if (uv.StartWarning != null)
+                lines.Add(Notify.Careful($"{uv.MachineName} — {uv.StartWarning} · ตรวจสถานะเริ่มพิมพ์ที่เครื่อง"));
+            return new StepSendResult(true, lines, Detail: detail);
         }
 
         return new StepSendResult(false, uv.Status switch
