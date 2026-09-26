@@ -1175,15 +1175,38 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        // ST3 ไม่ได้ต่อสายเข้าเครื่อง จองแล้วจบ ST1 จะหยิบไปส่งให้เองจากคิว
+        // ST3 ขอสิทธิ์ให้หัวคิวเป็น active ก่อน ST1 จึงจะหยิบไปส่งในรอบ poll
         if (station == StationService.St3)
         {
-            Notify.Success(this, $"{JobName(jobId)} เข้าคิวแล้ว · ST1 จะส่งให้");
+            var errors = await ClaimRemoteQueueAsync(jobId, plan.Steps);
+            if (IsDisposed) return;
+            if (errors.Count == 0)
+                Notify.Success(this, $"{JobName(jobId)} เข้าคิวแล้ว · ST1 จะส่งตามลำดับคิว");
+            else
+                Notify.Warn(this, $"{JobName(jobId)} เข้าคิวแล้ว แต่ยืนยันการเริ่มคิวไม่ได้ · "
+                    + string.Join(" · ", errors) + " · ตรวจสถานะคิวก่อนกดเริ่มอีกครั้ง");
             await RefreshDataAsync(force: true);
             return;
         }
 
         await SendQueuedForJobAsync(jobId, resolved, $"เริ่มงาน {JobName(jobId)}");
+    }
+
+    // ขอสิทธิ์อย่างเดียว ไม่ส่งเครื่องจาก ST3 และไม่ปล่อยงานที่กำลังถือเครื่องอยู่
+    private async Task<List<string>> ClaimRemoteQueueAsync(int jobId, List<string> steps)
+    {
+        var errors = new List<string>();
+        foreach (var machine in steps.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            var (claim, error) = await _api!.ClaimMachineAsync(machine, jobId);
+            if (IsDisposed) break;
+            if (error != null || claim == null)
+                errors.Add($"{machine}: {error ?? "ไม่ได้รับผลการขอคิว"}");
+            // busy/queued คือรอตามลำดับ ไม่ใช่ส่งล้มเหลว
+            else if (claim.Claimed == null && claim.Reason is not ("busy" or "queued"))
+                errors.Add($"{machine}: ไม่พบคิวที่พร้อมเริ่ม");
+        }
+        return errors;
     }
 
     /// <summary>
@@ -1226,7 +1249,9 @@ public partial class OrderListUserControl : UserControl
             var holder = rows.FirstOrDefault(r => r.Machine == step && r.State == "active");
 
             var state = holder == null
-                ? "ว่าง · ส่งเดี๋ยวนี้"
+                ? rows.Any(r => r.Machine == step && r.State == "pending")
+                    ? "มีงานรอ · ส่งตามลำดับคิว"
+                    : "ว่าง · ส่งเดี๋ยวนี้"
                 : $"ไม่ว่าง ({JobName(holder.PrintJobsId)} ค้างอยู่) · เข้าคิวรอปุ่มกดหน้างาน";
 
             body.Add($"[ {step} · ST{station} ]  {state}");
@@ -1434,7 +1459,9 @@ public partial class OrderListUserControl : UserControl
                 else
                 {
                     anyQueued = true;
-                    lines.Add(Notify.Note($"{machine}: เครื่องไม่ว่าง เข้าคิวรอไว้แล้ว"));
+                    lines.Add(Notify.Note(claim?.Reason == "queued"
+                        ? $"{machine}: มีงานเข้าคิวก่อน รอตามลำดับคิว"
+                        : $"{machine}: เครื่องไม่ว่าง เข้าคิวรอไว้แล้ว"));
                 }
             }
             var results = await SendPreparedBatchAsync(ready);
@@ -2082,6 +2109,8 @@ public partial class OrderListUserControl : UserControl
         List<Notify.ResultLine> lines;
         if (claim?.Claimed is { } row)
             lines = (await SendPreparedBatchAsync([new(row, resolved)])).SelectMany(r => r.Lines).ToList();
+        else if (claimError == null && claim?.Reason is "busy" or "queued")
+            lines = [Notify.Note($"{step}: เข้าคิวแล้ว รอตามลำดับคิว")];
         else
             lines = [Notify.Bad(claimError ?? "เครื่องยังไม่ว่างหรือคิวถูกส่งแล้ว กรุณาตรวจสถานะงาน")];
 

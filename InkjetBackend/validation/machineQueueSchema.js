@@ -25,7 +25,7 @@ const releaseSchema = z.object({
   hold_for_next_round: z.boolean().optional(),
 });
 
-// ระบุงานได้ = หยิบเฉพาะแถวของงานใบนั้น ไม่ระบุ = หยิบใบที่รอมาก่อนสุด
+// ระบุงานได้ แต่ต้องเป็นหัวคิวของเครื่องนั้นด้วย ห้ามข้ามใบที่รอก่อน
 const claimSchema = z.object({
   machine: machineName,
   print_jobs_id: z.number().int().min(1).optional(),

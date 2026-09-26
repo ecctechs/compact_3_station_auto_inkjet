@@ -618,11 +618,11 @@ public class ReleaseResult
 /// <summary>ผลของการขอหยิบงานถัดไปมาถือเครื่อง</summary>
 public class MachineClaimResult
 {
-    /// <summary>งานที่หยิบได้ — null แปลว่าเครื่องไม่ว่าง หรือคิวว่าง</summary>
+    /// <summary>งานที่หยิบได้ — null เมื่อเครื่องไม่ว่าง ยังไม่ถึงคิว หรือคิวว่าง</summary>
     [JsonPropertyName("claimed")]
     public MachineQueueRow? Claimed { get; set; }
 
-    /// <summary>busy = มีงานถือเครื่องอยู่ · empty = ไม่มีใครรอ</summary>
+    /// <summary>busy = มีงานถือเครื่องอยู่ · queued = มีงานรอก่อน · empty = ไม่มีใครรอ</summary>
     [JsonPropertyName("reason")]
     public string? Reason { get; set; }
 

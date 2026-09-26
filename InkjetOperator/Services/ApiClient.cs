@@ -508,7 +508,7 @@ public class ApiClient
     }
 
     /// <summary>
-    /// ขอหยิบงานถัดไปของเครื่องนั้นมาถือเครื่อง — คืน Claimed เป็น null เมื่อไม่ว่างหรือคิวว่าง
+    /// ขอหัวคิวของเครื่อง — คืน Claimed เป็น null เมื่อไม่ว่าง ยังไม่ถึงคิว หรือคิวว่าง
     /// </summary>
     public async Task<(MachineClaimResult? result, string? error)> ClaimMachineAsync(
         string machine, int? jobId = null)

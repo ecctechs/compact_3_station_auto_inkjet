@@ -139,15 +139,9 @@ class MachineQueueController {
           };
         }
 
-        // ระบุงานมาด้วย = หยิบเฉพาะแถวของงานใบนั้น ไม่ใช่ใบที่เข้าคิวมาก่อน
-        //
-        // ปุ่มเริ่มงานใช้ทางนี้ คนกดเริ่มงานใบไหนต้องได้ใบนั้น ไม่ใช่ไปส่งใบอื่น
-        // ที่บังเอิญรออยู่ในคิวเครื่องเดียวกัน ซึ่งเท่ากับสั่งพิมพ์งานที่ไม่มีใครกด
-        const where = { machine, state: PENDING };
-        if (print_jobs_id) where.print_jobs_id = print_jobs_id;
-
+        // ดูหัวคิวของเครื่องก่อนเสมอ งานจาก ST1 ห้ามแซงงานที่ ST3 จองไว้ก่อน
         const next = await MachineQueue.findOne({
-          where,
+          where: { machine, state: PENDING },
           order: [
             [sequelize.literal('COALESCE("queued_at", "created_at")'), "ASC"],
             ["id", "ASC"],
@@ -162,6 +156,10 @@ class MachineQueueController {
             reason: "empty",
           };
         }
+
+        // ผู้เรียกมีข้อมูลของงานที่ขอเท่านั้น ห้ามคืนงานอื่นไปส่งด้วยข้อมูลผิดใบ
+        if (print_jobs_id && next.print_jobs_id !== print_jobs_id)
+          return { claimed: null, reason: "queued" };
 
         // ไม่ตั้ง sent_at ตรงนี้ — active แปลว่า "ถึงคิวแล้ว รอ ST1 ส่ง" เท่านั้น
         // ฝั่งที่ส่งสำเร็จจริงเป็นคนประทับเวลาเอง แถวที่ยังไม่มี sent_at คือแถวที่

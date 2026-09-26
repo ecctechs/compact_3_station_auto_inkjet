@@ -77,6 +77,60 @@ test("concurrent claims on an empty machine grant only one holder", async () => 
   assert.equal(await MachineQueue.count({ where: { state: "active" } }), 1);
 });
 
+test("ST3 UV queued first cannot be overtaken by ST1 MK/UV; MK remains independent", async () => {
+  const a = await job(), b = await job();
+  await enqueue(a.id, [{ machine: "UV2", program_name: "ST3-A" }]);
+  await enqueue(b.id, [{ machine: "MK" }, { machine: "UV2", program_name: "ST1-B" }]);
+  // ST1 reaches claim while ST3 is still between enqueue and claim.
+  const blocked = await claim(b.id, "UV2");
+  assert.equal(blocked.status, 200);
+  assert.equal(blocked.data.claimed, null);
+  assert.equal(blocked.data.reason, "queued");
+  assert.equal(await MachineQueue.count({ where: { state: "active" } }), 0);
+  const [mk, uv] = await Promise.all([claim(b.id, "MK"), claim(a.id, "UV2")]);
+  assert.equal(mk.data.claimed.print_jobs_id, b.id);
+  assert.equal(uv.data.claimed.print_jobs_id, a.id);
+  assert.equal(uv.data.claimed.program_name, "ST3-A");
+  const ready = (await request("/machine-queue/getAll", undefined, "GET")).data
+    .filter(r => r.state === "active" && !r.sent_at);
+  assert.deepEqual(ready.map(r => [r.machine, r.print_jobs_id]).sort(), [["MK", b.id], ["UV2", a.id]]);
+  assert.equal((await claim(b.id, "UV2")).data.reason, "busy");
+  await sent(uv.data.claimed);
+  const next = await release(uv.data.claimed.id, { machine: "UV2" });
+  assert.equal(next.data.next.print_jobs_id, b.id);
+  assert.equal(next.data.next.program_name, "ST1-B");
+  assert.equal(await MachineQueue.count({ where: { machine: "MK", state: "active", print_jobs_id: b.id } }), 1);
+});
+
+test("FIFO applies both ways and concurrent claims use row ID for equal queue times", async () => {
+  const a = await job(), b = await job();
+  await enqueue(a.id, [{ machine: "MK" }, { machine: "UV2" }]);
+  await enqueue(b.id, [{ machine: "UV2" }]);
+  await MachineQueue.update({ queued_at: new Date("2026-01-01T00:00:00Z") }, { where: { machine: "UV2" } });
+  const results = await Promise.all([
+    ...Array.from({ length: 8 }, () => claim(b.id, "UV2")),
+    ...Array.from({ length: 8 }, () => claim(a.id, "UV2")),
+  ]);
+  const granted = results.filter(r => r.data.claimed);
+  assert.equal(granted.length, 1);
+  assert.equal(granted[0].data.claimed.print_jobs_id, a.id);
+  assert.equal(await MachineQueue.count({ where: { machine: "UV2", state: "active" } }), 1);
+  assert.equal(await MachineQueue.count({ where: { print_jobs_id: b.id, state: "pending" } }), 1);
+});
+
+test("a later start neither bypasses nor retries a failed head of queue", async () => {
+  const { job: a, row } = await active();
+  const token = randomUUID();
+  await begin(row.id, token);
+  await finish(row.id, token, "not_sent");
+  const b = await job(); await enqueue(b.id);
+  assert.equal((await claim(b.id)).data.reason, "queued");
+  assert.equal(await MachineQueue.count({ where: { state: "active" } }), 0);
+  assert.equal(await PrintJobCommand.count({ where: { command: "QUEUE_DISPATCH" } }), 1);
+  // Only a fresh explicit start of the first job can claim it again.
+  assert.equal((await claim(a.id)).data.claimed.id, row.id);
+});
+
 test("duplicate release cannot skip the newly promoted job", async () => {
   const a = await active();
   await sent(a.row);

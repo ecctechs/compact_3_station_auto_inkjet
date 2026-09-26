@@ -87,8 +87,57 @@ internal static class Program
         Check(handler.Unexpected == 0, "unexpected API/hardware path in test");
         await CheckConcurrentReleaseAsync(view, handler);
         await CheckIndependentDispatchAsync(view, handler);
+        await CheckRemoteQueueClaimAsync(view, handler);
+        await CheckRemoteQueueDispatchAsync(view, handler);
         CheckMachineStatusColumn(view);
         Console.WriteLine("PASS: real OrderList refresh, one queue read, coalesced requests, deferred refresh during sending, immediate queue check after release");
+    }
+
+    private static async Task CheckRemoteQueueClaimAsync(OrderListUserControl view, TestHttp handler)
+    {
+        var claim = typeof(OrderListUserControl).GetMethod("ClaimRemoteQueueAsync", Private)!;
+        foreach (var reason in new[] { "claimed", "busy", "queued", "empty", "error" })
+        {
+            handler.ClaimReason = reason;
+            handler.Paths.Clear();
+            handler.Claims.Clear();
+            var errors = await (Task<List<string>>)claim.Invoke(view, [77, new List<string> { "UV2", "UV2" }])!;
+            Check(handler.Claims.SequenceEqual(new[] { (77, "UV2") }), "ST3 did not claim exactly its requested job and machine");
+            Check(handler.Paths.SequenceEqual(new[] { "/machine-queue/claim" }), "ST3 released a queue or sent hardware instead of requesting its turn");
+            Check((errors.Count == 0) == (reason is "claimed" or "busy" or "queued"), "ST3 concealed claim failure or treated waiting as an error");
+        }
+        Console.WriteLine("PASS: ST3 requests its queue for ST1 without hardware IO; waiting is normal; failed claims stay visible");
+    }
+
+    private static async Task CheckRemoteQueueDispatchAsync(OrderListUserControl view, TestHttp handler)
+    {
+        // ST3 job A may be hidden from ST1's table; dispatch must load A itself, not reuse job B.
+        Field("_allJobs").SetValue(view, new List<PrintJob>());
+        var rows = new List<MachineQueueRow>
+        {
+            new() { Id = 501, PrintJobsId = 77, Machine = "UV2", State = "active", ProgramName = "ST3-A" },
+            new() { Id = 502, PrintJobsId = 88, Machine = "UV2", State = "pending", ProgramName = "ST1-B" },
+            new() { Id = 503, PrintJobsId = 88, Machine = "MK", State = "active" },
+        };
+        handler.BeginGates[501] = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        handler.BeginGates[503] = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        handler.Begins.Clear();
+        handler.ResolvedJobs.Clear();
+        // Keep the injected permission errors in memory instead of opening a modal during this test.
+        Field("_showingSendReport").SetValue(view, true);
+        var poll = (Task<bool>)typeof(OrderListUserControl).GetMethod("ProcessMachineQueueAsync", Private)!
+            .Invoke(view, [rows, null])!;
+        await PumpUntilAsync(() => handler.Begins.Count == 2);
+        Check(handler.ResolvedJobs.SequenceEqual(new[] { 77, 88 }), "ST1 did not load each station's correct job");
+        Check(handler.Begins.Order().SequenceEqual(new[] { 501, 503 }), "pending UV job B overtook A or independent MK was blocked");
+        // Stop at the production permission gate so this regression never performs device IO.
+        handler.BeginGates[501].SetResult();
+        handler.BeginGates[503].SetResult();
+        Check(await poll, "ST1 ignored active ST3 work");
+        ((IList)Field("_sendReports").GetValue(view)!).Clear();
+        Field("_showingSendReport").SetValue(view, false);
+        Check(!MachineBusy.Active, "ST1 polling leaked a machine lease");
+        Console.WriteLine("PASS: ST1 polling loads hidden ST3 job A for UV2 and job B for MK; pending UV2 B stays queued");
     }
 
     private static void CheckMachineStatusColumn(OrderListUserControl view)
@@ -265,6 +314,9 @@ internal static class Program
         public List<string> Paths = [];
         public List<string> Releases = [];
         public List<int> Begins = [];
+        public string ClaimReason = "claimed";
+        public List<(int Job, string Machine)> Claims = [];
+        public List<int> ResolvedJobs = [];
         public Dictionary<string, TaskCompletionSource> ReleaseGates = [];
         public Dictionary<int, TaskCompletionSource> BeginGates = [];
         public TaskCompletionSource? HoldNextJobs;
@@ -272,6 +324,15 @@ internal static class Program
         {
             string body;
             Paths.Add(request.RequestUri!.AbsolutePath);
+            if (request.RequestUri.AbsolutePath.StartsWith("/job/getResolved/"))
+            {
+                int jobId = int.Parse(request.RequestUri.AbsolutePath.Split('/').Last());
+                ResolvedJobs.Add(jobId);
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(new { data = new { job = new { id = jobId } } })),
+                };
+            }
             if (request.RequestUri.AbsolutePath.EndsWith("/begin-send"))
             {
                 int id = int.Parse(request.RequestUri.AbsolutePath.Split('/')[2]);
@@ -292,6 +353,15 @@ internal static class Program
                     body = "{\"data\":{\"data\":[]}}";
                     break;
                 case "/machine-queue/getAll": QueueReads++; body = "{\"data\":[]}"; break;
+                case "/machine-queue/claim":
+                    using (var claim = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken)))
+                        Claims.Add((claim.RootElement.GetProperty("print_jobs_id").GetInt32(), claim.RootElement.GetProperty("machine").GetString()!));
+                    if (ClaimReason == "error")
+                        return new HttpResponseMessage(HttpStatusCode.ServiceUnavailable) { Content = new StringContent("test: backend unavailable") };
+                    body = ClaimReason == "claimed"
+                        ? "{\"data\":{\"claimed\":{\"id\":77,\"print_jobs_id\":77,\"machine\":\"UV2\",\"state\":\"active\"}}}"
+                        : JsonSerializer.Serialize(new { data = new { claimed = (object?)null, reason = ClaimReason } });
+                    break;
                 case "/machine-queue/release":
                     var payload = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
                     string machine = payload.RootElement.GetProperty("machine").GetString()!;
