@@ -49,6 +49,16 @@ public static class MachineBusy
     /// </param>
     public static IDisposable Hold(string? machine = null) => new Holder(machine);
 
+    // ขอใช้เครื่องเดียวกันได้ครั้งละหนึ่งงาน เครื่องอื่นยังส่งพร้อมกันได้
+    public static IDisposable? TryHoldExclusive(string machine)
+    {
+        lock (_byMachine)
+        {
+            if (_byMachine.TryGetValue(machine, out int count) && count > 0) return null;
+            return new Holder(machine);
+        }
+    }
+
     private sealed class Holder : IDisposable
     {
         private readonly string? _machine;

@@ -189,6 +189,7 @@ public static class JobSendService
         IEnumerable<string> steps, PatternDetail? pattern, List<UvJobDataDto>? uvData)
     {
         var bad = new List<UnreachableMachine>();
+        var targets = new List<(string Name, string Host, int Port)>();
 
         foreach (var step in steps.Distinct(StringComparer.OrdinalIgnoreCase))
         {
@@ -204,8 +205,7 @@ public static class JobSendService
 
                     if (string.IsNullOrWhiteSpace(ip))
                         bad.Add(new UnreachableMachine(name, "ยังไม่ได้ตั้ง IP"));
-                    else if (!await CanConnectAsync(ip, MkPort))
-                        bad.Add(new UnreachableMachine(name, $"ต่อไม่ติด ({ip}:{MkPort})"));
+                    else targets.Add((name, ip, MkPort));
                 }
 
                 continue;
@@ -239,10 +239,14 @@ public static class JobSendService
                 ? p
                 : UvDefaultPort;
 
-            if (!await CanConnectAsync(uvIp, uvPort))
-                bad.Add(new UnreachableMachine(uvName, $"ต่อไม่ติด ({uvIp}:{uvPort})"));
+            targets.Add((uvName, uvIp, uvPort));
         }
 
+        var connected = await ConnectionPreflight.CheckAsync(
+            targets.Select(t => (t.Host, t.Port)).ToList(), CanConnectAsync);
+        for (int i = 0; i < targets.Count; i++)
+            if (!connected[i])
+                bad.Add(new UnreachableMachine(targets[i].Name, $"ต่อไม่ติด ({targets[i].Host}:{targets[i].Port})"));
         return bad;
     }
 
@@ -509,7 +513,7 @@ public static class JobSendService
     /// </summary>
     public static async Task<UvSendResult> SendUvAsync(
         IWin32Window? owner, int uvNumber, List<UvJobDataDto> uvData,
-        string? forcedProgram = null)
+        string? forcedProgram = null, bool allowPrompt = true)
     {
         string stepName = uvNumber == 1 ? "UV1" : "UV2";
 
@@ -545,6 +549,7 @@ public static class JobSendService
         UvProgramPick pick;
         if (string.IsNullOrWhiteSpace(forcedProgram))
         {
+            if (!allowPrompt) return Blocked(uvName, "ยังไม่ได้เลือกโปรแกรม UV ก่อนส่ง");
             var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber);
             pick = UvProgramResolver.Resolve(uvRow.ProgramName, docFolder, owner);
         }

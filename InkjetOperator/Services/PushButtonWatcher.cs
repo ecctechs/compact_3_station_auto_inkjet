@@ -29,6 +29,8 @@ public sealed class PushButtonWatcher : IDisposable
     private bool _reading;
     private bool _lastOn;
     private int _failures;
+    private int _generation;
+    private bool _disposed;
 
     /// <summary>
     /// ครั้งแรกหลังเริ่มเฝ้าหรือหลังกลับมาจากช่วงพัก ให้จำค่าไว้เฉย ๆ ไม่ถือเป็นการกด
@@ -93,8 +95,11 @@ public sealed class PushButtonWatcher : IDisposable
     /// </summary>
     public void Start()
     {
+        if (_disposed) return;
         Stop();
 
+        // ต้องฟังต่อแม้ปิดใช้งานอยู่ เพื่อเริ่มอ่านได้ทันทีเมื่อบันทึกเปิดใช้งาน
+        PushButtonSettings.Saved += OnSettingsSaved;
         _settings = PushButtonSettings.Load();
         if (!_settings.IsReady || _settings.Validate() != null) return;
 
@@ -106,15 +111,19 @@ public sealed class PushButtonWatcher : IDisposable
 
     public void Stop()
     {
+        _generation++;
+        PushButtonSettings.Saved -= OnSettingsSaved;
         _timer.Stop();
         _resync = true;
     }
+
+    private void OnSettingsSaved(object? sender, EventArgs e) => Start();
 
     private async Task TickAsync()
     {
         // กันอ่านซ้อน — รอบก่อนอาจยังคุยกับ PLC ไม่เสร็จ หรือคนที่รับ Pressed
         // ไปกำลังเปิดหน้าต่างค้างอยู่
-        if (_reading) return;
+        if (_reading || !Running || _disposed) return;
 
         if (ShouldWatch?.Invoke() == false)
         {
@@ -125,10 +134,14 @@ public sealed class PushButtonWatcher : IDisposable
         }
 
         _reading = true;
+        int generation = _generation;
         try
         {
             var (ok, on, error) = await McProtocolService.ReadBitAsync(
                 _settings.Ip, _settings.Port, _settings.Address);
+
+            // เปลี่ยน Address / หยุดเฝ้าระหว่างรอ ห้ามใช้คำตอบจากการอ่านรอบเก่า
+            if (generation != _generation || _disposed || !Running) return;
 
             if (!ok)
             {
@@ -189,7 +202,9 @@ public sealed class PushButtonWatcher : IDisposable
 
     public void Dispose()
     {
-        _timer.Stop();
+        if (_disposed) return;
+        _disposed = true;
+        Stop();
         _timer.Dispose();
     }
 }

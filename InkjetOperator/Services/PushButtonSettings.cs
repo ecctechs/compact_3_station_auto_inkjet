@@ -14,6 +14,8 @@ namespace InkjetOperator.Services;
 /// </summary>
 public sealed class PushButtonSettings
 {
+    // หน้า Setting บันทึกบน UI thread; แจ้งเมื่อเขียนครบแล้วเท่านั้น
+    public static event EventHandler? Saved;
     /// <summary>ช้ากว่านี้เสี่ยงพลาดสัญญาณที่ค้างแค่ 1 วินาที</summary>
     public const int MaxPollMs = 900;
 
@@ -81,6 +83,7 @@ public sealed class PushButtonSettings
         CustomSettingsManager.Write("PUSHBTN_ADDRESS_ST2", AddressSt2.Trim().ToUpperInvariant());
         CustomSettingsManager.Write("PUSHBTN_ADDRESS_ST3", AddressSt3.Trim().ToUpperInvariant());
         CustomSettingsManager.Write("PUSHBTN_POLL_MS", Clamp(PollMs.ToString()).ToString());
+        Saved?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>

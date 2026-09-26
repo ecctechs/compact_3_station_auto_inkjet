@@ -51,12 +51,8 @@ public class UvTcpService
         var (startOk, startLog) = await SendKeyAsync(
             ip, port, new { KEY = 83 }, "สั่งเริ่มพิมพ์", ReadTimeoutMs);
 
-        // start ที่ไม่ตอบรับไม่นับว่าล้ม — เครื่องอาจยังไม่พร้อมแต่รับคำสั่งไว้แล้ว
-        var log = loadLog + (startOk
-            ? startLog
-            : startLog.TrimEnd() + " (เครื่องอาจยังไม่พร้อม)" + Environment.NewLine);
-
-        return (true, log);
+        // โหลดได้อย่างเดียวยังไม่ถือว่าสำเร็จ ถ้าไม่รู้ผล Start ให้คิวรอตรวจ ไม่ส่งซ้ำเอง
+        return (startOk, loadLog + startLog);
     }
 
     /// <summary>เปิด TCP ใหม่ ส่ง 1 คำสั่ง แล้วอ่านผลกลับ</summary>

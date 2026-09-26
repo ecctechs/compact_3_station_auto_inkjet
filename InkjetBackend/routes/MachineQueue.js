@@ -9,6 +9,9 @@ const {
   releaseSchema,
   claimSchema,
   updateQueueSchema,
+  beginSendSchema,
+  finishSendSchema,
+  recoverSchema,
 } = require("../validation/machineQueueSchema");
 
 Route.get(RouteName + "/getAll", MachineQueueController.getAll);
@@ -36,6 +39,10 @@ Route.patch(
   validate(updateQueueSchema),
   MachineQueueController.update
 );
+
+Route.post(RouteName + "/:id/begin-send", validate(beginSendSchema), MachineQueueController.beginSend);
+Route.post(RouteName + "/:id/finish-send", validate(finishSendSchema), MachineQueueController.finishSend);
+Route.post(RouteName + "/:id/recover", validate(recoverSchema), MachineQueueController.recover);
 
 Route.delete(RouteName + "/job/:jobId", MachineQueueController.clearJob);
 

@@ -2,6 +2,8 @@
 const sequelize = require("../database");
 const ResponseManager = require("../middleware/ResponseManager");
 const { PrintJob, PrintJobCommand } = require("../model/jobModel");
+const { MachineQueue } = require("../model/machineQueueModel");
+const { withQueueLock, assertNoUnresolved, conflict } = require("../services/queueGuard");
 const {
   Pattern,
   InkjetConfig,
@@ -348,21 +350,25 @@ class JobController {
    */
   static async updateStatus(req, res) {
     try {
-      const job = await PrintJob.findByPk(req.params.id);
-      if (!job) {
-        return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
-      }
-
       const { status } = req.body;
       if (!status) {
         return ResponseManager.ErrorResponse(req, res, 400, "status is required");
       }
 
-      await job.update({ status });
+      await withQueueLock(async (transaction) => {
+        const job = await PrintJob.findByPk(req.params.id, { transaction });
+        if (!job) conflict("Job not found");
+        const rows = await MachineQueue.findAll({ where: { print_jobs_id: job.id }, transaction });
+        // ห้ามเปลี่ยนเป็นรอ/จบ/ยกเลิก ขณะที่เครื่องอาจรับงานไปแล้ว
+        if (status !== "Process") await assertNoUnresolved(rows, transaction);
+        if (["Success", "Cancel"].includes(status))
+          await MachineQueue.destroy({ where: { print_jobs_id: job.id }, transaction });
+        await job.update({ status }, { transaction });
+      });
 
       return ResponseManager.SuccessResponse(req, res, 200, "Status updated");
     } catch (err) {
-      return ResponseManager.CatchResponse(req, res, err.message);
+      return ResponseManager.ErrorResponse(req, res, err.statusCode || 500, err.message);
     }
   }
 
@@ -466,16 +472,17 @@ class JobController {
    */
   static async remove(req, res) {
     try {
-      const job = await PrintJob.findByPk(req.params.id);
-      if (!job) {
-        return ResponseManager.ErrorResponse(req, res, 404, "Job not found");
-      }
-
-      await job.destroy();
+      await withQueueLock(async (transaction) => {
+        const job = await PrintJob.findByPk(req.params.id, { transaction });
+        if (!job) conflict("Job not found");
+        const rows = await MachineQueue.findAll({ where: { print_jobs_id: job.id }, transaction });
+        await assertNoUnresolved(rows, transaction);
+        await job.destroy({ transaction });
+      });
 
       return ResponseManager.SuccessResponse(req, res, 200, "Job deleted");
     } catch (err) {
-      return ResponseManager.CatchResponse(req, res, err.message);
+      return ResponseManager.ErrorResponse(req, res, err.statusCode || 500, err.message);
     }
   }
 }

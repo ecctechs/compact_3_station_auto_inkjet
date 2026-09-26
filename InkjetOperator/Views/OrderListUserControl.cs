@@ -25,12 +25,18 @@ public partial class OrderListUserControl : UserControl
     /// modal เปิดอยู่ ถ้าไม่กันไว้ ตัวเฝ้าจะรับสัญญาณรอบใหม่ทับของเดิมได้
     /// </para>
     /// </summary>
-    private bool _pushHandling;
+    private readonly HashSet<string> _pushHandling = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Guid> _dispatchingMachines = new(StringComparer.OrdinalIgnoreCase);
+    private bool _preparingPrograms;
+    private readonly List<Notify.ResultLine> _sendReports = [];
+    private bool _showingSendReport;
 
     /// <summary>กำลังดึงข้อมูลรอบ poll อยู่ — กันรอบใหม่ทับรอบเก่าตอน backend ช้า</summary>
     private bool _refreshing;
+    private bool _refreshRequested;
+    private bool _refreshScheduled;
+    private long _lastBlockedPressNotice = long.MinValue;
     private readonly HashSet<int> _reportedUncertainQueues = [];
-    private bool _queueSendInProgress;
 
     /// <summary>
     /// กำลังทำงานตามปุ่มในแถวอยู่ — กันกดซ้ำระหว่างรออ่านข้อมูลจาก backend
@@ -89,6 +95,7 @@ public partial class OrderListUserControl : UserControl
             new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true, ColBreak = true },
             // กว้างกว่าคอลัมน์อื่นเพราะแท็บ List ใส่ได้ถึงสามปุ่ม — เริ่ม/จบงาน + ยกเลิก + รายละเอียด
             new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "12%" },
+            machineStatusColumn,
         };
 
         // ColBreak above is what centres the titles, and it is not obvious why.
@@ -187,6 +194,8 @@ public partial class OrderListUserControl : UserControl
         WirePanels();
 
         WirePushButton();
+        btnRecoverQueue.Visible = !StationService.IsSt3;
+        btnRecoverQueue.Click += async (_, _) => await RecoverSelectedQueueAsync();
 
         Load += OnLoad;
         Disposed += OnDisposed;
@@ -370,7 +379,7 @@ public partial class OrderListUserControl : UserControl
     /// </para>
     /// </summary>
     private bool CanReleaseNow(string machine) =>
-        !_pushHandling && !_showingRemoteError && !MachineBusy.IsBusy(machine);
+        !_recovering && !_pushHandling.Contains(machine) && !_dispatchingMachines.ContainsKey(machine) && !MachineBusy.IsBusy(machine);
 
     /// <summary>
     /// บอกคนหน้างานว่าการกดไม่ผ่านเพราะจอไม่ว่าง ให้กดใหม่
@@ -378,17 +387,23 @@ public partial class OrderListUserControl : UserControl
     /// ใช้ข้อความลอย ไม่ใช่กล่องที่ต้องกดปิด เพราะตอนนี้อาจมีกล่องอื่นเปิดค้างอยู่แล้ว
     /// การเปิดกล่องซ้อนจะยิ่งทำให้จอตันหนักกว่าเดิม
     /// </summary>
-    private void ShowBlockedPress() =>
+    private void ShowBlockedPress()
+    {
+        // กดรัวระหว่างส่งให้เตือนครั้งเดียวในช่วงที่ข้อความเดิมยังอยู่
+        long now = Environment.TickCount64;
+        if (_lastBlockedPressNotice != long.MinValue && now - _lastBlockedPressNotice < 5000) return;
+        _lastBlockedPressNotice = now;
         Notify.Warn(this, "มีคนกดปุ่มหน้างาน — ระบบกำลังทำงานอื่นอยู่ กรุณากดอีกครั้ง");
+    }
 
     private async Task OnPushButtonPressedAsync(string? machineOverride = null)
     {
-        if (_api == null || _pushHandling || IsDisposed) return;
-
-        _pushHandling = true;
+        if (_api == null || IsDisposed) return;
+        var machine = machineOverride ?? MachineOfThisStation();
+        if (!CanReleaseNow(machine)) return;
+        _pushHandling.Add(machine);
         try
         {
-            var machine = machineOverride ?? MachineOfThisStation();
 
             var (queue, queueError) = await _api.GetMachineQueueAsync();
             if (queueError != null)
@@ -415,7 +430,10 @@ public partial class OrderListUserControl : UserControl
             // คนกดปุ่มจะเห็นเป็นค้างไปหลายวินาทีก่อนอะไรจะเกิดขึ้น
             if (release.Next != null)
             {
-                Notify.Success(this, $"{machine} ว่างแล้ว · งานถัดไปในคิวจะถูกส่งให้");
+                if (StationService.IsSt3)
+                    Notify.Success(this, $"{machine} เข้าคิวแล้ว · ST1 จะส่งงานถัดไปให้");
+                else
+                    await ProcessMachineQueueAsync(machineFilter: machine);
             }
             else
             {
@@ -427,19 +445,12 @@ public partial class OrderListUserControl : UserControl
                 await ResetHeadPositionAsync(machine);
             }
 
-            // รีเฟรชอยู่ในนี้ ไม่ใช่นอก try
-            //
-            // บรรทัดนี้คือตัวที่ไปหยิบงานที่เพิ่งถูกยกให้มาส่งเข้าเครื่อง ถ้าปล่อยธงกัน
-            // การกดซ้ำก่อนถึงตรงนี้ การกดครั้งที่สองจะแทรกเข้ามาได้ในช่วงที่ถาม
-            // backend อยู่สามรอบก่อนเริ่มคุยกับเครื่อง ตอนนั้น MachineBusy ก็ยังไม่ถูก
-            // จอง การกดครั้งนั้นจะไปปล่อยแถวที่เพิ่งถูกยกให้ทั้งที่ยังไม่ได้ส่ง
-            // งานนั้นจะถูกข้ามไปเฉย ๆ กดรัว ๆ ตอนมีสามคิวจึงข้ามไปคิวสุดท้ายได้
-            if (!IsDisposed) await RefreshDataAsync(force: true);
         }
         finally
         {
-            _pushHandling = false;
+            _pushHandling.Remove(machine);
         }
+        if (!IsDisposed) await RefreshDataAsync(force: true);
     }
 
     /// <summary>
@@ -451,15 +462,19 @@ public partial class OrderListUserControl : UserControl
     /// แถบนี้จึงแสดงสิ่งที่คิวเชื่ออยู่ ซึ่งเป็นตัวที่ตัดสินว่างานถัดไปเข้าได้ไหม
     /// </para>
     /// </summary>
-    private async Task RefreshStationBarAsync()
+    private async Task RefreshStationBarAsync(List<MachineQueueRow>? snapshot = null)
     {
         if (_api == null || IsDisposed) return;
 
-        var (rows, error) = await _api.GetMachineQueueAsync();
+        var (rows, error) = snapshot == null
+            ? await _api.GetMachineQueueAsync()
+            : (snapshot, (string?)null);
         if (error != null || IsDisposed) return;
 
         // เก็บไว้ให้แผง Processing ใช้ต่อ จะได้ไม่ต้องยิงถามคิวซ้ำอีกรอบ
         _queueRows = rows;
+        ReconcileMachineStatus();
+        UpdateMachineStatusCells();
 
         foreach (var (machine, label, queueLabel, button) in StationSlots())
         {
@@ -545,11 +560,7 @@ public partial class OrderListUserControl : UserControl
         if (IsDisposed || results.Count == 0) return;
 
         var failed = results.Where(r => r.Error != null).ToList();
-        if (failed.Count == 0)
-        {
-            Notify.Success(this, "เลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้นแล้ว");
-            return;
-        }
+        if (failed.Count == 0) return; // แจ้งเครื่องว่างไว้แล้ว ไม่ต้องซ้อนข้อความสำเร็จ
 
         Notify.Warn(this, "เลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้นไม่สำเร็จ — "
             + string.Join(" · ", failed.Select(r => $"{r.Name} {r.Error}")));
@@ -562,13 +573,19 @@ public partial class OrderListUserControl : UserControl
     private void StartPolling()
     {
         _pollTimer = new System.Windows.Forms.Timer { Interval = 5000 };
-        _pollTimer.Tick += async (_, _) => await RefreshDataAsync();
+        _pollTimer.Tick += async (_, _) =>
+        {
+            // ระหว่างเครื่องหนึ่งส่งอยู่ ยังอ่านคิวของอีกเครื่องได้
+            if (_sending) await ProcessMachineQueueAsync();
+            else await RefreshDataAsync();
+        };
         _pollTimer.Start();
     }
 
     private async Task RefreshDataAsync(bool force = false)
     {
-        if (_api == null) return;
+        if (_api == null || IsDisposed) return;
+        _refreshRequested |= force;
 
         // ระหว่างส่งงานห้ามผูก DataSource ใหม่ ไม่งั้นแถวขยับใต้มือผู้ใช้
         // และกล่องเลือกรุ่นย่อยของ UV อาจถูกวาดทับ
@@ -579,6 +596,8 @@ public partial class OrderListUserControl : UserControl
         // เรื่อย ๆ จนมีคำขอค้างพร้อมกันหลายชุด แล้วเด้งกล่องผิดพลาดตามมาเป็นพรวด
         if (_refreshing) return;
 
+        force |= _refreshRequested;
+        _refreshRequested = false;
         _refreshing = true;
         try
         {
@@ -591,6 +610,7 @@ public partial class OrderListUserControl : UserControl
 
             var (jobs, error) = await _api.GetAllJobsAsync(100, fromUtc, toUtc);
             if (IsDisposed) return;
+            if (_sending) { _refreshRequested = true; return; }
             if (error != null)
             {
                 tblOrders.EmptyText = $"Error: {error}";
@@ -602,18 +622,29 @@ public partial class OrderListUserControl : UserControl
             // ถ้าไปทำหลังจากนั้น รอบที่หน้าจอไม่มีอะไรเปลี่ยนจะข้ามคำขอไปเลย
             await RecoverAbandonedRemoteStartsAsync();
             if (IsDisposed) return;
+            if (_sending) { _refreshRequested = true; return; }
 
             await ProcessRemoteStartsAsync();
             if (IsDisposed) return;
+            if (_sending) { _refreshRequested = true; return; }
 
-            await ProcessMachineQueueAsync();
+            var (queue, queueError) = await _api.GetMachineQueueAsync();
             if (IsDisposed) return;
-
-            await RefreshStationBarAsync();
+            if (_sending) { _refreshRequested = true; return; }
+            if (queueError == null)
+            {
+                bool changed = await ProcessMachineQueueAsync(queue);
+                if (IsDisposed) return;
+                if (_sending) { _refreshRequested = true; return; }
+                // รอบที่ไม่มีการส่ง ใช้คิวชุดเดิมวาดแถบสถานีได้ ไม่ต้องอ่านซ้ำ
+                await RefreshStationBarAsync(changed ? null : queue);
+            }
             if (IsDisposed) return;
+            if (_sending) { _refreshRequested = true; return; }
 
             await ShowRemoteErrorsAsync();
             if (IsDisposed) return;
+            if (_sending) { _refreshRequested = true; return; }
 
             // ผูก DataSource ใหม่ทีไร ตารางจะรีเซ็ตทั้งลำดับที่เรียงไว้และตำแหน่ง scroll
             // รอบ poll ที่ข้อมูลไม่เปลี่ยนจึงไม่ต้องผูกใหม่ ไม่งั้นทุก 5 วิจะกระตุกทีนึง
@@ -632,7 +663,19 @@ public partial class OrderListUserControl : UserControl
         finally
         {
             _refreshing = false;
+            SchedulePendingRefresh();
         }
+    }
+
+    private void SchedulePendingRefresh()
+    {
+        if (!_refreshRequested || _refreshScheduled || _refreshing || _sending || IsDisposed || !IsHandleCreated) return;
+        _refreshScheduled = true;
+        BeginInvoke(new Action(async () =>
+        {
+            _refreshScheduled = false;
+            if (!IsDisposed && _refreshRequested) await RefreshDataAsync(force: true);
+        }));
     }
 
     /// <summary>
@@ -739,6 +782,7 @@ public partial class OrderListUserControl : UserControl
                 ? "ไม่มีงานในช่วงวันที่ที่เลือก"
                 : $"No orders (total {_allJobs.Count}, filter: {string.Join("/", statuses.Select(JobStatusDisplay.Text))})";
         tblOrders.DataSource = null;
+        _displayRows = rows;
         tblOrders.DataSource = rows;
         ReapplySort();
         RestoreSelection();
@@ -781,7 +825,7 @@ public partial class OrderListUserControl : UserControl
     private async void TblOrders_CellButtonClick(object? sender, AntdUI.TableButtonEventArgs e)
     {
         if (e.Record is not OrderRow row) return;
-        if (_api == null || _rowBusy) return;
+        if (_api == null || _rowBusy || _recovering) return;
 
         _rowBusy = true;
         try
@@ -812,7 +856,7 @@ public partial class OrderListUserControl : UserControl
         }
         finally
         {
-            if (!IsDisposed) ShowSending(null);
+            if (!IsDisposed && !_sending) ShowSending(null);
         }
     }
 
@@ -960,7 +1004,30 @@ public partial class OrderListUserControl : UserControl
     // ── เริ่มงาน ────────────────────────────────────────────
 
     /// <summary>กำลังส่งงานอยู่ — กันทั้งการกดซ้ำและการรีเฟรชตารางทับ</summary>
-    private bool _sending;
+    private int _sendOperations;
+    private bool _sending => _sendOperations > 0 || _recovering;
+
+    private void EndSending()
+    {
+        _sendOperations--;
+        if (_sending || IsDisposed) return;
+        ShowSending(null);
+        if (!_showingSendReport)
+        {
+            _showingSendReport = true;
+            try
+            {
+                while (!_sending && _sendReports.Count > 0 && !IsDisposed)
+                {
+                    var lines = _sendReports.ToArray();
+                    _sendReports.Clear();
+                    Notify.Result(this, "ผลส่งงาน", lines);
+                }
+            }
+            finally { _showingSendReport = false; }
+        }
+        SchedulePendingRefresh();
+    }
 
     /// <summary>
     /// งานที่กดเริ่มได้ = ยังไม่ได้เริ่ม · สถานีนี้มีสิทธิ์เริ่ม · และรหัสใช้งานได้จริง
@@ -1341,156 +1408,154 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private async Task SendQueuedForJobAsync(int jobId, ResolvedJobResponse resolved, string title)
     {
-        var (rows, _) = await _api!.GetMachineQueueAsync();
-        if (IsDisposed) return;
-
-        // เครื่องละครั้งเดียว ไม่ใช่แถวละครั้ง
-        //
-        // งานที่เข้าเครื่องเดิมหลายรอบ (marking 22) จองไว้หลายแถวบนเครื่องเดียวกัน
-        // ถ้าวนตามแถว พอรอบแรกส่งไม่ผ่านแล้วแถวถูกคืนเป็นรอคิว เครื่องจะว่างอีกครั้ง
-        // การวนรอบถัดไปก็ขอเครื่องได้และได้แถวเดิมกลับมา กลายเป็นส่งซ้ำเข้าเครื่องจริง
-        // สองครั้งจากการกดครั้งเดียว
-        //
-        // การกดเริ่มงานหนึ่งครั้งควรส่งได้อย่างมากเครื่องละหนึ่งรอบอยู่แล้ว รอบถัดไป
-        // ของเครื่องเดิมต้องรอคนกดปุ่มหน้างานเสมอ
-        // เรียงตามลำดับที่ชิ้นงานเดินผ่านเครื่องจริง ไม่ใช่ตามที่ backend คืนมา
-        //
-        // backend เรียงตามชื่อเครื่อง ซึ่งตอนนี้บังเอิญตรงกับลำดับของแผน (MK < UV1 < UV2)
-        // แต่ลำดับที่ต้องใช้คือลำดับของแผน ถ้าวันหนึ่งชื่อเครื่องเปลี่ยนหรือแผนสลับลำดับ
-        // การพึ่งการเรียงตามตัวอักษรจะพากันผิดแบบเงียบ ๆ
-        var planSteps = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod).Steps;
-
-        var machines = rows
-            .Where(r => r.PrintJobsId == jobId && r.State == "pending")
-            .Select(r => r.Machine)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(m => PlanOrderOf(planSteps, m))
-            .ToList();
-
+        if (_sending) return;
+        _sendOperations++;
         var lines = new List<Notify.ResultLine>();
-        bool anySent = false;
-
-        // เครื่องไม่ว่าง = เข้าคิวจริง ไม่ใช่ส่งไม่ผ่าน ต้องแยกจากกันให้ชัด
-        // ไม่งั้นการจองที่ถูกต้องจะถูกล้างทิ้งตอนจบ แล้วงานจะหายไปจากคิวเงียบ ๆ
-        bool anyQueued = false;
-
-        foreach (var machine in machines)
+        try
         {
-            // ขอเฉพาะแถวของงานใบนี้ — กดเริ่มงานใบไหนต้องได้ใบนั้น ห้ามไปหยิบ
-            // ใบอื่นที่บังเอิญรออยู่ในคิวเครื่องเดียวกันมาส่งแทน
-            var (claim, claimError) = await _api.ClaimMachineAsync(machine, jobId);
+            var (rows, error) = await _api!.GetMachineQueueAsync();
             if (IsDisposed) return;
-
-            if (claimError != null)
+            if (error != null) { Notify.Error(this, error); return; }
+            var plan = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod).Steps;
+            var machines = rows.Where(r => r.PrintJobsId == jobId && r.State == "pending")
+                .Select(r => r.Machine).Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(m => PlanOrderOf(plan, m)).ToList();
+            var ready = new List<PreparedQueueSend>();
+            bool anyQueued = rows.Any(r => r.PrintJobsId == jobId && r.State == "active");
+            foreach (var machine in machines)
             {
-                lines.Add(Notify.Bad($"{machine}: {claimError}"));
-                continue;
+                var (claim, claimError) = await _api.ClaimMachineAsync(machine, jobId);
+                if (IsDisposed) return;
+                if (claimError != null)
+                {
+                    // คำตอบหายอาจจองสำเร็จแล้ว ห้ามล้างคิวจากการคาดเดา
+                    anyQueued = true;
+                    lines.Add(Notify.Bad($"{machine}: {claimError}"));
+                }
+                else if (claim?.Claimed is { } row) ready.Add(new(row, resolved));
+                else
+                {
+                    anyQueued = true;
+                    lines.Add(Notify.Note($"{machine}: เครื่องไม่ว่าง เข้าคิวรอไว้แล้ว"));
+                }
             }
-
-            if (claim?.Claimed == null)
+            var results = await SendPreparedBatchAsync(ready);
+            lines.AddRange(results.SelectMany(r => r.Lines));
+            anyQueued |= results.Any(r => r.HeldForReview);
+            if (!results.Any(r => r.Sent) && !anyQueued && !PrintedBefore(resolved))
             {
-                // เครื่องไม่ว่าง — ไม่ใช่ความผิดพลาด แถวยังรออยู่ในคิวเหมือนเดิม
-                //
-                // ขึ้นเป็นข้อสังเกต ไม่ใช่คำเตือน การเข้าคิวคือผลลัพธ์ปกติของการกดเริ่มงาน
-                // ตอนเครื่องไม่ว่าง ไม่มีอะไรให้ตัดสินใจ จึงไม่ควรบังคับให้กดปิดกล่องก่อน
-                // ทำงานต่อ ข้อความลอยพอ
-                anyQueued = true;
-                lines.Add(Notify.Note($"{machine}: เครื่องไม่ว่าง เข้าคิวรอไว้แล้ว"));
-                continue;
+                var (cleared, clearError) = await _api.ClearMachineQueueAsync(jobId, onlyUnsent: true);
+                if (!cleared) lines.Add(Notify.Bad($"ล้างคิวไม่สำเร็จ: {clearError}"));
             }
-
-            var claimed = claim.Claimed;
-
-            _sending = true;
-            ShowSending($"กำลังส่งไปที่ {claimed.Machine}");
-            StepSendResult sent;
-            try
-            {
-                sent = await SendQueueStepAsync(claimed, resolved);
-            }
-            finally
-            {
-                _sending = false;
-                if (!IsDisposed) ShowSending(null);
-            }
-
-            if (IsDisposed) return;
-            lines.AddRange(sent.Lines);
-
-            // ตัดสินจาก "ข้อมูลเข้าเครื่องแล้วไหม" ไม่ใช่จากว่ามีคำเตือนติดมาไหม
-            //
-            // เดิมนับทุกบรรทัดที่ไม่ใช่สีเขียวเป็นส่งไม่ผ่าน ผลคืองาน marking 12 ที่ใช้
-            // หัวพ่นตัวเดียว พอหัวอีกตัวปิดอยู่จนสั่งหยุดไม่ได้ (ขึ้นเป็นคำเตือน) แถวคิว
-            // ของ MK จะถูกคืนเป็นรอคิวทั้งที่เครื่องรับงานไปแล้วและกำลังพิมพ์อยู่
-            // เครื่องจึงดูเหมือนว่าง งานใบถัดไปเลยแย่งเข้าไปเปลี่ยนโปรแกรมทับได้
-            if (sent.HeldForReview)
-            {
-                anyQueued = true; // ห้ามล้างคิวที่อาจส่งเข้าเครื่องแล้ว
-                break;
-            }
-            if (sent.Sent) anySent = true;
-            else
-            {
-                // ส่งเครื่องนี้ไม่ผ่าน = หยุดทั้งการกดครั้งนี้ ไม่ส่งเครื่องที่เหลือต่อ
-                //
-                // เครื่องเรียงตามลำดับที่ชิ้นงานเดินผ่าน เครื่องที่เหลือจึงเป็นเครื่องที่
-                // อยู่หลังเครื่องที่เพิ่งพัง การโหลดโปรแกรมใส่เครื่องหลังไว้ทั้งที่เครื่อง
-                // หน้ายังไม่ได้รับงาน ทำให้งานกลายเป็น "เริ่มไปแล้วครึ่งหนึ่ง" ซึ่งกด
-                // เริ่มใหม่ไม่ได้ (สถานะเป็น Process) และไม่มีทางสั่งเครื่องหน้าซ้ำด้วย
-                //
-                // หยุดตรงนี้แทน ทุกอย่างจึงกลับไปเป็น Waiting และกดเริ่มใหม่ได้ทั้งใบ
-                var skipped = machines
-                    .SkipWhile(m => !string.Equals(m, machine, StringComparison.OrdinalIgnoreCase))
-                    .Skip(1)
-                    .ToList();
-
-                if (skipped.Count > 0)
-                    lines.Add(Notify.Careful(
-                        $"ยังไม่ได้ส่ง {string.Join(" ", skipped)} — ต้องแก้ที่ {machine} ให้ได้ก่อน"));
-
-                break;
-            }
+            if (!IsDisposed) _sendReports.AddRange(lines.Select(l => l with { Text = $"{title} · {l.Text}" }));
         }
-
-        if (IsDisposed) return;
-
-        // กดแล้วไม่มีเครื่องไหนรับงานไปได้เลย และงานนี้ก็ไม่เคยพิมพ์อะไรมาก่อน
-        // ให้ล้างการจองทิ้ง ไม่เหลือร่องรอยไว้ในคิว
-        //
-        // เครื่องต่อไม่ติดไม่ใช่การเข้าคิว ไม่มีอะไรถูกส่งไปไหนทั้งนั้น การทิ้งแถวไว้
-        // ทำให้งานไปกินที่ในคิวของเครื่องโดยไม่ได้ทำอะไร และหน้าจอก็ดูเหมือนกำลังรอคิว
-        // ทั้งที่ความจริงต้องไปแก้ที่เครื่องแล้วกดใหม่
-        //
-        // งานที่พิมพ์ไปแล้วบางเครื่องไม่เข้าเงื่อนไขนี้ การจองของเครื่องที่เหลือต้องอยู่ต่อ
-        // ไม่งั้นขั้นที่ยังไม่ได้ทำจะหายไปจากคิวโดยไม่มีทางเอากลับมา
-        //
-        // เครื่องไม่ว่างก็ไม่เข้าเงื่อนไขนี้เหมือนกัน นั่นคือการเข้าคิวที่ถูกต้อง งานต้อง
-        // รออยู่ในคิวจนกว่าจะมีคนกดปุ่มหน้างานปล่อยเครื่อง ไม่ใช่โดนล้างทิ้ง
-        if (!anySent && !anyQueued && !PrintedBefore(resolved))
+        finally
         {
-            var (cleared, error) = await _api.ClearMachineQueueAsync(jobId, onlyUnsent: true);
-            if (!cleared) lines.Add(Notify.Bad($"ล้างคิวไม่สำเร็จ: {error}"));
-            if (IsDisposed) return;
+            EndSending();
+            SchedulePendingRefresh();
+            if (!IsDisposed && !_sending) ShowSending(null);
         }
-
-        if (lines.Count > 0) Notify.Result(this, title, lines);
         if (!IsDisposed) await RefreshDataAsync(force: true);
     }
 
-    /// <summary>
-    /// ส่งขั้นตอนหนึ่งเข้าเครื่อง แล้วบันทึกลงประวัติถ้าสำเร็จ
-    /// <para>
-    /// เปลี่ยนสถานะเป็น Process ก่อนส่ง เพื่อให้แถวขึ้นสีและกันคนอื่นเริ่มงานซ้ำ
-    /// ระหว่างที่เครื่องกำลังรับข้อมูลอยู่
-    /// </para>
-    /// <para>
-    /// คืนรายการว่างเมื่อผู้ใช้กดยกเลิกที่กล่องเลือกรุ่นย่อย — ไม่ต้องรายงานอะไร
-    /// </para>
-    /// <para>
-    /// <paramref name="forcedProgram"/> มีค่าเมื่อกำลังส่งแทน ST3 ซึ่งเลือกโปรแกรม
-    /// ไว้ให้เสร็จแล้ว — การส่งรอบนั้นจะไม่เด้งหน้าต่างใด ๆ ที่จอ ST1
-    /// </para>
-    /// </summary>
+    private bool ReserveDispatch(string machine) => _dispatchingMachines.TryAdd(machine, Guid.NewGuid());
+
+    private void ReleaseDispatch(string machine, Guid token)
+    {
+        // รอบเก่าจบทีหลัง ต้องไม่ไปปลดสิทธิ์ของรอบใหม่ที่เครื่องเดียวกัน
+        if (_dispatchingMachines.TryGetValue(machine, out var current) && current == token)
+        {
+            _dispatchingMachines.Remove(machine);
+            if (!IsDisposed && _dispatchingMachines.Count > 0)
+                ShowSending($"กำลังส่งไปที่ {string.Join(" / ", _dispatchingMachines.Keys)}");
+        }
+    }
+
+    private sealed record PreparedQueueSend(MachineQueueRow Row, ResolvedJobResponse Job);
+
+    private async Task<StepSendResult[]> SendPreparedBatchAsync(List<PreparedQueueSend> items, bool includeJobNames = false, bool machinesReserved = false)
+    {
+        if (_preparingPrograms) return [new(false, [], HeldForReview: true)];
+        var owned = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
+        var selected = new List<PreparedQueueSend>();
+        foreach (var item in items.GroupBy(i => i.Row.Machine, StringComparer.OrdinalIgnoreCase).Select(g => g.First()))
+            if (machinesReserved || ReserveDispatch(item.Row.Machine))
+            {
+                selected.Add(item);
+                owned[item.Row.Machine] = _dispatchingMachines[item.Row.Machine];
+            }
+        try
+        {
+            var ready = new List<PreparedQueueSend>();
+            var results = new List<StepSendResult>();
+            if (selected.Count != items.Count) results.Add(new(false, [], HeldForReview: true));
+            // เลือกโปรแกรมให้ครบก่อนเริ่มคุยกับเครื่อง ไม่เปิดกล่องคั่นระหว่างส่ง
+            foreach (var item in selected)
+            {
+                var row = item.Row;
+                if (IsDisposed) break;
+                if (UvNumberOf(row.Machine) is int uvNumber && string.IsNullOrWhiteSpace(row.ProgramName))
+                {
+                    // โปรแกรมยังไม่พร้อม ให้รอก่อน ไม่เปิดกล่องคั่นระหว่างส่งเครื่องอื่น
+                    if (MachineBusy.Active) { results.Add(new(false, [], HeldForReview: true)); continue; }
+                    _preparingPrograms = true;
+                    try
+                    {
+                        var requested = item.Job.UvJobData?.FirstOrDefault(u => u.Machine == row.Machine)?.ProgramName;
+                        var pick = UvProgramResolver.Resolve(requested, UvSettingsManager.GetDocumentFolder(uvNumber), this);
+                        if (pick.Program == null || (pick.IsDefault &&
+                            !UvProgramResolver.ConfirmDefault(requested ?? "", row.Machine, this)))
+                        {
+                            var reset = await _api!.UpdateMachineQueueAsync(row.Id, state: "pending");
+                            results.Add(new(false, [Notify.Careful($"{row.Machine}: ยังไม่ส่ง เพราะไม่ได้เลือกโปรแกรม")],
+                                SafeToRetry: reset.ok, HeldForReview: !reset.ok));
+                            if (!reset.ok) results[^1].Lines.Add(Notify.Bad($"คืนคิวไม่ได้: {reset.error}"));
+                            continue;
+                        }
+                        var saved = await _api!.UpdateMachineQueueAsync(row.Id, programName: pick.Program);
+                        if (!saved.ok)
+                        {
+                            results.Add(new(false, [Notify.Bad($"{row.Machine}: บันทึกโปรแกรมไม่ได้ — {saved.error}")], HeldForReview: true));
+                            continue;
+                        }
+                        row.ProgramName = pick.Program;
+                    }
+                    finally { _preparingPrograms = false; }
+                }
+                ready.Add(item);
+            }
+            if (IsDisposed) return results.ToArray();
+            foreach (var (machine, token) in owned)
+                if (!ready.Any(i => i.Row.Machine == machine)) ReleaseDispatch(machine, token);
+            if (ready.Count > 0) ShowSending($"กำลังส่งไปที่ {string.Join(" / ", _dispatchingMachines.Keys)}");
+            var sent = await MachineSendBatch.RunAsync(ready, i => i.Row.Machine,
+                async i =>
+                {
+                    _activeStatusQueues.Add(i.Row.Id);
+                    try
+                    {
+                        var result = await SendQueueStepAsync(i.Row, i.Job);
+                        return includeJobNames
+                            ? result with { Lines = result.Lines.Select(l => l with { Text = $"{JobName(i.Row.PrintJobsId)} · {l.Text}" }).ToList() }
+                            : result;
+                    }
+                    finally
+                    {
+                        _activeStatusQueues.Remove(i.Row.Id);
+                        ReleaseDispatch(i.Row.Machine, owned[i.Row.Machine]);
+                    }
+                },
+                (i, ex) => new StepSendResult(false,
+                    [Notify.Bad($"{i.Row.Machine} คิว {i.Row.Id}: ตรวจสอบผลก่อนส่งซ้ำ — {ex.Message}")], HeldForReview: true));
+            results.AddRange(sent);
+            return results.ToArray();
+        }
+        finally
+        {
+            foreach (var (machine, token) in owned) ReleaseDispatch(machine, token);
+        }
+    }
+
     /// <summary>
     /// ผลการส่งหนึ่งขั้น — <paramref name="Sent"/> คือ "ข้อมูลเข้าเครื่องแล้วจริงไหม"
     ///
@@ -1505,42 +1570,46 @@ public partial class OrderListUserControl : UserControl
 
     private async Task<StepSendResult> SendQueueStepAsync(MachineQueueRow row, ResolvedJobResponse resolved)
     {
-        if (_queueSendInProgress)
+        using var lease = MachineBusy.TryHoldExclusive(row.Machine);
+        if (lease == null)
             return new(false, [Notify.Note($"{row.Machine}: รอการส่งรอบปัจจุบันจบก่อน")], HeldForReview: true);
-        _queueSendInProgress = true;
+        SetMachineStatus(row, "กำลังเตรียมส่ง", AntdUI.TTypeMini.Primary);
+        var token = Guid.NewGuid().ToString();
+        var (began, beginError) = await _api!.BeginQueueSendAsync(row.Id, token);
+        if (!began)
+        {
+            SetMachineStatus(row, "ตรวจสอบคิวก่อนส่งซ้ำ", AntdUI.TTypeMini.Warn);
+            return new(false, [Notify.Bad($"{row.Machine}: ยังไม่ส่ง — {beginError}")], HeldForReview: true);
+        }
+        SetMachineStatus(row, "กำลังส่ง", AntdUI.TTypeMini.Primary);
+
+        StepSendResult result;
         try
         {
-            var token = Guid.NewGuid().ToString();
-            var (began, beginError) = await _api!.BeginQueueSendAsync(row.Id, token);
-            if (!began)
-                return new(false, [Notify.Bad($"{row.Machine}: ยังไม่ส่ง — {beginError}")], HeldForReview: true);
-
-            StepSendResult result;
-            try
-            {
-                if (IsDisposed) result = new(false, [], SafeToRetry: true);
-                else result = await SendStepAsync(row.PrintJobsId, row.Machine, resolved, row.ProgramName);
-            }
-            catch (Exception ex)
-            {
-                result = new(false, [Notify.Bad($"{row.Machine}: {ex.Message}")]);
-            }
-
-            var outcome = result.Sent ? "sent" : result.SafeToRetry ? "not_sent" : "unknown";
-            var error = string.Join(" · ", result.Lines.Where(l => l.Kind == Notify.ResultKind.Error).Select(l => l.Text));
-            if (error.Length > 4000) error = error[..4000];
-            var recorded = await _api.FinishQueueSendAsync(row.Id, token, outcome, result.Detail, error);
-            // ลองบันทึกผลซ้ำได้ แต่ห้ามเรียกส่งเครื่องซ้ำ
-            if (!recorded.ok)
-                recorded = await _api.FinishQueueSendAsync(row.Id, token, outcome, result.Detail, error);
-
-            bool held = !recorded.ok || outcome == "unknown";
-            if (held)
-                result.Lines.Add(Notify.Bad($"{row.Machine}: ถือคิว {row.Id} ไว้ตรวจผล ห้ามส่งซ้ำหรือปล่อยเครื่อง"
-                    + (recorded.ok ? "" : $" · บันทึกผลไม่ได้: {recorded.error}")));
-            return result with { HeldForReview = held };
+            if (IsDisposed) result = new(false, [], SafeToRetry: true);
+            else result = await SendStepAsync(row.PrintJobsId, row.Machine, resolved, row.ProgramName);
         }
-        finally { _queueSendInProgress = false; }
+        catch (Exception ex)
+        {
+            result = new(false, [Notify.Bad($"{row.Machine}: {ex.Message}")]);
+        }
+
+        var outcome = result.Sent ? "sent" : result.SafeToRetry ? "not_sent" : "unknown";
+        var error = string.Join(" · ", result.Lines.Where(l => l.Kind == Notify.ResultKind.Error).Select(l => l.Text));
+        if (error.Length > 4000) error = error[..4000];
+        SetMachineStatus(row, "กำลังบันทึกผล", AntdUI.TTypeMini.Primary);
+        var recorded = await _api.FinishQueueSendAsync(row.Id, token, outcome, result.Detail, error);
+        // ลองบันทึกผลซ้ำได้ แต่ห้ามเรียกส่งเครื่องซ้ำ
+        if (!recorded.ok)
+            recorded = await _api.FinishQueueSendAsync(row.Id, token, outcome, result.Detail, error);
+
+        bool held = !recorded.ok || outcome == "unknown";
+        if (held)
+            result.Lines.Add(Notify.Bad($"{row.Machine}: ถือคิว {row.Id} ไว้ตรวจผล ห้ามส่งซ้ำหรือปล่อยเครื่อง"
+                + (recorded.ok ? "" : $" · บันทึกผลไม่ได้: {recorded.error}")));
+        SetMachineStatus(row, held ? "ต้องตรวจสอบก่อนส่งซ้ำ" : result.Sent ? "ส่งแล้ว" : "ยังไม่ส่ง / ส่งไม่สำเร็จ",
+            held ? AntdUI.TTypeMini.Warn : result.Sent ? AntdUI.TTypeMini.Success : AntdUI.TTypeMini.Error);
+        return result with { HeldForReview = held };
     }
 
     private async Task<StepSendResult> SendStepAsync(
@@ -1558,7 +1627,8 @@ public partial class OrderListUserControl : UserControl
             // อยู่ตรงนี้จึงได้ทุกทางเข้าเครื่อง ทั้งกดเริ่มงานตอนเครื่องว่าง กดปุ่มหน้างาน
             // ให้คิวเดินต่อ และคำขอจาก ST3
             var lines = new List<Notify.ResultLine>();
-            await SendJobPlcAsync(resolved, lines);
+            if (!await SendJobPlcAsync(resolved, lines))
+                return new StepSendResult(false, lines, SafeToRetry: true);
 
             var mk = await JobSendService.SendMkAsync(resolved.Pattern);
             var mkLines = Notify.MkLines(mk.Machines);
@@ -1574,7 +1644,7 @@ public partial class OrderListUserControl : UserControl
         }
 
         int uvNumber = step == "UV1" ? 1 : 2;
-        var uv = await JobSendService.SendUvAsync(this, uvNumber, resolved.UvJobData, forcedProgram);
+        var uv = await JobSendService.SendUvAsync(this, uvNumber, resolved.UvJobData, forcedProgram, allowPrompt: false);
 
         if (uv.Status == SendStatus.Ok)
         {
@@ -1692,7 +1762,7 @@ public partial class OrderListUserControl : UserControl
         //
         // ระหว่างรอ ตั้ง _sending ไว้ให้รอบ poll หยุด จะได้ไม่มีกล่องจากเบื้องหลัง
         // มาเด้งซ้อนเรื่องเดียวกัน
-        _sending = true;
+        _sendOperations++;
         ShowSending($"กำลังส่งไปที่ ST1 · {JobName(jobId)}");
         try
         {
@@ -1700,49 +1770,19 @@ public partial class OrderListUserControl : UserControl
         }
         finally
         {
-            _sending = false;
+            EndSending();
+            SchedulePendingRefresh();
             ShowSending(null);
         }
 
         if (!IsDisposed) await RefreshDataAsync(force: true);
     }
 
-    /// <summary>
-    /// การ์ดวงกลมหมุนกลางตาราง บอกว่ากำลังส่งอยู่ — ส่ง null เพื่อปิด
-    ///
-    /// ปิดตารางไปด้วยระหว่างแสดง เป็นการกันกดซ้ำที่แน่นอนกว่าการหวังให้คนอ่านข้อความทัน
-    /// (ข้อความลอยเล็กเกินกว่าจะทันเห็นตอนยืนห่างจากจอ) และทำให้เห็นชัดว่าเครื่องกำลังทำงาน
-    /// ไม่ใช่ค้าง
-    /// <para>
-    /// ข้อความต้องเป็นบรรทัดเดียวเสมอ — AntdUI วาดข้อความของ Spin ด้วย NoWrapEllipsis
-    /// (ไม่ตัดบรรทัด) และคำนวณขนาดวงกลมจากความสูงของข้อความ ใส่ขึ้นบรรทัดใหม่เข้าไป
-    /// วงกลมจะใหญ่ขึ้นเท่าตัวจนล้นกรอบและโดนตัดหัวตัดท้าย
-    /// </para>
-    /// </summary>
+    /// <summary>อัปเดตป้ายรายเครื่อง โดยไม่บังตารางหรือปิดการใช้งานทั้งหน้า</summary>
     private void ShowSending(string? text)
     {
-        bool busy = text != null;
-
-        if (busy)
-        {
-            spinSending.Text = text;
-
-            // จัดกึ่งกลางตอนแสดงทุกครั้ง — Anchor.None รักษาแค่สัดส่วนจากตำแหน่ง
-            // ตอนออกแบบ พอจอจริงคนละขนาดการ์ดจะเยื้องไปจากกลาง
-            var frame = pnlTableContainer.ClientSize;
-            pnlSending.Location = new Point(
-                Math.Max(0, (frame.Width - pnlSending.Width) / 2),
-                Math.Max(0, (frame.Height - pnlSending.Height) / 2));
-
-            pnlSending.Visible = true;
-            pnlSending.BringToFront();
-        }
-        else
-        {
-            pnlSending.Visible = false;
-        }
-
-        tlpTableInner.Enabled = !busy;
+        // แสดงในคอลัมน์รายเครื่องแทน ไม่บังหรือปิดตารางทั้งหน้า
+        UpdateMachineStatusCells();
     }
 
     /// <summary>
@@ -1879,84 +1919,57 @@ public partial class OrderListUserControl : UserControl
     /// ถามทีละเครื่อง เครื่องไหนไม่ว่าง backend จะไม่ให้หยิบเอง ฝั่งนี้ไม่ต้องเดา
     /// </para>
     /// </summary>
-    private async Task ProcessMachineQueueAsync()
+    private async Task<bool> ProcessMachineQueueAsync(List<MachineQueueRow>? snapshot = null, string? machineFilter = null)
     {
-        // ST3 เป็นฝ่ายจอง ไม่ใช่ฝ่ายส่ง · ระหว่างที่คนกดส่งเองอยู่ก็ไม่แทรก
-        if (_api == null || StationService.IsSt3 || _sending) return;
-
-        var (rows, error) = await _api.GetMachineQueueAsync();
-        if (error != null || IsDisposed) return;
-
-        // ส่งเฉพาะแถวที่ "ถึงคิวแล้วแต่ยังไม่ได้ส่ง" เท่านั้น และไม่หยิบคิวเองเด็ดขาด
-        //
-        // แถวจะมาอยู่ในสภาพนี้ได้จากการกดของคนเท่านั้น — กดเริ่มงาน หรือกดปุ่ม
-        // หน้างานปล่อยเครื่องแล้ว backend ยกเครื่องให้คิวถัดไป รอบนี้จึงเป็นแค่
-        // "มือที่ไปส่งแทน ST3" ไม่ใช่ตัวตัดสินว่างานไหนได้เข้าเครื่อง
-        //
-        // เดิมตรงนี้ไล่หยิบคิวเองทุก 5 วิ ผลคืองานที่ส่งไม่ผ่านแล้วถูกคืนเป็นรอคิว
-        // จะถูกหยิบมายิงใหม่ไม่มีวันจบ และงานใบอื่นที่ไม่มีใครกดก็ถูกส่งออกไปด้วย
-        foreach (var row in rows.Where(r => r.NeedsSendReview))
-            if (_reportedUncertainQueues.Add(row.Id))
-                Notify.Warn(this, $"{row.Machine} คิว {row.Id}: กำลังส่งหรือรอตรวจสอบผล ระบบจะไม่ส่งซ้ำเอง");
-
-        var ready = rows
-            .Where(r => r.State == "active" && r.SentAt == null && !r.NeedsSendReview)
-            .OrderBy(r => r.Id)
-            .ToList();
-
-        // ส่งให้ครบทุกแถวก่อน แล้วค่อยรายงาน
-        //
-        // เดิมเปิดกล่องผลอยู่ข้างในลูป แถวถัดไปจึงค้างรอคนมากด OK ก่อน งานที่ถึงคิว
-        // พร้อมกันหลายเครื่องจะถูกส่งทีละเครื่องตามจังหวะที่คนเดินมากดปิดกล่อง
-        var reports = new List<(string Title, List<Notify.ResultLine> Lines)>();
-
-        foreach (var row in ready)
-        {
-            var report = await SendClaimedAsync(row);
-            if (IsDisposed) return;
-            if (report.Lines.Count > 0) reports.Add(report);
-        }
-
-        foreach (var (title, lines) in reports)
-        {
-            Notify.Result(this, title, lines);
-            if (IsDisposed) return;
-        }
-    }
-
-    /// <summary>
-    /// ส่งงานที่หยิบมาได้เข้าเครื่อง แล้วรายงานผล — ส่งไม่ผ่านคืนแถวกลับเข้าคิว
-    /// </summary>
-    private async Task<(string Title, List<Notify.ResultLine> Lines)> SendClaimedAsync(
-        MachineQueueRow claimed)
-    {
-        var title = $"ส่ง {claimed.Machine} · {JobName(claimed.PrintJobsId)}";
-
-        var resolved = await _api!.GetResolvedJobAsync(claimed.PrintJobsId);
-        if (resolved == null || IsDisposed)
-        {
-            // อ่านงานไม่ได้ อย่าถือเครื่องค้างไว้
-            if (_api != null) await _api.UpdateMachineQueueAsync(claimed.Id, state: "pending");
-            return (title, []);
-        }
-
-        _sending = true;
-        ShowSending($"กำลังส่งไปที่ {claimed.Machine} · {JobName(claimed.PrintJobsId)}");
-        StepSendResult sent;
+        if (_api == null || StationService.IsSt3 || IsDisposed || _preparingPrograms) return false;
+        var owned = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
+        _sendOperations++;
         try
         {
-            sent = await SendQueueStepAsync(claimed, resolved);
+            var (rows, error) = snapshot == null
+                ? await _api.GetMachineQueueAsync()
+                : (snapshot, (string?)null);
+            if (error != null || IsDisposed) return false;
+            var review = rows.Where(r => r.NeedsSendReview && !_dispatchingMachines.ContainsKey(r.Machine) && _reportedUncertainQueues.Add(r.Id)).ToList();
+            if (review.Count > 0)
+                Notify.Warn(this, string.Join(" / ", review.Select(r => $"{r.Machine} คิว {r.Id}"))
+                    + ": กำลังส่งหรือรอตรวจสอบผล ระบบจะไม่ส่งซ้ำเอง");
+
+            // ส่งเฉพาะคิวที่คนสั่งเริ่มหรือปล่อยเครื่องแล้ว ไม่หยิบ pending มาส่งเอง
+            var ready = rows.Where(r => r.State == "active" && r.SentAt == null && !r.NeedsSendReview
+                    && (machineFilter == null || string.Equals(r.Machine, machineFilter, StringComparison.OrdinalIgnoreCase)))
+                .OrderBy(r => r.Id)
+                .Where(r => !MachineBusy.IsBusy(r.Machine) && ReserveDispatch(r.Machine)).ToList();
+            foreach (var row in ready) owned[row.Machine] = _dispatchingMachines[row.Machine];
+            var prepared = new List<PreparedQueueSend>();
+            var lines = new List<Notify.ResultLine>();
+            foreach (var group in ready.GroupBy(r => r.PrintJobsId))
+            {
+                var resolved = await _api.GetResolvedJobAsync(group.Key);
+                if (IsDisposed) return false;
+                foreach (var row in group)
+                {
+                    if (resolved != null) prepared.Add(new(row, resolved));
+                    else
+                    {
+                        var reset = await _api.UpdateMachineQueueAsync(row.Id, state: "pending");
+                        lines.Add(Notify.Bad($"{row.Machine} คิว {row.Id}: โหลดข้อมูลงานไม่ได้"
+                            + (reset.ok ? " คืนเข้าคิวรอแล้ว" : $" · คืนคิวไม่ได้: {reset.error}")));
+                    }
+                }
+            }
+            var results = await SendPreparedBatchAsync(prepared, includeJobNames: true, machinesReserved: true);
+            lines.AddRange(results.SelectMany(r => r.Lines));
+            if (!IsDisposed) _sendReports.AddRange(lines);
+            return ready.Count > 0;
         }
         finally
         {
-            _sending = false;
-            if (!IsDisposed) ShowSending(null);
+            foreach (var (machine, token) in owned) ReleaseDispatch(machine, token);
+            EndSending();
+            SchedulePendingRefresh();
+            if (!IsDisposed && !_sending) ShowSending(null);
         }
-
-        if (IsDisposed) return (title, []);
-
-        // ผลคิวกับประวัติถูกบันทึกพร้อมกันใน SendQueueStepAsync แล้ว
-        return ($"ส่ง {claimed.Machine} · {JobName(claimed.PrintJobsId)}", sent.Lines);
     }
 
     private async Task ProcessRemoteStartsAsync()
@@ -1972,15 +1985,17 @@ public partial class OrderListUserControl : UserControl
         foreach (var jobId in pending)
         {
             _remoteInFlight.Add(jobId);
-            _sending = true;
+            _sendOperations++;
             try
             {
                 await RunRemoteStartAsync(jobId);
             }
             finally
             {
-                _sending = false;
+                EndSending();
+                SchedulePendingRefresh();
                 _remoteInFlight.Remove(jobId);
+                if (!IsDisposed && !_sending) ShowSending(null);
             }
 
             if (IsDisposed) return;
@@ -2064,7 +2079,7 @@ public partial class OrderListUserControl : UserControl
             : (null, queueError);
         List<Notify.ResultLine> lines;
         if (claim?.Claimed is { } row)
-            lines = (await SendQueueStepAsync(row, resolved)).Lines;
+            lines = (await SendPreparedBatchAsync([new(row, resolved)])).SelectMany(r => r.Lines).ToList();
         else
             lines = [Notify.Bad(claimError ?? "เครื่องยังไม่ว่างหรือคิวถูกส่งแล้ว กรุณาตรวจสถานะงาน")];
 
@@ -2459,6 +2474,7 @@ public partial class OrderListUserControl : UserControl
             Shim = plan.NoCase ? Dash : MachineCell(plan.Shim),
             Station = OrDashStation(JobStationService.Current(job.Commands)),
             Status = statusText,
+            MachineStatus = BuildMachineStatus(job),
             Op = buttons.ToArray(),
             Back = string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase)
                 ? DesignTokens.RowSuccess
@@ -2586,7 +2602,7 @@ public partial class OrderListUserControl : UserControl
         }
         finally
         {
-            if (!IsDisposed) ShowSending(null);
+            if (!IsDisposed && !_sending) ShowSending(null);
         }
 
         if (bad.Count == 0) return false;
@@ -2620,27 +2636,39 @@ public partial class OrderListUserControl : UserControl
     /// เอาเฉพาะหัวที่งานนี้ใช้ หัวที่ไม่ได้ใช้ไม่ต้องไปเขียนทับค่าใน PLC
     /// </para>
     /// </summary>
-    private async Task SendJobPlcAsync(ResolvedJobResponse resolved, List<Notify.ResultLine> lines)
+    private async Task<bool> SendJobPlcAsync(ResolvedJobResponse resolved, List<Notify.ResultLine> lines)
     {
+        if (PlcOrderService.UnsendableReason(resolved.Pattern) is string reason)
+        {
+            lines.Add(Notify.Bad($"ยังไม่ส่ง MK — {reason}"));
+            return false;
+        }
         var plan = await PlcOrderService.BuildPlanAsync(_api, resolved.Pattern, usedHeadsOnly: true);
-        if (IsDisposed || plan.Count == 0) return;
+        if (IsDisposed) return false;
+        if (plan.Count == 0 || plan.Any(f => f.Address == null))
+        {
+            lines.Add(Notify.Bad("ยังไม่ส่ง MK — ตั้งค่า PLC Address ไม่ครบ: " +
+                string.Join(", ", plan.Where(f => f.Address == null).Select(f => f.Label))));
+            return false;
+        }
 
         var results = await PlcOrderService.SendAsync(plan);
-        if (IsDisposed) return;
+        if (IsDisposed) return false;
 
         foreach (var r in results)
         {
             if (r.Error != null)
             {
-                lines.Add(Notify.Careful($"PLC {r.Name} — {r.Error}"));
+                lines.Add(Notify.Bad($"ยังไม่ส่ง MK — PLC {r.Name}: {r.Error}"));
                 continue;
             }
 
             // เขียนผ่านแต่ค่าไม่เข้าก็ต้องเห็น ไม่ใช่รายงานว่าสำเร็จ
             if (r.ReadBack != r.Value)
-                lines.Add(Notify.Careful(
-                    $"PLC {r.Name} = {r.Value} · อ่านกลับได้ {r.ReadBack?.ToString() ?? "ไม่ได้"}"));
+                lines.Add(Notify.Bad(
+                    $"ยังไม่ส่ง MK — PLC {r.Name} = {r.Value} · อ่านกลับได้ {r.ReadBack?.ToString() ?? "ไม่ได้"}"));
         }
+        return PlcOrderService.IsVerified(plan, results);
     }
 
     /// <summary>ลำดับของเครื่องในแผน — เครื่องที่ไม่อยู่ในแผนไปต่อท้าย</summary>
@@ -2927,6 +2955,12 @@ internal class OrderRow : AntdUI.NotifyProperty
     public string Shim { get; set; } = "";
     public string Station { get; set; } = "";
     public AntdUI.CellText? Status { get; set; }
+    private AntdUI.CellTag[] _machineStatus = [];
+    public AntdUI.CellTag[] MachineStatus
+    {
+        get => _machineStatus;
+        set { _machineStatus = value; OnPropertyChanged(); }
+    }
     public AntdUI.CellButton[] Op { get; set; } = [];
     public Color? Back { get; set; }
 }

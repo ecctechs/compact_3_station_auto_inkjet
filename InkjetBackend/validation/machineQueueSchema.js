@@ -21,6 +21,7 @@ const machineSchema = z.object({
 // ปล่อยเครื่อง — บอกได้ว่าให้ถือเครื่องไว้ให้รอบถัดไปของงานเดิมไหม
 const releaseSchema = z.object({
   machine: machineName,
+  expected_holder_id: z.number().int().positive().nullable(),
   hold_for_next_round: z.boolean().optional(),
 });
 
@@ -36,10 +37,29 @@ const updateQueueSchema = z.object({
   sent: z.boolean().optional(),
 });
 
+const beginSendSchema = z.object({ token: z.string().uuid() });
+const recoverSchema = z.object({
+  expected_token: z.string().uuid(),
+  request_id: z.string().uuid(),
+  outcome: z.enum(["sent", "not_sent"]),
+  operator: z.string().trim().min(1).max(100),
+  reason: z.string().trim().min(5).max(1000),
+  sender_stopped: z.literal(true),
+});
+const finishSendSchema = z.object({
+  token: z.string().uuid(),
+  outcome: z.enum(["sent", "not_sent", "unknown"]),
+  detail: z.record(z.unknown()).nullable().optional(),
+  error: z.string().max(4000).optional(),
+});
+
 module.exports = {
   enqueueSchema,
   machineSchema,
   releaseSchema,
   claimSchema,
   updateQueueSchema,
+  beginSendSchema,
+  finishSendSchema,
+  recoverSchema,
 };

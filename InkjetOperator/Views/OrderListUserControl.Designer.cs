@@ -29,8 +29,6 @@ partial class OrderListUserControl
     {
         tlpOrderListRoot = new System.Windows.Forms.TableLayoutPanel();
         pnlTableContainer = new AntdUI.Panel();
-        pnlSending = new AntdUI.Panel();
-        spinSending = new AntdUI.Spin();
         tlpTableInner = new System.Windows.Forms.TableLayoutPanel();
         flpTabs = new System.Windows.Forms.FlowLayoutPanel();
         btnTabList = new AntdUI.Button();
@@ -39,6 +37,7 @@ partial class OrderListUserControl
         dtpHistoryRange = new AntdUI.DatePickerRange();
         btnSearchDate = new AntdUI.Button();
         btnClearDate = new AntdUI.Button();
+        btnRecoverQueue = new AntdUI.Button();
         tlpStationBar = new System.Windows.Forms.TableLayoutPanel();
         lblStationMk = new AntdUI.Label();
         lblStationUv1 = new AntdUI.Label();
@@ -53,6 +52,10 @@ partial class OrderListUserControl
         btnSimPushUv1 = new AntdUI.Button();
         btnSimPushUv2 = new AntdUI.Button();
         tblOrders = new AntdUI.Table();
+        machineStatusColumn = new AntdUI.Column("MachineStatus", "สถานะรายเครื่อง", AntdUI.ColumnAlign.Left);
+        machineStatusColumn.Width = "460";
+        machineStatusColumn.LineBreak = true;
+        machineStatusColumn.ColBreak = true;
         tlpBottom = new System.Windows.Forms.TableLayoutPanel();
         pnlPreview = new AntdUI.Panel();
         tlpPreview = new System.Windows.Forms.TableLayoutPanel();
@@ -74,7 +77,6 @@ partial class OrderListUserControl
         btnStart = new AntdUI.Button();
         tlpOrderListRoot.SuspendLayout();
         pnlTableContainer.SuspendLayout();
-        pnlSending.SuspendLayout();
         tlpTableInner.SuspendLayout();
         tlpStationBar.SuspendLayout();
         flpTabs.SuspendLayout();
@@ -110,7 +112,6 @@ partial class OrderListUserControl
         pnlTableContainer.Back = System.Drawing.Color.White;
         pnlTableContainer.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
         pnlTableContainer.BorderWidth = 2F;
-        pnlTableContainer.Controls.Add(pnlSending);
         pnlTableContainer.Controls.Add(tlpTableInner);
         pnlTableContainer.Dock = System.Windows.Forms.DockStyle.Fill;
         pnlTableContainer.Location = new System.Drawing.Point(32, 32);
@@ -120,37 +121,6 @@ partial class OrderListUserControl
         pnlTableContainer.Radius = 12;
         pnlTableContainer.Size = new System.Drawing.Size(1288, 882);
         pnlTableContainer.TabIndex = 0;
-        //
-        // pnlSending — การ์ดแจ้งว่ากำลังส่ง ลอยกลางตาราง ซ่อนไว้จนกว่าจะใช้
-        //
-        pnlSending.Anchor = System.Windows.Forms.AnchorStyles.None;
-        pnlSending.Back = System.Drawing.Color.White;
-        pnlSending.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        pnlSending.BorderWidth = 3F;
-        pnlSending.Controls.Add(spinSending);
-        pnlSending.Location = new System.Drawing.Point(384, 356);
-        pnlSending.Name = "pnlSending";
-        pnlSending.Padding = new System.Windows.Forms.Padding(24);
-        pnlSending.Radius = 12;
-        pnlSending.Shadow = 8;
-        pnlSending.Size = new System.Drawing.Size(620, 168);
-        pnlSending.TabIndex = 1;
-        pnlSending.Visible = false;
-        //
-        // spinSending
-        //
-        // BackColor ต้องสั่งเอง — ไม่งั้นจะสืบสีฟ้ามาจากหน้าจอ กลายเป็นแถบน้ำเงินกลางการ์ดขาว
-        spinSending.BackColor = System.Drawing.Color.White;
-        spinSending.Dock = System.Windows.Forms.DockStyle.Fill;
-        spinSending.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
-        spinSending.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        // สีของวงกลมที่หมุน ไม่ใช่สีพื้นหลัง
-        spinSending.Fill = System.Drawing.Color.FromArgb(91, 155, 213);
-        // กำหนดขนาดวงกลมเอง — ค่าเริ่มต้นคิดจากความสูงของข้อความ
-        // ข้อความยาวหรือหลายบรรทัดจะทำให้วงใหญ่จนล้นกรอบ
-        spinSending.CirSize = 36;
-        spinSending.Name = "spinSending";
-        spinSending.TabIndex = 0;
         //
         // tlpTableInner
         //
@@ -175,6 +145,7 @@ partial class OrderListUserControl
         flpTabs.BackColor = System.Drawing.Color.White;
         flpTabs.Controls.Add(btnTabList);
         flpTabs.Controls.Add(btnTabHistory);
+        flpTabs.Controls.Add(btnRecoverQueue);
         flpTabs.Controls.Add(lblDateFilter);
         flpTabs.Controls.Add(dtpHistoryRange);
         flpTabs.Controls.Add(btnSearchDate);
@@ -187,6 +158,12 @@ partial class OrderListUserControl
         flpTabs.Size = new System.Drawing.Size(1282, 62);
         flpTabs.TabIndex = 0;
         flpTabs.WrapContents = false;
+        btnRecoverQueue.Text = "ตรวจคิวค้าง";
+        btnRecoverQueue.Name = "btnRecoverQueue";
+        btnRecoverQueue.Size = new System.Drawing.Size(160, 45);
+        btnRecoverQueue.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        btnRecoverQueue.Radius = 6;
+        btnRecoverQueue.Type = AntdUI.TTypeMini.Warn;
         //
         // btnTabList
         //
@@ -765,7 +742,6 @@ partial class OrderListUserControl
         Size = new System.Drawing.Size(1375, 1075);
         tlpOrderListRoot.ResumeLayout(false);
         tlpOrderListRoot.PerformLayout();
-        pnlSending.ResumeLayout(false);
         pnlTableContainer.ResumeLayout(false);
         tlpStationBar.ResumeLayout(false);
         tlpTableInner.ResumeLayout(false);
@@ -785,8 +761,6 @@ partial class OrderListUserControl
 
     private System.Windows.Forms.TableLayoutPanel tlpOrderListRoot;
     private AntdUI.Panel pnlTableContainer;
-    private AntdUI.Panel pnlSending;
-    private AntdUI.Spin spinSending;
     private System.Windows.Forms.TableLayoutPanel tlpTableInner;
     private System.Windows.Forms.FlowLayoutPanel flpTabs;
     private AntdUI.Button btnTabList;
@@ -809,6 +783,7 @@ partial class OrderListUserControl
     private AntdUI.Button btnSimPushUv1;
     private AntdUI.Button btnSimPushUv2;
     private AntdUI.Table tblOrders;
+    private AntdUI.Column machineStatusColumn;
     private System.Windows.Forms.TableLayoutPanel tlpBottom;
     private AntdUI.Panel pnlPreview;
     private System.Windows.Forms.TableLayoutPanel tlpPreview;
@@ -828,4 +803,5 @@ partial class OrderListUserControl
     private System.Windows.Forms.PictureBox picProcShim;
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnStart;
+    private AntdUI.Button btnRecoverQueue;
 }

@@ -1186,6 +1186,8 @@ public partial class OrderDetailUserControl : UserControl
             return;
         }
 
+        using var lease = MachineBusy.TryHoldExclusive("MK");
+        if (lease == null) { Notify.Warn(this, "MK กำลังส่งงานอยู่ กรุณารอให้เสร็จก่อน"); return; }
         btnSendMk.Enabled = false;
         var originalText = btnSendMk.Text;
         btnSendMk.Text = "กำลังส่ง...";
@@ -1284,7 +1286,8 @@ public partial class OrderDetailUserControl : UserControl
         {
             // ปุ่มนี้มีเฉพาะโหมดทดสอบ แต่ก็ต้องกันไฟสถานะไม่ให้แย่งซ็อกเก็ตเหมือนกัน
             // จองตรงนี้ ไม่ใช่ตั้งแต่ต้นฟังก์ชัน เพราะข้างบนมีกล่องเลือกรุ่นย่อยที่ค้างรอคนได้นาน
-            using var busy = MachineBusy.Hold();
+            using var busy = MachineBusy.TryHoldExclusive($"UV{uvNumber}");
+            if (busy == null) { Notify.Warn(this, $"UV{uvNumber} กำลังส่งงานอยู่ กรุณารอให้เสร็จก่อน"); return; }
 
             var uvTcp = new UvTcpService();
 

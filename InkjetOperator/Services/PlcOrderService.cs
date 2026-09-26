@@ -29,6 +29,10 @@ public static class PlcOrderService
     /// <param name="ReadBack">ค่าที่อ่านกลับมาได้หลังเขียน — null เมื่ออ่านไม่สำเร็จ</param>
     public readonly record struct BlockResult(string Name, int Value, int? ReadBack, string? Error);
 
+    public static bool IsVerified(List<PlcField> plan, List<BlockResult> results) =>
+        plan.Count > 0 && plan.All(f => f.Address != null) && results.Count == plan.Count &&
+        results.All(r => r.Error == null && r.ReadBack == r.Value);
+
     /// <summary>
     /// รายการค่าทั้งหมดที่จะส่งของงานนี้ เรียงตามลำดับที่ผู้ใช้เห็นบนหน้าจอ
     /// <para>

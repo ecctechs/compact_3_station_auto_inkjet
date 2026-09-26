@@ -4,7 +4,30 @@ namespace InkjetOperator.Services;
 
 public static class CpiWriteService
 {
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, SemaphoreSlim> WriteLocks
+        = new(StringComparer.OrdinalIgnoreCase);
+
     public static async Task<(bool ok, string msg)> WriteAsync(
+        string dbPath, string table, string? lot, string? name,
+        string? text1, string? text2, string? text3, string? text4, string? text5)
+    {
+        try
+        {
+            var key = Path.GetFullPath(dbPath.Trim()).Replace('/', '\\');
+            var gate = WriteLocks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+            await gate.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                // SQLite ทำงานแบบ synchronous แม้ใช้ Async จึงย้ายเฉพาะงานไฟล์ออกจาก UI
+                return await Task.Run(() => WriteCoreAsync(dbPath, table, lot, name,
+                    text1, text2, text3, text4, text5)).ConfigureAwait(false);
+            }
+            finally { gate.Release(); }
+        }
+        catch (Exception ex) { return (false, $"เขียน CPI.db3 ไม่สำเร็จ: {ex.Message}"); }
+    }
+
+    private static async Task<(bool ok, string msg)> WriteCoreAsync(
         string dbPath, string table, string? lot, string? name,
         string? text1, string? text2, string? text3, string? text4, string? text5)
     {
@@ -25,7 +48,7 @@ public static class CpiWriteService
                 existingCols.Add(reader.GetString(1));
 
             var sets = new List<string>();
-            var cmd = conn.CreateCommand();
+            await using var cmd = conn.CreateCommand();
 
             // ช่องที่มีค่าจะส่ง แต่ตารางปลายทางไม่มีคอลัมน์นั้น
             //
