@@ -241,9 +241,11 @@ public partial class OrderListUserControl : UserControl
         //
         // กล่องเลือกรุ่นย่อย UV ที่เปิดจากในตัวส่งงานยังบล็อกเครื่องนั้นอยู่ เพราะช่วงนั้น
         // จอง MachineBusy ของ UV ไว้ ไม่ได้อาศัยเงื่อนไขเรื่องกล่อง
-        _pushButton.CanAct = () => CanReleaseNow(MachineOfThisStation());
+        // ถามเป็นรายเครื่อง เพราะเครื่องนี้เฝ้าหลายปุ่มพร้อมกัน — กำลังส่งงานเข้า MK
+        // อยู่ไม่ใช่เหตุให้ปล่อย UV2 ไม่ได้
+        _pushButton.CanAct = CanReleaseNow;
 
-        _pushButton.Pressed += async (_, _) => await OnPushButtonPressedAsync();
+        _pushButton.Pressed += async (_, machine) => await OnPushButtonPressedAsync(machine);
         _pushButton.BlockedPress += (_, _) => ShowBlockedPress();
 
         // แถบสถานีเห็นทุกโหมด — คนหน้างานต้องรู้ว่าเครื่องไหนว่างและมีอะไรรออยู่
@@ -298,14 +300,6 @@ public partial class OrderListUserControl : UserControl
     /// เพราะนั่นคือการ "เลือก" ไม่ใช่การ "ยืนยัน"
     /// </para>
     /// </summary>
-    /// <summary>
-    /// เครื่องที่ปุ่มกดของสถานีนี้คุมอยู่ — ST1 คุม MK · ST3 คุม UV2
-    ///
-    /// ปุ่มของ ST2 (UV1) ยังไม่มีเครื่องคอมเฝ้า เพราะ ST2 ไม่มีจอ
-    /// </summary>
-    private static string MachineOfThisStation() =>
-        StationService.IsSt3 ? "UV2" : "MK";
-
     /// <summary>
     /// มีคนกดปุ่มหน้างาน = พิมพ์ชิ้นเดิมเสร็จแล้ว ปล่อยเครื่องให้คิวถัดไป
     ///
@@ -394,10 +388,9 @@ public partial class OrderListUserControl : UserControl
         Notify.Warn(this, "มีคนกดปุ่มหน้างาน — ระบบกำลังทำงานอื่นอยู่ กรุณากดอีกครั้ง");
     }
 
-    private async Task OnPushButtonPressedAsync(string? machineOverride = null)
+    private async Task OnPushButtonPressedAsync(string machine)
     {
         if (_api == null || IsDisposed) return;
-        var machine = machineOverride ?? MachineOfThisStation();
         if (!CanReleaseNow(machine)) return;
         _pushHandling.Add(machine);
         try
@@ -2703,10 +2696,18 @@ public partial class OrderListUserControl : UserControl
     private static bool PrintedBefore(ResolvedJobResponse resolved) =>
         resolved.Commands?.Any(c => c.Success) == true;
 
-    /// <summary>งานที่ถือเครื่องของสถานีนี้อยู่ตอนนี้ — null เมื่อเครื่องว่างหรือยังไม่รู้คิว</summary>
+    /// <summary>
+    /// งานที่ถือเครื่องของสถานีนี้อยู่ตอนนี้ — null เมื่อเครื่องว่างหรือยังไม่รู้คิว
+    ///
+    /// <para>
+    /// "เครื่องของสถานีนี้" ใช้กับแผง Processing เท่านั้น คือเครื่องที่ตั้งอยู่ตรงหน้า
+    /// คนที่ยืนดูจออยู่ ไม่เกี่ยวกับว่าเครื่องนี้เฝ้าปุ่มกดของสถานีไหนบ้าง — PC ของ
+    /// ST1 เฝ้าปุ่มครบทั้งสามสถานี แต่แผงนี้ยังแสดงงานที่อยู่ใน MK ตรงหน้าเหมือนเดิม
+    /// </para>
+    /// </summary>
     private PrintJob? JobInMyMachine()
     {
-        var machine = MachineOfThisStation();
+        var machine = PushButtonSettings.MachineFor(StationService.Current);
 
         var holder = _queueRows.FirstOrDefault(r =>
             r.State == "active"

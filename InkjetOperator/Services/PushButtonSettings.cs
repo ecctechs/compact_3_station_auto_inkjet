@@ -33,14 +33,6 @@ public sealed class PushButtonSettings
     /// <summary>ที่อยู่บิตของปุ่มกดที่ ST3</summary>
     public string AddressSt3 { get; set; } = "";
 
-    /// <summary>
-    /// ที่อยู่ของสถานีที่เครื่องนี้เป็น — ตัวเฝ้าปุ่มกดใช้ตัวนี้ตัวเดียว
-    ///
-    /// แต่ละเครื่องสนใจแค่ปุ่มของสถานีตัวเอง ที่ต้องเก็บครบสามตัวเพราะตั้งค่า
-    /// ทีเดียวแล้วก๊อป Setting.config ไปใช้ได้ทุกเครื่องโดยไม่ต้องแก้ทีละที่
-    /// </summary>
-    public string Address => AddressFor(StationService.Current);
-
     /// <summary>ที่อยู่ของสถานีที่ระบุ — 1, 2 หรือ 3</summary>
     public string AddressFor(int station) => station switch
     {
@@ -48,6 +40,43 @@ public sealed class PushButtonSettings
         2 => AddressSt2.Trim(),
         _ => AddressSt3.Trim(),
     };
+
+    /// <summary>เครื่องที่ปุ่มของสถานีนั้นปล่อย — ST1 ปล่อย MK · ST2 ปล่อย UV1 · ST3 ปล่อย UV2</summary>
+    public static string MachineFor(int station) => station switch
+    {
+        1 => "MK",
+        2 => "UV1",
+        _ => "UV2",
+    };
+
+    /// <summary>
+    /// ปุ่มที่<b>เครื่องนี้</b>ต้องเฝ้า พร้อมเครื่องที่จะถูกปล่อยเมื่อมีคนกด
+    ///
+    /// <para>
+    /// PC ของ ST1 เฝ้าทั้งสามปุ่ม ส่วนเครื่องอื่นไม่เฝ้าเลย — ปุ่มหนึ่งปุ่มต้องมี
+    /// คนเฝ้าคนเดียวเท่านั้น ถ้าสองเครื่องอ่านบิตเดียวกัน การกดครั้งเดียวจะกลายเป็น
+    /// สั่งปล่อยเครื่องสองรอบ แล้วคิวจะเดินข้ามงานไปหนึ่งใบโดยไม่มีอะไรฟ้อง
+    /// </para>
+    /// <para>
+    /// ที่เลือก ST1 เพราะสาย MK กับ UV ต่ออยู่กับ PC ของ ST1 ที่เดียว การปล่อยเครื่อง
+    /// แล้วส่งงานใบถัดไปต่อทันทีจึงจบได้ในเครื่องเดียว และ ST2 ไม่มี PC ของตัวเอง
+    /// ถ้าไม่ให้ ST1 เฝ้าให้ ปุ่มของ ST2 จะไม่มีใครอ่านเลย คิวของ UV1 จะค้างตลอดกาล
+    /// </para>
+    /// <para>
+    /// ผลข้างเคียงที่ต้องรู้: ปิดโปรแกรมที่ ST1 เมื่อไหร่ ปุ่มหน้างานหยุดทำงานทั้งสามปุ่ม
+    /// </para>
+    /// </summary>
+    public IEnumerable<(int Station, string Address, string Machine)> Watched()
+    {
+        // ST3 มีจอของตัวเองแต่ไม่ต้องเฝ้าปุ่มไหน — ST1 เฝ้าให้ครบแล้ว
+        if (StationService.IsSt3) yield break;
+
+        foreach (var (station, address) in Addresses())
+        {
+            if (address.Length == 0) continue;
+            yield return (station, address, MachineFor(station));
+        }
+    }
 
     /// <summary>ทุกกี่มิลลิวินาทีจะอ่านบิตหนึ่งครั้ง</summary>
     public int PollMs { get; set; } = DefaultPollMs;
@@ -58,8 +87,8 @@ public sealed class PushButtonSettings
     public int Port =>
         int.TryParse(CustomSettingsManager.Read("CLAMP_PLC_PORT", "5012"), out int p) ? p : 5012;
 
-    /// <summary>พร้อมใช้จริงไหม — เปิดไว้ กรอกที่อยู่แล้ว และรู้ว่าจะไปคุยกับ PLC ตัวไหน</summary>
-    public bool IsReady => Enabled && Address.Length > 0 && Ip.Length > 0;
+    /// <summary>พร้อมใช้จริงไหม — เปิดไว้ มีปุ่มให้เฝ้า และรู้ว่าจะไปคุยกับ PLC ตัวไหน</summary>
+    public bool IsReady => Enabled && Ip.Length > 0 && Watched().Any();
 
     public static PushButtonSettings Load() => new()
     {
@@ -104,8 +133,20 @@ public sealed class PushButtonSettings
             if (CheckOne(station, address) is string problem) return problem;
         }
 
-        if (AddressFor(StationService.Current).Length == 0)
-            return $"เปิดใช้งานปุ่มกดหน้างานแล้ว แต่ยังไม่ได้กรอก address ของ ST{StationService.Current}";
+        // เครื่องที่ไม่ได้เฝ้าปุ่มไหน (ST3) บันทึกได้โดยไม่ต้องกรอกอะไร — ช่องทั้งสาม
+        // มีไว้ให้ตั้งทีเดียวแล้วก๊อป Setting.config ไปใช้ทุกเครื่อง
+        if (StationService.IsSt3) return null;
+
+        if (!Watched().Any())
+            return "เปิดใช้งานปุ่มกดหน้างานแล้ว แต่ยังไม่ได้กรอก address ของปุ่มไหนเลย";
+
+        // ขาด IP แล้วตัวเฝ้าจะไม่เริ่มอ่านเลย (IsReady เป็น false) โดยไม่มีอะไรฟ้อง
+        //
+        // เคยเจอจริง: ติ๊กเปิดใช้งาน กรอก address ครบ กด Save ผ่านฉลุย แล้วงงว่า
+        // ทำไมกดปุ่มหน้างานไม่มีอะไรเกิดขึ้น เพราะ IP ของ PLC แคลมป์ยังว่างอยู่
+        if (Ip.Length == 0)
+            return "เปิดใช้งานปุ่มกดหน้างานแล้ว แต่ยังไม่ได้ตั้ง IP ของ PLC แคลมป์ "
+                 + "— กรอกที่หัวข้อ \"การเชื่อมต่อ\" ด้านบนของหน้านี้ก่อน";
 
         return null;
     }

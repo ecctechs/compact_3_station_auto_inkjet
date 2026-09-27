@@ -79,23 +79,51 @@ public static class McProtocolService
 
     /// <summary>
     /// อ่าน 1 bit เช่น M800 — ใช้อ่านสัญญาณปุ่มกดหน้างาน
-    ///
-    /// อ่านแบบ bit unit ตอบกลับมา 1 ไบต์ต่อ 2 จุด จุดแรกอยู่ nibble บน
-    /// ขอจุดเดียวจึงดูแค่ว่า nibble บนเป็น 0 หรือไม่
     /// </summary>
     public static async Task<(bool ok, bool on, string error)> ReadBitAsync(
         string ip, int port, string address)
     {
+        var (ok, bits, error) = await ReadBitsAsync(ip, port, address, 1);
+        return (ok, ok && bits[0], error);
+    }
+
+    /// <summary>
+    /// อ่านหลายบิตที่อยู่ติดกันในคำขอเดียว เช่น M4000 ต่อไปอีก 4 จุด
+    ///
+    /// <para>
+    /// อ่านแบบ bit unit ตอบกลับมา 1 ไบต์ต่อ 2 จุด จุดแรกของคู่อยู่ nibble บน
+    /// จำนวนจุดคี่จะได้ไบต์สุดท้ายที่ nibble ล่างเป็นขยะ จึงตัดทิ้งตามจำนวนที่ขอ
+    /// </para>
+    /// <para>
+    /// มีไว้ให้ตัวเฝ้าปุ่มกดหน้างานที่ต้องดูหลายปุ่มทุกรอบ — ยิงทีละปุ่มจะเปิดปิด TCP
+    /// เท่าจำนวนปุ่ม และปุ่มแต่ละตัวถูกอ่านคนละจังหวะ ทำให้จับขอบขาขึ้นเพี้ยนเวลามี
+    /// คนกดสองปุ่มไล่กัน
+    /// </para>
+    /// </summary>
+    public static async Task<(bool ok, bool[] bits, string error)> ReadBitsAsync(
+        string ip, int port, string address, int count)
+    {
+        if (count < 1) return (false, [], "จำนวนจุดต้องมากกว่า 0");
+
         if (!TryParseAddress(address, out byte code, out int number, out string parseError))
-            return (false, false, parseError);
+            return (false, [], parseError);
+
+        int expected = (count + 1) / 2;
 
         var (ok, payload, error) = await SendAsync(
-            ip, port, CmdBatchRead, SubBit, DeviceSpec(code, number, 1), 1);
+            ip, port, CmdBatchRead, SubBit, DeviceSpec(code, number, (ushort)count), expected);
 
-        if (!ok) return (false, false, error);
-        if (payload.Length < 1) return (false, false, "ตอบกลับสั้นกว่าที่ควร");
+        if (!ok) return (false, [], error);
+        if (payload.Length < expected) return (false, [], "ตอบกลับสั้นกว่าที่ควร");
 
-        return (true, (payload[0] >> 4) != 0, "");
+        var bits = new bool[count];
+        for (int i = 0; i < count; i++)
+        {
+            byte pair = payload[i / 2];
+            bits[i] = (i % 2 == 0 ? pair >> 4 : pair & 0x0F) != 0;
+        }
+
+        return (true, bits, "");
     }
 
     /// <summary>

@@ -224,20 +224,29 @@ public partial class ClampSettingUserControl : UserControl
         if (!chkPushEnabled.Checked)
             return "ยังไม่ติ๊กเปิดใช้งาน เครื่องนี้จะยังไม่อ่านเอง";
 
-        int station = StationService.Current;
-        var mine = station switch
+        // ถามตัวค่าตั้งเอง ไม่เขียนกฎซ้ำที่นี่ — กฎว่าเครื่องไหนเฝ้าปุ่มไหนอยู่ที่
+        // PushButtonSettings.Watched() ที่เดียว ตัวเฝ้าจริงก็ใช้ตัวเดียวกัน
+        var probe = new PushButtonSettings
         {
-            1 => txtPushAddrSt1.Text,
-            2 => txtPushAddrSt2.Text,
-            _ => txtPushAddrSt3.Text,
+            Enabled = true,
+            AddressSt1 = txtPushAddrSt1.Text,
+            AddressSt2 = txtPushAddrSt2.Text,
+            AddressSt3 = txtPushAddrSt3.Text,
         };
-        mine = mine.Trim().ToUpperInvariant();
 
-        if (mine.Length == 0)
-            return $"เครื่องนี้เป็น ST{station} แต่ยังไม่ได้กรอก address ของ ST{station}";
+        int station = StationService.Current;
+        var mine = probe.Watched().ToList();
+
+        if (mine.Count == 0)
+        {
+            return StationService.IsSt3
+                ? "เครื่องนี้เป็น ST3 — ปุ่มหน้างานทั้งหมดให้ PC ของ ST1 เป็นคนอ่าน เครื่องนี้จึงไม่อ่านเอง"
+                : $"เครื่องนี้เป็น ST{station} แต่ยังไม่ได้กรอก address ของปุ่มไหนเลย";
+        }
 
         var ms = int.TryParse(txtPushPollMs.Text.Trim(), out int v) ? v : _push.PollMs;
-        return $"เครื่องนี้เป็น ST{station} อ่าน {mine} ทุก {ms} ms";
+        var list = string.Join(" · ", mine.Select(b => $"{b.Address.ToUpperInvariant()}→{b.Machine}"));
+        return $"เครื่องนี้เป็น ST{station} อ่าน {list} ทุก {ms} ms";
     }
 
     /// <summary>

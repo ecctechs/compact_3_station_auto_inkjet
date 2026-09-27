@@ -23,11 +23,31 @@ public sealed class PushButtonWatcher : IDisposable
     /// <summary>ตอนขาดการติดต่อ ถ่างรอบให้ห่างขึ้น จะได้ไม่รัวใส่ PLC ที่ไม่ตอบอยู่แล้ว</summary>
     private const int RetryMs = 5000;
 
+    /// <summary>
+    /// ช่วงที่ยอมอ่านรวดเดียว — กว้างกว่านี้ถือว่าปุ่มอยู่กันคนละโซน อ่านทีละปุ่มแทน
+    /// M4000-M4003 ของหน้างานกินแค่ 4 จุด จึงอ่านรวดเดียวได้เสมอ
+    /// </summary>
+    private const int MaxBatchPoints = 64;
+
     private readonly System.Windows.Forms.Timer _timer = new();
 
     private PushButtonSettings _settings = new();
+
+    /// <summary>ปุ่มที่เครื่องนี้เฝ้าอยู่ — ว่างแปลว่ายังไม่ได้เริ่ม</summary>
+    private (string Address, string Machine)[] _buttons = [];
+
+    /// <summary>ค่าบิตรอบก่อนของแต่ละปุ่ม เรียงตรงกับ <see cref="_buttons"/></summary>
+    private bool[] _lastOn = [];
+
+    /// <summary>ตำแหน่งของแต่ละปุ่มในผลที่อ่านรวดเดียว — ใช้เมื่อ <see cref="_batchCount"/> &gt; 0</summary>
+    private int[] _offsets = [];
+
+    private int _batchStart;
+
+    /// <summary>0 = อ่านรวดเดียวไม่ได้ ต้องไล่อ่านทีละปุ่ม</summary>
+    private int _batchCount;
+
     private bool _reading;
-    private bool _lastOn;
     private int _failures;
     private int _generation;
     private bool _disposed;
@@ -47,8 +67,8 @@ public sealed class PushButtonWatcher : IDisposable
         _timer.Tick += async (_, _) => await TickAsync();
     }
 
-    /// <summary>มีคนกดปุ่มหน้างาน</summary>
-    public event EventHandler? Pressed;
+    /// <summary>มีคนกดปุ่มหน้างาน — ค่าที่ส่งมาคือเครื่องที่ต้องปล่อย (MK / UV1 / UV2)</summary>
+    public event EventHandler<string>? Pressed;
 
     /// <summary>ขาดการติดต่อกับ PLC — ส่ง null เมื่อกลับมาอ่านได้แล้ว</summary>
     public event EventHandler<string?>? Trouble;
@@ -61,7 +81,7 @@ public sealed class PushButtonWatcher : IDisposable
     /// ไม่งั้นการกดจะหายเงียบ ๆ แล้วคนกดยืนรอโดยไม่รู้ว่าต้องทำอะไรต่อ
     /// </para>
     /// </summary>
-    public event EventHandler? BlockedPress;
+    public event EventHandler<string>? BlockedPress;
 
     /// <summary>
     /// ตอนนี้ควรเฝ้าอยู่ไหม — คืน false แล้วจะข้ามรอบนั้นไปโดยไม่แตะ PLC
@@ -82,16 +102,17 @@ public sealed class PushButtonWatcher : IDisposable
     /// ที่จะไม่ลงมือ — ใช้ตอนมีกล่องเปิดค้างหรือกำลังส่งงานอยู่
     /// </para>
     /// </summary>
-    public Func<bool>? CanAct { get; set; }
+    public Func<string, bool>? CanAct { get; set; }
 
     public bool Running => _timer.Enabled;
 
-    /// <summary>ที่อยู่ที่กำลังเฝ้าอยู่ — ว่างแปลว่ายังไม่ได้เริ่ม</summary>
-    public string Address => Running ? _settings.Address : "";
+    /// <summary>ที่อยู่ที่กำลังเฝ้าอยู่ เรียงตามสถานี — ว่างแปลว่ายังไม่ได้เริ่ม</summary>
+    public string Watching =>
+        Running ? string.Join(" · ", _buttons.Select(b => $"{b.Address}→{b.Machine}")) : "";
 
     /// <summary>
     /// เริ่มเฝ้า — อ่านค่าตั้งใหม่ทุกครั้ง เผื่อผู้ใช้เพิ่งไปแก้ที่หน้า Setting มา
-    /// ปิดใช้งานอยู่หรือยังไม่ได้กรอกที่อยู่ ก็ไม่เริ่ม
+    /// ปิดใช้งานอยู่ ไม่มีปุ่มให้เฝ้า หรือกรอกที่อยู่ผิด ก็ไม่เริ่ม
     /// </summary>
     public void Start()
     {
@@ -103,10 +124,77 @@ public sealed class PushButtonWatcher : IDisposable
         _settings = PushButtonSettings.Load();
         if (!_settings.IsReady || _settings.Validate() != null) return;
 
+        _buttons = _settings.Watched().Select(w => (w.Address, w.Machine)).ToArray();
+        if (_buttons.Length == 0) return;
+
+        _lastOn = new bool[_buttons.Length];
+        PlanBatchRead();
+
         _failures = 0;
         _resync = true;
         _timer.Interval = _settings.PollMs;
         _timer.Start();
+    }
+
+    /// <summary>
+    /// ดูว่าอ่านทุกปุ่มรวดเดียวได้ไหม แล้วจำตำแหน่งของแต่ละปุ่มไว้
+    ///
+    /// <para>
+    /// อ่านรวดเดียวดีกว่าสองทาง: เปิดปิด TCP รอบละครั้งแทนที่จะเท่าจำนวนปุ่ม (ตัวเฝ้า
+    /// ยิงทุก 300 ms ตลอดกะ) และทุกปุ่มถูกอ่าน ณ จังหวะเดียวกัน จึงไม่มีกรณีที่ปุ่มหลัง
+    /// ถูกอ่านช้ากว่าปุ่มแรกจนจับขอบขาขึ้นเพี้ยน
+    /// </para>
+    /// <para>
+    /// ที่อยู่ปุ่มกดถูกบังคับให้เป็น M อยู่แล้วตอนตรวจค่า แต่ยังเช็คซ้ำตรงนี้
+    /// เพราะถ้าวันหนึ่งกฎนั้นเปลี่ยน การอ่านรวมข้าม device จะได้ค่าผิดแบบเงียบ ๆ
+    /// </para>
+    /// </summary>
+    private void PlanBatchRead()
+    {
+        _batchCount = 0;
+        _offsets = new int[_buttons.Length];
+
+        var numbers = new int[_buttons.Length];
+        for (int i = 0; i < _buttons.Length; i++)
+        {
+            if (!_buttons[i].Address.StartsWith("M", StringComparison.OrdinalIgnoreCase)) return;
+            if (!McProtocolService.TryParseAddress(_buttons[i].Address, out _, out numbers[i], out _)) return;
+        }
+
+        int min = numbers.Min(), max = numbers.Max();
+        if (max - min + 1 > MaxBatchPoints) return;
+
+        _batchStart = min;
+        _batchCount = max - min + 1;
+        for (int i = 0; i < numbers.Length; i++) _offsets[i] = numbers[i] - min;
+    }
+
+    /// <summary>อ่านค่าของทุกปุ่มที่เฝ้าอยู่ เรียงตรงกับ <see cref="_buttons"/></summary>
+    private async Task<(bool ok, bool[] on, string error)> ReadAllAsync()
+    {
+        if (_batchCount > 0)
+        {
+            var (ok, bits, error) = await McProtocolService.ReadBitsAsync(
+                _settings.Ip, _settings.Port, $"M{_batchStart}", _batchCount);
+
+            if (!ok) return (false, [], error);
+
+            var picked = new bool[_buttons.Length];
+            for (int i = 0; i < picked.Length; i++) picked[i] = bits[_offsets[i]];
+            return (true, picked, "");
+        }
+
+        var result = new bool[_buttons.Length];
+        for (int i = 0; i < _buttons.Length; i++)
+        {
+            var (ok, on, error) = await McProtocolService.ReadBitAsync(
+                _settings.Ip, _settings.Port, _buttons[i].Address);
+
+            if (!ok) return (false, [], error);
+            result[i] = on;
+        }
+
+        return (true, result, "");
     }
 
     public void Stop()
@@ -137,8 +225,7 @@ public sealed class PushButtonWatcher : IDisposable
         int generation = _generation;
         try
         {
-            var (ok, on, error) = await McProtocolService.ReadBitAsync(
-                _settings.Ip, _settings.Port, _settings.Address);
+            var (ok, on, error) = await ReadAllAsync();
 
             // เปลี่ยน Address / หยุดเฝ้าระหว่างรอ ห้ามใช้คำตอบจากการอ่านรอบเก่า
             if (generation != _generation || _disposed || !Running) return;
@@ -153,22 +240,29 @@ public sealed class PushButtonWatcher : IDisposable
 
             if (_resync)
             {
-                _lastOn = on;
+                Array.Copy(on, _lastOn, on.Length);
                 _resync = false;
                 return;
             }
 
-            bool rising = on && !_lastOn;
-            _lastOn = on;
+            for (int i = 0; i < _buttons.Length; i++)
+            {
+                bool rising = on[i] && !_lastOn[i];
 
-            if (!rising) return;
+                // จำค่าไว้ก่อนแจ้ง — บิตค้างเป็น 1 อยู่ 2 วินาทีจะได้ไม่ถูกนับซ้ำ
+                // ในรอบถัดไป ซึ่งที่ 300 ms ต่อรอบคือนับซ้ำอีกหกครั้ง
+                _lastOn[i] = on[i];
+                if (!rising) continue;
 
-            // จอไม่ว่าง — ไม่ลงมือ แต่ต้องบอกให้รู้ว่ามีคนกด
-            //
-            // ห้ามเก็บไว้ทำทีหลัง เพราะคนกดอาจเดินออกไปแล้ว พอมีคนมาปิดกล่องอีก
-            // สิบวินาทีต่อมา เครื่องจะขยับเองตอนไม่มีใครยืนอยู่ตรงนั้น
-            if (CanAct?.Invoke() == false) BlockedPress?.Invoke(this, EventArgs.Empty);
-            else Pressed?.Invoke(this, EventArgs.Empty);
+                var machine = _buttons[i].Machine;
+
+                // จอไม่ว่าง — ไม่ลงมือ แต่ต้องบอกให้รู้ว่ามีคนกด
+                //
+                // ห้ามเก็บไว้ทำทีหลัง เพราะคนกดอาจเดินออกไปแล้ว พอมีคนมาปิดกล่องอีก
+                // สิบวินาทีต่อมา เครื่องจะขยับเองตอนไม่มีใครยืนอยู่ตรงนั้น
+                if (CanAct?.Invoke(machine) == false) BlockedPress?.Invoke(this, machine);
+                else Pressed?.Invoke(this, machine);
+            }
         }
         finally
         {
