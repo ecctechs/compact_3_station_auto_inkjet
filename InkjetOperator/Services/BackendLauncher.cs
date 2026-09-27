@@ -78,6 +78,12 @@ public static class BackendLauncher
     /// <summary>
     /// backend อยู่เครื่องนี้ไหม — ดูจากที่อยู่ที่ทุกหน้าใช้ต่อ
     /// ตั้งไม่ตรงกับความจริงคือตั้งค่าผิด ไม่ใช่เรื่องที่ตรงนี้จะเดาให้
+    ///
+    /// <para>
+    /// นับ IP วงแลนของเครื่องนี้เองด้วย ไม่ใช่แค่ 127.0.0.1 — เครื่องที่เป็นตัวหลัก
+    /// มักตั้ง <c>PC_IP</c> เป็น IP แลนของตัวเอง (เช่น 192.168.1.72) ให้ตรงกับที่
+    /// สถานีอื่นใช้ต่อเข้ามา เดิมกรณีนี้ถูกนับเป็นเครื่องอื่นแล้วข้ามการเปิดไปเงียบ ๆ
+    /// </para>
     /// </summary>
     private static bool BackendIsLocal()
     {
@@ -86,7 +92,25 @@ public static class BackendLauncher
         if (ip.Length == 0) return true;     // ยังไม่ตั้ง = ค่าเริ่มต้นคือเครื่องนี้
         if (string.Equals(ip, "localhost", StringComparison.OrdinalIgnoreCase)) return true;
 
-        return IPAddress.TryParse(ip, out var parsed) && IPAddress.IsLoopback(parsed);
+        if (!IPAddress.TryParse(ip, out var parsed)) return false;
+        if (IPAddress.IsLoopback(parsed)) return true;
+
+        return IsOwnAddress(parsed);
+    }
+
+    /// <summary>IP นี้เป็นของการ์ดแลนตัวใดตัวหนึ่งบนเครื่องนี้ไหม</summary>
+    private static bool IsOwnAddress(IPAddress address)
+    {
+        try
+        {
+            return NetworkInterface.GetAllNetworkInterfaces()
+                .SelectMany(nic => nic.GetIPProperties().UnicastAddresses)
+                .Any(unicast => unicast.Address.Equals(address));
+        }
+        catch
+        {
+            return false;   // ถามระบบไม่ได้ ถือว่าเป็นเครื่องอื่นเหมือนเดิม
+        }
     }
 
     /// <summary>

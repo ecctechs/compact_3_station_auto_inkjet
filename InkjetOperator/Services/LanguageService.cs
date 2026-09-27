@@ -204,6 +204,8 @@ public static class LanguageService
         ["Port:"] = "พอร์ต:",
         ["Name:"] = "ชื่อ:",
         ["Folder:"] = "โฟลเดอร์:",
+        ["Backend Folder"] = "โฟลเดอร์ Backend",
+        ["Backend Folder:"] = "โฟลเดอร์ Backend:",
         ["Program:"] = "โปรแกรม:",
         ["UV Software Folder:"] = "โฟลเดอร์ซอฟต์แวร์ UV:",
         ["Marking Reference Image"] = "รูปอ้างอิงการมาร์ก",

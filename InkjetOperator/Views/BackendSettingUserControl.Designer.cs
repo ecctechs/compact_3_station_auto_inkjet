@@ -26,6 +26,13 @@ partial class BackendSettingUserControl
         lblPcIpLabel = new System.Windows.Forms.Label();
         txtPcIp = new IpAddressInput();
 
+        grpDev = new System.Windows.Forms.GroupBox();
+        tlpDev = new System.Windows.Forms.TableLayoutPanel();
+        lblBackendPathLabel = new System.Windows.Forms.Label();
+        txtBackendPath = new AntdUI.Input();
+        btnBrowseBackend = new AntdUI.Button();
+        lblBackendPathStatus = new System.Windows.Forms.Label();
+
         flpActions = new System.Windows.Forms.FlowLayoutPanel();
         btnSave = new AntdUI.Button();
         btnCancel = new AntdUI.Button();
@@ -34,6 +41,8 @@ partial class BackendSettingUserControl
         tlpRoot.SuspendLayout();
         grpBackend.SuspendLayout();
         tlpDevice.SuspendLayout();
+        grpDev.SuspendLayout();
+        tlpDev.SuspendLayout();
         flpActions.SuspendLayout();
         SuspendLayout();
         //
@@ -43,6 +52,7 @@ partial class BackendSettingUserControl
         tlpRoot.ColumnCount = 1;
         tlpRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpRoot.Controls.Add(grpBackend, 0, 0);
+        tlpRoot.Controls.Add(grpDev, 0, 1);
         tlpRoot.Controls.Add(flpActions, 0, 2);
         tlpRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpRoot.Location = new System.Drawing.Point(0, 0);
@@ -147,6 +157,97 @@ partial class BackendSettingUserControl
         tlpDevice.SetColumnSpan(txtPcIp, 3);
         txtPcIp.TabIndex = 4;
         //
+        // grpDev — โฟลเดอร์ backend สำหรับโหมดทดสอบเท่านั้น
+        //
+        // อยู่ในแถวที่เดิมเป็นที่ว่างของ tlpRoot และ Dock=Top ไม่ใช่ Fill
+        // ซ่อนแล้วหน้าจึงกลับไปเหมือนเดิมทุกประการ โดยไม่ต้องไปแก้ความสูงของแถว
+        // จากโค้ด (ค่าที่เขียนทับจากโค้ดไม่ถูกสเกลตาม DPI ของจอ)
+        //
+        grpDev.Controls.Add(tlpDev);
+        grpDev.Dock = System.Windows.Forms.DockStyle.Top;
+        grpDev.Font = new System.Drawing.Font("Segoe UI", 17.5F, System.Drawing.FontStyle.Bold);
+        grpDev.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        grpDev.Margin = new System.Windows.Forms.Padding(3, 16, 3, 3);
+        grpDev.Name = "grpDev";
+        grpDev.Padding = new System.Windows.Forms.Padding(16, 20, 16, 16);
+        grpDev.Size = new System.Drawing.Size(943, 186);
+        grpDev.TabIndex = 1;
+        grpDev.TabStop = false;
+        grpDev.Text = "Backend Folder";
+        //
+        // tlpDev — คอลัมน์ชุดเดียวกับ tlpDevice ช่องกรอกจึงเริ่มตรงกับช่อง IP ด้านบน
+        //
+        tlpDev.BackColor = System.Drawing.Color.White;
+        tlpDev.ColumnCount = 6;
+        tlpDev.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 45F));
+        tlpDev.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 175F));
+        tlpDev.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 125F));
+        tlpDev.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpDev.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 25F));
+        tlpDev.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 112F));
+        tlpDev.Controls.Add(lblBackendPathLabel, 1, 0);
+        tlpDev.Controls.Add(txtBackendPath, 3, 0);
+        tlpDev.Controls.Add(btnBrowseBackend, 5, 0);
+        tlpDev.Controls.Add(lblBackendPathStatus, 3, 1);
+        tlpDev.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpDev.Name = "tlpDev";
+        tlpDev.RowCount = 3;
+        tlpDev.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
+        tlpDev.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
+        tlpDev.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpDev.TabIndex = 0;
+        //
+        // lblBackendPathLabel — spans col1+col2
+        //
+        lblBackendPathLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblBackendPathLabel.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        lblBackendPathLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblBackendPathLabel.Name = "lblBackendPathLabel";
+        tlpDev.SetColumnSpan(lblBackendPathLabel, 2);
+        lblBackendPathLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
+        lblBackendPathLabel.TabIndex = 0;
+        lblBackendPathLabel.Text = "Backend Folder:";
+        lblBackendPathLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        //
+        // txtBackendPath — spans col3+col4
+        //
+        txtBackendPath.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtBackendPath.Dock = System.Windows.Forms.DockStyle.Fill;
+        txtBackendPath.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        txtBackendPath.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
+        txtBackendPath.Name = "txtBackendPath";
+        txtBackendPath.PlaceholderText = "Select the folder that contains index.js...";
+        txtBackendPath.Radius = 4;
+        txtBackendPath.ReadOnly = true;
+        tlpDev.SetColumnSpan(txtBackendPath, 2);
+        txtBackendPath.TabIndex = 1;
+        //
+        // btnBrowseBackend
+        //
+        btnBrowseBackend.Anchor = System.Windows.Forms.AnchorStyles.Left;
+        btnBrowseBackend.BorderWidth = 2F;
+        btnBrowseBackend.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnBrowseBackend.Font = new System.Drawing.Font("Segoe UI", 11F);
+        btnBrowseBackend.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnBrowseBackend.IconRatio = 1.2F;
+        btnBrowseBackend.IconSvg = "FolderOpenFilled";
+        btnBrowseBackend.Name = "btnBrowseBackend";
+        btnBrowseBackend.Radius = 6;
+        btnBrowseBackend.Size = new System.Drawing.Size(52, 42);
+        btnBrowseBackend.TabIndex = 2;
+        btnBrowseBackend.Type = AntdUI.TTypeMini.Default;
+        //
+        // lblBackendPathStatus — under the input, aligned with it
+        //
+        lblBackendPathStatus.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblBackendPathStatus.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        lblBackendPathStatus.ForeColor = System.Drawing.Color.Gray;
+        lblBackendPathStatus.Name = "lblBackendPathStatus";
+        tlpDev.SetColumnSpan(lblBackendPathStatus, 3);
+        lblBackendPathStatus.Padding = new System.Windows.Forms.Padding(4, 4, 0, 0);
+        lblBackendPathStatus.TabIndex = 3;
+        lblBackendPathStatus.Text = "";
+        //
         // flpActions
         //
         flpActions.BackColor = System.Drawing.Color.White;
@@ -211,6 +312,8 @@ partial class BackendSettingUserControl
         tlpRoot.ResumeLayout(false);
         grpBackend.ResumeLayout(false);
         tlpDevice.ResumeLayout(false);
+        grpDev.ResumeLayout(false);
+        tlpDev.ResumeLayout(false);
         flpActions.ResumeLayout(false);
         //
         // tmrAutoCheck - ตรวจสถานะซ้ำเองระหว่างที่เปิดหน้านี้ค้างอยู่
@@ -229,6 +332,12 @@ partial class BackendSettingUserControl
     private AntdUI.Button btnPcName;
     private System.Windows.Forms.Label lblPcIpLabel;
     private IpAddressInput txtPcIp;
+    private System.Windows.Forms.GroupBox grpDev;
+    private System.Windows.Forms.TableLayoutPanel tlpDev;
+    private System.Windows.Forms.Label lblBackendPathLabel;
+    private AntdUI.Input txtBackendPath;
+    private AntdUI.Button btnBrowseBackend;
+    private System.Windows.Forms.Label lblBackendPathStatus;
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnSave;
     private AntdUI.Button btnCancel;
