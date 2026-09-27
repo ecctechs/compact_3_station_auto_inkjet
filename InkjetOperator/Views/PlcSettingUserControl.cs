@@ -12,9 +12,6 @@ public partial class PlcSettingUserControl : UserControl
     private static readonly Color StatusGreen = DesignTokens.Success;
     private static readonly Color StatusRed = DesignTokens.Danger;
 
-    private static readonly HashSet<string> FixedAddresses = new()
-        { "0", "1", "2", "3", "5", "6", "7", "8", "10", "11", "12" };
-
     private readonly ApiClient _api;
     private List<PlcRow> _rows = new();
     private bool _unlocked;
@@ -197,7 +194,8 @@ public partial class PlcSettingUserControl : UserControl
             var rows = await _api.GetAllPlcSettingsAsync();
             if (IsDisposed) return;
 
-            _rows = rows.Select(FromDto).ToList();
+            var required = RequiredListNames();
+            _rows = rows.Select(d => FromDto(d, required)).ToList();
         }
         catch { /* backend not available — keep current rows */ }
 
@@ -227,10 +225,10 @@ public partial class PlcSettingUserControl : UserControl
 
         return
         [
-            new PlcRow { AddressStart = "1",  AddressStop = "1",  PlcStart = "D1",  PlcStop = "D1",  ListName = $"{mk1} PostAct",   DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
-            new PlcRow { AddressStart = "2",  AddressStop = "2",  PlcStart = "D2",  PlcStop = "D2",  ListName = $"{mk1} Delay",     DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
-            new PlcRow { AddressStart = "6",  AddressStop = "6",  PlcStart = "D6",  PlcStop = "D6",  ListName = $"{mk2} PostAct",   DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
-            new PlcRow { AddressStart = "7",  AddressStop = "7",  PlcStart = "D7",  PlcStop = "D7",  ListName = $"{mk2} Delay",     DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
+            new PlcRow { AddressStart = "0",  AddressStop = "0",  PlcStart = "D0",  PlcStop = "D0",  ListName = $"{mk1} PostAct",   DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
+            new PlcRow { AddressStart = "1",  AddressStop = "1",  PlcStart = "D1",  PlcStop = "D1",  ListName = $"{mk1} Delay",     DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
+            new PlcRow { AddressStart = "5",  AddressStop = "5",  PlcStart = "D5",  PlcStop = "D5",  ListName = $"{mk2} PostAct",   DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
+            new PlcRow { AddressStart = "6",  AddressStop = "6",  PlcStart = "D6",  PlcStop = "D6",  ListName = $"{mk2} Delay",     DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
             new PlcRow { AddressStart = "10", AddressStop = "10", PlcStart = "D10", PlcStop = "D10", ListName = "Conveyor Speed 1", DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
         ];
     }
@@ -623,13 +621,42 @@ public partial class PlcSettingUserControl : UserControl
         new AntdUI.CellButton("del", "Del", AntdUI.TTypeMini.Error) { Radius = 6 },
     ];
 
-    private static PlcRow FromDto(PlcRegisterMap d)
+    /// <summary>
+    /// แถวที่โปรแกรมส่งค่าให้จริง — ลบไม่ได้ แต่แก้ address ได้ตลอด
+    ///
+    /// <para>
+    /// ชื่อพวกนี้คือกุญแจที่ <see cref="PlcOrderService"/> ใช้หา address ตอนส่งค่า
+    /// เข้า PLC และที่หน้า Order Detail ใช้แสดงว่าแต่ละช่องจะถูกส่งไป register ไหน
+    /// ทั้งสองที่จับคู่ด้วย <c>list_name</c> ไม่ใช่ address — ย้าย address ได้อิสระ
+    /// แต่ลบแถวไหนทิ้ง ค่านั้นจะเลิกถูกส่งทันทีโดยไม่มีอะไรฟ้อง
+    /// </para>
+    /// <para>
+    /// เดิมตัดสินจาก address ที่ฝังเป็นชุดตัวเลขไว้ในโค้ด ซึ่งขัดกับการที่ address
+    /// แก้ได้ — ย้ายแถวไป address นอกชุดแล้วบันทึก แถวเดิมจะกลายเป็นแถวลบได้
+    /// และแถวที่เพิ่มเองซึ่งบังเอิญไปตรงเลขในชุดจะกลายเป็นลบไม่ได้
+    /// </para>
+    /// </summary>
+    private static HashSet<string> RequiredListNames()
     {
-        var addr = d.AddressStart.ToString();
-        bool isFixed = FixedAddresses.Contains(addr);
+        var mk1 = CustomSettingsManager.Read("MK058_NAME", "MK-058");
+        var mk2 = CustomSettingsManager.Read("MK059_NAME", "MK-059");
+
+        return new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            $"{mk1} PostAct",
+            $"{mk1} Delay",
+            $"{mk2} PostAct",
+            $"{mk2} Delay",
+            "Conveyor Speed 1",
+        };
+    }
+
+    private static PlcRow FromDto(PlcRegisterMap d, HashSet<string> required)
+    {
+        bool isFixed = required.Contains((d.ListName ?? "").Trim());
         return new PlcRow
         {
-            AddressStart = addr,
+            AddressStart = d.AddressStart.ToString(),
             AddressStop = d.AddressStop.ToString(),
             PlcStart = d.PlcStart ?? "",
             PlcStop = d.PlcStop ?? "",
