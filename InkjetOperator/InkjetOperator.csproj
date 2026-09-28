@@ -68,7 +68,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Setting.config">
+    <!--
+      ค่าตั้งต้นที่ไปกับตัวโปรแกรม ใช้ครั้งเดียวตอนเครื่องยังไม่มีไฟล์ตั้งค่าของตัวเอง
+      (AppSettingsFile.Resolve) ชื่อไฟล์ต้องไม่ใช่ Setting.config เพราะชื่อนั้นเป็น
+      ของไฟล์จริงใน ProgramData ถ้าใช้ชื่อเดียวกัน ตัวที่ถูกก๊อปมาไว้ข้าง ๆ .exe
+      จะไปทับหรือถูกเข้าใจผิดว่าเป็นไฟล์จริง — รายละเอียดในหัวไฟล์นั้น
+    -->
+    <None Update="Setting.default.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

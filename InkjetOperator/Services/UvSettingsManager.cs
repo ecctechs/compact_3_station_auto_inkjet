@@ -1,4 +1,4 @@
-using System.Xml.Linq;
+﻿using System.Xml.Linq;
 
 namespace InkjetOperator.Services;
 
@@ -10,7 +10,7 @@ public static class UvSettingsManager
     {
         try
         {
-            EnsureFile();
+            AppSettingsFile.EnsureAppSettingsFile(_path);
             var doc = XDocument.Load(_path);
             var el = doc.Root?.Element("appSettings")?
                 .Elements("add")
@@ -24,7 +24,7 @@ public static class UvSettingsManager
     {
         try
         {
-            EnsureFile();
+            AppSettingsFile.EnsureAppSettingsFile(_path);
             var doc = XDocument.Load(_path);
             var settings = doc.Root?.Element("appSettings");
             if (settings == null) return false;
@@ -39,7 +39,7 @@ public static class UvSettingsManager
                     new XAttribute("key", key),
                     new XAttribute("value", value)));
 
-            doc.Save(_path);
+            AppSettingsFile.SaveAtomic(_path, doc.Save);
             return true;
         }
         catch (Exception ex)
@@ -47,15 +47,6 @@ public static class UvSettingsManager
             CustomSettingsManager.ReportWriteError(ex.Message);
             return false;
         }
-    }
-
-    private static void EnsureFile()
-    {
-        if (File.Exists(_path)) return;
-        var doc = new XDocument(
-            new XElement("configuration",
-                new XElement("appSettings")));
-        doc.Save(_path);
     }
 
     private const string REL_CPI = @"database\sys\CPI.db3";

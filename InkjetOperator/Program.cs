@@ -43,10 +43,9 @@ static class Program
         Services.LanguageService.Init();
         ConfigureAntdUi();
 
-        // Load local transform patterns (patterns.xml next to the exe).
-        string patternsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "patterns.xml");
-        PatternStore.Load(patternsPath);
-        PatternStore.SeedDefaults(patternsPath);
+        // Load local transform patterns (patterns.xml in ProgramData — see PatternStore).
+        PatternStore.Load();
+        PatternStore.SeedDefaults();
 
         WarnIfSettingsReadOnly();
         StartBackendIfNeeded();

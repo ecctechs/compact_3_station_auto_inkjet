@@ -27,9 +27,6 @@ public partial class EditPatternUserControl : UserControl
         }
     }
 
-    private readonly string _patternsPath =
-        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "patterns.xml");
-
     private BindingList<Pattern>? _patterns;
     private Pattern? _selectedPattern;
     private List<RuleRow> _rows = new();
@@ -209,7 +206,7 @@ public partial class EditPatternUserControl : UserControl
 
         try
         {
-            PatternStore.Save(_patternsPath);
+            PatternStore.Save();
             RefreshPatternListDisplay();
             Notify.Success(this, "Patterns saved.");
         }
@@ -229,7 +226,7 @@ public partial class EditPatternUserControl : UserControl
 
     private void SaveQuiet()
     {
-        try { PatternStore.Save(_patternsPath); } catch { }
+        try { PatternStore.Save(); } catch { }
     }
 
     // ── Preview ────────────────────────────────────────────

@@ -2168,8 +2168,8 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_E4ACCFFB4F3E4981848E60D497D8D50D"
             {
-            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\Setting.config"
-            "TargetName" = "8:Setting.config"
+            "SourcePath" = "8:..\\InkjetOperator\\bin\\Release\\net8.0-windows\\Setting.default.config"
+            "TargetName" = "8:Setting.default.config"
             "Tag" = "8:"
             "Folder" = "8:_99FE1913DDBB4999B389F8991F9177F4"
             "Condition" = "8:"

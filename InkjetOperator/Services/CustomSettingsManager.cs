@@ -18,6 +18,7 @@ public static class CustomSettingsManager
     {
         try
         {
+            AppSettingsFile.EnsureAppSettingsFile(_path);
             var doc = XDocument.Load(_path);
             var el = doc.Root?.Element("appSettings")?
                 .Elements("add")
@@ -33,6 +34,7 @@ public static class CustomSettingsManager
         LastError = null;
         try
         {
+            AppSettingsFile.EnsureAppSettingsFile(_path);
             var doc = XDocument.Load(_path);
             var settings = doc.Root?.Element("appSettings");
             if (settings == null)
@@ -51,7 +53,8 @@ public static class CustomSettingsManager
                     new XAttribute("key", key),
                     new XAttribute("value", value)));
 
-            doc.Save(_path);
+            // ไม่เขียนทับไฟล์เดิมตรง ๆ — เหตุผลที่ AppSettingsFile.SaveAtomic
+            AppSettingsFile.SaveAtomic(_path, doc.Save);
             return true;
         }
         catch (Exception ex)
