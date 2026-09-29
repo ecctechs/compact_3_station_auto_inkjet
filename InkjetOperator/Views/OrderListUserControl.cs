@@ -933,6 +933,62 @@ public partial class OrderListUserControl : UserControl
         tblOrders.DataSource = rows;
         ReapplySort();
         RestoreSelection();
+
+        // แถวถูกสร้างใหม่ทุกครั้งที่ผูกตาราง ปุ่มที่หมุนอยู่จึงหายไปด้วย ต้องสั่งหมุนใหม่
+        ApplyStartLoading();
+    }
+
+    /// <summary>งานที่กดเริ่มไปแล้วและยังส่งไม่เสร็จ — ปุ่มเริ่มงานของแถวนี้หมุนอยู่</summary>
+    private int? _startingJobId;
+
+    private const string StartButtonText = "เริ่มงาน";
+
+    /// <summary>
+    /// ให้ปุ่ม "เริ่มงาน" ของแถวที่กดหมุน จนกว่าจะส่งเสร็จ — null คือหยุดหมุน
+    ///
+    /// <para>
+    /// หมุนที่ปุ่มที่คนเพิ่งกด ไม่ใช่ขึ้นการ์ดบังทั้งตาราง คนเห็นทันทีว่าระบบรับการกด
+    /// แล้วและกำลังทำงานอยู่ ส่วนที่เหลือของจอยังใช้ได้ตามปกติ ดูแถวอื่นหรือเครื่อง
+    /// อื่นได้ระหว่างรอ — การ์ดแบบเก่าที่บังตารางถูกเอาออกไปเพราะเหตุนี้
+    /// </para>
+    /// <para>
+    /// หมุนตั้งแต่กดจนจบ รวมช่วงโหลดข้อมูลงานและตรวจการเชื่อมต่อเครื่อง ซึ่งช้าได้
+    /// เป็นวินาทีตอนเครือข่ายมีปัญหา ถ้าเริ่มหมุนตอนส่งจริงช่วงนั้นจะดูเหมือนกดไม่ติด
+    /// </para>
+    /// </summary>
+    private void ShowStartLoading(int? jobId)
+    {
+        _startingJobId = jobId;
+        ApplyStartLoading();
+    }
+
+    /// <summary>
+    /// ตั้งสถานะหมุนให้ปุ่มในตารางตามงานที่กำลังเริ่มอยู่
+    ///
+    /// <para>
+    /// ตั้งได้เฉพาะหลังผูกตารางแล้ว ปุ่มในตารางของ AntdUI ต้องรู้ว่าตัวเองอยู่ตารางไหน
+    /// ก่อนจะวาดตัวหมุนได้ ตั้งตอนสร้างแถวจะพังเพราะยังไม่มีตารางให้วาด
+    /// </para>
+    /// </summary>
+    private void ApplyStartLoading()
+    {
+        if (IsDisposed) return;
+
+        foreach (var row in _displayRows)
+        {
+            foreach (var button in row.Op)
+            {
+                if (button.Id != "start") continue;
+
+                bool spin = row.Id == _startingJobId;
+                button.Loading = spin;
+
+                // ตอนหมุนเหลือแค่ตัวหมุน ไม่มีข้อความ — ตัวหมุนกินที่เพิ่มหน้าข้อความ
+                // ปุ่มจึงกว้างเกินคอลัมน์ ดันปุ่มดูรายละเอียดตกขอบตาราง และตัวหมุนเอง
+                // ถูกตัดครึ่ง (วัดจากภาพแล้ว) ส่วนคำว่ากำลังส่งมีในคอลัมน์รายเครื่องอยู่แล้ว
+                button.Text = spin ? "" : StartButtonText;
+            }
+        }
     }
 
     /// <summary>
@@ -1022,7 +1078,19 @@ public partial class OrderListUserControl : UserControl
         }
         else if (buttonId == "start")
         {
-            await StartJobAsync(row.Id);
+            // กดซ้ำระหว่างที่ใบก่อนยังไม่จบ — ปุ่มที่หมุนอยู่ไม่รับคลิกอยู่แล้ว
+            // ตัวนี้กันการกดเริ่มใบอื่นแทรกเข้ามาก่อนใบแรกจะส่งเสร็จ
+            if (_startingJobId != null) return;
+
+            ShowStartLoading(row.Id);
+            try
+            {
+                await StartJobAsync(row.Id);
+            }
+            finally
+            {
+                ShowStartLoading(null);
+            }
         }
         else if (buttonId == "complete")
         {
@@ -2612,7 +2680,7 @@ public partial class OrderListUserControl : UserControl
             // งานที่ยังไม่เริ่ม = เริ่มงาน · งานที่เดินอยู่ = จบงาน
             if (CanStart(job))
             {
-                buttons.Add(new AntdUI.CellButton("start", "เริ่มงาน", AntdUI.TTypeMini.Primary)
+                buttons.Add(new AntdUI.CellButton("start", StartButtonText, AntdUI.TTypeMini.Primary)
                 { Radius = 6 });
             }
             else if (NotMyTurnYet(job))
