@@ -26,6 +26,8 @@ partial class PlcSettingUserControl
         txtPlc001Ip = new IpAddressInput();
         lblPortLabel = new System.Windows.Forms.Label();
         txtPlc001Port = new AntdUI.Input();
+        lblHomeLabel = new System.Windows.Forms.Label();
+        txtHomePosition = new AntdUI.Input();
         grpRegisterMap = new System.Windows.Forms.GroupBox();
         tlpMap = new System.Windows.Forms.TableLayoutPanel();
         tlpMapHeader = new System.Windows.Forms.TableLayoutPanel();
@@ -65,7 +67,7 @@ partial class PlcSettingUserControl
         tlpRoot.Name = "tlpRoot";
         tlpRoot.Padding = new System.Windows.Forms.Padding(16);
         tlpRoot.RowCount = 4;
-        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 291F));
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 353F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 291F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 85F));
@@ -101,9 +103,12 @@ partial class PlcSettingUserControl
         tlpConn.Controls.Add(txtPlc001Ip, 3, 1);
         tlpConn.Controls.Add(lblPortLabel, 1, 2);
         tlpConn.Controls.Add(txtPlc001Port, 3, 2);
+        tlpConn.Controls.Add(lblHomeLabel, 1, 3);
+        tlpConn.Controls.Add(txtHomePosition, 3, 3);
         tlpConn.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpConn.Name = "tlpConn";
-        tlpConn.RowCount = 4;
+        tlpConn.RowCount = 5;
+        tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
@@ -189,6 +194,29 @@ partial class PlcSettingUserControl
         txtPlc001Port.PlaceholderText = "502";
         txtPlc001Port.Radius = 4;
         txtPlc001Port.TabIndex = 6;
+        //
+        // lblHomeLabel
+        //
+        lblHomeLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblHomeLabel.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        lblHomeLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblHomeLabel.Name = "lblHomeLabel";
+        tlpConn.SetColumnSpan(lblHomeLabel, 2);
+        lblHomeLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
+        lblHomeLabel.TabIndex = 7;
+        lblHomeLabel.Text = "ตำแหน่งเริ่มต้นหัวพิมพ์:";
+        lblHomeLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        //
+        // txtHomePosition - ค่า PostAct ที่เขียนตอนสั่งหัวพิมพ์กลับตำแหน่งเริ่มต้น
+        //
+        txtHomePosition.Dock = System.Windows.Forms.DockStyle.Fill;
+        txtHomePosition.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtHomePosition.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        txtHomePosition.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
+        txtHomePosition.Name = "txtHomePosition";
+        txtHomePosition.PlaceholderText = "1";
+        txtHomePosition.Radius = 4;
+        txtHomePosition.TabIndex = 8;
         //
         // grpRegisterMap
         //
@@ -342,7 +370,7 @@ partial class PlcSettingUserControl
         flpActions.TabIndex = 3;
         flpActions.WrapContents = false;
         //
-        // btnResetPosition - ทดสอบเลื่อนหัวพิมพ์กลับตำแหน่ง 0 เห็นเฉพาะโหมดทดสอบ
+        // btnResetPosition - ทดสอบเลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้น เห็นเฉพาะโหมดทดสอบ
         //   designer ซ่อนไว้เป็นค่าตั้งต้น โค้ดเป็นที่เดียวที่เปิดให้เห็น
         //
         btnResetPosition.BorderWidth = 2F;
@@ -354,7 +382,7 @@ partial class PlcSettingUserControl
         btnResetPosition.Radius = 8;
         btnResetPosition.Size = new System.Drawing.Size(300, 55);
         btnResetPosition.TabIndex = 4;
-        btnResetPosition.Text = "รีเซ็ตตำแหน่งหัวพิมพ์เป็น 0";
+        btnResetPosition.Text = "รีเซ็ตตำแหน่งหัวพิมพ์";
         btnResetPosition.Type = AntdUI.TTypeMini.Default;
         btnResetPosition.Visible = false;
         //
@@ -434,6 +462,8 @@ partial class PlcSettingUserControl
     private IpAddressInput txtPlc001Ip;
     private System.Windows.Forms.Label lblPortLabel;
     private AntdUI.Input txtPlc001Port;
+    private System.Windows.Forms.Label lblHomeLabel;
+    private AntdUI.Input txtHomePosition;
     private AntdUI.Button btnCheckStatus;
     private System.Windows.Forms.GroupBox grpRegisterMap;
     private System.Windows.Forms.TableLayoutPanel tlpMap;

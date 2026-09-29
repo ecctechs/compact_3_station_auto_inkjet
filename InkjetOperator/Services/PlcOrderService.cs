@@ -140,21 +140,43 @@ public static class PlcOrderService
         return results;
     }
 
+    /// <summary>คีย์ใน Setting.config ของตำแหน่งเริ่มต้นหัวพิมพ์ — ตั้งที่หน้า PLC Setting</summary>
+    public const string HomePositionKey = "HEAD_HOME_POSITION";
+
+    /// <summary>
+    /// ค่าที่ใช้เมื่อยังไม่ได้ตั้ง
+    ///
+    /// <para>
+    /// ไม่ใช่ 0 เพราะ ladder ของ PLC หน้างานไม่ขยับหัวพิมพ์เมื่อ PostAct เป็น 0
+    /// (ลองแล้ว 0 ไม่ไป 1 ไป) และแก้ ladder ไม่ได้ จึงใช้ค่าต่ำสุดที่ PLC ยอมขยับแทน
+    /// เดิมฝังไว้เป็น 0 ในโค้ด ผลคือปุ่มกลับตำแหน่งเริ่มต้นไม่เคยทำงานจริงเลย
+    /// </para>
+    /// </summary>
+    public const int DefaultHomePosition = 1;
+
+    /// <summary>ค่าสูงสุดที่ใส่ได้ — register ของ Modbus เก็บเลขมีเครื่องหมาย 16 บิต</summary>
+    public const int MaxHomePosition = short.MaxValue;
+
     /// <summary>
     /// ตำแหน่งเริ่มต้นของหัวพิมพ์ — งานจบแล้วให้เลื่อนกลับมาที่นี่
     ///
     /// <para>
-    /// ไม่ได้ทำเป็นค่าตั้งได้ เพราะหัวหน้างานยืนยันว่าตำแหน่งเริ่มต้นคือ 0 เสมอ
+    /// ค่าที่ตั้งไว้เสียหรืออยู่นอกช่วงให้ใช้ค่าเริ่มต้น ไม่ใช่ 0 — ถ้าถอยไปเป็น 0
+    /// หัวพิมพ์จะไม่ขยับโดยไม่มีใครรู้ตัว
     /// </para>
     /// </summary>
-    private const int HomePosition = 0;
+    public static int HomePosition =>
+        int.TryParse(CustomSettingsManager.Read(HomePositionKey, ""), out var value)
+        && value is >= 1 and <= MaxHomePosition
+            ? value
+            : DefaultHomePosition;
 
     /// <summary>
     /// เลื่อนหัวพิมพ์ทั้งสองตัวกลับตำแหน่งเริ่มต้น — ใช้ตอนเครื่องว่างและไม่มีงานรอคิว
     ///
     /// <para>
-    /// เขียนเลข 0 ลงช่องตำแหน่งของแต่ละหัว ซึ่งเป็น address เดิมที่ใช้ส่งค่าของงาน
-    /// อยู่แล้ว ไม่ใช่คำสั่งใหม่ของ PLC
+    /// เขียน <see cref="HomePosition"/> ลงช่องตำแหน่งของแต่ละหัว ซึ่งเป็น address
+    /// เดิมที่ใช้ส่งค่าของงานอยู่แล้ว ไม่ใช่คำสั่งใหม่ของ PLC
     /// </para>
     /// <para>
     /// หา address จากตาราง register map ด้วยชื่อแถวที่ลงท้ายว่า Position เหมือนกับ
@@ -176,9 +198,10 @@ public static class PlcOrderService
         // ช่องที่คนหน้างานกรอกและโปรแกรมส่งจริงคือ Servo Post Act. ส่วนช่องที่ชื่อ
         // Position ตรง ๆ ไม่เคยถูกใช้เลย — ในฐานข้อมูลเป็นค่าว่างทุกแถว และหน้าจอ
         // ของโปรแกรมเดิมก็ปิดช่องนั้นทิ้งไว้ เหลือให้กรอกแต่ Post Act.
+        int home = HomePosition;
         var fields = new List<PlcField>();
-        Add(fields, map, $"{mk1} PostAct", $"{mk1} ตำแหน่งเริ่มต้น", HomePosition);
-        Add(fields, map, $"{mk2} PostAct", $"{mk2} ตำแหน่งเริ่มต้น", HomePosition);
+        Add(fields, map, $"{mk1} PostAct", $"{mk1} ตำแหน่งเริ่มต้น", home);
+        Add(fields, map, $"{mk2} PostAct", $"{mk2} ตำแหน่งเริ่มต้น", home);
 
         // ไม่มีแถวไหนตั้ง address ไว้ = ตารางยังไม่ครบ ไม่ต้องยิงอะไรออกไป
         if (fields.All(f => f.Address == null)) return [];
@@ -212,9 +235,8 @@ public static class PlcOrderService
     ///
     /// <para>
     /// หัวที่งานนี้ใช้จริงต้องมีทั้ง Servo Post Act. และ Delay ช่องว่างจะถูกแปลงเป็น 0
-    /// ก่อนส่ง ซึ่งที่ช่อง PostAct เลข 0 ไม่ใช่ค่ากลาง ๆ มันคือค่าเดียวกับที่ใช้สั่งเลื่อน
-    /// หัวพิมพ์กลับตำแหน่งเริ่มต้น ปลายทางจึงแยกไม่ออกว่า 0 นี้มาจาก "ตั้งใจให้กลับบ้าน"
-    /// หรือมาจาก "ไม่มีค่าแล้วระบบเติมให้"
+    /// ก่อนส่ง ซึ่งที่ช่อง PostAct เลข 0 ไม่ใช่ค่ากลาง ๆ — ladder ของ PLC หน้างาน
+    /// ไม่ขยับหัวพิมพ์เมื่อได้ 0 หัวจะค้างอยู่ที่ตำแหน่งของงานก่อนหน้าแล้วพิมพ์ผิดที่
     /// </para>
     /// <para>
     /// หัวที่งานไม่ได้ใช้ไม่ต้องมีค่าพวกนี้ เพราะไม่ถูกส่งอยู่แล้ว

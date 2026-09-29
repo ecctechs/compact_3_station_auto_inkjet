@@ -69,7 +69,7 @@ public partial class PlcSettingUserControl : UserControl
         // ไม่ใช่ของคนคุมเครื่อง แถวที่เพิ่มผิดคือส่งค่าไปทับ register อื่นตอนเริ่มงาน
         btnAddRow.Visible = StationService.IsDevMode;
 
-        // ปุ่มทดสอบเลื่อนหัวพิมพ์กลับตำแหน่ง 0 — ของจริงทำเองตอนปล่อยเครื่องแล้วไม่มีคิว
+        // ปุ่มทดสอบเลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้น — ของจริงทำเองตอนปล่อยเครื่องแล้วไม่มีคิว
         // ปุ่มนี้มีไว้ลองที่หน้างานโดยไม่ต้องรันงานจริงให้ครบวง
         btnResetPosition.Visible = StationService.IsDevMode;
         btnResetPosition.Click += async (_, _) => await ResetPositionAsync();
@@ -80,6 +80,8 @@ public partial class PlcSettingUserControl : UserControl
 
         txtPlc001Ip.TextChanged += (_, _) => txtPlc001Ip.BackColor = Color.LightYellow;
         txtPlc001Port.TextChanged += (_, _) => txtPlc001Port.BackColor = Color.LightYellow;
+        txtHomePosition.TextChanged += (_, _) => txtHomePosition.BackColor = Color.LightYellow;
+        NumericInput.DigitsOnly(txtHomePosition);
 
         tblPlcMap.CellButtonClick += TblPlcMap_CellButtonClick;
         tblPlcMap.CellEndEdit += TblPlcMap_CellEndEdit;
@@ -98,6 +100,7 @@ public partial class PlcSettingUserControl : UserControl
     {
         txtPlc001Ip.Text = CustomSettingsManager.Read("PLC_IP", "");
         txtPlc001Port.Text = CustomSettingsManager.Read("PLC_PORT", "502");
+        txtHomePosition.Text = PlcOrderService.HomePosition.ToString();
         lblPlcBadge.Text = CustomSettingsManager.Read("PLC_NAME", "PLC-001");
         ResetColors();
     }
@@ -138,6 +141,7 @@ public partial class PlcSettingUserControl : UserControl
         btnPlcName.Enabled = _unlocked;
         txtPlc001Ip.Enabled = _unlocked;
         txtPlc001Port.Enabled = _unlocked;
+        txtHomePosition.Enabled = _unlocked;
 
         tblPlcMap.EditMode = _unlocked ? AntdUI.TEditMode.Click : AntdUI.TEditMode.None;
     }
@@ -249,8 +253,9 @@ public partial class PlcSettingUserControl : UserControl
     /// </summary>
     private async Task ResetPositionAsync()
     {
+        int home = PlcOrderService.HomePosition;
         if (!Confirm.Ask(this, "รีเซ็ตตำแหน่งหัวพิมพ์",
-                "จะเขียนค่า 0 ลงช่องตำแหน่งของหัวพ่นทั้งสองตัว"
+                $"จะเขียนค่า {home} ลงช่องตำแหน่งของหัวพ่นทั้งสองตัว"
                 + Environment.NewLine + Environment.NewLine
                 + "ช่องเดียวกับที่ส่งตำแหน่งของงานเข้าไป (Servo Post Act.)"
                 + Environment.NewLine + Environment.NewLine + "ยืนยันหรือไม่?"))
@@ -290,7 +295,7 @@ public partial class PlcSettingUserControl : UserControl
                 return;
             }
 
-            Notify.Success(this, "รีเซ็ตตำแหน่งหัวพิมพ์เป็น 0 แล้ว");
+            Notify.Success(this, $"รีเซ็ตตำแหน่งหัวพิมพ์เป็น {home} แล้ว");
         }
         finally
         {
@@ -563,9 +568,11 @@ public partial class PlcSettingUserControl : UserControl
     private async void BtnSave_Click(object? sender, EventArgs e)
     {
         if (!ValidateRows()) return;
+        if (!TryReadHomePosition(out int home)) return;
 
         CustomSettingsManager.Write("PLC_IP", txtPlc001Ip.Text.Trim());
         CustomSettingsManager.Write("PLC_PORT", txtPlc001Port.Text.Trim());
+        CustomSettingsManager.Write(PlcOrderService.HomePositionKey, home.ToString());
 
         lblPlcStatus.ForeColor = StatusGray;
         _ = CheckStatusAsync();
@@ -604,6 +611,28 @@ public partial class PlcSettingUserControl : UserControl
     {
         txtPlc001Ip.BackColor = Color.White;
         txtPlc001Port.BackColor = Color.White;
+        txtHomePosition.BackColor = Color.White;
+    }
+
+    /// <summary>
+    /// อ่านตำแหน่งเริ่มต้นจากช่องกรอก — ผิดแล้วบอกคนกรอก ไม่บันทึกอะไรเลย
+    ///
+    /// <para>
+    /// ไม่รับ 0 เพราะ ladder ของ PLC หน้างานไม่ขยับหัวพิมพ์เมื่อได้ 0 ถ้ายอมให้บันทึก
+    /// ปุ่มกลับตำแหน่งเริ่มต้นจะดูเหมือนสำเร็จทั้งที่หัวไม่ได้ไปไหน
+    /// </para>
+    /// </summary>
+    private bool TryReadHomePosition(out int home)
+    {
+        if (int.TryParse(txtHomePosition.Text.Trim(), out home)
+            && home is >= 1 and <= PlcOrderService.MaxHomePosition)
+            return true;
+
+        Notify.WarnModal(this, "ตำแหน่งเริ่มต้นหัวพิมพ์",
+            $"ใส่เลข 1 ถึง {PlcOrderService.MaxHomePosition}"
+            + Environment.NewLine + Environment.NewLine
+            + "ใช้ 0 ไม่ได้ เพราะ PLC ไม่ขยับหัวพิมพ์เมื่อได้ค่า 0");
+        return false;
     }
 
     // ── Mapping helpers ────────────────────────────────────

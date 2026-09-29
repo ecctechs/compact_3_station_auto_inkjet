@@ -589,11 +589,17 @@ public partial class OrderListUserControl : UserControl
         var results = await PlcOrderService.ResetPositionAsync(_api);
         if (IsDisposed || results.Count == 0) return;
 
-        var failed = results.Where(r => r.Error != null).ToList();
+        // เขียนผ่านแต่อ่านกลับได้ค่าอื่นก็นับว่าไม่สำเร็จ — เดิมดูแค่ต่อติดไหม
+        // PLC ที่รับค่าแล้วไม่ยอมเก็บจึงเงียบ หัวพิมพ์ไม่ได้กลับแต่ไม่มีใครรู้
+        var failed = results
+            .Where(r => r.Error != null || r.ReadBack != r.Value)
+            .Select(r => r.Error != null
+                ? $"{r.Name} {r.Error}"
+                : $"{r.Name} ส่ง {r.Value} อ่านกลับได้ {r.ReadBack?.ToString() ?? "ไม่ได้"}")
+            .ToList();
         if (failed.Count == 0) return; // แจ้งเครื่องว่างไว้แล้ว ไม่ต้องซ้อนข้อความสำเร็จ
 
-        Notify.Warn(this, "เลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้นไม่สำเร็จ — "
-            + string.Join(" · ", failed.Select(r => $"{r.Name} {r.Error}")));
+        Notify.Warn(this, "เลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้นไม่สำเร็จ — " + string.Join(" · ", failed));
     }
 
     private static bool SentAlready(ResolvedJobResponse resolved, string step) =>
