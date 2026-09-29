@@ -1731,15 +1731,28 @@ public partial class OrderListUserControl : UserControl
             //
             // อยู่ตรงนี้จึงได้ทุกทางเข้าเครื่อง ทั้งกดเริ่มงานตอนเครื่องว่าง กดปุ่มหน้างาน
             // ให้คิวเดินต่อ และคำขอจาก ST3
-            var lines = new List<Notify.ResultLine>();
-            await SendJobPlcAsync(resolved, lines);
-
+            //
+            // ส่ง PLC กับ MK ไปพร้อมกัน ไม่ต้องรอ PLC เสร็จก่อน
+            //
+            // สองเครื่องนี้คนละสาย ไม่ได้รอผลของกันและกัน — PLC ส่งไม่ผ่านก็ไม่หยุด MK
+            // อยู่แล้ว (ดู SendJobPlcAsync) เดิมทำทีละอย่าง เวลาจึงบวกกัน ซึ่งเป็นส่วน
+            // หนึ่งที่ทำให้หน้างานกดส่ง MK แล้วต้องรอ 3-4 วินาที
+            var plcLines = new List<Notify.ResultLine>();
+            var plcTask = SendJobPlcAsync(resolved, plcLines);
             var mk = await JobSendService.SendMkAsync(resolved.Pattern);
+
+            // PLC พังต้องไม่ทำให้ผลของ MK หาย — ตอนนี้ MK อาจรับงานเข้าเครื่องไปแล้ว
+            // ถ้าปล่อยให้ exception หลุดออกไป งานจะถูกบันทึกว่าไม่ได้ส่งทั้งที่ส่งไปแล้ว
+            try { await plcTask; }
+            catch (Exception ex) { plcLines.Add(Notify.Careful($"PLC — {ex.Message}")); }
+
             var mkLines = Notify.MkLines(mk.Machines);
 
             if (mkLines.Count == 0)
                 mkLines.Add(Notify.Careful("ไม่มีเครื่อง MK ที่ตั้งค่า IP ไว้"));
 
+            // เรียงผลเหมือนเดิม — PLC ก่อน แล้วค่อย MK
+            var lines = new List<Notify.ResultLine>(plcLines);
             lines.AddRange(mkLines);
 
             bool ok = mk.Status == SendStatus.Ok;

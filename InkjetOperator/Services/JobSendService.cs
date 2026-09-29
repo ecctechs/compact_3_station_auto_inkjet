@@ -115,38 +115,31 @@ public static class JobSendService
         // บอกชื่อเครื่องไปด้วย เพื่อให้ปุ่มกดหน้างานของเครื่องอื่นไม่ถูกขวางไปด้วย
         using var busy = MachineBusy.Hold("MK");
 
-        var machines = new List<MkMachineResult>();
-        bool anySent = false;
-        bool workFailed = false;
+        var heads = MkMachines
+            .Select(m => new MkHead(
+                CustomSettingsManager.Read(m.NameKey, m.Fallback),
+                CustomSettingsManager.Read(m.IpKey),
+                pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == m.Ordinal),
+                m.Label))
+            .ToList();
 
-        foreach (var (ipKey, nameKey, fallbackName, ordinal, label) in MkMachines)
-        {
-            var name = CustomSettingsManager.Read(nameKey, fallbackName);
-            var ip = CustomSettingsManager.Read(ipKey);
-            var config = pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
+        // สองหัวส่งพร้อมกัน ไม่ต้องรอหัวแรกเสร็จก่อน
+        //
+        // หัวหนึ่งคือ 13 คำสั่ง (SQ · FW · FS+F1 ห้าบล็อก · FM) ที่ต้องรอคำตอบทีละคำสั่ง
+        // พร้อมช่วงเว้นตามโปรแกรมเดิม วัดกับเครื่องจำลองที่ตอบช้า 60 ms ได้ราว 1.8 วินาที
+        // ต่อหัว สองหัวต่อกันจึงเกือบ 4 วินาที ตรงกับที่หน้างานกดส่ง MK แล้วรอ 3-4 วินาที
+        // สองหัวเป็นเครื่องคนละตัว สายคนละเส้น ไม่มีเหตุให้ต้องรอกัน
+        //
+        // ยกเว้นตั้ง IP ซ้ำกัน = เครื่องเดียวกัน ห้ามเปิดสองสายเข้าไปพร้อมกัน เครื่องจะ
+        // ได้คำสั่งของสองหัวสลับกันไปมา จึงถอยกลับไปทำทีละหัวเหมือนเดิม
+        var outcomes = SameDevice(heads)
+            ? [await SendHeadAsync(heads[0]), await SendHeadAsync(heads[1])]
+            : await Task.WhenAll(heads.Select(SendHeadAsync));
 
-            if (!HasProgram(config))
-            {
-                // ไม่ได้ตั้ง IP ก็สั่งอะไรไม่ได้ และงานนี้ก็ไม่ได้ใช้เครื่องนี้อยู่แล้ว
-                if (string.IsNullOrWhiteSpace(ip)) continue;
-
-                machines.Add(new MkMachineResult(
-                    name, await StopOneMkAsync(ip, label), Suspended: true));
-                continue;
-            }
-
-            if (string.IsNullOrWhiteSpace(ip))
-            {
-                workFailed = true;
-                machines.Add(new MkMachineResult(
-                    name, $"{label}: ยังไม่ได้ตั้ง IP — ไปตั้งที่ Setting → Inkjet Setting"));
-                continue;
-            }
-
-            var (error, note) = await SendToOneMkAsync(ip, config!, label);
-            if (error == null) anySent = true; else workFailed = true;
-            machines.Add(new MkMachineResult(name, error, Note: note));
-        }
+        // เรียงผลตามหัวเสมอ ไม่ใช่ตามว่าหัวไหนเสร็จก่อน
+        var machines = outcomes.Where(o => o.Result != null).Select(o => o.Result!).ToList();
+        bool anySent = outcomes.Any(o => o.Sent);
+        bool workFailed = outcomes.Any(o => o.Failed);
 
         if (machines.Count == 0)
             return new MkSendResult(SendStatus.NotConfigured, machines);
@@ -297,6 +290,44 @@ public static class JobSendService
             ("MK058_COM", "MK058_NAME", "MK-058", 1, "MK1"),
             ("MK059_COM", "MK059_NAME", "MK-059", 2, "MK2"),
         ];
+
+    /// <summary>หัวพ่นหนึ่งหัวที่จะส่ง — อ่านค่าตั้งไว้ก่อนเริ่มยิง</summary>
+    private sealed record MkHead(string Name, string Ip, InkjetConfigDto? Config, string Label);
+
+    /// <summary>
+    /// ผลของหัวหนึ่ง — <c>Result</c> เป็น null เมื่อไม่มีอะไรต้องรายงาน
+    /// (งานไม่ได้ใช้หัวนี้และหัวนี้ก็ยังไม่ได้ตั้ง IP)
+    /// </summary>
+    private readonly record struct MkHeadOutcome(MkMachineResult? Result, bool Sent, bool Failed);
+
+    /// <summary>ส่งหรือสั่งหยุดหัวเดียว — กฎเดียวกับตอนที่ยังวนทีละหัว ไม่ได้เปลี่ยน</summary>
+    private static async Task<MkHeadOutcome> SendHeadAsync(MkHead head)
+    {
+        if (!HasProgram(head.Config))
+        {
+            // ไม่ได้ตั้ง IP ก็สั่งอะไรไม่ได้ และงานนี้ก็ไม่ได้ใช้เครื่องนี้อยู่แล้ว
+            if (string.IsNullOrWhiteSpace(head.Ip)) return new(null, false, false);
+
+            return new(new MkMachineResult(
+                head.Name, await StopOneMkAsync(head.Ip, head.Label), Suspended: true), false, false);
+        }
+
+        if (string.IsNullOrWhiteSpace(head.Ip))
+        {
+            return new(new MkMachineResult(
+                head.Name, $"{head.Label}: ยังไม่ได้ตั้ง IP — ไปตั้งที่ Setting → Inkjet Setting"),
+                false, true);
+        }
+
+        var (error, note) = await SendToOneMkAsync(head.Ip, head.Config!, head.Label);
+        return new(new MkMachineResult(head.Name, error, Note: note), error == null, error != null);
+    }
+
+    /// <summary>สองหัวตั้ง IP เดียวกัน = ที่จริงคือเครื่องเดียว ต้องส่งทีละหัว</summary>
+    private static bool SameDevice(List<MkHead> heads) =>
+        heads.Count == 2
+        && !string.IsNullOrWhiteSpace(heads[0].Ip)
+        && string.Equals(heads[0].Ip.Trim(), heads[1].Ip.Trim(), StringComparison.OrdinalIgnoreCase);
 
     /// <summary>ลำดับคำสั่งของเครื่อง MK — คืน null เมื่อสำเร็จ</summary>
     /// <summary>
