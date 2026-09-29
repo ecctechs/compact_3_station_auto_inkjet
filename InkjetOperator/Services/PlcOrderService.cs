@@ -98,27 +98,43 @@ public static class PlcOrderService
             return results;
         }
 
-        foreach (var field in ready)
+        // เปิดสายเดียวแล้วยิงทุกคำสั่งบนสายนั้น ไม่เปิดปิดใหม่ทีละ register
+        //
+        // ห้าค่าต่องานหมายถึงเขียน 5 ครั้งและอ่านกลับ 5 ครั้ง ถ้าเปิดปิดสายทุกครั้งคือ
+        // 10 รอบ ตอน PLC ต่อไม่ติดจะรอ timeout 3 วินาทีครบทั้ง 10 รอบ = 30 วินาที
+        // ต่อการกดส่งหนึ่งครั้ง เปิดครั้งเดียวจึงรอแค่ครั้งเดียว
+        var (session, connectError) = await ModbusTcpService.OpenAsync(ip, port);
+        if (session == null)
         {
-            int address = field.Address!.Value;
-            var name = $"D{address}  {field.Label}";
+            // ต่อไม่ติดคือทุกค่าไม่ได้ส่ง ไม่ใช่ปัญหาของ register ตัวใดตัวเดียว
+            foreach (var field in ready)
+                results.Add(new BlockResult(
+                    $"D{field.Address!.Value}  {field.Label}", field.Value, null, connectError));
 
-            var (ok, error) = await ModbusTcpService.WriteSingleRegisterAsync(
-                ip, port, address, field.Value);
+            return results;
+        }
 
-            if (!ok)
+        using (session)
+        {
+            foreach (var field in ready)
             {
-                results.Add(new BlockResult(name, field.Value, null, error));
-                continue;
+                int address = field.Address!.Value;
+                var name = $"D{address}  {field.Label}";
+
+                var (ok, error) = await session.WriteSingleRegisterAsync(address, field.Value);
+                if (!ok)
+                {
+                    results.Add(new BlockResult(name, field.Value, null, error));
+                    continue;
+                }
+
+                // อ่านกลับทันทีเหมือนที่หน้า PLC Setting ทำ — เขียนผ่านแต่ค่าไม่เข้า
+                // จะได้เห็นตั้งแต่ตรงนี้ ไม่ใช่ไปรู้เอาตอนเครื่องเดินผิด
+                var (readOk, values, _) = await session.ReadHoldingRegistersAsync(address, 1);
+
+                results.Add(new BlockResult(
+                    name, field.Value, readOk && values.Length > 0 ? values[0] : null, null));
             }
-
-            // อ่านกลับทันทีเหมือนที่หน้า PLC Setting ทำ — เขียนผ่านแต่ค่าไม่เข้า
-            // จะได้เห็นตั้งแต่ตรงนี้ ไม่ใช่ไปรู้เอาตอนเครื่องเดินผิด
-            var (readOk, values, _) = await ModbusTcpService.ReadHoldingRegistersAsync(
-                ip, port, address, 1);
-
-            results.Add(new BlockResult(
-                name, field.Value, readOk && values.Length > 0 ? values[0] : null, null));
         }
 
         return results;

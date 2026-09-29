@@ -42,13 +42,29 @@ public class ApiClient
         MaxConnectionsPerServer = 8,
     };
 
+    /// <summary>
+    /// รอคำตอบจาก backend นานสุดเท่านี้
+    ///
+    /// <para>
+    /// เดิม 10 วินาที ซึ่งนานเกินไปเมื่อปลายทางไม่มีใครตอบ — ตั้ง <c>PC_IP</c> ผิดช่อง
+    /// เดียวแล้วทุกปุ่มที่ต้องคุย backend ค้าง 10 วินาทีก่อนจะฟ้อง และรอบ poll ทุก 5
+    /// วินาทีก็มีสองคำขอ จึงค้างยาวต่อกันแทบไม่มีช่วงว่าง
+    /// </para>
+    /// <para>
+    /// backend อยู่บนเครื่องเดียวกันหรือในวงแลนเดียวกันเสมอ งานปกติตอบกลับใน
+    /// หลักสิบมิลลิวินาที สามวินาทีจึงเหลือเฟือสำหรับของจริง และสั้นพอให้ค่าที่ตั้งผิด
+    /// ฟ้องเร็วแทนที่จะหน่วงทั้งโปรแกรม
+    /// </para>
+    /// </summary>
+    private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(3);
+
     public ApiClient(string baseUrl)
     {
         _baseUrl = baseUrl.TrimEnd('/');
         _http = new HttpClient(SharedHandler, disposeHandler: false)
         {
             BaseAddress = new Uri(_baseUrl),
-            Timeout = TimeSpan.FromSeconds(10),
+            Timeout = RequestTimeout,
         };
     }
 

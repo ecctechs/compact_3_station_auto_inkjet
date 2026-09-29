@@ -1,52 +1,18 @@
-﻿using System.Xml.Linq;
-
-namespace InkjetOperator.Services;
+﻿namespace InkjetOperator.Services;
 
 public static class UvSettingsManager
 {
-    private static readonly string _path = AppSettingsFile.Resolve("uv.config");
+    private static readonly SettingsStore _store = new(AppSettingsFile.Resolve("uv.config"));
 
-    public static string Read(string key, string defaultValue = "")
-    {
-        try
-        {
-            AppSettingsFile.EnsureAppSettingsFile(_path);
-            var doc = XDocument.Load(_path);
-            var el = doc.Root?.Element("appSettings")?
-                .Elements("add")
-                .FirstOrDefault(e => e.Attribute("key")?.Value == key);
-            return el?.Attribute("value")?.Value ?? defaultValue;
-        }
-        catch { return defaultValue; }
-    }
+    public static string Read(string key, string defaultValue = "") => _store.Read(key, defaultValue);
 
     public static bool Write(string key, string value)
     {
-        try
-        {
-            AppSettingsFile.EnsureAppSettingsFile(_path);
-            var doc = XDocument.Load(_path);
-            var settings = doc.Root?.Element("appSettings");
-            if (settings == null) return false;
+        var error = _store.Write(key, value);
+        if (error == null) return true;
 
-            var el = settings.Elements("add")
-                .FirstOrDefault(e => e.Attribute("key")?.Value == key);
-
-            if (el != null)
-                el.SetAttributeValue("value", value);
-            else
-                settings.Add(new XElement("add",
-                    new XAttribute("key", key),
-                    new XAttribute("value", value)));
-
-            AppSettingsFile.SaveAtomic(_path, doc.Save);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            CustomSettingsManager.ReportWriteError(ex.Message);
-            return false;
-        }
+        CustomSettingsManager.ReportWriteError(error);
+        return false;
     }
 
     private const string REL_CPI = @"database\sys\CPI.db3";

@@ -205,6 +205,45 @@ public partial class OrderListUserControl : UserControl
         _ = RefreshDataAsync();
         StartPolling();
         _pushButton.Start();
+        WarmUpDetailDialog();
+    }
+
+    /// <summary>กล่อง Order Detail ถูกอุ่นเครื่องไปแล้วในโปรเซสนี้</summary>
+    private static bool _detailWarmedUp;
+
+    /// <summary>
+    /// สร้างกล่อง Order Detail ทิ้งหนึ่งใบตอนเปิดโปรแกรม เพื่อย้ายค่าเปิดครั้งแรกออกไป
+    ///
+    /// <para>
+    /// วัดได้ว่าการเปิดกล่องครั้งแรกของโปรแกรมใช้ 523 ms ครั้งต่อ ๆ ไป 8.9 ms
+    /// ส่วนต่างคือค่า JIT ของ <c>InitializeComponent</c> ที่ยาวสามพันกว่าบรรทัดและ
+    /// การสร้าง control 197 ตัว ซึ่งจ่ายครั้งเดียวต่อการรันโปรแกรม
+    /// </para>
+    /// <para>
+    /// จ่ายตอนนี้แทน — ตอนเปิดโปรแกรมคนยังกวาดตาดูรายการงานอยู่ ไม่ได้รออะไร
+    /// ต่างจากตอนกดปุ่มดูรายละเอียดซึ่งคนจ้องรอให้กล่องเด้ง ครึ่งวินาทีตรงนั้นรู้สึกได้
+    /// </para>
+    /// <para>
+    /// หน่วงไว้ก่อนหนึ่งวินาทีให้หน้าแรกวาดเสร็จและรอบโหลดงานแรกเดินไปก่อน
+    /// กล่องถูกทิ้งทันทีไม่ได้โชว์ที่ไหน เอาแค่ให้โค้ดถูกคอมไพล์และ type ถูกโหลดไว้
+    /// </para>
+    /// </summary>
+    private void WarmUpDetailDialog()
+    {
+        if (_detailWarmedUp) return;
+        _detailWarmedUp = true;
+
+        var warmUp = new System.Windows.Forms.Timer { Interval = 1000 };
+        warmUp.Tick += (_, _) =>
+        {
+            warmUp.Stop();
+            warmUp.Dispose();
+
+            // อุ่นเครื่องไม่สำเร็จไม่ใช่เรื่องต้องฟ้อง อย่างมากคือเปิดครั้งแรกช้าเหมือนเดิม
+            try { using var throwaway = new OrderDetailDialog(); }
+            catch { /* ignore */ }
+        };
+        warmUp.Start();
     }
 
     private void OnDisposed(object? sender, EventArgs e)
@@ -561,9 +600,18 @@ public partial class OrderListUserControl : UserControl
         resolved.Commands?.Any(c => c.Success &&
             string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true;
 
+    /// <summary>จังหวะปกติของการอ่านงานใหม่จาก backend</summary>
+    private const int PollNormalMs = 5000;
+
+    /// <summary>ห่างสุดตอนคุย backend ไม่ได้ — ยังลองอยู่ แต่ไม่รัวใส่ปลายทางที่ไม่ตอบ</summary>
+    private const int PollWhenDownMs = 30000;
+
+    /// <summary>คุย backend ไม่ได้ติดกันกี่รอบแล้ว</summary>
+    private int _pollFailures;
+
     private void StartPolling()
     {
-        _pollTimer = new System.Windows.Forms.Timer { Interval = 5000 };
+        _pollTimer = new System.Windows.Forms.Timer { Interval = PollNormalMs };
         _pollTimer.Tick += async (_, _) =>
         {
             // ระหว่างเครื่องหนึ่งส่งอยู่ ยังอ่านคิวของอีกเครื่องได้
@@ -571,6 +619,34 @@ public partial class OrderListUserControl : UserControl
             else await RefreshDataAsync();
         };
         _pollTimer.Start();
+    }
+
+    /// <summary>
+    /// ถ่างรอบ poll ออกเมื่อคุย backend ไม่ได้ และหุบกลับทันทีที่ติดอีกครั้ง
+    ///
+    /// <para>
+    /// ตอน backend ไม่ตอบ คำขอหนึ่งกินเวลาเท่า timeout เต็ม ๆ นาฬิกาที่ยังเดินทุก
+    /// 5 วินาทีจึงทำให้มีคำขอค้างต่อกันแทบไม่มีช่วงว่าง ทั้งที่รู้อยู่แล้วว่าไม่ติด
+    /// ถ่างเป็น 10 · 20 · 30 วินาทีตามจำนวนครั้งที่พลาด แล้วหยุดที่ 30
+    /// </para>
+    /// <para>
+    /// ไม่แตะรอบที่ผู้ใช้กดเอง การกดปุ่มยังยิงทันทีทุกครั้ง ตัวนี้คุมแค่นาฬิกาเบื้องหลัง
+    /// </para>
+    /// </summary>
+    private void NotePollResult(bool reached)
+    {
+        if (_pollTimer == null) return;
+
+        if (reached)
+        {
+            _pollFailures = 0;
+            if (_pollTimer.Interval != PollNormalMs) _pollTimer.Interval = PollNormalMs;
+            return;
+        }
+
+        _pollFailures++;
+        int wanted = Math.Min(PollNormalMs * 2 * _pollFailures, PollWhenDownMs);
+        if (_pollTimer.Interval != wanted) _pollTimer.Interval = wanted;
     }
 
     private async Task RefreshDataAsync(bool force = false)
@@ -601,6 +677,7 @@ public partial class OrderListUserControl : UserControl
 
             var (jobs, error) = await _api.GetAllJobsAsync(100, fromUtc, toUtc);
             if (IsDisposed) return;
+            NotePollResult(error == null);
             if (_sending) { _refreshRequested = true; return; }
             if (error != null)
             {
@@ -772,7 +849,11 @@ public partial class OrderListUserControl : UserControl
             : dateFiltered && rows.Count == 0
                 ? "ไม่มีงานในช่วงวันที่ที่เลือก"
                 : $"No orders (total {_allJobs.Count}, filter: {string.Join("/", statuses.Select(JobStatusDisplay.Text))})";
-        tblOrders.DataSource = null;
+        // ผูกครั้งเดียว ไม่ล้างเป็น null ก่อน
+        //
+        // การตั้งเป็น null แล้วตั้งค่าใหม่ทำให้ตารางสร้างแถวใหม่และวาดใหม่สองรอบ
+        // ต่อการรีเฟรชหนึ่งครั้ง และมีจังหวะที่ตารางว่างคาอยู่ระหว่างสองบรรทัดนั้น
+        // ซึ่งเห็นเป็นอาการกระพริบ การตั้งลิสต์ใหม่ทับไปเลยได้ผลเหมือนกันในรอบเดียว
         _displayRows = rows;
         tblOrders.DataSource = rows;
         ReapplySort();
