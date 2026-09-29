@@ -27,7 +27,63 @@ public partial class StationOptionsUserControl : UserControl
         chkHoldRound.Checked = StationService.HoldForNextRound;
         chkHoldRound.CheckedChanged += HoldRound_CheckedChanged;
 
+        _processTabsSaved = StationService.ProcessTabs;
+        ProcessTabsRadio(_processTabsSaved).Checked = true;
+        foreach (var radio in ProcessTabsRadios) radio.CheckedChanged += ProcessTabs_CheckedChanged;
+
         btnResetRuntime.Click += async (_, _) => await ResetRuntimeAsync();
+    }
+
+    /// <summary>ค่าที่บันทึกลงไฟล์ได้ล่าสุด — ใช้ดีดตัวเลือกกลับเมื่อบันทึกไม่ผ่าน</summary>
+    private StationService.ProcessTabsMode _processTabsSaved;
+
+    private AntdUI.Radio[] ProcessTabsRadios =>
+        [rdoProcessTabsStations, rdoProcessTabsDev, rdoProcessTabsOff];
+
+    private AntdUI.Radio ProcessTabsRadio(StationService.ProcessTabsMode mode) => mode switch
+    {
+        StationService.ProcessTabsMode.Stations => rdoProcessTabsStations,
+        StationService.ProcessTabsMode.Off => rdoProcessTabsOff,
+        _ => rdoProcessTabsDev,
+    };
+
+    /// <summary>
+    /// ใครเห็นแท็บ Online / Offline ในหน้า Order List — เซฟทันทีที่เลือก
+    ///
+    /// <para>
+    /// Radio ที่ถูกเลือกทำให้ตัวอื่นในกลุ่มหลุดเอง ซึ่งยิงเหตุการณ์ออกมาด้วยค่า false
+    /// รับเฉพาะตัวที่ถูกเลือก ไม่งั้นการเลือกหนึ่งครั้งจะเขียนไฟล์สามรอบ
+    /// </para>
+    /// </summary>
+    private void ProcessTabs_CheckedChanged(object? sender, AntdUI.BoolEventArgs e)
+    {
+        if (!e.Value) return;
+
+        var mode = ReferenceEquals(sender, rdoProcessTabsStations) ? StationService.ProcessTabsMode.Stations
+            : ReferenceEquals(sender, rdoProcessTabsOff) ? StationService.ProcessTabsMode.Off
+            : StationService.ProcessTabsMode.DevOnly;
+
+        if (mode == _processTabsSaved) return;
+
+        if (CustomSettingsManager.Write(StationService.ProcessTabsKey, StationService.ProcessTabsValue(mode)))
+        {
+            _processTabsSaved = mode;
+            Notify.Success(this, mode switch
+            {
+                StationService.ProcessTabsMode.Stations => "เปิดแท็บ Online / Offline ที่ ST1 และ ST3 แล้ว",
+                StationService.ProcessTabsMode.Off => "ปิดแท็บ Online / Offline ทุกเครื่องแล้ว",
+                _ => "แท็บ Online / Offline เห็นเฉพาะโหมด Dev",
+            });
+            return;
+        }
+
+        // เขียนไฟล์ไม่ผ่าน ตัวเลือกที่ค้างอยู่จะโกหกว่าเซฟแล้ว ต้องดีดกลับ
+        foreach (var radio in ProcessTabsRadios) radio.CheckedChanged -= ProcessTabs_CheckedChanged;
+        ProcessTabsRadio(_processTabsSaved).Checked = true;
+        foreach (var radio in ProcessTabsRadios) radio.CheckedChanged += ProcessTabs_CheckedChanged;
+
+        Notify.WarnModal(this, "บันทึกไม่สำเร็จ",
+            CustomSettingsManager.LastError ?? "เขียนไฟล์ตั้งค่าไม่ได้");
     }
 
     /// <summary>

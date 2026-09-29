@@ -171,7 +171,10 @@ public partial class OrderListUserControl : UserControl
     private void SetupEvents()
     {
         btnTabList.Click += (_, _) => SwitchTab(false);
+        btnTabOnline.Click += (_, _) => SwitchTab(false, JobProcessService.Online);
+        btnTabOffline.Click += (_, _) => SwitchTab(false, JobProcessService.Offline);
         btnTabHistory.Click += (_, _) => SwitchTab(true);
+        ApplyProcessTabs();
 
         // ST3 ไม่มีแท็บ History — ซ่อนปุ่มไปเลย ไม่ใช่แค่กรองรายการให้ว่าง
         // จอหน้างานมีหน้าที่เดียวคือทำงานที่ค้างอยู่ ไม่ได้ใช้ย้อนดูประวัติ
@@ -658,6 +661,7 @@ public partial class OrderListUserControl : UserControl
     private async Task RefreshDataAsync(bool force = false)
     {
         if (_api == null || IsDisposed) return;
+        ApplyProcessTabs();
         _refreshRequested |= force;
 
         // ระหว่างส่งงานห้ามผูก DataSource ใหม่ ไม่งั้นแถวขยับใต้มือผู้ใช้
@@ -784,12 +788,74 @@ public partial class OrderListUserControl : UserControl
         return sb.ToString();
     }
 
-    private void SwitchTab(bool showHistory)
+    /// <summary>
+    /// แท็บ Online / Offline ที่เลือกอยู่ — null คือแท็บ List ธรรมดา เห็นทุกงาน
+    ///
+    /// <para>
+    /// สองแท็บนี้เป็นมุมมองย่อยของ List ไม่ใช่ชุดงานใหม่ งานที่ยังไม่จบชุดเดียวกัน
+    /// แค่กรองตาม <see cref="JobProcessService.Current"/> แท็บ History ไม่มีตัวกรองนี้
+    /// </para>
+    /// </summary>
+    private string? _processFilter;
+
+    /// <summary>
+    /// โชว์หรือซ่อนแท็บ Online / Offline ตามตัวเลือกหน้างาน
+    ///
+    /// <para>
+    /// เรียกทุกรอบ poll ด้วย เพื่อให้เปลี่ยนตัวเลือกแล้วเห็นผลภายในไม่กี่วินาที
+    /// ไม่ต้องปิดเปิดโปรแกรม ถ้ากำลังดูแท็บที่เพิ่งถูกปิดอยู่ ให้กลับไปที่ List
+    /// ไม่งั้นตารางจะค้างเป็นรายการที่กรองไว้โดยไม่มีปุ่มให้กดออก
+    /// </para>
+    /// </summary>
+    private void ApplyProcessTabs()
+    {
+        bool enabled = StationService.ShowProcessTabs;
+        bool changed = enabled != _processTabsEnabled;
+        _processTabsEnabled = enabled;
+
+        ShowProcessTabButtons();
+        if (!changed) return;
+
+        if (!enabled && _processFilter != null)
+        {
+            SwitchTab(false);
+            return;
+        }
+
+        // คอลัมน์ Process seq ขึ้นกับตัวเลือกนี้ด้วย แต่ข้อมูลงานไม่ได้เปลี่ยน รอบ poll
+        // จึงไม่ผูกตารางใหม่ให้เอง ต้องสั่งเอง — ยังไม่มีงานก็ไม่ต้อง
+        if (_allJobs.Count > 0) RebindTable();
+    }
+
+    /// <summary>ตัวเลือกหน้างานเปิดแท็บ Online / Offline ให้เครื่องนี้อยู่ไหม — ค่าล่าสุดที่อ่านได้</summary>
+    private bool _processTabsEnabled;
+
+    /// <summary>
+    /// ซ่อนแท็บ Online / Offline ตอนอยู่แท็บ History
+    ///
+    /// <para>
+    /// สองแท็บนี้กรองได้เฉพาะงานที่ยังไม่จบ อยู่ใน History ก็ไม่มีความหมาย และแท็บ
+    /// History มีตัวกรองวันที่โผล่มาอีกสี่ชิ้นในแถวเดียวกัน วัดแล้วแถวล้นขอบ ปุ่มล้าง
+    /// วันที่ถูกตัดตกจอ จะกลับไปดู Online / Offline ให้กด List ก่อน
+    /// </para>
+    /// </summary>
+    private void ShowProcessTabButtons()
+    {
+        bool show = _processTabsEnabled && !_showHistory;
+        btnTabOnline.Visible = show;
+        btnTabOffline.Visible = show;
+    }
+
+    private void SwitchTab(bool showHistory, string? process = null)
     {
         _showHistory = showHistory;
+        _processFilter = showHistory ? null : process;
 
-        ButtonStyles.SetSelected(btnTabList, !showHistory);
+        ButtonStyles.SetSelected(btnTabList, !showHistory && _processFilter == null);
+        ButtonStyles.SetSelected(btnTabOnline, _processFilter == JobProcessService.Online);
+        ButtonStyles.SetSelected(btnTabOffline, _processFilter == JobProcessService.Offline);
         ButtonStyles.SetSelected(btnTabHistory, showHistory);
+        ShowProcessTabButtons();
 
         // ตัวกรองวันที่มีเฉพาะแท็บ History — ออกจากแท็บแล้วล้างค่าทิ้ง
         // ไม่งั้นกลับเข้ามาใหม่จะเห็นรายการหายไปโดยไม่รู้ว่าโดนกรองอยู่
@@ -843,6 +909,7 @@ public partial class OrderListUserControl : UserControl
             .Where(j => statuses.Contains(j.Status, StringComparer.OrdinalIgnoreCase))
             .Where(j => showEveryStation
                 || MarkingMethodService.VisibleAt(station, j.PlanRouting?.MarkingMethod))
+            .Where(j => _processFilter == null || JobProcessService.Current(j) == _processFilter)
             .OrderBy(StatusRank)
             .ThenByDescending(j => j.CreatedAt ?? DateTime.MinValue)
             .ToList();
@@ -852,6 +919,8 @@ public partial class OrderListUserControl : UserControl
         var rows = filtered.Select(j => ToRow(j, _showHistory)).ToList();
         tblOrders.EmptyText = _allJobs.Count == 0
             ? "No orders"
+            : _processFilter != null && rows.Count == 0
+                ? $"ไม่มีงาน {_processFilter}"
             : dateFiltered && rows.Count == 0
                 ? "ไม่มีงานในช่วงวันที่ที่เลือก"
                 : $"No orders (total {_allJobs.Count}, filter: {string.Join("/", statuses.Select(JobStatusDisplay.Text))})";
@@ -2591,9 +2660,15 @@ public partial class OrderListUserControl : UserControl
             // ใช้ตัวที่มีค่าจริง เผื่องานเก่าที่กรอกมาคนละทาง
             LotNo = FirstFilled(job.LotNumber, job.BarcodeRaw),
             Qty = job.Qty?.ToString() ?? "",
-            // ค่าดิบจาก plan_routing.process_sequence เช่น "online" / "offline"
+            // ค่าดิบจาก plan_routing.process_sequence เช่น "Online" / "Offline"
             // โชว์ตามที่ database ส่งมาตรง ๆ ไม่แปลง ไม่ normalize ตัวพิมพ์
-            ProcessSequence = job.PlanRouting?.ProcessSequence ?? "",
+            //
+            // ยกเว้นตอนเปิดแท็บ Online / Offline ไว้ งาน 22 ที่อยู่ระหว่างรอบขึ้นเป็น
+            // Offline ให้ตรงกับแท็บที่มันอยู่ ไม่งั้นแถวในแท็บ Offline จะเขียนว่า Online
+            ProcessSequence = StationService.ShowProcessTabs
+                && JobProcessService.BetweenRounds(job.PlanRouting?.MarkingMethod, job.Commands)
+                    ? JobProcessService.Offline
+                    : job.PlanRouting?.ProcessSequence ?? "",
             Plate = plan.NoCase ? Dash : MachineCell(plan.Plate),
             Shim = plan.NoCase ? Dash : MachineCell(plan.Shim),
             Station = OrDashStation(JobStationService.Current(job.Commands)),

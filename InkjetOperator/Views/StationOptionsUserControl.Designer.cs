@@ -29,6 +29,14 @@ partial class StationOptionsUserControl
         lblHoldRoundHeading = new AntdUI.Label();
         chkHoldRound = new AntdUI.Checkbox();
         lblHoldRoundHelp = new AntdUI.Label();
+        pnlProcessTabs = new AntdUI.Panel();
+        tlpProcessTabs = new System.Windows.Forms.TableLayoutPanel();
+        lblProcessTabsHeading = new AntdUI.Label();
+        flpProcessTabs = new System.Windows.Forms.FlowLayoutPanel();
+        rdoProcessTabsStations = new AntdUI.Radio();
+        rdoProcessTabsDev = new AntdUI.Radio();
+        rdoProcessTabsOff = new AntdUI.Radio();
+        lblProcessTabsHelp = new AntdUI.Label();
         pnlReset = new AntdUI.Panel();
         tlpReset = new System.Windows.Forms.TableLayoutPanel();
         lblResetHeading = new AntdUI.Label();
@@ -37,6 +45,9 @@ partial class StationOptionsUserControl
         tlpOptionsRoot.SuspendLayout();
         pnlRemoteSend.SuspendLayout();
         pnlHoldRound.SuspendLayout();
+        pnlProcessTabs.SuspendLayout();
+        tlpProcessTabs.SuspendLayout();
+        flpProcessTabs.SuspendLayout();
         pnlReset.SuspendLayout();
         tlpReset.SuspendLayout();
         tlpHoldRound.SuspendLayout();
@@ -50,18 +61,20 @@ partial class StationOptionsUserControl
         tlpOptionsRoot.Controls.Add(lblOptionsTitle, 0, 0);
         tlpOptionsRoot.Controls.Add(pnlRemoteSend, 0, 1);
         tlpOptionsRoot.Controls.Add(pnlHoldRound, 0, 2);
-        tlpOptionsRoot.Controls.Add(pnlReset, 0, 3);
+        tlpOptionsRoot.Controls.Add(pnlProcessTabs, 0, 3);
+        tlpOptionsRoot.Controls.Add(pnlReset, 0, 4);
         tlpOptionsRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpOptionsRoot.Location = new System.Drawing.Point(32, 32);
         tlpOptionsRoot.Margin = new System.Windows.Forms.Padding(0);
         tlpOptionsRoot.Name = "tlpOptionsRoot";
-        tlpOptionsRoot.RowCount = 5;
+        tlpOptionsRoot.RowCount = 6;
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 66F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 210F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 252F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 232F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 214F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 736);
+        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 968);
         tlpOptionsRoot.TabIndex = 0;
         //
         // lblOptionsTitle
@@ -173,6 +186,101 @@ partial class StationOptionsUserControl
         lblHoldRoundHelp.TabIndex = 2;
         lblHoldRoundHelp.Text = "ก. ถือเครื่องไว้ (ค่าเริ่มต้น ตามที่ตกลงกับหัวหน้างาน) — พ่นรอบแรกเสร็จแล้วกดปุ่มหน้างาน เครื่องยังเป็นของงานใบนี้อยู่ งานใบอื่นที่รอคิวเครื่องนี้แทรกไม่ได้ จนกว่าชิ้นงานจะกลับมาพ่นรอบสองเสร็จ เครื่องจะจอดรอระหว่างที่คนเอางานออกไปติด shim นอกไลน์\r\nข. ปล่อยเครื่อง (ติ๊กออก) — กดปุ่มหน้างานแล้วเครื่องว่างทันที งานใบอื่นแทรกเข้ามาทำได้ เครื่องไม่จอดเปล่า แต่พอชิ้นงานกลับมา รอบสองต้องไปต่อท้ายคิว อาจค้างกลางไลน์นานกว่าที่คิด\r\nมีผลเฉพาะงานที่เข้าเครื่องเดิมมากกว่าหนึ่งรอบ (marking 22) งานอื่นไม่เกี่ยว";
         //
+        // pnlProcessTabs
+        //
+        pnlProcessTabs.Back = System.Drawing.Color.White;
+        pnlProcessTabs.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlProcessTabs.BorderWidth = 2F;
+        pnlProcessTabs.Controls.Add(tlpProcessTabs);
+        pnlProcessTabs.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlProcessTabs.Margin = new System.Windows.Forms.Padding(0, 16, 0, 0);
+        pnlProcessTabs.Name = "pnlProcessTabs";
+        pnlProcessTabs.Padding = new System.Windows.Forms.Padding(24);
+        pnlProcessTabs.Radius = 10;
+        pnlProcessTabs.Size = new System.Drawing.Size(1216, 216);
+        pnlProcessTabs.TabIndex = 3;
+        //
+        // tlpProcessTabs
+        //
+        tlpProcessTabs.ColumnCount = 1;
+        tlpProcessTabs.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpProcessTabs.Controls.Add(lblProcessTabsHeading, 0, 0);
+        tlpProcessTabs.Controls.Add(flpProcessTabs, 0, 1);
+        tlpProcessTabs.Controls.Add(lblProcessTabsHelp, 0, 2);
+        tlpProcessTabs.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpProcessTabs.Margin = new System.Windows.Forms.Padding(0);
+        tlpProcessTabs.Name = "tlpProcessTabs";
+        tlpProcessTabs.RowCount = 3;
+        tlpProcessTabs.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
+        tlpProcessTabs.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpProcessTabs.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpProcessTabs.Size = new System.Drawing.Size(1168, 168);
+        tlpProcessTabs.TabIndex = 0;
+        //
+        // lblProcessTabsHeading
+        //
+        lblProcessTabsHeading.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblProcessTabsHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        lblProcessTabsHeading.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblProcessTabsHeading.Margin = new System.Windows.Forms.Padding(0);
+        lblProcessTabsHeading.Name = "lblProcessTabsHeading";
+        lblProcessTabsHeading.Size = new System.Drawing.Size(1168, 42);
+        lblProcessTabsHeading.TabIndex = 0;
+        lblProcessTabsHeading.Text = "แท็บ Online / Offline ในหน้า Order List";
+        //
+        // flpProcessTabs - สามตัวเลือกอยู่ใน parent เดียวกัน Radio จึงเลือกได้ทีละข้อเอง
+        //
+        flpProcessTabs.Controls.Add(rdoProcessTabsStations);
+        flpProcessTabs.Controls.Add(rdoProcessTabsDev);
+        flpProcessTabs.Controls.Add(rdoProcessTabsOff);
+        flpProcessTabs.Dock = System.Windows.Forms.DockStyle.Fill;
+        flpProcessTabs.Margin = new System.Windows.Forms.Padding(0, 0, 0, 12);
+        flpProcessTabs.Name = "flpProcessTabs";
+        flpProcessTabs.Size = new System.Drawing.Size(1168, 32);
+        flpProcessTabs.TabIndex = 1;
+        flpProcessTabs.WrapContents = false;
+        //
+        // rdoProcessTabsStations
+        //
+        rdoProcessTabsStations.Font = new System.Drawing.Font("Segoe UI", 15F);
+        rdoProcessTabsStations.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        rdoProcessTabsStations.Margin = new System.Windows.Forms.Padding(0, 0, 32, 0);
+        rdoProcessTabsStations.Name = "rdoProcessTabsStations";
+        rdoProcessTabsStations.Size = new System.Drawing.Size(300, 32);
+        rdoProcessTabsStations.TabIndex = 0;
+        rdoProcessTabsStations.Text = "โชว์ที่ ST1 และ ST3";
+        //
+        // rdoProcessTabsDev
+        //
+        rdoProcessTabsDev.Font = new System.Drawing.Font("Segoe UI", 15F);
+        rdoProcessTabsDev.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        rdoProcessTabsDev.Margin = new System.Windows.Forms.Padding(0, 0, 32, 0);
+        rdoProcessTabsDev.Name = "rdoProcessTabsDev";
+        rdoProcessTabsDev.Size = new System.Drawing.Size(300, 32);
+        rdoProcessTabsDev.TabIndex = 1;
+        rdoProcessTabsDev.Text = "เฉพาะโหมด Dev";
+        //
+        // rdoProcessTabsOff
+        //
+        rdoProcessTabsOff.Font = new System.Drawing.Font("Segoe UI", 15F);
+        rdoProcessTabsOff.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        rdoProcessTabsOff.Margin = new System.Windows.Forms.Padding(0);
+        rdoProcessTabsOff.Name = "rdoProcessTabsOff";
+        rdoProcessTabsOff.Size = new System.Drawing.Size(300, 32);
+        rdoProcessTabsOff.TabIndex = 2;
+        rdoProcessTabsOff.Text = "ปิดทั้งหมด";
+        //
+        // lblProcessTabsHelp
+        //
+        lblProcessTabsHelp.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblProcessTabsHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblProcessTabsHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
+        lblProcessTabsHelp.Margin = new System.Windows.Forms.Padding(0);
+        lblProcessTabsHelp.Name = "lblProcessTabsHelp";
+        lblProcessTabsHelp.Size = new System.Drawing.Size(1168, 82);
+        lblProcessTabsHelp.TabIndex = 2;
+        lblProcessTabsHelp.Text = "เพิ่มแท็บ Online กับ Offline ข้างแท็บ List ใช้กรองงานที่ยังไม่จบ อ่านจากช่อง Process seq ของงาน\r\nยกเว้นงานที่เข้าเครื่องเดิมสองรอบ (marking 22) — ส่งรอบแรกแล้วแต่ยังไม่ได้ส่งรอบสองนับเป็น Offline เพราะชิ้นงานอยู่นอกไลน์ไปติด shim ส่งรอบสองแล้วกลับเป็นตามช่อง Process seq\r\nเปลี่ยนแล้วหน้า Order List เห็นผลภายในไม่กี่วินาที ไม่ต้องปิดเปิดโปรแกรม";
+        //
         // pnlReset
         //
         pnlReset.Back = System.Drawing.Color.White;
@@ -185,7 +293,7 @@ partial class StationOptionsUserControl
         pnlReset.Padding = new System.Windows.Forms.Padding(24);
         pnlReset.Radius = 10;
         pnlReset.Size = new System.Drawing.Size(1216, 198);
-        pnlReset.TabIndex = 3;
+        pnlReset.TabIndex = 4;
         //
         // tlpReset
         //
@@ -284,9 +392,12 @@ partial class StationOptionsUserControl
         Controls.Add(tlpOptionsRoot);
         Name = "StationOptionsUserControl";
         Padding = new System.Windows.Forms.Padding(32);
-        Size = new System.Drawing.Size(1280, 800);
+        Size = new System.Drawing.Size(1280, 1032);
         tlpOptionsRoot.ResumeLayout(false);
         tlpReset.ResumeLayout(false);
+        flpProcessTabs.ResumeLayout(false);
+        tlpProcessTabs.ResumeLayout(false);
+        pnlProcessTabs.ResumeLayout(false);
         pnlReset.ResumeLayout(false);
         tlpHoldRound.ResumeLayout(false);
         pnlHoldRound.ResumeLayout(false);
@@ -306,6 +417,14 @@ partial class StationOptionsUserControl
     private AntdUI.Label lblHoldRoundHeading;
     private AntdUI.Checkbox chkHoldRound;
     private AntdUI.Label lblHoldRoundHelp;
+    private AntdUI.Panel pnlProcessTabs;
+    private System.Windows.Forms.TableLayoutPanel tlpProcessTabs;
+    private AntdUI.Label lblProcessTabsHeading;
+    private System.Windows.Forms.FlowLayoutPanel flpProcessTabs;
+    private AntdUI.Radio rdoProcessTabsStations;
+    private AntdUI.Radio rdoProcessTabsDev;
+    private AntdUI.Radio rdoProcessTabsOff;
+    private AntdUI.Label lblProcessTabsHelp;
     private AntdUI.Panel pnlReset;
     private System.Windows.Forms.TableLayoutPanel tlpReset;
     private AntdUI.Label lblResetHeading;

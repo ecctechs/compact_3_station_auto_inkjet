@@ -72,6 +72,55 @@ public static class StationService
     public static bool HoldForNextRound =>
         CustomSettingsManager.Read(HoldForNextRoundKey, "1") == "1";
 
+    /// <summary>คีย์ใน Setting.config ที่คุมแท็บ Online / Offline ในหน้า Order List</summary>
+    public const string ProcessTabsKey = "ORDER_PROCESS_TABS";
+
+    /// <summary>ใครเห็นแท็บ Online / Offline — ตั้งได้ที่ Setting → ตัวเลือกหน้างาน (โหมดทดสอบ)</summary>
+    public enum ProcessTabsMode
+    {
+        /// <summary>ปิดทั้งหมด ไม่มีเครื่องไหนเห็น</summary>
+        Off,
+
+        /// <summary>เห็นเฉพาะโหมดทดสอบ — ค่าเริ่มต้น ไว้ลองก่อนเปิดให้หน้างานใช้</summary>
+        DevOnly,
+
+        /// <summary>เห็นที่ ST1 กับ ST3 (และโหมดทดสอบ)</summary>
+        Stations,
+    }
+
+    /// <summary>ค่าที่ตั้งไว้ — ค่าที่อ่านไม่ออกถือเป็นเฉพาะโหมดทดสอบ ไม่เปิดให้หน้างานเอง</summary>
+    public static ProcessTabsMode ProcessTabs =>
+        CustomSettingsManager.Read(ProcessTabsKey, "").Trim().ToLowerInvariant() switch
+        {
+            "off" => ProcessTabsMode.Off,
+            "stations" => ProcessTabsMode.Stations,
+            _ => ProcessTabsMode.DevOnly,
+        };
+
+    /// <summary>ค่าที่เขียนลงไฟล์ของแต่ละตัวเลือก</summary>
+    public static string ProcessTabsValue(ProcessTabsMode mode) => mode switch
+    {
+        ProcessTabsMode.Off => "off",
+        ProcessTabsMode.Stations => "stations",
+        _ => "dev",
+    };
+
+    /// <summary>
+    /// เครื่องนี้ควรเห็นแท็บ Online / Offline ไหม
+    ///
+    /// <para>
+    /// เปิดให้สถานีแล้ว โหมดทดสอบก็ยังเห็นด้วย เพราะโหมดทดสอบเห็นทุกอย่างเสมอ
+    /// ส่วนหน้า Scan barcode (ระดับ 0) กับโหมดทดสอบหน้างาน (ระดับ 9) ไม่มีหน้า
+    /// Order List ให้ดูอยู่แล้ว
+    /// </para>
+    /// </summary>
+    public static bool ShowProcessTabs => ProcessTabs switch
+    {
+        ProcessTabsMode.Stations => Level is St1 or St3 || IsDevMode,
+        ProcessTabsMode.DevOnly => IsDevMode,
+        _ => false,
+    };
+
     /// <summary>
     /// โหมดทดสอบไหม — <c>MENU_LEVEL</c> 99
     ///

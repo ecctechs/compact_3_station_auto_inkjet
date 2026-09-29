@@ -32,6 +32,8 @@ partial class OrderListUserControl
         tlpTableInner = new System.Windows.Forms.TableLayoutPanel();
         flpTabs = new System.Windows.Forms.FlowLayoutPanel();
         btnTabList = new AntdUI.Button();
+        btnTabOnline = new AntdUI.Button();
+        btnTabOffline = new AntdUI.Button();
         btnTabHistory = new AntdUI.Button();
         lblDateFilter = new System.Windows.Forms.Label();
         dtpHistoryRange = new AntdUI.DatePickerRange();
@@ -143,6 +145,8 @@ partial class OrderListUserControl
         //
         flpTabs.BackColor = System.Drawing.Color.White;
         flpTabs.Controls.Add(btnTabList);
+        flpTabs.Controls.Add(btnTabOnline);
+        flpTabs.Controls.Add(btnTabOffline);
         flpTabs.Controls.Add(btnTabHistory);
         flpTabs.Controls.Add(lblDateFilter);
         flpTabs.Controls.Add(dtpHistoryRange);
@@ -169,6 +173,36 @@ partial class OrderListUserControl
         btnTabList.TabIndex = 0;
         btnTabList.Text = "List";
         btnTabList.Type = AntdUI.TTypeMini.Primary;
+        //
+        // btnTabOnline - มุมมองย่อยของแท็บ List ซ่อนไว้จนกว่าตัวเลือกหน้างานจะเปิดให้เครื่องนี้เห็น
+        //
+        btnTabOnline.DefaultBorderColor = System.Drawing.Color.FromArgb(180, 180, 180);
+        btnTabOnline.BorderWidth = 1F;
+        btnTabOnline.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        btnTabOnline.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        btnTabOnline.Margin = new System.Windows.Forms.Padding(3);
+        btnTabOnline.Name = "btnTabOnline";
+        btnTabOnline.Radius = 6;
+        btnTabOnline.Size = new System.Drawing.Size(138, 45);
+        btnTabOnline.TabIndex = 10;
+        btnTabOnline.Text = "Online";
+        btnTabOnline.Type = AntdUI.TTypeMini.Default;
+        btnTabOnline.Visible = false;
+        //
+        // btnTabOffline - มุมมองย่อยของแท็บ List ซ่อนไว้จนกว่าตัวเลือกหน้างานจะเปิดให้เครื่องนี้เห็น
+        //
+        btnTabOffline.DefaultBorderColor = System.Drawing.Color.FromArgb(180, 180, 180);
+        btnTabOffline.BorderWidth = 1F;
+        btnTabOffline.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        btnTabOffline.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        btnTabOffline.Margin = new System.Windows.Forms.Padding(3);
+        btnTabOffline.Name = "btnTabOffline";
+        btnTabOffline.Radius = 6;
+        btnTabOffline.Size = new System.Drawing.Size(138, 45);
+        btnTabOffline.TabIndex = 11;
+        btnTabOffline.Text = "Offline";
+        btnTabOffline.Type = AntdUI.TTypeMini.Default;
+        btnTabOffline.Visible = false;
         //
         // btnTabHistory
         //
@@ -756,6 +790,8 @@ partial class OrderListUserControl
     private System.Windows.Forms.TableLayoutPanel tlpTableInner;
     private System.Windows.Forms.FlowLayoutPanel flpTabs;
     private AntdUI.Button btnTabList;
+    private AntdUI.Button btnTabOnline;
+    private AntdUI.Button btnTabOffline;
     private AntdUI.Button btnTabHistory;
     private System.Windows.Forms.Label lblDateFilter;
     private AntdUI.DatePickerRange dtpHistoryRange;
