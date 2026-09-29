@@ -113,13 +113,13 @@ public static class JobSendService
     {
         // กันไฟสถานะตามหน้าจอไม่ให้เปิดซ็อกเก็ตไปแย่งคิวเครื่องระหว่างส่งงานจริง
         // บอกชื่อเครื่องไปด้วย เพื่อให้ปุ่มกดหน้างานของเครื่องอื่นไม่ถูกขวางไปด้วย
-        using var busy = MachineBusy.Hold("MK");
+        using var busy = MachineBusy.Hold("MK"); // พักการเช็กหัว MK แต่ไม่ขวางปุ่ม UV
 
-        var heads = MkMachines
+        var heads = MkMachines // รวม IP และ Pattern ของหัว MK ทั้งสองตัว
             .Select(m => new MkHead(
                 CustomSettingsManager.Read(m.NameKey, m.Fallback),
                 CustomSettingsManager.Read(m.IpKey),
-                pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == m.Ordinal),
+                pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == m.Ordinal), // จับ Pattern ให้ตรงลำดับหัว ไม่สลับข้อมูลกัน
                 m.Label))
             .ToList();
 
@@ -132,16 +132,16 @@ public static class JobSendService
         //
         // ยกเว้นตั้ง IP ซ้ำกัน = เครื่องเดียวกัน ห้ามเปิดสองสายเข้าไปพร้อมกัน เครื่องจะ
         // ได้คำสั่งของสองหัวสลับกันไปมา จึงถอยกลับไปทำทีละหัวเหมือนเดิม
-        var outcomes = SameDevice(heads)
-            ? [await SendHeadAsync(heads[0]), await SendHeadAsync(heads[1])]
-            : await Task.WhenAll(heads.Select(SendHeadAsync));
+        var outcomes = SameDevice(heads) // ถ้า IP ซ้ำให้ส่งทีละหัว ป้องกันคำสั่งตีกัน
+            ? [await SendHeadAsync(heads[0]), await SendHeadAsync(heads[1])] // ใช้ปลายทางเดียวกัน จึงรอหัวแรกก่อน
+            : await Task.WhenAll(heads.Select(SendHeadAsync)); // คนละ IP ส่งสองหัวพร้อมกันได้
 
         // เรียงผลตามหัวเสมอ ไม่ใช่ตามว่าหัวไหนเสร็จก่อน
-        var machines = outcomes.Where(o => o.Result != null).Select(o => o.Result!).ToList();
-        bool anySent = outcomes.Any(o => o.Sent);
-        bool workFailed = outcomes.Any(o => o.Failed);
+        var machines = outcomes.Where(o => o.Result != null).Select(o => o.Result!).ToList(); // รวมผลตามลำดับหัว ไม่ตามลำดับที่เสร็จ
+        bool anySent = outcomes.Any(o => o.Sent); // ตรวจว่ามีหัวที่รับข้อมูลจริงในรอบนี้หรือไม่
+        bool workFailed = outcomes.Any(o => o.Failed); // ดูความล้มเหลวเฉพาะหัวที่ต้องพิมพ์งาน
 
-        if (machines.Count == 0)
+        if (machines.Count == 0) // ไม่มีหัว MK ที่ได้ติดต่อเลย
             return new MkSendResult(SendStatus.NotConfigured, machines);
 
         // ไม่มีเครื่องไหนได้รับงานเลย = ขั้นตอนนี้ยังไม่ได้ทำ ต้องไม่ถูกบันทึกว่าสำเร็จ
@@ -159,7 +159,7 @@ public static class JobSendService
         // ยังฟ้องเป็นคำเตือนอยู่ ผู้เรียกต้องแสดงให้เห็น เพราะกรณีสายหลุดขณะเครื่อง
         // ยังเปิดอยู่ เครื่องนั้นจะค้างพิมพ์ของงานก่อนหน้าต่อโดยเราสั่งหยุดไม่ได้
         return new MkSendResult(
-            workFailed ? SendStatus.Failed : SendStatus.Ok,
+            workFailed ? SendStatus.Failed : SendStatus.Ok, // หัวที่ต้องใช้ล้มเหลวแม้เพียงหัวเดียว ให้ผลรวมไม่สำเร็จ
             machines);
     }
 
@@ -183,7 +183,7 @@ public static class JobSendService
         IEnumerable<string> steps, PatternDetail? pattern, List<UvJobDataDto>? uvData)
     {
         var bad = new List<UnreachableMachine>();
-        var targets = new List<(string Name, string Host, int Port)>();
+        var targets = new List<(string Name, string Host, int Port)>(); // รวมปลายทางที่จะตรวจให้ครบก่อนจองคิว
 
         foreach (var step in steps.Distinct(StringComparer.OrdinalIgnoreCase))
         {
@@ -192,14 +192,14 @@ public static class JobSendService
                 foreach (var (ipKey, nameKey, fallbackName, ordinal, _) in MkMachines)
                 {
                     var config = pattern?.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
-                    if (!HasProgram(config)) continue;
+                    if (!HasProgram(config)) continue; // หัวที่ไม่ได้ใช้ไม่ต้องผ่านด่านตรวจการเชื่อมต่อ
 
-                    var name = CustomSettingsManager.Read(nameKey, fallbackName);
-                    var ip = CustomSettingsManager.Read(ipKey);
+                    var name = CustomSettingsManager.Read(nameKey, fallbackName); // อ่านชื่อหัวพิมพ์ไว้รายงานผล
+                    var ip = CustomSettingsManager.Read(ipKey); // อ่าน IP ของหัวที่จะติดต่อ
 
                     if (string.IsNullOrWhiteSpace(ip))
                         bad.Add(new UnreachableMachine(name, "ยังไม่ได้ตั้ง IP"));
-                    else targets.Add((name, ip, MkPort));
+                    else targets.Add((name, ip, MkPort)); // เพิ่มหัว MK ที่มีงานเข้าในรายการตรวจ TCP
                 }
 
                 continue;
@@ -233,11 +233,11 @@ public static class JobSendService
                 ? p
                 : UvDefaultPort;
 
-            targets.Add((uvName, uvIp, uvPort));
+            targets.Add((uvName, uvIp, uvPort)); // เพิ่ม UV ที่แผนต้องใช้เข้าในรายการตรวจ
         }
 
-        var connected = await ConnectionPreflight.CheckAsync(
-            targets.Select(t => (t.Host, t.Port)).ToList(), CanConnectAsync);
+        var connected = await ConnectionPreflight.CheckAsync( // ตรวจหลายปลายทางพร้อมกันเพื่อลดเวลารอ
+            targets.Select(t => (t.Host, t.Port)).ToList(), CanConnectAsync); // ปลายทางซ้ำตรวจครั้งเดียวในชุดนี้
         for (int i = 0; i < targets.Count; i++)
             if (!connected[i])
                 bad.Add(new UnreachableMachine(targets[i].Name, $"ต่อไม่ติด ({targets[i].Host}:{targets[i].Port})"));
@@ -319,7 +319,7 @@ public static class JobSendService
                 false, true);
         }
 
-        var (error, note) = await SendToOneMkAsync(head.Ip, head.Config!, head.Label);
+        var (error, note) = await SendToOneMkAsync(head.Ip, head.Config!, head.Label); // ส่งโปรแกรมและข้อความไปหัวที่ใช้ในงาน
         return new(new MkMachineResult(head.Name, error, Note: note), error == null, error != null);
     }
 
@@ -385,13 +385,13 @@ public static class JobSendService
         //
         // ตรวจเฉพาะหัวที่งานนี้ใช้จริง — ผู้เรียกกรองด้วย HasProgram มาแล้ว หัวที่ไม่มี
         // โปรแกรมได้แค่คำสั่งสั่งหยุด ไม่เคยได้รับ FM จึงไม่ต้องมีค่าพวกนี้
-        foreach (var (name, _, _) in MachineRanges)
+        foreach (var (name, _, _) in MachineRanges) // ตรวจค่าจำเป็นของ MK ก่อนเริ่ม TCP
         {
             bool filled = name switch
             {
-                "Width" => config.Width.HasValue,
-                "Height" => config.Height.HasValue,
-                _ => config.TriggerDelay.HasValue,
+                "Width" => config.Width.HasValue, // ต้องกรอกความกว้าง ไม่ใส่ค่าแทนให้เอง
+                "Height" => config.Height.HasValue, // ต้องกรอกความสูงก่อนส่งหัวนี้
+                _ => config.TriggerDelay.HasValue, // ต้องมี Trigger Delay ของงาน
             };
 
             if (!filled)
@@ -460,14 +460,14 @@ public static class JobSendService
         // ตรวจตั้งแต่ยังไม่ต่อสาย เพราะค่าที่ผิดไม่มีเหตุให้ต้องไปรบกวนเครื่องเลย
         // ถ้าปล่อยไปเจอตอนส่ง บล็อกก่อนหน้าจะถูกเขียนลงเครื่องไปแล้วครึ่งทาง และ
         // คนอ่านก็ได้แต่รหัสจากเครื่องมาเดาเอง เช่น ER,F1,22 ตอนที่ Scale เป็น 0
-        if (InvalidConfig(config, label) is string bad) return (bad, null);
+        if (InvalidConfig(config, label) is string bad) return (bad, null); // ตรวจค่าพิมพ์ก่อนเชื่อมต่อ ป้องกันส่งไปได้เพียงบางส่วน
 
         var tcp = new TcpManager();
         try
         {
             await tcp.ConnectAsync(ip, MkPort)
                 .WaitAsync(TimeSpan.FromSeconds(ConnectTimeoutSeconds));
-            var adapter = new MkCompactAdapter(tcp);
+            var adapter = new MkCompactAdapter(tcp); // ใช้ชุดคำสั่งของเครื่อง MK ผ่าน TCP ที่เปิดไว้
 
             // ลำดับคำสั่งยกมาจากโปรแกรมเดิมทั้งชุด — SQ ก่อน แล้วค่อย FW / FS+F1 / FM
             //
@@ -480,7 +480,7 @@ public static class JobSendService
             //
             // คำสั่งคุมการพิมพ์ไม่ผ่านไม่ล้มทั้งการส่ง ตัวที่ตัดสินว่างานเข้าเครื่องหรือไม่
             // คือ FW / FS / F1 / FM
-            var notes = new List<string>();
+            var notes = new List<string>(); // เก็บคำเตือนประกอบผลส่งของหัวนี้
 
             // ไม่รายงานผลของคำสั่งนี้
             //
@@ -490,32 +490,32 @@ public static class JobSendService
             //
             // ถ้าเครื่องเงียบไปจริง ๆ (สายหลุด) คำสั่งที่เป็นตัวงานถัดจากนี้จะฟ้องเอง
             // จึงไม่ต้องกันไว้ตรงนี้ซ้ำ
-            await adapter.ResumeAsync();
+            await adapter.ResumeAsync(); // ส่ง SQ ก่อนเปลี่ยนโปรแกรม โดยโค้ดนี้ไม่ใช้ผลตอบ SQ ตัดสิน
 
-            var fw = await adapter.ChangeProgramAsync(config.ProgramNumber ?? 1);
+            var fw = await adapter.ChangeProgramAsync(config.ProgramNumber ?? 1); // ส่ง FW เลือกโปรแกรม ถ้าไม่มีเลขให้ใช้ 1
             if (!fw.Success)
                 return (Reject(label, $"เปลี่ยนไปโปรแกรม {config.ProgramNumber}", fw), Note(notes));
 
             // ส่งครบทุกช่องเสมอ ช่องที่งานนี้ไม่ได้ใช้ก็ส่งข้อความว่างไปทับ —
             // กฎเดียวกับโปรแกรมเดิม ถ้าข้ามไปเฉย ๆ ข้อความของงานก่อนหน้าจะค้าง
             // อยู่ในช่องนั้นแล้วถูกพิมพ์ติดไปกับงานใหม่
-            for (int slot = 1; slot <= MkBlockCount; slot++)
+            for (int slot = 1; slot <= MkBlockCount; slot++) // ส่งครบทุกช่องข้อความ รวมช่องที่งานนี้ไม่ได้ใช้
             {
-                var block = config.TextBlocks.FirstOrDefault(b => b.BlockNumber == slot)
+                var block = config.TextBlocks.FirstOrDefault(b => b.BlockNumber == slot) // หาข้อความของช่องปัจจุบันจาก Pattern
                     ?? new TextBlockDto { BlockNumber = slot, Text = "" };
 
-                await Task.Delay(MkBlockGapMs);
+                await Task.Delay(MkBlockGapMs); // เว้นจังหวะก่อนส่งช่องถัดไป
 
-                int deviceBlock = slot + MkFirstDeviceBlock - 1;
-                var fb = await adapter.SendTextBlockAsync(block, deviceBlock);
-                if (!fb.Success) return (Reject(label, $"ส่ง Block {slot}", fb), Note(notes));
+                int deviceBlock = slot + MkFirstDeviceBlock - 1; // แปลงเลขช่องในงานเป็นเลขช่องที่เครื่องใช้
+                var fb = await adapter.SendTextBlockAsync(block, deviceBlock); // ส่งข้อความและค่าบล็อกด้วย FS / F1
+                if (!fb.Success) return (Reject(label, $"ส่ง Block {slot}", fb), Note(notes)); // เครื่องไม่รับบล็อกนี้ ให้หยุดก่อนส่งช่องอื่น
             }
 
             // FM ต้องมาหลัง FS/F1 ตามสเปกของเครื่อง (FW -> FS/F1 -> FM)
             // ถ้าส่ง FM ก่อน Block ทิศทางที่ตั้งไว้จะถูก Block ที่ตามมาเขียนทับ
             // ปุ่ม ABC จะกดแล้วเครื่องพิมพ์หัวตั้งเหมือนเดิม
-            var fm = await adapter.SendConfigAsync(config);
-            if (!fm.Success) return (Reject(label, "ส่ง Config", fm), Note(notes));
+            var fm = await adapter.SendConfigAsync(config); // ส่ง FM หลังครบทุกบล็อก เพื่อไม่ให้ค่าถูกบล็อกเขียนทับ
+            if (!fm.Success) return (Reject(label, "ส่ง Config", fm), Note(notes)); // ส่งค่าพิมพ์ไม่ผ่าน ให้รายงานจุดที่หยุด
 
             return (null, Note(notes));
         }
@@ -547,76 +547,76 @@ public static class JobSendService
         IWin32Window? owner, int uvNumber, List<UvJobDataDto> uvData,
         string? forcedProgram = null, bool allowPrompt = true)
     {
-        string stepName = uvNumber == 1 ? "UV1" : "UV2";
+        string stepName = uvNumber == 1 ? "UV1" : "UV2"; // ระบุว่าจะใช้ข้อมูลของ UV1 หรือ UV2
 
         using var busy = MachineBusy.Hold(stepName);
 
-        string table = uvNumber == 1 ? "MK063" : "MK067";
+        string table = uvNumber == 1 ? "MK063" : "MK067"; // UV1 เขียน MK063 ส่วน UV2 เขียน MK067 ใน CPI.db3
 
-        var uvName = uvNumber == 1
+        var uvName = uvNumber == 1 // อ่านชื่อเครื่อง UV สำหรับแสดงผล
             ? UvSettingsManager.Read("UV1_NAME", "UV-001")
             : UvSettingsManager.Read("UV2_NAME", "UV-002");
 
-        var done = new List<string>();
+        var done = new List<string>(); // เก็บรายการขั้นที่ทำไปแล้วไว้รายงาน
 
-        var uvRow = uvData.FirstOrDefault(r => r.Machine == stepName);
-        if (uvRow == null)
+        var uvRow = uvData.FirstOrDefault(r => r.Machine == stepName); // หาแถวข้อมูลของ UV ที่ต้องส่ง
+        if (uvRow == null) // Job ยังไม่มีข้อมูลของเครื่องนี้
             return Blocked(uvName, $"ยังไม่มีข้อมูล {stepName} ของงานที่เลือก");
 
-        var cpiPath = UvSettingsManager.GetCpiPath(uvNumber);
-        if (cpiPath == null)
+        var cpiPath = UvSettingsManager.GetCpiPath(uvNumber); // หาไฟล์ CPI.db3 ตามชุดตั้งค่าของ UV
+        if (cpiPath == null) // หาไฟล์ CPI ไม่พบหรือยังไม่ตั้งโฟลเดอร์
             return Blocked(uvName, $"ยังไม่ได้ตั้งค่าโฟลเดอร์ UV{uvNumber} หรือไม่พบ CPI.db3");
 
-        var ip = CustomSettingsManager.Read($"UV00{uvNumber}_IP");
+        var ip = CustomSettingsManager.Read($"UV00{uvNumber}_IP"); // อ่าน IP ของเครื่อง UV ที่เลือก
         if (string.IsNullOrWhiteSpace(ip))
             return Blocked(uvName, $"ยังไม่ได้ตั้งค่า IP ของ UV{uvNumber}");
 
-        int port = int.TryParse(CustomSettingsManager.Read($"UV00{uvNumber}_PORT"), out var p)
+        int port = int.TryParse(CustomSettingsManager.Read($"UV00{uvNumber}_PORT"), out var p) // อ่านพอร์ต UV จากค่าตั้ง
             ? p
             : UvDefaultPort;
 
-        if (!await CanConnectAsync(ip, port))
+        if (!await CanConnectAsync(ip, port)) // ลองเชื่อมต่อปลายทางก่อนแก้ข้อมูล CPI
             return new UvSendResult(SendStatus.Unreachable, uvName, done, Ip: ip, Port: port);
 
-        UvProgramPick pick;
-        if (string.IsNullOrWhiteSpace(forcedProgram))
+        UvProgramPick pick; // เก็บผลเลือกโปรแกรมและการใช้โปรแกรมสำรอง
+        if (string.IsNullOrWhiteSpace(forcedProgram)) // ยังไม่มีชื่อโปรแกรมที่เลือกไว้จากผู้เริ่มงานหรือคิว
         {
             if (!allowPrompt) return Blocked(uvName, "ยังไม่ได้เลือกโปรแกรม UV ก่อนส่ง");
-            var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber);
-            pick = UvProgramResolver.Resolve(uvRow.ProgramName, docFolder, owner);
+            var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber); // หาโฟลเดอร์เก็บไฟล์โปรแกรมของ UV นี้
+            pick = UvProgramResolver.Resolve(uvRow.ProgramName, docFolder, owner); // ค้นโปรแกรมตามชื่อในงาน หรือเปิดให้เลือกรุ่นย่อย
         }
         else
         {
             // เลือกมาแล้วจากที่อื่น — ถือว่าผ่านการยืนยันของคนมาเรียบร้อย
-            pick = new UvProgramPick(forcedProgram.Trim(), false);
+            pick = new UvProgramPick(forcedProgram.Trim(), false); // ใช้โปรแกรมที่ผู้ขอส่งเลือกไว้แล้ว ไม่ถามเลือกซ้ำ
         }
 
-        var programFile = pick.Program;
-        if (programFile == null)
+        var programFile = pick.Program; // อ่านชื่อโปรแกรมที่ได้จากการเลือก
+        if (programFile == null) // ผู้ใช้ยังไม่ได้เลือกโปรแกรมที่จะส่ง
             return new UvSendResult(SendStatus.Cancelled, uvName, done);
 
-        if (pick.IsDefault &&
-            !UvProgramResolver.ConfirmDefault(uvRow.ProgramName ?? "", uvName, owner as Control))
+        if (pick.IsDefault && // ได้โปรแกรมสำรองแทนชื่อเดิมในงาน
+            !UvProgramResolver.ConfirmDefault(uvRow.ProgramName ?? "", uvName, owner as Control)) // ให้ผู้ใช้ยืนยันก่อนใช้โปรแกรมสำรอง
             return new UvSendResult(SendStatus.Cancelled, uvName, done);
 
         try
         {
-            var uvTcp = new UvTcpService();
+            var uvTcp = new UvTcpService(); // เตรียมชุดคำสั่ง TCP ของ UV
 
             // 1. หยุดเครื่องก่อนเสมอ — ไม่ตอบรับก็ไปต่อ เพราะเครื่องอาจหยุดอยู่แล้ว
-            var (stopOk, _) = await uvTcp.StopAsync(ip, port);
-            done.Add(stopOk ? "สั่งหยุดเครื่อง" : "สั่งหยุดเครื่อง (ไม่ตอบรับ — ทำต่อ)");
+            var (stopOk, _) = await uvTcp.StopAsync(ip, port); // ขอหยุด UV ก่อนเขียนข้อมูล โดยผลหยุดไม่ใช้บล็อกขั้นถัดไป
+            done.Add(stopOk ? "สั่งหยุดเครื่อง" : "สั่งหยุดเครื่อง (ไม่ตอบรับ — ทำต่อ)"); // เก็บว่าคำสั่งหยุดได้รับคำตอบหรือไม่
 
             // 2. เขียนข้อความลง CPI.db3
-            var (writeOk, writeMsg) = await CpiWriteService.WriteAsync(
+            var (writeOk, writeMsg) = await CpiWriteService.WriteAsync( // เขียนข้อมูลพิมพ์ของ Job ลงฐานข้อมูล CPI
                 cpiPath, table,
-                uvRow.Lot, uvRow.ErpMfg,
-                uvRow.Text1, uvRow.Text2, uvRow.Text3, uvRow.Text4, uvRow.Text5);
+                uvRow.Lot, uvRow.ErpMfg, // เขียน Lot และชื่อ ERP ของงานนี้
+                uvRow.Text1, uvRow.Text2, uvRow.Text3, uvRow.Text4, uvRow.Text5); // เขียนข้อความพิมพ์ทั้งห้าช่องของงาน
 
             if (!writeOk)
                 return Stopped(uvName, done, $"เขียน CPI.db3 ({table}) — {writeMsg}");
 
-            done.Add($"เขียน CPI.db3 ({table})"
+            done.Add($"เขียน CPI.db3 ({table})" // เก็บผลเขียน CPI ไว้ในรายงานการส่ง
                 + $"\n    Lot: {Dashed(uvRow.Lot)}"
                 + $"\n    Name: {Dashed(uvRow.ErpMfg)}");
 
@@ -625,11 +625,11 @@ public static class JobSendService
             if (!tcpOk)
                 return Stopped(uvName, done, tcpLog.Trim());
 
-            done.Add($"โหลดโปรแกรม {programFile}.uvdx");
+            done.Add($"โหลดโปรแกรม {programFile}.uvdx"); // เก็บชื่อโปรแกรมที่สั่งโหลดไว้ในผลส่ง
             if (startWarning == null) done.Add("เครื่องตอบรับคำสั่งเริ่มพิมพ์");
 
             return new UvSendResult(
-                SendStatus.Ok, uvName, done,
+                SendStatus.Ok, uvName, done, // ส่งผลสำเร็จพร้อมรายการขั้นที่ทำไป
                 ProgramFile: programFile, UsedDefault: pick.IsDefault, Ip: ip, Port: port, StartWarning: startWarning);
         }
         catch (Exception ex)

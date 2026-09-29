@@ -80,7 +80,7 @@ internal sealed class SettingsStore
                         new XAttribute("value", value)));
 
                 // ไม่เขียนทับไฟล์เดิมตรง ๆ — เหตุผลที่ AppSettingsFile.SaveAtomic
-                AppSettingsFile.SaveAtomic(_path, doc.Save);
+                AppSettingsFile.SaveAtomic(_path, doc.Save); // เขียนให้ครบแล้วสลับไฟล์ ป้องกันค่าว่างกลางบันทึก
 
                 // ทิ้งสำเนาไป ไม่แก้ทีละคีย์ — รอบหน้าอ่านไฟล์ที่เพิ่งเขียนมาใหม่หมด
                 // จึงไม่มีทางที่สำเนาจะไม่ตรงกับไฟล์ ไม่ว่าการเขียนจะไปโดนอะไรบ้าง
@@ -100,7 +100,7 @@ internal sealed class SettingsStore
     {
         lock (_gate)
         {
-            _values = null;
+            _values = null; // บังคับให้การอ่านครั้งหน้าโหลดค่าชุดใหม่
             _length = -1;
             _checkedAt = long.MinValue;
         }
@@ -113,13 +113,13 @@ internal sealed class SettingsStore
 
         if (_values != null && now - _checkedAt < RecheckMs) return _values;
 
-        var info = new FileInfo(_path);
+        var info = new FileInfo(_path); // ใช้เวลาแก้ไขและขนาดตรวจว่าไฟล์ถูกแก้จากภายนอกหรือไม่
         if (!info.Exists)
         {
             AppSettingsFile.EnsureAppSettingsFile(_path);
             info = new FileInfo(_path);
         }
-        _checkedAt = now;
+        _checkedAt = now; // เว้นช่วงตรวจดิสก์ ไม่เปิดไฟล์ซ้ำทุกครั้งที่อ่านค่า
 
         if (_values != null && info.LastWriteTimeUtc == _writtenUtc && info.Length == _length)
             return _values;
@@ -135,9 +135,9 @@ internal sealed class SettingsStore
                 map[key] = el.Attribute("value")?.Value ?? "";
         }
 
-        _values = map;
-        _writtenUtc = info.LastWriteTimeUtc;
-        _length = info.Length;
+        _values = map; // เก็บค่าล่าสุดให้ส่วนอื่นอ่านจากหน่วยความจำ
+        _writtenUtc = info.LastWriteTimeUtc; // จำเวลาไฟล์ไว้ตรวจการแก้จากโปรแกรมอื่น
+        _length = info.Length; // ใช้ขนาดไฟล์ช่วยตรวจว่าชุดตั้งค่าเปลี่ยนแล้ว
         return map;
     }
 }

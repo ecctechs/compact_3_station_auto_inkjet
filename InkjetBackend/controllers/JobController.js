@@ -360,10 +360,10 @@ class JobController {
         if (!job) conflict("Job not found");
         const rows = await MachineQueue.findAll({ where: { print_jobs_id: job.id }, transaction });
         // ห้ามเปลี่ยนเป็นรอ/จบ/ยกเลิก ขณะที่เครื่องอาจรับงานไปแล้ว
-        if (status !== "Process") await assertNoUnresolved(rows, transaction);
-        if (["Success", "Cancel"].includes(status))
-          await MachineQueue.destroy({ where: { print_jobs_id: job.id }, transaction });
-        await job.update({ status }, { transaction });
+        if (status !== "Process") await assertNoUnresolved(rows, transaction); // ห้ามจบ ยกเลิก หรือคืนรอ ขณะที่ยังไม่รู้ผลส่ง
+        if (["Success", "Cancel"].includes(status)) // จบหรือยกเลิกต้องล้างคิวพร้อมเปลี่ยนสถานะ
+          await MachineQueue.destroy({ where: { print_jobs_id: job.id }, transaction }); // ล้างคิวใน transaction เดียวกับสถานะ Job
+        await job.update({ status }, { transaction }); // หากบันทึกไม่ผ่าน ให้คิวและสถานะย้อนกลับพร้อมกัน
       });
 
       return ResponseManager.SuccessResponse(req, res, 200, "Status updated");

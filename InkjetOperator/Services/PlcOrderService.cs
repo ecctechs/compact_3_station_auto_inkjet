@@ -50,17 +50,17 @@ public static class PlcOrderService
         var mk1 = CustomSettingsManager.Read("MK058_NAME", "MK-058");
         var mk2 = CustomSettingsManager.Read("MK059_NAME", "MK-059");
 
-        var speeds = pattern?.ConveyorSpeeds;
+        var speeds = pattern?.ConveyorSpeeds; // อ่านความเร็วสายพานของ Job ที่กำลังส่ง
 
         var fields = new List<PlcField>();
-        if (!usedHeadsOnly || HasProgram(Inkjet(pattern, 1)))
-            AddServo(fields, map, mk1, Servo(pattern, 1));
-        if (!usedHeadsOnly || HasProgram(Inkjet(pattern, 2)))
-            AddServo(fields, map, mk2, Servo(pattern, 2));
+        if (!usedHeadsOnly || HasProgram(Inkjet(pattern, 1))) // โหมดส่งจริงเอาเฉพาะหัวแรกที่งานใช้
+            AddServo(fields, map, mk1, Servo(pattern, 1)); // จับค่า PostAct และ Delay ของหัวแรกกับ register map
+        if (!usedHeadsOnly || HasProgram(Inkjet(pattern, 2))) // หัวที่สองไม่มีงานให้ข้ามค่า servo ของหัวนั้น
+            AddServo(fields, map, mk2, Servo(pattern, 2)); // จับค่า servo ของหัวที่สองกับ address ที่ตั้งไว้
 
         // สายพานตัวเดียว — ตาราง register map เหลือ Conveyor Speed 1 แถวเดียว
         // โปรแกรมเดิมส่งสามตัวรวดเดียว (D10-D12) แต่ของใหม่ตกลงกันว่าเหลือตัวแรก
-        Add(fields, map, "Conveyor Speed 1", "Conveyor 1 (Hz)", Whole(speeds?.Speed1));
+        Add(fields, map, "Conveyor Speed 1", "Conveyor 1 (Hz)", Whole(speeds?.Speed1)); // ใช้ความเร็วสายพานตัวแรกเพียงตัวเดียว
 
         return fields;
     }
@@ -91,7 +91,7 @@ public static class PlcOrderService
 
         int port = int.TryParse(CustomSettingsManager.Read("PLC_PORT", "502"), out var p) ? p : 502;
 
-        var ready = plan.Where(f => f.Address != null).OrderBy(f => f.Address).ToList();
+        var ready = plan.Where(f => f.Address != null).OrderBy(f => f.Address).ToList(); // ส่งเฉพาะค่าที่มี register map แล้ว
         if (ready.Count == 0)
         {
             results.Add(new BlockResult("PLC", 0, null, "ไม่มีค่าไหนที่ map address ไว้"));
@@ -103,7 +103,7 @@ public static class PlcOrderService
         // ห้าค่าต่องานหมายถึงเขียน 5 ครั้งและอ่านกลับ 5 ครั้ง ถ้าเปิดปิดสายทุกครั้งคือ
         // 10 รอบ ตอน PLC ต่อไม่ติดจะรอ timeout 3 วินาทีครบทั้ง 10 รอบ = 30 วินาที
         // ต่อการกดส่งหนึ่งครั้ง เปิดครั้งเดียวจึงรอแค่ครั้งเดียว
-        var (session, connectError) = await ModbusTcpService.OpenAsync(ip, port);
+        var (session, connectError) = await ModbusTcpService.OpenAsync(ip, port); // เปิด TCP ครั้งเดียวใช้เขียนและอ่านทุกค่า
         if (session == null)
         {
             // ต่อไม่ติดคือทุกค่าไม่ได้ส่ง ไม่ใช่ปัญหาของ register ตัวใดตัวเดียว
@@ -121,7 +121,7 @@ public static class PlcOrderService
                 int address = field.Address!.Value;
                 var name = $"D{address}  {field.Label}";
 
-                var (ok, error) = await session.WriteSingleRegisterAsync(address, field.Value);
+                var (ok, error) = await session.WriteSingleRegisterAsync(address, field.Value); // เขียนทีละ register ด้วย FC6
                 if (!ok)
                 {
                     results.Add(new BlockResult(name, field.Value, null, error));
@@ -130,7 +130,7 @@ public static class PlcOrderService
 
                 // อ่านกลับทันทีเหมือนที่หน้า PLC Setting ทำ — เขียนผ่านแต่ค่าไม่เข้า
                 // จะได้เห็นตั้งแต่ตรงนี้ ไม่ใช่ไปรู้เอาตอนเครื่องเดินผิด
-                var (readOk, values, _) = await session.ReadHoldingRegistersAsync(address, 1);
+                var (readOk, values, _) = await session.ReadHoldingRegistersAsync(address, 1); // อ่านกลับทันทีเพื่อตรวจว่าค่าเข้า PLC จริง
 
                 results.Add(new BlockResult(
                     name, field.Value, readOk && values.Length > 0 ? values[0] : null, null));
@@ -198,15 +198,15 @@ public static class PlcOrderService
         // ช่องที่คนหน้างานกรอกและโปรแกรมส่งจริงคือ Servo Post Act. ส่วนช่องที่ชื่อ
         // Position ตรง ๆ ไม่เคยถูกใช้เลย — ในฐานข้อมูลเป็นค่าว่างทุกแถว และหน้าจอ
         // ของโปรแกรมเดิมก็ปิดช่องนั้นทิ้งไว้ เหลือให้กรอกแต่ Post Act.
-        int home = HomePosition;
+        int home = HomePosition; // ใช้ตำแหน่งเริ่มต้นจาก Setting ค่าเริ่มต้นคือ 1
         var fields = new List<PlcField>();
-        Add(fields, map, $"{mk1} PostAct", $"{mk1} ตำแหน่งเริ่มต้น", home);
-        Add(fields, map, $"{mk2} PostAct", $"{mk2} ตำแหน่งเริ่มต้น", home);
+        Add(fields, map, $"{mk1} PostAct", $"{mk1} ตำแหน่งเริ่มต้น", home); // คืนหัวแรกผ่านช่อง PostAct เดียวกับที่ใช้ส่งงาน
+        Add(fields, map, $"{mk2} PostAct", $"{mk2} ตำแหน่งเริ่มต้น", home); // คืนหัวที่สองตามค่าเริ่มต้นเดียวกัน
 
         // ไม่มีแถวไหนตั้ง address ไว้ = ตารางยังไม่ครบ ไม่ต้องยิงอะไรออกไป
         if (fields.All(f => f.Address == null)) return [];
 
-        return await SendAsync(fields);
+        return await SendAsync(fields); // เขียนตำแหน่งเริ่มต้นและอ่านค่ากลับด้วยทางส่ง PLC เดิม
     }
 
     private static void AddServo(

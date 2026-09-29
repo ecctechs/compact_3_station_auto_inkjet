@@ -38,19 +38,19 @@ public static class AppSettingsFile
     /// </summary>
     public static string Resolve(string fileName)
     {
-        var legacy = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName);
+        var legacy = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName); // เก็บทางไปไฟล์ตั้งค่ารุ่นเดิมข้างโปรแกรม
 
         try
         {
             Directory.CreateDirectory(Folder);
-            var target = Path.Combine(Folder, fileName);
+            var target = Path.Combine(Folder, fileName); // ใช้ไฟล์นี้ร่วมกันหลัง Build หรืออัปเดตโปรแกรม
 
-            RestoreIfEmpty(target);
+            RestoreIfEmpty(target); // ถ้าไฟล์ว่าง ให้ลองกู้จาก .bak ก่อนอ่าน
 
             if (!File.Exists(target))
             {
-                if (File.Exists(legacy)) File.Copy(legacy, target);
-                else if (SeedFor(fileName) is string seed) File.Copy(seed, target);
+                if (File.Exists(legacy)) File.Copy(legacy, target); // เครื่องที่ยังไม่ย้ายค่า ให้ใช้ไฟล์เดิมเป็นจุดตั้งต้น
+                else if (SeedFor(fileName) is string seed) File.Copy(seed, target); // เครื่องติดตั้งใหม่ใช้ไฟล์ default ที่มากับโปรแกรม
             }
 
             return target;
@@ -120,16 +120,16 @@ public static class AppSettingsFile
     public static void SaveAtomic(string path, Action<string> writeTo)
     {
         // ชื่อไม่ซ้ำกันทุกครั้ง จึงไม่ชนกับโปรแกรมตัวอื่นที่บันทึกพร้อมกัน
-        var temp = $"{path}.{Guid.NewGuid():N}.tmp";
+        var temp = $"{path}.{Guid.NewGuid():N}.tmp"; // เขียนไฟล์ใหม่ให้ครบก่อนแทนของเดิม
 
         try
         {
-            writeTo(temp);
+            writeTo(temp); // บันทึกเนื้อหาลงไฟล์ชั่วคราวของรอบนี้
 
             if (File.Exists(path))
-                File.Replace(temp, path, path + BackupSuffix, ignoreMetadataErrors: true);
+                File.Replace(temp, path, path + BackupSuffix, ignoreMetadataErrors: true); // สลับไฟล์พร้อมเก็บชุดก่อนหน้าเป็น .bak
             else
-                File.Move(temp, path);
+                File.Move(temp, path); // ครั้งแรกยังไม่มีไฟล์เดิมให้แทน
         }
         catch
         {
@@ -157,7 +157,7 @@ public static class AppSettingsFile
             if (!File.Exists(target) || new FileInfo(target).Length > 0) return;
             if (!File.Exists(backup) || new FileInfo(backup).Length == 0) return;
 
-            File.Copy(backup, target, overwrite: true);
+            File.Copy(backup, target, overwrite: true); // กู้ไฟล์ตั้งค่าที่เป็นศูนย์ไบต์จากชุดสำรอง
         }
         catch { /* กู้ไม่ได้ก็ปล่อยไปตามเดิม ไม่ให้เปิดโปรแกรมไม่ขึ้น */ }
     }

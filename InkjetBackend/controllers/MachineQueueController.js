@@ -78,7 +78,7 @@ class MachineQueueController {
           transaction: t,
         });
 
-        const taken = new Set(existing.map((r) => `${r.machine}#${r.round}`));
+        const taken = new Set(existing.map((r) => `${r.machine}#${r.round}`)); // กันจองเครื่องและรอบเดิมซ้ำ รวมแถวที่ปล่อยแล้ว
 
         const toCreate = [];
         for (const item of items) {
@@ -158,13 +158,13 @@ class MachineQueueController {
         }
 
         // ผู้เรียกมีข้อมูลของงานที่ขอเท่านั้น ห้ามคืนงานอื่นไปส่งด้วยข้อมูลผิดใบ
-        if (print_jobs_id && next.print_jobs_id !== print_jobs_id)
+        if (print_jobs_id && next.print_jobs_id !== print_jobs_id) // งานที่กดเริ่มทีหลังห้ามแซงหัวคิวของเครื่อง
           return { claimed: null, reason: "queued" };
 
         // ไม่ตั้ง sent_at ตรงนี้ — active แปลว่า "ถึงคิวแล้ว รอ ST1 ส่ง" เท่านั้น
         // ฝั่งที่ส่งสำเร็จจริงเป็นคนประทับเวลาเอง แถวที่ยังไม่มี sent_at คือแถวที่
         // ST1 ต้องหยิบไปส่ง จึงไม่มีทางส่งซ้ำแถวที่ส่งไปแล้ว
-        await next.update({ state: ACTIVE }, { transaction: t });
+        await next.update({ state: ACTIVE }, { transaction: t }); // ให้สิทธิ์ใช้เครื่อง ยังไม่ได้แปลว่าส่งข้อมูลแล้ว
 
         return { claimed: next };
       });
@@ -184,7 +184,7 @@ class MachineQueueController {
   static async release(req, res) {
     try {
       const result = await withQueueLock(async (t) => {
-        const { machine, hold_for_next_round, expected_holder_id } = req.body;
+        const { machine, hold_for_next_round, expected_holder_id } = req.body; // รับเครื่องและเลขคิวที่ผู้กดตั้งใจปล่อย
 
         const holder = await MachineQueue.findOne({
           where: { machine, state: ACTIVE },
@@ -193,11 +193,11 @@ class MachineQueueController {
         });
 
         // คำขอเก่าหรือกดซ้ำต้องไม่ไปปล่อยแถวใหม่ที่เพิ่งได้เครื่อง
-        if ((holder?.id ?? null) !== expected_holder_id)
+        if ((holder?.id ?? null) !== expected_holder_id) // คำขอเดิมห้ามไปปล่อยคิวใหม่ที่เพิ่งรับเครื่อง
           conflict("คิวเปลี่ยนแล้ว กรุณาตรวจงานที่ถือเครื่องก่อนกดอีกครั้ง");
         if (holder) {
           await assertNoUnresolved([holder], t);
-          if (!holder.sent_at) conflict("งานนี้ยังไม่ได้ส่งเข้าเครื่อง ปล่อยคิวไม่ได้");
+          if (!holder.sent_at) conflict("งานนี้ยังไม่ได้ส่งเข้าเครื่อง ปล่อยคิวไม่ได้"); // ยังไม่บันทึกส่งสำเร็จ จึงไม่ให้ข้ามไปงานถัดไป
         }
 
         if (holder) {
@@ -324,7 +324,7 @@ class MachineQueueController {
       const removed = await withQueueLock(async (t) => {
         const rows = await MachineQueue.findAll({ where: { print_jobs_id: req.params.jobId }, transaction: t });
         await assertNoUnresolved(rows, t);
-        if (req.query.only_unsent === "true" && rows.some(r => r.state !== PENDING || r.sent_at))
+        if (req.query.only_unsent === "true" && rows.some(r => r.state !== PENDING || r.sent_at)) // ล้างแบบปลอดภัยได้เมื่อทุกแถวยังรอและไม่มีผลส่ง
           conflict("มีคิวที่ถูกหยิบหรือส่งแล้ว ห้ามล้างทั้งงาน");
         return MachineQueue.destroy({
           where: { print_jobs_id: req.params.jobId },
@@ -351,10 +351,10 @@ class MachineQueueController {
           if (!job || !["Waiting", "Process"].includes(job.status)) conflict("งานถูกยกเลิกหรือจบแล้ว");
           await PrintJobCommand.create({
             job_id: row.print_jobs_id, command: DISPATCH, success: false,
-            payload: { queue_id: row.id, token: req.body.token, outcome: "sending" },
+            payload: { queue_id: row.id, token: req.body.token, outcome: "sending" }, // จดเลขคิวและรอบส่งไว้ก่อนฝั่ง C# แตะเครื่อง
             sent_at: new Date(),
           }, { transaction: t });
-          await job.update({ status: "Process" }, { transaction: t });
+          await job.update({ status: "Process" }, { transaction: t }); // เปลี่ยน Job พร้อมบันทึกเริ่มส่งใน transaction เดียวกัน
           return { token: req.body.token };
       });
       return ResponseManager.SuccessResponse(req, res, 200, result);
@@ -369,20 +369,20 @@ class MachineQueueController {
           if (!row) conflict("ไม่พบคิวที่ส่ง");
           const attempt = await latestDispatch(row.id, t);
           const { token, outcome, detail, error } = req.body;
-          if (!attempt || attempt.payload.token !== token) conflict("คำขอนี้ไม่ใช่รอบส่งปัจจุบัน");
-          if (attempt.payload.outcome === outcome) return { recorded: true };
-          if (["sent", "not_sent"].includes(attempt.payload.outcome)) conflict("รอบส่งนี้จบแล้ว");
+          if (!attempt || attempt.payload.token !== token) conflict("คำขอนี้ไม่ใช่รอบส่งปัจจุบัน"); // รับผลเฉพาะผู้ส่งที่เริ่มรอบนี้ไว้
+          if (attempt.payload.outcome === outcome) return { recorded: true }; // บันทึกซ้ำด้วยผลเดิมได้ โดยไม่เพิ่มประวัติซ้ำ
+          if (["sent", "not_sent"].includes(attempt.payload.outcome)) conflict("รอบส่งนี้จบแล้ว"); // รอบที่จบแล้วห้ามเปลี่ยนผลย้อนหลังผ่านคำขอนี้
           if (row.state !== ACTIVE || row.sent_at) conflict("คิวเปลี่ยนระหว่างส่ง");
           if (outcome === "not_sent" && attempt.payload.outcome !== "sending")
             conflict("ผลไม่แน่นอน ต้องตรวจเครื่องก่อนคืนคิว");
-          if (outcome === "sent") {
+          if (outcome === "sent") { // เครื่องรับข้อมูลแล้ว บันทึกประวัติพร้อมเวลาของคิว
             await PrintJobCommand.create({
               job_id: row.print_jobs_id, command: row.machine, success: true,
               payload: detail ?? null, sent_at: new Date(),
             }, { transaction: t });
-            await row.update({ sent_at: new Date() }, { transaction: t });
-          } else if (outcome === "not_sent") {
-            await row.update({ state: PENDING }, { transaction: t });
+            await row.update({ sent_at: new Date() }, { transaction: t }); // กันรอบอ่านงานหยิบคิวนี้ไปส่งซ้ำ
+          } else if (outcome === "not_sent") { // ยืนยันว่าไม่ได้ส่ง จึงให้กลับไปรอใหม่
+            await row.update({ state: PENDING }, { transaction: t }); // คืนคิวโดยไม่สั่งอุปกรณ์ซ้ำใน Backend
             const successful = await PrintJobCommand.count({
               where: { job_id: row.print_jobs_id, success: true }, transaction: t,
             });
@@ -392,11 +392,11 @@ class MachineQueueController {
                 payload: { outcome: { [Op.in]: ["sending", "unknown"] } },
               }, transaction: t,
             });
-            if (!successful && !stillSending) await PrintJob.update({ status: "Waiting" }, {
+            if (!successful && !stillSending) await PrintJob.update({ status: "Waiting" }, { // คืน Waiting ได้เมื่อไม่มีทั้งผลสำเร็จและรอบที่ยังไม่รู้ผล
               where: { id: row.print_jobs_id, status: "Process" }, transaction: t,
             });
           }
-          await attempt.update({ payload: { ...attempt.payload, outcome, error: error || null } }, { transaction: t });
+          await attempt.update({ payload: { ...attempt.payload, outcome, error: error || null } }, { transaction: t }); // เก็บผลรอบนี้พร้อมเหตุผิดพลาดในหลักฐานเดิม
           return { recorded: true };
       });
       return ResponseManager.SuccessResponse(req, res, 200, result);

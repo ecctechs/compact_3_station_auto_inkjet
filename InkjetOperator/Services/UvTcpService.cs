@@ -46,12 +46,12 @@ public class UvTcpService
 
         if (!loadOk) return (false, loadLog, null);
 
-        await Task.Delay(1000);
+        await Task.Delay(1000); // เว้นหนึ่งวินาทีหลังโหลดก่อนสั่งเริ่ม
 
         // ส่งข้อมูลสำเร็จตัดสินจาก Load ตาม flow หน้างาน ส่วน Start รายงานแยก
         var (startOk, startLog) = await SendKeyAsync(
-            ip, port, new { KEY = 83 }, "สั่งเริ่มพิมพ์", ReadTimeoutMs);
-        return (true, loadLog + startLog, startOk ? null : startLog.Trim());
+            ip, port, new { KEY = 83 }, "สั่งเริ่มพิมพ์", ReadTimeoutMs); // สั่ง Start แล้วเก็บผลแยกจากการโหลดข้อมูล
+        return (true, loadLog + startLog, startOk ? null : startLog.Trim()); // Load ผ่านถือว่าส่งข้อมูลแล้ว; Start ไม่ผ่านเก็บเป็นคำเตือน
     }
 
     /// <summary>เปิด TCP ใหม่ ส่ง 1 คำสั่ง แล้วอ่านผลกลับ</summary>
@@ -76,7 +76,7 @@ public class UvTcpService
             await SendJsonAsync(stream, JsonSerializer.Serialize(command));
 
             var (rs, detail) = await ReadJsonResponseAsync(stream, readTimeoutMs);
-            var ok = rs == 0;
+            var ok = rs == 0; // เครื่องยืนยันคำสั่งเมื่อ RS เป็นศูนย์เท่านั้น
 
             var log = ok
                 ? $"{label} → สำเร็จ"

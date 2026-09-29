@@ -430,12 +430,12 @@ public partial class OrderDetailUserControl : UserControl
     {
         if (_pattern == null || _savingPattern) return;
 
-        FlipMkOrdinals();
+        FlipMkOrdinals(); // สลับปลายทางของ Pattern และ servo ในหน่วยความจำก่อน
 
         var error = await SavePatternAsync();
         if (error == null) return;
 
-        FlipMkOrdinals();
+        FlipMkOrdinals(); // บันทึกไม่ผ่าน จึงสลับค่าบนจอกลับตามฐานเดิม
         Notify.ErrorModal(this, "สลับเครื่องไม่สำเร็จ",
             $"ยังไม่ได้บันทึกลงฐานข้อมูล จอจึงถูกปรับกลับเป็นค่าเดิม\n\n{error}");
     }
@@ -457,12 +457,12 @@ public partial class OrderDetailUserControl : UserControl
         if (_pattern == null) return;
 
         foreach (var cfg in _pattern.InkjetConfigs)
-            cfg.Ordinal = Flip(cfg.Ordinal);
+            cfg.Ordinal = Flip(cfg.Ordinal); // สลับหัว MK ที่จะรับชุดพิมพ์นี้
 
         foreach (var servo in _pattern.ServoConfigs)
-            servo.Ordinal = Flip(servo.Ordinal);
+            servo.Ordinal = Flip(servo.Ordinal); // ให้ค่าตำแหน่งและหน่วงตามไปกับหัว MK
 
-        SortPatternByOrdinal();
+        SortPatternByOrdinal(); // เรียงใหม่ตามหัวจริงก่อนเติมค่าบนจอ
 
         _isSwapped = !_isSwapped;
         lblMkSectionTitle.Text = _isSwapped
@@ -498,7 +498,7 @@ public partial class OrderDetailUserControl : UserControl
     {
         if (_savingPattern) return;
 
-        if (CollectEditedValues() is string problem)
+        if (CollectEditedValues() is string problem) // ตรวจค่าที่กรอกครบก่อนย้ายกลับเข้า Pattern
         {
             Notify.WarnModal(this, "ค่าที่กรอกไม่ถูกต้อง", problem);
             return;
@@ -507,7 +507,7 @@ public partial class OrderDetailUserControl : UserControl
         btnSavePattern.Enabled = false;
         try
         {
-            var error = await SavePatternAsync();
+            var error = await SavePatternAsync(); // บันทึกค่าที่แก้ลง Job เพราะหน้า List จะอ่านจาก Backend ใหม่
             if (IsDisposed) return;
 
             if (error != null)
@@ -518,14 +518,14 @@ public partial class OrderDetailUserControl : UserControl
             }
 
             // ข้อความ UV อยู่คนละตารางกับ pattern จึงต้องบันทึกแยก
-            var uvError = await SaveUvTextsAsync();
+            var uvError = await SaveUvTextsAsync(); // บันทึกข้อความ UV หลัง Pattern ผ่านแล้ว
             if (IsDisposed) return;
 
             // วาดใหม่จากค่าที่บันทึกแล้ว ช่องที่เว้นว่างไว้จะได้กลับมาเป็นขีด
             FillMkSection(_pattern!);
             FillConveyor(_pattern!);
 
-            if (uvError != null)
+            if (uvError != null) // ฝั่ง MK ลงแล้ว แต่ UV มีปัญหา ต้องบอกแยกส่วน
             {
                 Notify.ErrorModal(this, "บันทึกข้อความ UV ไม่สำเร็จ",
                     "ค่าฝั่ง MK บันทึกแล้ว แต่ข้อความ UV ยังไม่ได้ลงฐานข้อมูล"
@@ -565,29 +565,29 @@ public partial class OrderDetailUserControl : UserControl
                      (tblUv2Texts, "UV2"),
                  })
         {
-            var row = _uvData.FirstOrDefault(r =>
+            var row = _uvData.FirstOrDefault(r => // หาข้อมูล UV ให้ตรงตารางที่กำลังแก้
                 string.Equals(r.Machine, machine, StringComparison.OrdinalIgnoreCase));
 
             if (row == null) continue;
             if (table.DataSource is not List<UvTextRow> edited) continue;
             if (table.Tag is not List<string> original) continue;
 
-            var changed = new Dictionary<string, string?>();
+            var changed = new Dictionary<string, string?>(); // เก็บเฉพาะช่องที่ต่างจากตอนเปิดหน้า
             for (int i = 0; i < edited.Count && i < original.Count; i++)
             {
                 var now = (edited[i].Value ?? "").Trim();
-                if (now == Dash) now = "";
+                if (now == Dash) now = ""; // ขีดหมายถึงตั้งใจล้างข้อความช่องนี้
 
                 var before = (original[i] ?? "").Trim();
                 if (before == Dash) before = "";
 
-                if (now == before) continue;
-                changed[$"text{i + 1}"] = now.Length == 0 ? null : now;
+                if (now == before) continue; // ช่องที่ไม่ได้แก้ไม่ต้องส่งทับ
+                changed[$"text{i + 1}"] = now.Length == 0 ? null : now; // ผูกค่าที่แก้กับ text1 ถึง text5 รวมการล้างช่อง
             }
 
             if (changed.Count == 0) continue;
 
-            var (ok, error) = await _api.UpdateUvTextsAsync(row.Id, changed);
+            var (ok, error) = await _api.UpdateUvTextsAsync(row.Id, changed); // อัปเดตเฉพาะข้อมูล UV ของแถวนี้
             if (IsDisposed) return null;
 
             if (!ok)
@@ -609,7 +609,7 @@ public partial class OrderDetailUserControl : UserControl
                 }
             }
 
-            table.Tag = edited.Select(r => r.Value).ToList();
+            table.Tag = edited.Select(r => r.Value).ToList(); // ใช้ค่าที่บันทึกแล้วเป็นฐานเทียบการแก้รอบหน้า
         }
 
         return problems.Count == 0 ? null : string.Join(Environment.NewLine, problems);
@@ -667,10 +667,10 @@ public partial class OrderDetailUserControl : UserControl
         var s2 = Int(txtConveyor2, "Conveyor 2");
         var s3 = Int(txtConveyor3, "Conveyor 3");
 
-        var blocks1 = ReadBlocks(tblMk1Blocks, mk1, errors);
-        var blocks2 = ReadBlocks(tblMk2Blocks, mk2, errors);
+        var blocks1 = ReadBlocks(tblMk1Blocks, mk1, errors); // อ่านข้อความและค่าบล็อกของ MK หัวแรก
+        var blocks2 = ReadBlocks(tblMk2Blocks, mk2, errors); // อ่านหัวที่สองแยกกัน ไม่สลับกับหัวแรก
 
-        if (errors.Count > 0) return string.Join(Environment.NewLine, errors);
+        if (errors.Count > 0) return string.Join(Environment.NewLine, errors); // มีช่องผิดให้หยุดก่อนแก้ Pattern เพื่อไม่ค้างค่าครึ่งชุด
 
         void ApplyMk(int ordinal,
             (int? W, int? H, int? Trig, double? Act, double? Dly) v)
@@ -1031,8 +1031,8 @@ public partial class OrderDetailUserControl : UserControl
     /// </summary>
     private string? NextRemoteStep()
     {
-        if (_currentStep <= 0 || _currentStep >= _sendSteps.Count) return null;
-        if (!string.Equals(_jobStatus, "Process", StringComparison.OrdinalIgnoreCase)) return null;
+        if (_currentStep <= 0 || _currentStep >= _sendSteps.Count) return null; // ต้องผ่านขั้นแรกแล้ว และยังมีขั้นถัดไปค้างอยู่
+        if (!string.Equals(_jobStatus, "Process", StringComparison.OrdinalIgnoreCase)) return null; // ฝากส่งขั้นถัดไปได้เฉพาะงานที่กำลังผลิต
 
         return _sendSteps[_currentStep];
     }
@@ -1045,10 +1045,10 @@ public partial class OrderDetailUserControl : UserControl
     /// </summary>
     private void RequestRemoteStart()
     {
-        if (NextRemoteStep() is not string step) return;
+        if (NextRemoteStep() is not string step) return; // ไม่มีขั้นถัดไปที่ฝากส่งได้ จึงไม่ส่ง event
 
-        RemoteStartRequested?.Invoke(this, step);
-        CloseRequested?.Invoke(this, EventArgs.Empty);
+        RemoteStartRequested?.Invoke(this, step); // ฝากชื่อขั้นให้ OrderDetailDialog รับไว้
+        CloseRequested?.Invoke(this, EventArgs.Empty); // ปิด Detail เพื่อให้ Order List เปิดกล่องยืนยันและรอผล
     }
 
     private void ApplyStepButtons()
@@ -1058,7 +1058,7 @@ public partial class OrderDetailUserControl : UserControl
         //
         // โชว์เฉพาะเครื่องของ ST3 เพราะขั้นที่สองของงานสองสถานีเป็นของ ST3 ที่เดียว
         // (เปิดให้โหมดทดสอบเห็นด้วย ไว้ลองก่อนเอาไปเปิดใช้จริงที่หน้างาน)
-        var remoteStep = NextRemoteStep();
+        var remoteStep = NextRemoteStep(); // ตรวจว่างานมีขั้นถัดไปให้ ST1 ส่งหรือไม่
 
         // เก็บเป็นตัวแปรแล้วใช้ค่านั้นทั้งสองที่ ห้ามอ่าน .Visible กลับมาใช้ต่อ
         //
@@ -1066,13 +1066,13 @@ public partial class OrderDetailUserControl : UserControl
         // ไม่ใช่ค่าที่เพิ่งเซ็ตลงไป และหน้านี้ถูกเติมข้อมูลตั้งแต่ก่อนกล่องจะ ShowDialog
         // (OrderDetailDialog.LoadDetail มาก่อน dlg.ShowDialog เสมอ) ผลคือ Enabled
         // ถูกตั้งเป็น false ค้างไว้ พอกล่องเปิดขึ้นมาปุ่มจึงโผล่มาแบบกดไม่ได้
-        bool showRemote = remoteStep != null
-            && StationService.ManualRemoteSendEnabled
-            && (StationService.IsSt3 || _isDevMode);
+        bool showRemote = remoteStep != null // มีขั้นถัดไปจึงพิจารณาแสดงปุ่มสำรอง
+            && StationService.ManualRemoteSendEnabled // ต้องเปิดตัวเลือกฝากส่งด้วยมือไว้ก่อน
+            && (StationService.IsSt3 || _isDevMode); // ให้เห็นเฉพาะ ST3 หรือโหมดทดสอบ
 
         btnRemoteSend.Visible = showRemote;
-        btnRemoteSend.Enabled = showRemote;
-        if (remoteStep != null) btnRemoteSend.Text = $"ขอให้ ST1 ส่ง {remoteStep}";
+        btnRemoteSend.Enabled = showRemote; // เปิดให้กดด้วยเงื่อนไขเดียวกัน ไม่อ่าน Visible กลับมา
+        if (remoteStep != null) btnRemoteSend.Text = $"ขอให้ ST1 ส่ง {remoteStep}"; // ใส่ชื่อเครื่องที่ขอให้ ST1 ส่งบนปุ่ม
 
         // ปุ่มส่งมือเหลือไว้เฉพาะโหมดทดสอบ
         //
@@ -1417,7 +1417,7 @@ public partial class OrderDetailUserControl : UserControl
         // ค่าที่พิมพ์ลงช่องอยู่แค่ในคอนโทรล จะเข้ามาอยู่ใน pattern ก็ต่อเมื่อกดบันทึก
         // คนที่แก้ค่าแล้วกดปุ่มนี้ทันทีจึงเห็นเลขเก่าในกล่องยืนยันและส่งเลขเก่าออกไป
         // ทั้งที่ตั้งใจจะลองค่าใหม่ ซึ่งเป็นเหตุผลเดียวของปุ่มนี้
-        if (CollectEditedValues() is string invalid)
+        if (CollectEditedValues() is string invalid) // ใช้ค่าที่เพิ่งพิมพ์บนจอ แม้ยังไม่ได้กดบันทึก
         {
             Notify.WarnModal(this, "ค่าที่กรอกไม่ถูกต้อง", invalid);
             return;
@@ -1425,7 +1425,7 @@ public partial class OrderDetailUserControl : UserControl
 
         // ช่องว่างของหัวที่งานใช้จริงจะกลายเป็น 0 ตอนส่ง ซึ่งที่ช่อง PostAct มีความหมาย
         // เป็นคำสั่งเลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้น ไม่ใช่ค่ากลาง ๆ
-        if (PlcOrderService.UnsendableReason(_pattern) is string blank)
+        if (PlcOrderService.UnsendableReason(_pattern) is string blank) // กันช่องจำเป็นว่างก่อนส่ง PLC ในทางทดสอบ
         {
             Notify.WarnModal(this, "ส่งเข้า PLC ไม่ได้",
                 blank + Environment.NewLine + Environment.NewLine
@@ -1434,7 +1434,7 @@ public partial class OrderDetailUserControl : UserControl
         }
 
         // เอาเฉพาะหัวที่งานนี้ใช้ หัวที่ไม่ได้ใช้ไม่ต้องไปเขียนค่าทับใน PLC
-        var plan = await PlcOrderService.BuildPlanAsync(_api, _pattern, usedHeadsOnly: true);
+        var plan = await PlcOrderService.BuildPlanAsync(_api, _pattern, usedHeadsOnly: true); // จับค่ากับ register เฉพาะหัวที่งานใช้จริง
         if (IsDisposed) return;
 
         if (plan.Count == 0)
@@ -1443,8 +1443,8 @@ public partial class OrderDetailUserControl : UserControl
             return;
         }
 
-        var ready = plan.Where(f => f.Address != null).ToList();
-        var missing = plan.Where(f => f.Address == null).ToList();
+        var ready = plan.Where(f => f.Address != null).ToList(); // แยกรายการที่มี address พร้อมส่ง
+        var missing = plan.Where(f => f.Address == null).ToList(); // รายการที่ยังไม่ map ต้องบอกผู้ทดสอบก่อนยืนยัน
 
         if (ready.Count == 0)
         {
@@ -1588,16 +1588,16 @@ public partial class OrderDetailUserControl : UserControl
     {
         if (_api == null) return;
 
-        var (rows, error) = await _api.GetMachineQueueAsync();
+        var (rows, error) = await _api.GetMachineQueueAsync(); // อ่านคิวกลางก่อนเติมรายละเอียดท้ายสถานะ
         if (error != null || IsDisposed) return;
 
         // งานเปลี่ยนไปแล้วระหว่างรอคำตอบ อย่าเขียนทับของงานใบใหม่
-        if (jobId != _jobId) return;
+        if (jobId != _jobId) return; // เปลี่ยน Job ระหว่างรอแล้ว ไม่ใช้คำตอบเก่าทับหน้าปัจจุบัน
 
-        var stage = Services.JobStageService.Describe(jobId, _markingMethod, rows);
+        var stage = Services.JobStageService.Describe(jobId, _markingMethod, rows); // แปลงคิวเป็นเลข Q หรือด้านที่กำลังพิมพ์
         if (stage == null || _baseStatusText.Length == 0) return;
 
-        txtJobStatus.Text = $"{_baseStatusText} ({stage})";
+        txtJobStatus.Text = $"{_baseStatusText} ({stage})"; // เติมรายละเอียดหลังสถานะ เช่น Process (Mark Plate)
     }
 
     private void FillMkSection(PatternDetail pattern)
@@ -1904,11 +1904,11 @@ public partial class OrderDetailUserControl : UserControl
     /// <summary>ชื่องานสำหรับข้อความ — เผื่อเรียกก่อนที่ข้อมูลงานจะโหลดเสร็จ</summary>
     private string JobText() => _jobLabel.Length > 0 ? _jobLabel : $"#{_jobId}";
 
-    private bool CanCommandIai()
+    private bool CanCommandIai() // เช็กสิทธิ์ก่อน Send หรือ Upload ค่าแคลมป์
     {
-        if (_isDevMode || _jobId <= 0) return true;
+        if (_isDevMode || _jobId <= 0) return true; // โหมด Dev และหน้าที่ไม่ผูก Job สั่งแคลมป์ได้โดยตรง
 
-        if (string.Equals(_jobStatus, "Process", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(_jobStatus, "Process", StringComparison.OrdinalIgnoreCase)) // งานปกติต้องเริ่มเป็น Process ก่อนสั่งแคลมป์
             return true;
 
         Notify.WarnModal(this, "ยังสั่งแคลมป์ไม่ได้",
@@ -1917,7 +1917,7 @@ public partial class OrderDetailUserControl : UserControl
         return false;
     }
 
-    private async Task IaiSendAsync(AntdUI.Input input, bool isPlate, string? zone)
+    private async Task IaiSendAsync(AntdUI.Input input, bool isPlate, string? zone) // ส่งระยะไปยังแกนแคลมป์ที่เลือก
     {
         if (!CanCommandIai()) return;
 
@@ -1962,7 +1962,7 @@ public partial class OrderDetailUserControl : UserControl
         SetIaiAdjustBusy(true);
         try
         {
-            var result = await ClampService.ApplyAsync(s, axis, mm);
+            var result = await ClampService.ApplyAsync(s, axis, mm); // เขียนระยะลง D แล้วพัลส์ M ให้แกนวิ่ง
             if (IsDisposed) return;
 
             if (result.Ok)
@@ -1976,7 +1976,7 @@ public partial class OrderDetailUserControl : UserControl
         }
     }
 
-    private async Task IaiUploadAsync(AntdUI.Input input, AntdUI.Input programInput, AntdUI.Input displayInput, bool isPlate, string? zone)
+    private async Task IaiUploadAsync(AntdUI.Input input, AntdUI.Input programInput, AntdUI.Input displayInput, bool isPlate, string? zone) // เก็บระยะที่ปรับไว้ใช้กับโปรแกรมและ Job นี้
     {
         // กันด้วยกฎเดียวกับปุ่ม Send — ค่านี้เขียนทับระยะแคลมป์ที่ผูกกับงาน
         // และ backend ก็ปฏิเสธงานที่ยังไม่เริ่มอยู่แล้ว ดักที่นี่เพื่อบอกสาเหตุให้ตรง
@@ -1988,7 +1988,7 @@ public partial class OrderDetailUserControl : UserControl
             return;
         }
 
-        string program = programInput.Text.Trim();
+        string program = programInput.Text.Trim(); // ใช้ชื่อโปรแกรม UV หาระยะแคลมป์ในฐานต้นทาง
         if (string.IsNullOrEmpty(program) || program == Dash)
         {
             Notify.WarnModal(this, "แจ้งเตือน", "ไม่มีชื่อโปรแกรม UV");
@@ -2005,7 +2005,7 @@ public partial class OrderDetailUserControl : UserControl
         mm = ClampService.ClampMm(mm);
         var axis = s.Find(IaiAxisKey(isPlate, zone));
         if (axis == null) return;
-        string col = axis.Column;
+        string col = axis.Column; // เลือกคอลัมน์ให้ตรงกับแกน Plate หรือ Shim
 
         if (!Confirm.Ask(this, "ยืนยัน Upload",
                 $"บันทึก {col} = {mm} mm ให้ \"{program}\"\nไปยัง mydatabase และ Backend\n\nยืนยันหรือไม่?"))
@@ -2016,12 +2016,12 @@ public partial class OrderDetailUserControl : UserControl
         {
             var errors = new List<string>();
 
-            var (dbOk, dbMsg) = ClampService.Upload(s.DbPath, program, axis, mm);
-            if (!dbOk) errors.Add($"mydatabase: {dbMsg}");
+            var (dbOk, dbMsg) = ClampService.Upload(s.DbPath, program, axis, mm); // อัปเดตระยะใน mydatabase ก่อนบันทึกฐานกลาง
+            if (!dbOk) errors.Add($"mydatabase: {dbMsg}"); // เก็บข้อผิดพลาดไว้ โดยยังลองบันทึก Backend ต่อ
 
             if (_api != null && _jobId > 0)
             {
-                var request = new IaiCreateRequest { PrintJobsId = _jobId };
+                var request = new IaiCreateRequest { PrintJobsId = _jobId }; // ผูกค่าที่ปรับกับ Job ที่เปิดอยู่
                 if (isPlate)
                 {
                     request.M1ProgramName = program;
@@ -2037,7 +2037,7 @@ public partial class OrderDetailUserControl : UserControl
                     else if (zone == "Z2") request.IaiZ2 = mm;
                 }
 
-                var (apiOk, apiErr) = await _api.CreateIaiAsync(request);
+                var (apiOk, apiErr) = await _api.CreateIaiAsync(request); // บันทึก Backend แยกจาก mydatabase จึงอาจสำเร็จแค่ฝั่งเดียว
                 if (!apiOk) errors.Add($"Backend: {apiErr}");
             }
             else

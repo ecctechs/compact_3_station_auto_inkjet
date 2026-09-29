@@ -29,25 +29,25 @@ public static class JobStageService
     /// </param>
     public static string? Describe(int jobId, string? markingMethod, IEnumerable<MachineQueueRow> rows)
     {
-        var all = rows as IList<MachineQueueRow> ?? rows.ToList();
-        var mine = all.Where(r => r.PrintJobsId == jobId).ToList();
+        var all = rows as IList<MachineQueueRow> ?? rows.ToList(); // เก็บลำดับคิวตามที่ Backend ส่งมา
+        var mine = all.Where(r => r.PrintJobsId == jobId).ToList(); // แยกแถวคิวของ Job ที่กำลังดู
         if (mine.Count == 0) return null;
 
-        if (mine.Any(r => r.NeedsSendReview)) return "กำลังส่ง / รอตรวจสอบผล";
+        if (mine.Any(r => r.NeedsSendReview)) return "กำลังส่ง / รอตรวจสอบผล"; // ถ้ายังไม่รู้ผลส่ง ให้บอกจุดนี้ก่อนแสดงด้านหรือเลขคิว
 
-        var plan = MarkingMethodService.Resolve(markingMethod);
+        var plan = MarkingMethodService.Resolve(markingMethod); // ใช้แผน Marking แยกว่าเครื่องกำลังทำ Plate หรือ Shim
 
         // ถือเครื่องอยู่ = ไม่มีใครขวาง บอกด้านที่กำลังทำ
-        if (FirstInPlanOrder(plan, mine.Where(IsActive)) is { } holding)
+        if (FirstInPlanOrder(plan, mine.Where(IsActive)) is { } holding) // งานที่ถือเครื่องอยู่แสดงด้านที่มาก่อนในแผน
             return SideOf(plan, holding);
 
         // ยังไม่ถึงคิว บอกว่าอีกกี่คิวถึงตัวเอง
         if (FirstInPlanOrder(plan, mine.Where(IsPending)) is not { } waiting) return null;
 
         int position = all
-            .Where(r => IsPending(r) && SameMachine(r.Machine, waiting.Machine))
+            .Where(r => IsPending(r) && SameMachine(r.Machine, waiting.Machine)) // นับลำดับเฉพาะคิวรอของเครื่องเดียวกัน
             .ToList()
-            .FindIndex(r => r.Id == waiting.Id);
+            .FindIndex(r => r.Id == waiting.Id); // หาตำแหน่งของงานนี้ก่อนแสดง Q1, Q2 ต่อกัน
 
         return position < 0 ? null : $"Q{position + 1}";
     }
@@ -79,7 +79,7 @@ public static class JobStageService
     /// </summary>
     private static string? SideOf(MarkingPlan plan, MachineQueueRow row)
     {
-        if (plan.Plate == plan.Shim)
+        if (plan.Plate == plan.Shim) // กรณีใช้เครื่องเดิมสองด้าน ต้องดูเลขรอบประกอบ
             return plan.Plate == MarkingMachine.None
                 ? null
                 : row.Round >= 2 ? "Mark Shim" : "Mark Plate";

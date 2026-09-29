@@ -42,3 +42,26 @@ Desktop.ini
 
 # ผลลัพธ์จาก build-installer.bat — ไฟล์ติดตั้งกับ log ไม่ต้องเก็บใน git
 dist/
+InkjetBackend/controllers/JobController.js
+InkjetBackend/controllers/JobController.js
+InkjetBackend/controllers/MachineQueueController.js
+InkjetBackend/services/queueGuard.js
+InkjetOperator/Services/AppSettingsFile.cs
+InkjetOperator/Services/ClampService.cs
+InkjetOperator/Services/ConnectionPreflight.cs
+InkjetOperator/Services/JobProcessService.cs
+InkjetOperator/Services/JobSendService.cs
+InkjetOperator/Services/JobStageService.cs
+InkjetOperator/Services/MachineSendBatch.cs
+InkjetOperator/Services/MarkingMethodService.cs
+InkjetOperator/Services/PlcOrderService.cs
+InkjetOperator/Services/PushButtonSettings.cs
+InkjetOperator/Services/PushButtonWatcher.cs
+InkjetOperator/Services/SettingsStore.cs
+InkjetOperator/Services/SqliteDataService.cs
+InkjetOperator/Services/UvTcpService.cs
+InkjetOperator/Views/OrderDetailUserControl.cs
+InkjetOperator/Views/OrderListUserControl.cs
+InkjetOperator/Views/ScanBarcodeUserControl.cs
+outputs/01a0ce44-update-20260929/Compact_Inkjet_IT_Test.xlsx
+outputs/01a0ce44-update-20260929/Station_Code_Guide.xlsx

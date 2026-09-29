@@ -120,15 +120,15 @@ public sealed class PushButtonWatcher : IDisposable
         Stop();
 
         // ต้องฟังต่อแม้ปิดใช้งานอยู่ เพื่อเริ่มอ่านได้ทันทีเมื่อบันทึกเปิดใช้งาน
-        PushButtonSettings.Saved += OnSettingsSaved;
-        _settings = PushButtonSettings.Load();
+        PushButtonSettings.Saved += OnSettingsSaved; // รับการเปลี่ยนค่าปุ่มแม้ตอนนี้ยังปิดใช้งานอยู่
+        _settings = PushButtonSettings.Load(); // โหลดบิตและปลายทาง PLC ชุดล่าสุด
         if (!_settings.IsReady || _settings.Validate() != null) return;
 
-        _buttons = _settings.Watched().Select(w => (w.Address, w.Machine)).ToArray();
+        _buttons = _settings.Watched().Select(w => (w.Address, w.Machine)).ToArray(); // ST1 เฝ้าสามปุ่ม ส่วน ST3 ไม่มีรายการอ่าน
         if (_buttons.Length == 0) return;
 
-        _lastOn = new bool[_buttons.Length];
-        PlanBatchRead();
+        _lastOn = new bool[_buttons.Length]; // จำค่าปุ่มแยกรายเครื่องสำหรับจับการกดใหม่
+        PlanBatchRead(); // วางช่วงอ่านรวม ถ้าบิต M อยู่ไม่ห่างกันเกินกำหนด
 
         _failures = 0;
         _resync = true;
@@ -151,22 +151,22 @@ public sealed class PushButtonWatcher : IDisposable
     /// </summary>
     private void PlanBatchRead()
     {
-        _batchCount = 0;
-        _offsets = new int[_buttons.Length];
+        _batchCount = 0; // เริ่มจากอ่านแยกไว้ก่อน จนตรวจว่ารวมช่วงได้
+        _offsets = new int[_buttons.Length]; // จำตำแหน่งของแต่ละปุ่มในชุดบิตที่อ่านรวม
 
-        var numbers = new int[_buttons.Length];
+        var numbers = new int[_buttons.Length]; // เก็บเลข M ของแต่ละปุ่มเพื่อหาช่วงอ่าน
         for (int i = 0; i < _buttons.Length; i++)
         {
             if (!_buttons[i].Address.StartsWith("M", StringComparison.OrdinalIgnoreCase)) return;
             if (!McProtocolService.TryParseAddress(_buttons[i].Address, out _, out numbers[i], out _)) return;
         }
 
-        int min = numbers.Min(), max = numbers.Max();
-        if (max - min + 1 > MaxBatchPoints) return;
+        int min = numbers.Min(), max = numbers.Max(); // หาบิตแรกและบิตสุดท้ายที่ต้องอ่าน
+        if (max - min + 1 > MaxBatchPoints) return; // ช่วงกว้างเกินกำหนดให้กลับไปอ่านทีละปุ่ม
 
-        _batchStart = min;
-        _batchCount = max - min + 1;
-        for (int i = 0; i < numbers.Length; i++) _offsets[i] = numbers[i] - min;
+        _batchStart = min; // ตั้งบิตเริ่มอ่านรวม
+        _batchCount = max - min + 1; // อ่านให้ครอบคลุมทุกปุ่มในครั้งเดียว
+        for (int i = 0; i < numbers.Length; i++) _offsets[i] = numbers[i] - min; // จำว่าค่าปุ่มแต่ละตัวอยู่ช่องใดในผลอ่าน
     }
 
     /// <summary>อ่านค่าของทุกปุ่มที่เฝ้าอยู่ เรียงตรงกับ <see cref="_buttons"/></summary>
@@ -174,13 +174,13 @@ public sealed class PushButtonWatcher : IDisposable
     {
         if (_batchCount > 0)
         {
-            var (ok, bits, error) = await McProtocolService.ReadBitsAsync(
-                _settings.Ip, _settings.Port, $"M{_batchStart}", _batchCount);
+            var (ok, bits, error) = await McProtocolService.ReadBitsAsync( // อ่านหลายบิตจาก PLC ในคำขอเดียว
+                _settings.Ip, _settings.Port, $"M{_batchStart}", _batchCount); // ใช้ช่วง M ที่คำนวณไว้จากค่าปุ่ม
 
             if (!ok) return (false, [], error);
 
             var picked = new bool[_buttons.Length];
-            for (int i = 0; i < picked.Length; i++) picked[i] = bits[_offsets[i]];
+            for (int i = 0; i < picked.Length; i++) picked[i] = bits[_offsets[i]]; // ดึงเฉพาะบิตของปุ่มที่เฝ้า ไม่ใช้บิตคั่นกลาง
             return (true, picked, "");
         }
 
@@ -199,8 +199,8 @@ public sealed class PushButtonWatcher : IDisposable
 
     public void Stop()
     {
-        _generation++;
-        PushButtonSettings.Saved -= OnSettingsSaved;
+        _generation++; // ทำให้ผลอ่านที่เริ่มด้วยค่าเก่าหมดอายุ
+        PushButtonSettings.Saved -= OnSettingsSaved; // ถอดการรับเหตุการณ์เดิมก่อนหยุดหรือโหลดใหม่
         _timer.Stop();
         _resync = true;
     }
@@ -222,13 +222,13 @@ public sealed class PushButtonWatcher : IDisposable
         }
 
         _reading = true;
-        int generation = _generation;
+        int generation = _generation; // จำว่ารอบนี้เริ่มอ่านด้วยค่าตั้งชุดใด
         try
         {
-            var (ok, on, error) = await ReadAllAsync();
+            var (ok, on, error) = await ReadAllAsync(); // อ่านค่าปุ่มทุกเครื่องที่ PC นี้รับผิดชอบ
 
             // เปลี่ยน Address / หยุดเฝ้าระหว่างรอ ห้ามใช้คำตอบจากการอ่านรอบเก่า
-            if (generation != _generation || _disposed || !Running) return;
+            if (generation != _generation || _disposed || !Running) return; // ไม่ใช้ผลอ่านเก่าหลังเปลี่ยน Address หรือหยุดเฝ้า
 
             if (!ok)
             {
@@ -240,28 +240,28 @@ public sealed class PushButtonWatcher : IDisposable
 
             if (_resync)
             {
-                Array.Copy(on, _lastOn, on.Length);
+                Array.Copy(on, _lastOn, on.Length); // รอบแรกจำค่าไว้ก่อน ไม่นับบิตค้างเป็นการกด
                 _resync = false;
                 return;
             }
 
             for (int i = 0; i < _buttons.Length; i++)
             {
-                bool rising = on[i] && !_lastOn[i];
+                bool rising = on[i] && !_lastOn[i]; // นับเฉพาะปุ่มที่เปลี่ยนจาก 0 เป็น 1
 
                 // จำค่าไว้ก่อนแจ้ง — บิตค้างเป็น 1 อยู่ 2 วินาทีจะได้ไม่ถูกนับซ้ำ
                 // ในรอบถัดไป ซึ่งที่ 300 ms ต่อรอบคือนับซ้ำอีกหกครั้ง
-                _lastOn[i] = on[i];
+                _lastOn[i] = on[i]; // จำค่าก่อนแจ้งเหตุการณ์ เพื่อไม่ปล่อยซ้ำตอนกดค้าง
                 if (!rising) continue;
 
-                var machine = _buttons[i].Machine;
+                var machine = _buttons[i].Machine; // เลือกเครื่องที่ตรงกับปุ่มนี้
 
                 // จอไม่ว่าง — ไม่ลงมือ แต่ต้องบอกให้รู้ว่ามีคนกด
                 //
                 // ห้ามเก็บไว้ทำทีหลัง เพราะคนกดอาจเดินออกไปแล้ว พอมีคนมาปิดกล่องอีก
                 // สิบวินาทีต่อมา เครื่องจะขยับเองตอนไม่มีใครยืนอยู่ตรงนั้น
-                if (CanAct?.Invoke(machine) == false) BlockedPress?.Invoke(this, machine);
-                else Pressed?.Invoke(this, machine);
+                if (CanAct?.Invoke(machine) == false) BlockedPress?.Invoke(this, machine); // เครื่องนี้ยังส่งอยู่ ให้แจ้งกดใหม่ ไม่สะสมไว้ทำทีหลัง
+                else Pressed?.Invoke(this, machine); // ให้ Order List ปล่อยคิวเฉพาะเครื่องที่ถูกกด
             }
         }
         finally

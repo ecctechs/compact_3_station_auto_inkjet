@@ -69,12 +69,12 @@ public sealed class PushButtonSettings
     public IEnumerable<(int Station, string Address, string Machine)> Watched()
     {
         // ST3 มีจอของตัวเองแต่ไม่ต้องเฝ้าปุ่มไหน — ST1 เฝ้าให้ครบแล้ว
-        if (StationService.IsSt3) yield break;
+        if (StationService.IsSt3) yield break; // ST3 ไม่อ่านปุ่มซ้ำ เพราะ ST1 อ่านทั้งสามปุ่มให้แล้ว
 
         foreach (var (station, address) in Addresses())
         {
             if (address.Length == 0) continue;
-            yield return (station, address, MachineFor(station));
+            yield return (station, address, MachineFor(station)); // ผูกบิตแต่ละปุ่มกับเครื่องที่ต้องปล่อยคิว
         }
     }
 
@@ -112,7 +112,7 @@ public sealed class PushButtonSettings
         CustomSettingsManager.Write("PUSHBTN_ADDRESS_ST2", AddressSt2.Trim().ToUpperInvariant());
         CustomSettingsManager.Write("PUSHBTN_ADDRESS_ST3", AddressSt3.Trim().ToUpperInvariant());
         CustomSettingsManager.Write("PUSHBTN_POLL_MS", Clamp(PollMs.ToString()).ToString());
-        Saved?.Invoke(this, EventArgs.Empty);
+        Saved?.Invoke(this, EventArgs.Empty); // แจ้งตัวฟังปุ่มให้ใช้ค่าที่เพิ่งบันทึกโดยไม่ต้องเปิดใหม่
     }
 
     /// <summary>

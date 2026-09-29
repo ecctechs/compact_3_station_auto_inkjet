@@ -192,10 +192,10 @@ public static class ClampService
     }
 
     /// <summary>หาค่าของแกนหนึ่งจาก MainTable</summary>
-    public static ClampLookup Lookup(string dbPath, string programName, ClampAxis axis)
+    public static ClampLookup Lookup(string dbPath, string programName, ClampAxis axis) // ค้นระยะของแกนนี้จากไฟล์แคลมป์
     {
         string program = (programName ?? "").Trim();
-        if (program.Length == 0)
+        if (program.Length == 0) // ไม่มีชื่อโปรแกรมให้ค้น
             return new ClampLookup(false, 0, axis.Column, "ยังไม่ได้ระบุชื่อโปรแกรม");
 
         if (string.IsNullOrWhiteSpace(dbPath))
@@ -207,7 +207,7 @@ public static class ClampService
         var columns = ReadColumns(dbPath);
         if (columns.Count > 0 && !columns.Contains(axis.Column))
             return new ClampLookup(false, 0, axis.Column,
-                $"ฐานข้อมูลนี้ไม่มีคอลัมน์ {axis.Column}");
+                $"ฐานข้อมูลนี้ไม่มีคอลัมน์ {axis.Column}"); // ระบุคอลัมน์ที่ไม่มี
 
         try
         {
@@ -216,22 +216,22 @@ public static class ClampService
 
             using var cmd = conn.CreateCommand();
             cmd.CommandText =
-                $"SELECT {axis.Column} FROM MainTable WHERE {axis.NameColumn} = @p LIMIT 1";
+                $"SELECT {axis.Column} FROM MainTable WHERE {axis.NameColumn} = @p LIMIT 1"; // อ่านค่าแกนจาก MainTable แถวแรกที่ตรง
             cmd.Parameters.AddWithValue("@p", program);
 
-            object? raw = cmd.ExecuteScalar();
-            if (raw is null or DBNull)
+            object? raw = cmd.ExecuteScalar(); // อ่านค่าช่องเดียวที่ค้นได้
+            if (raw is null or DBNull) // ไม่พบแถวหรือค่าใน DB เป็น null
                 return new ClampLookup(false, 0, axis.Column,
-                    $"ไม่พบ \"{program}\" ใน {axis.NameColumn}");
+                    $"ไม่พบ \"{program}\" ใน {axis.NameColumn}"); // แจ้งชื่อโปรแกรมที่ค้นไม่พบ
 
             // เก็บเป็น TEXT ค่าว่างแปลว่ายังไม่ได้ setup
-            string text = raw.ToString()?.Trim() ?? "";
-            if (text.Length == 0)
+            string text = raw.ToString()?.Trim() ?? ""; // แปลงค่าดิบเป็นข้อความและตัดช่องว่าง
+            if (text.Length == 0) // พบแถวแต่ยังไม่ได้ใส่ค่า
                 return new ClampLookup(false, 0, axis.Column, $"{axis.Column} ยังไม่ได้ setup");
 
-            if (!double.TryParse(text, out double value))
+            if (!double.TryParse(text, out double value)) // ตรวจว่าค่าที่อ่านเป็นตัวเลข
                 return new ClampLookup(false, 0, axis.Column,
-                    $"{axis.Column} = \"{text}\" ไม่ใช่ตัวเลข");
+                    $"{axis.Column} = \"{text}\" ไม่ใช่ตัวเลข"); // บอกค่าที่แปลงเป็นตัวเลขไม่ได้
 
             return new ClampLookup(true, ClampMm(value), axis.Column, "");
         }
@@ -310,7 +310,7 @@ public static class ClampService
     public static async Task<ClampResult> ApplyAsync(ClampSettings s, ClampAxis axis, int valueMm)
     {
         int mm = ClampMm(valueMm);
-        int raw = ToRaw(mm);
+        int raw = ToRaw(mm); // แปลงระยะเป็นค่าที่ PLC รับตามสูตรของระบบเดิม
         var log = new List<string> { $"── {axis.Display} ({axis.Column}) ──" };
 
         if (!axis.IsConfigured)
@@ -319,20 +319,20 @@ public static class ClampService
             return new ClampResult(false, mm, raw, null, string.Join("\n", log));
         }
 
-        var (wOk, wErr) = await McProtocolService.WriteWordAsync(s.Ip, s.Port, axis.AddrTarget, raw);
+        var (wOk, wErr) = await McProtocolService.WriteWordAsync(s.Ip, s.Port, axis.AddrTarget, raw); // เขียนระยะลง D ของแกนนี้ก่อนสั่งวิ่ง
         log.Add($"เขียน {axis.AddrTarget} = {raw} → {(wOk ? "OK" : "❌ " + wErr)}");
         if (!wOk) return new ClampResult(false, mm, raw, null, string.Join("\n", log));
 
         // Node-RED หน่วงตรงนี้ก่อนพัลส์ — ให้ PLC รับค่าเข้า D ก่อนเห็นขอบขาขึ้นของ M
-        await Task.Delay(SettleMs);
+        await Task.Delay(SettleMs); // รอให้ PLC รับระยะก่อนพัลส์ Run
 
-        var (pOk, _) = await PulseAsync(s, axis.AddrRun, RunPulseMs, log);
+        var (pOk, _) = await PulseAsync(s, axis.AddrRun, RunPulseMs, log); // สั่ง Run เป็นพัลส์ ไม่ค้างบิตไว้
         if (!pOk) return new ClampResult(false, mm, raw, null, string.Join("\n", log));
 
         int? status = null;
-        if (axis.AddrStatus.Trim().Length > 0)
+        if (axis.AddrStatus.Trim().Length > 0) // อ่านสถานะกลับเฉพาะแกนที่กำหนด address ไว้
         {
-            var (rOk, value, rErr) = await McProtocolService.ReadWordAsync(s.Ip, s.Port, axis.AddrStatus);
+            var (rOk, value, rErr) = await McProtocolService.ReadWordAsync(s.Ip, s.Port, axis.AddrStatus); // อ่านไม่ผ่านจะอยู่ใน log แต่ไม่เปลี่ยนผลส่งก่อนหน้า
             log.Add($"อ่าน {axis.AddrStatus} → {(rOk ? value.ToString() : "❌ " + rErr)}");
             if (rOk) status = value;
         }
@@ -372,13 +372,13 @@ public static class ClampService
     private static async Task<(bool ok, string error)> PulseAsync(
         ClampSettings s, string address, int holdMs, List<string> log)
     {
-        var (onOk, onErr) = await McProtocolService.WriteBitAsync(s.Ip, s.Port, address, true);
+        var (onOk, onErr) = await McProtocolService.WriteBitAsync(s.Ip, s.Port, address, true); // ยกบิต Run หรือ Reset ของแกนที่เลือก
         log.Add($"{address} ON → {(onOk ? "OK" : "❌ " + onErr)}");
         if (!onOk) return (false, onErr);
 
-        await Task.Delay(holdMs);
+        await Task.Delay(holdMs); // ค้างบิตตามเวลาพัลส์ก่อนลดกลับ
 
-        var (offOk, offErr) = await McProtocolService.WriteBitAsync(s.Ip, s.Port, address, false);
+        var (offOk, offErr) = await McProtocolService.WriteBitAsync(s.Ip, s.Port, address, false); // ลดบิตเพื่อให้ PLC รับพัลส์รอบถัดไป
         log.Add($"{address} OFF → {(offOk ? "OK" : "❌ " + offErr)}");
         return offOk ? (true, "") : (false, offErr);
     }
