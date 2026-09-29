@@ -2,10 +2,6 @@ using System.Text.Json.Serialization;
 
 namespace InkjetOperator.Models;
 
-/// <summary>
-/// One row of the PLC register map (backend table <c>plc_register_maps</c>).
-/// Maps an address range to a named PLC register range.
-/// </summary>
 public class PlcRegisterMap
 {
     [JsonPropertyName("id")]
@@ -36,7 +32,6 @@ public class PlcRegisterMap
     public int SortOrder { get; set; }
 }
 
-/// <summary>Body for POST /plc-setting/bulkSave — replaces the whole table.</summary>
 public class PlcBulkSaveRequest
 {
     [JsonPropertyName("rows")]

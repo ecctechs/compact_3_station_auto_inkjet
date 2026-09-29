@@ -4,40 +4,13 @@ using System.Net.NetworkInformation;
 
 namespace InkjetOperator.Services;
 
-/// <summary>
-/// เปิด backend ให้เองตอนโปรแกรมเริ่ม
-///
-/// <para>
-/// หน้างานมีแค่จอเดียวและไม่มีใครนั่งเฝ้า การให้พนักงานเปิด terminal หรือ VS Code
-/// แล้วพิมพ์คำสั่งก่อนใช้โปรแกรมทุกเช้าเป็นขั้นตอนที่ลืมได้ และพอลืมแล้วอาการที่เห็น
-/// คือหน้าจอว่างเปล่าโดยไม่บอกสาเหตุ ในเมื่อยังไงก็ต้องเปิดโปรแกรมนี้อยู่แล้ว
-/// ก็ให้มันเปิด backend ให้เลย
-/// </para>
-/// <para>
-/// เปิดเฉพาะเมื่อ backend อยู่เครื่องเดียวกันเท่านั้น ดูจาก <c>PC_IP</c> ที่หน้า
-/// Backend Setting — ถ้าชี้ไปเครื่องอื่น (เช่น mini PC) จะไม่ทำอะไร เพราะสั่งเปิด
-/// โปรเซสข้ามเครื่องไม่ได้ และไม่ควรทำด้วย
-/// </para>
-/// <para>
-/// ไม่ปิด backend ตอนปิดโปรแกรม เพราะอีกสถานีอาจกำลังใช้ตัวเดียวกันอยู่
-/// </para>
-/// </summary>
 public static class BackendLauncher
 {
-    /// <summary>พอร์ตที่ backend ฟัง — ตรงกับที่ทุกหน้าใช้ต่อ (<c>http://ip:3000</c>)</summary>
     public const int Port = 3000;
 
     private const int StartupWaitMs = 20000;
     private const int PollMs = 300;
 
-    /// <summary>
-    /// เปิดถ้าจำเป็น — คืนข้อความปัญหา หรือ null เมื่อไม่มีอะไรต้องบอก
-    ///
-    /// <para>
-    /// คืน null ทั้งกรณีที่เปิดสำเร็จ กรณีที่มีคนเปิดค้างไว้อยู่แล้ว และกรณีที่
-    /// backend อยู่เครื่องอื่นซึ่งไม่ใช่หน้าที่เรา
-    /// </para>
-    /// </summary>
     public static async Task<string?> EnsureRunningAsync()
     {
         if (!BackendIsLocal()) return null;
@@ -53,8 +26,6 @@ public static class BackendLauncher
 
         try
         {
-            // node index.js ไม่ใช่ npm run dev — dev เป็น nodemon ที่คอยรีสตาร์ท
-            // เวลาไฟล์เปลี่ยน ซึ่งมีไว้ตอนเขียนโปรแกรม ไม่ใช่ตอนใช้งานจริง
             Process.Start(new ProcessStartInfo
             {
                 FileName = "node",
@@ -75,16 +46,6 @@ public static class BackendLauncher
               + "ตรวจว่า PostgreSQL เปิดอยู่ และไฟล์ .env ของ backend ถูกต้อง";
     }
 
-    /// <summary>
-    /// backend อยู่เครื่องนี้ไหม — ดูจากที่อยู่ที่ทุกหน้าใช้ต่อ
-    /// ตั้งไม่ตรงกับความจริงคือตั้งค่าผิด ไม่ใช่เรื่องที่ตรงนี้จะเดาให้
-    ///
-    /// <para>
-    /// นับ IP วงแลนของเครื่องนี้เองด้วย ไม่ใช่แค่ 127.0.0.1 — เครื่องที่เป็นตัวหลัก
-    /// มักตั้ง <c>PC_IP</c> เป็น IP แลนของตัวเอง (เช่น 192.168.1.72) ให้ตรงกับที่
-    /// สถานีอื่นใช้ต่อเข้ามา เดิมกรณีนี้ถูกนับเป็นเครื่องอื่นแล้วข้ามการเปิดไปเงียบ ๆ
-    /// </para>
-    /// </summary>
     private static bool BackendIsLocal()
     {
         var ip = CustomSettingsManager.Read("PC_IP", "127.0.0.1").Trim();
@@ -98,7 +59,6 @@ public static class BackendLauncher
         return IsOwnAddress(parsed);
     }
 
-    /// <summary>IP นี้เป็นของการ์ดแลนตัวใดตัวหนึ่งบนเครื่องนี้ไหม</summary>
     private static bool IsOwnAddress(IPAddress address)
     {
         try
@@ -113,14 +73,6 @@ public static class BackendLauncher
         }
     }
 
-    /// <summary>
-    /// มีใครฟังพอร์ตนี้อยู่แล้วหรือยัง
-    ///
-    /// <para>
-    /// ต้องเช็คก่อนเสมอ ไม่งั้นเปิดโปรแกรมสองสถานีบนเครื่องเดียวกัน หรือเปิดโปรแกรม
-    /// ซ้ำสองครั้ง จะได้ node ตัวที่สองที่ล้มทันทีด้วย EADDRINUSE
-    /// </para>
-    /// </summary>
     private static bool IsListening()
     {
         try

@@ -17,8 +17,6 @@ public partial class DatabaseSettingUserControl : UserControl
         btnSave.Click += BtnSave_Click;
         btnCancel.Click += (_, _) => LoadData();
 
-        // ไฟสถานะต้องตรงกับของจริง ไม่ใช่ภาพนิ่งตั้งแต่ตอนเปิดโปรแกรม
-        // กติกาทั้งหมดอยู่ที่ StatusRecheck
         Services.StatusRecheck.Wire(this, tmrAutoCheck, () => CheckStatusAsync());
     }
 
@@ -33,13 +31,6 @@ public partial class DatabaseSettingUserControl : UserControl
         txtClampPath.BackColor = Color.White;
     }
 
-    /// <summary>
-    /// Re-reads both database paths and refreshes the status labels.
-    /// <para>
-    /// The page no longer has a Check Status button; this stays public because
-    /// <see cref="SettingUserControl"/> calls it when the Setting page opens.
-    /// </para>
-    /// </summary>
     public async Task CheckStatusAsync()
     {
         var path = CustomSettingsManager.Read("DB_PATH");
@@ -82,10 +73,6 @@ public partial class DatabaseSettingUserControl : UserControl
         if (lblStatus.InvokeRequired) lblStatus.Invoke(Apply); else Apply();
     }
 
-    /// <summary>
-    /// สถานะของ mydatabase.db3 — ต้องมีตาราง MainTable ถึงจะอ่านระยะแคลมป์ได้
-    /// ไม่ตั้งค่าก็ไม่ถือว่าผิด (งานที่ไม่ผ่าน UV ไม่ต้องใช้) จึงขึ้นเป็นข้อความเทาเฉยๆ
-    /// </summary>
     private void UpdateClampStatus(string path)
     {
         bool exists = !string.IsNullOrWhiteSpace(path) && File.Exists(path);
@@ -173,7 +160,6 @@ public partial class DatabaseSettingUserControl : UserControl
             return;
         }
 
-        // Clamp DB ไม่บังคับ — ว่างไว้ได้ แต่ถ้าใส่มาต้องใช้ได้จริง
         var clampPath = txtClampPath.Text.Trim();
         if (clampPath.Length > 0)
         {

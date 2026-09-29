@@ -15,7 +15,6 @@ public partial class OrderDetailUserControl : UserControl
     private string _barcode = "";
     private bool _isSwapped;
 
-    /// <summary>กำลังบันทึก pattern อยู่ — กันกดปุ่มที่แก้ pattern ซ้อนกันระหว่างนั้น</summary>
     private bool _savingPattern;
     private List<string> _sendSteps = [];
     private int _currentStep;
@@ -24,28 +23,15 @@ public partial class OrderDetailUserControl : UserControl
     private ImageHoverPopup? _refPopup;
     private List<UvJobDataDto> _uvData = [];
 
-    // เก็บไว้เพื่อคำนวณบรรทัด Plate / Shim ใหม่ได้ทุกเมื่อ ไม่ใช่แค่ตอนเปิดหน้า
     private string? _markingMethod;
     private string? _erpMfg;
 
-    /// <summary>
-    /// โปรแกรม UV ที่ "เลือกแล้ว" ของแต่ละเครื่อง — คีย์เป็น "UV1" / "UV2"
-    ///
-    /// มาจากสามทาง: รุ่นที่ส่งเข้าเครื่องไปแล้ว · รุ่นที่ ST3 เลือกไว้รอ ST1 ส่ง ·
-    /// และรุ่นที่ผู้ใช้เพิ่งเลือกในหน้านี้ ไม่มีในนี้ = ยังใช้ชื่อฐานจากข้อมูลงาน
-    ///
-    /// รูปอ้างอิงของ Plate / Shim อ่านจากตรงนี้ที่เดียว เปลี่ยนค่าแล้วเรียก
-    /// <see cref="RefreshFlowRows"/> รูปจะตามทันทีโดยไม่มีทางค้างรุ่นเก่า
-    /// </summary>
     private readonly Dictionary<string, string> _chosenUvProgram = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>สถานะงานตอนเปิดหน้า — ใช้กันไม่ให้สั่งแคลมป์ก่อนเริ่มงาน</summary>
     private string _jobStatus = "";
 
-    /// <summary>ชื่อเรียกงานในข้อความที่พนักงานอ่าน — "ERP (LOT)" ไม่ใช่เลข id</summary>
     private string _jobLabel = "";
 
-    /// <summary>รอบก่อนยังตรวจไม่เสร็จ — กันไม่ให้รอบใหม่ทับ</summary>
     private bool _connCheckBusy;
 
     private readonly bool _isDevMode;
@@ -53,15 +39,6 @@ public partial class OrderDetailUserControl : UserControl
 
     public event EventHandler? CloseRequested;
 
-    /// <summary>
-    /// ขอให้หน้า Order List สั่ง ST1 ส่งขั้นถัดไปให้ — ค่าที่แนบมาคือชื่อขั้น เช่น "UV2"
-    ///
-    /// <para>
-    /// หน้านี้ไม่ยิงคำขอเอง เพราะการขอให้ ST1 ส่งมีด่านตรวจอยู่ที่หน้า Order List ครบแล้ว
-    /// (สถานีปลายทางว่างไหม · เลือกรุ่นย่อยของโปรแกรม UV · รอผลจริงจาก ST1 ไม่เกิน 40 วิ)
-    /// ทำอีกชุดที่นี่คือเปิดทางให้สองที่ตรวจไม่เหมือนกันในวันข้างหน้า
-    /// </para>
-    /// </summary>
     public event EventHandler<string>? RemoteStartRequested;
 
     public OrderDetailUserControl()
@@ -73,7 +50,6 @@ public partial class OrderDetailUserControl : UserControl
         var rawLevel = CustomSettingsManager.Read("MENU_LEVEL", "1");
         _isDevMode = int.TryParse(rawLevel, out var lvl) && lvl == 99;
 
-        // หน้าตาปุ่มปิดมาจากที่เดียวกับทุกหน้า — designer คุมแค่ตำแหน่งกับขนาด
         ButtonStyles.Close(btnDetailClose);
         btnDetailClose.Click += (_, _) => CloseRequested?.Invoke(this, EventArgs.Empty);
         btnMkSwap.Click += async (_, _) => await SwapMkDataAsync();
@@ -96,14 +72,6 @@ public partial class OrderDetailUserControl : UserControl
         Disposed += (_, _) => _refPopup?.Dispose();
     }
 
-    // ── Marking reference image (hover preview) ──────────────
-
-    /// <summary>
-    /// เหลือเฉพาะช่องชื่อโปรแกรมของ UV
-    ///
-    /// ฝั่ง MK ย้ายไปอยู่บนบรรทัด marking method แล้ว และเปลี่ยนเป็นกดคลิก
-    /// ไม่ใช่ hover — hover ไม่มีอะไรบอกว่ามีรูปให้ดู
-    /// </summary>
     private void WireRefImageHover()
     {
         foreach (var box in new[] { txtUv1Program, txtUv2Program })
@@ -120,8 +88,6 @@ public partial class OrderDetailUserControl : UserControl
         var name = box.Text.Trim();
         if (name.Length == 0 || name == Dash) return;
 
-        // เลือกรุ่นย่อยแล้วต้องเห็นเฉพาะรุ่นนั้น ค้นแบบตรงเป๊ะจึงไม่ลากรุ่นพี่น้อง
-        // ที่ชื่อขึ้นต้นเหมือนกันติดมาด้วย — ยังไม่ได้เลือกค่อยดูรวมทุกรุ่นไปก่อน
         string machine = ReferenceEquals(box, txtUv1Program) ? "UV1" : "UV2";
         var paths = _chosenUvProgram.ContainsKey(machine)
             ? MarkingRefImageService.FindImagesExact(name)
@@ -144,35 +110,18 @@ public partial class OrderDetailUserControl : UserControl
         tblMk1Blocks.Columns = BuildBlockColumns();
         tblMk2Blocks.Columns = BuildBlockColumns();
 
-        // ข้อความกับตำแหน่งของแต่ละบล็อกแก้ได้เหมือนโปรแกรมเดิม แตะช่องแล้วพิมพ์ทับ
-        // แตะครั้งเดียวพอ ไม่ใช่ดับเบิลคลิก เพราะบนจอสัมผัสดับเบิลคลิกทำยาก
         tblMk1Blocks.EditMode = AntdUI.TEditMode.Click;
         tblMk2Blocks.EditMode = AntdUI.TEditMode.Click;
         tblUv1Texts.Columns = BuildUvColumns();
         tblUv2Texts.Columns = BuildUvColumns();
 
-        // ข้อความของ UV แก้ได้ทุกช่อง — คลิกที่ช่องแล้วพิมพ์ทับได้เลย
-        // ส่วนอื่นของฝั่ง UV ยังล็อกไว้เหมือนเดิม
         tblUv1Texts.EditMode = AntdUI.TEditMode.Click;
         tblUv2Texts.EditMode = AntdUI.TEditMode.Click;
 
-        // X Y Size Scale เป็นตัวเลขล้วน ส่วนช่อง Text ของบล็อกและของ UV พิมพ์อะไรก็ได้
         NumericInput.DigitsOnlyColumns(tblMk1Blocks, "X", "Y", "Size", "Scale");
         NumericInput.DigitsOnlyColumns(tblMk2Blocks, "X", "Y", "Size", "Scale");
     }
 
-    /// <summary>
-    /// ช่องที่รับได้แต่ตัวเลข — ผูกครั้งเดียวตอนสร้างหน้า
-    ///
-    /// <para>
-    /// Width Height Trigger Delay และความเร็วสายพาน เก็บเป็นจำนวนเต็ม ส่วน
-    /// Servo Post Act. กับ Delay เก็บเป็นทศนิยม จึงยอมให้ใส่จุดได้จุดเดียว
-    /// </para>
-    /// <para>
-    /// ค่า IAI ทั้งหกช่องเป็นจำนวนเต็มมิลลิเมตร ปุ่ม Send กับ Upload ตรวจซ้ำอยู่แล้ว
-    /// ตรงนี้กันไม่ให้พิมพ์ผิดตั้งแต่แรกเฉย ๆ
-    /// </para>
-    /// </summary>
     private void ConfigureNumericInputs()
     {
         NumericInput.DigitsOnly(
@@ -189,7 +138,6 @@ public partial class OrderDetailUserControl : UserControl
 
     private static AntdUI.ColumnCollection BuildBlockColumns() =>
     [
-        // เลขบล็อกเป็นตัวชี้ว่าแถวนี้คือช่องไหนของเครื่อง แก้ไม่ได้
         new AntdUI.Column("Block", "Block", AntdUI.ColumnAlign.Center) { Width = "16%", Editable = false },
         new AntdUI.Column("BlockText", "Text", AntdUI.ColumnAlign.Left) { Width = "36%" },
         new AntdUI.Column("X", "X", AntdUI.ColumnAlign.Center) { Width = "12%" },
@@ -200,21 +148,10 @@ public partial class OrderDetailUserControl : UserControl
 
     private static AntdUI.ColumnCollection BuildUvColumns() =>
     [
-        // ชื่อช่องเป็นตัวชี้ว่าแถวนี้คือข้อความที่เท่าไร แก้ไม่ได้
         new AntdUI.Column("Field", "Field", AntdUI.ColumnAlign.Center) { Width = "30%", Editable = false },
         new AntdUI.Column("Value", "Value", AntdUI.ColumnAlign.Left) { Width = "70%", Editable = true },
     ];
 
-    /// <summary>
-    /// ชื่อเรียกงานบนหัวจอ — "Job #1 · 07/09/26"
-    ///
-    /// เลขงานเริ่มที่ 1 ใหม่ทุกวัน ลำพังเลขจึงระบุงานไม่ได้ ต้องมีวันที่กำกับเสมอ
-    /// งานเก่าที่รับก่อนมีเลขประจำวันตกไปใช้ id ของตารางแทน
-    ///
-    /// เป็น public เพราะแถบหัวหน้าต่างที่ครอบหน้านี้อยู่ต้องเรียกชื่อเดียวกัน —
-    /// เดิมสองที่ประกอบชื่อกันเอง หัวหน้าต่างเลยขึ้น id ส่วนหัวในหน้าขึ้นเลขประจำวัน
-    /// กลายเป็นงานเดียวกันแต่เห็นสองเลขบนจอเดียว
-    /// </summary>
     public static string JobTitle(PrintJob job)
     {
         var date = ThaiTime.Text(job.CreatedAt, ThaiTime.DateFormat, "");
@@ -235,7 +172,6 @@ public partial class OrderDetailUserControl : UserControl
         _markingMethod = resolved.PlanRouting?.MarkingMethod;
         _erpMfg = resolved.PlanRouting?.ErpMfg;
 
-        // ต้องรู้ว่าแต่ละเครื่องเลือกรุ่นไหนไว้แล้ว ก่อนจะไปคำนวณบรรทัด Plate / Shim
         _chosenUvProgram.Clear();
         foreach (var machine in new[] { "UV1", "UV2" })
         {
@@ -245,8 +181,6 @@ public partial class OrderDetailUserControl : UserControl
 
         lblHeaderTitle.Text = $"Job Information — {JobTitle(resolved.Job)}";
 
-        // โชว์ address ที่ค่าแต่ละช่องจะถูกส่งไป ดึงจากตาราง register map ของ
-        // หน้า PLC Setting ไม่ได้ให้รอ เพราะแค่ป้ายกำกับ ไม่ควรหน่วงการเปิดหน้า
         _ = ShowPlcAddressesAsync();
 
         SortPatternByOrdinal();
@@ -261,8 +195,6 @@ public partial class OrderDetailUserControl : UserControl
         FillUvSection(resolved);
         ClearIaiFields();
         _ = LoadIaiAsync(resolved.Job.Id);
-        // รอบแรกโชว์ "กำลังตรวจสอบ..." ได้ เพราะยังไม่มีอะไรให้ดูอยู่ก่อน
-        // รอบถัด ๆ ไปห้ามล้างเป็นสีเทา ไม่งั้นไฟจะกะพริบเทา-เขียวทุก 15 วิ
         _ = CheckConnectionsAsync(showChecking: true);
         tmrConnCheck.Start();
     }
@@ -279,36 +211,16 @@ public partial class OrderDetailUserControl : UserControl
         lblUv2Chip.Text = UvSettingsManager.Read("UV2_NAME", "UV-002");
     }
 
-    /// <summary>
-    /// จังหวะรีเฟรชไฟสถานะ — <c>async void</c> ตัวเดียวที่ยอมให้มีในหน้านี้
-    /// ข้างในจึงห้ามโยน exception ออกมาเด็ดขาด ไม่งั้นโปรแกรมหลุดทั้งตัว
-    /// (<see cref="CheckConnectionsAsync"/> กลืน exception ไว้หมดแล้ว)
-    /// </summary>
     private async void ConnCheck_Tick(object? sender, EventArgs e)
     {
         if (IsDisposed) return;
         await CheckConnectionsAsync(showChecking: false);
     }
 
-    /// <summary>
-    /// ไฟสี่ดวงบอกว่าต่อเครื่องไหนติดบ้าง — รอบแรกตอนเปิดหน้า แล้ววนเองทุก 15 วินาที
-    ///
-    /// <para>
-    /// ไม่บล็อกอะไรเลย งานทั้งหมดเป็น I/O แบบ async และ timeout อยู่ที่ 3 วินาที
-    /// ต่อปลายทาง ยิงพร้อมกันทั้งสี่ รอบหนึ่งจึงนานเท่ารายที่ช้าที่สุดรายเดียว
-    /// </para>
-    /// <para>
-    /// เงียบเสมอ ไม่มีกล่องเด้ง ต่อไม่ติดก็แค่เปลี่ยนสีกับข้อความบนป้าย และถ้ารอบไหน
-    /// พลาด ไฟจะค้างค่าเดิมไว้เฉย ๆ รอรอบหน้า ดีกว่าล้างเป็นเทาให้คนเข้าใจผิด
-    /// </para>
-    /// </summary>
     private async Task CheckConnectionsAsync(bool showChecking)
     {
-        // รอบก่อนยังไม่จบก็ข้ามรอบนี้ ไม่ต่อคิวซ้อนกันตอนปลายทางอืด
         if (_connCheckBusy || IsDisposed) return;
 
-        // กำลังส่งงานเข้าเครื่องอยู่ก็ข้ามเหมือนกัน เหตุผลอยู่ที่ MachineBusy
-        // ไฟสถานะยอมช้าไปหนึ่งรอบได้ การส่งงานยอมพลาดไม่ได้
         if (MachineBusy.Active) return;
 
         _connCheckBusy = true;
@@ -318,7 +230,6 @@ public partial class OrderDetailUserControl : UserControl
         }
         catch
         {
-            // ไฟสถานะพังไม่ควรลากทั้งหน้าไปด้วย ปล่อยค้างค่าเดิม รอบหน้ามาใหม่
         }
         finally
         {
@@ -381,7 +292,6 @@ public partial class OrderDetailUserControl : UserControl
             lbl.ForeColor = color;
         }
 
-        // ผลอาจกลับมาตอนคนปิดหน้าไปแล้วพอดี — ปล่อยผ่านเงียบ ๆ ไม่ใช่ปล่อยให้หลุด
         try
         {
             if (lbl.InvokeRequired) lbl.Invoke(Apply); else Apply();
@@ -396,9 +306,6 @@ public partial class OrderDetailUserControl : UserControl
         var tcp = new TcpManager();
         var connect = tcp.ConnectAsync(ip, port);
 
-        // ตอน timeout เราเดินต่อโดยทิ้ง task ไว้ ต้องมีคนรับ exception ของมัน
-        // ไม่งั้นกลายเป็น unobserved exception ลอยอยู่ — เดิมเช็คครั้งเดียวตอนเปิดหน้า
-        // เลยไม่เห็นผล ตอนนี้มันวนทุก 15 วินาทีตราบเท่าที่หน้ายังเปิดอยู่
         _ = connect.ContinueWith(static t => _ = t.Exception,
             TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
 
@@ -413,20 +320,7 @@ public partial class OrderDetailUserControl : UserControl
 
     private static int Flip(int o) => o == 1 ? 2 : o == 2 ? 1 : o;
 
-    /// <summary>
-    /// สลับว่าโปรแกรมไหนไปเข้าเครื่องไหน แล้วบันทึกลงฐานข้อมูล
-    ///
-    /// <para>
-    /// ต้องบันทึกจริง ไม่ใช่เก็บไว้ในจอ เพราะปุ่มเริ่มงานย้ายไปอยู่หน้า Order List
-    /// แล้ว และหน้านั้นอ่าน pattern ใหม่จาก backend ทุกครั้งที่สั่งส่ง ถ้าเก็บไว้
-    /// แค่ในหน้านี้ กดสลับไปก็ไม่มีผลอะไรเลย
-    /// </para>
-    /// <para>
-    /// บันทึกไม่ผ่านก็สลับกลับทันที จอจะได้ตรงกับของที่อยู่ในฐานข้อมูลจริงเสมอ
-    /// ไม่ใช่ค้างโชว์ค่าที่ไม่ได้ถูกบันทึก แล้วพนักงานเข้าใจว่าสลับไปแล้ว
-    /// </para>
-    /// </summary>
-    private async Task SwapMkDataAsync()
+    private async Task SwapMkDataAsync() // สลับชุดพิมพ์กับ servo ระหว่างหัว MK
     {
         if (_pattern == null || _savingPattern) return;
 
@@ -440,19 +334,7 @@ public partial class OrderDetailUserControl : UserControl
             $"ยังไม่ได้บันทึกลงฐานข้อมูล จอจึงถูกปรับกลับเป็นค่าเดิม\n\n{error}");
     }
 
-    /// <summary>
-    /// สลับ ordinal ของทั้ง inkjet และ servo แล้ววาดจอใหม่
-    ///
-    /// ordinal คือตัวชี้ว่าไปเครื่องไหน — <c>JobSendService.SendMkAsync</c> หยิบ
-    /// config ตาม ordinal (1 = MK-058, 2 = MK-059) การสลับ ordinal จึงเท่ากับ
-    /// สลับปลายทางจริง ไม่ใช่แค่สลับที่โชว์บนจอ
-    ///
-    /// <para>
-    /// ป้ายชื่อเครื่องบนหัวคอลัมน์ไม่ต้องสลับตาม เพราะคอลัมน์ซ้ายผูกกับ ordinal 1
-    /// ซึ่งคือ MK-058 เสมอ เดิมโค้ดสลับป้ายด้วย ป้ายเลยบอกเครื่องผิดตัวหลังกดสลับ
-    /// </para>
-    /// </summary>
-    private void FlipMkOrdinals()
+    private void FlipMkOrdinals() // สลับลำดับหัวใน Pattern และค่าตำแหน่ง
     {
         if (_pattern == null) return;
 
@@ -475,26 +357,7 @@ public partial class OrderDetailUserControl : UserControl
         FillMkSection(_pattern);
     }
 
-    /// <summary>
-    /// บันทึก pattern ที่ถืออยู่ในหน้านี้ลง backend — คืนข้อความปัญหา หรือ null เมื่อสำเร็จ
-    ///
-    /// ล็อกปุ่มที่แก้ pattern ไว้ระหว่างบันทึก กันกดรัวจนคำสั่งสองชุดไปถึง backend
-    /// สลับกันแล้วได้ผลลัพธ์ที่ไม่ตรงกับที่เห็นบนจอ
-    /// </summary>
-    /// <summary>
-    /// เก็บค่าที่แก้ในหน้านี้กลับเข้า pattern แล้วบันทึกลงฐานข้อมูล
-    ///
-    /// <para>
-    /// ต้องบันทึกลงฐานข้อมูลจริง ไม่ใช่เก็บไว้ในจอ เพราะการส่งงานจริงเกิดที่หน้า
-    /// Order List ซึ่งอ่าน pattern ใหม่จาก backend ทุกครั้ง แก้ไว้ในจออย่างเดียว
-    /// จึงไม่มีผลอะไรเลย — เหตุผลเดียวกับปุ่ม Swap กับ ABC
-    /// </para>
-    /// <para>
-    /// pattern ผูกกับงานแบบหนึ่งต่อหนึ่ง (backend หาด้วย <c>job_id</c>) การแก้ที่นี่
-    /// จึงกระทบงานนี้งานเดียว ไม่ลามไปงานอื่นที่ใช้แบบเดียวกัน
-    /// </para>
-    /// </summary>
-    private async Task SaveEditedValuesAsync()
+    private async Task SaveEditedValuesAsync() // บันทึก Pattern แล้วบันทึกข้อความ UV
     {
         if (_savingPattern) return;
 
@@ -517,11 +380,9 @@ public partial class OrderDetailUserControl : UserControl
                 return;
             }
 
-            // ข้อความ UV อยู่คนละตารางกับ pattern จึงต้องบันทึกแยก
             var uvError = await SaveUvTextsAsync(); // บันทึกข้อความ UV หลัง Pattern ผ่านแล้ว
             if (IsDisposed) return;
 
-            // วาดใหม่จากค่าที่บันทึกแล้ว ช่องที่เว้นว่างไว้จะได้กลับมาเป็นขีด
             FillMkSection(_pattern!);
             FillConveyor(_pattern!);
 
@@ -541,19 +402,7 @@ public partial class OrderDetailUserControl : UserControl
         }
     }
 
-    /// <summary>
-    /// บันทึกข้อความ UV ที่ถูกแก้ — คืนข้อความปัญหา หรือ null เมื่อไม่มีอะไรผิด
-    ///
-    /// <para>
-    /// ส่งเฉพาะช่องที่ค่าต่างไปจากที่วาดไว้ตอนเปิดหน้า และส่งเฉพาะแถวที่มีการแก้จริง
-    /// แถวที่ไม่ได้แตะจะไม่ถูกเขียนทับ กันการเผลอลบข้อความของเครื่องที่ไม่ได้ยุ่งด้วย
-    /// </para>
-    /// <para>
-    /// ช่องที่ลบจนว่างหรือใส่ขีดไว้ ถือว่าตั้งใจล้างข้อความนั้น ส่งเป็นค่าว่างไป
-    /// ไม่ใช่ข้ามไปเฉย ๆ ไม่งั้นลบข้อความทิ้งไม่ได้เลย
-    /// </para>
-    /// </summary>
-    private async Task<string?> SaveUvTextsAsync()
+    private async Task<string?> SaveUvTextsAsync() // บันทึกเฉพาะข้อความ UV ที่แก้
     {
         if (_api == null) return null;
 
@@ -596,7 +445,6 @@ public partial class OrderDetailUserControl : UserControl
                 continue;
             }
 
-            // เขียนกลับลงข้อมูลในมือด้วย ไม่งั้นกดส่งต่อทันทีจะส่งข้อความเก่าเข้าเครื่อง
             foreach (var (field, value) in changed)
             {
                 switch (field)
@@ -615,16 +463,7 @@ public partial class OrderDetailUserControl : UserControl
         return problems.Count == 0 ? null : string.Join(Environment.NewLine, problems);
     }
 
-    /// <summary>
-    /// อ่านค่าจากช่องกรอกทั้งหมดกลับเข้า <see cref="_pattern"/>
-    /// คืนข้อความปัญหาเมื่อมีช่องที่กรอกมาไม่ถูก หรือ null เมื่อเก็บครบ
-    ///
-    /// <para>
-    /// ตรวจให้ครบก่อนค่อยเขียนลง pattern จะได้ไม่เหลือสภาพเก็บไปได้ครึ่งเดียว
-    /// แล้วเด้ง error ทิ้งไว้
-    /// </para>
-    /// </summary>
-    private string? CollectEditedValues()
+    private string? CollectEditedValues() // ตรวจและเก็บค่าบนจอกลับเข้า Pattern
     {
         if (_pattern == null) return "ยังไม่มีข้อมูล pattern ของงานนี้";
 
@@ -651,10 +490,6 @@ public partial class OrderDetailUserControl : UserControl
         var mk1 = CustomSettingsManager.Read("MK058_NAME", "MK-058");
         var mk2 = CustomSettingsManager.Read("MK059_NAME", "MK-059");
 
-        // ชื่อโปรแกรมกับหมายเลขโปรแกรมไม่ได้อ่านกลับ เพราะล็อกไม่ให้แก้
-        // เป็นตัวชี้ว่าจะใช้โปรแกรมไหนในเครื่อง เปลี่ยนคือพิมพ์คนละแบบทั้งใบ
-        //
-        // อ่านช่องที่เหลือให้ครบก่อน แม้เจอที่ผิดแล้ว จะได้บอกทีเดียวว่าผิดตรงไหนบ้าง
         var v1 = (W: Int(txtMk1Width, $"{mk1} Width"), H: Int(txtMk1Height, $"{mk1} Height"),
                   Trig: Int(txtMk1Trigger, $"{mk1} Trigger Delay"),
                   Act: Dbl(txtMk1PosAct, $"{mk1} Pos Act"), Dly: Dbl(txtMk1Delay, $"{mk1} Delay"));
@@ -683,7 +518,6 @@ public partial class OrderDetailUserControl : UserControl
                 config.TriggerDelay = v.Trig;
             }
 
-            // PosAct กับ Delay อยู่บน ServoConfig ไม่ใช่ InkjetConfig — เป็นค่าที่ส่งเข้า PLC
             var servo = _pattern.ServoConfigs.FirstOrDefault(s => s.Ordinal == ordinal);
             if (servo != null)
             {
@@ -707,19 +541,9 @@ public partial class OrderDetailUserControl : UserControl
         return null;
     }
 
-    /// <summary>ค่าของบล็อกหนึ่งแถวที่อ่านกลับมาจากตาราง</summary>
     private readonly record struct BlockEdit(
         int Number, string? Text, int? X, int? Y, int? Size, int? Scale);
 
-    /// <summary>
-    /// อ่านค่าที่แก้ในตารางบล็อกกลับมา — ข้อความ ตำแหน่ง ขนาด และสเกล
-    ///
-    /// <para>
-    /// ช่องข้อความเก็บผลที่ผ่าน <see cref="PatternEngine"/> แล้ว ไม่ใช่สูตรดิบ
-    /// ถ้าผู้ใช้ไม่ได้แตะแถวนั้น ค่าที่อ่านกลับมาจึงเท่ากับผลลัพธ์เดิม ไม่ใช่สูตร
-    /// การเขียนทับจึงทำเฉพาะแถวที่ค่าต่างไปจากที่วาดไว้ตอนเปิดหน้า
-    /// </para>
-    /// </summary>
     private List<BlockEdit> ReadBlocks(AntdUI.Table table, string machine, List<string> errors)
     {
         var result = new List<BlockEdit>();
@@ -753,16 +577,6 @@ public partial class OrderDetailUserControl : UserControl
         return result;
     }
 
-    /// <summary>
-    /// เขียนค่าบล็อกที่แก้แล้วกลับลง pattern
-    ///
-    /// <para>
-    /// ข้ามช่องข้อความของแถวที่ผู้ใช้ไม่ได้แตะ — บล็อกที่มีสูตรอยู่ (เช่นสูตรตัด
-    /// บาร์โค้ด) ถูกวาดบนจอเป็นผลลัพธ์ที่แปลแล้ว ถ้าเขียนค่าที่เห็นกลับลงไปทุกแถว
-    /// สูตรจะถูกแทนที่ด้วยข้อความตายตัวของงานนี้ แล้วงานถัดไปที่ใช้สูตรเดียวกัน
-    /// จะพิมพ์ข้อความของงานเก่า
-    /// </para>
-    /// </summary>
     private void ApplyBlocks(int ordinal, List<BlockEdit> edits)
     {
         var config = _pattern?.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
@@ -778,7 +592,6 @@ public partial class OrderDetailUserControl : UserControl
             block.Size = edit.Size;
             block.Scale = edit.Scale;
 
-            // ข้อความเขียนทับเฉพาะตอนที่ต่างไปจากผลลัพธ์ที่วาดไว้ตอนเปิดหน้า
             var shown = PatternEngine.Process(_barcode, block.Text ?? "");
             if (edit.Text != shown) block.Text = edit.Text;
         }
@@ -816,24 +629,7 @@ public partial class OrderDetailUserControl : UserControl
             .OrderBy(s => s.Ordinal).ToList();
     }
 
-    // ── ABC = พิมพ์กลับหัว ─────────────────────────────────
-
-    /// <summary>
-    /// สลับทิศทางการพิมพ์ของเครื่อง MK ตัวนั้น ระหว่างปกติกับกลับหัว 180 องศา
-    /// แล้วบันทึกลงฐานข้อมูล
-    ///
-    /// <para>
-    /// ค่านี้ถูกใส่ไปในคำสั่ง FM ตอนส่งเข้าเครื่อง และคนกดส่งคือหน้า Order List
-    /// ซึ่งอ่าน pattern ใหม่จาก backend จึงต้องบันทึกจริง เดิมเก็บไว้แค่ในหน้านี้
-    /// ตอนที่ปุ่มเริ่มงานยังอยู่ที่นี่ พอย้ายปุ่มไปหน้า Order List แล้วการกดปุ่มนี้
-    /// ก็ไม่มีผลกับงานที่ส่งออกไปอีกเลย
-    /// </para>
-    /// <para>
-    /// บันทึกไม่ผ่านก็พลิกกลับทันที รูป ABC บนจอจะได้ตรงกับทิศทางที่จะถูกส่งจริง
-    /// — พิมพ์กลับหัวผิดคืองานเสียทั้งล็อต
-    /// </para>
-    /// </summary>
-    private async Task ToggleAbcAsync(int ordinal, PictureBox box)
+    private async Task ToggleAbcAsync(int ordinal, PictureBox box) // เปลี่ยนทิศทางข้อความแล้วบันทึก Pattern
     {
         if (_pattern == null || _savingPattern) return;
 
@@ -863,19 +659,8 @@ public partial class OrderDetailUserControl : UserControl
         ApplyAbc(box, config.Direction);
     }
 
-    /// <summary>
-    /// วาดคำว่า ABC หัวตั้งหรือหัวกลับลงในกรอบ เหมือน canvas ของโปรแกรมเดิม
-    ///
-    /// ตัวอักษรที่พลิกจริงอ่านออกทันทีจากอีกฝั่งของเครื่อง ต่างจากการเปลี่ยนแค่สี
-    /// ปุ่ม ซึ่งสำคัญเพราะพิมพ์กลับหัวผิดคืองานเสียทั้งล็อต
-    ///
-    /// วาดเป็น SVG แล้วให้ AntdUI แปลงเป็นบิตแมป WinForms หมุนข้อความบนคอนโทรล
-    /// เองไม่ได้ถ้าไม่เขียนโค้ดวาดทับ ซึ่งกฎของโปรเจคนี้ห้ามไว้
-    /// </summary>
     private static void ApplyAbc(PictureBox box, int? direction)
     {
-        // หมุนรอบจุดกึ่งกลางของตัวอักษร (y=20) ไม่ใช่รอบเส้นฐาน (y=29)
-        // ไม่งั้นหัวตั้งกับหัวกลับจะลอยอยู่คนละระดับในกรอบ
         string rotate = MkCompactAdapter.IsFlipped(direction)
             ? " transform='rotate(180 50 20)'"
             : "";
@@ -889,10 +674,6 @@ public partial class OrderDetailUserControl : UserControl
         previous?.Dispose();
     }
 
-    /// <summary>
-    /// กฎการแปล marking_method อยู่ที่ <see cref="MarkingMethodService"/> ที่เดียว
-    /// หน้า Order List ใช้ตัวเดียวกัน ห้ามตีความซ้ำที่นี่
-    /// </summary>
     private void ApplyMarkingMethodButtons()
     {
         var plan = MarkingMethodService.Resolve(_markingMethod);
@@ -904,15 +685,6 @@ public partial class OrderDetailUserControl : UserControl
         ApplyStepButtons();
     }
 
-    /// <summary>
-    /// คำนวณบรรทัด Plate / Shim ใหม่ทั้งสองบรรทัด รวมถึงรูปอ้างอิงของแต่ละด้าน
-    ///
-    /// แยกออกมาจาก <see cref="ApplyMarkingMethodButtons"/> เพราะต้องเรียกซ้ำได้
-    /// ทุกครั้งที่ผู้ใช้เลือกรุ่นย่อยใหม่ โดยไม่ไปรีเซ็ตลำดับขั้นตอนที่ส่งไปแล้ว
-    ///
-    /// ชื่อรูปฝั่ง UV มาจากรุ่นที่เลือกไว้ ไม่ใช่ชื่อฐาน — เปลี่ยนรุ่นเมื่อไหร่รูปจึงตามทันที
-    /// ส่วนฝั่ง MK ประกอบจาก ERP ซึ่งไม่เปลี่ยนตามการเลือก
-    /// </summary>
     private void RefreshFlowRows()
     {
         var plan = MarkingMethodService.Resolve(_markingMethod);
@@ -933,7 +705,6 @@ public partial class OrderDetailUserControl : UserControl
             sides.FirstOrDefault(s => s.Side == "Shim"), "");
     }
 
-    /// <summary>โปรแกรมของเครื่อง UV เครื่องหนึ่ง — เลือกแล้วหรือยังเป็นชื่อฐาน</summary>
     private UvProgramInfo UvProgramOf(string machine)
     {
         if (_chosenUvProgram.TryGetValue(machine, out var chosen))
@@ -943,21 +714,8 @@ public partial class OrderDetailUserControl : UserControl
         return new UvProgramInfo(baseName, Confirmed: false);
     }
 
-    /// <summary>
-    /// ชื่อรูปกับ path ของรูปที่บรรทัดหนึ่งถืออยู่
-    ///
-    /// เก็บ path ไปด้วยแทนที่จะเก็บแค่ชื่อแล้วค่อยไปค้นตอนกด เพราะการค้นใหม่จากชื่อ
-    /// คือทางที่ทำให้รูปไม่ตรงกับที่บรรทัดบอก ถ้าชื่อถูกเปลี่ยนระหว่างนั้น
-    /// </summary>
     private sealed record FlowRef(string Name, List<string> Images);
 
-    /// <summary>
-    /// หนึ่งบรรทัดของ marking method — "Plate - MK - (P-ABC123)"
-    ///
-    /// ชื่อรูปอ้างอิงฝั่ง MK เคยเป็นช่องกรอกแยกอยู่ใน MK Section แล้วต้อง
-    /// เอาเมาส์ไปจ่อถึงจะเห็นรูป ตอนนี้ต่อท้ายบรรทัดที่บอกอยู่แล้วว่าด้านนี้ใครมาร์ก
-    /// และมีไอคอนรูปกำกับว่ากดได้ — บรรทัดที่ไม่มีรูปจะไม่มีไอคอนและกดไม่ได้
-    /// </summary>
     private static void ApplyFlowRow(
         AntdUI.Button row, string side, MarkingMachine machine,
         MarkingRefSide? reference, string suffix)
@@ -969,22 +727,14 @@ public partial class OrderDetailUserControl : UserControl
             + (hasRef ? $" - ({refName})" : "")
             + suffix;
 
-        // Tag พาทั้งชื่อและรูปของรอบนี้ไปให้ตัวจัดการคลิก บรรทัดไหนไม่มีรูปก็ไม่มี Tag
         row.Tag = hasRef ? new FlowRef(refName!, reference!.Images) : null;
 
-        // บรรทัดที่กดไม่ได้ถอดกรอบกับพื้นออกให้เหลือเป็นข้อความเปล่า ๆ ไม่ใช้ Enabled
-        // เพราะปุ่มที่ถูก disable จะจางลงทั้งบรรทัด ทั้งที่ "Plate - UV1" เป็นข้อมูล
-        // ที่ต้องอ่านออกเท่า ๆ กับบรรทัดที่กดได้
         row.IconSvg = hasRef ? "PictureOutlined" : null;
         row.BorderWidth = hasRef ? 1F : 0F;
         row.DefaultBack = hasRef ? System.Drawing.Color.FromArgb(237, 243, 249) : Color.Transparent;
         row.Cursor = hasRef ? Cursors.Hand : Cursors.Default;
     }
 
-    /// <summary>
-    /// เปิดรูปชุดที่บรรทัดนี้ถืออยู่ — เป็นชุดเดียวกับที่ <see cref="RefreshFlowRows"/>
-    /// คำนวณไว้ล่าสุด จึงตรงกับชื่อที่บรรทัดแสดงเสมอ ไม่ว่าผู้ใช้จะเปลี่ยนรุ่นย่อยกี่รอบ
-    /// </summary>
     private void OpenFlowRefImages(AntdUI.Button row)
     {
         if (row.Tag is not FlowRef reference) return;
@@ -1019,16 +769,9 @@ public partial class OrderDetailUserControl : UserControl
 
     }
 
-    /// <summary>งานนี้มีขั้นตอนนี้อยู่ในแผนไหม — ชื่อขั้นมาจาก MarkingMethodService</summary>
     private bool HasStep(string step) =>
         _sendSteps.Any(s => string.Equals(s, step, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>
-    /// ขั้นถัดไปที่ต้องให้ ST1 เป็นคนส่งเข้าเครื่อง — null เมื่องานนี้ไม่เข้าเงื่อนไข
-    ///
-    /// เงื่อนไขเดียวกับที่ปุ่มกดหน้างานใช้เลือกงาน: งานเดินอยู่ · ขั้นแรกส่งไปแล้ว ·
-    /// ยังมีขั้นเหลือ ขั้นแรกของงานเป็นหน้าที่ของปุ่มเริ่มงานหน้า Order List ไม่ใช่ปุ่มนี้
-    /// </summary>
     private string? NextRemoteStep()
     {
         if (_currentStep <= 0 || _currentStep >= _sendSteps.Count) return null; // ต้องผ่านขั้นแรกแล้ว และยังมีขั้นถัดไปค้างอยู่
@@ -1037,13 +780,7 @@ public partial class OrderDetailUserControl : UserControl
         return _sendSteps[_currentStep];
     }
 
-    /// <summary>
-    /// ทางสำรองของปุ่มกดหน้างาน สำหรับตอนปุ่มกดหรือ PLC ใช้ไม่ได้
-    ///
-    /// ปิดหน้านี้ก่อนแล้วให้หน้า Order List เป็นคนยิงคำขอ วงกลมหมุนกับกล่องยืนยัน
-    /// จะได้อยู่บนหน้าที่ไม่มีอะไรบัง ไม่ใช่โผล่อยู่หลังกล่อง Order Detail
-    /// </summary>
-    private void RequestRemoteStart()
+    private void RequestRemoteStart() // ฝากขั้นถัดไปกลับไปที่หน้า Order List
     {
         if (NextRemoteStep() is not string step) return; // ไม่มีขั้นถัดไปที่ฝากส่งได้ จึงไม่ส่ง event
 
@@ -1051,21 +788,10 @@ public partial class OrderDetailUserControl : UserControl
         CloseRequested?.Invoke(this, EventArgs.Empty); // ปิด Detail เพื่อให้ Order List เปิดกล่องยืนยันและรอผล
     }
 
-    private void ApplyStepButtons()
+    private void ApplyStepButtons() // แสดงปุ่มส่งตามขั้นและสิทธิ์ของ Station
     {
-        // ปุ่มสำรองของปุ่มกดหน้างาน — ปิดไว้เป็นค่าเริ่มต้น เปิดที่ Setting → ตัวเลือกหน้างาน
-        // ซึ่งเห็นเฉพาะโหมดทดสอบ คนคุมเครื่องจึงเปิดเองไม่ได้
-        //
-        // โชว์เฉพาะเครื่องของ ST3 เพราะขั้นที่สองของงานสองสถานีเป็นของ ST3 ที่เดียว
-        // (เปิดให้โหมดทดสอบเห็นด้วย ไว้ลองก่อนเอาไปเปิดใช้จริงที่หน้างาน)
         var remoteStep = NextRemoteStep(); // ตรวจว่างานมีขั้นถัดไปให้ ST1 ส่งหรือไม่
 
-        // เก็บเป็นตัวแปรแล้วใช้ค่านั้นทั้งสองที่ ห้ามอ่าน .Visible กลับมาใช้ต่อ
-        //
-        // ตัวอ่านของ Control.Visible คืน false ถ้าพ่อแม่ชั้นไหนยังไม่ได้ถูกแสดง
-        // ไม่ใช่ค่าที่เพิ่งเซ็ตลงไป และหน้านี้ถูกเติมข้อมูลตั้งแต่ก่อนกล่องจะ ShowDialog
-        // (OrderDetailDialog.LoadDetail มาก่อน dlg.ShowDialog เสมอ) ผลคือ Enabled
-        // ถูกตั้งเป็น false ค้างไว้ พอกล่องเปิดขึ้นมาปุ่มจึงโผล่มาแบบกดไม่ได้
         bool showRemote = remoteStep != null // มีขั้นถัดไปจึงพิจารณาแสดงปุ่มสำรอง
             && StationService.ManualRemoteSendEnabled // ต้องเปิดตัวเลือกฝากส่งด้วยมือไว้ก่อน
             && (StationService.IsSt3 || _isDevMode); // ให้เห็นเฉพาะ ST3 หรือโหมดทดสอบ
@@ -1074,19 +800,6 @@ public partial class OrderDetailUserControl : UserControl
         btnRemoteSend.Enabled = showRemote; // เปิดให้กดด้วยเงื่อนไขเดียวกัน ไม่อ่าน Visible กลับมา
         if (remoteStep != null) btnRemoteSend.Text = $"ขอให้ ST1 ส่ง {remoteStep}"; // ใส่ชื่อเครื่องที่ขอให้ ST1 ส่งบนปุ่ม
 
-        // ปุ่มส่งมือเหลือไว้เฉพาะโหมดทดสอบ
-        //
-        // การส่งงานจริงเป็นหน้าที่ของปุ่มเริ่มงานหน้า Order List กับปุ่มกดหน้างาน
-        // ซึ่งเดินตามลำดับขั้นของ marking method ให้เอง ปุ่มพวกนี้กดข้ามลำดับได้
-        // เปิดไว้ในโหมดใช้งานปกติจึงเสี่ยงที่จะส่งซ้ำหรือส่งข้ามขั้น แล้วพ่นซ้ำ
-        // ลงชิ้นงานจริง
-        //
-        // โหมดทดสอบโชว์ครบทุกเครื่อง ไม่ดูว่างานนี้มีขั้นนั้นอยู่ในแผนไหม
-        //
-        // เพราะจุดประสงค์ของปุ่มชุดนี้คือยิงข้อความไปหาเครื่องเพื่อดูว่าเครื่องรับไหม
-        // ไม่ใช่การเดินงานตามแผน คนทดสอบจึงต้องเลือกเครื่องไหนก็ได้จากงานใบเดียว
-        // ปุ่มทดสอบส่ง PLC ก็อยู่ในชุดเดียวกัน — designer ซ่อนไว้เป็นค่าตั้งต้น
-        // ที่นี่คือที่เดียวที่เปิดให้เห็น
         btnTestPlc.Visible = _isDevMode;
         btnSendMk.Visible = _isDevMode;
         btnSendUv1.Visible = _isDevMode;
@@ -1116,29 +829,12 @@ public partial class OrderDetailUserControl : UserControl
             MarkButtonSent(GetSendButton(_sendSteps[i]));
     }
 
-    /// <summary>
-    /// <paramref name="detail"/> เก็บลง payload ของ command — ฝั่ง UV ใช้บันทึกว่า
-    /// พิมพ์ด้วยรุ่นย่อยไหนจริง ไม่งั้นย้อนดูทีหลังไม่รู้ว่าเป็น ABC-1 หรือ ABC-2
-    /// </summary>
     private void CompleteSendStep(string stepName, object? detail = null)
     {
-        // โหมดทดสอบไม่แตะประวัติและไม่แตะสถานะงาน ออกตรงนี้ก่อนทุกอย่าง
-        //
-        // ปุ่มชุดนั้นมีไว้ยิงข้อความหาเครื่องอย่างเดียว การบันทึกว่า "ขั้นนี้ส่งแล้ว"
-        // จะทำให้ปุ่มเริ่มงานกับปุ่มกดหน้างานข้ามขั้นนั้นไป ทั้งที่ยังไม่ได้พิมพ์จริง
-        // และงานที่เอามาลองก็จะเปลี่ยนสถานะไปเองโดยไม่มีใครสั่ง
         if (_isDevMode) return;
 
-        // บันทึกก่อนเสมอ ก่อนเช็คลำดับขั้นตอนใด ๆ — มาถึงบรรทัดนี้คือส่งเข้าเครื่อง
-        // สำเร็จไปแล้วจริง ต้องมีร่องรอยไว้เสมอ
-        //
-        // เดิมสองบรรทัดเช็คลำดับข้างล่างคืนค่าออกไปก่อนถึงการบันทึก ทำให้การส่งซ้ำ
-        // (ส่ง UV2 ไปแล้ว แล้วเลือกรุ่นย่อยใหม่ส่งอีกรอบ) ไม่ถูกบันทึกเลย
-        // เปิด Order Detail ใหม่จึงเห็นรุ่นเก่า ไม่ใช่รุ่นที่เพิ่งเลือกและพิมพ์จริง
         _ = _api?.SaveSendStepAsync(_jobId, stepName, detail);
 
-        // ที่เหลือคือการเดินสถานะปุ่มตามลำดับขั้นตอน — ส่งซ้ำหรือส่งข้ามลำดับ
-        // ไม่ควรเลื่อนลำดับ จึงยังคงเงื่อนไขเดิมไว้ตรงนี้
         if (_currentStep >= _sendSteps.Count) return;
         if (_sendSteps[_currentStep] != stepName) return;
 
@@ -1156,7 +852,6 @@ public partial class OrderDetailUserControl : UserControl
         {
             _ = _api?.UpdateJobStatusAsync(_jobId, "Process");
 
-            // ปลดล็อกปุ่มสั่งแคลมป์ทันทีโดยไม่ต้องปิดเปิดหน้าใหม่ — งานเริ่มไปแล้วจริง
             _jobStatus = "Process";
         }
     }
@@ -1194,8 +889,6 @@ public partial class OrderDetailUserControl : UserControl
 
         try
         {
-            // ใช้ตัวส่งชุดเดียวกับปุ่มเริ่มงานที่หน้า Order List — เดิมหน้านี้มีโค้ดส่ง
-            // ของตัวเองอีกชุด แก้กฎการส่งทีหนึ่งต้องไล่แก้สองที่ และพลาดไปแล้วหนึ่งรอบ
             var mk = await JobSendService.SendMkAsync(_pattern);
 
             var lines = Notify.MkLines(mk.Machines);
@@ -1213,9 +906,6 @@ public partial class OrderDetailUserControl : UserControl
         }
         finally
         {
-            // สำเร็จในโหมดใช้งานจริง CompleteSendStep จะ MarkButtonSent ให้เอง
-            // นอกนั้นคืนปุ่มกลับสภาพเดิมเสมอ — โหมดทดสอบไม่มีใครมาปลดปุ่มให้
-            // ถ้าไม่คืนตรงนี้ ปุ่มจะค้างอยู่ที่ "กำลังส่ง..." แบบกดไม่ได้ตลอด
             if (!IsDisposed && btnSendMk.Text?.StartsWith('✓') != true)
             {
                 btnSendMk.Text = originalText;
@@ -1224,12 +914,6 @@ public partial class OrderDetailUserControl : UserControl
         }
     }
 
-    /// <summary>
-    /// ปุ่มเดียวจบงาน: หยุดเครื่อง → เขียน CPI.db3 → โหลดโปรแกรม → เริ่มพิมพ์
-    ///
-    /// dialog ที่ถามผู้ใช้ทั้งหมดต้องจบก่อนคำสั่งแรกที่ส่งถึงเครื่อง
-    /// ถ้าถามทีหลังแล้วผู้ใช้กดยกเลิก จะทิ้งเครื่องค้างอยู่ในสถานะหยุดโดยไม่ตั้งใจ
-    /// </summary>
     private async Task SendToUvAsync(int uvNumber)
     {
         string stepName = uvNumber == 1 ? "UV1" : "UV2";
@@ -1284,18 +968,14 @@ public partial class OrderDetailUserControl : UserControl
         var done = new List<string>();
         try
         {
-            // ปุ่มนี้มีเฉพาะโหมดทดสอบ แต่ก็ต้องกันไฟสถานะไม่ให้แย่งซ็อกเก็ตเหมือนกัน
-            // จองตรงนี้ ไม่ใช่ตั้งแต่ต้นฟังก์ชัน เพราะข้างบนมีกล่องเลือกรุ่นย่อยที่ค้างรอคนได้นาน
             using var busy = MachineBusy.TryHoldExclusive($"UV{uvNumber}");
             if (busy == null) { Notify.Warn(this, $"UV{uvNumber} กำลังส่งงานอยู่ กรุณารอให้เสร็จก่อน"); return; }
 
             var uvTcp = new UvTcpService();
 
-            // 1. หยุดเครื่องก่อนเสมอ — ไม่ตอบรับก็ไปต่อ เพราะเครื่องอาจหยุดอยู่แล้ว
             var (stopOk, _) = await uvTcp.StopAsync(ip, port);
             done.Add(stopOk ? "สั่งหยุดเครื่อง" : "สั่งหยุดเครื่อง (ไม่ตอบรับ — ทำต่อ)");
 
-            // 2. เขียนข้อความลง CPI.db3
             var (writeOk, writeMsg) = await CpiWriteService.WriteAsync(
                 cpiPath, table,
                 uvRow.Lot, uvRow.ErpMfg,
@@ -1308,7 +988,6 @@ public partial class OrderDetailUserControl : UserControl
             }
             done.Add($"เขียน CPI.db3 ({table})\n    Lot: {OrDash(uvRow.Lot)}\n    Name: {OrDash(uvRow.ErpMfg)}");
 
-            // 3. โหลดโปรแกรม แล้วสั่งเริ่มพิมพ์
             var (tcpOk, tcpLog, startWarning) = await uvTcp.LoadAndStartAsync(ip, port, programFile);
             if (!tcpOk)
             {
@@ -1327,12 +1006,8 @@ public partial class OrderDetailUserControl : UserControl
                 start_warning = startWarning,
             });
 
-            // ช่อง Program ยังเป็นชื่อฐานอยู่ ถ้าไม่อัปเดตหน้าจอจะบอกคนละตัวกับที่เครื่องพิมพ์
-            // และ hover ดูรูปจะได้รูปของรุ่นที่พิมพ์จริงด้วย
             (uvNumber == 1 ? txtUv1Program : txtUv2Program).Text = programFile;
 
-            // จำรุ่นที่เพิ่งเลือก แล้ววาดบรรทัด Plate / Shim ใหม่ทั้งสองบรรทัด —
-            // รูปอ้างอิงของด้านนี้จะเปลี่ยนตามรุ่นใหม่ทันที ไม่ค้างรุ่นเดิม
             _chosenUvProgram[stepName] = programFile;
             RefreshFlowRows();
 
@@ -1350,7 +1025,6 @@ public partial class OrderDetailUserControl : UserControl
         }
         finally
         {
-            // สำเร็จแล้ว CompleteSendStep จะ MarkButtonSent ให้เอง นอกนั้นคืนปุ่มกลับสภาพเดิม
             if (btn.Text?.StartsWith('✓') != true)
             {
                 btn.Text = originalText;
@@ -1359,17 +1033,8 @@ public partial class OrderDetailUserControl : UserControl
         }
     }
 
-    // ── PLC ────────────────────────────────────────────────
-
-    /// <summary>ข้อความเดิมของป้ายกำกับ ก่อนต่อท้ายด้วย address</summary>
     private readonly Dictionary<AntdUI.Label, string> _plcLabelText = new();
 
-    /// <summary>
-    /// ต่อท้ายป้ายกำกับด้วย address ที่ค่านั้นจะถูกส่งไป เช่น "Delay (mm.)  →  D2"
-    ///
-    /// address มาจากตาราง register map ในหน้า PLC Setting ที่เดียว ช่องไหนยังไม่ได้
-    /// map จะขึ้นว่า ยังไม่ได้ map เพื่อให้เห็นตั้งแต่เปิดหน้า ไม่ต้องรอกดส่งแล้วค่อยรู้
-    /// </summary>
     private async Task ShowPlcAddressesAsync()
     {
         var plan = await PlcOrderService.BuildPlanAsync(_api, _pattern);
@@ -1378,8 +1043,6 @@ public partial class OrderDetailUserControl : UserControl
         var mk1 = CustomSettingsManager.Read("MK058_NAME", "MK-058");
         var mk2 = CustomSettingsManager.Read("MK059_NAME", "MK-059");
 
-        // Trigger Delay กับสายพาน 2/3 ไม่ได้ส่งเข้า PLC แล้ว จึงไม่ติดป้าย address ให้
-        // ไม่งั้นจะขึ้นว่า "ยังไม่ได้ map" ค้างอยู่ ทั้งที่ตั้งใจให้ไม่มี map
         TagAddress(lblMk1PosAct, plan, $"{mk1} PostAct");
         TagAddress(lblMk1Delay, plan, $"{mk1} Delay");
         TagAddress(lblMk2PosAct, plan, $"{mk2} PostAct");
@@ -1389,7 +1052,6 @@ public partial class OrderDetailUserControl : UserControl
 
     private void TagAddress(AntdUI.Label label, List<PlcOrderService.PlcField> plan, string listName)
     {
-        // เก็บข้อความเดิมไว้ครั้งแรก ไม่งั้นเปิดหน้าซ้ำ address จะต่อพอกกันไปเรื่อย ๆ
         if (!_plcLabelText.TryGetValue(label, out var baseText))
         {
             baseText = label.Text ?? "";
@@ -1404,27 +1066,14 @@ public partial class OrderDetailUserControl : UserControl
             : $"{baseText}  ·  D{address}";
     }
 
-    /// <summary>
-    /// ทดสอบส่งค่าเข้า PLC — แยกจากปุ่มส่ง MK เพื่อให้ลองค่าได้โดยไม่แตะเครื่องพิมพ์
-    ///
-    /// สรุปให้ดูก่อนทุกครั้งว่าจะเขียนอะไรลง register ไหน เพราะเขียนผิดตำแหน่ง
-    /// หมายถึงไปทับค่าอื่นใน PLC ซึ่งย้อนกลับเองไม่ได้
-    /// </summary>
-    private async Task TestPlcAsync()
+    private async Task TestPlcAsync() // ทดสอบ PLC ด้วยค่าที่เพิ่งแก้บนจอ
     {
-        // ดึงค่าที่แก้บนจอเข้า pattern ก่อน ไม่งั้นปุ่มนี้จะส่งค่าเก่าที่โหลดมาตอนเปิดหน้า
-        //
-        // ค่าที่พิมพ์ลงช่องอยู่แค่ในคอนโทรล จะเข้ามาอยู่ใน pattern ก็ต่อเมื่อกดบันทึก
-        // คนที่แก้ค่าแล้วกดปุ่มนี้ทันทีจึงเห็นเลขเก่าในกล่องยืนยันและส่งเลขเก่าออกไป
-        // ทั้งที่ตั้งใจจะลองค่าใหม่ ซึ่งเป็นเหตุผลเดียวของปุ่มนี้
         if (CollectEditedValues() is string invalid) // ใช้ค่าที่เพิ่งพิมพ์บนจอ แม้ยังไม่ได้กดบันทึก
         {
             Notify.WarnModal(this, "ค่าที่กรอกไม่ถูกต้อง", invalid);
             return;
         }
 
-        // ช่องว่างของหัวที่งานใช้จริงจะกลายเป็น 0 ตอนส่ง ซึ่งที่ช่อง PostAct มีความหมาย
-        // เป็นคำสั่งเลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้น ไม่ใช่ค่ากลาง ๆ
         if (PlcOrderService.UnsendableReason(_pattern) is string blank) // กันช่องจำเป็นว่างก่อนส่ง PLC ในทางทดสอบ
         {
             Notify.WarnModal(this, "ส่งเข้า PLC ไม่ได้",
@@ -1433,7 +1082,6 @@ public partial class OrderDetailUserControl : UserControl
             return;
         }
 
-        // เอาเฉพาะหัวที่งานนี้ใช้ หัวที่ไม่ได้ใช้ไม่ต้องไปเขียนค่าทับใน PLC
         var plan = await PlcOrderService.BuildPlanAsync(_api, _pattern, usedHeadsOnly: true); // จับค่ากับ register เฉพาะหัวที่งานใช้จริง
         if (IsDisposed) return;
 
@@ -1482,8 +1130,6 @@ public partial class OrderDetailUserControl : UserControl
                 {
                     if (b.Error != null) return Notify.Bad($"{b.Name} — {b.Error}");
 
-                    // อ่านกลับไม่ตรงกับที่เขียนคือค่าไม่เข้า ต้องขึ้นเป็นคำเตือน
-                    // ไม่ใช่รายงานว่าสำเร็จ เพราะคำสั่งผ่านแต่ผลไม่ได้ตามนั้น
                     if (b.ReadBack == null)
                         return Notify.Careful($"{b.Name} = {b.Value} (อ่านกลับไม่ได้)");
 
@@ -1528,7 +1174,6 @@ public partial class OrderDetailUserControl : UserControl
         }
     }
 
-    /// <summary>บอกว่าทำอะไรสำเร็จไปแล้วบ้างและหยุดที่ขั้นไหน — เครื่องยังค้างอยู่ในสถานะหยุด</summary>
     private static void ShowUvFailure(string uvName, List<string> done, string failReason)
     {
         var msg = $"ส่ง {uvName} ไม่สำเร็จ\n\n"
@@ -1550,9 +1195,6 @@ public partial class OrderDetailUserControl : UserControl
         txtJobLotNo.Text = OrDash(job.BarcodeRaw);
         txtJobCustomer.Text = OrDash(job.CustomerName);
         txtJobQty.Text = job.Qty?.ToString() ?? Dash;
-        // ทั้งคำและสีมาจาก JobStatusDisplay ที่เดียวกับคอลัมน์ Status ในตาราง
-        // Order List — backend เก็บเป็น Process / Success แต่บนจอเรียก Working /
-        // Finished ทั้งสองหน้า ไม่งั้นงานเดียวกันดูสองหน้าแล้วเหมือนคนละสถานะ
         var jobStatus = Theme.JobStatusDisplay.Resolve(
             job.Status,
             MarkingMethodService.FinishedIncomplete(
@@ -1561,37 +1203,21 @@ public partial class OrderDetailUserControl : UserControl
         txtJobStatus.ForeColor = jobStatus.Fore;
         _baseStatusText = jobStatus.Text;
 
-        // ต่อท้ายว่างานรออะไรอยู่ ต้องถามคิวจาก backend จึงทำแยกไม่ให้หน่วงการเปิดหน้า
         _ = ShowStageAsync(job.Id);
 
         var marking = resolved.PlanRouting?.MarkingMethod;
         txtMarkingMethod.Text = string.IsNullOrWhiteSpace(marking) ? "ไม่ระบุ" : marking;
     }
 
-    /// <summary>คำสถานะล้วน ๆ ก่อนต่อวงเล็บ — เก็บไว้เพื่อไม่ต่อซ้ำทับของเดิม</summary>
     private string _baseStatusText = "";
 
-    /// <summary>
-    /// ต่อท้ายสถานะว่างานนี้กำลังทำด้านไหน หรือรออยู่คิวที่เท่าไร
-    ///
-    /// <para>
-    /// เช่น <c>Working (Mark Plate)</c> · <c>Working (Mark Shim)</c> · <c>Waiting (Q2)</c>
-    /// กติกาอยู่ที่ <see cref="Services.JobStageService"/> ที่เดียว หน้า Order List
-    /// โชว์คำสถานะคำเดียวล้วน ๆ ไม่มีวงเล็บ
-    /// </para>
-    /// <para>
-    /// ถามคิวไม่ได้ก็ปล่อยคำเดิมไว้ ไม่ต้องฟ้อง — วงเล็บเป็นข้อมูลเสริม ไม่ใช่สิ่งที่
-    /// ขาดแล้วอ่านหน้านี้ไม่รู้เรื่อง
-    /// </para>
-    /// </summary>
-    private async Task ShowStageAsync(int jobId)
+    private async Task ShowStageAsync(int jobId) // เติมเลข Q หรือด้านพิมพ์ท้ายสถานะ
     {
         if (_api == null) return;
 
         var (rows, error) = await _api.GetMachineQueueAsync(); // อ่านคิวกลางก่อนเติมรายละเอียดท้ายสถานะ
         if (error != null || IsDisposed) return;
 
-        // งานเปลี่ยนไปแล้วระหว่างรอคำตอบ อย่าเขียนทับของงานใบใหม่
         if (jobId != _jobId) return; // เปลี่ยน Job ระหว่างรอแล้ว ไม่ใช้คำตอบเก่าทับหน้าปัจจุบัน
 
         var stage = Services.JobStageService.Describe(jobId, _markingMethod, rows); // แปลงคิวเป็นเลข Q หรือด้านที่กำลังพิมพ์
@@ -1686,23 +1312,11 @@ public partial class OrderDetailUserControl : UserControl
             SentProgram(commands, "UV2") ?? PendingProgram(resolved, "UV2"));
     }
 
-    /// <summary>
-    /// รุ่นย่อยที่ผู้ใช้เลือกไว้แล้วแต่ยังไม่ได้ส่งเข้าเครื่อง
-    ///
-    /// เกิดตอน ST3 กดเริ่มงาน: ผู้ใช้เลือกรุ่นย่อยที่จอ ST3 แล้วฝากคำขอไว้ให้ ST1 ส่งแทน
-    /// ค่าที่เลือกถูกเก็บไว้ที่ <c>print_jobs.remote_program</c> ระหว่างรอ ถ้าไม่เอามาโชว์
-    /// หน้าจอจะยังบอกชื่อฐาน ทั้งที่ผู้ใช้เพิ่งเลือกรุ่นย่อยไปกับมือ
-    ///
-    /// พอ ST1 ส่งสำเร็จ payload ของ command จะมีค่านี้แล้ว และ backend ล้าง
-    /// remote_program ทิ้ง — ลำดับการหาค่าจึงยังถูกต้องทุกช่วงเวลา
-    /// </summary>
     private static string? PendingProgram(ResolvedJobResponse resolved, string machine)
     {
         var pending = resolved.Job.RemoteProgram?.Trim();
         if (string.IsNullOrEmpty(pending)) return null;
 
-        // remote_program มีค่าเดียวต่องาน จึงต้องรู้ว่าเป็นของเครื่องไหน —
-        // ขั้นตอนแรกตาม marking method คือขั้นที่ ST3 ฝากให้ ST1 ส่ง
         var step = MarkingMethodService
             .Resolve(resolved.PlanRouting?.MarkingMethod)
             .Steps.FirstOrDefault();
@@ -1710,13 +1324,6 @@ public partial class OrderDetailUserControl : UserControl
         return string.Equals(step, machine, StringComparison.OrdinalIgnoreCase) ? pending : null;
     }
 
-    /// <summary>
-    /// รุ่นย่อยที่ส่งเข้าเครื่องไปแล้วจริง อ่านจาก payload ของ command
-    ///
-    /// ค่าใน uv_job_data เป็นชื่อฐานที่ระบบต้นทางสั่งมา (เช่น P-DPX-666)
-    /// แต่ที่พิมพ์จริงอาจเป็นรุ่นย่อย (P-DPX-666-1) หน้าจอต้องบอกตัวที่พิมพ์จริง
-    /// ไม่งั้นหน้าจอกับเครื่องพูดไม่ตรงกัน — ส่วนค่าที่สั่งมายังอยู่ครบใน payload
-    /// </summary>
     private static string? SentProgram(List<CommandResult> commands, string machine)
     {
         var sent = commands
@@ -1730,11 +1337,6 @@ public partial class OrderDetailUserControl : UserControl
         return string.IsNullOrEmpty(program) ? null : program;
     }
 
-    /// <summary>
-    /// โหลดระยะแคลมป์ของงานจาก backend มาโชว์ใต้ Program Name
-    /// UV1 = Plate → iaip/z1/z2 · UV2 = Shim → iai/z1/z2
-    /// ค่า null โชว์ "-" เพื่อให้เห็นว่ามีช่องนี้อยู่แต่ยังไม่ได้ setup
-    /// </summary>
     private async Task LoadIaiAsync(int jobId)
     {
         if (_api == null || jobId <= 0) return;
@@ -1781,8 +1383,6 @@ public partial class OrderDetailUserControl : UserControl
         _origIai = null;
     }
 
-    // ── IAI Adjust ─────────────────────────────────────────
-
     private void WireIaiAdjustEvents()
     {
         btnIaiAdj1Minus.Click += (_, _) => AdjustIaiValue(txtIaiAdj1Value, -1);
@@ -1805,28 +1405,24 @@ public partial class OrderDetailUserControl : UserControl
             txtIaiAdj2Value.Text = _origIai?.Iai?.ToString() ?? "";
         };
 
-        // UV1 Z1
         btnIaiAdj1Z1Minus.Click += (_, _) => AdjustIaiValue(txtIaiAdj1Z1Value, -1);
         btnIaiAdj1Z1Plus.Click += (_, _) => AdjustIaiValue(txtIaiAdj1Z1Value, +1);
         btnIaiAdj1Z1Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj1Z1Value, isPlate: true, zone: "Z1");
         btnIaiAdj1Z1Upload.Click += async (_, _) => await IaiUploadAsync(txtIaiAdj1Z1Value, txtUv1Program, txtUv1IaiZ1, isPlate: true, zone: "Z1");
         btnIaiAdj1Z1Reset.Click += (_, _) => { txtIaiAdj1Z1Value.Text = _origIai?.IaipZ1?.ToString() ?? ""; };
 
-        // UV1 Z2
         btnIaiAdj1Z2Minus.Click += (_, _) => AdjustIaiValue(txtIaiAdj1Z2Value, -1);
         btnIaiAdj1Z2Plus.Click += (_, _) => AdjustIaiValue(txtIaiAdj1Z2Value, +1);
         btnIaiAdj1Z2Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj1Z2Value, isPlate: true, zone: "Z2");
         btnIaiAdj1Z2Upload.Click += async (_, _) => await IaiUploadAsync(txtIaiAdj1Z2Value, txtUv1Program, txtUv1IaiZ2, isPlate: true, zone: "Z2");
         btnIaiAdj1Z2Reset.Click += (_, _) => { txtIaiAdj1Z2Value.Text = _origIai?.IaipZ2?.ToString() ?? ""; };
 
-        // UV2 Z1
         btnIaiAdj2Z1Minus.Click += (_, _) => AdjustIaiValue(txtIaiAdj2Z1Value, -1);
         btnIaiAdj2Z1Plus.Click += (_, _) => AdjustIaiValue(txtIaiAdj2Z1Value, +1);
         btnIaiAdj2Z1Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj2Z1Value, isPlate: false, zone: "Z1");
         btnIaiAdj2Z1Upload.Click += async (_, _) => await IaiUploadAsync(txtIaiAdj2Z1Value, txtUv2Program, txtUv2IaiZ1, isPlate: false, zone: "Z1");
         btnIaiAdj2Z1Reset.Click += (_, _) => { txtIaiAdj2Z1Value.Text = _origIai?.IaiZ1?.ToString() ?? ""; };
 
-        // UV2 Z2
         btnIaiAdj2Z2Minus.Click += (_, _) => AdjustIaiValue(txtIaiAdj2Z2Value, -1);
         btnIaiAdj2Z2Plus.Click += (_, _) => AdjustIaiValue(txtIaiAdj2Z2Value, +1);
         btnIaiAdj2Z2Send.Click += async (_, _) => await IaiSendAsync(txtIaiAdj2Z2Value, isPlate: false, zone: "Z2");
@@ -1834,16 +1430,6 @@ public partial class OrderDetailUserControl : UserControl
         btnIaiAdj2Z2Reset.Click += (_, _) => { txtIaiAdj2Z2Value.Text = _origIai?.IaiZ2?.ToString() ?? ""; };
     }
 
-    /// <summary>
-    /// ต่อท้ายป้ายของแต่ละแกนด้วย address ที่คำสั่งจะเขียนลงไป เช่น "IAIP · D100"
-    ///
-    /// address มาจากหน้า Clamp Setting ที่เดียว ตัวเดียวกับที่ ClampService ใช้ยิงจริง
-    /// แกนไหนยังไม่ได้ตั้งจะขึ้นว่ายังไม่ได้ตั้ง — กดปุ่ม Send ของแกนนั้นก็จะโดนกันไว้
-    /// ให้เห็นตั้งแต่เปิดหน้า ไม่ต้องรอกดแล้วค่อยรู้
-    ///
-    /// โชว์เฉพาะ address ปลายทาง (TARGET) ที่ค่าจะไปอยู่ ส่วน RUN เป็นบิตสั่งให้แกน
-    /// วิ่ง ไม่ใช่ที่เก็บค่า จึงไม่เอามารก
-    /// </summary>
     private void ShowClampAddresses()
     {
         var settings = ClampSettings.Load();
@@ -1868,9 +1454,6 @@ public partial class OrderDetailUserControl : UserControl
         var target = axis?.AddrTarget.Trim() ?? "";
         var run = axis?.AddrRun.Trim() ?? "";
 
-        // แยกให้ชัดว่า 'ยังไม่ได้ตั้งเลย' กับ 'ตั้ง Target แล้วแต่ยังไม่มี Run'
-        // คนละเรื่องกัน — อย่างหลังเห็น address บนจอแล้วแต่ยังสั่งไม่ได้
-        // เพราะไม่มีบิตสั่งวิ่ง ถ้าเขียนรวมเป็น 'ยังไม่ได้ตั้ง' จะงงว่าใส่ไปแล้วทำไมไม่ขึ้น
         label.Text = target.Length == 0
             ? $"{baseText}  ·  ยังไม่ได้ตั้ง"
             : run.Length == 0
@@ -1885,23 +1468,9 @@ public partial class OrderDetailUserControl : UserControl
         input.Text = next.ToString();
     }
 
-    /// <summary>
-    /// คีย์ของแกนใน ClampSettings — ตรงกับชื่อคอลัมน์ใน MainTable
-    /// Plate = IAIP / IAIPZ1 / IAIPZ2 · Shim = IAI / IAIZ1 / IAIZ2
-    /// </summary>
     private static string IaiAxisKey(bool isPlate, string? zone) =>
         (isPlate ? "IAIP" : "IAI") + (zone ?? "");
 
-    /// <summary>
-    /// สั่งแคลมป์ได้เฉพาะงานที่เริ่มไปแล้ว — แกนจะวิ่งจริงตอนกด ถ้างานยังไม่เริ่ม
-    /// แปลว่าชิ้นงานยังไม่อยู่ที่เครื่อง การสั่งแกนวิ่งตอนนั้นคือสั่งลงบนงานของคนอื่น
-    /// ที่ค้างอยู่ หรือสั่งลงบนที่ว่าง
-    /// <para>
-    /// โหมดทดสอบหน้างาน (MENU_LEVEL 99) และหน้าที่เปิดโดยไม่มี job จริงไม่โดนกัน
-    /// เพราะสองกรณีนั้นตั้งใจใช้สั่งแกนโดยไม่มีงานอยู่แล้ว
-    /// </para>
-    /// </summary>
-    /// <summary>ชื่องานสำหรับข้อความ — เผื่อเรียกก่อนที่ข้อมูลงานจะโหลดเสร็จ</summary>
     private string JobText() => _jobLabel.Length > 0 ? _jobLabel : $"#{_jobId}";
 
     private bool CanCommandIai() // เช็กสิทธิ์ก่อน Send หรือ Upload ค่าแคลมป์
@@ -1939,8 +1508,6 @@ public partial class OrderDetailUserControl : UserControl
         var axis = s.Find(IaiAxisKey(isPlate, zone));
         if (axis == null) return;
 
-        // ปุ่ม Send ต้องมีทั้ง Target (ที่เก็บค่า) และ Run (บิตสั่งวิ่ง) ขาดอย่างใด
-        // อย่างหนึ่งก็สั่งไม่ได้ — บอกให้ตรงว่าขาดอันไหน จะได้ไม่ต้องเดาว่าใส่ตรงไหนแล้ว
         if (!axis.IsConfigured)
         {
             var missing = axis.AddrTarget.Trim().Length == 0
@@ -1952,7 +1519,6 @@ public partial class OrderDetailUserControl : UserControl
             return;
         }
 
-        // บอกให้ครบว่าค่าจะไปลงที่ address ไหน สั่งผิดแกนคือชิ้นงานเสีย
         if (!Confirm.Ask(this, "ยืนยันสั่งแคลมป์",
                 $"สั่ง {axis.Display} ไปที่ {mm} mm\n\n"
                 + $"-> {axis.AddrTarget} = {ClampService.ToRaw(mm)}\n"
@@ -1978,8 +1544,6 @@ public partial class OrderDetailUserControl : UserControl
 
     private async Task IaiUploadAsync(AntdUI.Input input, AntdUI.Input programInput, AntdUI.Input displayInput, bool isPlate, string? zone) // เก็บระยะที่ปรับไว้ใช้กับโปรแกรมและ Job นี้
     {
-        // กันด้วยกฎเดียวกับปุ่ม Send — ค่านี้เขียนทับระยะแคลมป์ที่ผูกกับงาน
-        // และ backend ก็ปฏิเสธงานที่ยังไม่เริ่มอยู่แล้ว ดักที่นี่เพื่อบอกสาเหตุให้ตรง
         if (!CanCommandIai()) return;
 
         if (!int.TryParse(input.Text.Trim(), out int mm))
@@ -2083,7 +1647,6 @@ public partial class OrderDetailUserControl : UserControl
         AntdUI.Input program, AntdUI.Input erpMfg,
         AntdUI.Table table, string? sentProgram = null)
     {
-        // ส่งไปแล้วให้โชว์รุ่นที่พิมพ์จริง ยังไม่ส่งก็โชว์ชื่อฐานตามข้อมูลงาน
         program.Text = sentProgram ?? OrDash(uv?.ProgramName);
         erpMfg.Text = OrDash(uv?.ErpMfg);
 
@@ -2092,7 +1655,6 @@ public partial class OrderDetailUserControl : UserControl
             .Select((v, i) => new UvTextRow { Field = $"Text{i + 1}", Value = OrDash(v) })
             .ToList();
 
-        // จำค่าที่วาดไว้ เพื่อให้ตอนบันทึกรู้ว่าแถวไหนถูกแก้จริง ไม่ใช่เขียนทับทั้งห้าช่อง
         table.Tag = rows.Select(r => r.Value).ToList();
 
         table.DataSource = null;

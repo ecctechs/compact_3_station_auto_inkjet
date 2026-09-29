@@ -2,40 +2,19 @@ using InkjetOperator.Views;
 
 namespace InkjetOperator.Services;
 
-/// <summary>ผลการหาไฟล์โปรแกรม UV</summary>
-/// <param name="Program">ชื่อไฟล์ที่จะส่งให้เครื่อง (ไม่มีนามสกุล) — null = ยกเลิก</param>
-/// <param name="IsDefault">true = ไม่พบโปรแกรมที่ขอ ตกไปใช้ default.uvdx</param>
 public sealed record UvProgramPick(string? Program, bool IsDefault);
 
-/// <summary>
-/// หาไฟล์ .uvdx ที่จะส่งให้เครื่อง จากชื่อโปรแกรมที่ได้มา
-///
-/// รุ่นย่อย = ชื่อเดิมต่อด้วย "-" เท่านั้น (S-DEX-1624 → S-DEX-1624-1)
-/// ตรงกับเงื่อนไข SQL ของระบบเดิม: WHERE program = base OR program LIKE 'base-%'
-/// ใช้ StartsWith เปล่าๆ จะกินชื่อที่แค่ขึ้นต้นเหมือนกัน (S-DEX-16240, KJZ-684)
-///
-/// อยู่ที่นี่เพื่อให้หน้าส่งงานจริงกับหน้าทดสอบใช้ตรรกะเดียวกัน ไม่หลุดกันภายหลัง
-/// </summary>
 public static class UvProgramResolver
 {
     public const string DefaultProgram = "default";
 
     private const string UvdxExtension = ".uvdx";
 
-    /// <summary>
-    /// เจอ 1 ไฟล์ → ใช้เลย · เจอหลายไฟล์ → ให้เลือก · ไม่เจอ → default
-    /// ไม่รู้จักโฟลเดอร์ document → ส่งชื่อที่ได้มาตรงๆ ให้เครื่องตัดสินเอง
-    /// </summary>
     public static UvProgramPick Resolve(string? programName, string? docFolder, IWin32Window? owner = null)
     {
         var baseName = (programName ?? "").Trim();
         if (baseName.Length == 0) return new UvProgramPick(null, false);
 
-        // ชื่อโปรแกรมมีจุดอยู่ในตัวได้ เช่น "AKBONO.Lot664" — ห้ามใช้
-        // GetFileNameWithoutExtension เพราะมันมองว่า ".Lot664" เป็นนามสกุลแล้วตัดทิ้ง
-        // เหลือ "AKBONO" ซึ่งไปหาไฟล์ไม่เจอแล้วตกไปใช้ default.uvdx
-        //
-        // ตัดเฉพาะ ".uvdx" ท้ายชื่อ เผื่อค่าที่เก็บมาติดนามสกุลมาด้วย
         if (baseName.EndsWith(UvdxExtension, StringComparison.OrdinalIgnoreCase))
             baseName = baseName[..^UvdxExtension.Length];
         if (docFolder == null) return new UvProgramPick(baseName, false);
@@ -62,12 +41,6 @@ public static class UvProgramResolver
         return new UvProgramPick(DefaultProgram, true);
     }
 
-    /// <summary>
-    /// ยืนยันก่อนใช้ default — ไม่ให้พิมพ์ผิดแบบโดยไม่รู้ตัว
-    ///
-    /// ใช้กล่องของ AntdUI ชุดเดียวกับที่ยืนยันเรื่องอื่นทั้งระบบ ไม่ใช่กล่องของ
-    /// Windows ซึ่งตัวหนังสือเล็กและหน้าตาคนละแบบกับทุกหน้าในโปรแกรม
-    /// </summary>
     public static bool ConfirmDefault(string requestedProgram, string machineName, Control? owner = null)
     {
         var text =
@@ -79,12 +52,6 @@ public static class UvProgramResolver
         return Views.Confirm.Ask(owner, "ไม่พบโปรแกรม", text);
     }
 
-    /// <summary>
-    /// ให้ผู้ใช้เลือกรุ่นย่อยพร้อมเห็นรูปของแต่ละรุ่น
-    ///
-    /// ฝั่งนี้เลือกแล้ว "เปลี่ยนสิ่งที่พิมพ์จริง" ข้อความจึงต้องสื่อแบบนั้น
-    /// ต่างจากฝั่ง MK ที่เลือกแล้วเปลี่ยนแค่รูปที่ดู
-    /// </summary>
     private static string? PromptVariant(List<string> variants, IWin32Window? owner)
     {
         var options = variants

@@ -7,7 +7,7 @@ public static class CpiWriteService
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, SemaphoreSlim> WriteLocks
         = new(StringComparer.OrdinalIgnoreCase);
 
-    public static async Task<(bool ok, string msg)> WriteAsync(
+    public static async Task<(bool ok, string msg)> WriteAsync( // เขียนข้อความลงตาราง CPI ของ UV ที่เลือก
         string dbPath, string table, string? lot, string? name,
         string? text1, string? text2, string? text3, string? text4, string? text5)
     {
@@ -18,7 +18,6 @@ public static class CpiWriteService
             await gate.WaitAsync().ConfigureAwait(false);
             try
             {
-                // SQLite ทำงานแบบ synchronous แม้ใช้ Async จึงย้ายเฉพาะงานไฟล์ออกจาก UI
                 return await Task.Run(() => WriteCoreAsync(dbPath, table, lot, name,
                     text1, text2, text3, text4, text5)).ConfigureAwait(false);
             }
@@ -50,11 +49,6 @@ public static class CpiWriteService
             var sets = new List<string>();
             await using var cmd = conn.CreateCommand();
 
-            // ช่องที่มีค่าจะส่ง แต่ตารางปลายทางไม่มีคอลัมน์นั้น
-            //
-            // เดิมข้ามเงียบ ๆ แล้วรายงานว่าสำเร็จ ซึ่งแปลว่าข้อความที่คนหน้างานพิมพ์
-            // หายไปเฉย ๆ โดยไม่มีใครรู้ ถ้าชื่อคอลัมน์ของ CPI ที่หน้างานต่างไปแม้แต่
-            // ตัวเดียว จะรู้ตัวก็ต่อเมื่อชิ้นงานออกมาผิด
             var skipped = new List<string>();
 
             void AddCol(string col, string? val)
@@ -85,7 +79,6 @@ public static class CpiWriteService
 
             if (affected == 0) return (false, $"ไม่พบแถว id=1 ในตาราง {table}");
 
-            // มีช่องที่มีค่าแต่ลงไม่ได้ = ยังไม่ถือว่าสำเร็จ ต้องให้คนหน้างานเห็น
             if (skipped.Count > 0)
             {
                 return (false,
@@ -101,15 +94,10 @@ public static class CpiWriteService
         }
     }
 
-    /// <summary>ค่าที่อยู่ในแถว id=1 ของตาราง CPI ตอนนี้</summary>
     public sealed record CpiRow(
         string? Lot, string? Name,
         string? Text1, string? Text2, string? Text3, string? Text4, string? Text5);
 
-    /// <summary>
-    /// อ่านค่าปัจจุบันจาก CPI.db3 — ใช้ตอนทดสอบเพื่อดูว่าตอนนี้เครื่องถืออะไรอยู่ก่อนเขียนทับ
-    /// เปิดแบบ ReadOnly เพราะซอฟต์แวร์ UV อาจเปิดไฟล์ค้างอยู่
-    /// </summary>
     public static async Task<(bool ok, CpiRow? row, string msg)> ReadAsync(string dbPath, string table)
     {
         try

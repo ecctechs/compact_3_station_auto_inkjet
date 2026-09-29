@@ -11,7 +11,6 @@ public partial class OrderListUserControl
 
     private void ReconcileMachineStatus()
     {
-        // ได้คิวล่าสุดแล้ว ใช้ผลจาก Backend แทนข้อความชั่วคราวของรอบก่อน
         foreach (int id in _machineStatus.Keys.Where(id => !_activeStatusQueues.Contains(id)).ToArray())
             _machineStatus.Remove(id);
     }
@@ -43,7 +42,6 @@ public partial class OrderListUserControl
                 .GroupBy(r => r.Id).Select(g => g.First()).OrderBy(r => r.Round).ToList();
             if (rows.Count == 0)
             {
-                // ประวัติส่งเก่าอาจเป็นงานก่อน Restore จึงใช้ยืนยันรอบปัจจุบันไม่ได้
                 tags.Add(new AntdUI.CellTag($"{machine} · {(job.Status == "Waiting" ? "ยังไม่เข้าคิว" : "ไม่มีคิวปัจจุบัน")}",
                     AntdUI.TTypeMini.Default));
                 continue;
@@ -65,7 +63,6 @@ public partial class OrderListUserControl
         if (row.State == "done") return ("ปล่อยคิวแล้ว", AntdUI.TTypeMini.Default);
         if (row.SentAt != null) return (SentStatus(row.Machine), AntdUI.TTypeMini.Success);
         if (_machineStatus.TryGetValue(row.Id, out var local)) return (local.Text, local.Type);
-        // sending จาก Backend อย่างเดียวไม่ยืนยันว่าโปรแกรมต้นทางยังทำงานอยู่
         if (row.NeedsSendReview) return ("กำลังส่ง / รอตรวจสอบ", AntdUI.TTypeMini.Warn);
         if (row.DispatchState == "not_sent") return ("ยังไม่ส่ง / ส่งไม่สำเร็จ", AntdUI.TTypeMini.Error);
         return row.State == "active"

@@ -39,7 +39,6 @@ public class SqliteDataService
             JobId = jobId,
         };
 
-        // MK1 — ordinal 1
         var mk1 = new InkjetConfigDto // เตรียมค่าหัวพิมพ์ MK1
         {
             Ordinal = 1,
@@ -68,7 +67,6 @@ public class SqliteDataService
         }
         pattern.InkjetConfigs.Add(mk1); // รวม MK1 ไว้ใน Pattern
 
-        // MK2 — ordinal 2
         var mk2 = new InkjetConfigDto // เตรียมค่าหัวพิมพ์ MK2
         {
             Ordinal = 2,
@@ -95,7 +93,6 @@ public class SqliteDataService
         }
         pattern.InkjetConfigs.Add(mk2); // รวม MK2 ไว้ใน Pattern
 
-        // Conveyor speeds
         pattern.ConveyorSpeeds = new ConveyorSpeedDto // เตรียมค่าความเร็วสายพาน
         {
             Speed1 = ReadInt(reader, "สายพาน1_inkjet"), // อ่านความเร็วสายพาน 1
@@ -103,7 +100,6 @@ public class SqliteDataService
             Speed3 = ReadInt(reader, "สายพาน3"), // อ่านความเร็วสายพาน 3
         };
 
-        // Servo configs
         pattern.ServoConfigs = new List<ServoConfigDto> // เตรียมค่าของ Servo ทั้งสองตัว
         {
             new() { Ordinal = 1, PostAct = ReadDouble(reader, "pos_act"), Delay = ReadDouble(reader, "delay") }, // อ่านตำแหน่งและค่าหน่วง Servo 1
@@ -113,12 +109,6 @@ public class SqliteDataService
         return pattern;
     }
 
-    /// <summary>
-    /// อ่านข้อมูลหัวงานที่หน้า Scan Barcode เอาไปโชว์ — ไม่พบแถวใน print_data คืน null
-    ///
-    /// marking_method อยู่คนละตาราง (plan_routing) และ lot ที่ยังไม่มีแถวตรงนั้นก็มี
-    /// จึงปล่อยให้เป็นค่าว่างแทนที่จะถือว่าหาไม่เจอทั้ง lot
-    /// </summary>
     public LotSummary? GetLotSummary(string barcode) // อ่านหัวงานมาแสดงบนหน้าสแกน
     {
         using var conn = Open();
@@ -139,10 +129,6 @@ public class SqliteDataService
         };
     }
 
-    /// <summary>
-    /// ชื่อลูกค้าของ lot นี้ — อยู่ใน inkjet_data คนละตารางกับช่องอื่นของหน้า Scan Barcode
-    /// ไม่พบแถวหรือไม่มีคอลัมน์ก็คืน null ไม่ถือว่าผิด งานยังลงทะเบียนได้ตามปกติ
-    /// </summary>
     private string? GetCustomer(string barcode) // อ่านลูกค้าจากข้อมูลตั้งค่าพิมพ์
     {
         try
@@ -161,10 +147,6 @@ public class SqliteDataService
         }
     }
 
-    /// <summary>
-    /// อ่าน UV detail ของ lot นี้จาก print_data — 1 lot ได้สูงสุด 2 แถว (UV1/UV2)
-    /// เครื่องที่ไม่มีทั้งชื่อโปรแกรมและข้อความ = ไม่มีงาน UV → ไม่เก็บ
-    /// </summary>
     public List<UvJobItem> GetUvDetail(string barcode) // อ่านข้อมูล UV1 และ UV2
     {
         var items = new List<UvJobItem>(); // เตรียมรายการ UV ของ Lot
@@ -186,8 +168,6 @@ public class SqliteDataService
         return items;
     }
 
-    // m1_* → UV1/MK063 (Plate), m2_* → UV2/MK067 (Shim)
-    // ยืนยันจากชื่อโปรแกรมในข้อมูลจริง: m1 ขึ้นต้น "P-" (Plate), m2 ขึ้นต้น "S-" (Shim)
     private static UvJobItem BuildUv( // รวมค่าของเครื่อง UV หนึ่งรายการ
         SqliteDataReader r, string machine, string table, string prefix, // รับแถวข้อมูล เครื่อง และคำนำหน้าคอลัมน์
         string lot, string? erpMfg, int? qty) // รับ Lot, Order No และ Qty ต้นทาง
@@ -221,10 +201,6 @@ public class SqliteDataService
         if (hasData) items.Add(item); // เพิ่มเฉพาะรายการที่มีข้อมูล
     }
 
-    /// <summary>
-    /// อ่าน plan_routing ของ lot นี้จาก source DB — ไม่พบแถว/ไม่มีตาราง คืน null
-    /// เก็บค่าดิบทั้งหมด (marking_method เป็น NULL ได้)
-    /// </summary>
     public CreatePlanRoutingRequest? GetPlanRouting(string barcode, int jobId) // อ่านวิธีพิมพ์และลำดับกระบวนการ
     {
         try

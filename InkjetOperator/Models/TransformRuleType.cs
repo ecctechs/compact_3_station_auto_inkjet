@@ -2,10 +2,6 @@ using System.ComponentModel;
 
 namespace InkjetOperator.Models;
 
-/// <summary>
-/// The nine barcode-transform operations. The [Description] is the on-screen
-/// label shown in the Rule dropdown; the enum value is what gets persisted.
-/// </summary>
 public enum TransformRuleType
 {
     [Description("Delete")]

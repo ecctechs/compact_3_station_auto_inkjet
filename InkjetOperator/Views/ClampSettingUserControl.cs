@@ -3,21 +3,11 @@ using InkjetOperator.Services;
 
 namespace InkjetOperator.Views;
 
-/// <summary>
-/// หน้าควบคุมแคลมป์ผ่าน PLC (MC Protocol)
-///
-/// ตามแผนภาพหน้างาน: PLC ตัวเดียวคุม 6 แกน — Plate/Shim × X/Z1/Z2
-/// ใช้ตารางแทนช่องกรอกแยก เพราะแต่ละแกนมี 4 address (target/run/reset/status)
-/// รวม 24 ช่อง ซึ่งวางเป็นฟอร์มแล้วอ่านยากกว่ามาก
-///
-/// แกนที่ยังไม่ได้กำหนด address (แผนภาพเขียน DXXX/MXXX) จะถูกกันไม่ให้สั่ง
-/// </summary>
 public partial class ClampSettingUserControl : UserControl
 {
     private static readonly Color Green = Color.FromArgb(21, 128, 61);
     private static readonly Color Red = Color.FromArgb(220, 38, 38);
 
-    /// <summary>ช่องในตารางที่แก้แล้วมีผลกับเครื่อง — ล็อกไว้จนกว่าจะปลดล็อก</summary>
     private static readonly HashSet<string> LockedColumns =
         new(StringComparer.Ordinal) { "ValueMm", "AddrTarget", "AddrRun", "AddrReset", "AddrStatus" };
 
@@ -37,12 +27,8 @@ public partial class ClampSettingUserControl : UserControl
         lblStatus.ForeColor = Color.Gray;
         _ = CheckStatusAsync();
 
-        // ไฟสถานะต้องตรงกับของจริง ไม่ใช่ภาพนิ่งตั้งแต่ตอนเปิดโปรแกรม
-        // กติกาทั้งหมดอยู่ที่ StatusRecheck
         Services.StatusRecheck.Wire(this, tmrAutoCheck, () => CheckStatusAsync(quiet: true));
     }
-
-    // ── Setup ──────────────────────────────────────────────
 
     private void ConfigureColumns()
     {
@@ -120,17 +106,6 @@ public partial class ClampSettingUserControl : UserControl
         UpdateDbStatus();
     }
 
-    /// <summary>
-    /// อ่านบิตปุ่มกดของทุกสถานีที่กรอกไว้ ให้เห็นกับตาว่าต่อติดและที่อยู่ถูก
-    ///
-    /// <para>
-    /// ใช้ค่าที่พิมพ์อยู่ในช่อง ไม่ใช่ค่าที่บันทึกไว้ จะได้ลองก่อนกด Save ได้
-    /// </para>
-    /// <para>
-    /// อ่านทีเดียวครบทุกสถานี เพราะตอนติดตั้งหน้างานคนตั้งค่าอยู่ที่เครื่องเดียว
-    /// และต้องรู้ว่าสามปุ่มต่อถูกขาครบ ไม่ใช่ไล่กดทีละสถานี
-    /// </para>
-    /// </summary>
     private async Task TestPushButtonAsync()
     {
         var probe = new PushButtonSettings
@@ -168,9 +143,6 @@ public partial class ClampSettingUserControl : UserControl
         lblPushStatus.Text = "กำลังอ่าน...";
         try
         {
-            // ผลลงกล่อง "ผลการทำงาน" บรรทัดละสถานี ไม่ยัดรวมบรรทัดเดียวบนป้าย
-            // ป้ายมีที่จำกัดและตัดหัวตัดท้าย ส่วนกล่อง log เป็น Consolas คอลัมน์
-            // จึงตรงกันอ่านไล่ลงมาได้เร็ว
             Log($"ทดสอบปุ่มกด · {probe.Ip}:{probe.Port}");
 
             int okCount = 0;
@@ -207,25 +179,11 @@ public partial class ClampSettingUserControl : UserControl
         }
     }
 
-    /// <summary>
-    /// สรุปว่าตกลงแล้วเครื่องนี้จะอ่านปุ่มกดเองหรือเปล่า
-    ///
-    /// <para>
-    /// อ่านค่าทดสอบได้ไม่ได้แปลว่าระบบจะทำงาน ต้องติ๊กเปิดใช้งานและกด Save ด้วย
-    /// (<c>PushButtonWatcher.Start</c> เช็ค <c>IsReady</c> ซึ่งรวมค่าติ๊กนี้ไว้)
-    /// คนตั้งค่ามักลืมข้อนี้แล้วงงว่าทำไมกดปุ่มหน้างานแล้วไม่มีอะไรเกิดขึ้น
-    /// </para>
-    /// <para>
-    /// บอกด้วยว่าเครื่องนี้เฝ้าของสถานีไหน เพราะช่องมีสามช่องแต่เฝ้าช่องเดียว
-    /// </para>
-    /// </summary>
     private string PollNote()
     {
         if (!chkPushEnabled.Checked)
             return "ยังไม่ติ๊กเปิดใช้งาน เครื่องนี้จะยังไม่อ่านเอง";
 
-        // ถามตัวค่าตั้งเอง ไม่เขียนกฎซ้ำที่นี่ — กฎว่าเครื่องไหนเฝ้าปุ่มไหนอยู่ที่
-        // PushButtonSettings.Watched() ที่เดียว ตัวเฝ้าจริงก็ใช้ตัวเดียวกัน
         var probe = new PushButtonSettings
         {
             Enabled = true,
@@ -249,11 +207,6 @@ public partial class ClampSettingUserControl : UserControl
         return $"เครื่องนี้เป็น ST{station} อ่าน {list} ทุก {ms} ms";
     }
 
-    /// <summary>
-    /// ชุดสีเดียวกับตาราง Register Map ในหน้า PLC Setting —
-    /// อ่านอย่างเดียว = Default (ขาว) · สั่งงานเครื่อง = Primary (น้ำเงิน)
-    /// เรียงให้ปุ่มที่ปลอดภัยอยู่ซ้าย เหมือน [Read] [Write] ของหน้านั้น
-    /// </summary>
     private static AntdUI.CellButton[] NewButtons() =>
     [
         new AntdUI.CellButton("read", "Read", AntdUI.TTypeMini.Default) { Radius = 6 },
@@ -267,16 +220,6 @@ public partial class ClampSettingUserControl : UserControl
         tblAxes.DataSource = _rows;
     }
 
-    // ── Lock / Unlock ──────────────────────────────────────
-
-    /// <summary>
-    /// หน้านี้เป็นหน้าตั้งค่า/ทดสอบ ไม่ใช่หน้าใช้งานประจำวัน
-    /// การปรับแคลมป์ตอนผลิตจริงทำที่หน้า Order Detail (ส่วน IAI)
-    /// จึงล็อกทุกอย่างที่เปลี่ยนค่าได้ เหลือไว้เฉพาะคำสั่งที่อ่านอย่างเดียว
-    /// (เช็คการเชื่อมต่อ, ปุ่ม "อ่าน" รายแถว) ซึ่งไม่ทำให้เครื่องขยับ
-    ///
-    /// ใช้รหัสเดียวกับหน้า PLC Setting (คีย์ PLC_PASSWORD) จะได้ไม่ต้องจำสองชุด
-    /// </summary>
     private void ToggleLock()
     {
         if (_unlocked)
@@ -306,20 +249,17 @@ public partial class ClampSettingUserControl : UserControl
     {
         btnUnlock.Text = _unlocked ? "🔓 Lock" : "🔒 Unlock";
 
-        // 1. การเชื่อมต่อ — btnCheckStatus ไม่ล็อก เพราะแค่ ping ไม่เปลี่ยนอะไร
         txtIp.Enabled = _unlocked;
         txtPort.Enabled = _unlocked;
         txtDbPath.Enabled = _unlocked;
         btnBrowse.Enabled = _unlocked;
 
-        // 2. ชื่อโปรแกรม
         txtPlateProgram.Enabled = _unlocked;
         txtShimProgram.Enabled = _unlocked;
         btnLoadAll.Enabled = _unlocked;
         btnApplyAll.Enabled = _unlocked;
         btnUploadAll.Enabled = _unlocked;
 
-        // 4. ปุ่มกดหน้างาน — ปุ่มทดสอบไม่ล็อก เพราะแค่อ่านค่า ไม่เปลี่ยนอะไร
         chkPushEnabled.Enabled = _unlocked;
         txtPushAddrSt1.Enabled = _unlocked;
         txtPushAddrSt2.Enabled = _unlocked;
@@ -334,7 +274,6 @@ public partial class ClampSettingUserControl : UserControl
             : "ล็อกอยู่ — ดูได้อย่างเดียว กด Unlock เพื่อแก้ค่าหรือสั่งงาน";
     }
 
-    /// <summary>ดึงค่าจากตารางกลับเข้า settings — ตารางคือแหล่งความจริงระหว่างที่หน้าเปิดอยู่</summary>
     private void SyncRowsToSettings()
     {
         _settings.Ip = txtIp.Text.Trim();
@@ -378,15 +317,12 @@ public partial class ClampSettingUserControl : UserControl
         _settings.Save();
         _push.Save();
 
-        // Clamp คืนค่าที่ถูกปัดให้อยู่ในช่วงที่ใช้ได้จริง สะท้อนกลับให้เห็นบนหน้าจอ
         _push = PushButtonSettings.Load();
         txtPushPollMs.Text = _push.PollMs.ToString();
         txtPushAddrSt1.Text = _push.AddressSt1;
         txtPushAddrSt2.Text = _push.AddressSt2;
         txtPushAddrSt3.Text = _push.AddressSt3;
 
-        // บอกทันทีว่าหลังบันทึกแล้วตกลงเครื่องนี้จะอ่านปุ่มกดเองหรือเปล่า
-        // ไม่ต้องให้เดาเอาจากติ๊กถูกในช่อง
         Log($"บันทึกแล้ว · {PollNote()}");
 
         ResetColors();
@@ -395,7 +331,6 @@ public partial class ClampSettingUserControl : UserControl
         MessageBox.Show("บันทึกเรียบร้อย", "Clamp", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
-    /// <summary>ตรวจเฉพาะช่องที่กรอกมา — ปล่อยว่างได้ แปลว่าแกนนั้นยังไม่พร้อมใช้</summary>
     private bool ValidateAddresses(out string error)
     {
         foreach (var axis in _settings.Axes)
@@ -421,8 +356,6 @@ public partial class ClampSettingUserControl : UserControl
         return true;
     }
 
-    // ── Database ───────────────────────────────────────────
-
     private void BrowseDatabase()
     {
         using var dlg = new OpenFileDialog
@@ -445,7 +378,6 @@ public partial class ClampSettingUserControl : UserControl
         UpdateDbStatus();
     }
 
-    /// <summary>บอกว่าไฟล์นี้มีคอลัมน์ครบ 6 แกนไหม — ฐานข้อมูลรุ่นเก่าไม่มีคอลัมน์ Z</summary>
     private void UpdateDbStatus()
     {
         var path = txtDbPath.Text.Trim();
@@ -481,7 +413,6 @@ public partial class ClampSettingUserControl : UserControl
         }
     }
 
-    /// <summary>โหลดค่าทั้ง 6 แกนจาก MainTable ตามชื่อโปรแกรมของแต่ละฝั่ง</summary>
     private void LoadAllFromDatabase()
     {
         SyncRowsToSettings();
@@ -563,8 +494,6 @@ public partial class ClampSettingUserControl : UserControl
         var (ok, message) = ClampService.Upload(_settings.DbPath, program, axis, mm.Value);
         Log($"{axis.Display} → {(ok ? "" : "❌ ")}{message}");
     }
-
-    // ── PLC ────────────────────────────────────────────────
 
     private async Task ApplyAllAsync()
     {
@@ -665,11 +594,6 @@ public partial class ClampSettingUserControl : UserControl
             : $"{axis.Display} — ❌ {error}");
     }
 
-    /// <summary>
-    /// เปลี่ยนชื่อที่แสดงของ PLC แคลมป์ — ชุดเดียวกับหน้า PLC Setting
-    ///
-    /// หน้างานมี PLC หลายตัว เรียกด้วยชื่อที่ติดอยู่กับเครื่องจริงจะสื่อกันได้ดีกว่าเลข IP
-    /// </summary>
     private void EditName()
     {
         using var dlg = new InputDialog("Rename", "Display name:", ClampPlcName());
@@ -683,16 +607,11 @@ public partial class ClampSettingUserControl : UserControl
 
     private static string ClampPlcName() => CustomSettingsManager.Read(ClampNameKey, "PLC แคลมป์");
 
-    /// <summary>ไฟสถานะ — เทาคือยังไม่ได้เช็ค เขียวคือต่อได้ แดงคือต่อไม่ได้</summary>
     private void SetConnDot(Color colour)
     {
         if (!IsDisposed) lblClampStatusDot.ForeColor = colour;
     }
 
-    /// <param name="quiet">
-    /// true = รอบตรวจซ้ำอัตโนมัติ เปลี่ยนแค่สีไฟ ไม่เขียนลงกล่องผลการทำงาน
-    /// ไม่งั้นกล่องจะเต็มไปด้วยบรรทัดเดิมนาทีละสี่บรรทัดจนอ่านของจริงไม่เจอ
-    /// </param>
     public async Task CheckStatusAsync(bool quiet = false)
     {
         void Note(string text) { if (!quiet) Log(text); }
@@ -725,11 +644,8 @@ public partial class ClampSettingUserControl : UserControl
         }
     }
 
-    // ── Table events ───────────────────────────────────────
-
     private async void TblAxes_CellButtonClick(object? sender, AntdUI.TableButtonEventArgs e)
     {
-        // ล็อกอยู่ให้อ่านได้อย่างเดียว สั่งแกนวิ่งหรือรีเซ็ตต้องปลดล็อกก่อน
         if (!_unlocked && e.Btn?.Id != "read")
         {
             Notify.WarnModal(this, "ล็อกอยู่",
@@ -739,7 +655,6 @@ public partial class ClampSettingUserControl : UserControl
 
         if (e.Record is not AxisRow row) return;
 
-        // "อ่าน" ไม่ทำให้เครื่องขยับ จึงใช้ได้ตอนล็อก ส่วน "สั่ง"/"Reset" ต้องปลดล็อกก่อน
         if (!_unlocked && e.Btn?.Id != "read")
         {
             Warn("ล็อกอยู่ — กด Unlock ก่อนสั่งงาน");
@@ -763,7 +678,6 @@ public partial class ClampSettingUserControl : UserControl
         }
     }
 
-    /// <summary>คืน false = ไม่ให้เข้าโหมดแก้ไขช่องนั้น</summary>
     private bool TblAxes_CellBeginEdit(object? sender, AntdUI.TableEventArgs e)
     {
         if (_unlocked || !LockedColumns.Contains(e.Column.Key)) return true;
@@ -778,14 +692,12 @@ public partial class ClampSettingUserControl : UserControl
 
         var value = e.Value ?? "";
 
-        // กันไว้อีกชั้น เผื่อมีทางเข้าโหมดแก้ไขที่ไม่ผ่าน CellBeginEdit
         if (!_unlocked && e.Column != null && LockedColumns.Contains(e.Column.Key)) return false;
 
         switch (e.Column?.Key)
         {
             case "ValueMm":
                 row.ValueMm = value;
-                // อัปเดตค่าที่จะเขียนให้เห็นทันที จะได้ตรวจก่อนกดสั่ง
                 var mm = ParseMm(value);
                 row.Raw = mm.HasValue ? ClampService.ToRaw(mm.Value).ToString() : "-";
                 BeginInvoke(RebindTable);
@@ -800,9 +712,6 @@ public partial class ClampSettingUserControl : UserControl
         return true;
     }
 
-    // ── Helpers ────────────────────────────────────────────
-
-    /// <summary>คืน null เมื่อช่องว่าง = แกนนี้ไม่ถูกใช้ในรอบนี้ (ต่างจาก 0 ที่เป็นระยะจริง)</summary>
     private static int? ParseMm(string? text)
     {
         var s = (text ?? "").Trim();
@@ -837,7 +746,6 @@ public partial class ClampSettingUserControl : UserControl
         MessageBox.Show(message, "Clamp", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 }
 
-/// <summary>1 แถวในตารางแกน — ผูกกับ ClampAxis ผ่าน Key</summary>
 internal class AxisRow
 {
     public string Key { get; set; } = "";

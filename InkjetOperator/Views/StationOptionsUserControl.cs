@@ -2,19 +2,6 @@
 
 namespace InkjetOperator.Views;
 
-/// <summary>
-/// สวิตช์เปิด/ปิดของที่ไม่ได้เปิดไว้ตลอด — หน้านี้เห็นเฉพาะโหมดทดสอบ
-///
-/// <para>
-/// มีสามรายการ — ปุ่มสำรอง "ขอให้ ST1 ส่ง" ในหน้า Order Detail ของ ST3 ซึ่งเป็น
-/// ทางออกตอนปุ่มกดหน้างานหรือ PLC ใช้ไม่ได้ · การถือเครื่องไว้ระหว่างรอบของงาน
-/// ที่เข้าเครื่องเดิมสองรอบ · และปุ่มรีเซ็ตทุกอย่างกลับเป็นค่าเริ่มต้นสำหรับทดสอบ
-/// </para>
-/// <para>
-/// เซฟทันทีที่กด ไม่มีปุ่ม Save — มีช่องเดียวและเป็นค่า เปิด/ปิด กดแล้วลืมกดเซฟ
-/// จะกลายเป็นว่าเดินไปหน้างานแล้วปุ่มไม่ขึ้นโดยไม่รู้สาเหตุ
-/// </para>
-/// </summary>
 public partial class StationOptionsUserControl : UserControl
 {
     public StationOptionsUserControl()
@@ -34,7 +21,6 @@ public partial class StationOptionsUserControl : UserControl
         btnResetRuntime.Click += async (_, _) => await ResetRuntimeAsync();
     }
 
-    /// <summary>ค่าที่บันทึกลงไฟล์ได้ล่าสุด — ใช้ดีดตัวเลือกกลับเมื่อบันทึกไม่ผ่าน</summary>
     private StationService.ProcessTabsMode _processTabsSaved;
 
     private AntdUI.Radio[] ProcessTabsRadios =>
@@ -47,14 +33,6 @@ public partial class StationOptionsUserControl : UserControl
         _ => rdoProcessTabsDev,
     };
 
-    /// <summary>
-    /// ใครเห็นแท็บ Online / Offline ในหน้า Order List — เซฟทันทีที่เลือก
-    ///
-    /// <para>
-    /// Radio ที่ถูกเลือกทำให้ตัวอื่นในกลุ่มหลุดเอง ซึ่งยิงเหตุการณ์ออกมาด้วยค่า false
-    /// รับเฉพาะตัวที่ถูกเลือก ไม่งั้นการเลือกหนึ่งครั้งจะเขียนไฟล์สามรอบ
-    /// </para>
-    /// </summary>
     private void ProcessTabs_CheckedChanged(object? sender, AntdUI.BoolEventArgs e)
     {
         if (!e.Value) return;
@@ -77,7 +55,6 @@ public partial class StationOptionsUserControl : UserControl
             return;
         }
 
-        // เขียนไฟล์ไม่ผ่าน ตัวเลือกที่ค้างอยู่จะโกหกว่าเซฟแล้ว ต้องดีดกลับ
         foreach (var radio in ProcessTabsRadios) radio.CheckedChanged -= ProcessTabs_CheckedChanged;
         ProcessTabsRadio(_processTabsSaved).Checked = true;
         foreach (var radio in ProcessTabsRadios) radio.CheckedChanged += ProcessTabs_CheckedChanged;
@@ -86,14 +63,6 @@ public partial class StationOptionsUserControl : UserControl
             CustomSettingsManager.LastError ?? "เขียนไฟล์ตั้งค่าไม่ได้");
     }
 
-    /// <summary>
-    /// ล้างร่องรอยการเดินงานทั้งหมด ให้ทุกใบกลับไปเป็นรอเริ่ม
-    ///
-    /// <para>
-    /// ถามยืนยันก่อนเสมอ และบอกให้ครบว่าอะไรจะหายอะไรจะอยู่ เพราะย้อนกลับไม่ได้
-    /// และมีผลกับทุกเครื่องที่ต่ออยู่กับ backend เดียวกัน ไม่ใช่แค่เครื่องที่กด
-    /// </para>
-    /// </summary>
     private async Task ResetRuntimeAsync()
     {
         if (!Confirm.Ask(this, "รีเซ็ตกลับเป็นค่าเริ่มต้น",
@@ -143,14 +112,6 @@ public partial class StationOptionsUserControl : UserControl
         }
     }
 
-    /// <summary>
-    /// งานที่เข้าเครื่องเดิมสองรอบ จะถือเครื่องไว้ระหว่างรอบหรือปล่อยให้คนอื่นแทรก
-    ///
-    /// <para>
-    /// ค่าเริ่มต้นคือถือไว้ ตามที่ตกลงกับหัวหน้างาน เพราะ marking 22 เป็นงานพิเศษ
-    /// ที่ทำนาน ๆ ที ยอมให้เครื่องจอดรอดีกว่าเสี่ยงให้ชิ้นงานค้างกลางไลน์
-    /// </para>
-    /// </summary>
     private void HoldRound_CheckedChanged(object? sender, AntdUI.BoolEventArgs e)
     {
         if (CustomSettingsManager.Write(StationService.HoldForNextRoundKey, e.Value ? "1" : "0"))
@@ -161,7 +122,6 @@ public partial class StationOptionsUserControl : UserControl
             return;
         }
 
-        // เขียนไฟล์ไม่ผ่าน ติ๊กที่ค้างอยู่จะโกหกว่าเซฟแล้ว ต้องดีดกลับ
         chkHoldRound.CheckedChanged -= HoldRound_CheckedChanged;
         chkHoldRound.Checked = !e.Value;
         chkHoldRound.CheckedChanged += HoldRound_CheckedChanged;
@@ -180,7 +140,6 @@ public partial class StationOptionsUserControl : UserControl
             return;
         }
 
-        // เขียนไฟล์ไม่ผ่าน ติ๊กที่ค้างอยู่จะโกหกว่าเซฟแล้ว ต้องดีดกลับ
         chkManualRemoteSend.CheckedChanged -= ManualRemoteSend_CheckedChanged;
         chkManualRemoteSend.Checked = !e.Value;
         chkManualRemoteSend.CheckedChanged += ManualRemoteSend_CheckedChanged;

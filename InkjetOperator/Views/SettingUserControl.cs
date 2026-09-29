@@ -6,13 +6,10 @@ namespace InkjetOperator.Views;
 
 public partial class SettingUserControl : UserControl
 {
-    /// <summary>ระดับเมนูของโหมดทดสอบ — ตัวเดียวกับที่หน้า Order Detail ใช้</summary>
     private const int DevMenuLevel = 99;
 
-    /// <summary>ตำแหน่งของปุ่มสถานะระบบในตารางระดับเมนู</summary>
     private const int SystemHealthTab = 6;
 
-    /// <summary>ตำแหน่งของปุ่มตัวเลือกหน้างานในตารางระดับเมนู</summary>
     private const int StationOptionsTab = 7;
 
     private AntdUI.Button[] _menuButtons = [];
@@ -36,26 +33,13 @@ public partial class SettingUserControl : UserControl
         {
             0 => [false, true, true, false, false, false, false, false],
             1 => [true, false, false, true, true, false, false, false],
-            // ST3 — Backend DB อย่างเดียว
-            //
-            // โฟลเดอร์ UV2 ที่ ST3 ต้องใช้ไล่ดูรุ่นย่อยของ .uvdx ตั้งที่ UV2_FOLDER
-            // ใน uv.config ของเครื่องนั้น ตั้งครั้งเดียวตอนติดตั้ง ไม่มีหน้าจอให้แก้
-            // เพราะหน้า Printer Setting ที่มีช่องนี้อยู่แล้วมี COM port ของ MK กับ
-            // IP ของ UV ปนอยู่ด้วย ซึ่งไม่ควรเปิดให้ ST3 แตะ
             3 => [false, false, true, false, false, false, false, false],
             9 => [false, false, false, true, true, true, false, false],  // ทดสอบหน้างาน: PLC / Clamp / UV Test
             _ => [true, true, true, true, true, true, false, false],
         };
 
-        // หน้าสถานะระบบเปิดเฉพาะโหมดทดสอบ
-        //
-        // เป็นหน้าไว้ไล่หาสาเหตุตอนมีอะไรใช้ไม่ได้ ไม่ใช่หน้าที่พนักงานต้องดูระหว่าง
-        // ทำงาน และรายการที่ขึ้นแดงส่วนใหญ่เป็นของที่สถานีนั้นไม่ได้ใช้อยู่แล้ว
-        // เปิดให้ทุกคนเห็นมีแต่จะสร้างคำถามโดยไม่จำเป็น
         visible[SystemHealthTab] = level == DevMenuLevel;
 
-        // ตัวเลือกหน้างานก็เปิดเฉพาะโหมดทดสอบด้วยเหตุผลเดียวกัน — ในนั้นเป็นสวิตช์
-        // ที่เปลี่ยนกฎการทำงานหน้างาน ไม่ใช่ค่าที่พนักงานควรพลิกเองระหว่างผลิต
         visible[StationOptionsTab] = level == DevMenuLevel;
 
         int row = 0;
@@ -139,7 +123,6 @@ public partial class SettingUserControl : UserControl
         }
         else if (level == 9)
         {
-            // โหมดทดสอบหน้างาน — เช็คเฉพาะสามหน้าที่เปิดให้ใช้
             EnsureSubPage(nameof(btnPLCSetting));
             EnsureSubPage(nameof(btnClampSetting));
 
@@ -158,10 +141,6 @@ public partial class SettingUserControl : UserControl
         var page = CreateSubPage(buttonName);
         if (page != null)
         {
-            // จอที่เตี้ยกว่าที่ออกแบบไว้ Dock.Fill จะบีบหน้าลงมา แถวล่างสุด
-            // (ตาราง / ปุ่ม Save) หายไปเลยเพราะไม่มีที่ให้วาด
-            // ล็อกความสูงขั้นต่ำเท่าที่ Designer ออกแบบ แล้วให้ pnlContentArea เลื่อนแทน
-            // ล็อกเฉพาะความสูง — ความกว้างยังยืดหดตามจอได้เหมือนเดิม
             page.MinimumSize = new Size(0, page.Height);
             page.Dock = DockStyle.Fill;
             LanguageService.Apply(page);
@@ -195,12 +174,8 @@ public partial class SettingUserControl : UserControl
             return;
         }
 
-        // แต่ละหน้าสูงไม่เท่ากัน ต้องบอกช่วงเลื่อนใหม่ทุกครั้งที่สลับหน้า
-        // ไม่งั้นหน้าเตี้ยจะยังมี scrollbar ค้างจากหน้าก่อนหน้า
         pnlContentArea.AutoScrollPosition = Point.Empty;
         pnlContentArea.AutoScrollMinSize = new Size(0, page.MinimumSize.Height);
-        // แปลทุกครั้งที่แสดง ไม่ใช่แค่ตอนสร้าง — หน้าที่ถูกสร้างไว้ก่อนสลับภาษา
-        // จะถูกถอดออกจาก control tree ตอนสลับหน้า ทำให้ตอนสลับภาษาแปลไม่ถึง
         LanguageService.Apply(page);
         pnlContentArea.Controls.Add(page);
     }

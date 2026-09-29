@@ -29,8 +29,6 @@ public partial class PlcSettingUserControl : UserControl
         _ = CheckStatusAsync();
         _ = LoadTableAsync();
 
-        // ไฟสถานะต้องตรงกับของจริง ไม่ใช่ภาพนิ่งตั้งแต่ตอนเปิดโปรแกรม
-        // กติกาทั้งหมดอยู่ที่ StatusRecheck
         Services.StatusRecheck.Wire(this, tmrAutoCheck, () => CheckStatusAsync());
     }
 
@@ -39,8 +37,6 @@ public partial class PlcSettingUserControl : UserControl
         var pcIp = CustomSettingsManager.Read("PC_IP", "127.0.0.1");
         return $"http://{pcIp}:3000";
     }
-
-    // ── Setup ──────────────────────────────────────────────
 
     private void ConfigurePlcColumns()
     {
@@ -65,12 +61,8 @@ public partial class PlcSettingUserControl : UserControl
         btnCancel.Click += BtnCancel_Click;
         btnAddRow.Click += BtnAddRow_Click;
 
-        // เพิ่มแถวใน register map เป็นเรื่องของคนที่รู้ว่า PLC ตัวนี้มี address อะไรบ้าง
-        // ไม่ใช่ของคนคุมเครื่อง แถวที่เพิ่มผิดคือส่งค่าไปทับ register อื่นตอนเริ่มงาน
         btnAddRow.Visible = StationService.IsDevMode;
 
-        // ปุ่มทดสอบเลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้น — ของจริงทำเองตอนปล่อยเครื่องแล้วไม่มีคิว
-        // ปุ่มนี้มีไว้ลองที่หน้างานโดยไม่ต้องรันงานจริงให้ครบวง
         btnResetPosition.Visible = StationService.IsDevMode;
         btnResetPosition.Click += async (_, _) => await ResetPositionAsync();
         btnReadAll.Click += async (_, _) => await ReadAllAsync();
@@ -104,8 +96,6 @@ public partial class PlcSettingUserControl : UserControl
         lblPlcBadge.Text = CustomSettingsManager.Read("PLC_NAME", "PLC-001");
         ResetColors();
     }
-
-    // ── Lock / Unlock ──────────────────────────────────────
 
     private void ToggleLock()
     {
@@ -145,8 +135,6 @@ public partial class PlcSettingUserControl : UserControl
 
         tblPlcMap.EditMode = _unlocked ? AntdUI.TEditMode.Click : AntdUI.TEditMode.None;
     }
-
-    // ── Status light ───────────────────────────────────────
 
     public async Task CheckStatusAsync()
     {
@@ -189,8 +177,6 @@ public partial class PlcSettingUserControl : UserControl
             lblPlcStatus.ForeColor = color;
     }
 
-    // ── Register map table ─────────────────────────────────
-
     private async Task LoadTableAsync()
     {
         try
@@ -209,19 +195,6 @@ public partial class PlcSettingUserControl : UserControl
         RebindTable();
     }
 
-    /// <summary>
-    /// แถวตั้งต้นตอนตารางยังว่าง — ต้องตรงกับค่าที่ส่งจริงใน PlcOrderService
-    ///
-    /// <para>
-    /// เดิมมี 11 แถวตามผังของโปรแกรมเก่า คือหัวละ 4 ช่อง (Position, PostAct, Delay,
-    /// Trigger) และสายพาน 3 ตัว แต่ Position กับ Trigger ไม่เคยถูกส่งค่าอื่นนอกจาก 0
-    /// และหน้างานมีสายพานเดียว ตอนนี้จึงเหลือ 5 แถวที่ใช้จริง
-    /// </para>
-    /// <para>
-    /// ถ้าเพิ่มแถวที่นี่ ต้องไปเพิ่มใน PlcOrderService.BuildPlanAsync ด้วย ไม่งั้นแถวนั้น
-    /// จะโผล่บนหน้าจอแต่ไม่มีใครส่งค่าให้เลย
-    /// </para>
-    /// </summary>
     private static List<PlcRow> DefaultRows()
     {
         var mk1 = CustomSettingsManager.Read("MK058_NAME", "MK-058");
@@ -243,14 +216,6 @@ public partial class PlcSettingUserControl : UserControl
         tblPlcMap.DataSource = _rows;
     }
 
-    /// <summary>
-    /// ทดสอบเลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้น — เขียน 0 ลงช่องเดียวกับที่ส่งค่าของงาน
-    ///
-    /// <para>
-    /// ถามยืนยันก่อน เพราะเป็นการเขียนค่าลง PLC ของเครื่องที่อาจกำลังเดินอยู่
-    /// และบอกให้ครบว่าจะเขียนอะไรลง register ไหน แบบเดียวกับปุ่ม Write ในตาราง
-    /// </para>
-    /// </summary>
     private async Task ResetPositionAsync()
     {
         int home = PlcOrderService.HomePosition;
@@ -318,8 +283,6 @@ public partial class PlcSettingUserControl : UserControl
     {
         if (e.Record is not PlcRow row) return;
 
-        // ล็อกอยู่ให้อ่านได้อย่างเดียว การเขียนค่าลง PLC หรือลบแถวต้องปลดล็อกก่อน
-        // เพราะเขียนผิด register เดียวก็กระทบเครื่องจักรที่กำลังเดินอยู่
         if (!_unlocked && e.Btn?.Id != "read")
         {
             Warn("ล็อกอยู่ — กด Unlock ก่อนจึงจะส่งค่าไปที่ PLC ได้");
@@ -417,8 +380,6 @@ public partial class PlcSettingUserControl : UserControl
         return true;
     }
 
-    // ── Read All ──────────────────────────────────────────
-
     private async Task ReadAllAsync()
     {
         var ip = txtPlc001Ip.Text.Trim();
@@ -487,8 +448,6 @@ public partial class PlcSettingUserControl : UserControl
         RebindTable();
     }
 
-    // ── Validation ─────────────────────────────────────────
-
     private bool ValidateRows()
     {
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -545,10 +504,6 @@ public partial class PlcSettingUserControl : UserControl
     private static void Warn(string message) =>
         Notify.WarnModal(null, "แจ้งเตือน", message);
 
-    /// <summary>
-    /// บันทึกทุกคำสั่งที่ยิงออก PLC — หน้างานต้องดูย้อนหลังได้ว่าสั่งอะไรไปบ้าง
-    /// ต้อง marshal เอง เพราะ CheckStatusAsync ถูกเรียกจาก thread อื่นได้
-    /// </summary>
     private void Log(string message)
     {
         if (IsDisposed || string.IsNullOrWhiteSpace(message)) return;
@@ -562,8 +517,6 @@ public partial class PlcSettingUserControl : UserControl
         foreach (var line in message.Split('\n', StringSplitOptions.RemoveEmptyEntries))
             txtLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {line.TrimEnd()}{Environment.NewLine}");
     }
-
-    // ── Save / Cancel ──────────────────────────────────────
 
     private async void BtnSave_Click(object? sender, EventArgs e)
     {
@@ -614,14 +567,6 @@ public partial class PlcSettingUserControl : UserControl
         txtHomePosition.BackColor = Color.White;
     }
 
-    /// <summary>
-    /// อ่านตำแหน่งเริ่มต้นจากช่องกรอก — ผิดแล้วบอกคนกรอก ไม่บันทึกอะไรเลย
-    ///
-    /// <para>
-    /// ไม่รับ 0 เพราะ ladder ของ PLC หน้างานไม่ขยับหัวพิมพ์เมื่อได้ 0 ถ้ายอมให้บันทึก
-    /// ปุ่มกลับตำแหน่งเริ่มต้นจะดูเหมือนสำเร็จทั้งที่หัวไม่ได้ไปไหน
-    /// </para>
-    /// </summary>
     private bool TryReadHomePosition(out int home)
     {
         if (int.TryParse(txtHomePosition.Text.Trim(), out home)
@@ -634,8 +579,6 @@ public partial class PlcSettingUserControl : UserControl
             + "ใช้ 0 ไม่ได้ เพราะ PLC ไม่ขยับหัวพิมพ์เมื่อได้ค่า 0");
         return false;
     }
-
-    // ── Mapping helpers ────────────────────────────────────
 
     private static AntdUI.CellButton[] NewFixedButtons() =>
     [
@@ -650,21 +593,6 @@ public partial class PlcSettingUserControl : UserControl
         new AntdUI.CellButton("del", "Del", AntdUI.TTypeMini.Error) { Radius = 6 },
     ];
 
-    /// <summary>
-    /// แถวที่โปรแกรมส่งค่าให้จริง — ลบไม่ได้ แต่แก้ address ได้ตลอด
-    ///
-    /// <para>
-    /// ชื่อพวกนี้คือกุญแจที่ <see cref="PlcOrderService"/> ใช้หา address ตอนส่งค่า
-    /// เข้า PLC และที่หน้า Order Detail ใช้แสดงว่าแต่ละช่องจะถูกส่งไป register ไหน
-    /// ทั้งสองที่จับคู่ด้วย <c>list_name</c> ไม่ใช่ address — ย้าย address ได้อิสระ
-    /// แต่ลบแถวไหนทิ้ง ค่านั้นจะเลิกถูกส่งทันทีโดยไม่มีอะไรฟ้อง
-    /// </para>
-    /// <para>
-    /// เดิมตัดสินจาก address ที่ฝังเป็นชุดตัวเลขไว้ในโค้ด ซึ่งขัดกับการที่ address
-    /// แก้ได้ — ย้ายแถวไป address นอกชุดแล้วบันทึก แถวเดิมจะกลายเป็นแถวลบได้
-    /// และแถวที่เพิ่มเองซึ่งบังเอิญไปตรงเลขในชุดจะกลายเป็นลบไม่ได้
-    /// </para>
-    /// </summary>
     private static HashSet<string> RequiredListNames()
     {
         var mk1 = CustomSettingsManager.Read("MK058_NAME", "MK-058");

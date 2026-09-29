@@ -3,11 +3,6 @@ using System.Text;
 
 namespace InkjetOperator.Managers;
 
-/// <summary>
-/// TCP socket manager — follows Linx TcpClientManager pattern.
-/// Used for MK Compact inkjets over TCP (same protocol as RS232, different transport).
-/// Ported from socket_client.py.
-/// </summary>
 public class TcpManager
 {
     private TcpClient? _client;
@@ -20,9 +15,6 @@ public class TcpManager
 
     public TcpManager() { }
 
-    /// <summary>
-    /// Connect to TCP endpoint with a bounded asynchronous timeout.
-    /// </summary>
     public async Task ConnectAsync(string ipAddress, int port)
     {
         try
@@ -60,11 +52,6 @@ public class TcpManager
         return _client?.Connected ?? false;
     }
 
-    /// <summary>
-    /// Send command and receive response.
-    /// From socket_client.py: sock.sendall(msg), data = sock.recv(16)
-    /// รอทีละคำสั่ง เพื่อให้ผู้เรียกได้คำตอบของตัวเอง
-    /// </summary>
     public async Task<string> SendCommandAsync(string command)
     {
         var stream = _stream;
@@ -72,7 +59,6 @@ public class TcpManager
         await _sendGate.WaitAsync();
         try
         {
-            // คำสั่งที่รออยู่ห้ามข้ามไปส่งบน connection ใหม่หลังรอบก่อนหมดเวลา
             if (!ReferenceEquals(stream, _stream) || !IsConnected()) return "";
             using var timeout = new CancellationTokenSource(CommandTimeoutMs);
             byte[] cmd = Encoding.ASCII.GetBytes(command);
@@ -89,7 +75,6 @@ public class TcpManager
         }
         catch (OperationCanceledException)
         {
-            // ปิด socket เพื่อไม่ให้คำตอบที่มาช้าถูกนับเป็นคำตอบของคำสั่งถัดไป
             if (ReferenceEquals(stream, _stream)) Disconnect();
             throw new TimeoutException("MK ไม่ตอบกลับภายใน 3 วินาที — ตรวจสอบผลก่อนส่งซ้ำ");
         }

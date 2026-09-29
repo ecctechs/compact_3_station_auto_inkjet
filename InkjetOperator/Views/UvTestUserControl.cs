@@ -5,11 +5,6 @@ using InkjetOperator.Theme;
 
 namespace InkjetOperator.Views;
 
-/// <summary>
-/// หน้าทดสอบเครื่อง UV แบบเดี่ยว — ไม่ต้องมี job ไม่ต้องสแกนบาร์โค้ด
-/// กรอกชื่อโปรแกรมเองแล้วสั่ง Load / Start / Stop และเขียนข้อความลง CPI.db3 ได้จากหน้าเดียว
-/// ใช้ตอนติดตั้งหน้างานและตอนหาสาเหตุเมื่อเครื่องไม่พิมพ์
-/// </summary>
 public partial class UvTestUserControl : UserControl
 {
     private static readonly Color Green = DesignTokens.SuccessText;
@@ -24,8 +19,6 @@ public partial class UvTestUserControl : UserControl
         SetupEvents();
         SelectUv(1);
     }
-
-    // ── Setup ──────────────────────────────────────────────
 
     private void SetupEvents()
     {
@@ -46,7 +39,6 @@ public partial class UvTestUserControl : UserControl
         txtFolder.TextChanged += (_, _) => UpdatePathStatus();
     }
 
-    /// <summary>สลับเครื่อง แล้วดึงค่าที่ตั้งไว้ของเครื่องนั้นมาเติมให้อัตโนมัติ</summary>
     private void SelectUv(int uvNumber)
     {
         _uvNumber = uvNumber;
@@ -63,7 +55,6 @@ public partial class UvTestUserControl : UserControl
         txtPort.Text = CustomSettingsManager.Read($"UV00{uvNumber}_PORT", "10086");
         txtFolder.Text = UvSettingsManager.Read(uvNumber == 1 ? "UV1_FOLDER" : "UV2_FOLDER");
 
-        // ตารางใน CPI.db3 ผูกกับเครื่อง — UV1 = Plate, UV2 = Shim
         txtTable.Text = uvNumber == 1 ? "MK063" : "MK067";
 
         UpdatePathStatus();
@@ -73,12 +64,6 @@ public partial class UvTestUserControl : UserControl
     private string CurrentName() =>
         UvSettingsManager.Read(_uvNumber == 1 ? "UV1_NAME" : "UV2_NAME", $"UV-00{_uvNumber}");
 
-    // ── โฟลเดอร์ ──────────────────────────────────────────
-
-    /// <summary>
-    /// เลือกโฟลเดอร์รากของซอฟต์แวร์ UV แล้วบันทึกทันที
-    /// CPI.db3 กับ document เป็นโฟลเดอร์ย่อยข้างใน ไม่ต้องเลือกแยก
-    /// </summary>
     private void BrowseFolder()
     {
         using var dlg = new FolderBrowserDialog
@@ -121,7 +106,6 @@ public partial class UvTestUserControl : UserControl
         lblPathStatus.ForeColor = (cpi != null && doc != null) ? Green : Red;
     }
 
-    /// <summary>ดูว่ามีไฟล์ .uvdx ชื่อไหนบ้างที่ตรงกับที่พิมพ์ — ช่วยตอนจำชื่อเต็มไม่ได้</summary>
     private void FindProgram()
     {
         var doc = UvSettingsManager.GetDocumentFolder(_uvNumber);
@@ -165,7 +149,6 @@ public partial class UvTestUserControl : UserControl
         Log($"เลือกโปรแกรม {picked}.uvdx");
     }
 
-    /// <summary>กล่องเลือกรายการ — คลิกสองครั้งเลือกได้เลย</summary>
     private string? PickFromList(List<string> items, string keyword)
     {
         using var dlg = new Form
@@ -214,8 +197,6 @@ public partial class UvTestUserControl : UserControl
             : null;
     }
 
-    // ── สั่งงานเครื่อง ─────────────────────────────────────
-
     private async Task CheckConnectionAsync()
     {
         if (!TryGetEndpoint(out var ip, out int port)) return;
@@ -252,7 +233,6 @@ public partial class UvTestUserControl : UserControl
             return;
         }
 
-        // ใช้ตรรกะเดียวกับปุ่มส่งจริงในหน้า Order — เลือกรุ่นย่อย / ตกไป default
         var doc = UvSettingsManager.GetDocumentFolder(_uvNumber);
         var pick = UvProgramResolver.Resolve(requested, doc, this);
 
@@ -301,8 +281,6 @@ public partial class UvTestUserControl : UserControl
         }
     }
 
-    // ── CPI.db3 ────────────────────────────────────────────
-
     private async Task CpiWriteAsync()
     {
         if (!TryGetCpi(out var cpiPath, out var table)) return;
@@ -329,7 +307,6 @@ public partial class UvTestUserControl : UserControl
         }
     }
 
-    /// <summary>ดึงค่าที่อยู่ใน CPI.db3 ตอนนี้มาเติมในช่อง — ดูก่อนว่าเครื่องถืออะไรอยู่</summary>
     private async Task CpiReadAsync()
     {
         if (!TryGetCpi(out var cpiPath, out var table)) return;
@@ -360,8 +337,6 @@ public partial class UvTestUserControl : UserControl
             if (!IsDisposed) SetBusy(false);
         }
     }
-
-    // ── Helpers ────────────────────────────────────────────
 
     private bool TryGetEndpoint(out string ip, out int port)
     {

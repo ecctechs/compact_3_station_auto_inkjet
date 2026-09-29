@@ -3,18 +3,6 @@ using InkjetOperator.Theme;
 
 namespace InkjetOperator.Views;
 
-/// <summary>
-/// รายการสถานะของไฟล์ โฟลเดอร์ และเครื่องปลายทางทั้งหมด อัปเดตเองทุก 30 วินาที
-///
-/// <para>
-/// ไม่มีปุ่มให้กดตรวจ เพราะ <see cref="HealthMonitor"/> เฝ้าอยู่แล้วตลอดเวลา
-/// หน้านี้ทำหน้าที่แค่วาดผลรอบล่าสุดที่มันส่งมาให้
-/// </para>
-/// <para>
-/// <b>ไม่เด้งกล่องอะไรทั้งนั้น</b> ต่อให้ทุกอย่างพังพร้อมกัน — เปลี่ยนแค่สีกับ
-/// ข้อความในตาราง คนที่เปิดหน้านี้คือคนที่ตั้งใจมาดูสถานะอยู่แล้ว
-/// </para>
-/// </summary>
 public partial class SystemHealthUserControl : UserControl
 {
     public SystemHealthUserControl()
@@ -22,7 +10,6 @@ public partial class SystemHealthUserControl : UserControl
         InitializeComponent();
         ConfigureColumns();
 
-        // ผลรอบก่อนมีอยู่แล้วก็วาดเลย ไม่ต้องให้คนเปิดหน้ามานั่งรอรอบถัดไป
         Render(HealthMonitor.Latest);
 
         HealthMonitor.Updated += OnHealthUpdated;
@@ -40,12 +27,6 @@ public partial class SystemHealthUserControl : UserControl
         ];
     }
 
-    /// <summary>
-    /// ตัวเฝ้ายิงมาจากเธรดพูล ต้องข้ามกลับมาเธรดของหน้าจอก่อนแตะคอนโทรล
-    ///
-    /// ใช้ BeginInvoke ไม่ใช่ Invoke — ตัวเฝ้าไม่ควรต้องรอให้จอวาดเสร็จ
-    /// และถ้าจอกำลังติดกล่อง modal อยู่ Invoke จะค้างยาว
-    /// </summary>
     private void OnHealthUpdated(object? sender, IReadOnlyList<HealthItem> items)
     {
         if (IsDisposed || !IsHandleCreated) return;
@@ -56,7 +37,6 @@ public partial class SystemHealthUserControl : UserControl
         }
         catch (ObjectDisposedException)
         {
-            // หน้าถูกปิดระหว่างทางพอดี ไม่มีอะไรต้องทำต่อ
         }
     }
 

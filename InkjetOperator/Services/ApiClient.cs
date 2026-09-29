@@ -15,26 +15,6 @@ public class ApiClient
         PropertyNameCaseInsensitive = true,
     };
 
-    /// <summary>
-    /// สายเชื่อมต่อใช้ร่วมกันทุก <see cref="ApiClient"/> ในโปรแกรม
-    ///
-    /// <para>
-    /// เดิม <c>HttpClient</c> แต่ละตัวถือสายของตัวเอง และหน้า Scan Barcode สร้าง
-    /// <c>ApiClient</c> ใหม่ทุกครั้งที่กด OK โดยไม่ได้ปิดตัวเก่า สายที่เปิดค้างไว้
-    /// จึงค้างอยู่อย่างนั้นจนกว่าตัวเก็บขยะจะมาเก็บ วัดจริงแล้วกด 60 ครั้ง
-    /// เหลือสายค้าง 60 เส้น สแกนทั้งกะหลายร้อยงานก็ค้างหลายร้อยเส้น
-    /// สุดท้ายพอร์ตของ Windows หมดแล้วเปิดสายใหม่ไม่ได้
-    /// </para>
-    /// <para>
-    /// ย้ายสายมาไว้ที่เดียวแล้วให้ทุกตัวใช้ร่วมกัน ตัว <c>HttpClient</c> ที่ถูกทิ้ง
-    /// จึงไม่ได้พาสายไปด้วย สายที่ใช้เสร็จกลับเข้ากองกลางให้คนถัดไปใช้ต่อ
-    /// (<c>disposeHandler: false</c> คือบอกว่าอย่าไปปิดกองกลางตอนตัวเองถูกทิ้ง)
-    /// </para>
-    /// <para>
-    /// ปล่อยสายที่ไม่มีใครใช้ทิ้งหลังว่าง 1 นาที และรื้อสายที่ใช้มานาน 5 นาที
-    /// เพื่อไม่ให้ค้างกับปลายทางเดิมตอนมีคนไปเปลี่ยน PC_IP ที่หน้า Setting
-    /// </para>
-    /// </summary>
     private static readonly SocketsHttpHandler SharedHandler = new()
     {
         PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
@@ -42,20 +22,6 @@ public class ApiClient
         MaxConnectionsPerServer = 8,
     };
 
-    /// <summary>
-    /// รอคำตอบจาก backend นานสุดเท่านี้
-    ///
-    /// <para>
-    /// เดิม 10 วินาที ซึ่งนานเกินไปเมื่อปลายทางไม่มีใครตอบ — ตั้ง <c>PC_IP</c> ผิดช่อง
-    /// เดียวแล้วทุกปุ่มที่ต้องคุย backend ค้าง 10 วินาทีก่อนจะฟ้อง และรอบ poll ทุก 5
-    /// วินาทีก็มีสองคำขอ จึงค้างยาวต่อกันแทบไม่มีช่วงว่าง
-    /// </para>
-    /// <para>
-    /// backend อยู่บนเครื่องเดียวกันหรือในวงแลนเดียวกันเสมอ งานปกติตอบกลับใน
-    /// หลักสิบมิลลิวินาที สามวินาทีจึงเหลือเฟือสำหรับของจริง และสั้นพอให้ค่าที่ตั้งผิด
-    /// ฟ้องเร็วแทนที่จะหน่วงทั้งโปรแกรม
-    /// </para>
-    /// </summary>
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(3);
 
     public ApiClient(string baseUrl)
@@ -112,14 +78,6 @@ public class ApiClient
         }
     }
 
-    /// <summary>
-    /// แก้ข้อความของแถว UV แถวเดียว — ส่งเฉพาะช่องที่เปลี่ยน
-    ///
-    /// <para>
-    /// ใช้ตอนคนหน้างานพิมพ์ทับข้อความในตาราง UV ที่หน้า Order Detail
-    /// ไม่แตะ machine หรือ program_name ของแถวนั้น
-    /// </para>
-    /// </summary>
     public async Task<(bool ok, string? error)> UpdateUvTextsAsync(
         int rowId, IReadOnlyDictionary<string, string?> texts)
     {
@@ -143,14 +101,6 @@ public class ApiClient
         }
     }
 
-    /// <summary>
-    /// ล้างร่องรอยการเดินงานทั้งหมด ให้ทุกใบกลับไปเป็นรอเริ่ม — เครื่องมือทดสอบ
-    ///
-    /// <para>
-    /// ลบคิวเครื่อง ลบประวัติคำสั่ง และตั้งสถานะทุกงานเป็นรอเริ่ม ข้อมูลของงานเอง
-    /// (pattern, ข้อความ UV, แผน, ค่าแคลมป์) ไม่ถูกแตะ
-    /// </para>
-    /// </summary>
     public async Task<(ResetRuntimeResult? result, string? error)> ResetRuntimeAsync()
     {
         try
@@ -185,20 +135,6 @@ public class ApiClient
         }
     }
 
-    /// <summary>
-    /// บันทึก pattern ของงานทับของเดิม
-    ///
-    /// <para>
-    /// ใช้ตอนพนักงานแก้ค่าที่หน้า Order Detail เช่นสลับเครื่อง (SWAP) หรือสลับ
-    /// ทิศทางพิมพ์ (ABC) ค่าต้องลงฐานข้อมูลจริง เพราะคนกดส่งงานคือหน้า Order List
-    /// ซึ่งอ่าน pattern ใหม่จาก backend ทุกครั้ง ไม่ได้ใช้ค่าที่ค้างอยู่ในจอ
-    /// </para>
-    /// <para>
-    /// ฝั่ง backend ลบ inkjet_configs / text_blocks / servo_configs ของ pattern นี้
-    /// ทิ้งแล้วสร้างใหม่จากที่ส่งไป จึงต้องส่ง <see cref="PatternDetail"/> ไปทั้งก้อน
-    /// ส่งไปแค่บางส่วนแล้วส่วนที่ไม่ได้ส่งจะหายไปด้วย
-    /// </para>
-    /// </summary>
     public async Task<(bool ok, string? error)> UpdatePatternAsync(int patternId, PatternDetail pattern)
     {
         try
@@ -216,7 +152,6 @@ public class ApiClient
         }
     }
 
-    /// <summary>บันทึกระยะแคลมป์ของงาน — job เดิมเรียกซ้ำจะทับแถวเดิม ไม่สร้างซ้ำ</summary>
     public async Task<(bool ok, string? error)> CreateIaiAsync(IaiCreateRequest request)
     {
         try
@@ -233,7 +168,6 @@ public class ApiClient
         }
     }
 
-    /// <summary>อ่านระยะแคลมป์ของงานจาก backend</summary>
     public async Task<(IaiClampSettingDto? result, string? error)> GetIaiByJobAsync(int jobId)
     {
         try
@@ -283,11 +217,6 @@ public class ApiClient
         }
     }
 
-    /// <summary>
-    /// <paramref name="fromUtc"/> / <paramref name="toUtc"/> ใช้กรอง created_at ที่ฝั่ง backend
-    /// ต้องกรองที่นั่น ไม่ใช่กรองในหน้าจอ เพราะ endpoint คืนมาแค่ limit แถวล่าสุด
-    /// งานเก่ากว่านั้นจะไม่ถูกส่งมาให้กรองตั้งแต่แรก
-    /// </summary>
     public async Task<(List<PrintJob> jobs, string? error)> GetAllJobsAsync(
         int limit = 100, DateTime? fromUtc = null, DateTime? toUtc = null)
     {
@@ -392,11 +321,6 @@ public class ApiClient
         }
     }
 
-    /// <summary>
-    /// บันทึกว่า step นี้ส่งสำเร็จแล้ว
-    /// <paramref name="detail"/> เก็บลงคอลัมน์ payload (JSONB) ไว้ย้อนดูภายหลัง
-    /// เช่นรุ่นย่อย .uvdx ที่เลือกจริง — ไม่ส่งมาก็เก็บเป็น null เหมือนเดิม
-    /// </summary>
     public async Task<bool> SaveSendStepAsync(int jobId, string stepName, object? detail = null)
     {
         try
@@ -431,21 +355,6 @@ public class ApiClient
         }
     }
 
-    /// <summary>
-    /// ตั้ง/ล้างคำขอให้ ST1 ส่งคำสั่งแทน — ST3 ตั้งพร้อมชื่อโปรแกรมที่เลือกไว้แล้ว
-    /// ST1 ล้างทิ้ง (<paramref name="requested"/> = false) ทุกครั้งที่ลงมือส่งเสร็จ
-    /// ไม่ว่าจะสำเร็จหรือไม่ เพื่อไม่ให้รอบ poll ถัดไปหยิบไปส่งซ้ำ
-    /// <para>
-    /// <paramref name="failure"/> คือสาเหตุที่ส่งไม่สำเร็จ ฝากไว้ให้ ST3 อ่านไปแสดง
-    /// ที่จอตัวเอง — ส่ง null มาเมื่อไหร่คือล้างของเดิมทิ้ง
-    /// </para>
-    /// </summary>
-    /// <summary>
-    /// ST1 จองคำขอไว้แล้วว่ากำลังส่งเข้าเครื่องอยู่ (remote_start = "2")
-    ///
-    /// ต้องแยกจากสถานะ "รอคนหยิบ" เพราะ ST3 ใช้ตัดสินว่าจะตีงานกลับเป็น Waiting
-    /// ได้ไหม — ใบที่ไม่มีใครหยิบเลยตีกลับได้ ใบที่กำลังส่งอยู่ห้ามแตะ
-    /// </summary>
     public async Task<(bool ok, string? error)> ClaimRemoteStartAsync(
         int jobId, string? program, string? step = null)
     {
@@ -475,12 +384,6 @@ public class ApiClient
         }
     }
 
-    // ── คิวของเครื่อง ──────────────────────────────────────
-    //
-    // กติกาอยู่ที่ backend ทั้งหมด (ตาราง machine_queue) ตรงนี้เป็นแค่ทางผ่าน
-    // "เครื่องว่าง" คือเครื่องที่ไม่มีแถว active ไม่ได้ดูจากสถานะของงาน
-
-    /// <summary>คิวที่ยังไม่ปล่อยเครื่องทั้งหมด — ระบุเครื่องเพื่อดูเฉพาะเครื่องนั้น</summary>
     public async Task<(List<MachineQueueRow> rows, string? error)> GetMachineQueueAsync(
         string? machine = null)
     {
@@ -503,7 +406,6 @@ public class ApiClient
         }
     }
 
-    /// <summary>จองเครื่องให้งานหนึ่ง — เรียกตอนกดเริ่มงาน จองครบทุกเครื่องที่แผนต้องใช้</summary>
     public async Task<(bool ok, string? error)> EnqueueMachinesAsync(
         int jobId, List<MachineQueueItem> items)
     {
@@ -523,16 +425,11 @@ public class ApiClient
         }
     }
 
-    /// <summary>
-    /// ขอหัวคิวของเครื่อง — คืน Claimed เป็น null เมื่อไม่ว่าง ยังไม่ถึงคิว หรือคิวว่าง
-    /// </summary>
     public async Task<(MachineClaimResult? result, string? error)> ClaimMachineAsync(
         string machine, int? jobId = null)
     {
         try
         {
-            // ใส่เฉพาะช่องที่มีค่าจริง — ฝั่ง backend ตรวจด้วย zod ซึ่ง optional หมายถึง
-            // "ไม่ส่งมาก็ได้" ไม่ได้แปลว่า "ส่ง null มาได้" ส่ง null ไปคือถูกตีกลับ 400
             var payload = new Dictionary<string, object> { ["machine"] = machine };
             if (jobId != null) payload["print_jobs_id"] = jobId.Value;
 
@@ -551,7 +448,6 @@ public class ApiClient
         }
     }
 
-    /// <summary>ปล่อยเครื่อง — คนกดปุ่มหน้างานแล้ว แปลว่าพิมพ์ชิ้นเดิมเสร็จ</summary>
     public async Task<(ReleaseResult? result, string? error)> ReleaseMachineAsync(
         string machine, int? expectedHolderId, bool holdForNextRound = false)
     {
@@ -575,7 +471,6 @@ public class ApiClient
         }
     }
 
-    // ไม่ retry begin-send: ถ้าคำตอบหาย ต้องตรวจผลก่อนแตะเครื่อง
     public Task<(bool ok, string? error)> BeginQueueSendAsync(int rowId, string token) =>
         QueueSendRequestAsync(rowId, "begin-send", new { token });
 
@@ -594,20 +489,11 @@ public class ApiClient
         catch (Exception ex) { return (false, ex.Message); }
     }
 
-    /// <summary>แก้แถวในคิว — ใช้ตอนเลือกรุ่นย่อย UV เสร็จ หรือคืนแถวให้ลองส่งใหม่</summary>
     public async Task<(bool ok, string? error)> UpdateMachineQueueAsync(
         int rowId, string? state = null, string? programName = null, bool? sent = null)
     {
         try
         {
-            // ส่งเฉพาะช่องที่ตั้งใจจะแก้จริง ๆ
-            //
-            // เดิมส่งทั้งสามช่องเสมอ ช่องที่ไม่ได้ตั้งค่าจึงกลายเป็น null แล้วโดน zod
-            // ตีกลับ 400 ทั้งคำขอ ผลคือการบอกว่า "ส่งเข้าเครื่องแล้ว" ไม่เคยถึง backend
-            // แถวยังเป็น "ถึงคิวแล้วแต่ยังไม่ได้ส่ง" อยู่ รอบ poll จึงส่งซ้ำทุก 5 วินาที
-            //
-            // อีกด้านหนึ่ง ถ้า state ผ่านการตรวจ ช่อง program_name ที่ติด null ไปด้วย
-            // จะไปล้างรุ่นย่อยของโปรแกรม UV ที่เลือกไว้ทิ้งโดยไม่มีใครสั่ง
             var payload = new Dictionary<string, object>();
             if (state != null) payload["state"] = state;
             if (programName != null) payload["program_name"] = programName;
@@ -631,7 +517,6 @@ public class ApiClient
         }
     }
 
-    /// <summary>ล้างคิวของงานหนึ่งทิ้ง — ยกเลิกงาน จบงาน หรือสั่งพิมพ์ใหม่</summary>
     public async Task<(bool ok, string? error)> ClearMachineQueueAsync(int jobId, bool onlyUnsent = false)
     {
         try

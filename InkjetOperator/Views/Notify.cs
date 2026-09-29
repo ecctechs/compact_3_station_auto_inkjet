@@ -1,71 +1,19 @@
 ﻿namespace InkjetOperator.Views;
 
-/// <summary>
-/// In-window feedback for the operator, following the pattern the NastoKeyence
-/// project uses: <c>AntdUI.Message</c> for a one-line toast tied to the action the
-/// operator just took, and <c>AntdUI.Notification</c> for an outcome that carries
-/// its own heading and several lines of detail.
-/// <para>
-/// Both render inside the application window rather than as desktop-level popups,
-/// because <c>Program.ConfigureAntdUi()</c> sets <c>Config.ShowInWindowByMessage</c>
-/// and <c>Config.ShowInWindowByNotification</c>.
-/// </para>
-/// <para>
-/// <b>UI layer only.</b> Nothing under <c>Services/</c> or <c>Managers/</c> should
-/// call this - those layers report through their return values and let the page
-/// that invoked them decide what the operator sees.
-/// </para>
-/// <para>
-/// <b>Why the owner is optional:</b> AntdUI anchors both widgets to a
-/// <see cref="Form"/>, and several of the callers are static helpers with no
-/// instance to ask. Pass the control when there is one - it resolves to the form
-/// that actually hosts it, which stays correct even while a modal dialog is open -
-/// and leave it null otherwise.
-/// </para>
-/// </summary>
 internal static class Notify
 {
-    // How long each severity stays on screen, in seconds. Failures linger longer
-    // than confirmations because the operator has to read and act on them.
     private const int SuccessSeconds = 3;
     private const int InfoSeconds = 4;
     private const int WarnSeconds = 5;
     private const int ErrorSeconds = 6;
     private const int DetailSeconds = 10;
 
-    /// <summary>
-    /// ผลการส่งที่ผ่านหมด ค้างนานกว่าข้อความสำเร็จทั่วไป
-    ///
-    /// มีหลายบรรทัด (เครื่องละบรรทัด) ต้องมีเวลาให้กวาดตาอ่านครบก่อนหาย
-    /// </summary>
     private const int ResultSeconds = 5;
 
-    // ---- One-line toast ----
-
-    /// <summary>
-    /// ขนาดตัวอักษรของข้อความลอย
-    ///
-    /// <para>
-    /// เดิมมีแต่ <see cref="Success"/> ที่ตั้งฟอนต์ไว้ ส่วนเตือน/ผิดพลาด/ข้อมูล
-    /// ปล่อยให้ AntdUI ตกไปใช้ฟอนต์เริ่มต้นของฟอร์มซึ่งเป็น 9pt — เล็กจนอ่านไม่ทัน
-    /// เวลายืนห่างจากจอ ทั้งที่เป็นข้อความที่ต้องรีบเห็นที่สุด
-    /// </para>
-    /// <para>
-    /// AntdUI คิดขนาดไอคอนจากความสูงของตัวอักษร (86%) และคูณ padding ด้วย DPI ให้เอง
-    /// ตั้งฟอนต์ที่เดียวกล่องจึงโตขึ้นทั้งใบ ไม่ต้องไปไล่ตั้งขนาดอย่างอื่น
-    /// </para>
-    /// </summary>
     private static readonly Font ToastFont = InkjetOperator.Theme.DesignTokens.SectionLabel(19f);
 
-    /// <summary>ที่ว่างรอบข้อความ — AntdUI คูณ DPI ให้เอง ค่าที่ใส่จึงเป็นหน่วยออกแบบ</summary>
     private static readonly Size ToastPadding = new(20, 14);
 
-    /// <summary>
-    /// กว้างสุดก่อนตัดขึ้นบรรทัดใหม่
-    ///
-    /// ไม่ใส่ค่านี้ AntdUI จะวัดความกว้างเป็นบรรทัดเดียวไม่จำกัด ข้อความยาว ๆ อย่าง
-    /// เหตุผลที่ต่อ PLC ไม่ได้จะลากกล่องยาวจนล้นออกนอกจอ
-    /// </summary>
     private const int ToastMaxWidth = 1000;
 
     private static void Toast(
@@ -84,26 +32,20 @@ internal static class Notify
         });
     }
 
-    /// <summary>An action completed - saved, sent, created.</summary>
     public static void Success(Control? owner, string text)
     {
         System.Media.SystemSounds.Asterisk.Play();
         Toast(owner, AntdUI.TType.Success, text, SuccessSeconds, MessageBoxIcon.Information);
     }
 
-    /// <summary>Neutral progress or state information.</summary>
     public static void Info(Control? owner, string text) =>
         Toast(owner, AntdUI.TType.Info, text, InfoSeconds, MessageBoxIcon.Information);
 
-    /// <summary>Validation problem or a step that could not run as asked.</summary>
     public static void Warn(Control? owner, string text) =>
         Toast(owner, AntdUI.TType.Warn, text, WarnSeconds, MessageBoxIcon.Warning);
 
-    /// <summary>Something failed.</summary>
     public static void Error(Control? owner, string text) =>
         Toast(owner, AntdUI.TType.Error, text, ErrorSeconds, MessageBoxIcon.Error);
-
-    // ---- Centered modal dialog (blocks until OK) ----
 
     public static void WarnModal(Control? owner, string title, string text)
     {
@@ -144,18 +86,6 @@ internal static class Notify
             Fallback($"{title}\n\n{text}", MessageBoxIcon.Information);
     }
 
-    // ---- Shared modal proportions ----
-
-    // AntdUI's modal defaults are drawn for a desktop app at 100% scaling: a 416px
-    // box with 38px buttons, and no font at all - so it falls back to the owning
-    // form's 9pt application default. On the 1920x1080 panel PC that left the
-    // Yes/No pair small and pinched against the edge of a box narrower than the
-    // text inside it.
-    //
-    // Every modal in the app is sized through Sized() so they stay one family. Font
-    // does most of the work: AntdUI derives the title from it (Font x 1.14, bold)
-    // and sizes the status icon from the title's line height. Width, padding and
-    // BtnHeight are design units - AntdUI multiplies each by the display DPI.
     private const int ModalWidth = 560;
     private const int ModalButtonHeight = 54;
     private const int ModalButtonWidth = 120;
@@ -163,7 +93,6 @@ internal static class Notify
     private static readonly Font ModalBodyFont = InkjetOperator.Theme.DesignTokens.Body(16.5f);
     private static readonly Font ModalButtonFont = InkjetOperator.Theme.DesignTokens.SectionLabel(16.5f);
 
-    /// <summary>Applies the shared modal proportions. Shared with <see cref="Confirm"/>.</summary>
     internal static AntdUI.Modal.Config Sized(AntdUI.Modal.Config config)
     {
         config.Width = ModalWidth;
@@ -173,10 +102,6 @@ internal static class Notify
         config.OkFont = ModalButtonFont;
         config.CancelFont = ModalButtonFont;
 
-        // AntdUI sizes the buttons to their own caption, so a Yes/No pair came out
-        // lopsided and both far narrower than the touch target this panel needs.
-        // Fix a common width instead. AntdUI applies the font after this callback,
-        // and AutoSize is off by then, so the width set here is the one that sticks.
         config.OnButtonStyle = (_, button) =>
         {
             button.AutoSizeMode = AntdUI.TAutoSize.None;
@@ -187,26 +112,15 @@ internal static class Notify
         return config;
     }
 
-    // ---- Titled notification, for multi-line outcomes ----
-
-
-    /// <summary>A finished job or transfer, with a per-machine heading.</summary>
     public static void SuccessDetail(Control? owner, string title, string text) =>
         Detail(owner, title, text, AntdUI.TType.Success, MessageBoxIcon.Information);
 
-    /// <summary>A partial or blocked outcome that lists what did and did not run.</summary>
     public static void WarnDetail(Control? owner, string title, string text) =>
         Detail(owner, title, text, AntdUI.TType.Warn, MessageBoxIcon.Warning);
 
-    /// <summary>A failure with troubleshooting steps attached.</summary>
     public static void ErrorDetail(Control? owner, string title, string text) =>
         Detail(owner, title, text, AntdUI.TType.Error, MessageBoxIcon.Error);
 
-    /// <summary>
-    /// เดิมเด้งเป็น notification ที่มุมขวาบน ซึ่งอยู่คนละที่กับกล่องยืนยัน/กล่องเตือน
-    /// ทำให้ผู้ใช้ต้องคอยมองสองที่ และข้อความหายเองก่อนอ่านทัน
-    /// ตอนนี้รวมมาที่กล่องกลางจอเหมือนกล่องอื่นทั้งหมด ต้องกดรับทราบก่อนถึงจะปิด
-    /// </summary>
     private static void Detail(
         Control? owner, string title, string text, AntdUI.TType type, MessageBoxIcon fallbackIcon)
     {
@@ -224,12 +138,8 @@ internal static class Notify
         }));
     }
 
-    // ---- ผลหลายบรรทัดในกล่องเดียว ----
-
-    /// <summary>ระดับของผลลัพธ์หนึ่งบรรทัด</summary>
     public enum ResultKind { Success, Warn, Error, Info }
 
-    /// <summary>ผลลัพธ์หนึ่งบรรทัด เช่น "MK-058 ส่งสำเร็จ"</summary>
     public readonly record struct ResultLine(ResultKind Kind, string Text);
 
     public static ResultLine Ok(string text) => new(ResultKind.Success, text);
@@ -237,42 +147,19 @@ internal static class Notify
     public static ResultLine Careful(string text) => new(ResultKind.Warn, text);
     public static ResultLine Note(string text) => new(ResultKind.Info, text);
 
-    /// <summary>
-    /// แปลงผลการส่ง MK เป็นบรรทัดผล — อยู่ที่นี่ที่เดียวเพราะทั้งหน้า Order List
-    /// และ Order Detail ต้องแสดงเรื่องเดียวกันด้วยถ้อยคำเดียวกัน
-    ///
-    /// <para>
-    /// เครื่องที่ไม่มีงานแล้วสั่งหยุดไม่ได้ ขึ้นเป็น "ข้อสังเกต" ไม่บังคับให้กดปิดกล่อง —
-    /// งานถูกส่งไปเรียบร้อยแล้ว แต่ต้องบอกให้ไปดูด้วยตาว่าเครื่องนั้นหยุดจริง
-    /// เพราะถ้าสายหลุดขณะเครื่องยังเปิด มันจะพิมพ์ของงานก่อนหน้าต่อ
-    /// </para>
-    /// </summary>
     public static List<ResultLine> MkLines(IEnumerable<Services.MkMachineResult> machines) =>
         machines.Select(m => m switch
         {
             { Ok: true, Suspended: true } => Ok($"{m.Name} — ไม่มีงาน สั่งหยุดพิมพ์แล้ว"),
 
-            // ส่งข้อมูลเข้าเครื่องครบ แต่คำสั่งคุมการพิมพ์ไม่ผ่าน ต้องให้เห็น
-            // ไม่งั้นเครื่องอาจไม่ได้เริ่มพิมพ์เองทั้งที่ข้อมูลใหม่เข้าไปแล้ว
             { Ok: true, Note: not null } => Careful($"{m.Name} — ส่งสำเร็จ · {m.Note}"),
 
             { Ok: true } => Ok($"{m.Name} — ส่งสำเร็จ"),
-            // ไม่ต่อข้อความดิบท้ายบรรทัด เพราะมันเขียนเรื่องเดิมซ้ำด้วยชื่อภายใน
-            // (เช่น "MK2: สั่งหยุดพิมพ์ไม่สำเร็จ") ซึ่งคนหน้างานไม่รู้จัก เขารู้จัก
-            // เครื่องนี้ในชื่อ MK-059 ที่ขึ้นต้นบรรทัดอยู่แล้ว
             { Suspended: true } => Note(
                 $"{m.Name} — ไม่มีงานอยู่แล้ว แต่สั่งหยุดพิมพ์ไม่ได้ · ไปดูว่าเครื่องหยุดจริงไหม"),
             _ => Bad($"{m.Name} — {m.Error}"),
         }).ToList();
 
-    /// <summary>
-    /// รวมผลหลายรายการไว้ในกล่องเดียว แต่ละบรรทัดมีไอคอนบอกระดับของตัวเอง
-    ///
-    /// ใช้ตอนที่งานเดียวแตะหลายเครื่อง เช่นส่ง MK สองเครื่องแล้วสำเร็จหนึ่งพลาดหนึ่ง
-    /// ถ้าแยกเป็นสองกล่องผู้ใช้จะเห็นทีละอันแล้วสรุปภาพรวมไม่ออก
-    ///
-    /// ไอคอนของทั้งกล่องใช้ระดับที่แย่ที่สุดในรายการ เพื่อให้เหลือบตาเดียวรู้ว่าต้องสนใจไหม
-    /// </summary>
     public static void Result(Control? owner, string title, IEnumerable<ResultLine> lines)
     {
         var list = lines.ToList();
@@ -286,13 +173,6 @@ internal static class Notify
             : list.Any(l => l.Kind == ResultKind.Success) ? AntdUI.TType.Success
             : AntdUI.TType.Info;
 
-        // ผ่านหมดทุกบรรทัด = ไม่มีอะไรให้ตัดสินใจ ใช้ข้อความลอยกลางจอบนพอ
-        // คนที่เพิ่งกดส่งจะได้ทำงานต่อได้เลย ไม่ต้องเดินมากดปิดกล่องก่อน
-        //
-        // มีไม่ผ่านแม้แต่บรรทัดเดียวยังใช้กล่องเหมือนเดิม เพราะต้องอ่านให้ครบแล้ว
-        // ตัดสินใจว่าจะส่งซ้ำหรือไปแก้อะไร ข้อความลอยหายเองภายในไม่กี่วินาที
-        // ซึ่งพลาดได้ง่ายถ้ากดแล้วเดินไปที่เครื่องเลย
-        // ข้อสังเกตไม่นับเป็นเรื่องต้องตัดสินใจ รวมอยู่ในข้อความลอยได้
         if (worst == AntdUI.TType.Success || worst == AntdUI.TType.Info)
         {
             System.Media.SystemSounds.Asterisk.Play();
@@ -319,7 +199,6 @@ internal static class Notify
         }));
     }
 
-    /// <summary>ไอคอนหน้าบรรทัด — ใช้ตัวอักษรเพื่อให้เข้าชุดกับ log ของหน้าส่งงานที่ใช้อยู่แล้ว</summary>
     private static string Mark(ResultKind kind) => kind switch
     {
         ResultKind.Success => "✔",
@@ -328,13 +207,6 @@ internal static class Notify
         _ => "•",
     };
 
-    // ---- Plumbing ----
-
-    /// <summary>
-    /// Finds the form to draw on: the one hosting <paramref name="owner"/> when a
-    /// control was supplied, otherwise whichever window is currently in front.
-    /// <para>Shared with <see cref="Confirm"/>, which anchors its modal the same way.</para>
-    /// </summary>
     internal static Form? Resolve(Control? owner)
     {
         var form = owner?.FindForm();
@@ -353,11 +225,6 @@ internal static class Notify
         return null;
     }
 
-    /// <summary>
-    /// Last resort when no window is available - during shutdown, or before the
-    /// shell has been shown. Losing a message the operator needed is worse than an
-    /// out-of-style dialog, so this stays.
-    /// </summary>
     private static void Fallback(string text, MessageBoxIcon icon) =>
         MessageBox.Show(text, "InkjetOperator", MessageBoxButtons.OK, icon);
 }

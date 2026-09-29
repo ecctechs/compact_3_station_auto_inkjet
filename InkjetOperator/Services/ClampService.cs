@@ -2,31 +2,21 @@ using Microsoft.Data.Sqlite;
 
 namespace InkjetOperator.Services;
 
-/// <summary>ฝั่งวัสดุ — กำหนดว่าใช้คอลัมน์ชื่อโปรแกรมตัวไหนใน MainTable</summary>
 public enum ClampSide
 {
-    /// <summary>Plate — m1_program_name (ชื่อขึ้นต้น "P-") · UV1 / MK063 · ชุด IAI 2</summary>
     Plate,
 
-    /// <summary>Shim — m2_program_name · UV2 / MK067 · ชุด IAI 1</summary>
     Shim,
 }
 
-/// <summary>
-/// แกนแคลมป์ 1 ตัว — จากแผนภาพหน้างานมี 6 แกน (Plate/Shim × X/Z1/Z2)
-/// ทุกแกนอยู่บน PLC ตัวเดียวกัน ต่างกันแค่ register
-/// </summary>
 public sealed class ClampAxis
 {
-    /// <summary>คีย์ที่ใช้เก็บใน config เช่น "IAIP", "IAIZ1"</summary>
     public string Key { get; init; } = "";
 
     public ClampSide Side { get; init; }
 
-    /// <summary>"X" / "Z1" / "Z2"</summary>
     public string AxisLabel { get; init; } = "";
 
-    /// <summary>คอลัมน์ค่าใน MainTable</summary>
     public string Column { get; init; } = "";
 
     public string AddrTarget { get; set; } = "";
@@ -34,13 +24,8 @@ public sealed class ClampAxis
     public string AddrReset { get; set; } = "";
     public string AddrStatus { get; set; } = "";
 
-    /// <summary>ชื่อที่โชว์ให้คน เช่น "Plate X"</summary>
     public string Display => $"{(Side == ClampSide.Plate ? "Plate" : "Shim")} {AxisLabel}";
 
-    /// <summary>
-    /// พร้อมสั่งงานไหม — ต้องมีทั้ง register ค่าเป้าหมายและพัลส์สั่งวิ่ง
-    /// แผนภาพยังเขียน DXXX/MXXX ไว้ 5 แกน = ยังไม่ได้กำหนด จึงต้องกันไม่ให้ยิงคำสั่ง
-    /// </summary>
     public bool IsConfigured =>
         AddrTarget.Trim().Length > 0 && AddrRun.Trim().Length > 0;
 
@@ -48,7 +33,6 @@ public sealed class ClampAxis
         Side == ClampSide.Plate ? "m1_program_name" : "m2_program_name";
 }
 
-/// <summary>ค่าตั้งของ PLC แคลมป์ — PLC ตัวเดียว คุม 6 แกน</summary>
 public sealed class ClampSettings
 {
     public string Ip { get; set; } = "";
@@ -62,10 +46,6 @@ public sealed class ClampSettings
 
     public IEnumerable<ClampAxis> For(ClampSide side) => Axes.Where(a => a.Side == side);
 
-    /// <summary>
-    /// นิยามแกนทั้งหมดตามแผนภาพ — ค่า address เริ่มต้นใส่เฉพาะแกนที่รู้จริง
-    /// อีก 5 แกนปล่อยว่างจนกว่าจะได้ address จากลูกค้า (ว่าง = ปุ่มถูกปิด)
-    /// </summary>
     private static readonly (string Key, ClampSide Side, string Axis, string Column)[] Layout =
     [
         ("IAIP",   ClampSide.Plate, "X",  "IAIP"),
@@ -103,10 +83,6 @@ public sealed class ClampSettings
         return s;
     }
 
-    /// <summary>
-    /// อ่าน address ของแกน — ถ้ายังไม่มีคีย์ใหม่ ให้ตกไปใช้คีย์เดิมของแกน Shim X
-    /// (เวอร์ชันก่อนรองรับแกนเดียว เก็บไว้ที่ CLAMP_ADDR_TARGET ฯลฯ)
-    /// </summary>
     private static string ReadAddr(string key, string part)
     {
         var value = CustomSettingsManager.Read($"CLAMP_ADDR_{key}_{part}", "");
@@ -117,7 +93,6 @@ public sealed class ClampSettings
         var legacy = CustomSettingsManager.Read($"CLAMP_ADDR_{part}", "");
         if (legacy.Length > 0) return legacy;
 
-        // ค่าที่ระบบเดิมใช้จริง — มีแค่แกนนี้แกนเดียวที่ยืนยันแล้ว
         return part switch
         {
             "TARGET" => "D216",
@@ -144,22 +119,10 @@ public sealed class ClampSettings
     }
 }
 
-/// <summary>ผลการค้นค่าแคลมป์ของแกนหนึ่ง</summary>
 public sealed record ClampLookup(bool Found, int ValueMm, string Column, string Error);
 
-/// <summary>ผลการสั่งแคลมป์ของแกนหนึ่ง</summary>
 public sealed record ClampResult(bool Ok, int ValueMm, int RawWritten, int? Status, string Log);
 
-/// <summary>
-/// ควบคุมแคลมป์ผ่าน PLC (MC Protocol)
-///
-/// จากแผนภาพหน้างาน: PLC ตัวเดียว (10.10.100.100:5012) คุม 6 แกน
-///   Plate → IAIP / IAIPZ1 / IAIPZ2   (คู่กับ m1_program_name)
-///   Shim  → IAI  / IAIZ1  / IAIZ2    (คู่กับ m2_program_name)
-///
-/// ลำดับต่อแกนตรงตาม Node-RED เดิม:
-///   เขียนค่าเป้าหมาย → หน่วง 100ms → พัลส์สั่งวิ่ง (ON 100ms OFF) → อ่านสถานะ
-/// </summary>
 public static class ClampService
 {
     public const int MinMm = 0;
@@ -169,9 +132,6 @@ public static class ClampService
     private const int ResetPulseMs = 1000;
     private const int SettleMs = 100;
 
-    // ── อ่านค่าจากฐานข้อมูล ────────────────────────────────
-
-    /// <summary>คอลัมน์ที่มีจริงใน MainTable — schema แต่ละเครื่องไม่เท่ากัน (ตัวเก่าไม่มีคอลัมน์ Z)</summary>
     public static HashSet<string> ReadColumns(string dbPath)
     {
         var cols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -191,7 +151,6 @@ public static class ClampService
         return cols;
     }
 
-    /// <summary>หาค่าของแกนหนึ่งจาก MainTable</summary>
     public static ClampLookup Lookup(string dbPath, string programName, ClampAxis axis) // ค้นระยะของแกนนี้จากไฟล์แคลมป์
     {
         string program = (programName ?? "").Trim();
@@ -224,7 +183,6 @@ public static class ClampService
                 return new ClampLookup(false, 0, axis.Column,
                     $"ไม่พบ \"{program}\" ใน {axis.NameColumn}"); // แจ้งชื่อโปรแกรมที่ค้นไม่พบ
 
-            // เก็บเป็น TEXT ค่าว่างแปลว่ายังไม่ได้ setup
             string text = raw.ToString()?.Trim() ?? ""; // แปลงค่าดิบเป็นข้อความและตัดช่องว่าง
             if (text.Length == 0) // พบแถวแต่ยังไม่ได้ใส่ค่า
                 return new ClampLookup(false, 0, axis.Column, $"{axis.Column} ยังไม่ได้ setup");
@@ -241,7 +199,6 @@ public static class ClampService
         }
     }
 
-    /// <summary>บันทึกค่าของแกนหนึ่งกลับลง MainTable — UPDATE ล้วน ไม่สร้างแถวใหม่</summary>
     public static (bool ok, string message) Upload(
         string dbPath, string programName, ClampAxis axis, int valueMm)
     {
@@ -283,19 +240,9 @@ public static class ClampService
         }
     }
 
-    // ── การแปลงค่า ─────────────────────────────────────────
-
     public static int ClampMm(double value) =>
         (int)Math.Max(MinMm, Math.Min(MaxMm, Math.Round(value)));
 
-    /// <summary>
-    /// แปลงระยะ mm เป็นค่า raw ที่เขียนลง PLC — ห้ามแก้สูตรเอง
-    ///
-    /// ลอกจาก action "send" ของ Clamp UI router (ปุ่ม Sent ที่ operator กดจริง):
-    ///     Math.round((149 - (next - 6)) * 100)  ==  (155 - mm) * 100
-    ///
-    /// ยังไม่ยืนยันว่าแกน Z ใช้สูตรเดียวกับ X — ถ้าต่างต้องแยกสูตรต่อแกน
-    /// </summary>
     public static int ToRaw(int valueMm)
     {
         int raw = (MaxMm - valueMm) * 100;
@@ -304,9 +251,6 @@ public static class ClampService
         return raw;
     }
 
-    // ── สั่งงาน PLC ────────────────────────────────────────
-
-    /// <summary>เขียนค่าเป้าหมายของแกนหนึ่ง แล้วพัลส์สั่งวิ่ง จากนั้นอ่านสถานะกลับ</summary>
     public static async Task<ClampResult> ApplyAsync(ClampSettings s, ClampAxis axis, int valueMm)
     {
         int mm = ClampMm(valueMm);
@@ -323,7 +267,6 @@ public static class ClampService
         log.Add($"เขียน {axis.AddrTarget} = {raw} → {(wOk ? "OK" : "❌ " + wErr)}");
         if (!wOk) return new ClampResult(false, mm, raw, null, string.Join("\n", log));
 
-        // Node-RED หน่วงตรงนี้ก่อนพัลส์ — ให้ PLC รับค่าเข้า D ก่อนเห็นขอบขาขึ้นของ M
         await Task.Delay(SettleMs); // รอให้ PLC รับระยะก่อนพัลส์ Run
 
         var (pOk, _) = await PulseAsync(s, axis.AddrRun, RunPulseMs, log); // สั่ง Run เป็นพัลส์ ไม่ค้างบิตไว้
@@ -340,7 +283,6 @@ public static class ClampService
         return new ClampResult(true, mm, raw, status, string.Join("\n", log));
     }
 
-    /// <summary>พัลส์รีเซ็ตของแกนหนึ่ง — หน่วงนานกว่าพัลส์สั่งวิ่ง</summary>
     public static async Task<(bool ok, string log)> ResetAsync(ClampSettings s, ClampAxis axis)
     {
         var log = new List<string> { $"── {axis.Display} reset ──" };
@@ -355,7 +297,6 @@ public static class ClampService
         return (ok, string.Join("\n", log));
     }
 
-    /// <summary>อ่านสถานะของแกนหนึ่ง ไม่สั่งอะไร</summary>
     public static async Task<(bool ok, int value, string error)> ReadStatusAsync(
         ClampSettings s, ClampAxis axis)
     {
@@ -365,10 +306,6 @@ public static class ClampService
         return await McProtocolService.ReadWordAsync(s.Ip, s.Port, axis.AddrStatus);
     }
 
-    /// <summary>
-    /// พัลส์ ON → หน่วง → OFF
-    /// ต้องส่ง OFF เสมอ ค้าง ON ไว้ PLC จะไม่รับคำสั่งรอบถัดไป
-    /// </summary>
     private static async Task<(bool ok, string error)> PulseAsync(
         ClampSettings s, string address, int holdMs, List<string> log)
     {

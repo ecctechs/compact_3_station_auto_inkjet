@@ -5,22 +5,12 @@ using InkjetOperator.Models;
 
 namespace InkjetOperator.Adapters;
 
-/// <summary>
-/// MK Compact inkjet adapter — formats FW/FS/F1/FM/SR/SQ commands.
-/// Ported from rs232_connector.py + socket_client.py.
-/// Can use either Rs232Manager (COM port) or TcpManager (TCP/IP).
-/// </summary>
 public class MkCompactAdapter : IInkjetAdapter
 {
     private readonly Rs232Manager? _rs232;
     private readonly TcpManager? _tcp;
     private int _programNumber;
 
-    /// <summary>
-    /// Size conversion dict — from rs232_connector.py lines 8-22.
-    /// Maps logical size to device encoding.
-    /// </summary>
-    /// <summary>ตัวคูณของช่องหน่วงทริกเกอร์ในคำสั่ง FM — เก็บเป็น มม. ส่งเป็นสิบเท่า</summary>
     private const int TriggerDelayScale = 10;
 
     private static readonly Dictionary<string, string> SizeConversion = new()
@@ -40,13 +30,11 @@ public class MkCompactAdapter : IInkjetAdapter
         { "13", "11" },
     };
 
-    /// <summary>Constructor for RS232 connection (COM port).</summary>
     public MkCompactAdapter(Rs232Manager rs232)
     {
         _rs232 = rs232;
     }
 
-    /// <summary>Constructor for TCP connection.</summary>
     public MkCompactAdapter(TcpManager tcp)
     {
         _tcp = tcp;
@@ -54,7 +42,6 @@ public class MkCompactAdapter : IInkjetAdapter
 
     public Task<bool> ConnectAsync()
     {
-        // Connection is managed by the underlying manager
         return Task.FromResult(IsConnected());
     }
 
@@ -81,15 +68,6 @@ public class MkCompactAdapter : IInkjetAdapter
         return "";
     }
 
-    /// <summary>
-    /// คำตอบที่แปลว่าเครื่องไม่รับคำสั่ง — ขึ้นต้นด้วย ER แล้วตามด้วยคำสั่งกับรหัส
-    ///
-    /// <para>
-    /// ยิงคำสั่งที่เครื่องไม่รู้จักเข้าไปจะได้ <c>ER,test,00</c> กลับมา ซึ่งเป็นคำตอบ
-    /// ที่ไม่ว่าง การนับว่า "ตอบกลับมา = สำเร็จ" จึงทำให้คำสั่งที่เครื่องปฏิเสธถูก
-    /// รายงานว่าส่งสำเร็จ แล้วงานก็ไม่เข้าเครื่องโดยไม่มีอะไรบอก
-    /// </para>
-    /// </summary>
     private static bool IsRejected(string response) =>
         response.StartsWith("ER", StringComparison.OrdinalIgnoreCase);
 
@@ -100,37 +78,24 @@ public class MkCompactAdapter : IInkjetAdapter
             Command = command,
             Response = response,
 
-            // ว่าง = ต่อไม่ติดหรือเครื่องเงียบ · ขึ้นต้น ER = เครื่องรับคำสั่งแล้วปฏิเสธ
             Success = response != "" && !IsRejected(response),
             SentAt = DateTime.UtcNow.ToString("o"),
             Ordinal = ordinal,
         };
     }
 
-    /// <summary>
-    /// Send SR (suspend/stop printing).
-    /// From rs232_connector.py send_suspend() lines 46-51: sends "SR\r"
-    /// </summary>
     public async Task<CommandResult> SuspendAsync()
     {
         string response = await SendAsync("SR\r");
         return MakeResult("suspend", response);
     }
 
-    /// <summary>
-    /// Send SQ (resume printing).
-    /// From rs232_connector.py send_resume() lines 54-59: sends "SQ\r"
-    /// </summary>
     public async Task<CommandResult> ResumeAsync()
     {
         string response = await SendAsync("SQ\r");
         return MakeResult("resume", response);
     }
 
-    /// <summary>
-    /// Send FW (change program/message number).
-    /// From rs232_connector.py send_change_prog() lines 36-43: sends "FW,{n}\r"
-    /// </summary>
     public async Task<CommandResult> ChangeProgramAsync(int programNumber)
     {
         _programNumber = programNumber;
@@ -138,12 +103,6 @@ public class MkCompactAdapter : IInkjetAdapter
         return MakeResult("change_prog", response);
     }
 
-    /// <summary>
-    /// Send FS + F1 (text block content + format).
-    /// From rs232_connector.py send_text() lines 62-71:
-    ///   FS,{prog},{block},0,{text}\r
-    ///   F1,{prog},{block},{scale},{sizeConverted},{x},{y},1,1,1,0,00,0\r
-    /// </summary>
     public async Task<CommandResult> SendTextBlockAsync(TextBlockDto block, int deviceBlock)
     {
         string text = block.Text ?? "";
@@ -154,7 +113,6 @@ public class MkCompactAdapter : IInkjetAdapter
 
         string sizeConverted = SizeConversion.GetValueOrDefault(sizeKey, "0");
 
-        // FS command — set text content
         string fsCmd = $"FS,{_programNumber},{deviceBlock},0,{text}\r";
         string fsResponse = await SendAsync(fsCmd);
 
@@ -163,42 +121,24 @@ public class MkCompactAdapter : IInkjetAdapter
             return MakeResult("text_block", "", null);
         }
 
-        // F1 command — set text format
         string f1Cmd = $"F1,{_programNumber},{deviceBlock},{scale},{sizeConverted},{x},{y},1,1,1,0,00,0\r";
         string f1Response = await SendAsync(f1Cmd);
 
         return MakeResult("text_block", f1Response);
     }
 
-    // ── ทิศทางการพิมพ์ (ปุ่ม ABC) ──────────────────────────
-
-    // ค่าที่เก็บใน inkjet_config.direction มาจากไฟล์ตั้งต้นชุดเดียวกับโปรแกรมเดิม
-    // (PySocketClient) ซึ่งใช้ 1 = ปกติ · 2 = กลับหัว ส่วน 0 กับ 3 เป็นค่าที่
-    // คำสั่ง FM รับ ตัวอ่านจึงรับทั้งสองชุด เพราะข้อมูลที่มีอยู่ยังไม่ได้ยืนยัน
-    // ว่าถูกบันทึกด้วยชุดไหน แต่ตอนส่งออกจะเป็น 0/3 เสมอตามที่เครื่องรู้จัก
     public const int DirectionNormal = 1;
     public const int DirectionFlipped = 2;
 
-    /// <summary>ค่าไหนที่แปลว่ากลับหัว — 2 (ไฟล์ตั้งต้น) หรือ 3 (คำสั่ง FM)</summary>
     public static bool IsFlipped(int? direction) => direction == 2 || direction == 3;
 
-    /// <summary>
-    /// Send FM (program/message configuration).
-    /// From rs232_connector.py send_config() lines 74-83:
-    ///   FM,{prog},0,{name},0,{dir},0,0,01,20,500,{delay},300,1000,{height},{width},15,0,0,6\r
-    /// Program name is Unicode-normalized (NFKD) like Python unicodedata.normalize.
-    /// </summary>
     public async Task<CommandResult> SendConfigAsync(InkjetConfigDto config)
     {
         string progName = config.ProgramName ?? "";
-        // Normalize like Python: unicodedata.normalize('NFKD', ch)
         string normalizedName = progName.Normalize(NormalizationForm.FormKD);
 
         string direction = IsFlipped(config.Direction) ? "3" : "0";
 
-        // ค่าที่เก็บเป็นมิลลิเมตร แต่ช่องนี้ของคำสั่ง FM รับเป็นหน่วยสิบเท่า
-        // จึงต้องคูณ 10 ก่อนส่ง ตรงกับโปรแกรมเดิมที่ทำ int(float(delay) * 10)
-        // ลืมคูณแล้วหมึกจะลงเร็วกว่าที่ตั้งไว้สิบเท่า คือผิดตำแหน่งบนชิ้นงานจริง
         string delay = ((config.TriggerDelay ?? 0) * TriggerDelayScale).ToString();
         string height = (config.Height ?? 100).ToString();
         string width = (config.Width ?? 200).ToString();

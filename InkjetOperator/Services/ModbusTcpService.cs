@@ -2,35 +2,12 @@ using System.Net.Sockets;
 
 namespace InkjetOperator.Services;
 
-/// <summary>
-/// Minimal Modbus TCP client for FX5U — read/write holding registers only.
-///
-/// <para>
-/// เรียกแบบครั้งเดียวจบ (เปิดสาย → ส่ง → รับ → ปิด) ใช้กับปุ่มเดี่ยว ๆ เช่นปุ่ม Write
-/// ในตาราง register map ถ้าต้องยิงหลายคำสั่งติดกัน ให้เปิด <see cref="Session"/>
-/// ค้างไว้แทน ไม่งั้นค่าเสียเวลาเปิดสายจะคูณตามจำนวนคำสั่ง ซึ่งเห็นชัดมากตอน PLC
-/// ไม่ตอบ เพราะทุกครั้งต้องรอจนครบ timeout
-/// </para>
-/// </summary>
 public static class ModbusTcpService
 {
     private const byte UnitId = 1;
     private const int TimeoutMs = 3000;
     private static ushort _transactionId;
 
-    /// <summary>
-    /// สายที่เปิดค้างไว้ ยิงได้หลายคำสั่งต่อกัน
-    ///
-    /// <para>
-    /// หนึ่งงานต้องเขียน 5 register แล้วอ่านกลับทีละตัว ถ้าเปิดปิดสายทุกคำสั่งจะเป็น
-    /// 10 รอบ ตอน PLC ต่อไม่ติดคือรอ timeout 3 วินาที 10 ครั้ง = 30 วินาทีต่อการ
-    /// กดส่งหนึ่งครั้ง เปิดสายเดียวแล้วใช้ซ้ำทำให้เหลือรอครั้งเดียว
-    /// </para>
-    /// <para>
-    /// ตัวคำสั่งกับลำดับบนสายไม่เปลี่ยน ยังเป็น FC 6 เขียนทีละตัวแล้ว FC 3 อ่านกลับ
-    /// เหมือนเดิมทุกประการ ต่างแค่ไม่ปิดสายคั่นกลาง
-    /// </para>
-    /// </summary>
     public sealed class Session : IDisposable
     {
         private readonly TcpClient _tcp;
@@ -120,7 +97,6 @@ public static class ModbusTcpService
             await _stream.FlushAsync();
         }
 
-        /// <summary>บิตบนสุดของ function code ติด = PLC ตอบว่าไม่รับคำสั่ง</summary>
         private static string? ErrorIn(byte[] response) =>
             (response[7] & 0x80) == 0
                 ? null
@@ -129,7 +105,6 @@ public static class ModbusTcpService
         public void Dispose() => _tcp.Dispose();
     }
 
-    /// <summary>เปิดสายค้างไว้เพื่อยิงหลายคำสั่ง — คืน null พร้อมสาเหตุเมื่อต่อไม่ติด</summary>
     public static Task<(Session? session, string error)> OpenAsync(string ip, int port) =>
         Session.OpenAsync(ip, port);
 
@@ -151,12 +126,6 @@ public static class ModbusTcpService
         using (session) return await session.WriteSingleRegisterAsync(address, value);
     }
 
-    /// <summary>
-    /// เขียนหลาย register ติดกันในคำสั่งเดียว (FC 16)
-    ///
-    /// ค่าที่ส่งให้ PLC ของสายนี้เป็นชุด เช่น servo ของเครื่องหนึ่งคือ 4 ตัวเรียงกัน
-    /// ถ้าเขียนทีละตัวด้วย FC 6 PLC จะเห็นค่าครึ่ง ๆ กลาง ๆ ระหว่างทาง
-    /// </summary>
     public static async Task<(bool ok, string error)> WriteMultipleRegistersAsync(
         string ip, int port, int startAddress, IReadOnlyList<int> values)
     {
@@ -168,7 +137,6 @@ public static class ModbusTcpService
 
     private static byte[] BuildReadRequest(ushort txId, int startAddress, int quantity)
     {
-        // FC 0x03 = Read Holding Registers
         return
         [
             (byte)(txId >> 8), (byte)(txId & 0xFF),     // Transaction ID
@@ -183,7 +151,6 @@ public static class ModbusTcpService
 
     private static byte[] BuildWriteRequest(ushort txId, int address, ushort value)
     {
-        // FC 0x06 = Write Single Register
         return
         [
             (byte)(txId >> 8), (byte)(txId & 0xFF),
@@ -199,7 +166,6 @@ public static class ModbusTcpService
     private static byte[] BuildWriteMultipleRequest(
         ushort txId, int startAddress, IReadOnlyList<int> values)
     {
-        // FC 0x10 = Write Multiple Registers
         byte count = (byte)values.Count;
         byte byteCount = (byte)(count * 2);
         int length = 7 + byteCount;   // unit + fc + addr + qty + bytecount + data
@@ -221,7 +187,6 @@ public static class ModbusTcpService
 
         for (int i = 0; i < values.Count; i++)
         {
-            // ค่าลบส่งเป็น two's complement 16 บิต ให้ตรงกับที่ฝั่งอ่านตีความเป็น short
             ushort value = (ushort)(short)values[i];
             request[13 + i * 2] = (byte)(value >> 8);
             request[14 + i * 2] = (byte)(value & 0xFF);

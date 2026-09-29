@@ -41,8 +41,6 @@ public partial class InkjetSettingUserControl : UserControl
 
         Load += async (_, _) => await CheckAllStatusAsync();
 
-        // ไฟสถานะต้องตรงกับของจริง ไม่ใช่ภาพนิ่งตั้งแต่ตอนเปิดโปรแกรม
-        // กติกาทั้งหมดอยู่ที่ StatusRecheck
         Services.StatusRecheck.Wire(this, tmrAutoCheck, () => CheckAllStatusAsync(quiet: true));
     }
 
@@ -71,10 +69,6 @@ public partial class InkjetSettingUserControl : UserControl
 
     private void BtnSave_Click(object? sender, EventArgs e)
     {
-        // หัวพ่นสองตัวใช้ IP เดียวกันได้
-        //
-        // เดิมกันไว้เพราะคิดว่าเป็นคนละเครื่องต้องคนละที่อยู่ แต่หน้างานมีกรณีที่ทั้งสอง
-        // หัวอยู่หลังที่อยู่เดียวกัน และการกันไว้ทำให้ตั้งค่าไม่ได้เลย
         var ip058 = txtMk058Ip.Text.Trim();
         var ip059 = txtMk059Ip.Text.Trim();
 
@@ -111,12 +105,6 @@ public partial class InkjetSettingUserControl : UserControl
         Notify.Success(this, "บันทึกเรียบร้อย");
     }
 
-    // ── Check Status ────────────────────────────────────────────────
-
-    /// <param name="quiet">
-    /// true = รอบตรวจซ้ำอัตโนมัติ ไม่ต้องหมุนปุ่มให้รำคาญตาทุก 15 วินาที
-    /// เปลี่ยนแค่สีไฟกับข้อความ ซึ่งเป็นสิ่งที่คนเปิดหน้านี้มาดูอยู่แล้ว
-    /// </param>
     public async Task CheckAllStatusAsync(bool quiet = false)
     {
         if (!quiet)
@@ -200,8 +188,6 @@ public partial class InkjetSettingUserControl : UserControl
         if (dot.InvokeRequired) dot.Invoke(Apply); else Apply();
     }
 
-    // ── Folder browsing & validation ────────────────────────────────
-
     private void BrowseFolder(AntdUI.Input target, Label statusLabel, string requiredTable)
     {
         using var dlg = new FolderBrowserDialog { ShowNewFolderButton = false };
@@ -265,8 +251,6 @@ public partial class InkjetSettingUserControl : UserControl
         catch { return false; }
     }
 
-    // ── Edit name helpers ───────────────────────────────────────────
-
     private void EditMkName(string key, Label badge)
     {
         var current = CustomSettingsManager.Read(key, key.Replace("_NAME", ""));
@@ -285,8 +269,6 @@ public partial class InkjetSettingUserControl : UserControl
         badge.Text = dlg.Value;
     }
 
-    // ── Dirty / reset ───────────────────────────────────────────────
-
     private static void SetDotColor(Label dot, Color color)
     {
         if (dot.InvokeRequired) dot.Invoke(() => dot.ForeColor = color);
@@ -304,7 +286,6 @@ public partial class InkjetSettingUserControl : UserControl
         MarkDirty(txtMarkingRefFolder);
     }
 
-    // รับเป็น Control เพราะช่อง IP เปลี่ยนไปใช้ IpAddressInput ที่ไม่ใช่ AntdUI.Input
     private void MarkDirty(Control input) => input.BackColor = Color.LightYellow;
 
     private void ResetColors()

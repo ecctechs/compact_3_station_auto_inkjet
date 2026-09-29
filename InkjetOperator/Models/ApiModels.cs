@@ -2,9 +2,6 @@
 
 namespace InkjetOperator.Models;
 
-/// <summary>
-/// Standard backend response wrapper — matches ResponseManager { statusCode, data }.
-/// </summary>
 public class ApiResponse<T>
 {
     [JsonPropertyName("statusCode")]
@@ -23,8 +20,6 @@ public class PaginatedResult<T>
     public int Total { get; set; }
 }
 
-// --- Job models ---
-
 public class PrintJob
 {
     [JsonPropertyName("id")]
@@ -39,14 +34,9 @@ public class PrintJob
     [JsonPropertyName("pattern_no_erp")]
     public string? PatternNoErp { get; set; }
 
-    /// <summary>
-    /// เลขงานประจำวัน เริ่มที่ 1 ใหม่ทุกเที่ยงคืนเวลาไทย — ไม่ใช่ <see cref="Id"/>
-    /// งานเก่าที่รับก่อนมีคอลัมน์นี้อาจเป็น null
-    /// </summary>
     [JsonPropertyName("job_no")]
     public int? JobNo { get; set; }
 
-    /// <summary>วันตามเวลาไทยที่รับงาน — คู่กับ <see cref="JobNo"/> ถึงจะระบุงานได้</summary>
     [JsonPropertyName("job_date")]
     public string? JobDate { get; set; }
 
@@ -80,31 +70,17 @@ public class PrintJob
     [JsonPropertyName("st_status")]
     public string? StStatus { get; set; }
 
-    // ST3 กดเริ่มงานแล้วฝากให้ ST1 ส่งคำสั่งเข้าเครื่องแทน
-    // "1" = มีคำขอค้างอยู่ ST1 ยังไม่ได้ส่ง · remote_program = โปรแกรม UV ที่ ST3 เลือกไว้แล้ว
-
     [JsonPropertyName("remote_start")]
     public string? RemoteStart { get; set; }
 
     [JsonPropertyName("remote_program")]
     public string? RemoteProgram { get; set; }
 
-    /// <summary>
-    /// ขั้นตอนที่คำขอใบนี้ขอให้ส่ง — "MK" / "UV1" / "UV2"
-    /// <para>
-    /// ว่าง = คำขอที่ไม่ได้ระบุ ST1 จะถือว่าเป็นขั้นแรก ซึ่งเป็นพฤติกรรมเดิม
-    /// ก่อนมีช่องนี้ ใบที่ค้างอยู่ตอนอัปเดตโปรแกรมจึงยังทำงานถูก
-    /// </para>
-    /// </summary>
     [JsonPropertyName("remote_step")]
     public string? RemoteStep { get; set; }
 
-    /// <summary>สาเหตุที่ ST1 ส่งให้ไม่สำเร็จ — ST3 อ่านไปแสดงที่จอตัวเองแล้วล้างทิ้ง</summary>
     [JsonPropertyName("remote_error")]
     public string? RemoteError { get; set; }
-
-    // เวลาเป็น UTC ตามที่ backend ส่งมา แปลงเป็นเวลาไทยตอนแสดงผล
-    // created_at = เวลารับงาน · updated_at = เวลาแก้ล่าสุด ใช้เป็นเวลาจบงานเมื่อสถานะเป็น Success
 
     [JsonPropertyName("created_at")]
     public DateTime? CreatedAt { get; set; }
@@ -112,17 +88,12 @@ public class PrintJob
     [JsonPropertyName("updated_at")]
     public DateTime? UpdatedAt { get; set; }
 
-    // สองตัวล่างมาเฉพาะจาก /job/getAll — endpoint อื่นส่งเป็น null
-    // หน้า Order List ใช้ตรวจว่างานส่งครบยัง โดยไม่ต้องยิง getResolved ทีละแถว
-
     [JsonPropertyName("commands")]
     public List<CommandResult>? Commands { get; set; }
 
     [JsonPropertyName("plan_routing")]
     public PlanRoutingDto? PlanRouting { get; set; }
 }
-
-// --- Request DTOs ---
 
 public class CreateJobRequest
 {
@@ -178,10 +149,6 @@ public class CreateUvJobRequest
     public List<UvJobItem> Items { get; set; } = new();
 }
 
-/// <summary>
-/// ระยะแคลมป์ (IAI) ที่งานหนึ่งใช้ — 1 job = 1 แถว เก็บทั้งฝั่ง Plate และ Shim
-/// ค่าที่หาไม่เจอส่ง null มาได้ ระบบเก็บ null ไว้เพื่อบอกว่า "หาแล้วไม่มี"
-/// </summary>
 public class IaiCreateRequest
 {
     [JsonPropertyName("print_jobs_id")]
@@ -281,7 +248,6 @@ public class UvJobItem
     public string? Text5 { get; set; }
 }
 
-// plan_routing ที่อ่านมาจาก source DB ตอน register — เก็บค่าดิบ ไม่ตีความ
 public class CreatePlanRoutingRequest
 {
     [JsonPropertyName("print_jobs_id")]
@@ -299,8 +265,6 @@ public class CreatePlanRoutingRequest
     [JsonPropertyName("process_sequence")]
     public string? ProcessSequence { get; set; }
 }
-
-// --- Pattern models (from GET /job/getResolved) ---
 
 public class ResolvedJobResponse
 {
@@ -494,8 +458,6 @@ public class ServoConfigDto
     public int? Trigger { get; set; }
 }
 
-// --- Command result (POST /job/postResults) ---
-
 public class JobResultsPayload
 {
     [JsonPropertyName("success")]
@@ -529,15 +491,8 @@ public class CommandResult
     public string? SentAt { get; set; }
 }
 
-/// <summary>
-/// หนึ่งแถวในคิวของเครื่อง — งานนี้จองเครื่องนี้ไว้ และตอนนี้อยู่ในสถานะไหน
-/// <para>
-/// กติกาทั้งหมดอยู่ที่ backend (ตาราง machine_queue) ฝั่งโปรแกรมแค่อ่านไปทำตาม
-/// </para>
-/// </summary>
 public class MachineQueueRow
 {
-    // เก็บที่ Backend ก่อนส่งจริง ใช้กันส่งซ้ำหลังโปรแกรมหลุด
     [JsonPropertyName("dispatch_state")]
     public string? DispatchState { get; set; }
 
@@ -550,33 +505,22 @@ public class MachineQueueRow
     [JsonPropertyName("print_jobs_id")]
     public int PrintJobsId { get; set; }
 
-    /// <summary>MK · UV1 · UV2 — ชื่อเดียวกับขั้นตอนใน marking method</summary>
     [JsonPropertyName("machine")]
     public string Machine { get; set; } = "";
 
-    /// <summary>รอบที่เท่าไรของเครื่องนั้นในงานเดียวกัน — marking 22 เข้า MK สองรอบ</summary>
     [JsonPropertyName("round")]
     public int Round { get; set; } = 1;
 
-    /// <summary>รุ่นย่อยของโปรแกรม UV ที่เลือกไว้แล้ว — ว่างแปลว่ายังไม่ได้เลือก</summary>
     [JsonPropertyName("program_name")]
     public string? ProgramName { get; set; }
 
-    /// <summary>
-    /// เวลาที่ส่งเข้าเครื่องสำเร็จ — ว่างแปลว่ายังไม่ได้ส่ง
-    ///
-    /// แถวที่เป็น active แต่ยังไม่มีเวลานี้คือแถวที่ถึงคิวแล้วและรอ ST1 หยิบไปส่ง
-    /// มีเวลาแล้วคือส่งไปเรียบร้อย ห้ามหยิบไปส่งอีก
-    /// </summary>
     [JsonPropertyName("sent_at")]
     public DateTime? SentAt { get; set; }
 
-    /// <summary>pending รอคิว · active ถือเครื่องอยู่ · done ปล่อยแล้ว</summary>
     [JsonPropertyName("state")]
     public string State { get; set; } = "";
 }
 
-/// <summary>หนึ่งเครื่องที่งานหนึ่งจะจอง</summary>
 public class MachineQueueItem
 {
     [JsonPropertyName("machine")]
@@ -589,10 +533,8 @@ public class MachineQueueItem
     public string? ProgramName { get; set; }
 }
 
-/// <summary>จำนวนแถวที่ถูกล้างตอนรีเซ็ตกลับเป็นค่าเริ่มต้น</summary>
 public class ResetRuntimeResult
 {
-    /// <summary>จำนวนงานที่ถูกตั้งสถานะกลับเป็นรอเริ่ม</summary>
     [JsonPropertyName("jobs")]
     public int Jobs { get; set; }
 
@@ -603,30 +545,23 @@ public class ResetRuntimeResult
     public int CommandsRemoved { get; set; }
 }
 
-/// <summary>ผลของการปล่อยเครื่อง</summary>
 public class ReleaseResult
 {
-    /// <summary>แถวที่เพิ่งถูกปล่อย — null เมื่อไม่มีใครถือเครื่องอยู่</summary>
     [JsonPropertyName("released")]
     public MachineQueueRow? Released { get; set; }
 
-    /// <summary>งานที่ได้เครื่องต่อทันที — null แปลว่าไม่มีใครรอคิว เครื่องว่างจริง</summary>
     [JsonPropertyName("next")]
     public MachineQueueRow? Next { get; set; }
 }
 
-/// <summary>ผลของการขอหยิบงานถัดไปมาถือเครื่อง</summary>
 public class MachineClaimResult
 {
-    /// <summary>งานที่หยิบได้ — null เมื่อเครื่องไม่ว่าง ยังไม่ถึงคิว หรือคิวว่าง</summary>
     [JsonPropertyName("claimed")]
     public MachineQueueRow? Claimed { get; set; }
 
-    /// <summary>busy = มีงานถือเครื่องอยู่ · queued = มีงานรอก่อน · empty = ไม่มีใครรอ</summary>
     [JsonPropertyName("reason")]
     public string? Reason { get; set; }
 
-    /// <summary>งานที่ถือเครื่องอยู่ตอนนี้ — มีค่าเมื่อ reason เป็น busy</summary>
     [JsonPropertyName("holder")]
     public MachineQueueRow? Holder { get; set; }
 }

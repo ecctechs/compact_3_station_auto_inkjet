@@ -9,48 +9,27 @@ public partial class OrderListUserControl : UserControl
 {
     private static readonly string[] ActiveStatuses = ["Waiting", "Process"];
 
-    /// <summary>งานที่จบแล้ว — ทั้งที่ทำเสร็จจริงและที่ถูกยกเลิก ล้วนไปอยู่แท็บ History</summary>
     private static readonly string[] HistoryStatuses = ["Success", "Cancel"];
 
     private ApiClient? _api;
     private System.Windows.Forms.Timer? _pollTimer;
 
-    /// <summary>ตัวเฝ้าบิตปุ่มกดหน้างาน — เริ่มเองตอนหน้านี้โหลด</summary>
     private readonly PushButtonWatcher _pushButton = new();
 
-    /// <summary>
-    /// กำลังจัดการการกดปุ่มอยู่ — คลุมตั้งแต่รับสัญญาณจนจบ รวมช่วงที่มีหน้าต่างเปิดค้าง
-    /// <para>
-    /// ต้องมีแยกจาก <c>_sending</c> เพราะ WinForms Timer ยังเดินต่อระหว่างที่กล่อง
-    /// modal เปิดอยู่ ถ้าไม่กันไว้ ตัวเฝ้าจะรับสัญญาณรอบใหม่ทับของเดิมได้
-    /// </para>
-    /// </summary>
     private readonly HashSet<string> _pushHandling = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Guid> _dispatchingMachines = new(StringComparer.OrdinalIgnoreCase);
     private bool _preparingPrograms;
     private readonly List<Notify.ResultLine> _sendReports = [];
     private bool _showingSendReport;
 
-    /// <summary>กำลังดึงข้อมูลรอบ poll อยู่ — กันรอบใหม่ทับรอบเก่าตอน backend ช้า</summary>
     private bool _refreshing;
     private bool _refreshRequested;
     private bool _refreshScheduled;
     private long _lastBlockedPressNotice = long.MinValue;
     private readonly HashSet<int> _reportedUncertainQueues = [];
 
-    /// <summary>
-    /// กำลังทำงานตามปุ่มในแถวอยู่ — กันกดซ้ำระหว่างรออ่านข้อมูลจาก backend
-    ///
-    /// <para>
-    /// ทุกปุ่มในแถว (เริ่มงาน · จบงาน · แว่น · กากบาท) ต้องอ่านข้อมูลสดก่อนลงมือ
-    /// ซึ่งรอได้ถึง 10 วินาทีตอนต่อ backend ไม่ติด ระหว่างนั้นจอไม่มีอะไรบอกเลย
-    /// พนักงานจะกดซ้ำ แล้วแต่ละครั้งไปตั้งคำขอใหม่ พอครบกำหนดพร้อมกันก็เด้ง
-    /// กล่องผิดพลาดซ้อนกันเป็นพรวด
-    /// </para>
-    /// </summary>
     private bool _rowBusy;
 
-    /// <summary>ช้ากว่านี้ถึงจะขึ้นการ์ดว่ากำลังโหลด — เร็วกว่านี้การ์ดจะวาบจนรำคาญ</summary>
     private const int SlowLoadMs = 250;
     private bool _showHistory;
     private List<PrintJob> _allJobs = new();
@@ -66,21 +45,6 @@ public partial class OrderListUserControl : UserControl
 
     private void ConfigureColumns()
     {
-        // SortOrder = ให้ AntdUI จัดเรียงคอลัมน์นั้นเองเมื่อคลิกหัวตาราง
-        // คอลัมน์ Op ไม่ใส่ เพราะเป็นปุ่ม เรียงแล้วไม่มีความหมาย
-        //
-        // ความกว้างเป็น % ของตาราง รวมกันพอดี 100 — ทุกคอลัมน์แบ่งพื้นที่ตามสัดส่วน
-        // ไม่มีช่องว่างเหลือ และไม่ขยับตอนสลับภาษาเพราะไม่ได้วัดจากข้อความหัวตาราง
-        // (ถ้าไม่กำหนด Width เลย AntdUI จะวัดจากหัวตารางให้ ซึ่งเปลี่ยนตามภาษา)
-        //
-        // ตัวเลขที่เขียนไว้ตรงนี้คือชุดของแท็บ History ซึ่งมีคอลัมน์ครบทุกคอลัมน์
-        // แท็บ List ซ่อน End แล้วแจก 9% ที่ว่างคืนให้คอลัมน์อื่น ดู ApplyTabColumns
-        //
-        // ตัวเลข % เกลี่ยจากระยะห่างระหว่างข้อความหัวตารางกับลูกศร sort ที่ชิดขวา
-        // ให้ทุกคอลัมน์ห่างพอ ๆ กัน ไม่ใช่บีบจนลูกศรติดตัวหนังสือบางคอลัมน์
-        // ทุกคอลัมน์ยังกว้างกว่าข้อมูลที่ยาวที่สุดของตัวเอง — Start/End ถูกล็อกด้วย
-        // ความยาวของวันเวลา ("27/08/26 12:04" = 123px + ขอบ 24px) ต่ำกว่า 9% ไม่ได้
-        // เกลี่ยใหม่เมื่อไหร่ต้องเช็คสองอย่างนี้พร้อมกัน ทั้งข้อมูลล้นและระยะลูกศร
         tblOrders.Columns = new AntdUI.ColumnCollection
         {
             new AntdUI.Column("Start", "Start", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true, ColBreak = true },
@@ -93,44 +57,15 @@ public partial class OrderListUserControl : UserControl
             new AntdUI.Column("Shim", "Shim", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Station", "Station", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true, ColBreak = true },
-            // กว้างกว่าคอลัมน์อื่นเพราะแท็บ List ใส่ได้ถึงสามปุ่ม — เริ่ม/จบงาน + ยกเลิก + รายละเอียด
             new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "12%" },
             machineStatusColumn,
         };
 
-        // ColBreak above is what centres the titles, and it is not obvious why.
-        //
-        // A sortable header normally reserves a strip on its right for the sort arrow
-        // (SFWidth, derived from the text height - SortOrderSize does not change it),
-        // and AntdUI centres the title inside what is left of the cell rather than
-        // inside the whole cell. Every title therefore sat about half an arrow-width
-        // left of centre.
-        //
-        // With ColBreak set AND a percentage Width, AntdUI measures the header against
-        // the column width and returns early, leaving SFWidth at 0 - so the title is
-        // centred across the full cell while the arrow is still drawn. The trade-off is
-        // that a title too wide for its column now wraps (mid-word) instead of forcing
-        // the column wider. "Order No." is the first to go, once the table falls below
-        // roughly 1260px at 100% scaling (1.6x that at 150%) - full screen on the panel
-        // PC is about 1660px, so there is room to spare. Any column narrowed from here
-        // has to be checked against that: needed width = title width + 24px, divided by
-        // the column's share.
-        //
-        // Both parts are required: dropping either ColBreak or the % Width brings the
-        // off-centre title back.
-
-        // Sort arrows default to 60% of the header text height, which at 14pt bold
-        // crowds the title. Pin a smaller size that is still easy to read across the room.
         tblOrders.SortOrderSize = 12;
 
-        // แท็บตั้งต้นคือ List — SwitchTab ไม่ได้ถูกเรียกตอนเปิดหน้า
         ApplyTabColumns(showHistory: false);
     }
 
-    /// <summary>
-    /// คอลัมน์ที่ความกว้างไม่เท่ากันระหว่างสองแท็บ — (key, กว้างตอน List, กว้างตอน History)
-    /// ส่วนที่เหลือกว้างเท่ากันทั้งสองแท็บ จึงไม่ต้องมีในนี้
-    /// </summary>
     private static readonly (string Key, string ListWidth, string HistoryWidth)[] TabColumnWidths =
     [
         ("ErpMfg", "14%", "12%"),
@@ -141,16 +76,6 @@ public partial class OrderListUserControl : UserControl
         ("Shim", "7%", "6%"),
     ];
 
-    /// <summary>
-    /// แท็บ List ไม่มีคอลัมน์ End เพราะงานที่ยังไม่จบก็ยังไม่มีเวลาจบ — ทั้งคอลัมน์
-    /// เป็นขีดทุกแถวอยู่แล้ว เวลาจบงานดูได้ที่แท็บ History ที่เดียว
-    ///
-    /// ที่ต้องขยับความกว้างด้วย เพราะ AntdUI คิดความกว้างเป็นสัดส่วนของตารางตรง ๆ
-    /// (Table.Layout: width = rect.Width × ratio) ไม่ได้เกลี่ยใหม่ให้เมื่อซ่อนคอลัมน์
-    /// ซ่อน End เฉย ๆ จะเหลือที่ว่าง 9% ค้างท้ายตาราง จึงแจก 9% นั้นคืนเอง
-    ///
-    /// ทั้งสองชุดต้องรวมได้ 100 พอดี — แก้ตัวเลขเมื่อไหร่ต้องบวกใหม่ทั้งสองชุด
-    /// </summary>
     private void ApplyTabColumns(bool showHistory)
     {
         if (tblOrders.Columns == null) return;
@@ -168,138 +93,78 @@ public partial class OrderListUserControl : UserControl
         }
     }
 
-    private void SetupEvents()
+    private void SetupEvents() // ผูกปุ่มและเหตุการณ์ของหน้า Order List
     {
-        btnTabList.Click += (_, _) => SwitchTab(false);
-        btnTabOnline.Click += (_, _) => SwitchTab(false, JobProcessService.Online);
-        btnTabOffline.Click += (_, _) => SwitchTab(false, JobProcessService.Offline);
-        btnTabHistory.Click += (_, _) => SwitchTab(true);
-        ApplyProcessTabs();
+        btnTabList.Click += (_, _) => SwitchTab(false); // เปิดรายการงานที่ยังไม่จบ
+        btnTabOnline.Click += (_, _) => SwitchTab(false, JobProcessService.Online); // กรองเฉพาะงาน Online
+        btnTabOffline.Click += (_, _) => SwitchTab(false, JobProcessService.Offline); // กรองเฉพาะงาน Offline
+        btnTabHistory.Click += (_, _) => SwitchTab(true); // เปิดประวัติงานที่จบหรือยกเลิก
+        ApplyProcessTabs(); // แสดงแท็บตามค่าของ Station
 
-        // ST3 ไม่มีแท็บ History — ซ่อนปุ่มไปเลย ไม่ใช่แค่กรองรายการให้ว่าง
-        // จอหน้างานมีหน้าที่เดียวคือทำงานที่ค้างอยู่ ไม่ได้ใช้ย้อนดูประวัติ
-        // ตัวกรองวันที่ผูกกับแท็บนี้อยู่แล้ว จึงไม่โผล่ตามไปด้วย
-        btnTabHistory.Visible = !StationService.IsSt3;
-        tblOrders.CellButtonClick += TblOrders_CellButtonClick;
+        btnTabHistory.Visible = !StationService.IsSt3; // ซ่อน History ที่ ST3
+        tblOrders.CellButtonClick += TblOrders_CellButtonClick; // รับปุ่มเริ่ม จบ และรายละเอียดในแต่ละแถว
 
-        // AntdUI เรียงด้วยการเทียบ "ข้อความในเซลล์" ซึ่งทำให้ 26/08 มาหลัง 02/09
-        // จึงดักเทียบเองเฉพาะค่าที่เป็นวันเวลา ที่เหลือปล่อยเป็นการเทียบแบบรู้ตัวเลข
-        tblOrders.CustomSort += CompareCellText;
+        tblOrders.CustomSort += CompareCellText; // เรียงวันที่ตามเวลา ไม่เทียบเป็นข้อความ
         tblOrders.SetRowStyle += TblOrders_SetRowStyle;
 
-        // เปลี่ยนช่วงวันที่ = ต้องดึงใหม่ ไม่ใช่กรองของที่โหลดไว้ — งานเก่ายังไม่ได้อยู่ในมือ
-        // เลือกวันแล้วค้นให้เลย ปุ่มค้นหาเป็นทางกดซ้ำสำหรับคนที่อยากสั่งเอง
-        // (เช่นเลือกวันเดิมอีกครั้ง ซึ่ง ValueChanged ไม่ยิงให้)
-        dtpHistoryRange.ValueChanged += async (_, _) => await RefreshDataAsync(force: true);
-        btnSearchDate.Click += async (_, _) => await RefreshDataAsync(force: true);
-        btnClearDate.Click += (_, _) => dtpHistoryRange.Value = null;
+        dtpHistoryRange.ValueChanged += async (_, _) => await RefreshDataAsync(force: true); // เปลี่ยนช่วงวันแล้วอ่าน History ใหม่
+        btnSearchDate.Click += async (_, _) => await RefreshDataAsync(force: true); // ค้นประวัติตามช่วงวันที่เลือก
+        btnClearDate.Click += (_, _) => dtpHistoryRange.Value = null; // ล้างตัวกรองวันที่
 
-        WirePanels();
+        WirePanels(); // ผูกส่วนแสดงเครื่องและคิว
 
-        WirePushButton();
+        WirePushButton(); // ผูกปุ่มหน้างานกับการปล่อยคิว
 
-        Load += OnLoad;
-        Disposed += OnDisposed;
+        Load += OnLoad; // เปิดหน้าแล้วเริ่มอ่านข้อมูล
+        Disposed += OnDisposed; // ปิดหน้าแล้วหยุดงานเบื้องหลัง
     }
 
-    private void OnLoad(object? sender, EventArgs e)
+    private void OnLoad(object? sender, EventArgs e) // เริ่มอ่านงานและฟังปุ่มเมื่อเปิดหน้า
     {
         _api = new ApiClient($"http://{CustomSettingsManager.Read("PC_IP", "127.0.0.1")}:3000"); // ชี้ไป Backend กลางตาม IP ที่ตั้งไว้
         _ = RefreshDataAsync(); // อ่านรายการงานทันทีที่เปิดหน้า
-        StartPolling();
+        StartPolling(); // ตั้งรอบอ่านงานจาก Backend
         _pushButton.Start(); // เริ่มฟังปุ่มหน้างานจาก PLC
-        WarmUpDetailDialog();
+        WarmUpDetailDialog(); // เตรียม Detail ไว้ก่อนผู้ใช้กดเปิด
     }
 
-    /// <summary>กล่อง Order Detail ถูกอุ่นเครื่องไปแล้วในโปรเซสนี้</summary>
     private static bool _detailWarmedUp;
 
-    /// <summary>
-    /// สร้างกล่อง Order Detail ทิ้งหนึ่งใบตอนเปิดโปรแกรม เพื่อย้ายค่าเปิดครั้งแรกออกไป
-    ///
-    /// <para>
-    /// วัดได้ว่าการเปิดกล่องครั้งแรกของโปรแกรมใช้ 523 ms ครั้งต่อ ๆ ไป 8.9 ms
-    /// ส่วนต่างคือค่า JIT ของ <c>InitializeComponent</c> ที่ยาวสามพันกว่าบรรทัดและ
-    /// การสร้าง control 197 ตัว ซึ่งจ่ายครั้งเดียวต่อการรันโปรแกรม
-    /// </para>
-    /// <para>
-    /// จ่ายตอนนี้แทน — ตอนเปิดโปรแกรมคนยังกวาดตาดูรายการงานอยู่ ไม่ได้รออะไร
-    /// ต่างจากตอนกดปุ่มดูรายละเอียดซึ่งคนจ้องรอให้กล่องเด้ง ครึ่งวินาทีตรงนั้นรู้สึกได้
-    /// </para>
-    /// <para>
-    /// หน่วงไว้ก่อนหนึ่งวินาทีให้หน้าแรกวาดเสร็จและรอบโหลดงานแรกเดินไปก่อน
-    /// กล่องถูกทิ้งทันทีไม่ได้โชว์ที่ไหน เอาแค่ให้โค้ดถูกคอมไพล์และ type ถูกโหลดไว้
-    /// </para>
-    /// </summary>
-    private void WarmUpDetailDialog()
+    private void WarmUpDetailDialog() // เตรียมหน้า Detail ให้เปิดครั้งแรกเร็วขึ้น
     {
-        if (_detailWarmedUp) return;
-        _detailWarmedUp = true;
+        if (_detailWarmedUp) return; // เตรียมไว้แล้ว ไม่ต้องทำซ้ำ
+        _detailWarmedUp = true; // จำว่าเตรียมหน้า Detail แล้ว
 
-        var warmUp = new System.Windows.Forms.Timer { Interval = 1000 };
-        warmUp.Tick += (_, _) =>
+        var warmUp = new System.Windows.Forms.Timer { Interval = 1000 }; // ตั้งเวลาให้รอ 1 วินาที
+        warmUp.Tick += (_, _) => // ครบเวลาแล้วเตรียมหน้าต่าง
         {
-            warmUp.Stop();
-            warmUp.Dispose();
+            warmUp.Stop(); // หยุดเวลา ให้ทำแค่ครั้งเดียว
+            warmUp.Dispose(); // เลิกใช้ตัวจับเวลา
 
-            // อุ่นเครื่องไม่สำเร็จไม่ใช่เรื่องต้องฟ้อง อย่างมากคือเปิดครั้งแรกช้าเหมือนเดิม
-            try { using var throwaway = new OrderDetailDialog(); }
-            catch { /* ignore */ }
+            try { using var throwaway = new OrderDetailDialog(); } // สร้างแล้วทิ้ง โดยไม่แสดงหน้าต่าง
+            catch { /* ignore */ } // เตรียมไม่ผ่าน ยังเปิด Detail ทีหลังได้
         };
-        warmUp.Start();
+        warmUp.Start(); // เริ่มนับเวลา
     }
 
-    private void OnDisposed(object? sender, EventArgs e)
+    private void OnDisposed(object? sender, EventArgs e) // หยุดตัวอ่านงานและคืนทรัพยากรเมื่อปิดหน้า
     {
-        _pollTimer?.Stop();
-        _pollTimer?.Dispose();
-        _pushButton.Dispose();
-        DisposePanelImages();
+        _pollTimer?.Stop(); // หยุดรอบอ่าน Backend
+        _pollTimer?.Dispose(); // เลิกใช้ตัวจับเวลารายการงาน
+        _pushButton.Dispose(); // หยุดฟังปุ่ม PLC
+        DisposePanelImages(); // คืนรูปที่ใช้ในส่วนแสดงเครื่อง
     }
 
-    // ── ปุ่มกดหน้างาน ───────────────────────────────────────
-
-    private void WirePushButton()
+    private void WirePushButton() // ผูกปุ่มจริงและปุ่มจำลองเข้ากับเครื่อง
     {
-        // ปุ่มบอกว่า "เครื่องว่างแล้ว" ซึ่งกดได้ตลอดที่เครื่องถืองานอยู่ จึงเฝ้าไว้
-        // ตลอดที่หน้านี้เปิด ไม่ต้องรอว่ามีงานในคิวไหม กดตอนไม่มีอะไรถือเครื่องอยู่
-        // ก็ไม่เกิดอะไรขึ้น backend คืน released เป็นค่าว่างเฉย ๆ
-        // เฝ้าตลอดที่หน้านี้เปิดอยู่ ไม่หยุดอ่านตอนไม่ว่าง
-        //
-        // เดิมหยุดอ่านตอนกำลังส่งงาน ผลคือการกดที่เกิดในช่วงนั้นหายไปเงียบ ๆ เพราะ
-        // พอกลับมาอ่าน ค่าแรกถูกใช้เป็นค่าตั้งต้นเฉย ๆ ไม่นับเป็นการกด คนหน้างาน
-        // กดแล้วไม่มีอะไรเกิดขึ้นและไม่รู้ว่าต้องกดใหม่
-        _pushButton.ShouldWatch = () => Visible;
+        _pushButton.ShouldWatch = () => Visible; // อ่านปุ่มเมื่อหน้า Order List แสดงอยู่
 
-        // ลงมือได้ทุกเมื่อ ยกเว้นตอนกำลังคุยกับเครื่องอยู่
-        //
-        // แทรกกลางการส่งคือเรื่องเดียวที่ทำให้เสียของจริง แถวคิวของงานที่กำลังถูกส่ง
-        // จะถูกปิดทิ้งกลางทาง เครื่องถูกยกให้ใบถัดไป แล้วรอบตรวจถัดมาจะเขียนโปรแกรม
-        // ของใบถัดไปทับลงหัวพ่นที่เพิ่งรับงานแรกไป
-        //
-        // ไม่กันตอนมีกล่องเปิดค้าง เพราะไล่ดูทุกใบแล้วไม่มีใบไหนที่กดตอนนั้นแล้วเสียของ
-        // อย่างแย่สุดคืองานเข้าคิวแทนที่จะส่งทันที ซึ่งเป็นความสับสนไม่ใช่ความเสียหาย
-        // และการกันไว้มีราคาคือถ้ามีคนเปิดกล่องค้างแล้วเดินหนี ไลน์จะหยุดทั้งช่วงนั้น
-        //
-        // กล่องเลือกรุ่นย่อย UV ที่เปิดจากในตัวส่งงานยังบล็อกเครื่องนั้นอยู่ เพราะช่วงนั้น
-        // จอง MachineBusy ของ UV ไว้ ไม่ได้อาศัยเงื่อนไขเรื่องกล่อง
-        // ถามเป็นรายเครื่อง เพราะเครื่องนี้เฝ้าหลายปุ่มพร้อมกัน — กำลังส่งงานเข้า MK
-        // อยู่ไม่ใช่เหตุให้ปล่อย UV2 ไม่ได้
-        _pushButton.CanAct = CanReleaseNow;
+        _pushButton.CanAct = CanReleaseNow; // ตรวจว่าเครื่องนี้ปล่อยคิวได้หรือยัง
 
-        _pushButton.Pressed += async (_, machine) => await OnPushButtonPressedAsync(machine);
-        _pushButton.BlockedPress += (_, _) => ShowBlockedPress();
+        _pushButton.Pressed += async (_, machine) => await OnPushButtonPressedAsync(machine); // กดปุ่มแล้วปล่อยคิวของเครื่องนั้น
+        _pushButton.BlockedPress += (_, _) => ShowBlockedPress(); // ถ้ายังปล่อยไม่ได้ ให้แจ้งกดใหม่
 
-        // แถบสถานีเห็นทุกโหมด — คนหน้างานต้องรู้ว่าเครื่องไหนว่างและมีอะไรรออยู่
-        // ส่วนปุ่มจำลองการกดปุ่มหน้างานเหลือเฉพาะโหมดทดสอบเหมือนเดิม
-        //
-        // ซ่อนปุ่มอย่างเดียวพอ ความสูงของแถบวัดจากของที่แสดงอยู่จริง
-        //
-        // ห้ามล็อกความสูงเป็นตัวเลขตายตัวจากตรงนี้ ค่าที่ designer ตั้งไว้จะถูกสเกล
-        // ตาม DPI ของจอให้เอง แต่ค่าที่เขียนทับจากโค้ดไม่ถูกสเกลด้วย พอไปอยู่บนจอ 4K
-        // ที่สเกล 200% แถวป้ายสองแถวบนโตขึ้นเท่าตัวจนกินความสูงที่ล็อกไว้จนหมด
-        // แถวปุ่มเลยเหลือเกือบศูนย์ ปุ่มถูกบีบจนอ่านไม่ออก
-        bool dev = StationService.IsDevMode;
+        bool dev = StationService.IsDevMode; // ปุ่มจำลองใช้เฉพาะโหมดทดสอบ
 
         btnSimDelayMk.Visible = dev;
         btnSimDelayUv1.Visible = dev;
@@ -317,8 +182,6 @@ public partial class OrderListUserControl : UserControl
         btnSimPushUv1.Click += async (_, _) => await OnPushButtonPressedAsync("UV1");
         btnSimPushUv2.Click += async (_, _) => await OnPushButtonPressedAsync("UV2");
 
-        // ขาดการติดต่อไม่ใช่เรื่องต้องกดปิด — ใช้ข้อความลอย ไม่ใช่กล่อง modal
-        // ตัวเฝ้าแจ้งครั้งเดียวตอนขาด และอีกครั้งตอนกลับมา ไม่ได้แจ้งทุกรอบ
         _pushButton.Trouble += (_, error) =>
         {
             if (IsDisposed) return;
@@ -328,53 +191,12 @@ public partial class OrderListUserControl : UserControl
         };
     }
 
-
     private static bool AlreadySent(PrintJob job, string step) =>
         job.Commands?.Any(c => c.Success &&
             string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true;
 
-    /// <summary>
-    /// มีคนกดปุ่มหน้างาน — ส่งขั้นตอนถัดไปให้ทันที
-    ///
-    /// <para>
-    /// ไม่ถามยืนยัน คนกดยืนอยู่หน้าเครื่องแล้ว การเด้งกล่องให้เดินมากดตกลงที่จอ
-    /// อีกทีทำให้ปุ่มไม่มีประโยชน์ กล่องเลือกโปรแกรม UV ยังเด้งอยู่ถ้าจำเป็น
-    /// เพราะนั่นคือการ "เลือก" ไม่ใช่การ "ยืนยัน"
-    /// </para>
-    /// </summary>
-    /// <summary>
-    /// มีคนกดปุ่มหน้างาน = พิมพ์ชิ้นเดิมเสร็จแล้ว ปล่อยเครื่องให้คิวถัดไป
-    ///
-    /// <para>
-    /// ปุ่มนี้ไม่ได้สั่งส่งงานเองอีกต่อไป มันบอกแค่ว่า "เครื่องนี้ว่างแล้ว"
-    /// ใครจะได้เครื่องต่อเป็นเรื่องของคิวที่ backend และคนที่หยิบไปส่งคือ ST1
-    /// </para>
-    /// <para>
-    /// ไม่ถามยืนยัน คนกดยืนอยู่หน้าเครื่องแล้ว และไม่มีอะไรให้เลือกด้วย
-    /// เพราะลำดับคิวถูกกำหนดไว้ก่อนแล้วตั้งแต่ตอนกดเริ่มงาน
-    /// </para>
-    /// </summary>
-    /// <summary>หน่วงเวลากี่วินาทีก่อนจำลองการกดปุ่มหน้างาน</summary>
     private const int DelayedPushSeconds = 5;
 
-    /// <summary>
-    /// จำลองการกดปุ่มหน้างานแบบหน่วงเวลา — โหมดทดสอบเท่านั้น
-    ///
-    /// <para>
-    /// ปุ่มจำลองสามปุ่มข้างบนเรียกตัวจัดการโดยตรง จึงข้ามด่านที่กันการกดตอนจอไม่ว่าง
-    /// ไปทั้งหมด และต่อให้ไม่ข้าม พอมีกล่องเปิดค้างก็กดปุ่มบนจอไม่ได้อยู่แล้ว ทดสอบ
-    /// เคส "กดปุ่มหน้างานตอนจอมีกล่องค้าง" ด้วยปุ่มพวกนั้นไม่ได้เลย
-    /// </para>
-    /// <para>
-    /// ตัวนี้หน่วงเวลาไว้ก่อน คนทดสอบจึงมีเวลาไปเปิดกล่องยืนยันให้ค้างไว้ แล้วดูว่า
-    /// พอถึงเวลาเกิดอะไรขึ้น และเดินผ่านด่านเดียวกับปุ่มจริงทุกประการ ผลที่เห็นจึง
-    /// เชื่อถือได้เท่ากับไปยืนกดปุ่มจริงที่หน้าเครื่อง
-    /// </para>
-    /// <para>
-    /// แยกเป็นปุ่มละเครื่อง เพราะปุ่มจริงของแต่ละสถานีปล่อยคนละเครื่องกัน ทดสอบ
-    /// ด้วยปุ่มเดียวจะได้แค่เครื่องของสถานีที่เปิดโปรแกรมอยู่
-    /// </para>
-    /// </summary>
     private void StartDelayedPushTest(string machine)
     {
         Notify.Success(this, $"จะจำลองการกดปุ่ม {machine} ในอีก {DelayedPushSeconds} วินาที");
@@ -386,8 +208,6 @@ public partial class OrderListUserControl : UserControl
             timer.Dispose();
             if (IsDisposed) return;
 
-            // ด่านชุดเดียวกับที่ตัวเฝ้าปุ่มจริงใช้ ไม่ได้เขียนเงื่อนไขซ้ำ
-            // ถามด้วยชื่อเครื่องของปุ่มนี้ ไม่ใช่เครื่องของสถานีที่เปิดโปรแกรมอยู่
             if (!CanReleaseNow(machine))
             {
                 ShowBlockedPress();
@@ -399,55 +219,33 @@ public partial class OrderListUserControl : UserControl
         timer.Start();
     }
 
-    /// <summary>
-    /// ปล่อยเครื่องนี้ตอนนี้ได้ไหม — false = กำลังคุยกับเครื่องตัวนี้อยู่
-    ///
-    /// <para>
-    /// ดูรายเครื่อง ไม่ใช่ธงกลาง การส่งงานเข้า MK ไม่มีเหตุให้ขวางการปล่อย UV2
-    /// คนละสายคนละพอร์ต กดพร้อมกันได้ เดิมใช้ธงกลางจึงขวางกันหมดทั้งที่ไม่เกี่ยวกัน
-    /// </para>
-    /// <para>
-    /// ที่ต้องกันคือการแทรกกลางการส่งของ<b>เครื่องเดียวกัน</b> ซึ่งจะทำให้แถวคิวของงาน
-    /// ที่กำลังถูกส่งถูกปิดทิ้งกลางทาง แล้วโปรแกรมของใบถัดไปถูกเขียนทับลงหัวพ่นที่
-    /// เพิ่งรับงานแรกไป
-    /// </para>
-    /// </summary>
-    private bool CanReleaseNow(string machine) =>
+    private bool CanReleaseNow(string machine) => // ตรวจว่าเครื่องนี้ไม่มีงานส่งหรือปล่อยคิวค้างอยู่
         !_pushHandling.Contains(machine) && !_dispatchingMachines.ContainsKey(machine) && !MachineBusy.IsBusy(machine);
 
-    /// <summary>
-    /// บอกคนหน้างานว่าการกดไม่ผ่านเพราะจอไม่ว่าง ให้กดใหม่
-    ///
-    /// ใช้ข้อความลอย ไม่ใช่กล่องที่ต้องกดปิด เพราะตอนนี้อาจมีกล่องอื่นเปิดค้างอยู่แล้ว
-    /// การเปิดกล่องซ้อนจะยิ่งทำให้จอตันหนักกว่าเดิม
-    /// </summary>
     private void ShowBlockedPress()
     {
-        // กดรัวระหว่างส่งให้เตือนครั้งเดียวในช่วงที่ข้อความเดิมยังอยู่
         long now = Environment.TickCount64;
         if (_lastBlockedPressNotice != long.MinValue && now - _lastBlockedPressNotice < 5000) return;
         _lastBlockedPressNotice = now;
         Notify.Warn(this, "มีคนกดปุ่มหน้างาน — ระบบกำลังทำงานอื่นอยู่ กรุณากดอีกครั้ง");
     }
 
-    private async Task OnPushButtonPressedAsync(string machine)
+    private async Task OnPushButtonPressedAsync(string machine) // ปล่อยเครื่องแล้วให้ ST1 รับคิวถัดไป
     {
         if (_api == null || IsDisposed) return;
-        if (!CanReleaseNow(machine)) return;
-        _pushHandling.Add(machine);
+        if (!CanReleaseNow(machine)) return; // เครื่องนี้ยังทำรายการอยู่ ไม่รับการกดซ้ำ
+        _pushHandling.Add(machine); // ล็อกการกดซ้ำเฉพาะเครื่องนี้
         try
         {
 
-            var (queue, queueError) = await _api.GetMachineQueueAsync();
-            if (queueError != null)
+            var (queue, queueError) = await _api.GetMachineQueueAsync(); // อ่านคิวล่าสุดก่อนปล่อยเครื่อง
+            if (queueError != null) // อ่านคิวไม่ได้ จึงไม่เดาว่าจะปล่อยงานไหน
             {
                 Notify.Warn(this, $"อ่านคิว {machine} ไม่สำเร็จ — {queueError}");
                 return;
             }
             var holder = queue.FirstOrDefault(r => r.Machine == machine && r.State == "active"); // อ่านว่าตอนนี้กำลังปล่อยคิวหมายเลขใด
 
-            // งานที่เข้าเครื่องเดิมหลายรอบจะถือเครื่องไว้ให้รอบถัดไปหรือไม่
-            // เป็นตัวเลือกที่ Setting → ตัวเลือกหน้างาน ค่าเริ่มต้นคือถือไว้
             var (release, error) = await _api.ReleaseMachineAsync( // ขอปล่อยคิวปัจจุบันและรับคิวถัดไปจาก Backend
                 machine, holder?.Id, StationService.HoldForNextRound); // ส่งเลขคิวเดิมไปกันกดซ้ำแล้วข้ามงานถัดไป
             if (IsDisposed) return;
@@ -458,22 +256,15 @@ public partial class OrderListUserControl : UserControl
                 return;
             }
 
-            // ห้ามออกจากเมธอดตรงนี้ — บรรทัดท้ายเมธอดคือตัวที่ไปหยิบงานรอบถัดไป
-            // มาส่งเข้าเครื่องทันที ถ้าข้ามไป การส่งจะไปรอนาฬิกา poll รอบหน้า
-            // คนกดปุ่มจะเห็นเป็นค้างไปหลายวินาทีก่อนอะไรจะเกิดขึ้น
             if (release.Next != null) // มีงานถัดไปได้รับสิทธิ์ใช้เครื่องแล้ว
             {
-                if (StationService.IsSt3)
+                if (StationService.IsSt3) // ที่ ST3 ให้รอ ST1 เป็นผู้ส่ง
                     Notify.Success(this, $"{machine} เข้าคิวแล้ว · ST1 จะส่งงานถัดไปให้");
                 else
                     await ProcessMachineQueueAsync(machineFilter: machine); // ส่งคิวถัดไปของเครื่องที่เพิ่งปล่อยทันที
             }
             else
             {
-                // ไม่มีใครรอคิว — เลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้น
-                //
-                // มีคิวรออยู่ไม่ต้องเลื่อน เพราะงานถัดไปเขียนตำแหน่งของมันทับอยู่แล้ว
-                // การเลื่อนกลับก่อนแล้วเลื่อนไปใหม่คือขยับหัวสองรอบโดยไม่ได้อะไร
                 Notify.Success(this, $"{machine} ว่างแล้ว · ไม่มีงานรอคิว");
                 await ResetHeadPositionAsync(machine); // ขอให้ PLC พาหัวพิมพ์กลับตำแหน่งเริ่มต้น
             }
@@ -483,18 +274,9 @@ public partial class OrderListUserControl : UserControl
         {
             _pushHandling.Remove(machine); // เปิดรับปุ่มเครื่องนี้อีกครั้ง โดยไม่รอเครื่องอื่น
         }
-        if (!IsDisposed) await RefreshDataAsync(force: true);
+        if (!IsDisposed) await RefreshDataAsync(force: true); // อ่านสถานะคิวใหม่หลังรับปุ่ม
     }
 
-    /// <summary>
-    /// อัปเดตแถบบอกว่าแต่ละสถานีถืองานอะไรอยู่ — โหมดทดสอบเท่านั้น
-    ///
-    /// <para>
-    /// "ถืออยู่" อ่านจากคิวที่ backend ไม่ได้ถามเครื่อง เพราะโปรแกรมไม่มีทางรู้ว่า
-    /// เครื่องพิมพ์เสร็จหรือยัง สิ่งเดียวที่บอกว่าเครื่องว่างคือคนกดปุ่มหน้างาน
-    /// แถบนี้จึงแสดงสิ่งที่คิวเชื่ออยู่ ซึ่งเป็นตัวที่ตัดสินว่างานถัดไปเข้าได้ไหม
-    /// </para>
-    /// </summary>
     private async Task RefreshStationBarAsync(List<MachineQueueRow>? snapshot = null)
     {
         if (_api == null || IsDisposed) return;
@@ -504,7 +286,6 @@ public partial class OrderListUserControl : UserControl
             : (snapshot, (string?)null);
         if (error != null || IsDisposed) return;
 
-        // เก็บไว้ให้แผง Processing ใช้ต่อ จะได้ไม่ต้องยิงถามคิวซ้ำอีกรอบ
         _queueRows = rows;
         ReconcileMachineStatus(); // ใช้ผล Backend แทนข้อความชั่วคราวของคิวที่ส่งจบแล้ว
         UpdateMachineStatusCells();
@@ -513,17 +294,11 @@ public partial class OrderListUserControl : UserControl
         {
             var holder = rows.FirstOrDefault(r => r.Machine == machine && r.State == "active");
 
-            // เรียงตามลำดับที่จะได้เครื่อง — ตัวแรกในรายการคือคิวที่ 1
             var waiting = rows
                 .Where(r => r.Machine == machine && r.State == "pending")
                 .OrderBy(r => r.Id)
                 .ToList();
 
-            // ปุ่มกดได้ตราบใดที่ยังมีอะไรให้ขยับ — ถืออยู่ก็ปล่อย ว่างแต่มีคนรอก็ยกให้คิว
-            //
-            // ปุ่มจริงหน้าเครื่องกดได้ตลอดเวลาอยู่แล้ว และสภาพ "ว่างแต่มีงานรออยู่"
-            // เกิดได้จริง เช่นปล่อยเครื่องไปแล้วแต่การยกให้คิวถัดไปไม่สำเร็จ
-            // ถ้าปุ่มกดไม่ได้ตอนนั้น จะไม่มีทางดันคิวให้เดินต่อได้เลย
             button.Enabled = holder != null || waiting.Count > 0;
 
             if (holder == null)
@@ -533,7 +308,6 @@ public partial class OrderListUserControl : UserControl
             }
             else
             {
-                // ถึงคิวแล้วแต่ยังไม่ได้ส่ง กับส่งเข้าเครื่องไปแล้ว เป็นคนละสภาพกัน
                 var what = holder.NeedsSendReview ? "กำลังส่ง / รอตรวจสอบผล"
                     : holder.SentAt == null ? "รอ ST1 ส่ง" : machine == "MK" ? "กำลังพิมพ์" : "ส่งข้อมูลแล้ว";
 
@@ -545,12 +319,6 @@ public partial class OrderListUserControl : UserControl
         }
     }
 
-    /// <summary>
-    /// บรรทัดบอกคิวของเครื่องหนึ่ง — ใบถัดไปคือใบไหน และมีทั้งหมดกี่ใบ
-    ///
-    /// บอกชื่องานของใบถัดไปด้วย ไม่ใช่แค่จำนวน เพราะคนหน้างานต้องรู้ว่าเดี๋ยวจะได้
-    /// ชิ้นงานของล็อตไหนมาเข้าเครื่องต่อ จะได้เตรียมของถูกใบ
-    /// </summary>
     private string QueueLine(List<MachineQueueRow> waiting)
     {
         if (waiting.Count == 0) return "ไม่มีคิวรอ";
@@ -559,13 +327,10 @@ public partial class OrderListUserControl : UserControl
         return waiting.Count == 1 ? next : $"{next}   (รอทั้งหมด {waiting.Count} ใบ)";
     }
 
-    /// <summary>คิวของทุกเครื่องจากรอบล่าสุด — ว่างแปลว่ายังไม่เคยอ่านสำเร็จ</summary>
     private List<MachineQueueRow> _queueRows = [];
 
-    /// <summary>สีของเครื่องที่ไม่ว่าง หรือว่างแต่ยังมีงานค้างคิวอยู่</summary>
     private static readonly Color WaitingColor = Color.FromArgb(214, 108, 0);
 
-    /// <summary>สามช่องของแถบสถานี — ชื่อเครื่อง ป้ายสถานะ ป้ายคิว และปุ่มจำลอง</summary>
     private IEnumerable<(string Machine, AntdUI.Label Label, AntdUI.Label Queue, AntdUI.Button Button)> StationSlots()
     {
         yield return ("MK", lblStationMk, lblQueueMk, btnSimPushMk);
@@ -573,27 +338,13 @@ public partial class OrderListUserControl : UserControl
         yield return ("UV2", lblStationUv2, lblQueueUv2, btnSimPushUv2);
     }
 
-    /// <summary>
-    /// เลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้นหลังปล่อยเครื่องแล้วไม่มีงานรอคิว
-    ///
-    /// <para>
-    /// ทำเฉพาะเครื่อง MK เพราะช่องตำแหน่งของหัวพ่นอยู่บน PLC ตัวหลัก ส่วน UV ใช้
-    /// ชุดแคลมป์คนละตัวและยังไม่ได้ตั้ง address ไว้
-    /// </para>
-    /// <para>
-    /// ยังไม่ได้ตั้ง address ของช่องตำแหน่งก็ไม่ทำอะไรและไม่ฟ้อง เพราะเป็นสภาพปกติ
-    /// ของหน้างานที่ยังไม่ได้กรอกตาราง register map ให้ครบ
-    /// </para>
-    /// </summary>
-    private async Task ResetHeadPositionAsync(string machine)
+    private async Task ResetHeadPositionAsync(string machine) // คืนหัว MK กลับ Home เมื่อไม่มีคิวต่อ
     {
         if (!string.Equals(machine, "MK", StringComparison.OrdinalIgnoreCase)) return; // รีเซ็ตตำแหน่งเฉพาะ MK; UV1 / UV2 ข้ามขั้นนี้
 
         var results = await PlcOrderService.ResetPositionAsync(_api); // สั่ง PLC คืนตำแหน่งหัว MK ผ่านค่าในระบบ
         if (IsDisposed || results.Count == 0) return;
 
-        // เขียนผ่านแต่อ่านกลับได้ค่าอื่นก็นับว่าไม่สำเร็จ — เดิมดูแค่ต่อติดไหม
-        // PLC ที่รับค่าแล้วไม่ยอมเก็บจึงเงียบ หัวพิมพ์ไม่ได้กลับแต่ไม่มีใครรู้
         var failed = results
             .Where(r => r.Error != null || r.ReadBack != r.Value)
             .Select(r => r.Error != null
@@ -609,39 +360,23 @@ public partial class OrderListUserControl : UserControl
         resolved.Commands?.Any(c => c.Success &&
             string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true;
 
-    /// <summary>จังหวะปกติของการอ่านงานใหม่จาก backend</summary>
     private const int PollNormalMs = 5000;
 
-    /// <summary>ห่างสุดตอนคุย backend ไม่ได้ — ยังลองอยู่ แต่ไม่รัวใส่ปลายทางที่ไม่ตอบ</summary>
     private const int PollWhenDownMs = 30000;
 
-    /// <summary>คุย backend ไม่ได้ติดกันกี่รอบแล้ว</summary>
     private int _pollFailures;
 
-    private void StartPolling()
+    private void StartPolling() // ตั้งรอบอ่านงานและคิวจาก Backend
     {
-        _pollTimer = new System.Windows.Forms.Timer { Interval = PollNormalMs };
-        _pollTimer.Tick += async (_, _) =>
+        _pollTimer = new System.Windows.Forms.Timer { Interval = PollNormalMs }; // สร้างตัวจับเวลาตามรอบอ่านปกติ
+        _pollTimer.Tick += async (_, _) => // ครบเวลาแล้วตรวจงานรอบใหม่
         {
-            // ระหว่างเครื่องหนึ่งส่งอยู่ ยังอ่านคิวของอีกเครื่องได้
-            if (_sending) await ProcessMachineQueueAsync();
-            else await RefreshDataAsync();
+            if (_sending) await ProcessMachineQueueAsync(); // ยังส่งอยู่ ให้ตรวจคิวเครื่องอื่นที่พร้อม
+            else await RefreshDataAsync(); // ถ้าไม่ได้ส่ง ให้อ่านรายการงานใหม่
         };
-        _pollTimer.Start();
+        _pollTimer.Start(); // เริ่มอ่านงานเป็นรอบ
     }
 
-    /// <summary>
-    /// ถ่างรอบ poll ออกเมื่อคุย backend ไม่ได้ และหุบกลับทันทีที่ติดอีกครั้ง
-    ///
-    /// <para>
-    /// ตอน backend ไม่ตอบ คำขอหนึ่งกินเวลาเท่า timeout เต็ม ๆ นาฬิกาที่ยังเดินทุก
-    /// 5 วินาทีจึงทำให้มีคำขอค้างต่อกันแทบไม่มีช่วงว่าง ทั้งที่รู้อยู่แล้วว่าไม่ติด
-    /// ถ่างเป็น 10 · 20 · 30 วินาทีตามจำนวนครั้งที่พลาด แล้วหยุดที่ 30
-    /// </para>
-    /// <para>
-    /// ไม่แตะรอบที่ผู้ใช้กดเอง การกดปุ่มยังยิงทันทีทุกครั้ง ตัวนี้คุมแค่นาฬิกาเบื้องหลัง
-    /// </para>
-    /// </summary>
     private void NotePollResult(bool reached)
     {
         if (_pollTimer == null) return;
@@ -658,19 +393,14 @@ public partial class OrderListUserControl : UserControl
         if (_pollTimer.Interval != wanted) _pollTimer.Interval = wanted;
     }
 
-    private async Task RefreshDataAsync(bool force = false)
+    private async Task RefreshDataAsync(bool force = false) // อ่าน Job และคิวล่าสุดมาแสดงบนจอ
     {
         if (_api == null || IsDisposed) return;
         ApplyProcessTabs();
         _refreshRequested |= force;
 
-        // ระหว่างส่งงานห้ามผูก DataSource ใหม่ ไม่งั้นแถวขยับใต้มือผู้ใช้
-        // และกล่องเลือกรุ่นย่อยของ UV อาจถูกวาดทับ
         if (_sending) return;
 
-        // รอบก่อนยังไม่จบก็ข้ามรอบนี้ไป — นาฬิกาเดินทุก 5 วิ แต่ถ้า backend ช้า
-        // หรือต่อไม่ติด คำขอหนึ่งรออยู่ได้ถึง 10 วิ ไม่กันไว้รอบใหม่จะทับกันไป
-        // เรื่อย ๆ จนมีคำขอค้างพร้อมกันหลายชุด แล้วเด้งกล่องผิดพลาดตามมาเป็นพรวด
         if (_refreshing) return;
 
         force |= _refreshRequested;
@@ -696,8 +426,6 @@ public partial class OrderListUserControl : UserControl
             }
             _allJobs = jobs;
 
-            // ทำก่อนเช็ค signature เพราะคำขอจาก ST3 ไม่ได้เปลี่ยนอะไรที่ตารางวาด
-            // ถ้าไปทำหลังจากนั้น รอบที่หน้าจอไม่มีอะไรเปลี่ยนจะข้ามคำขอไปเลย
             await RecoverAbandonedRemoteStartsAsync();
             if (IsDisposed) return;
             if (_sending) { _refreshRequested = true; return; }
@@ -714,7 +442,6 @@ public partial class OrderListUserControl : UserControl
                 bool changed = await ProcessMachineQueueAsync(queue);
                 if (IsDisposed) return;
                 if (_sending) { _refreshRequested = true; return; }
-                // รอบที่ไม่มีการส่ง ใช้คิวชุดเดิมวาดแถบสถานีได้ ไม่ต้องอ่านซ้ำ
                 await RefreshStationBarAsync(changed ? null : queue);
             }
             if (IsDisposed) return;
@@ -724,8 +451,6 @@ public partial class OrderListUserControl : UserControl
             if (IsDisposed) return;
             if (_sending) { _refreshRequested = true; return; }
 
-            // ผูก DataSource ใหม่ทีไร ตารางจะรีเซ็ตทั้งลำดับที่เรียงไว้และตำแหน่ง scroll
-            // รอบ poll ที่ข้อมูลไม่เปลี่ยนจึงไม่ต้องผูกใหม่ ไม่งั้นทุก 5 วิจะกระตุกทีนึง
             var signature = BuildSignature(jobs) + QueueSignature(); // คิวเปลี่ยนอย่างเดียวก็ต้องอัปเดตสถานะบนจอ
             if (!force && signature == _lastSignature) return;
 
@@ -756,10 +481,6 @@ public partial class OrderListUserControl : UserControl
         }));
     }
 
-    /// <summary>
-    /// ย่อสภาพคิวให้เหลือข้อความเดียว — ช่องสถานะเอาคิวมาแสดงด้วย ถ้าไม่นับรวม
-    /// รอบที่มีแต่คิวเปลี่ยนจะไม่วาดตารางใหม่ แล้วสถานะจะค้างอยู่ของเก่า
-    /// </summary>
     private string QueueSignature()
     {
         var sb = new System.Text.StringBuilder(_queueRows.Count * 16);
@@ -768,7 +489,6 @@ public partial class OrderListUserControl : UserControl
         return sb.ToString();
     }
 
-    /// <summary>ย่อทุกอย่างที่ตารางวาดให้เหลือข้อความเดียว ไว้เทียบว่ารอบนี้มีอะไรเปลี่ยนไหม</summary>
     private static string BuildSignature(List<PrintJob> jobs)
     {
         var sb = new System.Text.StringBuilder(jobs.Count * 48);
@@ -788,26 +508,9 @@ public partial class OrderListUserControl : UserControl
         return sb.ToString();
     }
 
-    /// <summary>
-    /// แท็บ Online / Offline ที่เลือกอยู่ — null คือแท็บ List ธรรมดา เห็นทุกงาน
-    ///
-    /// <para>
-    /// สองแท็บนี้เป็นมุมมองย่อยของ List ไม่ใช่ชุดงานใหม่ งานที่ยังไม่จบชุดเดียวกัน
-    /// แค่กรองตาม <see cref="JobProcessService.Current"/> แท็บ History ไม่มีตัวกรองนี้
-    /// </para>
-    /// </summary>
     private string? _processFilter;
 
-    /// <summary>
-    /// โชว์หรือซ่อนแท็บ Online / Offline ตามตัวเลือกหน้างาน
-    ///
-    /// <para>
-    /// เรียกทุกรอบ poll ด้วย เพื่อให้เปลี่ยนตัวเลือกแล้วเห็นผลภายในไม่กี่วินาที
-    /// ไม่ต้องปิดเปิดโปรแกรม ถ้ากำลังดูแท็บที่เพิ่งถูกปิดอยู่ ให้กลับไปที่ List
-    /// ไม่งั้นตารางจะค้างเป็นรายการที่กรองไว้โดยไม่มีปุ่มให้กดออก
-    /// </para>
-    /// </summary>
-    private void ApplyProcessTabs()
+    private void ApplyProcessTabs() // เปิดแท็บ Online และ Offline ตามค่าตั้ง
     {
         bool enabled = StationService.ShowProcessTabs; // ใช้ตัวเลือกหน้างานกำหนดว่าจอนี้เห็น Online/Offline ไหม
         bool changed = enabled != _processTabsEnabled; // ตรวจว่าต้องเปลี่ยนแท็บหรือคอลัมน์จากค่าครั้งก่อนหรือไม่
@@ -822,23 +525,11 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        // คอลัมน์ Process seq ขึ้นกับตัวเลือกนี้ด้วย แต่ข้อมูลงานไม่ได้เปลี่ยน รอบ poll
-        // จึงไม่ผูกตารางใหม่ให้เอง ต้องสั่งเอง — ยังไม่มีงานก็ไม่ต้อง
         if (_allJobs.Count > 0) RebindTable();
     }
 
-    /// <summary>ตัวเลือกหน้างานเปิดแท็บ Online / Offline ให้เครื่องนี้อยู่ไหม — ค่าล่าสุดที่อ่านได้</summary>
     private bool _processTabsEnabled;
 
-    /// <summary>
-    /// ซ่อนแท็บ Online / Offline ตอนอยู่แท็บ History
-    ///
-    /// <para>
-    /// สองแท็บนี้กรองได้เฉพาะงานที่ยังไม่จบ อยู่ใน History ก็ไม่มีความหมาย และแท็บ
-    /// History มีตัวกรองวันที่โผล่มาอีกสี่ชิ้นในแถวเดียวกัน วัดแล้วแถวล้นขอบ ปุ่มล้าง
-    /// วันที่ถูกตัดตกจอ จะกลับไปดู Online / Offline ให้กด List ก่อน
-    /// </para>
-    /// </summary>
     private void ShowProcessTabButtons()
     {
         bool show = _processTabsEnabled && !_showHistory;
@@ -857,19 +548,15 @@ public partial class OrderListUserControl : UserControl
         ButtonStyles.SetSelected(btnTabHistory, showHistory);
         ShowProcessTabButtons();
 
-        // ตัวกรองวันที่มีเฉพาะแท็บ History — ออกจากแท็บแล้วล้างค่าทิ้ง
-        // ไม่งั้นกลับเข้ามาใหม่จะเห็นรายการหายไปโดยไม่รู้ว่าโดนกรองอยู่
         lblDateFilter.Visible = showHistory;
         dtpHistoryRange.Visible = showHistory;
         btnSearchDate.Visible = showHistory;
         btnClearDate.Visible = showHistory;
         if (!showHistory) dtpHistoryRange.Value = null;
 
-        // ออกจากแท็บแล้วการเลือกเดิมไม่มีความหมาย ล้างทั้งไฮไลต์และรูป
         _selectedJobId = null;
         ShowPreviewSides(null, null);
 
-        // แผงขวามีเฉพาะแท็บ List
         pnlProcessing.Visible = !showHistory;
 
         ApplyTabColumns(showHistory);
@@ -878,31 +565,16 @@ public partial class OrderListUserControl : UserControl
         _ = UpdateProcessingAsync();
     }
 
-    /// <summary>
-    /// ลำดับตั้งต้นของตาราง 2 ชั้น — ชั้นแรกสถานะ ชั้นสองเวลารับงานใหม่สุดขึ้นก่อน
-    ///
-    /// งานที่เดินอยู่ต้องอยู่บนสุดเสมอ เพราะเป็นงานที่ผู้ใช้ต้องแตะ ส่วนงานที่รอ
-    /// อยู่ล่าง — ตารางยาวแค่ไหนก็ไม่ต้องเลื่อนหา
-    ///
-    /// AntdUI เรียงได้ทีละคอลัมน์ ทำ 2 ชั้นในตัวมันไม่ได้ จึงเรียงลิสต์เองก่อน
-    /// ส่งเข้าตาราง ถ้าผู้ใช้กดหัวคอลัมน์ การเรียงนั้นจะทับลำดับนี้ทั้งหมด
-    /// (กดซ้ำจนลูกศรกลับเป็นเทาก็ได้ลำดับนี้คืน)
-    /// </summary>
     private static int StatusRank(PrintJob job) =>
         string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase) ? 0
         : string.Equals(job.Status, "Waiting", StringComparison.OrdinalIgnoreCase) ? 1
         : 2;
 
-    private void RebindTable()
+    private void RebindTable() // กรองและเติมรายการตาม Station กับแท็บที่เลือก
     {
         var statuses = _showHistory ? HistoryStatuses : ActiveStatuses;
         int station = StationService.Current;
 
-        // ST1 เห็นประวัติทั้งสาย รวมงานที่ ST3 ทำจนจบซึ่งตัวเองไม่เคยเห็นในแท็บ List
-        // เพราะเป็นจอที่ใช้ตามงานทั้งกระบวนการ
-        //
-        // ส่วน ST3 ไม่มีแท็บ History ให้กดอยู่แล้ว เงื่อนไข IsSt3 ตรงนี้จึงเป็นแค่
-        // ตัวกันไว้ เผื่อวันหลังเปิดแท็บคืนให้ ST3 จะได้ยังกรองเฉพาะงานของตัวเอง
         bool showEveryStation = _showHistory && !StationService.IsSt3;
 
         var filtered = _allJobs
@@ -924,52 +596,24 @@ public partial class OrderListUserControl : UserControl
             : dateFiltered && rows.Count == 0
                 ? "ไม่มีงานในช่วงวันที่ที่เลือก"
                 : $"No orders (total {_allJobs.Count}, filter: {string.Join("/", statuses.Select(JobStatusDisplay.Text))})";
-        // ผูกครั้งเดียว ไม่ล้างเป็น null ก่อน
-        //
-        // การตั้งเป็น null แล้วตั้งค่าใหม่ทำให้ตารางสร้างแถวใหม่และวาดใหม่สองรอบ
-        // ต่อการรีเฟรชหนึ่งครั้ง และมีจังหวะที่ตารางว่างคาอยู่ระหว่างสองบรรทัดนั้น
-        // ซึ่งเห็นเป็นอาการกระพริบ การตั้งลิสต์ใหม่ทับไปเลยได้ผลเหมือนกันในรอบเดียว
         _displayRows = rows;
         tblOrders.DataSource = rows;
         ReapplySort();
         RestoreSelection();
 
-        // แถวถูกสร้างใหม่ทุกครั้งที่ผูกตาราง ปุ่มที่หมุนอยู่จึงหายไปด้วย ต้องสั่งหมุนใหม่
         ApplyStartLoading();
     }
 
-    /// <summary>งานที่กดเริ่มไปแล้วและยังส่งไม่เสร็จ — ปุ่มเริ่มงานของแถวนี้หมุนอยู่</summary>
     private int? _startingJobId;
 
     private const string StartButtonText = "เริ่มงาน";
 
-    /// <summary>
-    /// ให้ปุ่ม "เริ่มงาน" ของแถวที่กดหมุน จนกว่าจะส่งเสร็จ — null คือหยุดหมุน
-    ///
-    /// <para>
-    /// หมุนที่ปุ่มที่คนเพิ่งกด ไม่ใช่ขึ้นการ์ดบังทั้งตาราง คนเห็นทันทีว่าระบบรับการกด
-    /// แล้วและกำลังทำงานอยู่ ส่วนที่เหลือของจอยังใช้ได้ตามปกติ ดูแถวอื่นหรือเครื่อง
-    /// อื่นได้ระหว่างรอ — การ์ดแบบเก่าที่บังตารางถูกเอาออกไปเพราะเหตุนี้
-    /// </para>
-    /// <para>
-    /// หมุนตั้งแต่กดจนจบ รวมช่วงโหลดข้อมูลงานและตรวจการเชื่อมต่อเครื่อง ซึ่งช้าได้
-    /// เป็นวินาทีตอนเครือข่ายมีปัญหา ถ้าเริ่มหมุนตอนส่งจริงช่วงนั้นจะดูเหมือนกดไม่ติด
-    /// </para>
-    /// </summary>
-    private void ShowStartLoading(int? jobId)
+    private void ShowStartLoading(int? jobId) // แสดงการรอที่ปุ่มเริ่มของงานที่เลือก
     {
         _startingJobId = jobId; // จำแถวที่กำลังเริ่ม เพื่อไม่ให้ไปหมุนผิดงาน
         ApplyStartLoading();
     }
 
-    /// <summary>
-    /// ตั้งสถานะหมุนให้ปุ่มในตารางตามงานที่กำลังเริ่มอยู่
-    ///
-    /// <para>
-    /// ตั้งได้เฉพาะหลังผูกตารางแล้ว ปุ่มในตารางของ AntdUI ต้องรู้ว่าตัวเองอยู่ตารางไหน
-    /// ก่อนจะวาดตัวหมุนได้ ตั้งตอนสร้างแถวจะพังเพราะยังไม่มีตารางให้วาด
-    /// </para>
-    /// </summary>
     private void ApplyStartLoading()
     {
         if (IsDisposed) return;
@@ -983,18 +627,11 @@ public partial class OrderListUserControl : UserControl
                 bool spin = row.Id == _startingJobId;
                 button.Loading = spin;
 
-                // ตอนหมุนเหลือแค่ตัวหมุน ไม่มีข้อความ — ตัวหมุนกินที่เพิ่มหน้าข้อความ
-                // ปุ่มจึงกว้างเกินคอลัมน์ ดันปุ่มดูรายละเอียดตกขอบตาราง และตัวหมุนเอง
-                // ถูกตัดครึ่ง (วัดจากภาพแล้ว) ส่วนคำว่ากำลังส่งมีในคอลัมน์รายเครื่องอยู่แล้ว
                 button.Text = spin ? "" : StartButtonText;
             }
         }
     }
 
-    /// <summary>
-    /// ตั้ง DataSource ใหม่ทีไร AntdUI ล้างลำดับที่เรียงไว้ทุกที (แต่ลูกศรบนหัวตารางยังค้าง)
-    /// เรียงกลับตามคอลัมน์เดิม ไม่งั้นหัวตารางกับข้อมูลจะไม่ตรงกัน
-    /// </summary>
     private void ReapplySort()
     {
         if (tblOrders.Columns == null) return;
@@ -1007,7 +644,6 @@ public partial class OrderListUserControl : UserControl
         }
     }
 
-    /// <summary>ช่วงวันที่ที่เลือก ขยายเป็นทั้งวันตามเวลาไทย (00:00 ถึง 23:59:59)</summary>
     private bool TryGetDateRange(out DateTime from, out DateTime to)
     {
         from = default;
@@ -1041,12 +677,6 @@ public partial class OrderListUserControl : UserControl
         }
     }
 
-    /// <summary>
-    /// รออ่านข้อมูลงานสดจาก backend พร้อมขึ้นการ์ดบอกเมื่อรอนานผิดปกติ
-    ///
-    /// ปกติอ่านเสร็จในหลักสิบมิลลิวินาที ขึ้นการ์ดทุกครั้งจะวาบจนรำคาญ จึงรอ
-    /// สักครู่ก่อนแล้วค่อยขึ้น — เห็นการ์ดเมื่อไหร่แปลว่าเครือข่ายมีปัญหาจริง
-    /// </summary>
     private async Task<ResolvedJobResponse?> LoadJobAsync(int jobId, string busyText)
     {
         var task = _api!.GetResolvedJobAsync(jobId); // ขอข้อมูล Job พร้อม Pattern, UV และประวัติส่งจาก Backend
@@ -1063,7 +693,7 @@ public partial class OrderListUserControl : UserControl
         }
     }
 
-    private async Task HandleRowButtonAsync(string? buttonId, OrderRow row)
+    private async Task HandleRowButtonAsync(string? buttonId, OrderRow row) // แยกงานตามปุ่มที่กดในตาราง
     {
         if (buttonId == "detail") // ปุ่มรายละเอียดเปิดข้อมูลของแถวที่เลือก
         {
@@ -1078,8 +708,6 @@ public partial class OrderListUserControl : UserControl
         }
         else if (buttonId == "start")
         {
-            // กดซ้ำระหว่างที่ใบก่อนยังไม่จบ — ปุ่มที่หมุนอยู่ไม่รับคลิกอยู่แล้ว
-            // ตัวนี้กันการกดเริ่มใบอื่นแทรกเข้ามาก่อนใบแรกจะส่งเสร็จ
             if (_startingJobId != null) return;
 
             ShowStartLoading(row.Id); // ให้ปุ่มเริ่มหมุนตั้งแต่โหลดงานจนจบการส่ง
@@ -1106,18 +734,6 @@ public partial class OrderListUserControl : UserControl
         }
     }
 
-    /// <summary>
-    /// ชื่อเรียกงานที่พนักงานหน้างานใช้จริง — "ERP MFG (เลขล็อต)"
-    ///
-    /// ใช้แทนเลข id ในข้อความที่พูดถึง "งานอีกใบ" เพราะ id เป็นเลขในฐานข้อมูล
-    /// ที่ไม่ได้อยู่บนใบสั่งงานและไม่มีในตาราง คนอ่านจึงไล่หาไม่เจอว่าเป็นงานไหน
-    ///
-    /// ขาดค่าไหนก็ตัดออก เหลือเท่าที่รู้ ไม่มีเลยค่อยตกไปใช้ id
-    /// </summary>
-    /// <summary>
-    /// ชื่อเรียกงานจากเลข id — ใช้ในข้อความที่มีแต่ id อยู่ในมือ
-    /// หางานในรายการที่โหลดมาไม่เจอค่อยตกไปใช้ id ให้ยังอ้างอิงอะไรได้อยู่
-    /// </summary>
     private string JobName(int jobId)
     {
         var job = _allJobs.FirstOrDefault(j => j.Id == jobId);
@@ -1126,7 +742,6 @@ public partial class OrderListUserControl : UserControl
 
     private static string JobLabel(PrintJob job) => JobDisplay.Label(job);
 
-    /// <summary>ค่าแรกที่ไม่ว่าง — ว่างทั้งคู่คืนขีด ให้เข้าชุดกับคอลัมน์อื่นที่ใช้ขีดแทนช่องว่าง</summary>
     private static string FirstFilled(params string?[] values)
     {
         foreach (var value in values)
@@ -1137,19 +752,10 @@ public partial class OrderListUserControl : UserControl
         return Dash;
     }
 
-    /// <summary>งานที่ถูกยกเลิก — แยกจากงานที่จบแล้ว ทั้งที่อยู่แท็บ History เหมือนกัน</summary>
     private static bool IsCancelled(PrintJob job) =>
         string.Equals(job.Status, "Cancel", StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>
-    /// เอางานที่ยกเลิกไว้กลับมาพิมพ์ใหม่ — สถานะกลับเป็น Waiting งานจึงกลับไป
-    /// อยู่ในแท็บ List ให้กดเริ่มงานได้ตามปกติ
-    ///
-    /// ไม่ได้สร้าง job ใหม่โดยตั้งใจ — เลข job, pattern, ข้อมูล UV และระยะแคลมป์
-    /// ยังเป็นชุดเดิมทั้งหมด ไม่ต้องสแกนบาร์โค้ดซ้ำ และประวัติการส่งของรอบก่อน
-    /// ยังอยู่ครบใน print_job_commands ให้ย้อนดูได้ว่าเคยพิมพ์อะไรไปแล้วบ้าง
-    /// </summary>
-    private async Task RestoreJobAsync(int jobId)
+    private async Task RestoreJobAsync(int jobId) // นำ Job เดิมจาก History กลับมารอเริ่ม
     {
         if (_api == null) return;
 
@@ -1159,7 +765,7 @@ public partial class OrderListUserControl : UserControl
                 + "ยืนยันหรือไม่?"))
             return;
 
-        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Waiting");
+        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Waiting"); // คืนสถานะรอ โดยยังเก็บประวัติส่งเดิม
         if (IsDisposed) return;
 
         if (!ok)
@@ -1168,25 +774,14 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        // ล้างคำขอ/ข้อความผิดพลาดที่ค้างจากรอบก่อน ไม่งั้น ST1 อาจหยิบธงเก่าไปส่งทันที
-        // ที่งานกลับมาเป็น Waiting ทั้งที่ยังไม่มีใครกดเริ่มงานรอบใหม่
-        await _api.SetRemoteStartAsync(jobId, requested: false);
+        await _api.SetRemoteStartAsync(jobId, requested: false); // ล้างคำขอส่งเก่าของ ST3
         if (IsDisposed) return;
 
         Notify.Success(this, $"{JobName(jobId)} กลับไปอยู่ในรายการงานแล้ว");
-        await RefreshDataAsync(force: true);
+        await RefreshDataAsync(force: true); // อ่านรายการใหม่ให้เห็นงานที่นำกลับ
     }
 
-    // ── ยกเลิกงาน ──────────────────────────────────────────
-
-    /// <summary>
-    /// ยกเลิกงาน — สถานะไปเป็น "Cancel" งานจึงหลุดจากแท็บ List ไปโผล่ที่ History
-    /// เหมือนงานที่จบแล้ว ต่างกันแค่ป้ายสถานะ
-    ///
-    /// ไม่ส่งอะไรเข้าเครื่องและไม่ย้อนคำสั่งที่ส่งไปแล้ว — สิ่งที่พิมพ์ไปแล้วก็พิมพ์ไปแล้ว
-    /// ประวัติการส่งยังอยู่ครบใน print_job_commands ตามเดิม
-    /// </summary>
-    private async Task CancelJobAsync(int jobId)
+    private async Task CancelJobAsync(int jobId) // ยืนยันยกเลิกงานแล้วให้ Backend ล้างคิว
     {
         if (_api == null) return;
 
@@ -1197,7 +792,6 @@ public partial class OrderListUserControl : UserControl
                 + "ยืนยันหรือไม่?"))
             return;
 
-        // Backend ล้างคิวกับเปลี่ยนสถานะใน Transaction เดียวกัน
         var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Cancel");
         if (IsDisposed) return;
 
@@ -1207,8 +801,6 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        // ยกเลิกตอนที่ ST3 ฝากคำขอค้างไว้ ธงต้องหายไปด้วย ไม่งั้นมันจะค้างอยู่กับงาน
-        // ข้ามไปถึงตอนที่งานถูกนำกลับมาพิมพ์ใหม่
         await _api.SetRemoteStartAsync(jobId, requested: false);
         if (IsDisposed) return;
 
@@ -1216,9 +808,6 @@ public partial class OrderListUserControl : UserControl
         await RefreshDataAsync(force: true);
     }
 
-    // ── เริ่มงาน ────────────────────────────────────────────
-
-    /// <summary>กำลังส่งงานอยู่ — กันทั้งการกดซ้ำและการรีเฟรชตารางทับ</summary>
     private int _sendOperations;
     private bool _sending => _sendOperations > 0;
 
@@ -1244,27 +833,6 @@ public partial class OrderListUserControl : UserControl
         SchedulePendingRefresh();
     }
 
-    /// <summary>
-    /// งานที่กดเริ่มได้ = ยังไม่ได้เริ่ม · สถานีนี้มีสิทธิ์เริ่ม · และรหัสใช้งานได้จริง
-    /// <para>
-    /// รหัส "00" ไม่มีขั้นตอนต้องส่งเลย แต่ยังกดเริ่มได้ — เป็นงานที่ทำด้วยมือ
-    /// การกดเริ่มแค่เปลี่ยนสถานะให้คนอื่นเห็นว่ามีคนรับไปทำแล้ว
-    /// ส่วน "21" เป็นรหัสที่ไม่มีอยู่จริง กดเริ่มไม่ได้ ให้ตกไปใช้ปุ่มจบงานแทน
-    /// </para>
-    /// </summary>
-    /// <summary>
-    /// งานที่ยังไม่มีใครเริ่ม และสถานีนี้ไม่ใช่คนที่มีสิทธิ์เริ่ม = ยังไม่ถึงตาสถานีนี้
-    ///
-    /// <para>
-    /// เกิดที่ ST3 กับงาน 11 และ 12 (รวม 13 31 32 33) ซึ่ง ST3 เห็นในตารางแต่ต้อง
-    /// ให้ ST1 เป็นคนเริ่ม เดิมพอ <see cref="CanStart"/> คืน false งานพวกนี้จะตกไป
-    /// เข้าเงื่อนไขปุ่มจบงานทันที กลายเป็นกดจบงานที่ยังไม่เคยพ่นอะไรลงชิ้นงานได้
-    /// </para>
-    /// <para>
-    /// รหัสที่ไม่มีอยู่จริง (21) ไม่เข้าข่ายนี้โดยตั้งใจ — มันกดเริ่มไม่ได้อยู่แล้ว
-    /// และต้องเหลือปุ่มจบงานไว้เป็นทางเคลียร์ออกจากตาราง
-    /// </para>
-    /// </summary>
     private static bool NotMyTurnYet(PrintJob job)
     {
         bool started = job.Commands?.Any(c => c.Success) == true;
@@ -1281,9 +849,6 @@ public partial class OrderListUserControl : UserControl
         if (!string.Equals(job.Status, "Waiting", StringComparison.OrdinalIgnoreCase))
             return false;
 
-        // มีคำขอจาก ST3 ค้างอยู่ = งานถูกจองไว้แล้ว แม้สถานะจะยังเป็น Waiting
-        // (Working จะถูกตั้งก็ต่อเมื่อ ST1 ต่อเครื่องติดและส่งจริง) ถ้าไม่กันตรงนี้
-        // จะมีคนกดเริ่มซ้ำระหว่างที่คำขอกำลังรอ ST1 อยู่ กลายเป็นส่งสองรอบ
         if (job.RemoteStart is RemotePending or RemoteSending)
             return false;
 
@@ -1294,19 +859,11 @@ public partial class OrderListUserControl : UserControl
         return !MarkingMethodService.Resolve(method).NoCase;
     }
 
-    /// <summary>
-    /// เริ่มงาน: ส่งเข้าสถานีแรกตาม marking method แล้วเปลี่ยนสถานะเป็น Working
-    /// <para>
-    /// หนึ่งสถานีรับงานได้ทีละงาน ตรงกับความจริงหน้างานที่ชิ้นงานอยู่ที่เครื่อง
-    /// ได้ทีละชิ้น ถ้าสถานีแรกไม่ว่างจะไม่ยอมให้เริ่ม
-    /// </para>
-    /// </summary>
-    private async Task StartJobAsync(int jobId)
+    private async Task StartJobAsync(int jobId) // ตรวจงาน จองคิว แล้วเริ่มส่งตาม Station
     {
         if (_api == null || _sending) return;
 
-        // อ่านสดก่อนตัดสินใจ — ตารางอาจค้างได้ถึง 5 วิตามรอบ poll
-        var resolved = await LoadJobAsync(jobId, $"กำลังโหลดข้อมูล · {JobName(jobId)}");
+        var resolved = await LoadJobAsync(jobId, $"กำลังโหลดข้อมูล · {JobName(jobId)}"); // อ่านรายละเอียด Job ล่าสุดก่อนเริ่ม
         if (IsDisposed) return;
         if (resolved == null)
         {
@@ -1314,8 +871,8 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        var method = resolved.PlanRouting?.MarkingMethod;
-        int station = StationService.Current;
+        var method = resolved.PlanRouting?.MarkingMethod; // อ่านรหัสวิธีพิมพ์ของงาน
+        int station = StationService.Current; // อ่าน Station ของจอนี้
 
         if (!MarkingMethodService.CanStartAt(station, method)) // ตรวจว่างานรหัสนี้เริ่มที่ Station ปัจจุบันได้หรือไม่
         {
@@ -1327,64 +884,34 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        var plan = MarkingMethodService.Resolve(method);
-        if (plan.NoCase)
+        var plan = MarkingMethodService.Resolve(method); // แปลงรหัสเป็นเครื่องและลำดับพิมพ์
+        if (plan.NoCase) // รหัสนี้ยังไม่มีแผนที่รองรับ
         {
             Notify.WarnModal(this, "แจ้งเตือน",
                 $"{JobName(jobId)} ใช้รหัส marking ที่ไม่มีอยู่จริง ({Method(method)})");
             return;
         }
 
-        // marking 00 ไม่มีคำสั่งต้องส่งเข้าเครื่องเลย — เป็นงานที่ทำด้วยมือล้วน
-        // การกดเริ่มจึงแค่เปลี่ยนสถานะให้คนอื่นเห็นว่ามีคนรับไปทำแล้ว
         if (plan.Steps.Count == 0) // ไม่มีขั้นส่งเครื่อง เช่น marking 00
         {
             await StartWithoutSendingAsync(jobId, method); // เปลี่ยนเป็นกำลังผลิตอย่างเดียวสำหรับงานไม่มีขั้นส่ง
             return;
         }
 
-        // เลือกโปรแกรม UV ให้เสร็จตรงนี้ ก่อนจะสรุปให้ดูและก่อนจองคิว
-        //
-        // กล่องเลือกรุ่นย่อยกับกล่องยืนยัน default ต้องเด้งที่จอของคนที่กดเริ่ม
-        // ไม่ใช่ไปเด้งตอนส่งจริงซึ่งเกิดที่ ST1 เสมอ
         var uvPicks = PickUvPrograms(plan, resolved); // เลือกโปรแกรม UV ที่จอคนกด ก่อนจองคิว
-        if (uvPicks == null || IsDisposed) return;
+        if (uvPicks == null || IsDisposed) return; // ยกเลิกเลือกโปรแกรมแล้วไม่จองคิว
 
-        // สรุปให้ดูก่อนว่าจะส่งอะไรเข้าเครื่องไหนบ้าง แล้วค่อยลงมือ
-        //
-        // ถามก่อนจอง ไม่ใช่หลังจอง — กดยกเลิกแล้วต้องไม่มีอะไรค้างอยู่ในคิวเลย
         if (!await ConfirmStartAsync(jobId, resolved, plan, uvPicks)) return; // ให้ตรวจชื่อโปรแกรมและคิวก่อนเริ่มจริง
         if (IsDisposed) return;
 
-        // ต่อให้ครบทุกเครื่องก่อน ถึงจะจองคิวและเริ่มส่ง
-        //
-        // งานที่ใช้หลายเครื่องต้องต่อได้ครบถึงจะเริ่มได้ ถ้าเริ่มทั้งที่เครื่องหลังต่อไม่ติด
-        // เครื่องหน้าจะรับงานไปพ่นลงชิ้นงานจริงแล้ว ย้อนคืนไม่ได้ และงานจะค้างครึ่งทาง
-        // คือกดเริ่มใหม่ก็ไม่ได้เพราะสถานะเป็นกำลังผลิตไปแล้ว
-        //
-        // ตรวจหลังกล่องยืนยัน ไม่ใช่ก่อน เพราะการไล่ต่อทุกเครื่องกินเวลาหลายวินาที
-        // ไม่ควรให้คนที่แค่เปิดดูแล้วกดยกเลิกต้องรอ
-        //
-        // ข้ามที่ ST3 เพราะ ST3 ไม่ได้เป็นคนส่ง มันแค่จองคิวไว้ให้ ST1 หยิบไปส่ง
-        // เครื่องต่อสายอยู่กับ PC ของ ST1 ที่เดียว และพาธของ CPI.db3 ที่ตรวจด้วยก็
-        // เป็นของ ST1 การตรวจที่ ST3 จึงตอบว่าต่อไม่ได้เสมอ ทั้งที่ ST1 ต่อได้อยู่
-        //
-        // ไม่เสียอะไรด้วย เพราะงานที่ ST3 กดเริ่มได้มีแต่รหัส 10 ซึ่งใช้เครื่องเดียว
-        // (UV2) ไม่มีเคสเริ่มไปได้ครึ่งทางแบบงานหลายเครื่องที่ด่านนี้มีไว้กัน และถ้า
-        // ST1 ส่งไม่ผ่านจริง มันรายงานกลับมาที่จอ ST3 ให้อยู่แล้ว
         if (!StationService.IsSt3 && await BlockedByUnreachableAsync(jobId, plan, resolved)) return; // ST1 ต้องต่อเครื่องที่ใช้ให้ครบ ส่วน ST3 ฝากให้ ST1 ส่ง
         if (IsDisposed) return;
 
-        // จองทุกเครื่องที่แผนของงานนี้ต้องใช้ ในคราวเดียว
-        //
-        // จองก่อนส่งเสมอ เพราะการจองคือสิ่งที่บอกว่างานนี้มีสิทธิ์ในเครื่องไหนบ้าง
-        // เครื่องที่ว่างจะถูกส่งต่อทันทีข้างล่าง ส่วนเครื่องที่ไม่ว่างก็รออยู่ในคิว
-        // จนกว่าคนหน้างานจะกดปุ่มปล่อยเครื่อง
         var (queued, queueError) = await _api.EnqueueMachinesAsync( // จองคิวของ Job พร้อมชื่อโปรแกรมที่เลือก
             jobId, QueueItemsFor(plan.Steps, uvPicks)); // แยกเลขรอบเมื่อแผนใช้เครื่องเดิมซ้ำ
         if (IsDisposed) return;
 
-        if (!queued)
+        if (!queued) // จองคิวไม่ผ่าน จึงยังไม่ส่งเครื่อง
         {
             Notify.ErrorModal(this, "จองเครื่องไม่สำเร็จ",
                 $"{JobName(jobId)} ยังไม่ได้เข้าคิว" + Environment.NewLine + Environment.NewLine
@@ -1392,7 +919,6 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        // ST3 ขอสิทธิ์ให้หัวคิวเป็น active ก่อน ST1 จึงจะหยิบไปส่งในรอบ poll
         if (station == StationService.St3) // ST3 ขอสิทธิ์คิวแล้วให้ ST1 เป็นผู้ส่งเครื่อง
         {
             var errors = await ClaimRemoteQueueAsync(jobId, plan.Steps); // ST3 ขอให้หัวคิวเป็น active เพื่อให้ ST1 รับไปส่ง
@@ -1409,8 +935,7 @@ public partial class OrderListUserControl : UserControl
         await SendQueuedForJobAsync(jobId, resolved, $"เริ่มงาน {JobName(jobId)}"); // ST1 ขอสิทธิ์เครื่องแล้วส่งข้อมูลของ Job ที่กด
     }
 
-    // ขอสิทธิ์อย่างเดียว ไม่ส่งเครื่องจาก ST3 และไม่ปล่อยงานที่กำลังถือเครื่องอยู่
-    private async Task<List<string>> ClaimRemoteQueueAsync(int jobId, List<string> steps)
+    private async Task<List<string>> ClaimRemoteQueueAsync(int jobId, List<string> steps) // ST3 ขอสิทธิ์คิวไว้ให้ ST1 รับไปส่ง
     {
         var errors = new List<string>();
         foreach (var machine in steps.Distinct(StringComparer.OrdinalIgnoreCase)) // ขอเครื่องละหนึ่งครั้ง แม้แผนมีหลายรอบ
@@ -1419,26 +944,13 @@ public partial class OrderListUserControl : UserControl
             if (IsDisposed) break;
             if (error != null || claim == null)
                 errors.Add($"{machine}: {error ?? "ไม่ได้รับผลการขอคิว"}");
-            // busy/queued คือรอตามลำดับ ไม่ใช่ส่งล้มเหลว
             else if (claim.Claimed == null && claim.Reason is not ("busy" or "queued")) // เครื่องติดงานหรือมีคนจองก่อนถือว่ารอคิวตามปกติ
                 errors.Add($"{machine}: ไม่พบคิวที่พร้อมเริ่ม");
         }
         return errors;
     }
 
-    /// <summary>
-    /// สรุปสิ่งที่จะถูกส่งเข้าเครื่อง แล้วรอคนยืนยัน — false = กดยกเลิก ไม่ต้องทำต่อ
-    ///
-    /// <para>
-    /// บอกด้วยว่าเครื่องไหนว่างและเครื่องไหนต้องเข้าคิวรอ เพราะกดเริ่มงานหนึ่งครั้ง
-    /// อาจได้ผลต่างกันในแต่ละเครื่อง คนกดจะได้รู้ตั้งแต่ก่อนกดว่าอะไรจะเข้าเดี๋ยวนี้
-    /// และอะไรต้องรอคนกดปุ่มหน้างานก่อน
-    /// </para>
-    /// <para>
-    /// อ่านคิวก่อนจอง แถวที่เห็นตอนนี้จึงเป็นของงานใบอื่นล้วน ๆ ไม่ใช่ของใบที่กำลังกด
-    /// </para>
-    /// </summary>
-    private async Task<bool> ConfirmStartAsync(
+    private async Task<bool> ConfirmStartAsync( // ให้ตรวจแผนและคิวก่อนยืนยันเริ่มงาน
         int jobId, ResolvedJobResponse resolved, MarkingPlan plan,
         Dictionary<string, string> uvPicks)
     {
@@ -1449,7 +961,6 @@ public partial class OrderListUserControl : UserControl
             BuildStartPreview(jobId, resolved, plan, rows, uvPicks));
     }
 
-    /// <summary>ข้อความสรุปที่โชว์ในกล่องยืนยัน — แยกไว้ให้ทดสอบข้อความได้โดยไม่ต้องเปิดกล่อง</summary>
     private string BuildStartPreview(
         int jobId, ResolvedJobResponse resolved, MarkingPlan plan, List<MachineQueueRow> rows,
         Dictionary<string, string> uvPicks)
@@ -1479,7 +990,6 @@ public partial class OrderListUserControl : UserControl
         return string.Join(Environment.NewLine, body).TrimEnd();
     }
 
-    /// <summary>ข้อมูลที่จะถูกส่งเข้าเครื่องของขั้นตอนหนึ่ง เขียนให้อ่านจากที่ไกล ๆ ได้</summary>
     private static List<string> StepPreviewLines(
         string step, ResolvedJobResponse resolved, Dictionary<string, string> uvPicks)
     {
@@ -1493,7 +1003,6 @@ public partial class OrderListUserControl : UserControl
                 var config = resolved.Pattern?.InkjetConfigs
                     .FirstOrDefault(c => c.Ordinal == ordinal);
 
-                // เกณฑ์เดียวกับตอนส่งจริง หัวที่งานนี้ไม่ได้ใช้จะถูกสั่งหยุด ไม่ใช่ส่งงานเปล่า
                 bool used = config != null
                     && (config.ProgramNumber is > 0 || !string.IsNullOrWhiteSpace(config.ProgramName));
 
@@ -1521,10 +1030,6 @@ public partial class OrderListUserControl : UserControl
         lines.Add($"{uvName}: โปรแกรม {OrDash(uv.ProgramName)}");
         lines.Add($"Lot: {OrDash(uv.Lot)}      Name: {OrDash(uv.ErpMfg)}");
 
-        // บอกชื่อไฟล์ที่จะโหลดเข้าเครื่องจริง ซึ่งเลือกไปแล้วก่อนมาถึงกล่องนี้
-        //
-        // ขั้นที่ยังไม่รู้ต้องบอกสาเหตุให้ตรง ไม่ใช่บอกแค่ว่าจะถามทีหลัง — คนที่ ST3
-        // จะได้รู้ว่าต้องไปตั้งโฟลเดอร์ที่เครื่องตัวเอง ไม่ใช่รอให้กล่องเด้งเอง
         if (uvPicks.TryGetValue(step, out var chosen))
             lines.Add($"จะโหลดไฟล์ {chosen}.uvdx เข้าเครื่อง");
         else if (UvSettingsManager.GetDocumentFolder(uvNumber) == null)
@@ -1535,32 +1040,12 @@ public partial class OrderListUserControl : UserControl
         return lines;
     }
 
-    /// <summary>UV1 หรือ UV2 คืนเลขเครื่อง · ขั้นอื่น (MK) คืน null</summary>
     private static int? UvNumberOf(string step) =>
         string.Equals(step, "UV1", StringComparison.OrdinalIgnoreCase) ? 1
         : string.Equals(step, "UV2", StringComparison.OrdinalIgnoreCase) ? 2
         : null;
 
-    /// <summary>
-    /// เลือกโปรแกรม UV ของทุกขั้นในแผนตั้งแต่ตอนกดเริ่มงาน — null = คนกดยกเลิก
-    ///
-    /// <para>
-    /// เดิมกล่องเลือกรุ่นย่อยกับกล่องยืนยันโปรแกรม default จะเด้งตอนส่งเข้าเครื่องจริง
-    /// ซึ่งเกิดที่จอ ST1 เสมอ เพราะสายของเครื่องต่ออยู่ที่นั่นที่เดียว งานที่ ST3 กดเริ่ม
-    /// จึงไปค้างรอคนตอบที่จอซึ่งคนกดไม่ได้ยืนอยู่ และงานที่เข้าคิวรอปุ่มกดหน้างาน
-    /// ก็เด้งขึ้นตอนที่ไม่มีใครเฝ้า
-    /// </para>
-    /// <para>
-    /// เลือกตรงนี้ทีเดียวจบทุกเครื่องที่แผนต้องใช้ แล้วฝากชื่อที่เลือกไว้กับแถวคิว
-    /// ตอนส่งจริงจึงไม่ต้องถามอะไรอีก ไม่ว่าจะส่งทันทีหรือส่งทีหลังหลังกดปุ่มหน้างาน
-    /// </para>
-    /// <para>
-    /// ขั้นที่หาโฟลเดอร์ document ของเครื่องไม่เจอจะไม่ถูกเลือกไว้ตรงนี้ เพราะไม่รู้ว่า
-    /// โปรแกรมนั้นมีรุ่นย่อยกี่รุ่น การเดาแล้วฝากชื่อดิบให้ ST1 ส่งเลยอันตรายกว่า
-    /// การปล่อยให้ ST1 ถามเองเหมือนเดิม กล่องสรุปจะบอกไว้ว่าขั้นไหนเข้าข่ายนี้
-    /// </para>
-    /// </summary>
-    private Dictionary<string, string>? PickUvPrograms(MarkingPlan plan, ResolvedJobResponse resolved)
+    private Dictionary<string, string>? PickUvPrograms(MarkingPlan plan, ResolvedJobResponse resolved) // เลือกโปรแกรม UV ก่อนส่งชื่อไปกับคิว
     {
         var picks = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase); // เก็บโปรแกรมที่เลือกแยก UV1 กับ UV2
 
@@ -1571,8 +1056,6 @@ public partial class OrderListUserControl : UserControl
             var uvRow = resolved.UvJobData?.FirstOrDefault(r => // หาแถว UV ของเครื่องที่จะส่ง
                 string.Equals(r.Machine, step, StringComparison.OrdinalIgnoreCase));
 
-            // ไม่มีชื่อโปรแกรมมาให้ = ไม่มีอะไรให้เลือก ปล่อยไปตามทางเดิม
-            // ตอนส่งจริงเป็นคนบอกเองว่าข้อมูลของเครื่องนี้ไม่ครบ
             if (string.IsNullOrWhiteSpace(uvRow?.ProgramName)) continue; // ไม่มีชื่อโปรแกรมให้เลือก จะตรวจความพร้อมอีกทีตอนส่ง
 
             var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber);
@@ -1594,24 +1077,16 @@ public partial class OrderListUserControl : UserControl
         return picks;
     }
 
-    /// <summary>ช่องว่างให้ขึ้นขีดแทน จะได้ไม่เห็นเป็นบรรทัดแหว่ง</summary>
     private static string OrDash(string? text) =>
         string.IsNullOrWhiteSpace(text) ? Dash : text.Trim();
 
-    /// <summary>หัวพ่นของ MK ทั้งสองตัว — คีย์ชื่อ ชื่อสำรอง และลำดับใน pattern</summary>
     private static readonly (string NameKey, string Fallback, int Ordinal)[] MkHeads =
     [
         ("MK058_NAME", "MK-058", 1),
         ("MK059_NAME", "MK-059", 2),
     ];
 
-    /// <summary>
-    /// แปลงลำดับขั้นของแผนเป็นรายการจองเครื่อง
-    ///
-    /// เครื่องเดียวกันที่โผล่ซ้ำในแผนได้รอบเพิ่มขึ้นทีละหนึ่ง — marking 22 เข้า MK
-    /// สองรอบ จึงได้ MK รอบ 1 กับ MK รอบ 2 ซึ่งเป็นคนละคิวกัน
-    /// </summary>
-    private static List<MachineQueueItem> QueueItemsFor(
+    private static List<MachineQueueItem> QueueItemsFor( // สร้างคิวเครื่องและแยกรอบของงาน
         List<string> steps, Dictionary<string, string> uvPicks)
     {
         var rounds = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase); // นับเลขรอบแยกตามเครื่อง
@@ -1625,8 +1100,6 @@ public partial class OrderListUserControl : UserControl
                 Machine = step,
                 Round = rounds[step],
 
-                // ชื่อที่คนเลือกไว้ตอนกดเริ่ม — ตอนส่งจริงจะถูกส่งเป็น forcedProgram
-                // ซึ่งข้ามทั้งกล่องเลือกรุ่นย่อยและกล่องยืนยัน default ไปเลย
                 ProgramName = uvPicks.GetValueOrDefault(step), // ตอนส่งจริงใช้ชื่อนี้โดยไม่ถามเลือกซ้ำ
             });
         }
@@ -1634,19 +1107,7 @@ public partial class OrderListUserControl : UserControl
         return items;
     }
 
-    /// <summary>
-    /// ไล่ส่งงานนี้เข้าเครื่องที่ว่างอยู่ทุกเครื่อง เครื่องที่ไม่ว่างปล่อยไว้ในคิว
-    ///
-    /// <para>
-    /// หยิบทีละเครื่องด้วย claim ซึ่ง backend เป็นคนตัดสินว่าว่างไหมและใครได้ไปก่อน
-    /// ฝั่งนี้ไม่เดาเอง เพราะ ST1 กับ ST3 กดพร้อมกันได้
-    /// </para>
-    /// <para>
-    /// เครื่องไหนส่งไม่ผ่าน คืนแถวกลับเป็นรอคิวแล้วบอกคนที่กด — ไม่มีการลองใหม่เอง
-    /// เบื้องหลัง คนหน้างานเป็นคนตัดสินว่าจะกดส่งซ้ำไหม
-    /// </para>
-    /// </summary>
-    private async Task SendQueuedForJobAsync(int jobId, ResolvedJobResponse resolved, string title)
+    private async Task SendQueuedForJobAsync(int jobId, ResolvedJobResponse resolved, string title) // ขอเครื่องที่ว่างแล้วรวมเป็นชุดส่ง
     {
         if (_sending) return;
         _sendOperations++;
@@ -1668,7 +1129,6 @@ public partial class OrderListUserControl : UserControl
                 if (IsDisposed) return;
                 if (claimError != null) // ขอสิทธิ์เครื่องแล้ว Backend แจ้งข้อผิดพลาด
                 {
-                    // คำตอบหายอาจจองสำเร็จแล้ว ห้ามล้างคิวจากการคาดเดา
                     anyQueued = true;
                     lines.Add(Notify.Bad($"{machine}: {claimError}")); // เก็บเหตุที่ขอใช้เครื่องนี้ไม่ได้
                 }
@@ -1704,7 +1164,6 @@ public partial class OrderListUserControl : UserControl
 
     private void ReleaseDispatch(string machine, Guid token)
     {
-        // รอบเก่าจบทีหลัง ต้องไม่ไปปลดสิทธิ์ของรอบใหม่ที่เครื่องเดียวกัน
         if (_dispatchingMachines.TryGetValue(machine, out var current) && current == token) // รอบเก่าปลดสิทธิ์ได้เฉพาะ token ของตัวเอง
         {
             _dispatchingMachines.Remove(machine); // เปิดทางให้เครื่องนี้รับรอบส่งใหม่
@@ -1715,7 +1174,7 @@ public partial class OrderListUserControl : UserControl
 
     private sealed record PreparedQueueSend(MachineQueueRow Row, ResolvedJobResponse Job);
 
-    private async Task<StepSendResult[]> SendPreparedBatchAsync(List<PreparedQueueSend> items, bool includeJobNames = false, bool machinesReserved = false)
+    private async Task<StepSendResult[]> SendPreparedBatchAsync(List<PreparedQueueSend> items, bool includeJobNames = false, bool machinesReserved = false) // เตรียมโปรแกรมแล้วส่งเครื่องที่พร้อมพร้อมกัน
     {
         if (_preparingPrograms) return [new(false, [], HeldForReview: true)];
         var owned = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
@@ -1731,14 +1190,12 @@ public partial class OrderListUserControl : UserControl
             var ready = new List<PreparedQueueSend>();
             var results = new List<StepSendResult>();
             if (selected.Count != items.Count) results.Add(new(false, [], HeldForReview: true)); // บางคิวไม่ได้สิทธิ์ จึงห้ามตีความว่างานไม่มีคิวค้าง
-            // เลือกโปรแกรมให้ครบก่อนเริ่มคุยกับเครื่อง ไม่เปิดกล่องคั่นระหว่างส่ง
             foreach (var item in selected)
             {
                 var row = item.Row;
                 if (IsDisposed) break;
                 if (UvNumberOf(row.Machine) is int uvNumber && string.IsNullOrWhiteSpace(row.ProgramName)) // คิว UV ที่ยังไม่เลือกโปรแกรมต้องเตรียมให้เสร็จก่อน
                 {
-                    // โปรแกรมยังไม่พร้อม ให้รอก่อน ไม่เปิดกล่องคั่นระหว่างส่งเครื่องอื่น
                     if (MachineBusy.Active) { results.Add(new(false, [], HeldForReview: true)); continue; } // ยังมีเครื่องส่งอยู่ อย่าเปิดกล่องเลือกโปรแกรมแทรก
                     _preparingPrograms = true; // กันชุดอื่นเริ่มส่งระหว่างคนเลือกโปรแกรม
                     try
@@ -1798,19 +1255,10 @@ public partial class OrderListUserControl : UserControl
         }
     }
 
-    /// <summary>
-    /// ผลการส่งหนึ่งขั้น — <paramref name="Sent"/> คือ "ข้อมูลเข้าเครื่องแล้วจริงไหม"
-    ///
-    /// <para>
-    /// ต้องแยกจากระดับของบรรทัดที่รายงาน เพราะการส่งที่สำเร็จมีคำเตือนติดมาได้
-    /// เช่นหัวพ่นอีกตัวที่งานนี้ไม่ได้ใช้และปิดอยู่ จะสั่งหยุดไม่ได้และขึ้นเป็นคำเตือน
-    /// ทั้งที่หัวที่ต้องทำงานรับข้อมูลครบและกำลังพิมพ์อยู่
-    /// </para>
-    /// </summary>
     private sealed record StepSendResult(bool Sent, List<Notify.ResultLine> Lines,
         bool SafeToRetry = false, object? Detail = null, bool HeldForReview = false);
 
-    private async Task<StepSendResult> SendQueueStepAsync(MachineQueueRow row, ResolvedJobResponse resolved)
+    private async Task<StepSendResult> SendQueueStepAsync(MachineQueueRow row, ResolvedJobResponse resolved) // จดรอบส่ง ส่งเครื่อง แล้วบันทึกผล
     {
         using var lease = MachineBusy.TryHoldExclusive(row.Machine); // กันทางส่งอื่นในโปรแกรมเข้าเครื่องเดียวกันซ้อน
         if (lease == null)
@@ -1841,7 +1289,6 @@ public partial class OrderListUserControl : UserControl
         if (error.Length > 4000) error = error[..4000];
         SetMachineStatus(row, "กำลังบันทึกผล", AntdUI.TTypeMini.Primary);
         var recorded = await _api.FinishQueueSendAsync(row.Id, token, outcome, result.Detail, error); // บันทึกผลคิวกับประวัติส่งในคำขอเดียว
-        // ลองบันทึกผลซ้ำได้ แต่ห้ามเรียกส่งเครื่องซ้ำ
         if (!recorded.ok)
             recorded = await _api.FinishQueueSendAsync(row.Id, token, outcome, result.Detail, error); // ลองบันทึกซ้ำด้วย token เดิม ไม่ยิงเครื่องซ้ำ
 
@@ -1854,32 +1301,16 @@ public partial class OrderListUserControl : UserControl
         return result with { HeldForReview = held };
     }
 
-    private async Task<StepSendResult> SendStepAsync(
+    private async Task<StepSendResult> SendStepAsync( // เลือกส่ง MK หรือ UV ตามขั้นของงาน
         int jobId, string step, ResolvedJobResponse resolved,
         string? forcedProgram = null)
     {
         if (step == "MK")
         {
-            // ตั้งค่าที่ PLC ตรงนี้ ไม่ใช่ตอนกดเริ่มงาน
-            //
-            // ตำแหน่งหัวพ่นกับความเร็วสายพานต้องพร้อมตอนชิ้นงานวิ่งผ่าน เครื่องที่ยัง
-            // ไม่ว่างและได้แค่เข้าคิว ชิ้นงานยังไม่ไปไหน การเขียนค่าลง PLC ตั้งแต่ตอน
-            // กดจึงเร็วเกินไป และไปทับค่าของงานที่เครื่องกำลังทำอยู่ด้วย
-            //
-            // อยู่ตรงนี้จึงได้ทุกทางเข้าเครื่อง ทั้งกดเริ่มงานตอนเครื่องว่าง กดปุ่มหน้างาน
-            // ให้คิวเดินต่อ และคำขอจาก ST3
-            //
-            // ส่ง PLC กับ MK ไปพร้อมกัน ไม่ต้องรอ PLC เสร็จก่อน
-            //
-            // สองเครื่องนี้คนละสาย ไม่ได้รอผลของกันและกัน — PLC ส่งไม่ผ่านก็ไม่หยุด MK
-            // อยู่แล้ว (ดู SendJobPlcAsync) เดิมทำทีละอย่าง เวลาจึงบวกกัน ซึ่งเป็นส่วน
-            // หนึ่งที่ทำให้หน้างานกดส่ง MK แล้วต้องรอ 3-4 วินาที
             var plcLines = new List<Notify.ResultLine>();
             var plcTask = SendJobPlcAsync(resolved, plcLines); // เริ่มเขียนตำแหน่งหัวและสายพานไปพร้อมการส่ง MK
             var mk = await JobSendService.SendMkAsync(resolved.Pattern); // ส่ง Pattern ไปยังหัว MK ที่ตั้งค่าไว้
 
-            // PLC พังต้องไม่ทำให้ผลของ MK หาย — ตอนนี้ MK อาจรับงานเข้าเครื่องไปแล้ว
-            // ถ้าปล่อยให้ exception หลุดออกไป งานจะถูกบันทึกว่าไม่ได้ส่งทั้งที่ส่งไปแล้ว
             try { await plcTask; } // รอผล PLC มารวม โดยไม่ส่ง MK ซ้ำ
             catch (Exception ex) { plcLines.Add(Notify.Careful($"PLC — {ex.Message}")); }
 
@@ -1888,7 +1319,6 @@ public partial class OrderListUserControl : UserControl
             if (mkLines.Count == 0)
                 mkLines.Add(Notify.Careful("ไม่มีเครื่อง MK ที่ตั้งค่า IP ไว้"));
 
-            // เรียงผลเหมือนเดิม — PLC ก่อน แล้วค่อย MK
             var lines = new List<Notify.ResultLine>(plcLines); // เรียงผล PLC ก่อนผลหัว MK ให้คนอ่านตามได้
             lines.AddRange(mkLines);
 
@@ -1920,7 +1350,6 @@ public partial class OrderListUserControl : UserControl
 
         return new StepSendResult(false, uv.Status switch
         {
-            // ยกเลิกที่กล่องเลือกรุ่นย่อย ไม่ใช่ความผิดพลาด ไม่ต้องขึ้นกล่องสรุป
             SendStatus.Cancelled => [], // ผู้ใช้ยกเลิกเลือกโปรแกรม จึงไม่ต้องเด้งข้อความผิดพลาด
             SendStatus.Unreachable => // ต่อ UV ไม่ได้ ให้รายงานปลายทางที่ติดต่อ
                 [Notify.Bad($"{uv.MachineName} — เชื่อมต่อไม่ได้ ({uv.Ip}:{uv.Port})")],
@@ -1928,12 +1357,6 @@ public partial class OrderListUserControl : UserControl
         }, SafeToRetry: uv.Status is SendStatus.Cancelled or SendStatus.Unreachable or SendStatus.NotConfigured);
     }
 
-    // ── งานที่ไม่ต้องส่งคำสั่ง (marking 00) ─────────────────
-
-    /// <summary>
-    /// เริ่มงานที่ไม่มีขั้นตอนต้องส่งเข้าเครื่อง — เปลี่ยนสถานะอย่างเดียว
-    /// ไม่แตะทั้ง Inkjet และ UV เพราะงานแบบนี้ทำด้วยมือทั้งหมด
-    /// </summary>
     private async Task StartWithoutSendingAsync(int jobId, string? markingMethod)
     {
         if (!Confirm.Ask(this, "ยืนยันเริ่มงาน", // ยืนยันเริ่มงานที่ไม่มีขั้นส่งเครื่อง
@@ -1951,22 +1374,7 @@ public partial class OrderListUserControl : UserControl
         await RefreshDataAsync(force: true);
     }
 
-    // ── ST3 ฝากงานให้ ST1 ส่ง ───────────────────────────────
-
-    /// <summary>
-    /// ST3 กดเริ่มงาน: เลือกโปรแกรม UV ให้เสร็จตรงนี้ แล้วฝากคำขอไว้ที่ backend
-    /// ให้ ST1 เป็นคนส่งเข้าเครื่อง (สาย MK/UV ต่ออยู่กับ PC ของ ST1 ที่เดียว)
-    /// <para>
-    /// ที่ต้องเลือกโปรแกรมตรงนี้ เพราะถ้าปล่อยให้ ST1 เลือก หน้าต่างเลือกรุ่นย่อย
-    /// จะไปเด้งค้างที่จอ ST1 ซึ่งไม่มีคนเฝ้าอยู่ งานก็จะค้างไปเรื่อย ๆ
-    /// </para>
-    /// </summary>
-    /// <param name="askFirst">
-    /// false = มาจากปุ่มกดหน้างาน ข้ามกล่องยืนยัน เพราะคนกดยืนอยู่หน้าเครื่องแล้ว
-    /// กล่องเลือกโปรแกรม UV กับกล่องยืนยันการใช้ default ยังเด้งอยู่ทั้งคู่
-    /// นั่นคือการเลือก ไม่ใช่การยืนยัน และเลือกผิดหมายถึงพิมพ์ผิดแบบลงชิ้นงานจริง
-    /// </param>
-    private async Task RequestRemoteStartAsync(
+    private async Task RequestRemoteStartAsync( // ฝากขั้นและโปรแกรมให้ ST1 ส่งผ่านคิว
         int jobId, string step, ResolvedJobResponse resolved, bool askFirst = true)
     {
         int machineStation = JobStationService.StationOf(step) ?? 0;
@@ -1999,11 +1407,6 @@ public partial class OrderListUserControl : UserControl
                 + "ยืนยันหรือไม่?"))
             return;
 
-        // ไม่ตั้งสถานะเป็น Working ตรงนี้โดยตั้งใจ — Working แปลว่า "ส่งเข้าเครื่องแล้ว"
-        // แต่ตอนนี้ยังไม่มีใครแตะเครื่องเลย ยังไม่รู้ด้วยซ้ำว่า ST1 ต่อ UV ได้ไหม
-        //
-        // งานคงเป็น Waiting ไว้จนกว่า ST1 จะต่อเครื่องติดและส่งสำเร็จจริง
-        // Backend ตั้ง Process ตอนบันทึกเริ่มส่ง และถอนคืนเฉพาะกรณีที่ยังไม่ได้ส่งจริง
         var (ok, err) = await _api!.SetRemoteStartAsync(
             jobId, requested: true, pick.Program, step: step); // ฝากทั้ง Job, โปรแกรม และขั้น UV ที่ต้องการให้ ST1 ส่ง
         if (IsDisposed) return;
@@ -2016,11 +1419,6 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        // รอผลจริงตรงนี้ ไม่ปล่อยให้ไปโผล่ทีหลังเบื้องหลัง — คนที่กดยืนอยู่หน้าจอนี้
-        // ต้องได้คำตอบจากการกดของตัวเอง เหมือนกดที่ ST1 ทุกประการ
-        //
-        // ระหว่างรอ ตั้ง _sending ไว้ให้รอบ poll หยุด จะได้ไม่มีกล่องจากเบื้องหลัง
-        // มาเด้งซ้อนเรื่องเดียวกัน
         _sendOperations++;
         ShowSending($"กำลังส่งไปที่ ST1 · {JobName(jobId)}"); // บอกผู้ใช้ว่ากำลังรอให้ ST1 ส่ง
         try
@@ -2037,32 +1435,14 @@ public partial class OrderListUserControl : UserControl
         if (!IsDisposed) await RefreshDataAsync(force: true);
     }
 
-    /// <summary>อัปเดตป้ายรายเครื่อง โดยไม่บังตารางหรือปิดการใช้งานทั้งหน้า</summary>
     private void ShowSending(string? text)
     {
-        // แสดงในคอลัมน์รายเครื่องแทน ไม่บังหรือปิดตารางทั้งหน้า
         UpdateMachineStatusCells();
     }
 
-    /// <summary>
-    /// นานสุดที่ ST3 ยอมรอผลจาก ST1 — ST1 หยิบคำขอทุกรอบ poll (5 วิ) บวกเวลาที่
-    /// เครื่อง UV ใช้หยุด เขียน CPI โหลดโปรแกรม แล้วสั่งพิมพ์อีกหลายวินาที
-    /// </summary>
     private static readonly TimeSpan RemoteOutcomeWait = TimeSpan.FromSeconds(40);
 
-    /// <summary>
-    /// รอจน ST1 ส่งเสร็จ แล้วแสดงผลแบบเดียวกับที่ ST1 แสดงให้คนที่ยืนตรงนั้นเห็น
-    ///
-    /// <para>
-    /// ST3 ต่อสายไปหา UV ไม่ถึงก็จริง แต่ไม่จำเป็นต้องต่อ — ผลที่ ST1 วัดได้ถูกฝากไว้ที่
-    /// backend อยู่แล้วทั้งสองทาง: สำเร็จเห็นเป็นแถวใน print_job_commands · ไม่สำเร็จ
-    /// เห็นเป็นข้อความใน remote_error หน้าที่ตรงนี้คือเฝ้าช่องนั้นจนกว่าจะมีคำตอบ
-    /// </para>
-    /// <para>
-    /// ล้าง remote_error ก่อนแสดงเสมอ เพื่อไม่ให้ตัวเฝ้าเบื้องหลังหยิบใบเดิมมาเด้งซ้ำ
-    /// </para>
-    /// </summary>
-    private async Task ShowRemoteOutcomeAsync(int jobId, string step)
+    private async Task ShowRemoteOutcomeAsync(int jobId, string step) // รอผลส่งที่ ST1 บันทึกกลับมา
     {
         var deadline = DateTime.UtcNow + RemoteOutcomeWait; // กำหนดเวลาสูงสุดที่หน้าจอจะรอผลรอบนี้
 
@@ -2094,8 +1474,6 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        // หมดเวลาแล้วยังเงียบ — ต้องแยกให้ออกว่า "ไม่มีใครหยิบไปทำเลย" กับ
-        // "ST1 หยิบไปแล้วแต่ยังส่งไม่เสร็จ" เพราะสองอย่างนี้ต้องจัดการคนละแบบ
         var final = await _api!.GetJobByIdAsync(jobId); // ครบเวลารอแล้ว อ่านสถานะอีกครั้งก่อนตัดสิน
         if (IsDisposed) return;
 
@@ -2108,9 +1486,6 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        // ไม่มีใครหยิบเลย = โปรแกรมที่ ST1 ไม่ได้เปิด หรือต่อ Backend ไม่ได้
-        // ต้องตีงานกลับเป็น Waiting ไม่งั้นค้างเป็น Working ตลอดกาลทั้งที่ยังไม่ได้พิมพ์
-        // ปิดโปรแกรมเปิดใหม่ก็ยังเห็นเป็น Working และกดเริ่มใหม่ไม่ได้
         await _api.SetRemoteStartAsync(jobId, requested: false);
         await _api.UpdateJobStatusAsync(jobId, "Waiting");
         if (IsDisposed) return;
@@ -2122,27 +1497,12 @@ public partial class OrderListUserControl : UserControl
             + "ตรวจว่าโปรแกรมที่เครื่อง ST1 เปิดอยู่และต่อ Backend ได้ แล้วกดเริ่มงานใหม่");
     }
 
-    // ── ST1 หยิบคำขอของ ST3 ไปส่ง ───────────────────────────
-
-    /// <summary>ST3 ฝากไว้ ยังไม่มีใครหยิบ — ตีกลับเป็น Waiting ได้</summary>
     private const string RemotePending = "1";
 
-    /// <summary>ST1 หยิบไปแล้วกำลังส่งเข้าเครื่อง — ห้ามแตะ งานกำลังเดินอยู่จริง</summary>
     private const string RemoteSending = "2";
 
-    /// <summary>
-    /// งานที่กำลังส่งแทน ST3 อยู่ — กันไม่ให้รอบ poll ถัดไปหยิบงานเดิมไปส่งซ้ำ
-    /// ระหว่างที่รอบนี้ยังส่งไม่เสร็จ (รอบ poll ทุก 5 วิ แต่การส่ง UV ใช้เวลานานกว่านั้นได้)
-    /// </summary>
     private readonly HashSet<int> _remoteInFlight = new();
 
-    /// <summary>
-    /// เก็บกวาดคำขอที่ค้างสถานะ "กำลังส่ง" ทั้งที่ ST1 ตัวนี้ไม่ได้ส่งอยู่
-    ///
-    /// เกิดตอนโปรแกรม ST1 ถูกปิดหรือดับกลางคันระหว่างส่ง — ธงค้างเป็น "2" ตลอดกาล
-    /// ไม่มีใครหยิบไปทำต่อ (ตัวหยิบมองเฉพาะ "1") และ ST3 ก็จะเห็นว่า "กำลังส่งอยู่"
-    /// ทั้งที่ไม่มีใครส่ง คืนงานกลับเป็นรอเริ่มเพื่อให้กดใหม่ได้
-    /// </summary>
     private async Task RecoverAbandonedRemoteStartsAsync()
     {
         if (_api == null || StationService.IsSt3) return;
@@ -2162,22 +1522,6 @@ public partial class OrderListUserControl : UserControl
         }
     }
 
-    /// <summary>
-    /// ST1 กวาดหาคำขอที่ ST3 ฝากไว้ แล้วส่งเข้าเครื่องให้ — ทำเงียบ ๆ ไม่มีหน้าต่างเด้ง
-    /// เพราะโปรแกรมที่ ST3 เลือกไว้แล้วถูกส่งมากับคำขอ
-    /// </summary>
-    /// <summary>
-    /// ST1 ไล่หยิบงานที่รออยู่ในคิวไปส่งเข้าเครื่อง — เรียกทุกรอบ poll
-    ///
-    /// <para>
-    /// เครื่องต่อสายอยู่กับ PC ของ ST1 ที่เดียว การส่งจริงจึงเกิดที่นี่เสมอ
-    /// ไม่ว่าคนที่กดเริ่มงานจะยืนอยู่สถานีไหน งานที่ ST3 จองไว้ก็มาถึงทางนี้
-    /// และงานที่รอเครื่องว่างอยู่ก็ถูกหยิบต่อทันทีที่มีคนกดปุ่มปล่อยเครื่อง
-    /// </para>
-    /// <para>
-    /// ถามทีละเครื่อง เครื่องไหนไม่ว่าง backend จะไม่ให้หยิบเอง ฝั่งนี้ไม่ต้องเดา
-    /// </para>
-    /// </summary>
     private async Task<bool> ProcessMachineQueueAsync(List<MachineQueueRow>? snapshot = null, string? machineFilter = null) // ST1 รับคิวที่ได้สิทธิ์แล้ว ทั้งงานจาก ST1 และ ST3
     {
         if (_api == null || StationService.IsSt3 || IsDisposed || _preparingPrograms) return false;
@@ -2194,7 +1538,6 @@ public partial class OrderListUserControl : UserControl
                 Notify.Warn(this, string.Join(" / ", review.Select(r => $"{r.Machine} คิว {r.Id}"))
                     + ": กำลังส่งหรือรอตรวจสอบผล ระบบจะไม่ส่งซ้ำเอง");
 
-            // ส่งเฉพาะคิวที่คนสั่งเริ่มหรือปล่อยเครื่องแล้ว ไม่หยิบ pending มาส่งเอง
             var ready = rows.Where(r => r.State == "active" && r.SentAt == null && !r.NeedsSendReview // ส่งเฉพาะ active ที่ยังไม่ส่งและไม่มีผลค้างตรวจ
                     && (machineFilter == null || string.Equals(r.Machine, machineFilter, StringComparison.OrdinalIgnoreCase))) // หลังปล่อยปุ่ม ให้รับต่อเฉพาะเครื่องที่เพิ่งว่าง
                 .OrderBy(r => r.Id)
@@ -2233,7 +1576,6 @@ public partial class OrderListUserControl : UserControl
 
     private async Task ProcessRemoteStartsAsync()
     {
-        // ST3 เป็นฝ่ายฝาก ไม่ใช่ฝ่ายส่ง · ระหว่างที่คนที่ ST1 กดส่งเองอยู่ก็ไม่แทรก
         if (_api == null || StationService.IsSt3 || _sending) return;
 
         var pending = _allJobs // เตรียม Job ที่มีคำขอจาก ST3
@@ -2261,20 +1603,11 @@ public partial class OrderListUserControl : UserControl
         }
     }
 
-    /// <summary>
-    /// ส่งคำขอหนึ่งใบ — ล้างธงทุกเส้นทางที่ออกจากเมธอดนี้ ไม่ว่าจะส่งได้หรือไม่
-    /// ธงที่ค้างคือสาเหตุเดียวที่จะทำให้รอบถัดไปส่งซ้ำ
-    /// </summary>
-    private async Task RunRemoteStartAsync(int jobId)
+    private async Task RunRemoteStartAsync(int jobId) // ST1 ตรวจคำขอจาก ST3 แล้วเข้าทางคิวปกติ
     {
         var resolved = await _api!.GetResolvedJobAsync(jobId); // อ่าน Job ล่าสุดก่อนรับคำขอจาก ST3
         if (resolved == null) return;   // อ่านไม่ได้ = คงธงไว้ให้รอบหน้าลองใหม่
 
-        // งานต้องยังไม่ถูกยกเลิกหรือจบไปแล้ว ถ้าไม่ดักตรงนี้ ธงที่ค้างจะสั่งพิมพ์
-        // งานที่ถูกยกเลิกไปแล้ว
-        //
-        // รับทั้ง Waiting และ Process — คำขอจาก ST3 มาถึงตอนงานยังเป็น Waiting
-        // เพราะ Working จะถูกตั้งก็ต่อเมื่อต่อเครื่องติดและส่งจริงแล้วเท่านั้น
         var status = resolved.Job.Status; // ตรวจสถานะจริงของ Job จาก Backend
         bool live = string.Equals(status, "Waiting", StringComparison.OrdinalIgnoreCase) // รับคำขอของงานที่ยังรอเริ่ม
                  || string.Equals(status, "Process", StringComparison.OrdinalIgnoreCase); // หรือของงานที่กำลังผลิตและมีขั้นถัดไป
@@ -2287,20 +1620,12 @@ public partial class OrderListUserControl : UserControl
 
         var plan = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod); // อ่านแผนเครื่องที่ Job นี้ใช้จริง
 
-        // ขั้นตอนที่จะส่งมาจากตัวคำขอ ไม่ใช่การเดาเอาว่าเป็นขั้นแรกเสมอ
-        //
-        // งานหนึ่งใบมีได้หลายขั้น เช่น marking 32 คือ MK แล้วต่อ UV2 ถ้าหยิบขั้นแรก
-        // ตายตัวแบบเดิม คำขอที่ ST3 ฝากไว้ว่าขอ UV2 จะกลายเป็นส่ง MK ซ้ำ
-        //
-        // คำขอที่ไม่ได้ระบุขั้นถือว่าเป็นขั้นแรก — ใบที่ค้างอยู่ตอนอัปเดตโปรแกรม
-        // จึงยังทำงานถูกเหมือนเดิม
         var requested = _allJobs.FirstOrDefault(j => j.Id == jobId)?.RemoteStep; // อ่านชื่อขั้นที่ ST3 ฝากมา
         var step = string.IsNullOrWhiteSpace(requested) // ดูว่าคำขอระบุขั้นมาหรือไม่
             ? plan.Steps.FirstOrDefault()
             : plan.Steps.FirstOrDefault(x =>
                 string.Equals(x, requested.Trim(), StringComparison.OrdinalIgnoreCase));
 
-        // ขั้นที่ขอมาไม่มีอยู่ในแผนของงานนี้ = คำขอใช้ไม่ได้ ทิ้งไปพร้อมบอกสาเหตุ
         if (step == null)
         {
             await _api.SetRemoteStartAsync(jobId, requested: false,
@@ -2310,8 +1635,6 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        // อ่านสดจาก backend แล้วเช็คว่าขั้นตอนนี้ส่งสำเร็จไปแล้วหรือยัง —
-        // ด่านสุดท้ายที่กันการส่งซ้ำ ถ้าธงค้างเพราะเหตุอื่น เช่นโปรแกรมถูกปิดกลางคัน
         if (resolved.Commands?.Any(c => c.Success &&
                 string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true)
         {
@@ -2319,18 +1642,14 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        // เครื่องปลายทางไม่ว่าง — คงธงไว้ให้รอบ poll ถัดไปลองใหม่ ไม่ต้องรบกวนใคร
         int machineStation = JobStationService.StationOf(step) ?? 0;
         if (StationOwner(machineStation, jobId) != null) return; // ยังมี Job อื่นครอง Station ให้คงคำขอไว้รอรอบหน้า
 
         var program = _allJobs.FirstOrDefault(j => j.Id == jobId)?.RemoteProgram; // ใช้ชื่อโปรแกรมที่ ST3 เลือกฝากไว้
 
-        // จองไว้ก่อนลงมือ — ตั้งแต่บรรทัดนี้ไป ST3 จะเห็นว่า "กำลังส่งอยู่" ไม่ใช่
-        // "ไม่มีใครรับ" จึงไม่ตีงานกลับเป็น Waiting ทับงานที่เครื่องกำลังรับข้อมูล
         await _api.ClaimRemoteStartAsync(jobId, program, step); // เปลี่ยนธงเป็นกำลังส่ง เพื่อให้ ST3 รู้ว่ารับแล้ว
         if (IsDisposed) return;
 
-        // ทางสำรองจาก ST3 ต้องผ่านคิวและบันทึกก่อนส่งเหมือนปุ่มเริ่มงาน
         var (queued, queueError) = await _api.EnqueueMachinesAsync(jobId,
             [new MachineQueueItem { Machine = step, Round = 1, ProgramName = program }]);
         var (claim, claimError) = queued
@@ -2344,8 +1663,6 @@ public partial class OrderListUserControl : UserControl
         else
             lines = [Notify.Bad(claimError ?? "เครื่องยังไม่ว่างหรือคิวถูกส่งแล้ว กรุณาตรวจสถานะงาน")];
 
-        // ล้มเหลวแล้วฝากสาเหตุกลับไปให้ ST3 ด้วย — คนที่กดเริ่มงานอยู่ที่นั่น
-        // ไม่ได้เห็นจอนี้ ถ้าไม่ฝากไว้เขาจะเห็นแค่งานเด้งกลับเป็น Waiting เฉย ๆ
         bool failed = lines.Any(l => l.Kind == Notify.ResultKind.Error); // ดูว่าผลส่งมีข้อความผิดพลาดหรือไม่
         var failure = failed // เตรียมเหตุที่ต้องส่งกลับให้ ST3
             ? string.Join(" · ", lines.Where(l => l.Kind == Notify.ResultKind.Error).Select(l => l.Text))
@@ -2355,25 +1672,14 @@ public partial class OrderListUserControl : UserControl
 
         if (IsDisposed || lines.Count == 0) return;
 
-        // ต้องเป็นข้อความลอย ไม่ใช่กล่องที่ต้องกดปิด — จอ ST1 ไม่มีคนเฝ้าอยู่
-        // กล่อง modal จะค้างหน้าจอและหยุดรอบ poll ไปจนกว่าจะมีคนมากด
         var text = $"{JobName(jobId)} — {lines[0].Text} (คำขอจาก ST3)"; // ระบุ Job และผลส่งว่าเป็นคำขอจาก ST3
 
         if (failed) Notify.Warn(this, text); // แจ้งเตือนแบบไม่ค้างรอคนปิดที่ ST1
         else Notify.Success(this, text);
     }
 
-    // ── ST3 รับผลกลับจาก ST1 ────────────────────────────────
-
-    /// <summary>กล่องแจ้งผลเปิดค้างอยู่ — กันไม่ให้รอบ poll ถัดไปเปิดซ้อนขึ้นมาอีกใบ</summary>
     private bool _showingRemoteError;
 
-    /// <summary>
-    /// ST3 หยิบสาเหตุที่ ST1 ส่งไม่สำเร็จมาแสดงที่จอตัวเอง แล้วล้างทิ้งทันที
-    ///
-    /// ล้างทันทีที่แสดง จึงไม่ต้องจำว่าเคยแสดงใบไหนไปแล้ว และไม่เด้งซ้ำตอนเปิดโปรแกรมใหม่
-    /// งานที่ยังไม่เคยพิมพ์อะไรเลยถูกถอนสถานะกลับเป็น Waiting ไว้แล้ว กดเริ่มใหม่ได้เลย
-    /// </summary>
     private async Task ShowRemoteErrorsAsync()
     {
         if (_api == null || !StationService.IsSt3 || _showingRemoteError) return;
@@ -2383,7 +1689,6 @@ public partial class OrderListUserControl : UserControl
 
         var message = failed.RemoteError!; // เก็บข้อความไว้ก่อนล้างค่าที่ Backend
 
-        // ล้างก่อนเปิดกล่อง — ระหว่างกล่องเปิดค้าง รอบ poll ยังเดินอยู่หลังกล่อง
         await _api.SetRemoteStartAsync(failed.Id, requested: false);
         if (IsDisposed) return;
 
@@ -2400,7 +1705,6 @@ public partial class OrderListUserControl : UserControl
         }
     }
 
-    /// <summary>งานที่จองสถานีนี้อยู่ — null = ว่าง</summary>
     private PrintJob? StationOwner(int station, int exceptJobId)
     {
         if (station == 0) return null;
@@ -2415,12 +1719,11 @@ public partial class OrderListUserControl : UserControl
         return null;
     }
 
-    private async Task CompleteJobAsync(int jobId)
+    private async Task CompleteJobAsync(int jobId) // ตรวจขั้นที่ส่งแล้วก่อนบันทึกจบงาน
     {
         if (_api == null) return;
 
-        // อ่านสดก่อนตัดสินใจ — ตารางอาจค้างได้ถึง 5 วิตามรอบ poll
-        var resolved = await LoadJobAsync(jobId, $"กำลังโหลดข้อมูล · {JobName(jobId)}");
+        var resolved = await LoadJobAsync(jobId, $"กำลังโหลดข้อมูล · {JobName(jobId)}"); // อ่านประวัติส่งล่าสุดของ Job
         if (IsDisposed) return;
         if (resolved == null)
         {
@@ -2428,7 +1731,7 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        var method = resolved.PlanRouting?.MarkingMethod;
+        var method = resolved.PlanRouting?.MarkingMethod; // ใช้รหัสพิมพ์ตรวจสิทธิ์จบงาน
         if (!MarkingMethodService.CanCompleteAt(StationService.Current, method)) // ตรวจสิทธิ์จบงานของ Station ปัจจุบัน
         {
             Notify.WarnModal(this, "จบงานที่สถานีนี้ไม่ได้",
@@ -2439,7 +1742,6 @@ public partial class OrderListUserControl : UserControl
 
         var steps = CheckSteps(method, resolved.Commands); // เทียบแผนกับประวัติส่ง รวมจำนวนรอบของเครื่องเดิม
 
-        // งานยังไม่ครบก็จบได้ ถ้าผู้ใช้ยืนยันเอง — บันทึกไว้ว่าเป็นการจบด้วยมือ
         bool manual = !steps.Complete; // ถ้าประวัติยังไม่ครบ ต้องจบแบบยืนยันด้วยมือ
         if (manual)
         {
@@ -2455,11 +1757,10 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        // เปลี่ยนสถานะและล้างคิวพร้อมกัน ฝั่ง Backend จะกันงานที่ยังไม่รู้ผลส่ง
-        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Success");
+        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Success"); // เปลี่ยนเป็น Success และล้างคิวที่ Backend
         if (ok)
         {
-            if (manual && !await _api.SaveSendStepAsync(jobId, "MANUAL_COMPLETE"))
+            if (manual && !await _api.SaveSendStepAsync(jobId, "MANUAL_COMPLETE")) // จบด้วยมือแล้วบันทึกประวัติการยืนยัน
                 Notify.Warn(this, "จบงานแล้ว แต่บันทึกประวัติการยืนยันด้วยมือไม่สำเร็จ");
             Notify.Success(this, manual
                 ? $"{JobName(jobId)} จบงานแล้ว (ยืนยันด้วยมือ)"
@@ -2472,30 +1773,14 @@ public partial class OrderListUserControl : UserControl
         }
     }
 
-    // ── ตรวจความครบของงาน ──────────────────────────────────
-
-    /// <summary>ผลตรวจว่างานส่งครบทุกขั้นตอนแล้วหรือยัง</summary>
     private readonly record struct StepStatus(bool Complete, List<string> Missing);
 
-    /// <summary>
-    /// ใช้ร่วมกันทั้งตอนระบายสีปุ่มและตอนกดจบงาน เพื่อไม่ให้สองที่ตัดสินคนละแบบ
-    ///
-    /// รหัส "22" เคยถูกดักเป็นกรณีพิเศษว่าต้องส่ง MK สำเร็จ 2 ครั้งถึงจะครบ
-    /// ตอนนี้เลิกแล้ว ส่ง MK ครั้งเดียวก็จบงานได้ เหมือนรหัสอื่นที่ใช้ MK อย่างเดียว
-    /// </summary>
     private static StepStatus CheckSteps(string? markingMethod, List<CommandResult>? commands)
     {
         var need = MarkingMethodService.MissingSteps(markingMethod, commands); // ตรวจขั้นที่ยังขาด โดยนับประวัติให้ครบจำนวนรอบ
         return new StepStatus(need.Count == 0, need);
     }
 
-    /// <summary>
-    /// พื้นหลังของแถว — งานที่กำลังเดินอยู่ (Working) ระบายเขียวอ่อนให้สะดุดตา
-    /// จากระยะไกล
-    ///
-    /// คืนเฉพาะ BackColor ไม่แตะ ForeColor เพราะถ้าใส่ ForeColor มา AntdUI จะเอา
-    /// สีนั้นทาทับทุกเซลล์ในแถว แล้วสีของคอลัมน์ Status ที่บอกสถานะด้วยสีจะหายไป
-    /// </summary>
     private static AntdUI.Table.CellStyleInfo? TblOrders_SetRowStyle(
         object sender, AntdUI.TableSetRowStyleEventArgs e)
     {
@@ -2503,26 +1788,15 @@ public partial class OrderListUserControl : UserControl
         return new AntdUI.Table.CellStyleInfo { BackColor = back };
     }
 
-    /// <summary>
-    /// กฎอยู่ที่ <see cref="MarkingMethodService"/> ที่เดียว หน้า Order Detail ใช้ตัวเดียวกัน
-    /// เดิมที่นี่ไม่รู้จักรหัส 21 ทำให้งาน 21 ถูกมองว่ายังต้องส่ง MK ทั้งที่กดส่งไม่ได้
-    /// </summary>
     private static List<string> GetRequiredSteps(string markingMethod) =>
         MarkingMethodService.Resolve(markingMethod).Steps;
 
-    /// <summary>
-    /// เปิดกล่อง Order Detail แล้วทำตามสิ่งที่คนในกล่องขอไว้ตอนปิด
-    ///
-    /// ตอนนี้มีอย่างเดียวคือปุ่มสำรอง "ขอให้ ST1 ส่ง" ซึ่งเป็นทางออกตอนปุ่มกดหน้างาน
-    /// ใช้ไม่ได้ ตัวคำขอยิงจากที่นี่ ไม่ใช่จากในกล่อง เพราะด่านตรวจทั้งหมดอยู่ที่นี่
-    /// </summary>
-    private async Task ShowDetailDialogAsync(ResolvedJobResponse resolved)
+    private async Task ShowDetailDialogAsync(ResolvedJobResponse resolved) // เปิดรายละเอียดและรับคำขอส่งจากหน้าต่าง
     {
         string? requestedStep; // เก็บขั้นที่ผู้ใช้ขอให้ ST1 ส่งจากหน้า Detail
 
         using (var dlg = new OrderDetailDialog()) // เปิดหน้าต่างรายละเอียดเฉพาะ Job นี้
         {
-            // ชื่อเดียวกับหัวที่อยู่ในหน้า ไม่ประกอบเอง ไม่งั้นสองที่จะขึ้นคนละเลข
             dlg.TitleText = $"{OrderDetailUserControl.JobTitle(resolved.Job)} — Order Detail"; // ตั้งหัวหน้าต่างให้บอกงานที่กำลังดู
             dlg.Text = dlg.TitleText;
             dlg.LoadDetail(resolved, _api); // เติมรายละเอียดงานและตัวเชื่อม Backend ให้หน้ารายละเอียด
@@ -2535,15 +1809,6 @@ public partial class OrderListUserControl : UserControl
         await RequestRemoteStartFromDetailAsync(resolved.Job.Id); // อ่านข้อมูลสดและตรวจขั้นอีกครั้งก่อนฝากส่ง
     }
 
-    /// <summary>
-    /// ทำต่อจากปุ่มสำรองในหน้า Order Detail — เดินทางเดียวกับปุ่มกดหน้างานทุกประการ
-    ///
-    /// <para>
-    /// อ่านงานสดใหม่ก่อนเสมอ เพราะกล่อง Order Detail เปิดค้างได้นาน ระหว่างนั้น
-    /// ปุ่มกดหน้างานหรืออีกสถานีอาจส่งขั้นนั้นไปแล้ว ถ้าเชื่อค่าที่อ่านไว้ตอนเปิดกล่อง
-    /// จะกลายเป็นส่งซ้ำลงชิ้นงานจริง
-    /// </para>
-    /// </summary>
     private async Task RequestRemoteStartFromDetailAsync(int jobId)
     {
         var resolved = await LoadJobAsync(jobId, $"กำลังตรวจสอบงาน · {JobName(jobId)}"); // อ่านประวัติใหม่ เผื่อมีคนส่งไปแล้วระหว่างเปิด Detail
@@ -2552,7 +1817,6 @@ public partial class OrderListUserControl : UserControl
         var steps = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod).Steps; // อ่านขั้นที่งานนี้ต้องส่งจากวิธีพิมพ์
         int next = steps.FindIndex(step => !SentAlready(resolved, step)); // หาขั้นแรกที่ยังไม่มีประวัติส่งสำเร็จ
 
-        // -1 = ส่งครบแล้ว · 0 = ยังไม่ได้เริ่มเลย ซึ่งเป็นหน้าที่ของปุ่มเริ่มงาน ไม่ใช่ปุ่มนี้
         if (next <= 0)
         {
             Notify.WarnModal(this, "ไม่มีขั้นที่ต้องส่ง",
@@ -2564,24 +1828,14 @@ public partial class OrderListUserControl : UserControl
         await RequestRemoteStartAsync(jobId, steps[next], resolved, askFirst: true); // ให้เลือกโปรแกรมและยืนยันก่อนฝากขั้นถัดไปให้ ST1
     }
 
-
-    // ── เวลา ───────────────────────────────────────────────
-
-    // การแปลงเวลาไทยทั้งหมดอยู่ที่ ThaiTime — หน้านี้กับหัวหน้า Order Detail
-    // ต้องบอกวันเดียวกันของงานเดียวกัน จึงต้องใช้ตัวแปลงตัวเดียวกัน
     private const string TimeFormat = ThaiTime.Format;
 
     private const string Dash = "-";
 
-    /// <summary>เวลาไทย → UTC สำหรับส่งเป็นเงื่อนไขให้ backend</summary>
     private static DateTime ToUtcFromThai(DateTime thai) => ThaiTime.ToUtc(thai);
 
     private static string FormatThaiTime(DateTime? utc) => ThaiTime.Text(utc, TimeFormat, Dash);
 
-    /// <summary>
-    /// ตัวเทียบของ AntdUI ได้มาแค่ข้อความในเซลล์ ถ้าทั้งคู่เป็นเวลาก็เทียบเป็นเวลา
-    /// นอกนั้นส่งต่อให้การเทียบแบบรู้ตัวเลข (เพื่อให้ Qty 9 มาก่อน 10)
-    /// </summary>
     private static int CompareCellText(string x, string y)
     {
         if (TryParseCellTime(x, out var tx) && TryParseCellTime(y, out var ty))
@@ -2596,7 +1850,6 @@ public partial class OrderListUserControl : UserControl
             System.Globalization.CultureInfo.InvariantCulture,
             System.Globalization.DateTimeStyles.None, out value);
 
-    /// <summary>เทียบข้อความโดยอ่านกลุ่มตัวเลขเป็นจำนวน ไม่ใช่ทีละตัวอักษร</summary>
     private static int CompareNatural(string? a, string? b)
     {
         string x = a ?? "", y = b ?? "";
@@ -2629,28 +1882,15 @@ public partial class OrderListUserControl : UserControl
         return (x.Length - i) - (y.Length - j);
     }
 
-    /// <summary>
-    /// เลข marking_method ดิบ เช่น "12" "02" "22" — ไม่แปลเป็นชื่อเครื่อง
-    /// เพราะหน้านี้ใช้ไล่เทียบกับใบสั่งงาน ซึ่งเขียนเป็นตัวเลขเหมือนกัน
-    /// ความหมายของแต่ละหลักดูได้ที่ Order Detail บรรทัด Plate / Shim
-    /// </summary>
     private static string Method(string? markingMethod)
     {
         var value = (markingMethod ?? "").Trim();
         return value.Length == 0 ? Dash : value;
     }
 
-    /// <summary>
-    /// เครื่องที่มาร์กด้านนั้น ในตารางใช้ขีดแทน "None" ให้เข้าชุดกับคอลัมน์ End
-    /// ที่ใช้ขีดแทนช่องว่างอยู่แล้ว
-    /// </summary>
     private static string MachineCell(MarkingMachine machine) =>
         machine == MarkingMachine.None ? Dash : MarkingMethodService.Label(machine);
 
-    /// <summary>
-    /// สถานีล่าสุดที่กดส่งสำเร็จ — ยังไม่เคยส่งเป็นขีด เข้าชุดกับคอลัมน์ End
-    /// งานที่จบแล้วยังค้างอยู่ที่สถานีสุดท้ายของมัน ไม่ได้ล้างทิ้ง
-    /// </summary>
     private static string OrDashStation(int? station)
     {
         var label = JobStationService.Label(station);
@@ -2661,23 +1901,16 @@ public partial class OrderListUserControl : UserControl
     {
         var plan = MarkingMethodService.Resolve(job.PlanRouting?.MarkingMethod);
 
-        // งานที่กดจบทั้งที่ยังส่งไม่ครบต้องดูออกจากในตาราง ไม่ต้องเปิดเข้าไปดูทีละงาน
         var (statusLabel, statusColor) = JobStatusDisplay.Resolve(
             job.Status,
             MarkingMethodService.FinishedIncomplete(
                 job.Status, job.PlanRouting?.MarkingMethod, job.Commands));
-        // ไม่ต่อท้ายอะไรตรงนี้ — ตารางต้องอ่านจากที่ไกล ๆ จึงเหลือคำสถานะคำเดียวล้วน ๆ
-        //
-        // รายละเอียดว่างานรออะไรอยู่ (คิวที่เท่าไร หรือกำลังทำด้านไหน) ไปโชว์ที่หน้า
-        // Order Detail ซึ่งเปิดดูทีละงานอยู่แล้ว ดู JobStageService
 
         var statusText = new AntdUI.CellText(statusLabel) { Fore = statusColor };
 
         var buttons = new List<AntdUI.CellButton>();
         if (!isHistory)
         {
-            // คอลัมน์ปุ่มยัดปุ่มข้อความสองอันไม่ลง จึงสลับปุ่มแรกตามสถานะแทน
-            // งานที่ยังไม่เริ่ม = เริ่มงาน · งานที่เดินอยู่ = จบงาน
             if (CanStart(job))
             {
                 buttons.Add(new AntdUI.CellButton("start", StartButtonText, AntdUI.TTypeMini.Primary)
@@ -2685,35 +1918,26 @@ public partial class OrderListUserControl : UserControl
             }
             else if (NotMyTurnYet(job))
             {
-                // ยังไม่ถึงตาสถานีนี้ — ไม่ใส่ปุ่มข้อความ เหลือแค่ยกเลิกกับดูรายละเอียด
             }
             else if (MarkingMethodService.CanCompleteAt(
                          StationService.Current, job.PlanRouting?.MarkingMethod))
             {
-                // เขียว = ส่งครบแล้วจบได้เลย · ส้ม = ยังไม่ครบ กดได้แต่จะเตือนก่อน
-                // commands / plan_routing มาจาก /job/getAll ที่ include ไว้ให้แล้ว
                 var steps = CheckSteps(job.PlanRouting?.MarkingMethod, job.Commands);
                 buttons.Add(new AntdUI.CellButton("complete", "จบงาน",
                     steps.Complete ? AntdUI.TTypeMini.Success : AntdUI.TTypeMini.Warn)
                 { Radius = 6 });
             }
 
-            // ยกเลิกได้ทุกงานที่ยังไม่จบ ไม่ว่าเริ่มไปแล้วหรือยัง — เป็นทางออกเดียว
-            // ของงานที่ยกเลิกหน้างานแล้วไม่ควรค้างอยู่ในตารางให้คนอื่นสับสน
             buttons.Add(new AntdUI.CellButton("cancel", "", AntdUI.TTypeMini.Error)
             { Radius = 6, IconSvg = "CloseOutlined" });
         }
         else if (IsCancelled(job))
         {
-            // งานที่ยกเลิกไปแล้วยังเอากลับมาพิมพ์ใหม่ได้ ต่างจากงานที่จบไปแล้วจริง ๆ
-            // ซึ่งไม่มีปุ่มนี้ — เพราะการยกเลิกคือ "ไม่ได้ทำ" ไม่ใช่ "ทำเสร็จแล้ว"
             buttons.Add(new AntdUI.CellButton("restore", "พิมพ์ใหม่", AntdUI.TTypeMini.Primary)
             { Radius = 6 });
         }
         buttons.Add(new AntdUI.CellButton("detail", "", AntdUI.TTypeMini.Default) { Radius = 6, IconSvg = "SearchOutlined" });
 
-        // End มีความหมายเฉพาะงานที่จบแล้ว — งานที่ยังวิ่งอยู่ updated_at คือเวลาแก้ล่าสุด ไม่ใช่เวลาจบ
-        // งานที่ถูกยกเลิกก็นับว่าจบ updated_at ของมันคือเวลาที่กดยกเลิก
         bool finished =
             string.Equals(job.Status, "Success", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(job.Status, "Cancel", StringComparison.OrdinalIgnoreCase);
@@ -2724,15 +1948,8 @@ public partial class OrderListUserControl : UserControl
             Start = FormatThaiTime(job.CreatedAt),
             End = finished ? FormatThaiTime(job.UpdatedAt) : Dash,
             ErpMfg = job.OrderNo ?? "",
-            // barcode ที่สแกนเข้ามา = เลขล็อต — backend เก็บซ้ำไว้ใน lot_number ด้วย
-            // ใช้ตัวที่มีค่าจริง เผื่องานเก่าที่กรอกมาคนละทาง
             LotNo = FirstFilled(job.LotNumber, job.BarcodeRaw),
             Qty = job.Qty?.ToString() ?? "",
-            // ค่าดิบจาก plan_routing.process_sequence เช่น "Online" / "Offline"
-            // โชว์ตามที่ database ส่งมาตรง ๆ ไม่แปลง ไม่ normalize ตัวพิมพ์
-            //
-            // ยกเว้นตอนเปิดแท็บ Online / Offline ไว้ งาน 22 ที่อยู่ระหว่างรอบขึ้นเป็น
-            // Offline ให้ตรงกับแท็บที่มันอยู่ ไม่งั้นแถวในแท็บ Offline จะเขียนว่า Online
             ProcessSequence = StationService.ShowProcessTabs
                 && JobProcessService.BetweenRounds(job.PlanRouting?.MarkingMethod, job.Commands)
                     ? JobProcessService.Offline
@@ -2749,12 +1966,8 @@ public partial class OrderListUserControl : UserControl
         };
     }
 
-    // ── แผง Preview / Processing ───────────────────────────
-
-    /// <summary>job ที่ผู้ใช้กดเลือกในตาราง — แผงซ้ายผูกกับตัวนี้</summary>
     private int? _selectedJobId;
 
-    /// <summary>job ที่แผงขวากำลังแสดง กับเวลาแก้ล่าสุดของมัน ไว้กันโหลดซ้ำทุกรอบ poll</summary>
     private int? _processingJobId;
     private long _processingStamp;
 
@@ -2771,10 +1984,6 @@ public partial class OrderListUserControl : UserControl
         ShowProcessingSides(null, null);
     }
 
-    /// <summary>
-    /// คลิกแถวไหนก็แสดงรูปของงานนั้นในแผงซ้าย
-    /// ข้ามคอลัมน์ Op เพราะเป็นปุ่ม — ปล่อยให้ CellButtonClick จัดการไปตามเดิม
-    /// </summary>
     private async void TblOrders_CellClick(object? sender, AntdUI.TableClickEventArgs e)
     {
         if (e.RowType != AntdUI.RowType.None) return;
@@ -2786,7 +1995,6 @@ public partial class OrderListUserControl : UserControl
         await UpdatePreviewAsync();
     }
 
-    /// <summary>แผงซ้าย — รูปของงานที่เลือกอยู่</summary>
     private async Task UpdatePreviewAsync()
     {
         var job = _selectedJobId is int id
@@ -2805,22 +2013,6 @@ public partial class OrderListUserControl : UserControl
         ShowPreviewSides(Find(sides, "Plate"), Find(sides, "Shim"));
     }
 
-    /// <summary>
-    /// แผงขวา — งานที่อยู่ในเครื่องของสถานีนี้ ไม่เกี่ยวกับแถวที่เลือกในตาราง
-    ///
-    /// <para>
-    /// ยึดตามเครื่องที่สถานีนี้คุมอยู่ (ST1 ดู MK · ST3 ดู UV2) ไม่ใช่ตามงานที่ขยับล่าสุด
-    /// เพราะพอมีงานเดินพร้อมกันหลายใบ งานที่เพิ่งกดเริ่มจะแย่งแผงไปทันที ทั้งที่เครื่อง
-    /// ตรงหน้ายังพิมพ์ใบเดิมอยู่ คนที่ยืนอยู่หน้าเครื่องต้องเห็นของเครื่องตัวเอง
-    /// </para>
-    /// <para>
-    /// คิวยังไม่มีข้อมูล (อ่านไม่สำเร็จ หรือเป็นงานที่เริ่มไว้ก่อนมีระบบคิว) ค่อยตกกลับ
-    /// ไปใช้เกณฑ์เดิมคือ Process ที่แก้ล่าสุด
-    /// </para>
-    /// <para>
-    /// โหลดใหม่เฉพาะตอนเปลี่ยนตัวหรือ updated_at ขยับ ไม่ใช่ทุกรอบ poll
-    /// </para>
-    /// </summary>
     private async Task UpdateProcessingAsync()
     {
         var job = _showHistory ? null : JobInMyMachine() ?? NewestProcessJob();
@@ -2842,22 +2034,12 @@ public partial class OrderListUserControl : UserControl
         var sides = await BuildSidesAsync(job);
         if (IsDisposed) return;
 
-        // แผงนี้บอกว่า "ส่งอะไรเข้าเครื่องไปแล้ว" ไม่ใช่ "งานนี้ต้องทำอะไรบ้าง"
-        // method 12 กดส่ง MK อย่างเดียวต้องเห็นแค่ด้านของ MK จนกว่าจะกดส่ง UV2
         sides = OnlySent(sides, job.Commands);
 
         ShowProcessingSides(Find(sides, "Plate"), Find(sides, "Shim"));
     }
 
-    /// <summary>
-    /// มีเครื่องที่ต่อไม่ติดไหม — true = บอกผู้ใช้ไปแล้ว ห้ามเริ่มงานนี้
-    ///
-    /// <para>
-    /// ไม่แตะทั้งสถานะงานและคิว งานยังเป็น Waiting เหมือนไม่เคยกด พอแก้เรื่องการ
-    /// เชื่อมต่อได้แล้วกดเริ่มใหม่ได้ทันที
-    /// </para>
-    /// </summary>
-    private async Task<bool> BlockedByUnreachableAsync(
+    private async Task<bool> BlockedByUnreachableAsync( // ตรวจปลายทางที่ต้องใช้ก่อนจองคิว
         int jobId, MarkingPlan plan, ResolvedJobResponse resolved)
     {
         ShowSending($"กำลังตรวจการเชื่อมต่อ · {JobName(jobId)}");
@@ -2887,23 +2069,7 @@ public partial class OrderListUserControl : UserControl
         return true;
     }
 
-    /// <summary>
-    /// ส่งค่าของงานเข้า PLC ตอนงานกำลังจะเข้าเครื่อง — ตำแหน่งหัวพ่นและความเร็วสายพาน
-    ///
-    /// <para>
-    /// ไม่ตรวจว่าช่องไหนว่าง ส่งไปตามที่มี ช่องว่างจะกลายเป็น 0 ตามเดิม ต่างจากปุ่ม
-    /// ทดสอบในหน้า Order Detail ที่ตั้งใจให้ฟ้องก่อน เพราะปุ่มนั้นคนกดเพื่อลองค่า
-    /// ส่วนตรงนี้คือทางเดินของงานจริงซึ่งต้องไม่ถูกขวาง
-    /// </para>
-    /// <para>
-    /// ส่งไม่ผ่านก็ไม่หยุดการส่งเข้าเครื่อง แค่แจ้งเป็นคำเตือนไปในกล่องสรุปผลเดียวกัน
-    /// PLC กับเครื่องพิมพ์เป็นคนละสายกัน ตัวหนึ่งล่มไม่ได้แปลว่าอีกตัวทำงานไม่ได้
-    /// </para>
-    /// <para>
-    /// เอาเฉพาะหัวที่งานนี้ใช้ หัวที่ไม่ได้ใช้ไม่ต้องไปเขียนทับค่าใน PLC
-    /// </para>
-    /// </summary>
-    private async Task SendJobPlcAsync(ResolvedJobResponse resolved, List<Notify.ResultLine> lines)
+    private async Task SendJobPlcAsync(ResolvedJobResponse resolved, List<Notify.ResultLine> lines) // ส่งตำแหน่งหัวและสายพานไป PLC
     {
         var plan = await PlcOrderService.BuildPlanAsync(_api, resolved.Pattern, usedHeadsOnly: true); // เตรียมค่า PLC เฉพาะหัวที่ Job ใช้ พร้อมสายพาน
         if (IsDisposed || plan.Count == 0) return;
@@ -2919,14 +2085,12 @@ public partial class OrderListUserControl : UserControl
                 continue;
             }
 
-            // เขียนผ่านแต่ค่าไม่เข้าก็ต้องเห็น ไม่ใช่รายงานว่าสำเร็จ
             if (r.ReadBack != r.Value) // เครื่องตอบรับแต่ค่าไม่ตรง ก็ต้องเตือนหน้างาน
                 lines.Add(Notify.Careful(
                     $"PLC {r.Name} = {r.Value} · อ่านกลับได้ {r.ReadBack?.ToString() ?? "ไม่ได้"}"));
         }
     }
 
-    /// <summary>ลำดับของเครื่องในแผน — เครื่องที่ไม่อยู่ในแผนไปต่อท้าย</summary>
     private static int PlanOrderOf(List<string> planSteps, string machine)
     {
         int index = planSteps.FindIndex(step =>
@@ -2935,19 +2099,9 @@ public partial class OrderListUserControl : UserControl
         return index < 0 ? int.MaxValue : index;
     }
 
-    /// <summary>งานนี้เคยส่งเข้าเครื่องสำเร็จมาก่อนไหม — ดูจากประวัติคำสั่งที่บันทึกไว้</summary>
     private static bool PrintedBefore(ResolvedJobResponse resolved) =>
         resolved.Commands?.Any(c => c.Success) == true;
 
-    /// <summary>
-    /// งานที่ถือเครื่องของสถานีนี้อยู่ตอนนี้ — null เมื่อเครื่องว่างหรือยังไม่รู้คิว
-    ///
-    /// <para>
-    /// "เครื่องของสถานีนี้" ใช้กับแผง Processing เท่านั้น คือเครื่องที่ตั้งอยู่ตรงหน้า
-    /// คนที่ยืนดูจออยู่ ไม่เกี่ยวกับว่าเครื่องนี้เฝ้าปุ่มกดของสถานีไหนบ้าง — PC ของ
-    /// ST1 เฝ้าปุ่มครบทั้งสามสถานี แต่แผงนี้ยังแสดงงานที่อยู่ใน MK ตรงหน้าเหมือนเดิม
-    /// </para>
-    /// </summary>
     private PrintJob? JobInMyMachine()
     {
         var machine = PushButtonSettings.MachineFor(StationService.Current);
@@ -2961,7 +2115,6 @@ public partial class OrderListUserControl : UserControl
             : _allJobs.FirstOrDefault(j => j.Id == holder.PrintJobsId);
     }
 
-    /// <summary>เกณฑ์สำรองแบบเดิม — งานที่เดินอยู่และแก้ล่าสุด</summary>
     private PrintJob? NewestProcessJob() =>
         _allJobs
             .Where(j => string.Equals(j.Status, "Process", StringComparison.OrdinalIgnoreCase))
@@ -2971,12 +2124,6 @@ public partial class OrderListUserControl : UserControl
     private static MarkingRefSide? Find(List<MarkingRefSide> sides, string side) =>
         sides.FirstOrDefault(s => s.Side == side);
 
-    /// <summary>
-    /// กรองเหลือเฉพาะด้านที่ step ของมันถูกกดส่งสำเร็จไปแล้ว
-    ///
-    /// ข้อจำกัด: marking 22 ที่ MK ทำทั้งสองด้านมี command "MK" อันเดียว
-    /// ระบบแยกไม่ออกว่ารอบแรกทำด้านไหน จึงขึ้นทั้งสองด้านพร้อมกัน
-    /// </summary>
     private static List<MarkingRefSide> OnlySent(
         List<MarkingRefSide> sides, List<CommandResult>? commands)
     {
@@ -2985,7 +2132,6 @@ public partial class OrderListUserControl : UserControl
             .Select(c => c.Command)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        // ของเก่าบางงานบันทึกเป็น MK1 / MK2 แทน MK
         bool mkSent = sent.Contains("MK") || sent.Contains("MK1") || sent.Contains("MK2");
 
         return sides
@@ -2993,11 +2139,6 @@ public partial class OrderListUserControl : UserControl
             .ToList();
     }
 
-    /// <summary>
-    /// ฝั่ง MK ใช้ erp_mfg ที่ติดมากับ /job/getAll อยู่แล้ว
-    /// ฝั่ง UV ต้องรู้ชื่อโปรแกรมซึ่งอยู่ใน uv_job_data จึงต้องยิง getResolved
-    /// เรียกเฉพาะงานที่ใช้ UV จริง และเฉพาะตอนที่งานเปลี่ยนเท่านั้น
-    /// </summary>
     private async Task<List<MarkingRefSide>> BuildSidesAsync(PrintJob job)
     {
         var method = job.PlanRouting?.MarkingMethod;
@@ -3019,10 +2160,6 @@ public partial class OrderListUserControl : UserControl
         return MarkingRefResolver.Resolve(method, job.PlanRouting?.ErpMfg, uv1, uv2);
     }
 
-    /// <summary>
-    /// ส่งไปแล้ว → ใช้รุ่นย่อยที่เลือกจริง (เก็บใน payload ของ command) ถือว่ายืนยันแล้ว
-    /// ยังไม่ได้ส่ง → ได้แค่ชื่อฐานจากข้อมูลงาน ยังตอบไม่ได้ว่าจะพิมพ์รุ่นไหน
-    /// </summary>
     private static UvProgramInfo PickUvProgram(ResolvedJobResponse resolved, string machine)
     {
         var sent = resolved.Commands
@@ -3042,8 +2179,6 @@ public partial class OrderListUserControl : UserControl
         return new UvProgramInfo(baseName, false);
     }
 
-    // ── แผงรูปทั้งแผง ──────────────────────────────────────
-
     private void ShowPreviewSides(MarkingRefSide? plate, MarkingRefSide? shim)
     {
         ApplySide(plate, picPrevPlate, lblPrevPlateCaption);
@@ -3058,18 +2193,10 @@ public partial class OrderListUserControl : UserControl
         BalanceSlots(tlpProcessingSlots, picProcPlate, picProcShim);
     }
 
-    /// <summary>
-    /// สองช่องแบ่งกรอบคนละครึ่งตายตัว พองานใช้ด้านเดียว (เช่น method 02 มีแต่ Plate)
-    /// รูปเลยไปเกาะครึ่งซ้าย เหลือครึ่งขวาว่าง ดูเหมือนวางผิดที่มากกว่าจะดูตั้งใจ
-    ///
-    /// ยุบคอลัมน์ที่ไม่ได้ใช้เหลือ 0 ด้านที่เหลือจะกินเต็มกรอบ และ PictureBox โหมด
-    /// Zoom จัดรูปไว้กลางกรอบให้เอง โดยไม่ยืดรูปผิดสัดส่วน
-    /// </summary>
     private static void BalanceSlots(TableLayoutPanel slots, PictureBox left, PictureBox right)
     {
         bool hasLeft = left.Visible, hasRight = right.Visible;
 
-        // ไม่เหลือด้านไหนเลยก็คืนเป็นครึ่งต่อครึ่ง กรอบว่างจะได้ไม่เพี้ยน
         if (hasLeft == hasRight)
         {
             slots.ColumnStyles[0].Width = 50F;
@@ -3081,8 +2208,6 @@ public partial class OrderListUserControl : UserControl
         slots.ColumnStyles[1].Width = hasRight ? 100F : 0F;
     }
 
-    // ── ช่องรูปหนึ่งช่อง ───────────────────────────────────
-
     private static void ClearSlot(PictureBox box, Label caption)
     {
         box.Image?.Dispose();
@@ -3093,10 +2218,6 @@ public partial class OrderListUserControl : UserControl
         caption.Visible = false;
     }
 
-    /// <summary>
-    /// ด้านที่ marking method ไม่ได้ใช้ → ซ่อนทั้งช่อง
-    /// ด้านที่ใช้แต่ไม่มีรูป → ยังโชว์ป้ายไว้ พร้อมบอกสาเหตุ ไม่ปล่อยว่างเปล่า
-    /// </summary>
     private static void ApplySide(MarkingRefSide? side, PictureBox box, Label caption)
     {
         box.Image?.Dispose();
@@ -3125,8 +2246,6 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        // ยังไม่ได้เลือกรุ่นย่อย — หยิบใบไหนมาโชว์ก็ดูเหมือนระบบเลือกไว้ให้แล้ว
-        // ปล่อยกรอบว่างไว้แล้วบอกตรง ๆ ว่ามีให้เลือกกี่แบบ (กดที่กรอบดูตัวอย่างได้)
         if (side.Pending)
         {
             caption.Text = $"{side.Side} · {side.Machine} · ยังไม่ได้เลือกรุ่น ({side.Images.Count} แบบ)";
@@ -3145,10 +2264,6 @@ public partial class OrderListUserControl : UserControl
         caption.Text = $"{side.Side} · {side.Machine} · {Path.GetFileName(path)}{more}";
     }
 
-    /// <summary>
-    /// คลิกรูปเพื่อดูใหญ่และเลือกใบอื่นของด้านเดียวกัน
-    /// ฝั่งนี้เลือกแล้วเปลี่ยนแค่รูปที่ดู ไม่กระทบงานที่พิมพ์ ข้อความจึงต้องบอกให้ชัด
-    /// </summary>
     private void OpenSidePicker(PictureBox box, Label caption)
     {
         if (box.Tag is not MarkingRefSide side || side.Images.Count == 0) return;
@@ -3169,15 +2284,9 @@ public partial class OrderListUserControl : UserControl
         reordered.AddRange(side.Images.Where(path => path != chosen));
         ApplySide(side with { Images = reordered, Pending = false }, box, caption);
 
-        // เปิดดูเองตอนที่ยังไม่ได้เลือกรุ่น ต้องไม่ให้เข้าใจว่านี่คือรุ่นที่จะพิมพ์
         if (side.Pending) caption.Text += "  (ตัวอย่าง)";
     }
 
-    /// <summary>
-    /// ผูก DataSource ใหม่ทีไร AntdUI ล้าง selection ทิ้งเสมอ ต้องเลือกกลับให้เอง
-    /// ไม่งั้นไฮไลต์กับรูปจะหายทุกครั้งที่มีงานไหนก็ตามเปลี่ยนสถานะ
-    /// งานที่หลุดจากลิสต์แล้วจริง ๆ ค่อยล้างทั้งไฮไลต์และรูปพร้อมกัน
-    /// </summary>
     private void RestoreSelection()
     {
         if (_selectedJobId is not int id) return;

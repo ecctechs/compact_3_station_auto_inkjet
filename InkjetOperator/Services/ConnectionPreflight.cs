@@ -1,9 +1,8 @@
 namespace InkjetOperator.Services;
 
-/// <summary>ตรวจคนละปลายทางพร้อมกัน แต่ไม่เปิดซ็อกเก็ตซ้ำไป IP/port เดียวกันในชุดเดียว</summary>
 public static class ConnectionPreflight
 {
-    public static async Task<bool[]> CheckAsync(
+    public static async Task<bool[]> CheckAsync( // ตรวจปลายทางหลายเครื่องพร้อมกัน
         IReadOnlyList<(string Host, int Port)> targets, Func<string, int, Task<bool>> connect)
     {
         var checks = new Dictionary<(string Host, int Port), Task<bool>>(); // แชร์ผลตรวจเมื่อมีหลายรายการใช้ IP และพอร์ตเดียวกัน

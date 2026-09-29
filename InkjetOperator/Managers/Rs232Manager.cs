@@ -3,11 +3,6 @@ using System.Text;
 
 namespace InkjetOperator.Managers;
 
-/// <summary>
-/// Serial port manager for MK Compact inkjets — follows Linx SerialPortManager pattern.
-/// MK Compact uses text-based protocol: send command string, read until '\r'.
-/// Ported from rs232_connector.py send_data() (lines 25-34).
-/// </summary>
 public class Rs232Manager
 {
     private SerialPort _serialPort;
@@ -74,13 +69,6 @@ public class Rs232Manager
         return _serialPort.IsOpen;
     }
 
-    /// <summary>
-    /// Send a command string and read response until '\r'.
-    /// Ported from rs232_connector.py send_data():
-    ///   s.write(msg)
-    ///   data = s.read_until(expected=b'\r')
-    ///   if data == '': return False  # connection problem
-    /// </summary>
     public async Task<string> SendCommandAsync(string command)
     {
         if (!_serialPort.IsOpen)
@@ -94,7 +82,6 @@ public class Rs232Manager
             _serialPort.Write(commandBytes, 0, commandBytes.Length);
             await Task.Delay(5);
 
-            // Read until \r
             string response = "";
             try
             {
@@ -102,7 +89,6 @@ public class Rs232Manager
             }
             catch (TimeoutException)
             {
-                // No response within timeout — connection problem
                 return "";
             }
 

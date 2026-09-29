@@ -3,24 +3,10 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace InkjetOperator.Views;
 
-/// <summary>
-/// ช่องกรอก IP Address แบบ 4 ช่องคั่นด้วยจุด
-///
-/// <para>
-/// ใช้แทน <c>AntdUI.Input</c> ช่องเดียวได้เลย เพราะเปิด <see cref="Text"/> ให้อ่าน/เขียน
-/// เป็นสตริงเต็ม "192.168.1.10" เหมือนเดิม โค้ดหน้าเดิมที่อ่าน <c>.Text</c> จึงไม่ต้องแก้
-/// </para>
-///
-/// <para>
-/// กรอกครบ 3 หลักหรือกดจุดแล้วเด้งไปช่องถัดไปให้เอง และกด Backspace ตอนช่องว่าง
-/// จะถอยกลับช่องก่อนหน้า เพื่อให้พิมพ์รวดเดียวได้โดยไม่ต้องใช้เมาส์
-/// </para>
-/// </summary>
 public partial class IpAddressInput : UserControl
 {
     private AntdUI.Input[] _octets = [];
 
-    /// <summary>กันไม่ให้ตอนเซ็ตค่าจากโค้ดไปกระตุ้น TextChanged ซ้ำทีละช่อง</summary>
     private bool _loading;
 
     public IpAddressInput()
@@ -43,12 +29,6 @@ public partial class IpAddressInput : UserControl
 
     private string _placeholder = "";
 
-    /// <summary>
-    /// ตัวอย่าง IP ที่ขึ้นจาง ๆ ตอนยังไม่ได้กรอก เช่น "10.10.100.100"
-    ///
-    /// รับมาเป็นสตริงเต็มแล้วแยกจุดไปใส่ทีละช่องให้เอง หน้าที่ใช้จะได้เขียนเหมือน
-    /// ช่องกรอกธรรมดาช่องเดียว ไม่ต้องรู้ว่าข้างในเป็นสี่ช่อง
-    /// </summary>
     [Browsable(true)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     [DefaultValue("")]
@@ -65,7 +45,6 @@ public partial class IpAddressInput : UserControl
         }
     }
 
-    /// <summary>ค่า IP เต็ม เช่น "192.168.1.10" — ว่างทุกช่องจะได้สตริงว่าง</summary>
     [Browsable(true)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     [AllowNull]
@@ -92,10 +71,8 @@ public partial class IpAddressInput : UserControl
         }
     }
 
-    /// <summary>สีพื้นของทุกช่อง — หน้าตั้งค่าใช้ทำเครื่องหมายว่ามีการแก้ยังไม่บันทึก</summary>
     public override Color BackColor
     {
-        // AntdUI.Input เก็บสีพื้นเป็น Color? — ไม่ได้ตั้งไว้ก็ใช้สีของตัว control เอง
         get => _octets.Length > 0 ? _octets[0].BackColor ?? base.BackColor : base.BackColor;
         set
         {
@@ -103,11 +80,8 @@ public partial class IpAddressInput : UserControl
         }
     }
 
-    /// <summary>true = กรอกครบ 4 ช่องและทุกช่องอยู่ในช่วง 0–255</summary>
     public bool IsValid =>
         _octets.All(o => byte.TryParse(o.Text.Trim(), out _));
-
-    // ── พฤติกรรมการพิมพ์ ───────────────────────────────────
 
     private void OctetChanged(int index)
     {
@@ -124,14 +98,12 @@ public partial class IpAddressInput : UserControl
 
         OnTextChanged(EventArgs.Empty);
 
-        // ครบ 3 หลักแล้วไปช่องถัดไปเลย ไม่ต้องกด Tab
         if (cleaned.Length == 3 && index < _octets.Length - 1)
             FocusOctet(index + 1);
     }
 
     private void OctetKeyPress(int index, KeyPressEventArgs e)
     {
-        // จุดหรือลูกน้ำ = ข้ามไปช่องถัดไป ไม่ต้องพิมพ์ลงในช่อง
         if (e.KeyChar is '.' or ',')
         {
             e.Handled = true;
@@ -139,7 +111,6 @@ public partial class IpAddressInput : UserControl
             return;
         }
 
-        // รับเฉพาะตัวเลขกับปุ่มควบคุม
         if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar)) e.Handled = true;
     }
 
@@ -147,7 +118,6 @@ public partial class IpAddressInput : UserControl
     {
         if (index == 0) return;
 
-        // ลบจนช่องว่างแล้วยังกด Backspace ต่อ = ถอยไปช่องก่อนหน้า
         if (e.KeyCode == Keys.Back && _octets[index].Text.Length == 0)
         {
             FocusOctet(index - 1);
@@ -162,7 +132,6 @@ public partial class IpAddressInput : UserControl
         box.SelectAll();
     }
 
-    /// <summary>เหลือเฉพาะตัวเลข ไม่เกิน 3 หลัก และไม่เกิน 255</summary>
     private static string Clean(string? raw)
     {
         var digits = new string((raw ?? "").Where(char.IsDigit).ToArray());

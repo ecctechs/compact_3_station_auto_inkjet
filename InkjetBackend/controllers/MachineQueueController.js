@@ -8,28 +8,16 @@ const { DISPATCH, withQueueLock, conflict, latestDispatch, assertNoUnresolved } 
 const reportError = (req, res, error) =>
   ResponseManager.ErrorResponse(req, res, error.statusCode || 500, error.message);
 
-// สถานะของแถวในคิว
 const PENDING = "pending";
 const ACTIVE = "active";
 const DONE = "done";
 
 class MachineQueueController {
-  /**
-   * GET /machine-queue/getAll?machine=UV2
-   *
-   * คืนทุกแถวที่ยังไม่ปล่อยเครื่อง (pending กับ active) เรียงเก่าก่อนใหม่
-   * ฝั่งโปรแกรมใช้ดูว่าเครื่องไหนว่าง และมีอะไรรออยู่บ้าง
-   */
   static async getAll(req, res) {
     try {
       const where = { state: { [Op.in]: [PENDING, ACTIVE] } };
       if (req.query.machine) where.machine = req.query.machine;
 
-      // เรียงชุดเดียวกับที่ release ใช้เลือกคิวถัดไป
-      //
-      // เดิมเรียงด้วย created_at ซึ่งไม่เท่ากับลำดับจริงเมื่อมีการดันแถวไปต่อท้ายคิว
-      // (เลือก "ปล่อยเครื่อง" ของงานที่เข้าเครื่องเดิมหลายรอบ จะเลื่อน queued_at)
-      // ผลคือเลข Q ที่หน้า Order Detail บอก จะไม่ตรงกับตัวที่ได้เครื่องไปจริง
       const rows = await MachineQueue.findAll({
         where,
         order: [
@@ -52,16 +40,7 @@ class MachineQueueController {
     }
   }
 
-  /**
-   * POST /machine-queue/enqueue
-   * body: { print_jobs_id, items: [{ machine, round?, program_name? }] }
-   *
-   * จองเครื่องให้งานหนึ่ง — เรียกตอนกดเริ่มงาน จองครบทุกเครื่องที่ marking ต้องใช้
-   *
-   * เรียกซ้ำด้วยงานเดิมไม่สร้างของซ้ำ แถวที่มีอยู่แล้วและยังไม่ปล่อยเครื่องจะถูก
-   * ข้ามไป กันกรณีกดเริ่มงานรัว ๆ หรือกดซ้ำหลังส่งไปแล้วบางเครื่อง
-   */
-  static async enqueue(req, res) {
+  static async enqueue(req, res) { // จองเครื่องและรอบ โดยกันรายการเดิมซ้ำ
     try {
       const created = await withQueueLock(async (t) => {
         const { print_jobs_id, items } = req.body;
@@ -69,10 +48,6 @@ class MachineQueueController {
         if (!job || !["Waiting", "Process"].includes(job.status))
           conflict("งานถูกยกเลิกหรือจบแล้ว จองคิวไม่ได้");
 
-        // ดูทุกสถานะรวม done ด้วย ไม่ใช่เฉพาะที่ยังค้างอยู่
-        //
-        // เครื่องที่พิมพ์ให้งานนี้จบไปแล้วห้ามถูกจองซ้ำ ไม่งั้นกดเริ่มงานอีกครั้ง
-        // จะเข้าคิวใหม่แล้วพ่นซ้ำลงชิ้นงานเดิม
         const existing = await MachineQueue.findAll({
           where: { print_jobs_id },
           transaction: t,
@@ -109,18 +84,7 @@ class MachineQueueController {
     }
   }
 
-  /**
-   * POST /machine-queue/claim
-   * body: { machine }
-   *
-   * หยิบงานถัดไปของเครื่องนั้นมาถือเครื่อง — คืน null ถ้าเครื่องไม่ว่างหรือคิวว่าง
-   *
-   * เครื่องไม่ว่าง (มีแถว active ค้างอยู่) จะไม่หยิบให้ เพราะโปรแกรมที่อยู่ในเครื่อง
-   * ตอนนี้ยังพิมพ์ไม่เสร็จ การเปลี่ยนโปรแกรมทับคือพิมพ์ผิดแบบลงชิ้นงานจริง
-   *
-   * ทำในทรานแซกชันเดียวและล็อกแถวไว้ กันสองเครื่องที่ poll พร้อมกันหยิบงานใบเดียวกัน
-   */
-  static async claim(req, res) {
+  static async claim(req, res) { // ให้สิทธิ์หัวคิวเมื่อเครื่องว่าง
     try {
       const result = await withQueueLock(async (t) => {
         const { machine, print_jobs_id } = req.body;
@@ -139,7 +103,6 @@ class MachineQueueController {
           };
         }
 
-        // ดูหัวคิวของเครื่องก่อนเสมอ งานจาก ST1 ห้ามแซงงานที่ ST3 จองไว้ก่อน
         const next = await MachineQueue.findOne({
           where: { machine, state: PENDING },
           order: [
@@ -157,13 +120,9 @@ class MachineQueueController {
           };
         }
 
-        // ผู้เรียกมีข้อมูลของงานที่ขอเท่านั้น ห้ามคืนงานอื่นไปส่งด้วยข้อมูลผิดใบ
         if (print_jobs_id && next.print_jobs_id !== print_jobs_id) // งานที่กดเริ่มทีหลังห้ามแซงหัวคิวของเครื่อง
           return { claimed: null, reason: "queued" };
 
-        // ไม่ตั้ง sent_at ตรงนี้ — active แปลว่า "ถึงคิวแล้ว รอ ST1 ส่ง" เท่านั้น
-        // ฝั่งที่ส่งสำเร็จจริงเป็นคนประทับเวลาเอง แถวที่ยังไม่มี sent_at คือแถวที่
-        // ST1 ต้องหยิบไปส่ง จึงไม่มีทางส่งซ้ำแถวที่ส่งไปแล้ว
         await next.update({ state: ACTIVE }, { transaction: t }); // ให้สิทธิ์ใช้เครื่อง ยังไม่ได้แปลว่าส่งข้อมูลแล้ว
 
         return { claimed: next };
@@ -174,14 +133,7 @@ class MachineQueueController {
     }
   }
 
-  /**
-   * POST /machine-queue/release
-   * body: { machine }
-   *
-   * ปล่อยเครื่อง — คนกดปุ่มหน้างานที่เครื่องนั้น แปลว่าพิมพ์ชิ้นเดิมเสร็จแล้ว
-   * แถวที่ถือเครื่องอยู่กลายเป็น done เครื่องจึงว่างให้คิวถัดไป
-   */
-  static async release(req, res) {
+  static async release(req, res) { // ปล่อยคิวเดิมแล้วเลื่อนงานถัดไป
     try {
       const result = await withQueueLock(async (t) => {
         const { machine, hold_for_next_round, expected_holder_id } = req.body; // รับเครื่องและเลขคิวที่ผู้กดตั้งใจปล่อย
@@ -192,7 +144,6 @@ class MachineQueueController {
           lock: t.LOCK.UPDATE,
         });
 
-        // คำขอเก่าหรือกดซ้ำต้องไม่ไปปล่อยแถวใหม่ที่เพิ่งได้เครื่อง
         if ((holder?.id ?? null) !== expected_holder_id) // คำขอเดิมห้ามไปปล่อยคิวใหม่ที่เพิ่งรับเครื่อง
           conflict("คิวเปลี่ยนแล้ว กรุณาตรวจงานที่ถือเครื่องก่อนกดอีกครั้ง");
         if (holder) {
@@ -207,20 +158,8 @@ class MachineQueueController {
           );
         }
 
-        // ยกเครื่องให้คิวถัดไปในจังหวะเดียวกับที่ปล่อย
-        //
-        // ทำตรงนี้เพราะการกดปุ่มหน้างานคือจังหวะเดียวที่งานใหม่มีสิทธิ์เข้าเครื่อง
-        // ถ้าปล่อยให้ฝั่งโปรแกรมไล่หยิบคิวเองเป็นรอบ ๆ งานที่ไม่มีใครกดก็จะถูกส่ง
-        // ออกไปเงียบ ๆ ได้ ซึ่งเคยเกิดมาแล้วและกลายเป็นพิมพ์งานที่ไม่มีใครสั่ง
-        // งานที่เข้าเครื่องเดิมหลายรอบ (marking 22) เลือกได้ว่าจะถือเครื่องไว้ไหม
-        //
-        // ถือไว้ = รอบถัดไปของงานเดิมได้เครื่องต่อทันที งานใบอื่นที่รอคิวแทรกไม่ได้
-        // จนกว่าชิ้นงานจะกลับมาจากการติด shim นอกไลน์แล้วพ่นรอบสองเสร็จ
-        //
-        // ไม่ถือ = ใครรอมาก่อนได้ก่อนตามปกติ รอบสองไปต่อท้ายคิว
         let next = null;
 
-        // รอบถัดไปของงานเดิม ถ้ามี
         const sameJobNextRound = holder
           ? await MachineQueue.findOne({
               where: {
@@ -238,11 +177,6 @@ class MachineQueueController {
           if (hold_for_next_round) {
             next = sameJobNextRound;
           } else {
-            // ดันไปต่อท้ายคิวจริง ๆ
-            //
-            // แถวของรอบสองถูกสร้างพร้อมรอบแรกตั้งแต่ตอนกดเริ่มงาน มันจึงเก่ากว่าทุกใบ
-            // ที่เข้าคิวมาทีหลังเสมอ ถ้าไม่เลื่อนเวลา การเรียงแบบใครมาก่อนได้ก่อนจะยก
-            // เครื่องให้รอบสองอยู่ดี กลายเป็นว่าเลือก "ปล่อยเครื่อง" แล้วไม่มีอะไรต่างเลย
             await sameJobNextRound.update(
               { queued_at: new Date() },
               { transaction: t }
@@ -275,13 +209,6 @@ class MachineQueueController {
     }
   }
 
-  /**
-   * PATCH /machine-queue/:id
-   * body: { state?, program_name? }
-   *
-   * แก้แถวเดียว — ใช้ตอนเลือกรุ่นย่อยโปรแกรม UV เสร็จ หรือตอนส่งไม่ผ่านแล้วต้อง
-   * คืนแถวกลับเป็น pending ให้ลองใหม่
-   */
   static async update(req, res) {
     try {
       const row = await withQueueLock(async (t) => {
@@ -299,7 +226,6 @@ class MachineQueueController {
         if (state === PENDING) patch.state = PENDING;
         if (program_name !== undefined) patch.program_name = program_name || null;
 
-        // omitNull ถูกเปิดไว้ทั้งโปรเจค การล้าง program_name เป็นค่าว่างจึงต้องปิดตรงนี้
         await row.update(patch, { omitNull: false, transaction: t });
         return row;
       });
@@ -309,16 +235,6 @@ class MachineQueueController {
     }
   }
 
-  /**
-   * DELETE /machine-queue/job/:jobId
-   *
-   * ล้างคิวของงานหนึ่งทิ้งทั้งหมด — ใช้ตอนยกเลิกงาน จบงาน หรือสั่งพิมพ์ใหม่
-   *
-   * ลบรวม done ด้วย ไม่ใช่เฉพาะที่ยังค้าง เพราะแถว done คือตัวกันไม่ให้จองเครื่องซ้ำ
-   * งานที่กดพิมพ์ใหม่จึงต้องล้างประวัติตรงนี้ก่อน ไม่งั้นจองเครื่องไม่ได้อีกเลย
-   *
-   * คิวที่เริ่มส่งแล้วแต่ยังไม่รู้ผลจะลบไม่ได้ ต้องตรวจเครื่องก่อน
-   */
   static async clearJob(req, res) {
     try {
       const removed = await withQueueLock(async (t) => {
@@ -338,8 +254,7 @@ class MachineQueueController {
     }
   }
 
-  // จดก่อนส่งจริง ถ้าโปรแกรมดับ แถวนี้จะไม่ถูกหยิบส่งซ้ำตอนเปิดใหม่
-  static async beginSend(req, res) {
+  static async beginSend(req, res) { // จด token ก่อนให้ฝั่ง C# ส่งเครื่อง
     try {
       const result = await withQueueLock(async (t) => {
           const row = await MachineQueue.findByPk(req.params.id, { transaction: t });
@@ -361,8 +276,7 @@ class MachineQueueController {
     } catch (err) { return reportError(req, res, err); }
   }
 
-  // เก็บประวัติกับผลคิวพร้อมกัน เรียกซ้ำด้วย token เดิมไม่เพิ่มประวัติซ้ำ
-  static async finishSend(req, res) {
+  static async finishSend(req, res) { // รับผลส่งแล้วบันทึกคิวกับประวัติ
     try {
       const result = await withQueueLock(async (t) => {
           const row = await MachineQueue.findByPk(req.params.id, { transaction: t });

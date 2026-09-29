@@ -4,39 +4,27 @@ using System.Text.Json;
 
 namespace InkjetOperator.Services;
 
-/// <summary>
-/// สั่งเครื่อง UV ผ่าน TCP (ค่าเริ่มต้นพอร์ต 10086) ด้วยคำสั่ง KEY
-///   KEY:85 + DATA = โหลดโปรแกรม (.uvdx)
-///   KEY:84 = หยุด
-///   KEY:83 = เริ่มพิมพ์
-/// เครื่องปิด connection หลังตอบทุกครั้ง จึงต้องเปิดใหม่ต่อ 1 คำสั่ง
-/// </summary>
 public class UvTcpService
 {
     private const int DefaultPort = 10086;
     private const int ConnectTimeoutMs = 5000;
     private const int ReadTimeoutMs = 3000;
 
-    // โหลดโปรแกรมเป็นงานหนักกว่าสั่งหยุด/เริ่ม เครื่องใช้เวลาตอบนานกว่ามาก
     private const int LoadReadTimeoutMs = 15000;
 
-    /// <summary>KEY:84 — สั่งหยุดเครื่อง</summary>
     public Task<(bool ok, string log)> StopAsync(string ip, int port)
         => SendKeyAsync(ip, port, new { KEY = 84 }, "สั่งหยุดเครื่อง", ReadTimeoutMs);
 
-    /// <summary>KEY:85 — โหลดโปรแกรมอย่างเดียว ไม่สั่งเริ่มพิมพ์ (ใช้ในหน้าทดสอบ)</summary>
     public Task<(bool ok, string log)> LoadAsync(string ip, int port, string programName)
         => SendKeyAsync(ip, port,
             new { KEY = 85, DATA = $"{programName}.uvdx" },
             $"โหลดโปรแกรม {programName}.uvdx",
             LoadReadTimeoutMs);
 
-    /// <summary>KEY:83 — สั่งเริ่มพิมพ์อย่างเดียว (ใช้ในหน้าทดสอบ)</summary>
     public Task<(bool ok, string log)> StartAsync(string ip, int port)
         => SendKeyAsync(ip, port, new { KEY = 83 }, "สั่งเริ่มพิมพ์", ReadTimeoutMs);
 
-    /// <summary>KEY:85 โหลดโปรแกรม รอให้เครื่องโหลดเสร็จ แล้ว KEY:83 สั่งเริ่มพิมพ์</summary>
-    public async Task<(bool ok, string log, string? startWarning)> LoadAndStartAsync(string ip, int port, string programName)
+    public async Task<(bool ok, string log, string? startWarning)> LoadAndStartAsync(string ip, int port, string programName) // โหลดข้อมูลก่อนสั่ง Start แล้วแยกผลสองขั้น
     {
         var (loadOk, loadLog) = await SendKeyAsync(
             ip, port,
@@ -48,13 +36,11 @@ public class UvTcpService
 
         await Task.Delay(1000); // เว้นหนึ่งวินาทีหลังโหลดก่อนสั่งเริ่ม
 
-        // ส่งข้อมูลสำเร็จตัดสินจาก Load ตาม flow หน้างาน ส่วน Start รายงานแยก
         var (startOk, startLog) = await SendKeyAsync(
             ip, port, new { KEY = 83 }, "สั่งเริ่มพิมพ์", ReadTimeoutMs); // สั่ง Start แล้วเก็บผลแยกจากการโหลดข้อมูล
         return (true, loadLog + startLog, startOk ? null : startLog.Trim()); // Load ผ่านถือว่าส่งข้อมูลแล้ว; Start ไม่ผ่านเก็บเป็นคำเตือน
     }
 
-    /// <summary>เปิด TCP ใหม่ ส่ง 1 คำสั่ง แล้วอ่านผลกลับ</summary>
     private static async Task<(bool ok, string log)> SendKeyAsync(
         string ip, int port, object command, string label, int readTimeoutMs)
     {
@@ -98,10 +84,6 @@ public class UvTcpService
         await stream.FlushAsync(timeout.Token);
     }
 
-    /// <summary>
-    /// อ่านผลกลับ แล้วแยกสาเหตุให้ชัดว่าล้มเพราะอะไร
-    /// รวมทุกกรณีเป็น "ล้มเหลว" เฉยๆ ทำให้หน้างานเดาไม่ออกว่าต้องแก้ที่ไหน
-    /// </summary>
     private static async Task<(int rs, string detail)> ReadJsonResponseAsync(
         NetworkStream stream, int timeoutMs)
     {

@@ -3,11 +3,6 @@ using InkjetOperator.Models;
 
 namespace InkjetOperator.Adapters;
 
-/// <summary>
-/// Stub adapter for inkjet 3 & 4 (different brand, TCP → SQLite .db3).
-/// Implements IInkjetAdapter so it can be used interchangeably with MkCompactAdapter.
-/// Actual implementation TBD — needs: exact table/column names from the machine's .db3 schema.
-/// </summary>
 public class SqliteInkjetAdapter : IInkjetAdapter
 {
     private readonly TcpManager _tcp;
@@ -21,7 +16,6 @@ public class SqliteInkjetAdapter : IInkjetAdapter
 
     public Task<bool> ConnectAsync()
     {
-        // TODO: Connect to inkjet machine via TCP, then open .db3 database
         return Task.FromResult(false);
     }
 
@@ -38,7 +32,6 @@ public class SqliteInkjetAdapter : IInkjetAdapter
 
     public Task<CommandResult> SuspendAsync()
     {
-        // TODO: SQL UPDATE to pause printing
         return Task.FromResult(new CommandResult
         {
             Command = "suspend",
@@ -49,7 +42,6 @@ public class SqliteInkjetAdapter : IInkjetAdapter
 
     public Task<CommandResult> ResumeAsync()
     {
-        // TODO: SQL UPDATE to resume printing
         return Task.FromResult(new CommandResult
         {
             Command = "resume",
@@ -60,7 +52,6 @@ public class SqliteInkjetAdapter : IInkjetAdapter
 
     public Task<CommandResult> ChangeProgramAsync(int programNumber)
     {
-        // TODO: SQL UPDATE to change active message/program
         return Task.FromResult(new CommandResult
         {
             Command = "change_prog",
@@ -71,7 +62,6 @@ public class SqliteInkjetAdapter : IInkjetAdapter
 
     public Task<CommandResult> SendTextBlockAsync(TextBlockDto block, int deviceBlock)
     {
-        // TODO: SQL UPDATE on the .db3 text content table
         return Task.FromResult(new CommandResult
         {
             Command = "text_block",
@@ -82,7 +72,6 @@ public class SqliteInkjetAdapter : IInkjetAdapter
 
     public Task<CommandResult> SendConfigAsync(InkjetConfigDto config)
     {
-        // TODO: SQL UPDATE for print configuration
         return Task.FromResult(new CommandResult
         {
             Command = "config",

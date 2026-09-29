@@ -13,10 +13,6 @@ public partial class BackendSettingUserControl : UserControl
         InitializeComponent();
         LoadSettings();
 
-        // ช่องโฟลเดอร์ backend เห็นเฉพาะโหมดทดสอบ
-        //
-        // เป็นที่อยู่ของโค้ดที่โปรแกรมสั่งรันเอง (ดู BackendLauncher) ไม่ใช่ค่าที่
-        // พนักงานหน้างานต้องแตะ ตั้งครั้งเดียวตอนติดตั้งแล้วไม่ต้องยุ่งอีก
         grpDev.Visible = StationService.IsDevMode;
 
         txtPcIp.TextChanged += (_, _) => MarkDirty(txtPcIp);
@@ -26,8 +22,6 @@ public partial class BackendSettingUserControl : UserControl
         btnSave.Click += BtnSave_Click;
         btnCancel.Click += (_, _) => { LoadSettings(); ResetColors(); };
 
-        // ไฟสถานะต้องตรงกับของจริง ไม่ใช่ภาพนิ่งตั้งแต่ตอนเปิดโปรแกรม
-        // กติกาทั้งหมดอยู่ที่ StatusRecheck
         Services.StatusRecheck.Wire(this, tmrAutoCheck, () => CheckStatusAsync(quiet: true));
     }
 
@@ -49,10 +43,6 @@ public partial class BackendSettingUserControl : UserControl
     {
         var ip = txtPcIp.Text.Trim();
 
-        // โฟลเดอร์ที่ชี้ผิดแย่กว่าไม่ได้ตั้งไว้เลย — ตอนเปิดโปรแกรมจะพยายามรัน
-        // แล้วค้างรอจนหมดเวลาโดยไม่มีอะไรบอกว่าผิดตรงไหน
-        //
-        // ว่างไว้ได้ แปลว่าไม่ให้โปรแกรมเปิด backend ให้
         var backend = txtBackendPath.Text.Trim();
         if (grpDev.Visible && backend.Length > 0 && !File.Exists(Path.Combine(backend, BackendEntryFile)))
         {
@@ -64,8 +54,6 @@ public partial class BackendSettingUserControl : UserControl
         CustomSettingsManager.Write("PC_IP", ip);
         _savedPcIp = ip;
 
-        // เขียนเฉพาะตอนที่ช่องนี้โผล่ให้เห็น ไม่งั้นการกด Save ที่เครื่องหน้างาน
-        // (ซึ่งไม่เห็นช่องนี้) จะล้างค่าที่ตั้งไว้ทิ้งโดยไม่มีใครตั้งใจ
         if (grpDev.Visible)
         {
             CustomSettingsManager.Write("BACKEND_PATH", backend);
@@ -76,7 +64,6 @@ public partial class BackendSettingUserControl : UserControl
         Notify.Success(this, "Saved.");
     }
 
-    /// <summary>ไฟล์ที่ <see cref="BackendLauncher"/> สั่งรัน — ใช้ตรวจว่าเลือกโฟลเดอร์ถูกไหม</summary>
     private const string BackendEntryFile = "index.js";
 
     private void BrowseBackendFolder()
@@ -98,10 +85,6 @@ public partial class BackendSettingUserControl : UserControl
         UpdateBackendPathStatus(dlg.SelectedPath);
     }
 
-    /// <summary>
-    /// บอกว่าโฟลเดอร์ที่เลือกใช้ได้จริงไหม — ตรวจจากไฟล์ที่ต้องมี ไม่ใช่แค่ชื่อโฟลเดอร์
-    /// ไม่ได้ตั้งไว้ก็ไม่ถือว่าผิด แค่แปลว่าต้องเปิด backend เอง
-    /// </summary>
     private void UpdateBackendPathStatus(string path)
     {
         path = path.Trim();
@@ -137,7 +120,6 @@ public partial class BackendSettingUserControl : UserControl
         lblPcBadge.Text = dlg.Value;
     }
 
-    /// <param name="quiet">true = รอบตรวจซ้ำอัตโนมัติ ไม่ต้องหมุนปุ่ม</param>
     public async Task CheckStatusAsync(bool quiet = false)
     {
         var ip = txtPcIp.Text.Trim();
@@ -180,7 +162,6 @@ public partial class BackendSettingUserControl : UserControl
             lblPcStatus.ForeColor = color;
     }
 
-    // รับเป็น Control เพราะช่อง IP เปลี่ยนไปใช้ IpAddressInput ที่ไม่ใช่ AntdUI.Input
     private void MarkDirty(Control input) =>
         input.BackColor = Color.LightYellow;
 

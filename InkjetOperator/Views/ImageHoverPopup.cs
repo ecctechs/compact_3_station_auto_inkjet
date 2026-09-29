@@ -4,11 +4,6 @@ using InkjetOperator.Theme;
 
 namespace InkjetOperator.Views;
 
-/// <summary>
-/// Borderless, non-activating popup that shows one or more marking reference
-/// images side-by-side in a single frame. Used as a hover preview next to the
-/// program-name fields in Order Detail.
-/// </summary>
 internal sealed class ImageHoverPopup : Form
 {
     private const int ThumbHeight = 280;
@@ -38,10 +33,8 @@ internal sealed class ImageHoverPopup : Form
         Controls.Add(_flow);
     }
 
-    // Do not steal focus from the detail window when shown on hover.
     protected override bool ShowWithoutActivation => true;
 
-    /// <summary>Load + show the given image files near <paramref name="screenLocation"/>.</summary>
     public void ShowImages(List<string> paths, Point screenLocation)
     {
         ClearImages();
@@ -73,7 +66,6 @@ internal sealed class ImageHoverPopup : Form
         Width = Math.Min(totalWidth + Padding.Horizontal, MaxTotalWidth);
         Height = ThumbHeight + _flow.Padding.Vertical + Padding.Vertical + 8;
 
-        // keep fully on the screen the anchor sits on
         var area = Screen.FromPoint(screenLocation).WorkingArea;
         int x = Math.Min(screenLocation.X, area.Right - Width);
         int y = Math.Min(screenLocation.Y, area.Bottom - Height);

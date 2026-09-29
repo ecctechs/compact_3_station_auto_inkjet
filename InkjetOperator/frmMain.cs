@@ -7,31 +7,21 @@ using InkjetOperator.Services;
 
 namespace InkjetOperator;
 
-/// <summary>
-/// Main operator form — polls backend for pending jobs, displays pattern detail,
-/// sends commands to inkjet adapters, posts results back.
-/// Follows Linx frmMain pattern: timer polling, Invoke() for thread safety,
-/// manager instances created directly (no DI).
-/// </summary>
 public partial class frmMain : Form
 {
-    // ── Hardware managers ──
     private Rs232Manager _rs232Ij1 = new();
     private Rs232Manager _rs232Ij2 = new();
     private TcpManager _tcpIj3 = new();
     private TcpManager _tcpIj4 = new();
     private PlcManager _plc = new();
 
-    // ── Adapters ──
     private MkCompactAdapter _adapterIj1;
     private MkCompactAdapter _adapterIj2;
     private SqliteInkjetAdapter _adapterIj3;
     private SqliteInkjetAdapter _adapterIj4;
 
-    // ── API ──
     private ApiClient _api;
 
-    // ── State ──
     private List<PrintJob> _pendingJobs = new();
     private ResolvedJobResponse? _currentResolved;
     private int _selectedJobId = -1;
@@ -48,13 +38,8 @@ public partial class frmMain : Form
         _api = new ApiClient("http://localhost:3000");
     }
 
-    // ════════════════════════════════════════
-    //  Form events
-    // ════════════════════════════════════════
-
     private void frmMain_Load(object sender, EventArgs e)
     {
-        // Populate COM port dropdowns
         string[] ports = SerialPort.GetPortNames();
         cmbCom1.Items.AddRange(ports);
         cmbCom2.Items.AddRange(ports);
@@ -75,10 +60,6 @@ public partial class frmMain : Form
         _tcpIj4.Disconnect();
         _plc.Disconnect();
     }
-
-    // ════════════════════════════════════════
-    //  Connection handlers
-    // ════════════════════════════════════════
 
     private void btnConnectRs232_Click(object sender, EventArgs e)
     {
@@ -144,10 +125,6 @@ public partial class frmMain : Form
         Log($"API URL set to: {url}");
     }
 
-    // ════════════════════════════════════════
-    //  Polling
-    // ════════════════════════════════════════
-
     private async void tmrPoll_Tick(object sender, EventArgs e)
     {
         tmrPoll.Stop(); // Prevent re-entry
@@ -174,10 +151,6 @@ public partial class frmMain : Form
     {
         tmrPoll_Tick(sender, e);
     }
-
-    // ════════════════════════════════════════
-    //  Job selection
-    // ════════════════════════════════════════
 
     private async void dgvJobs_SelectionChanged(object sender, EventArgs e)
     {
@@ -214,10 +187,6 @@ public partial class frmMain : Form
         dgvTextBlocks.DataSource = config.TextBlocks;
     }
 
-    // ════════════════════════════════════════
-    //  Send to devices
-    // ════════════════════════════════════════
-
     private async void btnSend_Click(object sender, EventArgs e)
     {
         if (_currentResolved == null || _selectedJobId < 0)
@@ -231,7 +200,6 @@ public partial class frmMain : Form
 
         try
         {
-            // Mark job as executing
             bool ok = await _api.ExecuteJobAsync(_selectedJobId);
             if (!ok)
             {
@@ -240,7 +208,6 @@ public partial class frmMain : Form
                 return;
             }
 
-            // Re-fetch resolved data (templates may depend on attempt number)
             var resolved = await _api.GetResolvedJobAsync(_selectedJobId);
             if (resolved?.Pattern == null)
             {
@@ -252,7 +219,6 @@ public partial class frmMain : Form
             _currentResolved = resolved;
             UpdateDetailPanel();
 
-            // Send to each inkjet by ordinal
             var configs = resolved.Pattern.InkjetConfigs ?? new List<InkjetConfigDto>();
             bool hasError = false;
 
@@ -281,7 +247,6 @@ public partial class frmMain : Form
                     break; // Sequential error — stop (csv_extractor.py line 281)
                 }
 
-                // 1. Change program
                 if (config.ProgramNumber.HasValue)
                 {
                     var r = await adapter.ChangeProgramAsync(config.ProgramNumber.Value);
@@ -292,7 +257,6 @@ public partial class frmMain : Form
                     if (!r.Success) { hasError = true; break; }
                 }
 
-                // 2. Send config
                 var cfgResult = await adapter.SendConfigAsync(config);
                 cfgResult.Ordinal = config.Ordinal;
                 commandResults.Add(cfgResult);
@@ -300,7 +264,6 @@ public partial class frmMain : Form
 
                 if (!cfgResult.Success) { hasError = true; break; }
 
-                // 3. Send text blocks (device blocks 6-10)
                 var blocks = config.TextBlocks ?? new List<TextBlockDto>();
                 foreach (var block in blocks.OrderBy(b => b.BlockNumber))
                 {
@@ -316,7 +279,6 @@ public partial class frmMain : Form
 
                 if (hasError) break;
 
-                // 4. Resume printing
                 var resumeResult = await adapter.ResumeAsync();
                 resumeResult.Ordinal = config.Ordinal;
                 commandResults.Add(resumeResult);
@@ -325,7 +287,6 @@ public partial class frmMain : Form
                 if (!resumeResult.Success) { hasError = true; break; }
             }
 
-            // Send conveyor speed + servo to PLC
             if (!hasError && resolved.Pattern.ConveyorSpeeds != null)
             {
                 var spd = resolved.Pattern.ConveyorSpeeds;
@@ -342,7 +303,6 @@ public partial class frmMain : Form
                 }
             }
 
-            // Post results back to backend
             var payload = new JobResultsPayload
             {
                 Success = !hasError,
@@ -370,10 +330,6 @@ public partial class frmMain : Form
         bool ok = await _api.RetryJobAsync(_selectedJobId);
         Log(ok ? $"Job {_selectedJobId} retried." : $"Retry failed for job {_selectedJobId}.");
     }
-
-    // ════════════════════════════════════════
-    //  Helpers
-    // ════════════════════════════════════════
 
     private IInkjetAdapter GetAdapterByOrdinal(int ordinal)
     {

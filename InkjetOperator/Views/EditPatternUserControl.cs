@@ -5,15 +5,8 @@ using InkjetOperator.Services;
 
 namespace InkjetOperator.Views;
 
-/// <summary>
-/// Edit Pattern page. Left: pattern list. Right: pattern detail form + transform
-/// rules (AntdUI.Table) + live preview + actions. Controls and layout live in the
-/// Designer file; this file holds the page interaction/data-binding logic
-/// (patterns come from <see cref="PatternStore"/>, preview from Pattern.Apply).
-/// </summary>
 public partial class EditPatternUserControl : UserControl
 {
-    // Enum <-> on-screen label maps (label = [Description] on TransformRuleType).
     private static readonly Dictionary<TransformRuleType, string> _labelByType = new();
     private static readonly Dictionary<string, TransformRuleType> _typeByLabel = new();
 
@@ -40,9 +33,6 @@ public partial class EditPatternUserControl : UserControl
         LoadData();
     }
 
-    // ── Setup ──────────────────────────────────────────────
-
-    /// <summary>Define the AntdUI.Table columns (data-binding config, required in code).</summary>
     private void ConfigureRuleColumns()
     {
         tblRules.Columns = new AntdUI.ColumnCollection
@@ -78,8 +68,6 @@ public partial class EditPatternUserControl : UserControl
         else LoadSelectedPattern();
     }
 
-    // ── Pattern selection ──────────────────────────────────
-
     private void LoadSelectedPattern()
     {
         _loading = true;
@@ -110,15 +98,12 @@ public partial class EditPatternUserControl : UserControl
         UpdatePreview();
     }
 
-    // ── Rules table ────────────────────────────────────────
-
     private void RebindTable()
     {
         tblRules.DataSource = null;
         tblRules.DataSource = _rows;
     }
 
-    /// <summary>Rebuild the selected pattern's Rules from the table rows.</summary>
     private void SyncRulesToPattern()
     {
         if (_selectedPattern == null) return;
@@ -169,8 +154,6 @@ public partial class EditPatternUserControl : UserControl
         return true;
     }
 
-    // ── Pattern add / delete / save ────────────────────────
-
     private void btnNewPattern_Click(object? sender, EventArgs e)
     {
         if (_patterns == null) return;
@@ -195,7 +178,6 @@ public partial class EditPatternUserControl : UserControl
     {
         if (_selectedPattern != null)
         {
-            // Write text fields back to the object (they are not two-way bound).
             _selectedPattern.Name = txtPatternName.Text;
             _selectedPattern.Description = txtDescription.Text;
             _selectedPattern.TestBarcode = txtLotTest.Text;
@@ -216,7 +198,6 @@ public partial class EditPatternUserControl : UserControl
         }
     }
 
-    /// <summary>Refresh the list text (e.g. after a rename) without losing the selection.</summary>
     private void RefreshPatternListDisplay()
     {
         var keep = _selectedPattern;
@@ -229,8 +210,6 @@ public partial class EditPatternUserControl : UserControl
         try { PatternStore.Save(); } catch { }
     }
 
-    // ── Preview ────────────────────────────────────────────
-
     private void UpdatePreview()
     {
         if (_loading || _selectedPattern == null) return;
@@ -242,8 +221,6 @@ public partial class EditPatternUserControl : UserControl
             ? block.Replace(_selectedPattern.Name, result)
             : result;
     }
-
-    // ── Helpers ────────────────────────────────────────────
 
     private static AntdUI.CellButton[] NewDeleteButtons() =>
         new[] { new AntdUI.CellButton("del", "Delete", AntdUI.TTypeMini.Error) { Radius = 6 } };
@@ -282,7 +259,6 @@ public partial class EditPatternUserControl : UserControl
     }
 }
 
-/// <summary>Row view-model bound to the AntdUI.Table (string cells + a delete button).</summary>
 internal class RuleRow : AntdUI.NotifyProperty
 {
     private string _from = "";
