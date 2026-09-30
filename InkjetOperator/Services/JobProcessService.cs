@@ -16,10 +16,10 @@ public static class JobProcessService
     {
         var steps = MarkingMethodService.Resolve(markingMethod).Steps; // ดูจำนวนรอบเครื่องจากแผนพิมพ์
 
-        foreach (var machine in steps.Distinct(StringComparer.OrdinalIgnoreCase))
+        foreach (var machine in steps.Distinct(StringComparer.OrdinalIgnoreCase)) // ตรวจเครื่องแต่ละชนิดในแผนเพียงครั้งเดียว
         {
             int rounds = steps.Count(s => Same(s, machine)); // นับว่าต้องเข้าเครื่องนี้กี่รอบ
-            if (rounds < 2) continue;
+            if (rounds < 2) continue; // เครื่องที่ใช้รอบเดียวไม่ใช่งานระหว่างรอบ
 
             int sent = commands?.Count(c => c.Success && Same(c.Command, machine)) ?? 0; // นับรอบที่มีประวัติส่งสำเร็จแล้ว
             if (sent > 0 && sent < rounds) return true; // ทำไปแล้วบางรอบ จึงเป็นช่วงออกนอกไลน์

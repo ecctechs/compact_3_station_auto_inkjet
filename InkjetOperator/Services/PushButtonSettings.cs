@@ -34,9 +34,9 @@ public sealed class PushButtonSettings
     {
         if (StationService.IsSt3) yield break; // ST3 ไม่อ่านปุ่มซ้ำ เพราะ ST1 อ่านทั้งสามปุ่มให้แล้ว
 
-        foreach (var (station, address) in Addresses())
+        foreach (var (station, address) in Addresses()) // ไล่ค่าตั้งปุ่มของแต่ละสถานี
         {
-            if (address.Length == 0) continue;
+            if (address.Length == 0) continue; // ข้ามปุ่มที่ไม่ได้กำหนด address
             yield return (station, address, MachineFor(station)); // ผูกบิตแต่ละปุ่มกับเครื่องที่ต้องปล่อยคิว
         }
     }
@@ -65,11 +65,11 @@ public sealed class PushButtonSettings
 
     public void Save() // บันทึกค่าปุ่มแล้วแจ้งตัวอ่านให้โหลดใหม่
     {
-        CustomSettingsManager.Write("PUSHBTN_ENABLED", Enabled ? "1" : "0");
-        CustomSettingsManager.Write("PUSHBTN_ADDRESS_ST1", AddressSt1.Trim().ToUpperInvariant());
-        CustomSettingsManager.Write("PUSHBTN_ADDRESS_ST2", AddressSt2.Trim().ToUpperInvariant());
-        CustomSettingsManager.Write("PUSHBTN_ADDRESS_ST3", AddressSt3.Trim().ToUpperInvariant());
-        CustomSettingsManager.Write("PUSHBTN_POLL_MS", Clamp(PollMs.ToString()).ToString());
+        CustomSettingsManager.Write("PUSHBTN_ENABLED", Enabled ? "1" : "0"); // บันทึกเปิดหรือปิดการอ่านปุ่ม
+        CustomSettingsManager.Write("PUSHBTN_ADDRESS_ST1", AddressSt1.Trim().ToUpperInvariant()); // บันทึกบิตปุ่มของ MK
+        CustomSettingsManager.Write("PUSHBTN_ADDRESS_ST2", AddressSt2.Trim().ToUpperInvariant()); // บันทึกบิตปุ่มของ UV1
+        CustomSettingsManager.Write("PUSHBTN_ADDRESS_ST3", AddressSt3.Trim().ToUpperInvariant()); // บันทึกบิตปุ่มของ UV2
+        CustomSettingsManager.Write("PUSHBTN_POLL_MS", Clamp(PollMs.ToString()).ToString()); // บันทึกรอบอ่านโดยจำกัดช่วงเวลาที่ใช้ได้
         Saved?.Invoke(this, EventArgs.Empty); // แจ้งตัวฟังปุ่มให้ใช้ค่าที่เพิ่งบันทึกโดยไม่ต้องเปิดใหม่
     }
 

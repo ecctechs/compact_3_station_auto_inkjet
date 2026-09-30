@@ -105,7 +105,7 @@ public partial class OrderListUserControl : UserControl
         tblOrders.CellButtonClick += TblOrders_CellButtonClick; // รับปุ่มเริ่ม จบ และรายละเอียดในแต่ละแถว
 
         tblOrders.CustomSort += CompareCellText; // เรียงวันที่ตามเวลา ไม่เทียบเป็นข้อความ
-        tblOrders.SetRowStyle += TblOrders_SetRowStyle;
+        tblOrders.SetRowStyle += TblOrders_SetRowStyle; // ผูกการกำหนดรูปแบบของแต่ละแถว
 
         dtpHistoryRange.ValueChanged += async (_, _) => await RefreshDataAsync(force: true); // เปลี่ยนช่วงวันแล้วอ่าน History ใหม่
         btnSearchDate.Click += async (_, _) => await RefreshDataAsync(force: true); // ค้นประวัติตามช่วงวันที่เลือก
@@ -166,28 +166,28 @@ public partial class OrderListUserControl : UserControl
 
         bool dev = StationService.IsDevMode; // ปุ่มจำลองใช้เฉพาะโหมดทดสอบ
 
-        btnSimDelayMk.Visible = dev;
-        btnSimDelayUv1.Visible = dev;
-        btnSimDelayUv2.Visible = dev;
+        btnSimDelayMk.Visible = dev; // แสดงปุ่มจำลอง MK เฉพาะโหมดทดสอบ
+        btnSimDelayUv1.Visible = dev; // แสดงปุ่มจำลอง UV1 เฉพาะโหมดทดสอบ
+        btnSimDelayUv2.Visible = dev; // แสดงปุ่มจำลอง UV2 เฉพาะโหมดทดสอบ
 
-        btnSimDelayMk.Click += (_, _) => StartDelayedPushTest("MK");
-        btnSimDelayUv1.Click += (_, _) => StartDelayedPushTest("UV1");
-        btnSimDelayUv2.Click += (_, _) => StartDelayedPushTest("UV2");
+        btnSimDelayMk.Click += (_, _) => StartDelayedPushTest("MK"); // จำลองปุ่ม MK หลังครบเวลาหน่วง
+        btnSimDelayUv1.Click += (_, _) => StartDelayedPushTest("UV1"); // จำลองปุ่ม UV1 หลังครบเวลาหน่วง
+        btnSimDelayUv2.Click += (_, _) => StartDelayedPushTest("UV2"); // จำลองปุ่ม UV2 หลังครบเวลาหน่วง
 
-        btnSimPushMk.Visible = dev;
-        btnSimPushUv1.Visible = dev;
-        btnSimPushUv2.Visible = dev;
+        btnSimPushMk.Visible = dev; // แสดงปุ่มจำลอง MK เฉพาะโหมดทดสอบ
+        btnSimPushUv1.Visible = dev; // แสดงปุ่มจำลอง UV1 เฉพาะโหมดทดสอบ
+        btnSimPushUv2.Visible = dev; // แสดงปุ่มจำลอง UV2 เฉพาะโหมดทดสอบ
 
-        btnSimPushMk.Click += async (_, _) => await OnPushButtonPressedAsync("MK");
-        btnSimPushUv1.Click += async (_, _) => await OnPushButtonPressedAsync("UV1");
-        btnSimPushUv2.Click += async (_, _) => await OnPushButtonPressedAsync("UV2");
+        btnSimPushMk.Click += async (_, _) => await OnPushButtonPressedAsync("MK"); // จำลองกดปุ่ม MK ทันที
+        btnSimPushUv1.Click += async (_, _) => await OnPushButtonPressedAsync("UV1"); // จำลองกดปุ่ม UV1 ทันที
+        btnSimPushUv2.Click += async (_, _) => await OnPushButtonPressedAsync("UV2"); // จำลองกดปุ่ม UV2 ทันที
 
-        _pushButton.Trouble += (_, error) =>
+        _pushButton.Trouble += (_, error) => // รับเหตุอ่านปุ่มมีปัญหาหรือกลับมาใช้ได้
         {
-            if (IsDisposed) return;
+            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
-            if (error == null) Notify.Success(this, "ปุ่มกดหน้างาน — กลับมาอ่านค่าได้แล้ว");
-            else Notify.Warn(this, $"ปุ่มกดหน้างาน — อ่านค่าจาก PLC ไม่ได้ ({error})");
+            if (error == null) Notify.Success(this, "ปุ่มกดหน้างาน — กลับมาอ่านค่าได้แล้ว"); // แจ้งว่า PLC กลับมาอ่านปุ่มได้แล้ว
+            else Notify.Warn(this, $"ปุ่มกดหน้างาน — อ่านค่าจาก PLC ไม่ได้ ({error})"); // แสดงเหตุที่อ่านปุ่มจาก PLC ไม่ได้
         };
     }
 
@@ -220,7 +220,7 @@ public partial class OrderListUserControl : UserControl
     }
 
     private bool CanReleaseNow(string machine) => // ตรวจว่าเครื่องนี้ไม่มีงานส่งหรือปล่อยคิวค้างอยู่
-        !_pushHandling.Contains(machine) && !_dispatchingMachines.ContainsKey(machine) && !MachineBusy.IsBusy(machine);
+        !_pushHandling.Contains(machine) && !_dispatchingMachines.ContainsKey(machine) && !MachineBusy.IsBusy(machine); // ต้องไม่มีทั้งการปล่อยคิวและการส่งของเครื่องนี้
 
     private void ShowBlockedPress()
     {
@@ -232,45 +232,45 @@ public partial class OrderListUserControl : UserControl
 
     private async Task OnPushButtonPressedAsync(string machine) // ปล่อยเครื่องแล้วให้ ST1 รับคิวถัดไป
     {
-        if (_api == null || IsDisposed) return;
+        if (_api == null || IsDisposed) return; // หยุดเมื่อไม่มี Backend หรือหน้าถูกปิด
         if (!CanReleaseNow(machine)) return; // เครื่องนี้ยังทำรายการอยู่ ไม่รับการกดซ้ำ
         _pushHandling.Add(machine); // ล็อกการกดซ้ำเฉพาะเครื่องนี้
-        try
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
 
             var (queue, queueError) = await _api.GetMachineQueueAsync(); // อ่านคิวล่าสุดก่อนปล่อยเครื่อง
             if (queueError != null) // อ่านคิวไม่ได้ จึงไม่เดาว่าจะปล่อยงานไหน
             {
-                Notify.Warn(this, $"อ่านคิว {machine} ไม่สำเร็จ — {queueError}");
-                return;
+                Notify.Warn(this, $"อ่านคิว {machine} ไม่สำเร็จ — {queueError}"); // แจ้งเหตุอ่านคิวไม่ได้ก่อนหยุดปล่อย
+                return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
             }
             var holder = queue.FirstOrDefault(r => r.Machine == machine && r.State == "active"); // อ่านว่าตอนนี้กำลังปล่อยคิวหมายเลขใด
 
             var (release, error) = await _api.ReleaseMachineAsync( // ขอปล่อยคิวปัจจุบันและรับคิวถัดไปจาก Backend
                 machine, holder?.Id, StationService.HoldForNextRound); // ส่งเลขคิวเดิมไปกันกดซ้ำแล้วข้ามงานถัดไป
-            if (IsDisposed) return;
+            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
             if (release == null) // Backend ไม่คืนผลการปล่อยเครื่อง
             {
-                Notify.Warn(this, $"ปล่อยเครื่อง {machine} ไม่สำเร็จ — {error}");
-                return;
+                Notify.Warn(this, $"ปล่อยเครื่อง {machine} ไม่สำเร็จ — {error}"); // แจ้งเหตุที่ Backend ไม่ยอมปล่อยเครื่อง
+                return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
             }
 
             if (release.Next != null) // มีงานถัดไปได้รับสิทธิ์ใช้เครื่องแล้ว
             {
                 if (StationService.IsSt3) // ที่ ST3 ให้รอ ST1 เป็นผู้ส่ง
-                    Notify.Success(this, $"{machine} เข้าคิวแล้ว · ST1 จะส่งงานถัดไปให้");
-                else
+                    Notify.Success(this, $"{machine} เข้าคิวแล้ว · ST1 จะส่งงานถัดไปให้"); // บอกว่าต้องรอ ST1 ส่งคิวใหม่
+                else // กรณีไม่เข้าเงื่อนไขก่อนหน้า
                     await ProcessMachineQueueAsync(machineFilter: machine); // ส่งคิวถัดไปของเครื่องที่เพิ่งปล่อยทันที
             }
-            else
+            else // กรณีไม่เข้าเงื่อนไขก่อนหน้า
             {
-                Notify.Success(this, $"{machine} ว่างแล้ว · ไม่มีงานรอคิว");
+                Notify.Success(this, $"{machine} ว่างแล้ว · ไม่มีงานรอคิว"); // แจ้งว่าเครื่องไม่มีงานรอแล้ว
                 await ResetHeadPositionAsync(machine); // ขอให้ PLC พาหัวพิมพ์กลับตำแหน่งเริ่มต้น
             }
 
         }
-        finally
+        finally // ทำส่วนนี้เสมอ แม้ขั้นก่อนหน้ามีปัญหา
         {
             _pushHandling.Remove(machine); // เปิดรับปุ่มเครื่องนี้อีกครั้ง โดยไม่รอเครื่องอื่น
         }
@@ -343,17 +343,17 @@ public partial class OrderListUserControl : UserControl
         if (!string.Equals(machine, "MK", StringComparison.OrdinalIgnoreCase)) return; // รีเซ็ตตำแหน่งเฉพาะ MK; UV1 / UV2 ข้ามขั้นนี้
 
         var results = await PlcOrderService.ResetPositionAsync(_api); // สั่ง PLC คืนตำแหน่งหัว MK ผ่านค่าในระบบ
-        if (IsDisposed || results.Count == 0) return;
+        if (IsDisposed || results.Count == 0) return; // ไม่มีจอหรือไม่มีผล Home ให้รายงาน
 
-        var failed = results
-            .Where(r => r.Error != null || r.ReadBack != r.Value)
-            .Select(r => r.Error != null
-                ? $"{r.Name} {r.Error}"
-                : $"{r.Name} ส่ง {r.Value} อ่านกลับได้ {r.ReadBack?.ToString() ?? "ไม่ได้"}")
-            .ToList();
+        var failed = results // รวบรวมรายการคืน Home ที่มีปัญหา
+            .Where(r => r.Error != null || r.ReadBack != r.Value) // เลือกทั้งข้อผิดพลาดและค่าที่อ่านกลับไม่ตรง
+            .Select(r => r.Error != null // แยกเหตุคำสั่งผิดพลาดจากเหตุค่ากลับไม่ตรง
+                ? $"{r.Name} {r.Error}" // ใช้เหตุผิดพลาดของ register นั้น
+                : $"{r.Name} ส่ง {r.Value} อ่านกลับได้ {r.ReadBack?.ToString() ?? "ไม่ได้"}") // แสดงค่าที่ส่งเทียบกับค่าที่อ่านได้
+            .ToList(); // เก็บผลที่กรองแล้วเป็นรายการ
         if (failed.Count == 0) return; // แจ้งเครื่องว่างไว้แล้ว ไม่ต้องซ้อนข้อความสำเร็จ
 
-        Notify.Warn(this, "เลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้นไม่สำเร็จ — " + string.Join(" · ", failed));
+        Notify.Warn(this, "เลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้นไม่สำเร็จ — " + string.Join(" · ", failed)); // รวมเหตุที่หัว MK กลับ Home ไม่สำเร็จ
     }
 
     private static bool SentAlready(ResolvedJobResponse resolved, string step) =>
@@ -395,89 +395,89 @@ public partial class OrderListUserControl : UserControl
 
     private async Task RefreshDataAsync(bool force = false) // อ่าน Job และคิวล่าสุดมาแสดงบนจอ
     {
-        if (_api == null || IsDisposed) return;
-        ApplyProcessTabs();
-        _refreshRequested |= force;
+        if (_api == null || IsDisposed) return; // หยุดเมื่อไม่มี Backend หรือหน้าถูกปิด
+        ApplyProcessTabs(); // ปรับแท็บ Online และ Offline ตามค่าล่าสุด
+        _refreshRequested |= force; // จำคำขอรีเฟรชบังคับไว้ระหว่างรอ
 
-        if (_sending) return;
+        if (_sending) return; // ยังมีงานส่งอยู่ ให้รอรอบถัดไป
 
-        if (_refreshing) return;
+        if (_refreshing) return; // กำลังอ่านรอบก่อนอยู่ ไม่อ่านซ้อน
 
-        force |= _refreshRequested;
-        _refreshRequested = false;
-        _refreshing = true;
-        try
+        force |= _refreshRequested; // รวมคำขอที่ค้างไว้เข้ากับรอบนี้
+        _refreshRequested = false; // รับคำขอรีเฟรชที่ค้างมาทำแล้ว
+        _refreshing = true; // ล็อกไม่ให้ตัวจับเวลาเริ่มอ่านซ้อน
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
-            DateTime? fromUtc = null, toUtc = null;
-            if (_showHistory && TryGetDateRange(out var from, out var to))
+            DateTime? fromUtc = null, toUtc = null; // เริ่มจากไม่จำกัดช่วงวัน
+            if (_showHistory && TryGetDateRange(out var from, out var to)) // History มีช่วงวันที่เลือกไว้
             {
-                fromUtc = ToUtcFromThai(from);
-                toUtc = ToUtcFromThai(to);
+                fromUtc = ToUtcFromThai(from); // แปลงวันเริ่มจากเวลาไทยเป็น UTC
+                toUtc = ToUtcFromThai(to); // แปลงวันสิ้นสุดจากเวลาไทยเป็น UTC
             }
 
-            var (jobs, error) = await _api.GetAllJobsAsync(100, fromUtc, toUtc);
-            if (IsDisposed) return;
-            NotePollResult(error == null);
-            if (_sending) { _refreshRequested = true; return; }
-            if (error != null)
+            var (jobs, error) = await _api.GetAllJobsAsync(100, fromUtc, toUtc); // ขอรายการ Job พร้อมตัวกรองวัน
+            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
+            NotePollResult(error == null); // บันทึกว่ารอบอ่าน Backend ผ่านหรือไม่
+            if (_sending) { _refreshRequested = true; return; } // มีงานส่งแทรกเข้ามา ให้เก็บรอรีเฟรชทีหลัง
+            if (error != null) // มีรายละเอียดข้อผิดพลาดส่งกลับมา
             {
-                tblOrders.EmptyText = $"Error: {error}";
-                return;
+                tblOrders.EmptyText = $"Error: {error}"; // แสดงเหตุอ่านข้อมูลไม่ได้ในพื้นที่ตาราง
+                return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
             }
-            _allJobs = jobs;
+            _allJobs = jobs; // เก็บ Job ชุดใหม่ไว้ใช้กรองบนจอ
 
-            await RecoverAbandonedRemoteStartsAsync();
-            if (IsDisposed) return;
-            if (_sending) { _refreshRequested = true; return; }
+            await RecoverAbandonedRemoteStartsAsync(); // ตรวจคำขอฝากส่งเก่าที่ค้างอยู่
+            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
+            if (_sending) { _refreshRequested = true; return; } // มีงานส่งแทรกเข้ามา ให้เก็บรอรีเฟรชทีหลัง
 
-            await ProcessRemoteStartsAsync();
-            if (IsDisposed) return;
-            if (_sending) { _refreshRequested = true; return; }
+            await ProcessRemoteStartsAsync(); // ให้ ST1 จัดการคำขอส่งจาก ST3
+            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
+            if (_sending) { _refreshRequested = true; return; } // มีงานส่งแทรกเข้ามา ให้เก็บรอรีเฟรชทีหลัง
 
-            var (queue, queueError) = await _api.GetMachineQueueAsync();
-            if (IsDisposed) return;
-            if (_sending) { _refreshRequested = true; return; }
-            if (queueError == null)
+            var (queue, queueError) = await _api.GetMachineQueueAsync(); // อ่านคิวเครื่องล่าสุดประกอบรายการงาน
+            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
+            if (_sending) { _refreshRequested = true; return; } // มีงานส่งแทรกเข้ามา ให้เก็บรอรีเฟรชทีหลัง
+            if (queueError == null) // อ่านคิวผ่านจึงนำไปใช้ส่งต่อ
             {
-                bool changed = await ProcessMachineQueueAsync(queue);
-                if (IsDisposed) return;
-                if (_sending) { _refreshRequested = true; return; }
-                await RefreshStationBarAsync(changed ? null : queue);
+                bool changed = await ProcessMachineQueueAsync(queue); // ตรวจคิวที่ได้สิทธิ์แล้วและยังรอส่ง
+                if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
+                if (_sending) { _refreshRequested = true; return; } // มีงานส่งแทรกเข้ามา ให้เก็บรอรีเฟรชทีหลัง
+                await RefreshStationBarAsync(changed ? null : queue); // อัปเดตแถบเครื่องด้วยคิวหลังประมวลผล
             }
-            if (IsDisposed) return;
-            if (_sending) { _refreshRequested = true; return; }
+            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
+            if (_sending) { _refreshRequested = true; return; } // มีงานส่งแทรกเข้ามา ให้เก็บรอรีเฟรชทีหลัง
 
-            await ShowRemoteErrorsAsync();
-            if (IsDisposed) return;
-            if (_sending) { _refreshRequested = true; return; }
+            await ShowRemoteErrorsAsync(); // แสดงเหตุผิดพลาดที่ฝากกลับจาก ST1
+            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
+            if (_sending) { _refreshRequested = true; return; } // มีงานส่งแทรกเข้ามา ให้เก็บรอรีเฟรชทีหลัง
 
             var signature = BuildSignature(jobs) + QueueSignature(); // คิวเปลี่ยนอย่างเดียวก็ต้องอัปเดตสถานะบนจอ
-            if (!force && signature == _lastSignature) return;
+            if (!force && signature == _lastSignature) return; // ข้อมูลไม่เปลี่ยนและไม่ได้บังคับ ไม่วาดซ้ำ
 
-            _lastSignature = signature;
-            RebindTable();
-            await UpdateProcessingAsync();
+            _lastSignature = signature; // จำลายเซ็นข้อมูลที่แสดงรอบนี้
+            RebindTable(); // กรองและผูกข้อมูลใหม่เข้าตาราง
+            await UpdateProcessingAsync(); // อัปเดตส่วนงานที่กำลังผลิต
         }
-        catch (Exception ex)
+        catch (Exception ex) // รับรายละเอียดข้อผิดพลาดไว้แจ้งต่อ
         {
-            if (!IsDisposed)
-                tblOrders.EmptyText = $"Error: {ex.Message}";
+            if (!IsDisposed) // ทำต่อเมื่อหน้ายังเปิดอยู่
+                tblOrders.EmptyText = $"Error: {ex.Message}"; // แสดงเหตุอ่านข้อมูลไม่ได้ในพื้นที่ตาราง
         }
-        finally
+        finally // ทำส่วนนี้เสมอ แม้ขั้นก่อนหน้ามีปัญหา
         {
-            _refreshing = false;
-            SchedulePendingRefresh();
+            _refreshing = false; // จบการอ่านรอบนี้ เปิดให้รอบใหม่เริ่มได้
+            SchedulePendingRefresh(); // นัดอ่านรายการที่ค้างรอรีเฟรช
         }
     }
 
-    private void SchedulePendingRefresh()
+    private void SchedulePendingRefresh() // นัดรีเฟรชที่ถูกเลื่อนระหว่างส่งงาน
     {
-        if (!_refreshRequested || _refreshScheduled || _refreshing || _sending || IsDisposed || !IsHandleCreated) return;
-        _refreshScheduled = true;
-        BeginInvoke(new Action(async () =>
+        if (!_refreshRequested || _refreshScheduled || _refreshing || _sending || IsDisposed || !IsHandleCreated) return; // รอจนมีคำขอและหน้าพร้อม โดยไม่ซ้อนงานเดิม
+        _refreshScheduled = true; // จำว่านัดรีเฟรชไว้แล้ว
+        BeginInvoke(new Action(async () => // ให้เธรดหน้าจอทำรีเฟรชในจังหวะถัดไป
         {
-            _refreshScheduled = false;
-            if (!IsDisposed && _refreshRequested) await RefreshDataAsync(force: true);
+            _refreshScheduled = false; // รับงานที่นัดไว้แล้ว ปลดสถานะรอนัด
+            if (!IsDisposed && _refreshRequested) await RefreshDataAsync(force: true); // ยังมีคำขอและหน้ายังอยู่จึงอ่านใหม่
         }));
     }
 
@@ -514,18 +514,18 @@ public partial class OrderListUserControl : UserControl
     {
         bool enabled = StationService.ShowProcessTabs; // ใช้ตัวเลือกหน้างานกำหนดว่าจอนี้เห็น Online/Offline ไหม
         bool changed = enabled != _processTabsEnabled; // ตรวจว่าต้องเปลี่ยนแท็บหรือคอลัมน์จากค่าครั้งก่อนหรือไม่
-        _processTabsEnabled = enabled;
+        _processTabsEnabled = enabled; // จำสถานะเปิดแท็บย่อยรอบล่าสุด
 
-        ShowProcessTabButtons();
-        if (!changed) return;
+        ShowProcessTabButtons(); // ปรับการแสดงปุ่มแท็บตามค่าตั้ง
+        if (!changed) return; // สถานะเหมือนเดิม ไม่ต้องปรับรายการซ้ำ
 
         if (!enabled && _processFilter != null) // ปิดตัวเลือกขณะอยู่แท็บย่อย ต้องกลับ List
         {
-            SwitchTab(false);
-            return;
+            SwitchTab(false); // กลับแท็บ List เมื่อปิดตัวเลือกแท็บย่อย
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
-        if (_allJobs.Count > 0) RebindTable();
+        if (_allJobs.Count > 0) RebindTable(); // มีข้อมูลอยู่แล้ว ให้กรองตารางใหม่
     }
 
     private bool _processTabsEnabled;
@@ -537,32 +537,32 @@ public partial class OrderListUserControl : UserControl
         btnTabOffline.Visible = show;
     }
 
-    private void SwitchTab(bool showHistory, string? process = null)
+    private void SwitchTab(bool showHistory, string? process = null) // สลับหน้า List, History หรือกรอง Process
     {
-        _showHistory = showHistory;
-        _processFilter = showHistory ? null : process;
+        _showHistory = showHistory; // จำว่ากำลังแสดง History หรือไม่
+        _processFilter = showHistory ? null : process; // History ไม่ใช้ตัวกรอง Online หรือ Offline
 
-        ButtonStyles.SetSelected(btnTabList, !showHistory && _processFilter == null);
-        ButtonStyles.SetSelected(btnTabOnline, _processFilter == JobProcessService.Online);
-        ButtonStyles.SetSelected(btnTabOffline, _processFilter == JobProcessService.Offline);
-        ButtonStyles.SetSelected(btnTabHistory, showHistory);
-        ShowProcessTabButtons();
+        ButtonStyles.SetSelected(btnTabList, !showHistory && _processFilter == null); // ทำเครื่องหมาย List เมื่อไม่เลือกตัวกรองย่อย
+        ButtonStyles.SetSelected(btnTabOnline, _processFilter == JobProcessService.Online); // ทำเครื่องหมายแท็บ Online ที่เลือก
+        ButtonStyles.SetSelected(btnTabOffline, _processFilter == JobProcessService.Offline); // ทำเครื่องหมายแท็บ Offline ที่เลือก
+        ButtonStyles.SetSelected(btnTabHistory, showHistory); // ทำเครื่องหมายแท็บ History ที่เลือก
+        ShowProcessTabButtons(); // ปรับการแสดงปุ่มแท็บตามค่าตั้ง
 
-        lblDateFilter.Visible = showHistory;
-        dtpHistoryRange.Visible = showHistory;
-        btnSearchDate.Visible = showHistory;
-        btnClearDate.Visible = showHistory;
-        if (!showHistory) dtpHistoryRange.Value = null;
+        lblDateFilter.Visible = showHistory; // แสดงหัวข้อตัวกรองวันเฉพาะ History
+        dtpHistoryRange.Visible = showHistory; // แสดงช่องเลือกช่วงวันเฉพาะ History
+        btnSearchDate.Visible = showHistory; // แสดงปุ่มค้นหาวันเฉพาะ History
+        btnClearDate.Visible = showHistory; // แสดงปุ่มล้างวันเฉพาะ History
+        if (!showHistory) dtpHistoryRange.Value = null; // กลับ List แล้วล้างช่วงวันที่ค้างไว้
 
-        _selectedJobId = null;
-        ShowPreviewSides(null, null);
+        _selectedJobId = null; // ล้าง Job ที่เคยเลือกในแท็บก่อน
+        ShowPreviewSides(null, null); // ล้างรูปตัวอย่างงานก่อนเปลี่ยนรายการ
 
-        pnlProcessing.Visible = !showHistory;
+        pnlProcessing.Visible = !showHistory; // ส่วนงานกำลังผลิตแสดงเฉพาะ List
 
-        ApplyTabColumns(showHistory);
+        ApplyTabColumns(showHistory); // ปรับคอลัมน์ให้เหมาะกับแท็บที่เลือก
 
-        RebindTable();
-        _ = UpdateProcessingAsync();
+        RebindTable(); // กรองและผูกข้อมูลใหม่เข้าตาราง
+        _ = UpdateProcessingAsync(); // อัปเดตส่วนงานที่กำลังผลิต
     }
 
     private static int StatusRank(PrintJob job) =>
@@ -572,36 +572,36 @@ public partial class OrderListUserControl : UserControl
 
     private void RebindTable() // กรองและเติมรายการตาม Station กับแท็บที่เลือก
     {
-        var statuses = _showHistory ? HistoryStatuses : ActiveStatuses;
-        int station = StationService.Current;
+        var statuses = _showHistory ? HistoryStatuses : ActiveStatuses; // เลือกสถานะงานตาม List หรือ History
+        int station = StationService.Current; // อ่าน Station ของจอนี้
 
-        bool showEveryStation = _showHistory && !StationService.IsSt3;
+        bool showEveryStation = _showHistory && !StationService.IsSt3; // History ที่ไม่ใช่ ST3 ดูงานทุก Station ได้
 
-        var filtered = _allJobs
-            .Where(j => statuses.Contains(j.Status, StringComparer.OrdinalIgnoreCase))
-            .Where(j => showEveryStation
-                || MarkingMethodService.VisibleAt(station, j.PlanRouting?.MarkingMethod))
-            .Where(j => _processFilter == null || JobProcessService.Current(j) == _processFilter)
-            .OrderBy(StatusRank)
-            .ThenByDescending(j => j.CreatedAt ?? DateTime.MinValue)
-            .ToList();
+        var filtered = _allJobs // เริ่มกรองจาก Job ที่อ่านมา
+            .Where(j => statuses.Contains(j.Status, StringComparer.OrdinalIgnoreCase)) // เก็บเฉพาะสถานะของแท็บปัจจุบัน
+            .Where(j => showEveryStation // History ที่ดูทุก Station ไม่ต้องกรองรหัสเครื่อง
+                || MarkingMethodService.VisibleAt(station, j.PlanRouting?.MarkingMethod)) // รายการปกติใช้กฎการเห็นงานของ Station
+            .Where(j => _processFilter == null || JobProcessService.Current(j) == _processFilter) // กรอง Online หรือ Offline เมื่อเลือกแท็บย่อย
+            .OrderBy(StatusRank) // เรียงกลุ่มตามลำดับความสำคัญของสถานะ
+            .ThenByDescending(j => j.CreatedAt ?? DateTime.MinValue) // ในกลุ่มเดียวกันให้งานใหม่ขึ้นก่อน
+            .ToList(); // เก็บผลที่กรองแล้วเป็นรายการ
 
-        bool dateFiltered = _showHistory && TryGetDateRange(out _, out _);
+        bool dateFiltered = _showHistory && TryGetDateRange(out _, out _); // จำว่า History กำลังใช้ตัวกรองวัน
 
-        var rows = filtered.Select(j => ToRow(j, _showHistory)).ToList();
-        tblOrders.EmptyText = _allJobs.Count == 0
-            ? "No orders"
-            : _processFilter != null && rows.Count == 0
-                ? $"ไม่มีงาน {_processFilter}"
-            : dateFiltered && rows.Count == 0
-                ? "ไม่มีงานในช่วงวันที่ที่เลือก"
-                : $"No orders (total {_allJobs.Count}, filter: {string.Join("/", statuses.Select(JobStatusDisplay.Text))})";
-        _displayRows = rows;
-        tblOrders.DataSource = rows;
-        ReapplySort();
-        RestoreSelection();
+        var rows = filtered.Select(j => ToRow(j, _showHistory)).ToList(); // แปลง Job เป็นแถวข้อมูลบนตาราง
+        tblOrders.EmptyText = _allJobs.Count == 0 // เลือกข้อความตอนตารางไม่มีงาน
+            ? "No orders" // ไม่มี Job เลยให้แสดงข้อความว่างทั่วไป
+            : _processFilter != null && rows.Count == 0 // ตรวจว่ากรอง Process แล้วไม่เหลืองาน
+                ? $"ไม่มีงาน {_processFilter}" // ระบุว่าไม่พบงานของ Process ที่เลือก
+            : dateFiltered && rows.Count == 0 // ตรวจว่ากรองช่วงวันแล้วไม่เหลืองาน
+                ? "ไม่มีงานในช่วงวันที่ที่เลือก" // แจ้งว่าไม่มีงานในช่วงวันที่เลือก
+                : $"No orders (total {_allJobs.Count}, filter: {string.Join("/", statuses.Select(JobStatusDisplay.Text))})"; // ระบุจำนวนงานเดิมและสถานะที่กำลังกรอง
+        _displayRows = rows; // เก็บแถวที่แสดงไว้ใช้กับการเลือกงาน
+        tblOrders.DataSource = rows; // นำข้อมูลแถวไปแสดงในตาราง
+        ReapplySort(); // เรียงตามคอลัมน์ที่ผู้ใช้เลือกไว้
+        RestoreSelection(); // คืนการเลือกงานเดิมถ้ายังอยู่ในรายการ
 
-        ApplyStartLoading();
+        ApplyStartLoading(); // อัปเดตปุ่มหมุนให้ตรงกับ Job ที่เริ่ม
     }
 
     private int? _startingJobId;
@@ -611,7 +611,7 @@ public partial class OrderListUserControl : UserControl
     private void ShowStartLoading(int? jobId) // แสดงการรอที่ปุ่มเริ่มของงานที่เลือก
     {
         _startingJobId = jobId; // จำแถวที่กำลังเริ่ม เพื่อไม่ให้ไปหมุนผิดงาน
-        ApplyStartLoading();
+        ApplyStartLoading(); // อัปเดตปุ่มหมุนให้ตรงกับ Job ที่เริ่ม
     }
 
     private void ApplyStartLoading()
@@ -677,19 +677,19 @@ public partial class OrderListUserControl : UserControl
         }
     }
 
-    private async Task<ResolvedJobResponse?> LoadJobAsync(int jobId, string busyText)
+    private async Task<ResolvedJobResponse?> LoadJobAsync(int jobId, string busyText) // โหลดรายละเอียด Job พร้อมข้อความรอเมื่อช้า
     {
         var task = _api!.GetResolvedJobAsync(jobId); // ขอข้อมูล Job พร้อม Pattern, UV และประวัติส่งจาก Backend
         if (await Task.WhenAny(task, Task.Delay(SlowLoadMs)) == task) return await task; // ถ้าอ่านทันภายในเวลาที่กำหนด ใช้ข้อมูลได้เลยโดยไม่ขึ้นหน้ารอ
 
         ShowSending(busyText); // ขึ้นข้อความรอเมื่ออ่านรายละเอียดช้า
-        try
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
-            return await task;
+            return await task; // รอรายละเอียด Job ให้ครบก่อนส่งต่อ
         }
-        finally
+        finally // ทำส่วนนี้เสมอ แม้ขั้นก่อนหน้ามีปัญหา
         {
-            if (!IsDisposed && !_sending) ShowSending(null);
+            if (!IsDisposed && !_sending) ShowSending(null); // ปิดข้อความรอเมื่อไม่มีงานส่งค้าง
         }
     }
 
@@ -698,37 +698,37 @@ public partial class OrderListUserControl : UserControl
         if (buttonId == "detail") // ปุ่มรายละเอียดเปิดข้อมูลของแถวที่เลือก
         {
             var resolved = await LoadJobAsync(row.Id, $"กำลังโหลดข้อมูล · {JobName(row.Id)}"); // อ่านรายละเอียดล่าสุดก่อนเปิดหน้าต่าง
-            if (IsDisposed) return;
-            if (resolved == null)
+            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
+            if (resolved == null) // อ่านรายละเอียด Job ไม่ได้
             {
-                Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลด Detail ของ {JobName(row.Id)} ได้");
-                return;
+                Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลด Detail ของ {JobName(row.Id)} ได้"); // แจ้งว่าอ่านรายละเอียดของงานนี้ไม่ได้
+                return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
             }
             await ShowDetailDialogAsync(resolved); // เปิด Order Detail แล้วรอให้ผู้ใช้ปิด
         }
-        else if (buttonId == "start")
+        else if (buttonId == "start") // ผู้ใช้กดปุ่มเริ่มงาน
         {
-            if (_startingJobId != null) return;
+            if (_startingJobId != null) return; // ยังมี Job ที่กำลังเริ่มอยู่ ไม่รับกดซ้อน
 
             ShowStartLoading(row.Id); // ให้ปุ่มเริ่มหมุนตั้งแต่โหลดงานจนจบการส่ง
-            try
+            try // ดักข้อผิดพลาดของขั้นนี้
             {
                 await StartJobAsync(row.Id); // เริ่ม Job ของแถวที่กด
             }
-            finally
+            finally // ทำส่วนนี้เสมอ แม้ขั้นก่อนหน้ามีปัญหา
             {
                 ShowStartLoading(null); // คืนปุ่มเริ่มให้กดได้ทั้งกรณีสำเร็จและยกเลิก
             }
         }
-        else if (buttonId == "complete")
+        else if (buttonId == "complete") // ผู้ใช้กดปุ่มจบงาน
         {
             await CompleteJobAsync(row.Id); // ตรวจและบันทึกจบ Job ที่เลือก
         }
-        else if (buttonId == "cancel")
+        else if (buttonId == "cancel") // ผู้ใช้กดปุ่มยกเลิกงาน
         {
             await CancelJobAsync(row.Id); // ยกเลิก Job ของแถวที่กด
         }
-        else if (buttonId == "restore")
+        else if (buttonId == "restore") // ผู้ใช้กดนำงานจาก History กลับมา
         {
             await RestoreJobAsync(row.Id); // คืน Job เดิมเป็น Waiting
         }
@@ -757,80 +757,80 @@ public partial class OrderListUserControl : UserControl
 
     private async Task RestoreJobAsync(int jobId) // นำ Job เดิมจาก History กลับมารอเริ่ม
     {
-        if (_api == null) return;
+        if (_api == null) return; // ยังไม่มีตัวเรียก Backend ให้หยุดก่อน
 
         if (!Confirm.Ask(this, "ยืนยันนำกลับมาพิมพ์ใหม่", // ให้ผู้ใช้ยืนยันก่อนเปลี่ยนงานใน History กลับมารอ
-                $"{JobName(jobId)}\n\n"
-                + "งานจะกลับไปอยู่ในรายการงาน รอกดเริ่มงานอีกครั้ง\n\n"
-                + "ยืนยันหรือไม่?"))
-            return;
+                $"{JobName(jobId)}\n\n" // ระบุ Job ที่จะนำกลับในกล่องยืนยัน
+                + "งานจะกลับไปอยู่ในรายการงาน รอกดเริ่มงานอีกครั้ง\n\n" // บอกว่านำกลับแล้วต้องกดเริ่มใหม่
+                + "ยืนยันหรือไม่?")) // ถามยืนยันการนำ Job กลับ
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
 
         var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Waiting"); // คืนสถานะรอ โดยยังเก็บประวัติส่งเดิม
-        if (IsDisposed) return;
+        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
-        if (!ok)
+        if (!ok) // ตรวจกรณีทำรายการไม่ผ่าน
         {
-            Notify.ErrorModal(this, "นำกลับมาไม่สำเร็จ", err ?? "ไม่สามารถเปลี่ยนสถานะได้");
-            return;
+            Notify.ErrorModal(this, "นำกลับมาไม่สำเร็จ", err ?? "ไม่สามารถเปลี่ยนสถานะได้"); // แจ้งเหตุที่คืนสถานะ Waiting ไม่ได้
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
         await _api.SetRemoteStartAsync(jobId, requested: false); // ล้างคำขอส่งเก่าของ ST3
-        if (IsDisposed) return;
+        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
-        Notify.Success(this, $"{JobName(jobId)} กลับไปอยู่ในรายการงานแล้ว");
+        Notify.Success(this, $"{JobName(jobId)} กลับไปอยู่ในรายการงานแล้ว"); // แจ้งว่า Job กลับมารอใน List แล้ว
         await RefreshDataAsync(force: true); // อ่านรายการใหม่ให้เห็นงานที่นำกลับ
     }
 
     private async Task CancelJobAsync(int jobId) // ยืนยันยกเลิกงานแล้วให้ Backend ล้างคิว
     {
-        if (_api == null) return;
+        if (_api == null) return; // ยังไม่มีตัวเรียก Backend ให้หยุดก่อน
 
         if (!Confirm.Ask(this, "ยืนยันยกเลิกงาน", // ให้ผู้ใช้ยืนยันก่อนย้ายงานออกจากรายการผลิต
-                $"ยกเลิก {JobName(jobId)}\n\n"
-                + "งานจะถูกย้ายออกจากรายการไปอยู่ในประวัติ\n"
-                + "ถ้าต้องการทำต่อ กดพิมพ์ใหม่ได้ที่แท็บ History\n\n"
-                + "ยืนยันหรือไม่?"))
-            return;
+                $"ยกเลิก {JobName(jobId)}\n\n" // ระบุงานที่จะยกเลิกให้ตรวจอีกครั้ง
+                + "งานจะถูกย้ายออกจากรายการไปอยู่ในประวัติ\n" // บอกว่างานย้ายไปอยู่ History
+                + "ถ้าต้องการทำต่อ กดพิมพ์ใหม่ได้ที่แท็บ History\n\n" // บอกทางนำงานกลับมาทำต่อ
+                + "ยืนยันหรือไม่?")) // ถามยืนยันก่อนเปลี่ยนเป็น Cancel
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
 
-        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Cancel");
-        if (IsDisposed) return;
+        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Cancel"); // ขอเปลี่ยนสถานะและล้างคิวที่ Backend
+        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
-        if (!ok)
+        if (!ok) // ตรวจกรณีทำรายการไม่ผ่าน
         {
-            Notify.ErrorModal(this, "ยกเลิกงานไม่สำเร็จ", err ?? "ไม่สามารถบันทึกสถานะยกเลิกได้");
-            return;
+            Notify.ErrorModal(this, "ยกเลิกงานไม่สำเร็จ", err ?? "ไม่สามารถบันทึกสถานะยกเลิกได้"); // แจ้งเหตุที่ยกเลิก Job ไม่ได้
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
-        await _api.SetRemoteStartAsync(jobId, requested: false);
-        if (IsDisposed) return;
+        await _api.SetRemoteStartAsync(jobId, requested: false); // ล้างคำขอฝากส่งของ Job นี้
+        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
-        Notify.Success(this, $"ยกเลิก {JobName(jobId)} แล้ว");
-        await RefreshDataAsync(force: true);
+        Notify.Success(this, $"ยกเลิก {JobName(jobId)} แล้ว"); // แจ้งยืนยันผลยกเลิกงาน
+        await RefreshDataAsync(force: true); // อ่าน Job และคิวใหม่โดยไม่ใช้ข้อมูลเดิม
     }
 
     private int _sendOperations;
     private bool _sending => _sendOperations > 0;
 
-    private void EndSending()
+    private void EndSending() // ปิดรอบส่งและรายงานผลที่สะสมไว้
     {
-        _sendOperations--;
-        if (_sending || IsDisposed) return;
-        ShowSending(null);
-        if (!_showingSendReport)
+        _sendOperations--; // ลดจำนวนชุดที่กำลังส่ง
+        if (_sending || IsDisposed) return; // ยังมีชุดอื่นส่งอยู่หรือปิดหน้าแล้ว ให้หยุดก่อน
+        ShowSending(null); // ปิดข้อความกำลังส่ง
+        if (!_showingSendReport) // ยังไม่มีชุดรายงานผลเปิดอยู่
         {
-            _showingSendReport = true;
-            try
+            _showingSendReport = true; // ล็อกไม่ให้เปิดรายงานผลซ้อน
+            try // ดักข้อผิดพลาดของขั้นนี้
             {
-                while (!_sending && _sendReports.Count > 0 && !IsDisposed)
+                while (!_sending && _sendReports.Count > 0 && !IsDisposed) // ทยอยรายงานเมื่อไม่มีงานส่งค้าง
                 {
-                    var lines = _sendReports.ToArray();
-                    _sendReports.Clear();
-                    Notify.Result(this, "ผลส่งงาน", lines);
+                    var lines = _sendReports.ToArray(); // แยกผลรอบนี้ออกจากรายการสะสม
+                    _sendReports.Clear(); // ล้างที่เก็บเพื่อรับผลชุดถัดไป
+                    Notify.Result(this, "ผลส่งงาน", lines); // แสดงผลรวมการส่งรอบนี้
                 }
             }
-            finally { _showingSendReport = false; }
+            finally { _showingSendReport = false; } // ปลดสถานะรายงานผลเสมอเมื่อจบ
         }
-        SchedulePendingRefresh();
+        SchedulePendingRefresh(); // นัดอ่านรายการที่ค้างรอรีเฟรช
     }
 
     private static bool NotMyTurnYet(PrintJob job)
@@ -861,14 +861,14 @@ public partial class OrderListUserControl : UserControl
 
     private async Task StartJobAsync(int jobId) // ตรวจงาน จองคิว แล้วเริ่มส่งตาม Station
     {
-        if (_api == null || _sending) return;
+        if (_api == null || _sending) return; // Backend ยังไม่พร้อมหรือส่งอยู่ ให้รอก่อน
 
         var resolved = await LoadJobAsync(jobId, $"กำลังโหลดข้อมูล · {JobName(jobId)}"); // อ่านรายละเอียด Job ล่าสุดก่อนเริ่ม
-        if (IsDisposed) return;
-        if (resolved == null)
+        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
+        if (resolved == null) // อ่านรายละเอียด Job ไม่ได้
         {
-            Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลดข้อมูล {JobName(jobId)} ได้");
-            return;
+            Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลดข้อมูล {JobName(jobId)} ได้"); // แจ้งว่าอ่านรายละเอียด Job ไม่ได้
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
         var method = resolved.PlanRouting?.MarkingMethod; // อ่านรหัสวิธีพิมพ์ของงาน
@@ -876,60 +876,60 @@ public partial class OrderListUserControl : UserControl
 
         if (!MarkingMethodService.CanStartAt(station, method)) // ตรวจว่างานรหัสนี้เริ่มที่ Station ปัจจุบันได้หรือไม่
         {
-            Notify.WarnModal(this, "เริ่มงานที่สถานีนี้ไม่ได้",
-                $"{JobName(jobId)} — marking {Method(method)}\n\n"
-                + ((method ?? "").Trim() == "10"
-                    ? "งาน marking 10 เริ่มได้ที่ ST3 เท่านั้น"
-                    : "งานนี้เริ่มได้ที่ ST1 เท่านั้น"));
-            return;
+            Notify.WarnModal(this, "เริ่มงานที่สถานีนี้ไม่ได้", // เตือนว่า Station นี้ไม่มีสิทธิ์เริ่มงาน
+                $"{JobName(jobId)} — marking {Method(method)}\n\n" // ระบุ Job และรหัสพิมพ์ที่ถูกกันไว้
+                + ((method ?? "").Trim() == "10" // แยกข้อความสำหรับรหัส 10
+                    ? "งาน marking 10 เริ่มได้ที่ ST3 เท่านั้น" // ชี้ให้เริ่มงาน 10 จาก ST3
+                    : "งานนี้เริ่มได้ที่ ST1 เท่านั้น")); // งานรหัสอื่นให้เริ่มจาก ST1
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
         var plan = MarkingMethodService.Resolve(method); // แปลงรหัสเป็นเครื่องและลำดับพิมพ์
         if (plan.NoCase) // รหัสนี้ยังไม่มีแผนที่รองรับ
         {
-            Notify.WarnModal(this, "แจ้งเตือน",
-                $"{JobName(jobId)} ใช้รหัส marking ที่ไม่มีอยู่จริง ({Method(method)})");
-            return;
+            Notify.WarnModal(this, "แจ้งเตือน", // แจ้งปัญหารหัส Marking
+                $"{JobName(jobId)} ใช้รหัส marking ที่ไม่มีอยู่จริง ({Method(method)})"); // บอกงานและรหัสที่ไม่มีแผนรองรับ
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
         if (plan.Steps.Count == 0) // ไม่มีขั้นส่งเครื่อง เช่น marking 00
         {
             await StartWithoutSendingAsync(jobId, method); // เปลี่ยนเป็นกำลังผลิตอย่างเดียวสำหรับงานไม่มีขั้นส่ง
-            return;
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
         var uvPicks = PickUvPrograms(plan, resolved); // เลือกโปรแกรม UV ที่จอคนกด ก่อนจองคิว
         if (uvPicks == null || IsDisposed) return; // ยกเลิกเลือกโปรแกรมแล้วไม่จองคิว
 
         if (!await ConfirmStartAsync(jobId, resolved, plan, uvPicks)) return; // ให้ตรวจชื่อโปรแกรมและคิวก่อนเริ่มจริง
-        if (IsDisposed) return;
+        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
         if (!StationService.IsSt3 && await BlockedByUnreachableAsync(jobId, plan, resolved)) return; // ST1 ต้องต่อเครื่องที่ใช้ให้ครบ ส่วน ST3 ฝากให้ ST1 ส่ง
-        if (IsDisposed) return;
+        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
         var (queued, queueError) = await _api.EnqueueMachinesAsync( // จองคิวของ Job พร้อมชื่อโปรแกรมที่เลือก
             jobId, QueueItemsFor(plan.Steps, uvPicks)); // แยกเลขรอบเมื่อแผนใช้เครื่องเดิมซ้ำ
-        if (IsDisposed) return;
+        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
         if (!queued) // จองคิวไม่ผ่าน จึงยังไม่ส่งเครื่อง
         {
-            Notify.ErrorModal(this, "จองเครื่องไม่สำเร็จ",
-                $"{JobName(jobId)} ยังไม่ได้เข้าคิว" + Environment.NewLine + Environment.NewLine
-                + (queueError ?? "ติดต่อ backend ไม่ได้"));
-            return;
+            Notify.ErrorModal(this, "จองเครื่องไม่สำเร็จ", // แจ้งว่าจองคิวเครื่องไม่ผ่าน
+                $"{JobName(jobId)} ยังไม่ได้เข้าคิว" + Environment.NewLine + Environment.NewLine // ระบุว่า Job ยังไม่ได้เข้าคิว
+                + (queueError ?? "ติดต่อ backend ไม่ได้")); // แนบเหตุจาก Backend หรือเหตุที่ติดต่อไม่ได้
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
         if (station == StationService.St3) // ST3 ขอสิทธิ์คิวแล้วให้ ST1 เป็นผู้ส่งเครื่อง
         {
             var errors = await ClaimRemoteQueueAsync(jobId, plan.Steps); // ST3 ขอให้หัวคิวเป็น active เพื่อให้ ST1 รับไปส่ง
-            if (IsDisposed) return;
-            if (errors.Count == 0)
-                Notify.Success(this, $"{JobName(jobId)} เข้าคิวแล้ว · ST1 จะส่งตามลำดับคิว");
-            else
-                Notify.Warn(this, $"{JobName(jobId)} เข้าคิวแล้ว แต่ยืนยันการเริ่มคิวไม่ได้ · "
-                    + string.Join(" · ", errors) + " · ตรวจสถานะคิวก่อนกดเริ่มอีกครั้ง");
-            await RefreshDataAsync(force: true);
-            return;
+            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
+            if (errors.Count == 0) // ขอสิทธิ์คิวครบโดยไม่พบปัญหา
+                Notify.Success(this, $"{JobName(jobId)} เข้าคิวแล้ว · ST1 จะส่งตามลำดับคิว"); // แจ้งว่า ST1 จะรับส่งตามคิว
+            else // กรณีไม่เข้าเงื่อนไขก่อนหน้า
+                Notify.Warn(this, $"{JobName(jobId)} เข้าคิวแล้ว แต่ยืนยันการเริ่มคิวไม่ได้ · " // แจ้งว่าจองแล้วแต่ยังยืนยันสิทธิ์คิวไม่ได้
+                    + string.Join(" · ", errors) + " · ตรวจสถานะคิวก่อนกดเริ่มอีกครั้ง"); // รวมปัญหาและให้ตรวจคิวก่อนเริ่มซ้ำ
+            await RefreshDataAsync(force: true); // อ่าน Job และคิวใหม่โดยไม่ใช้ข้อมูลเดิม
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
         await SendQueuedForJobAsync(jobId, resolved, $"เริ่มงาน {JobName(jobId)}"); // ST1 ขอสิทธิ์เครื่องแล้วส่งข้อมูลของ Job ที่กด
@@ -937,28 +937,28 @@ public partial class OrderListUserControl : UserControl
 
     private async Task<List<string>> ClaimRemoteQueueAsync(int jobId, List<string> steps) // ST3 ขอสิทธิ์คิวไว้ให้ ST1 รับไปส่ง
     {
-        var errors = new List<string>();
+        var errors = new List<string>(); // เตรียมเก็บปัญหาที่พบในรอบนี้
         foreach (var machine in steps.Distinct(StringComparer.OrdinalIgnoreCase)) // ขอเครื่องละหนึ่งครั้ง แม้แผนมีหลายรอบ
         {
             var (claim, error) = await _api!.ClaimMachineAsync(machine, jobId); // ให้ Backend ตรวจผู้ถือเครื่องและลำดับ FIFO
-            if (IsDisposed) break;
-            if (error != null || claim == null)
-                errors.Add($"{machine}: {error ?? "ไม่ได้รับผลการขอคิว"}");
+            if (IsDisposed) break; // ปิดหน้าแล้วให้หยุดวนรายการ
+            if (error != null || claim == null) // คำขอสิทธิ์ผิดพลาดหรือไม่มีคำตอบ
+                errors.Add($"{machine}: {error ?? "ไม่ได้รับผลการขอคิว"}"); // เก็บปัญหาการขอสิทธิ์แยกเครื่อง
             else if (claim.Claimed == null && claim.Reason is not ("busy" or "queued")) // เครื่องติดงานหรือมีคนจองก่อนถือว่ารอคิวตามปกติ
-                errors.Add($"{machine}: ไม่พบคิวที่พร้อมเริ่ม");
+                errors.Add($"{machine}: ไม่พบคิวที่พร้อมเริ่ม"); // เก็บเหตุว่าเครื่องยังไม่มีคิวพร้อมเริ่ม
         }
-        return errors;
+        return errors; // ส่งปัญหาทั้งชุดให้ผู้เริ่มงานดู
     }
 
     private async Task<bool> ConfirmStartAsync( // ให้ตรวจแผนและคิวก่อนยืนยันเริ่มงาน
-        int jobId, ResolvedJobResponse resolved, MarkingPlan plan,
-        Dictionary<string, string> uvPicks)
+        int jobId, ResolvedJobResponse resolved, MarkingPlan plan, // รับ Job รายละเอียด และแผนส่งเครื่อง
+        Dictionary<string, string> uvPicks) // รับโปรแกรม UV ที่ผู้ใช้เลือกไว้
     {
         var (rows, _) = await _api!.GetMachineQueueAsync(); // อ่านคิวไว้สรุปให้ผู้ใช้ดูก่อนเริ่มงาน
-        if (IsDisposed) return false;
+        if (IsDisposed) return false; // ปิดหน้าแล้วไม่เปิดกล่องยืนยันต่อ
 
-        return Confirm.Ask(this, "ยืนยันเริ่มงาน",
-            BuildStartPreview(jobId, resolved, plan, rows, uvPicks));
+        return Confirm.Ask(this, "ยืนยันเริ่มงาน", // ใช้คำตอบผู้ใช้ตัดสินว่าจะเริ่มหรือยกเลิก
+            BuildStartPreview(jobId, resolved, plan, rows, uvPicks)); // สร้างสรุป Job เครื่อง คิว และโปรแกรมก่อนส่ง
     }
 
     private string BuildStartPreview(
@@ -1049,32 +1049,32 @@ public partial class OrderListUserControl : UserControl
     {
         var picks = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase); // เก็บโปรแกรมที่เลือกแยก UV1 กับ UV2
 
-        foreach (var step in plan.Steps.Distinct(StringComparer.OrdinalIgnoreCase))
+        foreach (var step in plan.Steps.Distinct(StringComparer.OrdinalIgnoreCase)) // เลือกโปรแกรมให้แต่ละเครื่องเพียงครั้งเดียว
         {
-            if (UvNumberOf(step) is not int uvNumber) continue;
+            if (UvNumberOf(step) is not int uvNumber) continue; // ขั้นที่ไม่ใช่ UV ไม่ต้องเลือกโปรแกรม
 
             var uvRow = resolved.UvJobData?.FirstOrDefault(r => // หาแถว UV ของเครื่องที่จะส่ง
-                string.Equals(r.Machine, step, StringComparison.OrdinalIgnoreCase));
+                string.Equals(r.Machine, step, StringComparison.OrdinalIgnoreCase)); // เลือกข้อมูลให้ตรงชื่อเครื่องในแผน
 
             if (string.IsNullOrWhiteSpace(uvRow?.ProgramName)) continue; // ไม่มีชื่อโปรแกรมให้เลือก จะตรวจความพร้อมอีกทีตอนส่ง
 
-            var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber);
-            if (docFolder == null) continue;
+            var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber); // อ่านโฟลเดอร์โปรแกรมของ UV นี้
+            if (docFolder == null) continue; // ไม่มีโฟลเดอร์ให้ข้ามการเลือกในรอบนี้
 
             var pick = UvProgramResolver.Resolve(uvRow.ProgramName, docFolder, this); // ค้นไฟล์หรือเปิดให้เลือกรุ่นย่อยที่จอนี้
-            if (pick.Program == null) return null;
+            if (pick.Program == null) return null; // ผู้ใช้ไม่เลือกโปรแกรม ให้ยกเลิกชุดเลือก
 
-            var uvName = UvSettingsManager.Read(
-                uvNumber == 1 ? "UV1_NAME" : "UV2_NAME", $"UV-00{uvNumber}");
+            var uvName = UvSettingsManager.Read( // อ่านชื่อเครื่อง UV ตามค่าตั้ง
+                uvNumber == 1 ? "UV1_NAME" : "UV2_NAME", $"UV-00{uvNumber}"); // เลือกชุดชื่อให้ตรงกับ UV1 หรือ UV2
 
-            if (pick.IsDefault &&
-                !UvProgramResolver.ConfirmDefault(uvRow.ProgramName, uvName, this))
-                return null;
+            if (pick.IsDefault && // ตรวจว่าโปรแกรมที่ได้เป็นตัวสำรอง
+                !UvProgramResolver.ConfirmDefault(uvRow.ProgramName, uvName, this)) // ให้ยืนยันว่าจะใช้สำรองแทนชื่อในงาน
+                return null; // จบโดยไม่มีข้อมูลให้ใช้ต่อ
 
             picks[step] = pick.Program; // จำชื่อไฟล์ไว้ส่งไปกับคิวเครื่อง
         }
 
-        return picks;
+        return picks; // ส่งโปรแกรมที่เลือกแยกตาม UV กลับไป
     }
 
     private static string OrDash(string? text) =>
@@ -1087,7 +1087,7 @@ public partial class OrderListUserControl : UserControl
     ];
 
     private static List<MachineQueueItem> QueueItemsFor( // สร้างคิวเครื่องและแยกรอบของงาน
-        List<string> steps, Dictionary<string, string> uvPicks)
+        List<string> steps, Dictionary<string, string> uvPicks) // รับแผนเครื่องและชื่อโปรแกรมที่เลือก
     {
         var rounds = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase); // นับเลขรอบแยกตามเครื่อง
         var items = new List<MachineQueueItem>(); // เตรียมรายการคิวที่จะส่งไป Backend
@@ -1095,80 +1095,80 @@ public partial class OrderListUserControl : UserControl
         foreach (var step in steps) // สร้างคิวตามทุกขั้นในแผน
         {
             rounds[step] = rounds.TryGetValue(step, out int used) ? used + 1 : 1; // เครื่องเดิมปรากฏซ้ำให้เป็นรอบถัดไป เช่น MK รอบ 2
-            items.Add(new MachineQueueItem
+            items.Add(new MachineQueueItem // เพิ่มคิวหนึ่งขั้นตามแผน
             {
-                Machine = step,
-                Round = rounds[step],
+                Machine = step, // ระบุเครื่องที่จะใช้ในแถวคิว
+                Round = rounds[step], // ระบุรอบของเครื่องนี้
 
                 ProgramName = uvPicks.GetValueOrDefault(step), // ตอนส่งจริงใช้ชื่อนี้โดยไม่ถามเลือกซ้ำ
             });
         }
 
-        return items;
+        return items; // ส่งรายการคิวให้เรียก Backend
     }
 
     private async Task SendQueuedForJobAsync(int jobId, ResolvedJobResponse resolved, string title) // ขอเครื่องที่ว่างแล้วรวมเป็นชุดส่ง
     {
-        if (_sending) return;
-        _sendOperations++;
-        var lines = new List<Notify.ResultLine>();
-        try
+        if (_sending) return; // ยังมีงานส่งอยู่ ให้รอรอบถัดไป
+        _sendOperations++; // นับชุดส่งที่กำลังทำงานเพิ่ม
+        var lines = new List<Notify.ResultLine>(); // เตรียมเก็บผลแต่ละขั้นไว้รายงานรวม
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
-            var (rows, error) = await _api!.GetMachineQueueAsync();
-            if (IsDisposed) return;
-            if (error != null) { Notify.Error(this, error); return; }
+            var (rows, error) = await _api!.GetMachineQueueAsync(); // อ่านคิวเครื่องล่าสุดจาก Backend
+            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
+            if (error != null) { Notify.Error(this, error); return; } // อ่านคิวไม่ได้ ให้แจ้งแล้วหยุดรอบส่ง
             var plan = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod).Steps; // ใช้ลำดับเครื่องของงานเพื่อจัดชุดที่จะส่ง
             var machines = rows.Where(r => r.PrintJobsId == jobId && r.State == "pending") // เอาเฉพาะคิวรอของ Job ที่กดเริ่ม
-                .Select(r => r.Machine).Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select(r => r.Machine).Distinct(StringComparer.OrdinalIgnoreCase) // เอารายชื่อเครื่องโดยตัดชื่อที่ซ้ำ
                 .OrderBy(m => PlanOrderOf(plan, m)).ToList(); // จัดรายการให้ตรงกับแผนพิมพ์ของงาน
-            var ready = new List<PreparedQueueSend>();
+            var ready = new List<PreparedQueueSend>(); // เตรียมรวมคิวที่พร้อมส่ง
             bool anyQueued = rows.Any(r => r.PrintJobsId == jobId && r.State == "active"); // จำว่ามีคิวได้รับสิทธิ์แล้ว เพื่อไม่ล้างทิ้งผิดจังหวะ
             foreach (var machine in machines) // ขอสิทธิ์ทีละเครื่อง แล้วรวมเครื่องที่พร้อมส่งเป็นชุด
             {
                 var (claim, claimError) = await _api.ClaimMachineAsync(machine, jobId); // ขอสิทธิ์เฉพาะคิวของ Job นี้ ไม่หยิบงานอื่น
-                if (IsDisposed) return;
+                if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
                 if (claimError != null) // ขอสิทธิ์เครื่องแล้ว Backend แจ้งข้อผิดพลาด
                 {
-                    anyQueued = true;
+                    anyQueued = true; // ขอสิทธิ์ไม่ชัดเจน ให้ถือว่าคิวอาจยังอยู่
                     lines.Add(Notify.Bad($"{machine}: {claimError}")); // เก็บเหตุที่ขอใช้เครื่องนี้ไม่ได้
                 }
                 else if (claim?.Claimed is { } row) ready.Add(new(row, resolved)); // รวมคิวที่ได้เครื่องพร้อมข้อมูลของ Job เดียวกัน
-                else
+                else // กรณีไม่เข้าเงื่อนไขก่อนหน้า
                 {
-                    anyQueued = true;
-                    lines.Add(Notify.Note(claim?.Reason == "queued"
-                        ? $"{machine}: มีงานเข้าคิวก่อน รอตามลำดับคิว"
-                        : $"{machine}: เครื่องไม่ว่าง เข้าคิวรอไว้แล้ว"));
+                    anyQueued = true; // เครื่องไม่ว่างหรือยังไม่ถึงคิว ให้คงคิวไว้
+                    lines.Add(Notify.Note(claim?.Reason == "queued" // แยกข้อความเหตุที่ต้องรอเครื่อง
+                        ? $"{machine}: มีงานเข้าคิวก่อน รอตามลำดับคิว" // บอกว่ามีงานมาก่อน ห้ามแซงลำดับ
+                        : $"{machine}: เครื่องไม่ว่าง เข้าคิวรอไว้แล้ว")); // บอกว่าเครื่องติดงานและเก็บคิวรอแล้ว
                 }
             }
             var results = await SendPreparedBatchAsync(ready); // ส่งเครื่องที่พร้อมพร้อมกัน โดยแยกผลแต่ละเครื่อง
-            lines.AddRange(results.SelectMany(r => r.Lines));
+            lines.AddRange(results.SelectMany(r => r.Lines)); // รวมผลของเครื่องที่ส่งพร้อมกัน
             anyQueued |= results.Any(r => r.HeldForReview); // คิวที่ยังไม่รู้ผลต้องถือไว้ ไม่ล้างหรือส่งซ้ำ
             if (!results.Any(r => r.Sent) && !anyQueued && !PrintedBefore(resolved)) // ล้างได้เมื่อไม่มีผลส่งเดิม ไม่มีคิวรอ และไม่มีคิวต้องตรวจ
             {
                 var (cleared, clearError) = await _api.ClearMachineQueueAsync(jobId, onlyUnsent: true); // ขอให้ Backend ล้างเฉพาะงานที่ทุกคิวยังไม่ถูกหยิบส่ง
-                if (!cleared) lines.Add(Notify.Bad($"ล้างคิวไม่สำเร็จ: {clearError}"));
+                if (!cleared) lines.Add(Notify.Bad($"ล้างคิวไม่สำเร็จ: {clearError}")); // เก็บเหตุที่ล้างคิวปลอดภัยไม่สำเร็จ
             }
-            if (!IsDisposed) _sendReports.AddRange(lines.Select(l => l with { Text = $"{title} · {l.Text}" }));
+            if (!IsDisposed) _sendReports.AddRange(lines.Select(l => l with { Text = $"{title} · {l.Text}" })); // แนบชื่อชุดงานไว้ในผลที่รอรายงาน
         }
-        finally
+        finally // ทำส่วนนี้เสมอ แม้ขั้นก่อนหน้ามีปัญหา
         {
-            EndSending();
-            SchedulePendingRefresh();
-            if (!IsDisposed && !_sending) ShowSending(null);
+            EndSending(); // จบชุดส่งแล้วตรวจงานที่ค้างอยู่
+            SchedulePendingRefresh(); // นัดอ่านรายการที่ค้างรอรีเฟรช
+            if (!IsDisposed && !_sending) ShowSending(null); // ปิดข้อความรอเมื่อไม่มีงานส่งค้าง
         }
-        if (!IsDisposed) await RefreshDataAsync(force: true);
+        if (!IsDisposed) await RefreshDataAsync(force: true); // อ่านสถานะใหม่ถ้าหน้ายังเปิดอยู่
     }
 
-    private bool ReserveDispatch(string machine) => _dispatchingMachines.TryAdd(machine, Guid.NewGuid());
+    private bool ReserveDispatch(string machine) => _dispatchingMachines.TryAdd(machine, Guid.NewGuid()); // จองสิทธิ์ในโปรแกรมให้เครื่องละรอบส่งเดียว
 
-    private void ReleaseDispatch(string machine, Guid token)
+    private void ReleaseDispatch(string machine, Guid token) // คืนสิทธิ์เฉพาะรอบส่งที่ถือ token นี้
     {
         if (_dispatchingMachines.TryGetValue(machine, out var current) && current == token) // รอบเก่าปลดสิทธิ์ได้เฉพาะ token ของตัวเอง
         {
             _dispatchingMachines.Remove(machine); // เปิดทางให้เครื่องนี้รับรอบส่งใหม่
-            if (!IsDisposed && _dispatchingMachines.Count > 0)
-                ShowSending($"กำลังส่งไปที่ {string.Join(" / ", _dispatchingMachines.Keys)}");
+            if (!IsDisposed && _dispatchingMachines.Count > 0) // ยังมีเครื่องอื่นในชุดที่กำลังส่ง
+                ShowSending($"กำลังส่งไปที่ {string.Join(" / ", _dispatchingMachines.Keys)}"); // แสดงชื่อเครื่องที่ยังทำงานอยู่
         }
     }
 
@@ -1176,8 +1176,8 @@ public partial class OrderListUserControl : UserControl
 
     private async Task<StepSendResult[]> SendPreparedBatchAsync(List<PreparedQueueSend> items, bool includeJobNames = false, bool machinesReserved = false) // เตรียมโปรแกรมแล้วส่งเครื่องที่พร้อมพร้อมกัน
     {
-        if (_preparingPrograms) return [new(false, [], HeldForReview: true)];
-        var owned = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
+        if (_preparingPrograms) return [new(false, [], HeldForReview: true)]; // กำลังเลือกโปรแกรมอยู่ ให้ถือคิวชุดใหม่ไว้ก่อน
+        var owned = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase); // จำสิทธิ์ส่งแยกเครื่องไว้คืนตอนจบ
         var selected = new List<PreparedQueueSend>(); // เก็บคิวที่ชุดนี้ได้รับสิทธิ์ส่งจริง
         foreach (var item in items.GroupBy(i => i.Row.Machine, StringComparer.OrdinalIgnoreCase).Select(g => g.First())) // เลือกเครื่องละรอบ ไม่ส่ง MK รอบสองตามไปเอง
             if (machinesReserved || ReserveDispatch(item.Row.Machine)) // ใช้สิทธิ์ที่จองไว้ หรือขอสิทธิ์ในโปรแกรมก่อนส่ง
@@ -1185,37 +1185,37 @@ public partial class OrderListUserControl : UserControl
                 selected.Add(item); // รวมคิวที่ส่งได้ในชุดนี้
                 owned[item.Row.Machine] = _dispatchingMachines[item.Row.Machine]; // จำ token ไว้คืนสิทธิ์เมื่อเครื่องนี้ทำเสร็จ
             }
-        try
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
-            var ready = new List<PreparedQueueSend>();
-            var results = new List<StepSendResult>();
+            var ready = new List<PreparedQueueSend>(); // เตรียมรวมคิวที่พร้อมส่ง
+            var results = new List<StepSendResult>(); // เตรียมผลของทุกคิวในชุดนี้
             if (selected.Count != items.Count) results.Add(new(false, [], HeldForReview: true)); // บางคิวไม่ได้สิทธิ์ จึงห้ามตีความว่างานไม่มีคิวค้าง
-            foreach (var item in selected)
+            foreach (var item in selected) // ตรวจความพร้อมของคิวที่ได้สิทธิ์ทีละรายการ
             {
-                var row = item.Row;
-                if (IsDisposed) break;
+                var row = item.Row; // อ่านแถวคิวของรายการปัจจุบัน
+                if (IsDisposed) break; // ปิดหน้าแล้วให้หยุดวนรายการ
                 if (UvNumberOf(row.Machine) is int uvNumber && string.IsNullOrWhiteSpace(row.ProgramName)) // คิว UV ที่ยังไม่เลือกโปรแกรมต้องเตรียมให้เสร็จก่อน
                 {
                     if (MachineBusy.Active) { results.Add(new(false, [], HeldForReview: true)); continue; } // ยังมีเครื่องส่งอยู่ อย่าเปิดกล่องเลือกโปรแกรมแทรก
                     _preparingPrograms = true; // กันชุดอื่นเริ่มส่งระหว่างคนเลือกโปรแกรม
-                    try
+                    try // ดักข้อผิดพลาดของขั้นนี้
                     {
                         var requested = item.Job.UvJobData?.FirstOrDefault(u => u.Machine == row.Machine)?.ProgramName; // อ่านชื่อโปรแกรมต้นทางของเครื่องในคิว
                         var pick = UvProgramResolver.Resolve(requested, UvSettingsManager.GetDocumentFolder(uvNumber), this); // เลือกไฟล์ UV สำหรับคิวที่ยังไม่มีชื่อจริง
-                        if (pick.Program == null || (pick.IsDefault &&
-                            !UvProgramResolver.ConfirmDefault(requested ?? "", row.Machine, this)))
+                        if (pick.Program == null || (pick.IsDefault && // ตรวจว่ายังไม่เลือกหรือได้โปรแกรมสำรอง
+                            !UvProgramResolver.ConfirmDefault(requested ?? "", row.Machine, this))) // ผู้ใช้ไม่ยืนยันสำรอง ให้เลื่อนคิวกลับไปรอ
                         {
                             var reset = await _api!.UpdateMachineQueueAsync(row.Id, state: "pending"); // ยกเลิกเลือกโปรแกรม ให้คืนคิวไปรอก่อน
-                            results.Add(new(false, [Notify.Careful($"{row.Machine}: ยังไม่ส่ง เพราะไม่ได้เลือกโปรแกรม")],
-                                SafeToRetry: reset.ok, HeldForReview: !reset.ok));
-                            if (!reset.ok) results[^1].Lines.Add(Notify.Bad($"คืนคิวไม่ได้: {reset.error}"));
-                            continue;
+                            results.Add(new(false, [Notify.Careful($"{row.Machine}: ยังไม่ส่ง เพราะไม่ได้เลือกโปรแกรม")], // บอกว่ายังไม่ส่งเพราะยังไม่เลือกโปรแกรม
+                                SafeToRetry: reset.ok, HeldForReview: !reset.ok)); // ลองใหม่ได้ต่อเมื่อยืนยันคืนคิวแล้ว
+                            if (!reset.ok) results[^1].Lines.Add(Notify.Bad($"คืนคิวไม่ได้: {reset.error}")); // แนบเหตุที่คืนคิวไป pending ไม่ได้
+                            continue; // ข้ามรายการนี้ไปตัวถัดไป
                         }
                         var saved = await _api!.UpdateMachineQueueAsync(row.Id, programName: pick.Program); // เก็บโปรแกรมลงคิวก่อนแตะเครื่องจริง
-                        if (!saved.ok)
+                        if (!saved.ok) // เก็บชื่อโปรแกรมลงคิวไม่สำเร็จ
                         {
-                            results.Add(new(false, [Notify.Bad($"{row.Machine}: บันทึกโปรแกรมไม่ได้ — {saved.error}")], HeldForReview: true));
-                            continue;
+                            results.Add(new(false, [Notify.Bad($"{row.Machine}: บันทึกโปรแกรมไม่ได้ — {saved.error}")], HeldForReview: true)); // ถือคิวไว้ตรวจ เพราะชื่อโปรแกรมยังไม่แน่นอน
+                            continue; // ข้ามรายการนี้ไปตัวถัดไป
                         }
                         row.ProgramName = pick.Program; // ใช้โปรแกรมเดียวกับที่เพิ่งบันทึกลง Backend
                     }
@@ -1223,35 +1223,35 @@ public partial class OrderListUserControl : UserControl
                 }
                 ready.Add(item); // โปรแกรมพร้อมแล้ว จึงรวมคิวในชุดส่ง
             }
-            if (IsDisposed) return results.ToArray();
-            foreach (var (machine, token) in owned)
+            if (IsDisposed) return results.ToArray(); // ปิดหน้าแล้วให้จบด้วยผลที่มีอยู่
+            foreach (var (machine, token) in owned) // ตรวจทุกสิทธิ์ที่ชุดนี้จองไว้
                 if (!ready.Any(i => i.Row.Machine == machine)) ReleaseDispatch(machine, token); // คืนสิทธิ์เครื่องที่ยังไม่พร้อมส่งในรอบนี้
-            if (ready.Count > 0) ShowSending($"กำลังส่งไปที่ {string.Join(" / ", _dispatchingMachines.Keys)}");
+            if (ready.Count > 0) ShowSending($"กำลังส่งไปที่ {string.Join(" / ", _dispatchingMachines.Keys)}"); // มีเครื่องพร้อมส่งจึงแสดงสถานะกำลังส่ง
             var sent = await MachineSendBatch.RunAsync(ready, i => i.Row.Machine, // เริ่มส่งคนละเครื่องพร้อมกัน
-                async i =>
+                async i => // กำหนดวิธีส่งสำหรับคิวแต่ละเครื่อง
                 {
                     _activeStatusQueues.Add(i.Row.Id); // เก็บข้อความระหว่างส่งไว้ ไม่ให้รอบรีเฟรชลบทิ้ง
-                    try
+                    try // ดักข้อผิดพลาดของขั้นนี้
                     {
                         var result = await SendQueueStepAsync(i.Row, i.Job); // บันทึกสิทธิ์ส่งกับ Backend ก่อนส่งอุปกรณ์
-                        return includeJobNames
-                            ? result with { Lines = result.Lines.Select(l => l with { Text = $"{JobName(i.Row.PrintJobsId)} · {l.Text}" }).ToList() }
-                            : result;
+                        return includeJobNames // เลือกว่าต้องแนบชื่อ Job ในผลไหม
+                            ? result with { Lines = result.Lines.Select(l => l with { Text = $"{JobName(i.Row.PrintJobsId)} · {l.Text}" }).ToList() } // เติมชื่อ Job หน้าทุกบรรทัดผลส่ง
+                            : result; // ใช้ผลเดิมเมื่อไม่ต้องแนบชื่อ Job
                     }
-                    finally
+                    finally // ทำส่วนนี้เสมอ แม้ขั้นก่อนหน้ามีปัญหา
                     {
                         _activeStatusQueues.Remove(i.Row.Id); // จบรอบส่งแล้ว ให้สถานะจาก Backend เป็นหลัก
                         ReleaseDispatch(i.Row.Machine, owned[i.Row.Machine]); // เครื่องนี้เสร็จแล้ว ไม่ต้องรอเครื่องอื่นเพื่อคืนสิทธิ์
                     }
                 },
-                (i, ex) => new StepSendResult(false,
-                    [Notify.Bad($"{i.Row.Machine} คิว {i.Row.Id}: ตรวจสอบผลก่อนส่งซ้ำ — {ex.Message}")], HeldForReview: true));
-            results.AddRange(sent);
-            return results.ToArray();
+                (i, ex) => new StepSendResult(false, // จัดผลเมื่อการส่งเครื่องนี้มีข้อผิดพลาด
+                    [Notify.Bad($"{i.Row.Machine} คิว {i.Row.Id}: ตรวจสอบผลก่อนส่งซ้ำ — {ex.Message}")], HeldForReview: true)); // ระบุคิวที่ต้องตรวจ ห้ามเดาผลแล้วส่งซ้ำ
+            results.AddRange(sent); // รวมผลเครื่องที่ส่งจริงกับผลเตรียมก่อนหน้า
+            return results.ToArray(); // ส่งผลของทุกคิวในชุดนี้กลับผู้เรียก
         }
-        finally
+        finally // ทำส่วนนี้เสมอ แม้ขั้นก่อนหน้ามีปัญหา
         {
-            foreach (var (machine, token) in owned) ReleaseDispatch(machine, token);
+            foreach (var (machine, token) in owned) ReleaseDispatch(machine, token); // คืนสิทธิ์ทุกเครื่องของชุดนี้เมื่อจบเสมอ
         }
     }
 
@@ -1261,78 +1261,78 @@ public partial class OrderListUserControl : UserControl
     private async Task<StepSendResult> SendQueueStepAsync(MachineQueueRow row, ResolvedJobResponse resolved) // จดรอบส่ง ส่งเครื่อง แล้วบันทึกผล
     {
         using var lease = MachineBusy.TryHoldExclusive(row.Machine); // กันทางส่งอื่นในโปรแกรมเข้าเครื่องเดียวกันซ้อน
-        if (lease == null)
-            return new(false, [Notify.Note($"{row.Machine}: รอการส่งรอบปัจจุบันจบก่อน")], HeldForReview: true);
-        SetMachineStatus(row, "กำลังเตรียมส่ง", AntdUI.TTypeMini.Primary);
+        if (lease == null) // มีทางอื่นกำลังใช้เครื่องเดียวกัน
+            return new(false, [Notify.Note($"{row.Machine}: รอการส่งรอบปัจจุบันจบก่อน")], HeldForReview: true); // ถือคิวไว้รอให้รอบปัจจุบันจบก่อน
+        SetMachineStatus(row, "กำลังเตรียมส่ง", AntdUI.TTypeMini.Primary); // แสดงว่าคิวกำลังเตรียมก่อนแตะเครื่อง
         var token = Guid.NewGuid().ToString(); // สร้างรหัสอ้างอิงเฉพาะรอบส่งนี้
         var (began, beginError) = await _api!.BeginQueueSendAsync(row.Id, token); // ขอให้ Backend จดหลักฐานก่อนแตะเครื่อง
-        if (!began)
+        if (!began) // Backend ยังไม่ยืนยันว่าเริ่มรอบส่งได้
         {
-            SetMachineStatus(row, "ตรวจสอบคิวก่อนส่งซ้ำ", AntdUI.TTypeMini.Warn);
-            return new(false, [Notify.Bad($"{row.Machine}: ยังไม่ส่ง — {beginError}")], HeldForReview: true);
+            SetMachineStatus(row, "ตรวจสอบคิวก่อนส่งซ้ำ", AntdUI.TTypeMini.Warn); // แสดงว่าต้องตรวจคิวก่อนลองใหม่
+            return new(false, [Notify.Bad($"{row.Machine}: ยังไม่ส่ง — {beginError}")], HeldForReview: true); // จบโดยไม่ยิงเครื่องและถือคิวไว้ตรวจ
         }
-        SetMachineStatus(row, "กำลังส่ง", AntdUI.TTypeMini.Primary);
+        SetMachineStatus(row, "กำลังส่ง", AntdUI.TTypeMini.Primary); // แสดงว่ารอบนี้เริ่มส่งข้อมูลเข้าเครื่องแล้ว
 
-        StepSendResult result;
-        try
+        StepSendResult result; // เตรียมเก็บผลส่งของเครื่องนี้
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
-            if (IsDisposed) result = new(false, [], SafeToRetry: true);
+            if (IsDisposed) result = new(false, [], SafeToRetry: true); // ปิดหน้าก่อนแตะเครื่อง จึงระบุว่ายังไม่ส่ง
             else result = await SendStepAsync(row.PrintJobsId, row.Machine, resolved, row.ProgramName); // ส่งข้อมูลตาม Job และโปรแกรมที่ผูกกับคิว
         }
-        catch (Exception ex)
+        catch (Exception ex) // รับรายละเอียดข้อผิดพลาดไว้แจ้งต่อ
         {
-            result = new(false, [Notify.Bad($"{row.Machine}: {ex.Message}")]);
+            result = new(false, [Notify.Bad($"{row.Machine}: {ex.Message}")]); // เก็บปัญหาที่เกิดระหว่างส่งเครื่อง
         }
 
         var outcome = result.Sent ? "sent" : result.SafeToRetry ? "not_sent" : "unknown"; // แยกส่งแล้ว ยังไม่ส่งแน่นอน และยังยืนยันผลไม่ได้
-        var error = string.Join(" · ", result.Lines.Where(l => l.Kind == Notify.ResultKind.Error).Select(l => l.Text));
-        if (error.Length > 4000) error = error[..4000];
-        SetMachineStatus(row, "กำลังบันทึกผล", AntdUI.TTypeMini.Primary);
+        var error = string.Join(" · ", result.Lines.Where(l => l.Kind == Notify.ResultKind.Error).Select(l => l.Text)); // รวมเฉพาะข้อความผิดพลาดไว้บันทึก Backend
+        if (error.Length > 4000) error = error[..4000]; // จำกัดความยาวเหตุผิดพลาดไม่เกิน 4000 ตัว
+        SetMachineStatus(row, "กำลังบันทึกผล", AntdUI.TTypeMini.Primary); // แสดงว่ารอ Backend บันทึกผลรอบส่ง
         var recorded = await _api.FinishQueueSendAsync(row.Id, token, outcome, result.Detail, error); // บันทึกผลคิวกับประวัติส่งในคำขอเดียว
-        if (!recorded.ok)
+        if (!recorded.ok) // บันทึกไม่ผ่าน จึงลองจดผลเดิมอีกครั้ง
             recorded = await _api.FinishQueueSendAsync(row.Id, token, outcome, result.Detail, error); // ลองบันทึกซ้ำด้วย token เดิม ไม่ยิงเครื่องซ้ำ
 
         bool held = !recorded.ok || outcome == "unknown"; // ยังบันทึกไม่ได้หรือผลไม่แน่นอน ต้องถือคิวไว้ตรวจ
-        if (held)
-            result.Lines.Add(Notify.Bad($"{row.Machine}: ถือคิว {row.Id} ไว้ตรวจผล ห้ามส่งซ้ำหรือปล่อยเครื่อง"
-                + (recorded.ok ? "" : $" · บันทึกผลไม่ได้: {recorded.error}")));
-        SetMachineStatus(row, held ? "ต้องตรวจสอบก่อนส่งซ้ำ" : result.Sent ? SentStatus(row.Machine) : "ยังไม่ส่ง / ส่งไม่สำเร็จ",
-            held ? AntdUI.TTypeMini.Warn : result.Sent ? AntdUI.TTypeMini.Success : AntdUI.TTypeMini.Error);
-        return result with { HeldForReview = held };
+        if (held) // คิวนี้ยังต้องค้างไว้ตรวจผล
+            result.Lines.Add(Notify.Bad($"{row.Machine}: ถือคิว {row.Id} ไว้ตรวจผล ห้ามส่งซ้ำหรือปล่อยเครื่อง" // เตือนว่าห้ามส่งซ้ำหรือปล่อยคิวที่ไม่รู้ผล
+                + (recorded.ok ? "" : $" · บันทึกผลไม่ได้: {recorded.error}"))); // แนบเหตุที่บันทึกผลไม่ผ่านถ้ามี
+        SetMachineStatus(row, held ? "ต้องตรวจสอบก่อนส่งซ้ำ" : result.Sent ? SentStatus(row.Machine) : "ยังไม่ส่ง / ส่งไม่สำเร็จ", // ตั้งข้อความสถานะตามผลส่งและการถือคิว
+            held ? AntdUI.TTypeMini.Warn : result.Sent ? AntdUI.TTypeMini.Success : AntdUI.TTypeMini.Error); // เลือกสีเตือน ผ่าน หรือผิดพลาดให้ตรงผล
+        return result with { HeldForReview = held }; // แนบสถานะรอตรวจกลับไปพร้อมผลเครื่อง
     }
 
     private async Task<StepSendResult> SendStepAsync( // เลือกส่ง MK หรือ UV ตามขั้นของงาน
-        int jobId, string step, ResolvedJobResponse resolved,
-        string? forcedProgram = null)
+        int jobId, string step, ResolvedJobResponse resolved, // รับ Job ขั้นที่ส่ง และข้อมูลล่าสุด
+        string? forcedProgram = null) // รับโปรแกรมที่กำหนดไว้ล่วงหน้าถ้ามี
     {
-        if (step == "MK")
+        if (step == "MK") // เข้าทางส่งหัว MK และ PLC
         {
-            var plcLines = new List<Notify.ResultLine>();
+            var plcLines = new List<Notify.ResultLine>(); // เก็บผล PLC แยกจากผลพิมพ์ MK
             var plcTask = SendJobPlcAsync(resolved, plcLines); // เริ่มเขียนตำแหน่งหัวและสายพานไปพร้อมการส่ง MK
             var mk = await JobSendService.SendMkAsync(resolved.Pattern); // ส่ง Pattern ไปยังหัว MK ที่ตั้งค่าไว้
 
             try { await plcTask; } // รอผล PLC มารวม โดยไม่ส่ง MK ซ้ำ
-            catch (Exception ex) { plcLines.Add(Notify.Careful($"PLC — {ex.Message}")); }
+            catch (Exception ex) { plcLines.Add(Notify.Careful($"PLC — {ex.Message}")); } // PLC มีปัญหาให้เก็บเป็นคำเตือนประกอบ
 
-            var mkLines = Notify.MkLines(mk.Machines);
+            var mkLines = Notify.MkLines(mk.Machines); // แปลงผล MK แต่ละหัวเป็นข้อความ
 
-            if (mkLines.Count == 0)
-                mkLines.Add(Notify.Careful("ไม่มีเครื่อง MK ที่ตั้งค่า IP ไว้"));
+            if (mkLines.Count == 0) // ไม่มีหัว MK ที่ได้ผลส่งมาเลย
+                mkLines.Add(Notify.Careful("ไม่มีเครื่อง MK ที่ตั้งค่า IP ไว้")); // เตือนว่าหัว MK ยังไม่มี IP ใช้งาน
 
             var lines = new List<Notify.ResultLine>(plcLines); // เรียงผล PLC ก่อนผลหัว MK ให้คนอ่านตามได้
-            lines.AddRange(mkLines);
+            lines.AddRange(mkLines); // รวมผล MK ต่อจากผล PLC
 
             bool ok = mk.Status == SendStatus.Ok; // ใช้ผลรวมการส่ง MK เป็นตัวตัดสินความสำเร็จ
 
-            return new StepSendResult(ok, lines);
+            return new StepSendResult(ok, lines); // ส่งผลรวมโดยยึดความสำเร็จของ MK
         }
 
-        int uvNumber = step == "UV1" ? 1 : 2;
+        int uvNumber = step == "UV1" ? 1 : 2; // เลือกหมายเลข UV ตามขั้นในแผน
         var uv = await JobSendService.SendUvAsync(this, uvNumber, resolved.UvJobData, forcedProgram, allowPrompt: false); // ส่ง UV ด้วยโปรแกรมที่เตรียมไว้ ไม่เปิดกล่องเลือกกลางชุด
 
         if (uv.Status == SendStatus.Ok) // UV ส่งผ่านครบตามเงื่อนไขใน Service
         {
-            var detail = new
+            var detail = new // เตรียมข้อมูลโปรแกรมไว้บันทึกประวัติส่ง
             {
                 requested = resolved.UvJobData.FirstOrDefault(r => r.Machine == step)?.ProgramName ?? "", // เก็บชื่อโปรแกรมต้นทางไว้เทียบกับที่เลือกใช้
                 program = uv.ProgramFile, // เก็บโปรแกรมที่ส่งเข้าเครื่องจริง
@@ -1341,51 +1341,51 @@ public partial class OrderListUserControl : UserControl
                 start_warning = uv.StartWarning, // เก็บเหตุที่ Start ไม่ยืนยันไว้ให้ตรวจที่เครื่อง
             };
 
-            var lines = new List<Notify.ResultLine>
-                { Notify.Ok($"{uv.MachineName} — ส่งข้อมูลแล้ว ({uv.ProgramFile}.uvdx)") };
-            if (uv.StartWarning != null)
-                lines.Add(Notify.Careful($"{uv.MachineName} — {uv.StartWarning} · ตรวจสถานะเริ่มพิมพ์ที่เครื่อง"));
-            return new StepSendResult(true, lines, Detail: detail);
+            var lines = new List<Notify.ResultLine> // เตรียมข้อความผล UV สำหรับผู้ใช้
+                { Notify.Ok($"{uv.MachineName} — ส่งข้อมูลแล้ว ({uv.ProgramFile}.uvdx)") }; // ระบุว่าโหลดข้อมูลโปรแกรมนี้เข้า UV แล้ว
+            if (uv.StartWarning != null) // เครื่องยังไม่ยืนยันคำสั่ง Start
+                lines.Add(Notify.Careful($"{uv.MachineName} — {uv.StartWarning} · ตรวจสถานะเริ่มพิมพ์ที่เครื่อง")); // ให้ตรวจการเริ่มพิมพ์จริงที่เครื่อง
+            return new StepSendResult(true, lines, Detail: detail); // ยืนยันผลส่งข้อมูลพร้อมรายละเอียด UV
         }
 
-        return new StepSendResult(false, uv.Status switch
+        return new StepSendResult(false, uv.Status switch // แยกเหตุที่ส่ง UV ไม่สำเร็จ
         {
             SendStatus.Cancelled => [], // ผู้ใช้ยกเลิกเลือกโปรแกรม จึงไม่ต้องเด้งข้อความผิดพลาด
             SendStatus.Unreachable => // ต่อ UV ไม่ได้ ให้รายงานปลายทางที่ติดต่อ
-                [Notify.Bad($"{uv.MachineName} — เชื่อมต่อไม่ได้ ({uv.Ip}:{uv.Port})")],
+                [Notify.Bad($"{uv.MachineName} — เชื่อมต่อไม่ได้ ({uv.Ip}:{uv.Port})")], // แสดง IP และพอร์ต UV ที่เชื่อมต่อไม่ได้
             _ => [Notify.Bad($"{uv.MachineName} — {uv.FailReason}")], // ปัญหาอื่นใช้เหตุที่ Service ส่งกลับมา
-        }, SafeToRetry: uv.Status is SendStatus.Cancelled or SendStatus.Unreachable or SendStatus.NotConfigured);
+        }, SafeToRetry: uv.Status is SendStatus.Cancelled or SendStatus.Unreachable or SendStatus.NotConfigured); // ลองใหม่ได้เฉพาะกรณีที่ยังไม่ได้ส่งแน่นอน
     }
 
-    private async Task StartWithoutSendingAsync(int jobId, string? markingMethod)
+    private async Task StartWithoutSendingAsync(int jobId, string? markingMethod) // เริ่มงานที่ไม่มีขั้นส่งเข้าเครื่อง
     {
         if (!Confirm.Ask(this, "ยืนยันเริ่มงาน", // ยืนยันเริ่มงานที่ไม่มีขั้นส่งเครื่อง
-                $"{JobName(jobId)} — marking {Method(markingMethod)}\n\n"
-                + "งานนี้ไม่มีขั้นตอนต้องส่งเข้าเครื่อง จะเปลี่ยนสถานะเป็นกำลังผลิตอย่างเดียว\n\n"
-                + "ยืนยันหรือไม่?"))
-            return;
+                $"{JobName(jobId)} — marking {Method(markingMethod)}\n\n" // ระบุงานและรหัสพิมพ์ที่จะเริ่ม
+                + "งานนี้ไม่มีขั้นตอนต้องส่งเข้าเครื่อง จะเปลี่ยนสถานะเป็นกำลังผลิตอย่างเดียว\n\n" // บอกว่าจะเปลี่ยนสถานะอย่างเดียว
+                + "ยืนยันหรือไม่?")) // ถามยืนยันก่อนเริ่มงานไม่มีขั้นส่ง
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
 
-        var (ok, err) = await _api!.UpdateJobStatusAsync(jobId, "Process");
-        if (IsDisposed) return;
+        var (ok, err) = await _api!.UpdateJobStatusAsync(jobId, "Process"); // เปลี่ยน Job เป็น Process ที่ Backend
+        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
-        if (ok) Notify.Success(this, $"เริ่มงาน {JobName(jobId)} แล้ว");
-        else Notify.ErrorModal(this, "เริ่มงานไม่สำเร็จ", err ?? "ไม่สามารถเปลี่ยนสถานะได้");
+        if (ok) Notify.Success(this, $"เริ่มงาน {JobName(jobId)} แล้ว"); // แจ้งว่าเปลี่ยนเป็นงานกำลังผลิตแล้ว
+        else Notify.ErrorModal(this, "เริ่มงานไม่สำเร็จ", err ?? "ไม่สามารถเปลี่ยนสถานะได้"); // แสดงเหตุที่เริ่มงานไม่ได้
 
-        await RefreshDataAsync(force: true);
+        await RefreshDataAsync(force: true); // อ่าน Job และคิวใหม่โดยไม่ใช้ข้อมูลเดิม
     }
 
     private async Task RequestRemoteStartAsync( // ฝากขั้นและโปรแกรมให้ ST1 ส่งผ่านคิว
-        int jobId, string step, ResolvedJobResponse resolved, bool askFirst = true)
+        int jobId, string step, ResolvedJobResponse resolved, bool askFirst = true) // รับงาน ขั้น ข้อมูล และตัวเลือกถามยืนยัน
     {
-        int machineStation = JobStationService.StationOf(step) ?? 0;
+        int machineStation = JobStationService.StationOf(step) ?? 0; // หา Station ที่ดูแลขั้นเครื่องนี้
         if (StationOwner(machineStation, jobId) is { } busyJob) // ตรวจว่ามี Job อื่นครอง Station นั้นอยู่หรือไม่
         {
-            Notify.WarnModal(this, "สถานีไม่ว่าง",
-                $"ST{machineStation} มีงาน {JobLabel(busyJob)} อยู่\n\nต้องจบงานนั้นก่อนถึงจะเริ่มงานนี้ได้");
-            return;
+            Notify.WarnModal(this, "สถานีไม่ว่าง", // เตือนว่าสถานีปลายทางยังมีงาน
+                $"ST{machineStation} มีงาน {JobLabel(busyJob)} อยู่\n\nต้องจบงานนั้นก่อนถึงจะเริ่มงานนี้ได้"); // ระบุงานที่ครองสถานีอยู่ก่อน
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
-        int uvNumber = step == "UV1" ? 1 : 2;
+        int uvNumber = step == "UV1" ? 1 : 2; // เลือกหมายเลข UV ตามขั้นในแผน
         var uvRow = resolved.UvJobData.FirstOrDefault(r => r.Machine == step); // อ่านข้อมูล UV ของขั้นที่ต้องส่ง
 
         var pick = UvProgramResolver.Resolve( // หาโปรแกรมจริงหรือให้ผู้ใช้เลือกรุ่นย่อยก่อนฝากส่ง
@@ -1393,46 +1393,46 @@ public partial class OrderListUserControl : UserControl
 
         if (pick.Program == null) return;   // ผู้ใช้ปิดกล่องเลือกรุ่นย่อย
 
-        var uvName = UvSettingsManager.Read(
-            uvNumber == 1 ? "UV1_NAME" : "UV2_NAME", $"UV-00{uvNumber}");
+        var uvName = UvSettingsManager.Read( // อ่านชื่อเครื่อง UV ตามค่าตั้ง
+            uvNumber == 1 ? "UV1_NAME" : "UV2_NAME", $"UV-00{uvNumber}"); // เลือกชุดชื่อให้ตรงกับ UV1 หรือ UV2
 
-        if (pick.IsDefault &&
+        if (pick.IsDefault && // ตรวจว่าต้องยืนยันโปรแกรมสำรองไหม
             !UvProgramResolver.ConfirmDefault(uvRow?.ProgramName ?? "", uvName, this)) // ยืนยันว่าใช้โปรแกรมสำรองแทนชื่อจากงานได้
-            return;
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
 
         if (askFirst &&!Confirm.Ask(this, "ยืนยันเริ่มงาน", // ถามยืนยัน Job และโปรแกรมที่จะให้ ST1 ส่ง
-                $"{JobName(jobId)} — marking {Method(resolved.PlanRouting?.MarkingMethod)}\n\n"
-                + $"ส่งไป {step} ด้วยโปรแกรม {pick.Program}.uvdx\n"
-                + "คำสั่งจะถูกส่งเข้าเครื่องโดยโปรแกรมที่ ST1\n\n"
-                + "ยืนยันหรือไม่?"))
-            return;
+                $"{JobName(jobId)} — marking {Method(resolved.PlanRouting?.MarkingMethod)}\n\n" // แสดงชื่อ Job และรหัสพิมพ์ก่อนฝากส่ง
+                + $"ส่งไป {step} ด้วยโปรแกรม {pick.Program}.uvdx\n" // แสดงเครื่องและไฟล์โปรแกรมที่เลือก
+                + "คำสั่งจะถูกส่งเข้าเครื่องโดยโปรแกรมที่ ST1\n\n" // บอกว่า ST1 เป็นผู้ส่งคำสั่งจริง
+                + "ยืนยันหรือไม่?")) // ถามยืนยันการฝากส่ง
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
 
-        var (ok, err) = await _api!.SetRemoteStartAsync(
+        var (ok, err) = await _api!.SetRemoteStartAsync( // บันทึกคำขอให้ ST1 มารับงานนี้
             jobId, requested: true, pick.Program, step: step); // ฝากทั้ง Job, โปรแกรม และขั้น UV ที่ต้องการให้ ST1 ส่ง
-        if (IsDisposed) return;
+        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
-        if (!ok)
+        if (!ok) // ตรวจกรณีทำรายการไม่ผ่าน
         {
-            await _api.UpdateJobStatusAsync(jobId, "Waiting");
-            Notify.ErrorModal(this, "ส่งคำขอไม่สำเร็จ", err ?? "ไม่สามารถฝากคำขอไว้ที่ ST1 ได้");
-            await RefreshDataAsync(force: true);
-            return;
+            await _api.UpdateJobStatusAsync(jobId, "Waiting"); // ฝากคำขอไม่ผ่าน ให้ขอคืนสถานะ Waiting
+            Notify.ErrorModal(this, "ส่งคำขอไม่สำเร็จ", err ?? "ไม่สามารถฝากคำขอไว้ที่ ST1 ได้"); // แจ้งเหตุที่ฝากคำขอไป ST1 ไม่ได้
+            await RefreshDataAsync(force: true); // อ่าน Job และคิวใหม่โดยไม่ใช้ข้อมูลเดิม
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
-        _sendOperations++;
+        _sendOperations++; // นับชุดส่งที่กำลังทำงานเพิ่ม
         ShowSending($"กำลังส่งไปที่ ST1 · {JobName(jobId)}"); // บอกผู้ใช้ว่ากำลังรอให้ ST1 ส่ง
-        try
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
             await ShowRemoteOutcomeAsync(jobId, step); // ติดตามประวัติส่งและข้อผิดพลาดที่ ST1 ฝากกลับมา
         }
-        finally
+        finally // ทำส่วนนี้เสมอ แม้ขั้นก่อนหน้ามีปัญหา
         {
-            EndSending();
-            SchedulePendingRefresh();
-            ShowSending(null);
+            EndSending(); // จบชุดส่งแล้วตรวจงานที่ค้างอยู่
+            SchedulePendingRefresh(); // นัดอ่านรายการที่ค้างรอรีเฟรช
+            ShowSending(null); // ปิดข้อความรอผลฝากส่ง
         }
 
-        if (!IsDisposed) await RefreshDataAsync(force: true);
+        if (!IsDisposed) await RefreshDataAsync(force: true); // อ่านสถานะใหม่ถ้าหน้ายังเปิดอยู่
     }
 
     private void ShowSending(string? text)
@@ -1449,52 +1449,52 @@ public partial class OrderListUserControl : UserControl
         while (DateTime.UtcNow < deadline) // ติดตามผลจนสำเร็จ มีปัญหา หรือครบเวลารอ
         {
             await Task.Delay(700); // เว้น 700 ms ก่อนอ่านผลครั้งถัดไป
-            if (IsDisposed) return;
+            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
             var job = await _api!.GetJobByIdAsync(jobId); // อ่าน Job ล่าสุดรวมประวัติส่งและ remote_error
-            if (IsDisposed) return;
+            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
             if (job == null) continue; // อ่าน Job ไม่ได้ในรอบนี้ ให้ลองใหม่ภายในเวลาที่เหลือ
 
             var failure = job.RemoteError?.Trim(); // อ่านเหตุที่ ST1 ส่งไม่สำเร็จ
             if (!string.IsNullOrEmpty(failure)) // มีข้อผิดพลาดที่ ST1 ฝากกลับมา
             {
-                await _api.SetRemoteStartAsync(jobId, requested: false);
-                if (IsDisposed) return;
+                await _api.SetRemoteStartAsync(jobId, requested: false); // ล้างคำขอฝากส่งของ Job นี้
+                if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
-                Notify.Result(this, $"เริ่มงาน {JobName(jobId)}", [Notify.Bad(failure)]);
-                return;
+                Notify.Result(this, $"เริ่มงาน {JobName(jobId)}", [Notify.Bad(failure)]); // แสดงผลผิดพลาดที่ ST1 ฝากกลับมา
+                return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
             }
 
             bool sent = job.Commands?.Any(c => c.Success && // ค้นประวัติส่งสำเร็จของขั้นที่ขอ
-                string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true;
+                string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true; // นับเฉพาะประวัติของขั้นที่กำลังรอ
             if (!sent) continue; // ยังไม่มีประวัติสำเร็จของขั้นนี้ ให้รอต่อ
 
             var uvName = UvSettingsManager.Read(step == "UV1" ? "UV1_NAME" : "UV2_NAME", step); // ใช้ชื่อ UV ที่ตั้งไว้แสดงผล
-            Notify.Result(this, $"เริ่มงาน {JobName(jobId)}", [Notify.Ok($"{uvName} — ส่งสำเร็จ")]);
-            return;
+            Notify.Result(this, $"เริ่มงาน {JobName(jobId)}", [Notify.Ok($"{uvName} — ส่งสำเร็จ")]); // แสดงว่า ST1 มีประวัติส่งขั้นนี้ผ่านแล้ว
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
         var final = await _api!.GetJobByIdAsync(jobId); // ครบเวลารอแล้ว อ่านสถานะอีกครั้งก่อนตัดสิน
-        if (IsDisposed) return;
+        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
         if (final?.RemoteStart == RemoteSending) // ST1 รับคำขอไปแล้วแต่ยังไม่จบการส่ง
         {
-            Notify.WarnModal(this, "ST1 กำลังส่งอยู่",
-                $"{JobName(jobId)}\n\n"
-                + "ST1 รับคำขอไปแล้วและกำลังส่งเข้าเครื่อง แต่ใช้เวลานานกว่าปกติ\n\n"
-                + "งานยังเดินอยู่ ไม่ต้องกดซ้ำ — รอผลอีกสักครู่");
-            return;
+            Notify.WarnModal(this, "ST1 กำลังส่งอยู่", // แจ้งว่าคำขอยังอยู่ระหว่างส่งที่ ST1
+                $"{JobName(jobId)}\n\n" // ระบุ Job ที่กำลังรอผล
+                + "ST1 รับคำขอไปแล้วและกำลังส่งเข้าเครื่อง แต่ใช้เวลานานกว่าปกติ\n\n" // บอกว่า ST1 รับแล้วแต่ยังส่งไม่จบ
+                + "งานยังเดินอยู่ ไม่ต้องกดซ้ำ — รอผลอีกสักครู่"); // ให้รอผลแทนกดคำขอซ้ำ
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
-        await _api.SetRemoteStartAsync(jobId, requested: false);
-        await _api.UpdateJobStatusAsync(jobId, "Waiting");
-        if (IsDisposed) return;
+        await _api.SetRemoteStartAsync(jobId, requested: false); // ล้างคำขอฝากส่งของ Job นี้
+        await _api.UpdateJobStatusAsync(jobId, "Waiting"); // ขอคืนสถานะ Waiting เมื่อยังไม่มีผู้รับคำขอ
+        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
-        Notify.WarnModal(this, "ST1 ไม่รับคำขอ",
-            $"{JobName(jobId)}\n\n"
-            + $"รอมา {RemoteOutcomeWait.TotalSeconds:0} วินาทีแล้วยังไม่มีใครรับไปส่ง\n"
-            + "งานถูกตีกลับเป็นรอเริ่มแล้ว ยังไม่มีอะไรถูกส่งเข้าเครื่อง\n\n"
-            + "ตรวจว่าโปรแกรมที่เครื่อง ST1 เปิดอยู่และต่อ Backend ได้ แล้วกดเริ่มงานใหม่");
+        Notify.WarnModal(this, "ST1 ไม่รับคำขอ", // แจ้งว่าครบเวลารอแล้วยังไม่มีผู้รับ
+            $"{JobName(jobId)}\n\n" // ระบุ Job ที่กำลังรอผล
+            + $"รอมา {RemoteOutcomeWait.TotalSeconds:0} วินาทีแล้วยังไม่มีใครรับไปส่ง\n" // แสดงเวลาที่รอคำขอไปแล้ว
+            + "งานถูกตีกลับเป็นรอเริ่มแล้ว ยังไม่มีอะไรถูกส่งเข้าเครื่อง\n\n" // แสดงข้อความคืนรอของทางหมดเวลาเดิม
+            + "ตรวจว่าโปรแกรมที่เครื่อง ST1 เปิดอยู่และต่อ Backend ได้ แล้วกดเริ่มงานใหม่"); // ให้ตรวจโปรแกรม ST1 และการต่อ Backend
     }
 
     private const string RemotePending = "1";
@@ -1524,53 +1524,53 @@ public partial class OrderListUserControl : UserControl
 
     private async Task<bool> ProcessMachineQueueAsync(List<MachineQueueRow>? snapshot = null, string? machineFilter = null) // ST1 รับคิวที่ได้สิทธิ์แล้ว ทั้งงานจาก ST1 และ ST3
     {
-        if (_api == null || StationService.IsSt3 || IsDisposed || _preparingPrograms) return false;
-        var owned = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
-        _sendOperations++;
-        try
+        if (_api == null || StationService.IsSt3 || IsDisposed || _preparingPrograms) return false; // เฉพาะ ST1 ที่พร้อมและไม่ได้เลือกโปรแกรมจึงส่งคิวได้
+        var owned = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase); // จำสิทธิ์ส่งแยกเครื่องไว้คืนตอนจบ
+        _sendOperations++; // นับชุดส่งที่กำลังทำงานเพิ่ม
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
             var (rows, error) = snapshot == null // ใช้คิวจากรอบอ่านเดิมได้ ถ้าไม่มีจึงขอ Backend ใหม่
-                ? await _api.GetMachineQueueAsync()
-                : (snapshot, (string?)null);
-            if (error != null || IsDisposed) return false;
-            var review = rows.Where(r => r.NeedsSendReview && !_dispatchingMachines.ContainsKey(r.Machine) && _reportedUncertainQueues.Add(r.Id)).ToList();
-            if (review.Count > 0)
-                Notify.Warn(this, string.Join(" / ", review.Select(r => $"{r.Machine} คิว {r.Id}"))
-                    + ": กำลังส่งหรือรอตรวจสอบผล ระบบจะไม่ส่งซ้ำเอง");
+                ? await _api.GetMachineQueueAsync() // ไม่มี snapshot จึงอ่านคิวจาก Backend
+                : (snapshot, (string?)null); // มีคิวจากรอบอ่านอยู่แล้ว ใช้ชุดนั้นต่อ
+            if (error != null || IsDisposed) return false; // อ่านคิวไม่ได้หรือปิดหน้าแล้ว ไม่ส่งต่อ
+            var review = rows.Where(r => r.NeedsSendReview && !_dispatchingMachines.ContainsKey(r.Machine) && _reportedUncertainQueues.Add(r.Id)).ToList(); // หาคิวที่ไม่รู้ผลและยังไม่ได้แจ้งเตือนในจอนี้
+            if (review.Count > 0) // มีคิวค้างตรวจผลอย่างน้อยหนึ่งรายการ
+                Notify.Warn(this, string.Join(" / ", review.Select(r => $"{r.Machine} คิว {r.Id}")) // แสดงเครื่องและเลขคิวที่ต้องตรวจ
+                    + ": กำลังส่งหรือรอตรวจสอบผล ระบบจะไม่ส่งซ้ำเอง"); // บอกว่าระบบจะไม่ส่งคิวไม่รู้ผลซ้ำเอง
 
             var ready = rows.Where(r => r.State == "active" && r.SentAt == null && !r.NeedsSendReview // ส่งเฉพาะ active ที่ยังไม่ส่งและไม่มีผลค้างตรวจ
                     && (machineFilter == null || string.Equals(r.Machine, machineFilter, StringComparison.OrdinalIgnoreCase))) // หลังปล่อยปุ่ม ให้รับต่อเฉพาะเครื่องที่เพิ่งว่าง
-                .OrderBy(r => r.Id)
+                .OrderBy(r => r.Id) // เรียงคิวที่ได้สิทธิ์ตามเลขคิว
                 .Where(r => !MachineBusy.IsBusy(r.Machine) && ReserveDispatch(r.Machine)).ToList(); // กันทางอื่นใช้เครื่องเดียวกันระหว่างเตรียมส่ง
             foreach (var row in ready) owned[row.Machine] = _dispatchingMachines[row.Machine]; // จำสิทธิ์ที่ชุดนี้ถือไว้ เพื่อปล่อยเฉพาะของตัวเอง
-            var prepared = new List<PreparedQueueSend>();
-            var lines = new List<Notify.ResultLine>();
+            var prepared = new List<PreparedQueueSend>(); // เตรียมคิวพร้อมรายละเอียด Job สำหรับส่ง
+            var lines = new List<Notify.ResultLine>(); // เตรียมเก็บผลแต่ละขั้นไว้รายงานรวม
             foreach (var group in ready.GroupBy(r => r.PrintJobsId)) // รวมคิวของ Job เดียวกันเพื่ออ่านรายละเอียดครั้งเดียว
             {
                 var resolved = await _api.GetResolvedJobAsync(group.Key); // อ่าน Pattern และ UV ล่าสุดของ Job ในคิว
-                if (IsDisposed) return false;
-                foreach (var row in group)
+                if (IsDisposed) return false; // ปิดหน้าแล้ว ไม่เริ่มส่งเครื่องต่อ
+                foreach (var row in group) // จับข้อมูล Job ให้แต่ละคิวในกลุ่ม
                 {
                     if (resolved != null) prepared.Add(new(row, resolved)); // จับคิวกับข้อมูล Job ก่อนส่ง
-                    else
+                    else // กรณีไม่เข้าเงื่อนไขก่อนหน้า
                     {
                         var reset = await _api.UpdateMachineQueueAsync(row.Id, state: "pending"); // อ่าน Job ไม่ได้ ให้ขอคืนคิวนี้ไปรอก่อน
-                        lines.Add(Notify.Bad($"{row.Machine} คิว {row.Id}: โหลดข้อมูลงานไม่ได้"
-                            + (reset.ok ? " คืนเข้าคิวรอแล้ว" : $" · คืนคิวไม่ได้: {reset.error}")));
+                        lines.Add(Notify.Bad($"{row.Machine} คิว {row.Id}: โหลดข้อมูลงานไม่ได้" // จดว่าโหลดข้อมูลของ Job ในคิวไม่ได้
+                            + (reset.ok ? " คืนเข้าคิวรอแล้ว" : $" · คืนคิวไม่ได้: {reset.error}"))); // แสดงผลว่าคืนคิวไปรอได้หรือมีปัญหา
                     }
                 }
             }
             var results = await SendPreparedBatchAsync(prepared, includeJobNames: true, machinesReserved: true); // ใช้สิทธิ์ที่จองไว้ส่งเครื่องที่พร้อมพร้อมกัน
-            lines.AddRange(results.SelectMany(r => r.Lines));
+            lines.AddRange(results.SelectMany(r => r.Lines)); // รวมข้อความผลส่งของทุกเครื่อง
             if (!IsDisposed) _sendReports.AddRange(lines); // เก็บผลไว้รายงานรวมหลังเริ่มส่งเครื่องที่พร้อมครบแล้ว
-            return ready.Count > 0;
+            return ready.Count > 0; // บอกว่ารอบนี้มีคิวที่พร้อมประมวลผลไหม
         }
-        finally
+        finally // ทำส่วนนี้เสมอ แม้ขั้นก่อนหน้ามีปัญหา
         {
             foreach (var (machine, token) in owned) ReleaseDispatch(machine, token); // คืนสิทธิ์ของชุดนี้เสมอ แม้เตรียมหรือส่งบางเครื่องไม่ผ่าน
-            EndSending();
+            EndSending(); // จบชุดส่งแล้วตรวจงานที่ค้างอยู่
             SchedulePendingRefresh(); // ให้รายการที่รอรีเฟรชตามหลังการส่งทำงานต่อ
-            if (!IsDisposed && !_sending) ShowSending(null);
+            if (!IsDisposed && !_sending) ShowSending(null); // ปิดข้อความรอเมื่อไม่มีงานส่งค้าง
         }
     }
 
@@ -1612,94 +1612,94 @@ public partial class OrderListUserControl : UserControl
         bool live = string.Equals(status, "Waiting", StringComparison.OrdinalIgnoreCase) // รับคำขอของงานที่ยังรอเริ่ม
                  || string.Equals(status, "Process", StringComparison.OrdinalIgnoreCase); // หรือของงานที่กำลังผลิตและมีขั้นถัดไป
 
-        if (!live)
+        if (!live) // Job ไม่ได้อยู่ Waiting หรือ Process แล้ว
         {
-            await _api.SetRemoteStartAsync(jobId, requested: false);
-            return;
+            await _api.SetRemoteStartAsync(jobId, requested: false); // ล้างคำขอฝากส่งของ Job นี้
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
         var plan = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod); // อ่านแผนเครื่องที่ Job นี้ใช้จริง
 
         var requested = _allJobs.FirstOrDefault(j => j.Id == jobId)?.RemoteStep; // อ่านชื่อขั้นที่ ST3 ฝากมา
         var step = string.IsNullOrWhiteSpace(requested) // ดูว่าคำขอระบุขั้นมาหรือไม่
-            ? plan.Steps.FirstOrDefault()
-            : plan.Steps.FirstOrDefault(x =>
-                string.Equals(x, requested.Trim(), StringComparison.OrdinalIgnoreCase));
+            ? plan.Steps.FirstOrDefault() // ไม่ระบุขั้นมา ให้ดูขั้นแรกของแผน
+            : plan.Steps.FirstOrDefault(x => // ระบุขั้นมา ให้ค้นเฉพาะขั้นนั้น
+                string.Equals(x, requested.Trim(), StringComparison.OrdinalIgnoreCase)); // เทียบชื่อขั้นโดยไม่สนตัวพิมพ์
 
-        if (step == null)
+        if (step == null) // แผนไม่มีขั้นที่ขอให้ส่ง
         {
-            await _api.SetRemoteStartAsync(jobId, requested: false,
-                failure: string.IsNullOrWhiteSpace(requested)
-                    ? null
-                    : $"งานนี้ไม่มีขั้นตอน {requested.Trim()} ให้ส่ง");
-            return;
+            await _api.SetRemoteStartAsync(jobId, requested: false, // ล้างคำขอที่ทำตามแผนไม่ได้
+                failure: string.IsNullOrWhiteSpace(requested) // แยกคำขอว่างกับชื่อขั้นที่ไม่ถูกต้อง
+                    ? null // คำขอว่างไม่แนบเหตุชื่อขั้นผิด
+                    : $"งานนี้ไม่มีขั้นตอน {requested.Trim()} ให้ส่ง"); // แจ้งว่าขั้นที่ระบุไม่อยู่ในงานนี้
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
-        if (resolved.Commands?.Any(c => c.Success &&
-                string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true)
+        if (resolved.Commands?.Any(c => c.Success && // ตรวจว่ามีประวัติส่งขั้นนี้ผ่านแล้วไหม
+                string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true) // เทียบชื่อคำสั่งกับขั้นที่ขอ
         {
-            await _api.SetRemoteStartAsync(jobId, requested: false);
-            return;
+            await _api.SetRemoteStartAsync(jobId, requested: false); // ล้างคำขอฝากส่งของ Job นี้
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
-        int machineStation = JobStationService.StationOf(step) ?? 0;
+        int machineStation = JobStationService.StationOf(step) ?? 0; // หา Station ที่ดูแลขั้นเครื่องนี้
         if (StationOwner(machineStation, jobId) != null) return; // ยังมี Job อื่นครอง Station ให้คงคำขอไว้รอรอบหน้า
 
         var program = _allJobs.FirstOrDefault(j => j.Id == jobId)?.RemoteProgram; // ใช้ชื่อโปรแกรมที่ ST3 เลือกฝากไว้
 
         await _api.ClaimRemoteStartAsync(jobId, program, step); // เปลี่ยนธงเป็นกำลังส่ง เพื่อให้ ST3 รู้ว่ารับแล้ว
-        if (IsDisposed) return;
+        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
-        var (queued, queueError) = await _api.EnqueueMachinesAsync(jobId,
-            [new MachineQueueItem { Machine = step, Round = 1, ProgramName = program }]);
-        var (claim, claimError) = queued
-            ? await _api.ClaimMachineAsync(step, jobId)
-            : (null, queueError);
-        List<Notify.ResultLine> lines;
-        if (claim?.Claimed is { } row)
-            lines = (await SendPreparedBatchAsync([new(row, resolved)])).SelectMany(r => r.Lines).ToList();
-        else if (claimError == null && claim?.Reason is "busy" or "queued")
-            lines = [Notify.Note($"{step}: เข้าคิวแล้ว รอตามลำดับคิว")];
-        else
-            lines = [Notify.Bad(claimError ?? "เครื่องยังไม่ว่างหรือคิวถูกส่งแล้ว กรุณาตรวจสถานะงาน")];
+        var (queued, queueError) = await _api.EnqueueMachinesAsync(jobId, // นำคำขอฝากส่งเข้าระบบคิวก่อน
+            [new MachineQueueItem { Machine = step, Round = 1, ProgramName = program }]); // สร้างคิวขั้นที่ขอพร้อมโปรแกรมที่ ST3 เลือก
+        var (claim, claimError) = queued // ตรวจผลจองก่อนขอสิทธิ์เครื่อง
+            ? await _api.ClaimMachineAsync(step, jobId) // ขอสิทธิ์เฉพาะ Job และเครื่องนี้
+            : (null, queueError); // จองไม่ผ่านให้ใช้เหตุจองคิวแทน
+        List<Notify.ResultLine> lines; // เตรียมผลของคำขอฝากส่ง
+        if (claim?.Claimed is { } row) // Backend ยกสิทธิ์คิวให้คำขอนี้แล้ว
+            lines = (await SendPreparedBatchAsync([new(row, resolved)])).SelectMany(r => r.Lines).ToList(); // ส่งผ่านชุดปกติที่จด token ก่อนแตะเครื่อง
+        else if (claimError == null && claim?.Reason is "busy" or "queued") // เครื่องติดงานหรือยังไม่ถึงคิว ไม่ถือว่าผิดพลาด
+            lines = [Notify.Note($"{step}: เข้าคิวแล้ว รอตามลำดับคิว")]; // แสดงว่าเก็บคิวรอไว้แล้ว
+        else // กรณีไม่เข้าเงื่อนไขก่อนหน้า
+            lines = [Notify.Bad(claimError ?? "เครื่องยังไม่ว่างหรือคิวถูกส่งแล้ว กรุณาตรวจสถานะงาน")]; // แสดงเหตุที่ยังรับเครื่องไปส่งไม่ได้
 
         bool failed = lines.Any(l => l.Kind == Notify.ResultKind.Error); // ดูว่าผลส่งมีข้อความผิดพลาดหรือไม่
         var failure = failed // เตรียมเหตุที่ต้องส่งกลับให้ ST3
-            ? string.Join(" · ", lines.Where(l => l.Kind == Notify.ResultKind.Error).Select(l => l.Text))
-            : null;
+            ? string.Join(" · ", lines.Where(l => l.Kind == Notify.ResultKind.Error).Select(l => l.Text)) // รวมเหตุผิดพลาดที่จะฝากกลับ ST3
+            : null; // ไม่มีปัญหาให้ล้างข้อความผิดพลาดเดิม
 
-        await _api.SetRemoteStartAsync(jobId, requested: false, failure: failure);
+        await _api.SetRemoteStartAsync(jobId, requested: false, failure: failure); // จบคำขอและบันทึกผลไว้ให้ ST3 อ่าน
 
-        if (IsDisposed || lines.Count == 0) return;
+        if (IsDisposed || lines.Count == 0) return; // ถ้าปิดหน้าแล้วหรือไม่มีผลให้แจ้งก็หยุด
 
         var text = $"{JobName(jobId)} — {lines[0].Text} (คำขอจาก ST3)"; // ระบุ Job และผลส่งว่าเป็นคำขอจาก ST3
 
         if (failed) Notify.Warn(this, text); // แจ้งเตือนแบบไม่ค้างรอคนปิดที่ ST1
-        else Notify.Success(this, text);
+        else Notify.Success(this, text); // แจ้งผลเมื่อส่งงานสำเร็จ
     }
 
     private bool _showingRemoteError;
 
-    private async Task ShowRemoteErrorsAsync()
+    private async Task ShowRemoteErrorsAsync() // ให้ ST3 แสดงปัญหาที่ ST1 ส่งกลับมา
     {
-        if (_api == null || !StationService.IsSt3 || _showingRemoteError) return;
+        if (_api == null || !StationService.IsSt3 || _showingRemoteError) return; // ข้ามเมื่อ API ยังไม่พร้อม ไม่ใช่ ST3 หรือกำลังแจ้งปัญหาอยู่
 
         var failed = _allJobs.FirstOrDefault(j => !string.IsNullOrWhiteSpace(j.RemoteError)); // หางานที่ ST1 ฝากเหตุส่งไม่สำเร็จไว้
-        if (failed == null) return;
+        if (failed == null) return; // หยุดเมื่อไม่มีงานส่งพลาด
 
         var message = failed.RemoteError!; // เก็บข้อความไว้ก่อนล้างค่าที่ Backend
 
-        await _api.SetRemoteStartAsync(failed.Id, requested: false);
-        if (IsDisposed) return;
+        await _api.SetRemoteStartAsync(failed.Id, requested: false); // เคลียร์คำขอเริ่มงานที่ส่งพลาด
+        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
-        _showingRemoteError = true;
-        try
+        _showingRemoteError = true; // กันเปิดกล่องแจ้งปัญหาซ้อนกัน
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
-            Notify.ErrorModal(this, "ST1 ส่งงานไม่สำเร็จ",
-                $"{JobLabel(failed)}\n\n{message}\n\n"
-                + "งานถูกตีกลับเป็นรอเริ่ม กดเริ่มงานใหม่ได้");
+            Notify.ErrorModal(this, "ST1 ส่งงานไม่สำเร็จ", // เปิดกล่องแจ้งว่า ST1 ส่งงานไม่สำเร็จ
+                $"{JobLabel(failed)}\n\n{message}\n\n" // ใส่ชื่องานกับสาเหตุที่ส่งพลาด
+                + "งานถูกตีกลับเป็นรอเริ่ม กดเริ่มงานใหม่ได้"); // บอกให้กดเริ่มงานใหม่หลังงานกลับไปรอ
         }
-        finally
+        finally // ทำส่วนนี้เสมอ แม้ขั้นก่อนหน้ามีปัญหา
         {
             _showingRemoteError = false; // เปิดให้แจ้งปัญหางานถัดไปได้เมื่อปิดกล่องแล้ว
         }
@@ -1721,55 +1721,55 @@ public partial class OrderListUserControl : UserControl
 
     private async Task CompleteJobAsync(int jobId) // ตรวจขั้นที่ส่งแล้วก่อนบันทึกจบงาน
     {
-        if (_api == null) return;
+        if (_api == null) return; // ยังไม่มีตัวเรียก Backend ให้หยุดก่อน
 
         var resolved = await LoadJobAsync(jobId, $"กำลังโหลดข้อมูล · {JobName(jobId)}"); // อ่านประวัติส่งล่าสุดของ Job
-        if (IsDisposed) return;
-        if (resolved == null)
+        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
+        if (resolved == null) // อ่านรายละเอียด Job ไม่ได้
         {
-            Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลดข้อมูล {JobName(jobId)} ได้");
-            return;
+            Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลดข้อมูล {JobName(jobId)} ได้"); // แจ้งว่าโหลดงานที่จะจบไม่ได้
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
         var method = resolved.PlanRouting?.MarkingMethod; // ใช้รหัสพิมพ์ตรวจสิทธิ์จบงาน
         if (!MarkingMethodService.CanCompleteAt(StationService.Current, method)) // ตรวจสิทธิ์จบงานของ Station ปัจจุบัน
         {
-            Notify.WarnModal(this, "จบงานที่สถานีนี้ไม่ได้",
-                $"{JobName(jobId)} — marking {Method(method)}\n\n"
-                + "งาน marking 10 / 11 / 12 จบได้ที่ ST3 เท่านั้น");
-            return;
+            Notify.WarnModal(this, "จบงานที่สถานีนี้ไม่ได้", // แจ้งว่าสถานีนี้จบงานประเภทนี้ไม่ได้
+                $"{JobName(jobId)} — marking {Method(method)}\n\n" // แสดงชื่องานและวิธีพิมพ์ที่เลือก
+                + "งาน marking 10 / 11 / 12 จบได้ที่ ST3 เท่านั้น"); // บอกว่างานกลุ่มนี้ต้องจบที่ ST3
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
         var steps = CheckSteps(method, resolved.Commands); // เทียบแผนกับประวัติส่ง รวมจำนวนรอบของเครื่องเดิม
 
         bool manual = !steps.Complete; // ถ้าประวัติยังไม่ครบ ต้องจบแบบยืนยันด้วยมือ
-        if (manual)
+        if (manual) // แยกกรณียืนยันจบทั้งที่ส่งไม่ครบ
         {
             var list = string.Join(", ", steps.Missing); // รวมชื่อขั้นที่ยังไม่มีประวัติครบ
             if (!Confirm.Ask(this, "งานยังส่งไม่ครบ", // ให้ยืนยันว่าจะจบทั้งที่ส่งยังไม่ครบ
-                    $"{JobName(jobId)} ยังส่งไม่ครบ\n\nยังขาด: {list}\n\n" +
-                    "ยืนยันจบงานทั้งที่ยังส่งไม่ครบหรือไม่?"))
-                return;
+                    $"{JobName(jobId)} ยังส่งไม่ครบ\n\nยังขาด: {list}\n\n" + // แสดงขั้นตอนที่ยังส่งไม่ครบ
+                    "ยืนยันจบงานทั้งที่ยังส่งไม่ครบหรือไม่?")) // ให้คนกดยืนยันว่าจะจบงานนี้
+                return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
-        else if (!Confirm.Ask(this, "ยืนยันจบงาน",
-                     $"จบงาน {JobName(jobId)}\n\nยืนยันหรือไม่?"))
+        else if (!Confirm.Ask(this, "ยืนยันจบงาน", // ถามยืนยันสำหรับงานที่ส่งครบแล้ว
+                     $"จบงาน {JobName(jobId)}\n\nยืนยันหรือไม่?")) // แสดงชื่องานที่จะจบให้ตรวจอีกครั้ง
         {
-            return;
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
         var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Success"); // เปลี่ยนเป็น Success และล้างคิวที่ Backend
-        if (ok)
+        if (ok) // ทำต่อเมื่อบันทึกจบงานสำเร็จ
         {
             if (manual && !await _api.SaveSendStepAsync(jobId, "MANUAL_COMPLETE")) // จบด้วยมือแล้วบันทึกประวัติการยืนยัน
-                Notify.Warn(this, "จบงานแล้ว แต่บันทึกประวัติการยืนยันด้วยมือไม่สำเร็จ");
-            Notify.Success(this, manual
-                ? $"{JobName(jobId)} จบงานแล้ว (ยืนยันด้วยมือ)"
-                : $"{JobName(jobId)} จบงานแล้ว");
+                Notify.Warn(this, "จบงานแล้ว แต่บันทึกประวัติการยืนยันด้วยมือไม่สำเร็จ"); // แจ้งว่าจบงานแล้วแต่เก็บประวัติยืนยันไม่ได้
+            Notify.Success(this, manual // เลือกข้อความแจ้งตามวิธีจบงาน
+                ? $"{JobName(jobId)} จบงานแล้ว (ยืนยันด้วยมือ)" // ระบุว่างานนี้ยืนยันจบด้วยมือ
+                : $"{JobName(jobId)} จบงานแล้ว"); // แจ้งจบงานตามปกติ
             await RefreshDataAsync(); // อ่านรายการใหม่ให้งานที่จบออกจาก List
         }
-        else
+        else // กรณีไม่เข้าเงื่อนไขก่อนหน้า
         {
-            Notify.ErrorModal(this, "จบงานไม่สำเร็จ", err ?? "ไม่สามารถบันทึกสถานะจบงานได้");
+            Notify.ErrorModal(this, "จบงานไม่สำเร็จ", err ?? "ไม่สามารถบันทึกสถานะจบงานได้"); // แสดงสาเหตุที่บันทึกจบงานไม่ได้
         }
     }
 
@@ -1798,7 +1798,7 @@ public partial class OrderListUserControl : UserControl
         using (var dlg = new OrderDetailDialog()) // เปิดหน้าต่างรายละเอียดเฉพาะ Job นี้
         {
             dlg.TitleText = $"{OrderDetailUserControl.JobTitle(resolved.Job)} — Order Detail"; // ตั้งหัวหน้าต่างให้บอกงานที่กำลังดู
-            dlg.Text = dlg.TitleText;
+            dlg.Text = dlg.TitleText; // ตั้งชื่อหน้าต่างให้ตรงกับหัวข้อรายละเอียด
             dlg.LoadDetail(resolved, _api); // เติมรายละเอียดงานและตัวเชื่อม Backend ให้หน้ารายละเอียด
             dlg.ShowDialog(this); // รอให้ผู้ใช้ดูรายละเอียดหรือกดขอส่งแล้วปิดหน้าต่าง
             requestedStep = dlg.RemoteStartStep; // รับขั้นที่ผู้ใช้กดขอให้ ST1 ส่ง
@@ -1809,20 +1809,20 @@ public partial class OrderListUserControl : UserControl
         await RequestRemoteStartFromDetailAsync(resolved.Job.Id); // อ่านข้อมูลสดและตรวจขั้นอีกครั้งก่อนฝากส่ง
     }
 
-    private async Task RequestRemoteStartFromDetailAsync(int jobId)
+    private async Task RequestRemoteStartFromDetailAsync(int jobId) // ส่งคำขอจากหน้ารายละเอียดให้ ST1 เริ่มงาน
     {
         var resolved = await LoadJobAsync(jobId, $"กำลังตรวจสอบงาน · {JobName(jobId)}"); // อ่านประวัติใหม่ เผื่อมีคนส่งไปแล้วระหว่างเปิด Detail
-        if (resolved == null || IsDisposed) return;
+        if (resolved == null || IsDisposed) return; // หยุดเมื่อโหลดงานไม่ได้หรือปิดหน้าแล้ว
 
         var steps = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod).Steps; // อ่านขั้นที่งานนี้ต้องส่งจากวิธีพิมพ์
         int next = steps.FindIndex(step => !SentAlready(resolved, step)); // หาขั้นแรกที่ยังไม่มีประวัติส่งสำเร็จ
 
-        if (next <= 0)
+        if (next <= 0) // เช็คว่ายังมีขั้นถัดไปให้ส่งหรือไม่
         {
-            Notify.WarnModal(this, "ไม่มีขั้นที่ต้องส่ง",
-                $"{JobName(jobId)} ไม่มีขั้นถัดไปที่รอ ST1 ส่งแล้ว\n\n"
-                + "อาจมีคนกดปุ่มหน้างานไปก่อนหน้านี้");
-            return;
+            Notify.WarnModal(this, "ไม่มีขั้นที่ต้องส่ง", // แจ้งว่าไม่มีขั้นตอนค้างส่ง
+                $"{JobName(jobId)} ไม่มีขั้นถัดไปที่รอ ST1 ส่งแล้ว\n\n" // ระบุงานที่ไม่มีขั้นถัดไปรอ ST1
+                + "อาจมีคนกดปุ่มหน้างานไปก่อนหน้านี้"); // บอกว่าปุ่มหน้างานอาจทำขั้นนี้ไปแล้ว
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
         await RequestRemoteStartAsync(jobId, steps[next], resolved, askFirst: true); // ให้เลือกโปรแกรมและยืนยันก่อนฝากขั้นถัดไปให้ ST1
@@ -2040,31 +2040,31 @@ public partial class OrderListUserControl : UserControl
     }
 
     private async Task<bool> BlockedByUnreachableAsync( // ตรวจปลายทางที่ต้องใช้ก่อนจองคิว
-        int jobId, MarkingPlan plan, ResolvedJobResponse resolved)
+        int jobId, MarkingPlan plan, ResolvedJobResponse resolved) // รับรหัสงาน แผนส่ง และข้อมูลที่โหลดไว้
     {
-        ShowSending($"กำลังตรวจการเชื่อมต่อ · {JobName(jobId)}");
-        List<JobSendService.UnreachableMachine> bad;
-        try
+        ShowSending($"กำลังตรวจการเชื่อมต่อ · {JobName(jobId)}"); // แสดงว่ากำลังตรวจเครื่องของงานนี้
+        List<JobSendService.UnreachableMachine> bad; // เตรียมเก็บเครื่องที่เชื่อมต่อไม่ได้
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
-            bad = await JobSendService.UnreachableAsync(
-                plan.Steps, resolved.Pattern, resolved.UvJobData);
+            bad = await JobSendService.UnreachableAsync( // ตรวจการเชื่อมต่อเครื่องที่งานนี้ต้องใช้
+                plan.Steps, resolved.Pattern, resolved.UvJobData); // ส่งแผนงานพร้อมข้อมูล MK และ UV ไปตรวจ
         }
-        finally
+        finally // ทำส่วนนี้เสมอ แม้ขั้นก่อนหน้ามีปัญหา
         {
-            if (!IsDisposed && !_sending) ShowSending(null);
+            if (!IsDisposed && !_sending) ShowSending(null); // ปิดข้อความรอเมื่อไม่มีงานส่งค้าง
         }
 
-        if (bad.Count == 0) return false;
-        if (IsDisposed) return true;
+        if (bad.Count == 0) return false; // ผ่านการตรวจเมื่อไม่มีเครื่องที่ต่อไม่ได้
+        if (IsDisposed) return true; // หยุดขั้นเริ่มงานเมื่อหน้าถูกปิดแล้ว
 
-        Notify.ErrorModal(this, "เริ่มงานไม่ได้ — ต่อเครื่องไม่ครบ",
-            $"{JobName(jobId)} ต้องใช้ {plan.Steps.Count} ขั้นตอน และต้องต่อได้ครบทุกเครื่อง"
-            + Environment.NewLine + Environment.NewLine
-            + string.Join(Environment.NewLine, bad.Select(m => $"• {m.Name} — {m.Reason}"))
-            + Environment.NewLine + Environment.NewLine
-            + "ยังไม่มีอะไรถูกส่งเข้าเครื่อง และงานยังไม่เข้าคิว"
-            + Environment.NewLine
-            + "แก้แล้วกดเริ่มงานใหม่ได้เลย");
+        Notify.ErrorModal(this, "เริ่มงานไม่ได้ — ต่อเครื่องไม่ครบ", // แจ้งว่าเริ่มไม่ได้เพราะต่อเครื่องไม่ครบ
+            $"{JobName(jobId)} ต้องใช้ {plan.Steps.Count} ขั้นตอน และต้องต่อได้ครบทุกเครื่อง" // บอกจำนวนขั้นที่ต้องพร้อมก่อนเริ่มงาน
+            + Environment.NewLine + Environment.NewLine // เว้นบรรทัดก่อนรายการเครื่องที่มีปัญหา
+            + string.Join(Environment.NewLine, bad.Select(m => $"• {m.Name} — {m.Reason}")) // แสดงชื่อเครื่องและสาเหตุที่ต่อไม่ได้ทีละตัว
+            + Environment.NewLine + Environment.NewLine // เว้นบรรทัดก่อนแจ้งสถานะงาน
+            + "ยังไม่มีอะไรถูกส่งเข้าเครื่อง และงานยังไม่เข้าคิว" // แจ้งว่ายังไม่ได้ส่งเครื่องและยังไม่เข้าคิว
+            + Environment.NewLine // ขึ้นบรรทัดใหม่สำหรับวิธีทำต่อ
+            + "แก้แล้วกดเริ่มงานใหม่ได้เลย"); // บอกให้แก้การเชื่อมต่อแล้วเริ่มใหม่
 
         return true;
     }
@@ -2072,22 +2072,22 @@ public partial class OrderListUserControl : UserControl
     private async Task SendJobPlcAsync(ResolvedJobResponse resolved, List<Notify.ResultLine> lines) // ส่งตำแหน่งหัวและสายพานไป PLC
     {
         var plan = await PlcOrderService.BuildPlanAsync(_api, resolved.Pattern, usedHeadsOnly: true); // เตรียมค่า PLC เฉพาะหัวที่ Job ใช้ พร้อมสายพาน
-        if (IsDisposed || plan.Count == 0) return;
+        if (IsDisposed || plan.Count == 0) return; // ข้ามเมื่อปิดหน้าแล้วหรือไม่มีค่า PLC ให้ส่ง
 
         var results = await PlcOrderService.SendAsync(plan); // เขียนแต่ละ register แล้วอ่านกลับมาเทียบ
-        if (IsDisposed) return;
+        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
-        foreach (var r in results)
+        foreach (var r in results) // ไล่ดูผลส่ง PLC แต่ละรายการ
         {
-            if (r.Error != null)
+            if (r.Error != null) // เช็คว่ารายการนี้ส่งแล้วมีปัญหาหรือไม่
             {
-                lines.Add(Notify.Careful($"PLC {r.Name} — {r.Error}"));
-                continue;
+                lines.Add(Notify.Careful($"PLC {r.Name} — {r.Error}")); // เก็บชื่อ PLC และสาเหตุไว้แจ้งคนใช้
+                continue; // ข้ามรายการนี้ไปตัวถัดไป
             }
 
             if (r.ReadBack != r.Value) // เครื่องตอบรับแต่ค่าไม่ตรง ก็ต้องเตือนหน้างาน
-                lines.Add(Notify.Careful(
-                    $"PLC {r.Name} = {r.Value} · อ่านกลับได้ {r.ReadBack?.ToString() ?? "ไม่ได้"}"));
+                lines.Add(Notify.Careful( // เพิ่มผลอ่านกลับที่ต้องให้คนใช้ตรวจ
+                    $"PLC {r.Name} = {r.Value} · อ่านกลับได้ {r.ReadBack?.ToString() ?? "ไม่ได้"}")); // แสดงค่าที่ส่งเทียบกับค่าที่อ่านกลับ
         }
     }
 

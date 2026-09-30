@@ -322,259 +322,259 @@ public partial class OrderDetailUserControl : UserControl
 
     private async Task SwapMkDataAsync() // สลับชุดพิมพ์กับ servo ระหว่างหัว MK
     {
-        if (_pattern == null || _savingPattern) return;
+        if (_pattern == null || _savingPattern) return; // ยังไม่มี Pattern หรือกำลังบันทึก ให้รอก่อน
 
         FlipMkOrdinals(); // สลับปลายทางของ Pattern และ servo ในหน่วยความจำก่อน
 
-        var error = await SavePatternAsync();
-        if (error == null) return;
+        var error = await SavePatternAsync(); // บันทึก Pattern ของ Job ลง Backend
+        if (error == null) return; // บันทึกผ่านแล้ว จบโดยไม่ย้อนค่าบนจอ
 
         FlipMkOrdinals(); // บันทึกไม่ผ่าน จึงสลับค่าบนจอกลับตามฐานเดิม
-        Notify.ErrorModal(this, "สลับเครื่องไม่สำเร็จ",
-            $"ยังไม่ได้บันทึกลงฐานข้อมูล จอจึงถูกปรับกลับเป็นค่าเดิม\n\n{error}");
+        Notify.ErrorModal(this, "สลับเครื่องไม่สำเร็จ", // แจ้งว่าสลับหัวไม่สำเร็จ
+            $"ยังไม่ได้บันทึกลงฐานข้อมูล จอจึงถูกปรับกลับเป็นค่าเดิม\n\n{error}"); // บอกว่าคืนค่าบนจอตามฐานเดิมแล้ว
     }
 
     private void FlipMkOrdinals() // สลับลำดับหัวใน Pattern และค่าตำแหน่ง
     {
-        if (_pattern == null) return;
+        if (_pattern == null) return; // ยังไม่มี Pattern จึงทำรายการต่อไม่ได้
 
-        foreach (var cfg in _pattern.InkjetConfigs)
+        foreach (var cfg in _pattern.InkjetConfigs) // ไล่ค่าพิมพ์ทุกหัวใน Pattern
             cfg.Ordinal = Flip(cfg.Ordinal); // สลับหัว MK ที่จะรับชุดพิมพ์นี้
 
-        foreach (var servo in _pattern.ServoConfigs)
+        foreach (var servo in _pattern.ServoConfigs) // ไล่ค่า servo ที่ผูกกับแต่ละหัว
             servo.Ordinal = Flip(servo.Ordinal); // ให้ค่าตำแหน่งและหน่วงตามไปกับหัว MK
 
         SortPatternByOrdinal(); // เรียงใหม่ตามหัวจริงก่อนเติมค่าบนจอ
 
-        _isSwapped = !_isSwapped;
-        lblMkSectionTitle.Text = _isSwapped
-            ? "MK Section (MK Inkjet) — SWAPPED"
-            : "MK Section (MK Inkjet)";
-        lblMkSectionTitle.ForeColor = _isSwapped
-            ? DesignTokens.Warning
-            : DesignTokens.DarkNavy;
+        _isSwapped = !_isSwapped; // สลับสถานะว่าจออยู่ในโหมดสลับหัว
+        lblMkSectionTitle.Text = _isSwapped // เลือกหัวข้อให้ตรงสถานะสลับหัว
+            ? "MK Section (MK Inkjet) — SWAPPED" // เพิ่มคำว่า SWAPPED ให้เห็นชัด
+            : "MK Section (MK Inkjet)"; // ใช้หัวข้อปกติเมื่อกลับค่าหัวเดิม
+        lblMkSectionTitle.ForeColor = _isSwapped // เลือกสีหัวข้อตามสถานะสลับ
+            ? DesignTokens.Warning // ใช้สีเตือนเมื่อสลับหัวอยู่
+            : DesignTokens.DarkNavy; // ใช้สีปกติเมื่อไม่ได้สลับหัว
 
-        FillMkSection(_pattern);
+        FillMkSection(_pattern); // เติมค่าหัว MK บนจอจาก Pattern ล่าสุด
     }
 
     private async Task SaveEditedValuesAsync() // บันทึก Pattern แล้วบันทึกข้อความ UV
     {
-        if (_savingPattern) return;
+        if (_savingPattern) return; // กำลังบันทึกรอบก่อน ไม่รับคำขอซ้ำ
 
         if (CollectEditedValues() is string problem) // ตรวจค่าที่กรอกครบก่อนย้ายกลับเข้า Pattern
         {
-            Notify.WarnModal(this, "ค่าที่กรอกไม่ถูกต้อง", problem);
-            return;
+            Notify.WarnModal(this, "ค่าที่กรอกไม่ถูกต้อง", problem); // แจ้งช่องที่กรอกแล้วตรวจไม่ผ่าน
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
-        btnSavePattern.Enabled = false;
-        try
+        btnSavePattern.Enabled = false; // ปิดปุ่ม Save ระหว่างบันทึก
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
             var error = await SavePatternAsync(); // บันทึกค่าที่แก้ลง Job เพราะหน้า List จะอ่านจาก Backend ใหม่
-            if (IsDisposed) return;
+            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
-            if (error != null)
+            if (error != null) // มีรายละเอียดข้อผิดพลาดส่งกลับมา
             {
-                Notify.ErrorModal(this, "บันทึกไม่สำเร็จ",
-                    "ค่าที่แก้ยังไม่ได้ลงฐานข้อมูล" + Environment.NewLine + Environment.NewLine + error);
-                return;
+                Notify.ErrorModal(this, "บันทึกไม่สำเร็จ", // แจ้งว่า Pattern ยังบันทึกไม่ผ่าน
+                    "ค่าที่แก้ยังไม่ได้ลงฐานข้อมูล" + Environment.NewLine + Environment.NewLine + error); // แนบเหตุที่ค่าบนจอยังไม่ลงฐาน
+                return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
             }
 
             var uvError = await SaveUvTextsAsync(); // บันทึกข้อความ UV หลัง Pattern ผ่านแล้ว
-            if (IsDisposed) return;
+            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
-            FillMkSection(_pattern!);
-            FillConveyor(_pattern!);
+            FillMkSection(_pattern!); // เติมค่าหัว MK บนจอจาก Pattern ล่าสุด
+            FillConveyor(_pattern!); // เติมค่าสายพานจากข้อมูลที่บันทึก
 
             if (uvError != null) // ฝั่ง MK ลงแล้ว แต่ UV มีปัญหา ต้องบอกแยกส่วน
             {
-                Notify.ErrorModal(this, "บันทึกข้อความ UV ไม่สำเร็จ",
-                    "ค่าฝั่ง MK บันทึกแล้ว แต่ข้อความ UV ยังไม่ได้ลงฐานข้อมูล"
-                    + Environment.NewLine + Environment.NewLine + uvError);
-                return;
+                Notify.ErrorModal(this, "บันทึกข้อความ UV ไม่สำเร็จ", // แจ้งปัญหาเฉพาะส่วนข้อความ UV
+                    "ค่าฝั่ง MK บันทึกแล้ว แต่ข้อความ UV ยังไม่ได้ลงฐานข้อมูล" // บอกให้แยกผล MK ที่บันทึกแล้วออกจาก UV
+                    + Environment.NewLine + Environment.NewLine + uvError); // แนบเหตุที่บันทึกข้อความ UV ไม่ได้
+                return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
             }
 
-            Notify.Success(this, "บันทึกค่าเรียบร้อย");
+            Notify.Success(this, "บันทึกค่าเรียบร้อย"); // แจ้งว่าบันทึกครบตามขั้นแล้ว
         }
-        finally
+        finally // ทำส่วนนี้เสมอ แม้ขั้นก่อนหน้ามีปัญหา
         {
-            if (!IsDisposed) btnSavePattern.Enabled = true;
+            if (!IsDisposed) btnSavePattern.Enabled = true; // เปิดปุ่ม Save กลับเมื่อหน้ายังอยู่
         }
     }
 
     private async Task<string?> SaveUvTextsAsync() // บันทึกเฉพาะข้อความ UV ที่แก้
     {
-        if (_api == null) return null;
+        if (_api == null) return null; // ไม่มีตัวเรียก Backend ให้ข้ามการบันทึก UV
 
-        var problems = new List<string>();
+        var problems = new List<string>(); // เตรียมรวมปัญหาของ UV ทั้งสองชุด
 
-        foreach (var (table, machine) in new[]
+        foreach (var (table, machine) in new[] // ตรวจตารางข้อความแยกตามเครื่อง
                  {
-                     (tblUv1Texts, "UV1"),
-                     (tblUv2Texts, "UV2"),
+                     (tblUv1Texts, "UV1"), // จับตารางแรกกับข้อมูล UV1
+                     (tblUv2Texts, "UV2"), // จับตารางที่สองกับข้อมูล UV2
                  })
         {
             var row = _uvData.FirstOrDefault(r => // หาข้อมูล UV ให้ตรงตารางที่กำลังแก้
-                string.Equals(r.Machine, machine, StringComparison.OrdinalIgnoreCase));
+                string.Equals(r.Machine, machine, StringComparison.OrdinalIgnoreCase)); // เลือกแถวของเครื่องเดียวกันโดยไม่สนตัวพิมพ์
 
-            if (row == null) continue;
-            if (table.DataSource is not List<UvTextRow> edited) continue;
-            if (table.Tag is not List<string> original) continue;
+            if (row == null) continue; // ไม่พบแถวของเครื่องนี้ ให้ข้าม
+            if (table.DataSource is not List<UvTextRow> edited) continue; // ไม่มีตารางค่าที่แก้แล้ว ให้ข้าม
+            if (table.Tag is not List<string> original) continue; // ไม่มีค่าต้นฉบับให้เทียบ ให้ข้าม
 
             var changed = new Dictionary<string, string?>(); // เก็บเฉพาะช่องที่ต่างจากตอนเปิดหน้า
-            for (int i = 0; i < edited.Count && i < original.Count; i++)
+            for (int i = 0; i < edited.Count && i < original.Count; i++) // เทียบเฉพาะช่องที่มีทั้งค่าเก่าและค่าใหม่
             {
-                var now = (edited[i].Value ?? "").Trim();
+                var now = (edited[i].Value ?? "").Trim(); // อ่านค่าข้อความปัจจุบันแล้วตัดช่องว่าง
                 if (now == Dash) now = ""; // ขีดหมายถึงตั้งใจล้างข้อความช่องนี้
 
-                var before = (original[i] ?? "").Trim();
-                if (before == Dash) before = "";
+                var before = (original[i] ?? "").Trim(); // อ่านค่าที่แสดงไว้ตอนเปิดหน้า
+                if (before == Dash) before = ""; // ขีดในค่าเดิมก็นับเป็นข้อความว่าง
 
                 if (now == before) continue; // ช่องที่ไม่ได้แก้ไม่ต้องส่งทับ
                 changed[$"text{i + 1}"] = now.Length == 0 ? null : now; // ผูกค่าที่แก้กับ text1 ถึง text5 รวมการล้างช่อง
             }
 
-            if (changed.Count == 0) continue;
+            if (changed.Count == 0) continue; // เครื่องนี้ไม่มีช่องเปลี่ยน ไม่ต้องบันทึก
 
             var (ok, error) = await _api.UpdateUvTextsAsync(row.Id, changed); // อัปเดตเฉพาะข้อมูล UV ของแถวนี้
-            if (IsDisposed) return null;
+            if (IsDisposed) return null; // ปิดหน้าแล้วไม่แก้ข้อมูลบนจอต่อ
 
-            if (!ok)
+            if (!ok) // ตรวจกรณีทำรายการไม่ผ่าน
             {
-                problems.Add($"{machine}: {error}");
-                continue;
+                problems.Add($"{machine}: {error}"); // เก็บเหตุบันทึกไม่ได้แยกชื่อ UV
+                continue; // ข้ามรายการนี้ไปตัวถัดไป
             }
 
-            foreach (var (field, value) in changed)
+            foreach (var (field, value) in changed) // นำค่าที่บันทึกแล้วกลับเข้าข้อมูลในหน้านี้
             {
-                switch (field)
+                switch (field) // เลือกช่องข้อความที่จะเปลี่ยน
                 {
-                    case "text1": row.Text1 = value; break;
-                    case "text2": row.Text2 = value; break;
-                    case "text3": row.Text3 = value; break;
-                    case "text4": row.Text4 = value; break;
-                    case "text5": row.Text5 = value; break;
+                    case "text1": row.Text1 = value; break; // อัปเดตข้อความช่อง 1 ในหน่วยความจำ
+                    case "text2": row.Text2 = value; break; // อัปเดตข้อความช่อง 2 ในหน่วยความจำ
+                    case "text3": row.Text3 = value; break; // อัปเดตข้อความช่อง 3 ในหน่วยความจำ
+                    case "text4": row.Text4 = value; break; // อัปเดตข้อความช่อง 4 ในหน่วยความจำ
+                    case "text5": row.Text5 = value; break; // อัปเดตข้อความช่อง 5 ในหน่วยความจำ
                 }
             }
 
             table.Tag = edited.Select(r => r.Value).ToList(); // ใช้ค่าที่บันทึกแล้วเป็นฐานเทียบการแก้รอบหน้า
         }
 
-        return problems.Count == 0 ? null : string.Join(Environment.NewLine, problems);
+        return problems.Count == 0 ? null : string.Join(Environment.NewLine, problems); // รวมเหตุผิดพลาด ถ้าไม่มีให้ถือว่าบันทึกครบ
     }
 
     private string? CollectEditedValues() // ตรวจและเก็บค่าบนจอกลับเข้า Pattern
     {
-        if (_pattern == null) return "ยังไม่มีข้อมูล pattern ของงานนี้";
+        if (_pattern == null) return "ยังไม่มีข้อมูล pattern ของงานนี้"; // ต้องโหลด Pattern ก่อนอ่านหรือบันทึกค่าที่แก้
 
-        var errors = new List<string>();
+        var errors = new List<string>(); // เตรียมเก็บปัญหาที่พบในรอบนี้
 
-        int? Int(AntdUI.Input box, string label)
+        int? Int(AntdUI.Input box, string label) // ตัวช่วยอ่านช่องที่ต้องเป็นจำนวนเต็ม
         {
-            var text = box.Text.Trim();
-            if (text.Length == 0 || text == Dash) return null;
-            if (int.TryParse(text, out int v)) return v;
-            errors.Add($"{label}: \"{text}\" ไม่ใช่จำนวนเต็ม");
-            return null;
+            var text = box.Text.Trim(); // อ่านข้อความในช่องแล้วตัดช่องว่าง
+            if (text.Length == 0 || text == Dash) return null; // ช่องว่างหรือขีดยังไม่มีค่าตัวเลข
+            if (int.TryParse(text, out int v)) return v; // ใช้ค่าที่แปลงเป็นจำนวนเต็มได้
+            errors.Add($"{label}: \"{text}\" ไม่ใช่จำนวนเต็ม"); // เก็บชื่อช่องที่กรอกไม่เป็นจำนวนเต็ม
+            return null; // จบโดยไม่มีข้อมูลให้ใช้ต่อ
         }
 
-        double? Dbl(AntdUI.Input box, string label)
+        double? Dbl(AntdUI.Input box, string label) // ตัวช่วยอ่านช่องที่รับทศนิยม
         {
-            var text = box.Text.Trim();
-            if (text.Length == 0 || text == Dash) return null;
-            if (double.TryParse(text, out double v)) return v;
-            errors.Add($"{label}: \"{text}\" ไม่ใช่ตัวเลข");
-            return null;
+            var text = box.Text.Trim(); // อ่านข้อความในช่องแล้วตัดช่องว่าง
+            if (text.Length == 0 || text == Dash) return null; // ช่องว่างหรือขีดยังไม่มีค่าตัวเลข
+            if (double.TryParse(text, out double v)) return v; // ใช้ค่าที่แปลงเป็นทศนิยมได้
+            errors.Add($"{label}: \"{text}\" ไม่ใช่ตัวเลข"); // เก็บชื่อช่องที่กรอกไม่เป็นตัวเลข
+            return null; // จบโดยไม่มีข้อมูลให้ใช้ต่อ
         }
 
-        var mk1 = CustomSettingsManager.Read("MK058_NAME", "MK-058");
-        var mk2 = CustomSettingsManager.Read("MK059_NAME", "MK-059");
+        var mk1 = CustomSettingsManager.Read("MK058_NAME", "MK-058"); // อ่านชื่อหัว MK ตัวแรกจาก Setting
+        var mk2 = CustomSettingsManager.Read("MK059_NAME", "MK-059"); // อ่านชื่อหัว MK ตัวที่สองจาก Setting
 
-        var v1 = (W: Int(txtMk1Width, $"{mk1} Width"), H: Int(txtMk1Height, $"{mk1} Height"),
-                  Trig: Int(txtMk1Trigger, $"{mk1} Trigger Delay"),
-                  Act: Dbl(txtMk1PosAct, $"{mk1} Pos Act"), Dly: Dbl(txtMk1Delay, $"{mk1} Delay"));
+        var v1 = (W: Int(txtMk1Width, $"{mk1} Width"), H: Int(txtMk1Height, $"{mk1} Height"), // อ่านความกว้างและความสูงของ MK หัวแรก
+                  Trig: Int(txtMk1Trigger, $"{mk1} Trigger Delay"), // อ่าน Trigger Delay ของหัวแรก
+                  Act: Dbl(txtMk1PosAct, $"{mk1} Pos Act"), Dly: Dbl(txtMk1Delay, $"{mk1} Delay")); // อ่านตำแหน่งและหน่วง servo หัวแรก
 
-        var v2 = (W: Int(txtMk2Width, $"{mk2} Width"), H: Int(txtMk2Height, $"{mk2} Height"),
-                  Trig: Int(txtMk2Trigger, $"{mk2} Trigger Delay"),
-                  Act: Dbl(txtMk2PosAct, $"{mk2} Pos Act"), Dly: Dbl(txtMk2Delay, $"{mk2} Delay"));
+        var v2 = (W: Int(txtMk2Width, $"{mk2} Width"), H: Int(txtMk2Height, $"{mk2} Height"), // อ่านความกว้างและความสูงของ MK หัวที่สอง
+                  Trig: Int(txtMk2Trigger, $"{mk2} Trigger Delay"), // อ่าน Trigger Delay ของหัวที่สอง
+                  Act: Dbl(txtMk2PosAct, $"{mk2} Pos Act"), Dly: Dbl(txtMk2Delay, $"{mk2} Delay")); // อ่านตำแหน่งและหน่วง servo หัวที่สอง
 
-        var s1 = Int(txtConveyor1, "Conveyor 1");
-        var s2 = Int(txtConveyor2, "Conveyor 2");
-        var s3 = Int(txtConveyor3, "Conveyor 3");
+        var s1 = Int(txtConveyor1, "Conveyor 1"); // อ่านความเร็วสายพานตัวที่ 1
+        var s2 = Int(txtConveyor2, "Conveyor 2"); // อ่านความเร็วสายพานตัวที่ 2
+        var s3 = Int(txtConveyor3, "Conveyor 3"); // อ่านความเร็วสายพานตัวที่ 3
 
         var blocks1 = ReadBlocks(tblMk1Blocks, mk1, errors); // อ่านข้อความและค่าบล็อกของ MK หัวแรก
         var blocks2 = ReadBlocks(tblMk2Blocks, mk2, errors); // อ่านหัวที่สองแยกกัน ไม่สลับกับหัวแรก
 
         if (errors.Count > 0) return string.Join(Environment.NewLine, errors); // มีช่องผิดให้หยุดก่อนแก้ Pattern เพื่อไม่ค้างค่าครึ่งชุด
 
-        void ApplyMk(int ordinal,
-            (int? W, int? H, int? Trig, double? Act, double? Dly) v)
+        void ApplyMk(int ordinal, // ตัวช่วยใส่ค่ากลับให้หัวตามลำดับ
+            (int? W, int? H, int? Trig, double? Act, double? Dly) v) // รับชุดค่าพิมพ์และค่า servo ของหัวนั้น
         {
-            var config = _pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
-            if (config != null)
+            var config = _pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal); // หา InkjetConfig ของหัวที่กำหนด
+            if (config != null) // มีชุดค่าพิมพ์ของหัวนี้แล้ว
             {
-                config.Width = v.W;
-                config.Height = v.H;
-                config.TriggerDelay = v.Trig;
+                config.Width = v.W; // เก็บความกว้างที่แก้บนจอ
+                config.Height = v.H; // เก็บความสูงที่แก้บนจอ
+                config.TriggerDelay = v.Trig; // เก็บ Trigger Delay ที่แก้บนจอ
             }
 
-            var servo = _pattern.ServoConfigs.FirstOrDefault(s => s.Ordinal == ordinal);
-            if (servo != null)
+            var servo = _pattern.ServoConfigs.FirstOrDefault(s => s.Ordinal == ordinal); // หาค่า servo ให้ตรงหัวเดียวกัน
+            if (servo != null) // มีค่า servo ของหัวนี้แล้ว
             {
-                servo.PostAct = v.Act;
-                servo.Delay = v.Dly;
+                servo.PostAct = v.Act; // เก็บตำแหน่งหัวที่แก้
+                servo.Delay = v.Dly; // เก็บค่าหน่วงของ servo ที่แก้
             }
         }
 
-        ApplyMk(1, v1);
-        ApplyMk(2, v2);
-        ApplyBlocks(1, blocks1);
-        ApplyBlocks(2, blocks2);
+        ApplyMk(1, v1); // นำค่าชุดแรกใส่ MK หัวแรก
+        ApplyMk(2, v2); // นำค่าชุดที่สองใส่ MK หัวที่สอง
+        ApplyBlocks(1, blocks1); // เก็บบล็อกข้อความของหัวแรก
+        ApplyBlocks(2, blocks2); // เก็บบล็อกข้อความของหัวที่สอง
 
-        if (_pattern.ConveyorSpeeds is { } speeds)
+        if (_pattern.ConveyorSpeeds is { } speeds) // ตรวจว่ามีชุดความเร็วสายพานใน Pattern
         {
-            speeds.Speed1 = s1;
-            speeds.Speed2 = s2;
-            speeds.Speed3 = s3;
+            speeds.Speed1 = s1; // เก็บความเร็วสายพานตัวที่ 1
+            speeds.Speed2 = s2; // เก็บความเร็วสายพานตัวที่ 2
+            speeds.Speed3 = s3; // เก็บความเร็วสายพานตัวที่ 3
         }
 
-        return null;
+        return null; // จบโดยไม่มีข้อมูลให้ใช้ต่อ
     }
 
     private readonly record struct BlockEdit(
         int Number, string? Text, int? X, int? Y, int? Size, int? Scale);
 
-    private List<BlockEdit> ReadBlocks(AntdUI.Table table, string machine, List<string> errors)
+    private List<BlockEdit> ReadBlocks(AntdUI.Table table, string machine, List<string> errors) // อ่านค่าบล็อกในตารางพร้อมตรวจตัวเลข
     {
-        var result = new List<BlockEdit>();
-        if (table.DataSource is not List<BlockRow> rows) return result;
+        var result = new List<BlockEdit>(); // เตรียมรายการบล็อกที่แก้แล้ว
+        if (table.DataSource is not List<BlockRow> rows) return result; // ไม่มีข้อมูลตาราง ให้จบด้วยรายการว่าง
 
-        int? Int(string? text, string label)
+        int? Int(string? text, string label) // ตัวช่วยแปลงค่าบล็อกเป็นจำนวนเต็ม
         {
-            var value = (text ?? "").Trim();
-            if (value.Length == 0 || value == Dash) return null;
-            if (int.TryParse(value, out int v)) return v;
-            errors.Add($"{label}: \"{value}\" ไม่ใช่จำนวนเต็ม");
-            return null;
+            var value = (text ?? "").Trim(); // แทนค่าว่างแล้วตัดช่องว่างหัวท้าย
+            if (value.Length == 0 || value == Dash) return null; // ช่องว่างหรือขีดหมายถึงยังไม่มีค่า
+            if (int.TryParse(value, out int v)) return v; // ใช้จำนวนเต็มที่แปลงได้
+            errors.Add($"{label}: \"{value}\" ไม่ใช่จำนวนเต็ม"); // เก็บช่องบล็อกที่กรอกตัวเลขผิด
+            return null; // จบโดยไม่มีข้อมูลให้ใช้ต่อ
         }
 
-        foreach (var row in rows)
+        foreach (var row in rows) // อ่านบล็อกทีละแถว
         {
-            if (!int.TryParse(row.Block, out int number)) continue;
+            if (!int.TryParse(row.Block, out int number)) continue; // เลขบล็อกไม่ถูกต้อง ให้ข้ามแถวนี้
 
-            var where = $"{machine} Block {number}";
-            var text = (row.BlockText ?? "").Trim();
+            var where = $"{machine} Block {number}"; // ระบุหัวและเลขบล็อกสำหรับรายงานปัญหา
+            var text = (row.BlockText ?? "").Trim(); // อ่านข้อความพิมพ์ในแถวนี้
 
-            result.Add(new BlockEdit(
-                number,
-                text.Length == 0 || text == Dash ? null : text,
-                Int(row.X, $"{where} X"),
-                Int(row.Y, $"{where} Y"),
-                Int(row.Size, $"{where} Size"),
-                Int(row.Scale, $"{where} Scale")));
+            result.Add(new BlockEdit( // รวมค่าที่อ่านได้เป็นบล็อกหนึ่งชุด
+                number, // เก็บหมายเลขบล็อก
+                text.Length == 0 || text == Dash ? null : text, // ช่องว่างหรือขีดใช้แทนการล้างข้อความ
+                Int(row.X, $"{where} X"), // อ่านตำแหน่ง X ของข้อความ
+                Int(row.Y, $"{where} Y"), // อ่านตำแหน่ง Y ของข้อความ
+                Int(row.Size, $"{where} Size"), // อ่านขนาดตัวอักษร
+                Int(row.Scale, $"{where} Scale"))); // อ่านอัตราขยายของข้อความ
         }
 
-        return result;
+        return result; // ส่งบล็อกที่ตรวจแล้วกลับไปเก็บใน Pattern
     }
 
     private void ApplyBlocks(int ordinal, List<BlockEdit> edits)
@@ -597,26 +597,26 @@ public partial class OrderDetailUserControl : UserControl
         }
     }
 
-    private async Task<string?> SavePatternAsync()
+    private async Task<string?> SavePatternAsync() // ส่ง Pattern ปัจจุบันไปอัปเดต Backend
     {
-        if (_pattern == null) return "ยังไม่มีข้อมูล pattern ของงานนี้";
-        if (_api == null) return "ยังไม่ได้เชื่อมต่อ backend";
+        if (_pattern == null) return "ยังไม่มีข้อมูล pattern ของงานนี้"; // ต้องโหลด Pattern ก่อนอ่านหรือบันทึกค่าที่แก้
+        if (_api == null) return "ยังไม่ได้เชื่อมต่อ backend"; // ต้องมี Backend ก่อนบันทึก Pattern
 
-        _savingPattern = true;
-        btnMkSwap.Enabled = false;
-        picMk1Abc.Enabled = false;
-        picMk2Abc.Enabled = false;
-        try
+        _savingPattern = true; // จำว่ากำลังบันทึก เพื่อกันแก้ซ้อน
+        btnMkSwap.Enabled = false; // ปิดปุ่มสลับหัวระหว่างบันทึก
+        picMk1Abc.Enabled = false; // ปิดปุ่มกลับทิศหัวแรกระหว่างบันทึก
+        picMk2Abc.Enabled = false; // ปิดปุ่มกลับทิศหัวที่สองระหว่างบันทึก
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
-            var (ok, error) = await _api.UpdatePatternAsync(_pattern.Id, _pattern);
-            return ok ? null : error ?? "บันทึกไม่สำเร็จ";
+            var (ok, error) = await _api.UpdatePatternAsync(_pattern.Id, _pattern); // อัปเดต Pattern ใบเดิมด้วยค่าปัจจุบัน
+            return ok ? null : error ?? "บันทึกไม่สำเร็จ"; // ส่งเหตุที่บันทึกไม่ผ่านให้ผู้เรียก
         }
-        finally
+        finally // ทำส่วนนี้เสมอ แม้ขั้นก่อนหน้ามีปัญหา
         {
-            _savingPattern = false;
-            btnMkSwap.Enabled = true;
-            picMk1Abc.Enabled = true;
-            picMk2Abc.Enabled = true;
+            _savingPattern = false; // จบรอบบันทึกแล้วรับการแก้ไขใหม่ได้
+            btnMkSwap.Enabled = true; // เปิดปุ่มสลับหัวกลับ
+            picMk1Abc.Enabled = true; // เปิดปุ่มกลับทิศหัวแรกกลับ
+            picMk2Abc.Enabled = true; // เปิดปุ่มกลับทิศหัวที่สองกลับ
         }
     }
 
@@ -631,23 +631,23 @@ public partial class OrderDetailUserControl : UserControl
 
     private async Task ToggleAbcAsync(int ordinal, PictureBox box) // เปลี่ยนทิศทางข้อความแล้วบันทึก Pattern
     {
-        if (_pattern == null || _savingPattern) return;
+        if (_pattern == null || _savingPattern) return; // ยังไม่มี Pattern หรือกำลังบันทึก ให้รอก่อน
 
-        var config = _pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
-        if (config == null)
+        var config = _pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal); // หาค่าพิมพ์ของหัวที่กด ABC
+        if (config == null) // ยังไม่มีค่าพิมพ์ของหัวนั้น
         {
-            Notify.WarnModal(this, "แจ้งเตือน", $"ไม่พบ InkjetConfig ordinal {ordinal}");
-            return;
+            Notify.WarnModal(this, "แจ้งเตือน", $"ไม่พบ InkjetConfig ordinal {ordinal}"); // บอกลำดับหัวที่หาไม่พบ
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
-        FlipDirection(config, box);
+        FlipDirection(config, box); // กลับทิศข้อความและรูปบนจอก่อนบันทึก
 
-        var error = await SavePatternAsync();
-        if (error == null) return;
+        var error = await SavePatternAsync(); // บันทึก Pattern ของ Job ลง Backend
+        if (error == null) return; // บันทึกผ่านแล้ว จบโดยไม่ย้อนค่าบนจอ
 
-        FlipDirection(config, box);
-        Notify.ErrorModal(this, "สลับทิศทางพิมพ์ไม่สำเร็จ",
-            $"ยังไม่ได้บันทึกลงฐานข้อมูล จอจึงถูกปรับกลับเป็นค่าเดิม\n\n{error}");
+        FlipDirection(config, box); // บันทึกไม่ได้ ให้กลับทิศคืนค่าเดิม
+        Notify.ErrorModal(this, "สลับทิศทางพิมพ์ไม่สำเร็จ", // แจ้งว่ากลับทิศพิมพ์ไม่สำเร็จ
+            $"ยังไม่ได้บันทึกลงฐานข้อมูล จอจึงถูกปรับกลับเป็นค่าเดิม\n\n{error}"); // บอกว่าคืนค่าบนจอตามฐานเดิมแล้ว
     }
 
     private static void FlipDirection(InkjetConfigDto config, PictureBox box)
@@ -772,12 +772,12 @@ public partial class OrderDetailUserControl : UserControl
     private bool HasStep(string step) =>
         _sendSteps.Any(s => string.Equals(s, step, StringComparison.OrdinalIgnoreCase));
 
-    private string? NextRemoteStep()
+    private string? NextRemoteStep() // หาขั้นถัดไปที่ฝากให้ ST1 ส่งได้
     {
         if (_currentStep <= 0 || _currentStep >= _sendSteps.Count) return null; // ต้องผ่านขั้นแรกแล้ว และยังมีขั้นถัดไปค้างอยู่
         if (!string.Equals(_jobStatus, "Process", StringComparison.OrdinalIgnoreCase)) return null; // ฝากส่งขั้นถัดไปได้เฉพาะงานที่กำลังผลิต
 
-        return _sendSteps[_currentStep];
+        return _sendSteps[_currentStep]; // ส่งชื่อเครื่องของขั้นปัจจุบันให้ปุ่มฝากส่ง
     }
 
     private void RequestRemoteStart() // ฝากขั้นถัดไปกลับไปที่หน้า Order List
@@ -796,37 +796,37 @@ public partial class OrderDetailUserControl : UserControl
             && StationService.ManualRemoteSendEnabled // ต้องเปิดตัวเลือกฝากส่งด้วยมือไว้ก่อน
             && (StationService.IsSt3 || _isDevMode); // ให้เห็นเฉพาะ ST3 หรือโหมดทดสอบ
 
-        btnRemoteSend.Visible = showRemote;
+        btnRemoteSend.Visible = showRemote; // แสดงปุ่มฝากส่งตามสิทธิ์ที่ตรวจไว้
         btnRemoteSend.Enabled = showRemote; // เปิดให้กดด้วยเงื่อนไขเดียวกัน ไม่อ่าน Visible กลับมา
         if (remoteStep != null) btnRemoteSend.Text = $"ขอให้ ST1 ส่ง {remoteStep}"; // ใส่ชื่อเครื่องที่ขอให้ ST1 ส่งบนปุ่ม
 
-        btnTestPlc.Visible = _isDevMode;
-        btnSendMk.Visible = _isDevMode;
-        btnSendUv1.Visible = _isDevMode;
-        btnSendUv2.Visible = _isDevMode;
+        btnTestPlc.Visible = _isDevMode; // แสดงปุ่ม Test PLC เฉพาะโหมดทดสอบ
+        btnSendMk.Visible = _isDevMode; // แสดงปุ่มส่ง MK ตรงเฉพาะโหมดทดสอบ
+        btnSendUv1.Visible = _isDevMode; // แสดงปุ่มส่ง UV1 ตรงเฉพาะโหมดทดสอบ
+        btnSendUv2.Visible = _isDevMode; // แสดงปุ่มส่ง UV2 ตรงเฉพาะโหมดทดสอบ
 
-        if (_isDevMode)
+        if (_isDevMode) // โหมดทดสอบเปิดให้ส่งแต่ละเครื่องเอง
         {
-            btnTestPlc.Enabled = true;
-            btnSendMk.Enabled = true;
-            btnSendUv1.Enabled = true;
-            btnSendUv2.Enabled = true;
-            return;
+            btnTestPlc.Enabled = true; // เปิดให้ทดสอบ PLC ได้
+            btnSendMk.Enabled = true; // เปิดให้ทดสอบส่ง MK ได้
+            btnSendUv1.Enabled = true; // เปิดให้ทดสอบส่ง UV1 ได้
+            btnSendUv2.Enabled = true; // เปิดให้ทดสอบส่ง UV2 ได้
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
-        btnTestPlc.Enabled = false;
-        btnSendMk.Enabled = false;
-        btnSendUv1.Enabled = false;
-        btnSendUv2.Enabled = false;
+        btnTestPlc.Enabled = false; // ปิดการส่ง PLC ตรงในโหมดหน้างาน
+        btnSendMk.Enabled = false; // ปิดปุ่มส่ง MK ไว้ก่อนตรวจขั้น
+        btnSendUv1.Enabled = false; // ปิดปุ่มส่ง UV1 ไว้ก่อนตรวจขั้น
+        btnSendUv2.Enabled = false; // ปิดปุ่มส่ง UV2 ไว้ก่อนตรวจขั้น
 
-        if (_currentStep < _sendSteps.Count)
+        if (_currentStep < _sendSteps.Count) // ยังมีขั้นที่ส่งไม่ครบในแผน
         {
-            var step = _sendSteps[_currentStep];
-            GetSendButton(step).Enabled = true;
+            var step = _sendSteps[_currentStep]; // อ่านชื่อเครื่องของขั้นที่ค้าง
+            GetSendButton(step).Enabled = true; // เปิดปุ่มของขั้นที่ถึงลำดับ
         }
 
-        for (int i = 0; i < _currentStep && i < _sendSteps.Count; i++)
-            MarkButtonSent(GetSendButton(_sendSteps[i]));
+        for (int i = 0; i < _currentStep && i < _sendSteps.Count; i++) // ไล่ขั้นที่มีประวัติส่งแล้ว
+            MarkButtonSent(GetSendButton(_sendSteps[i])); // แสดงเครื่องหมายส่งแล้วบนปุ่มนั้น
     }
 
     private void CompleteSendStep(string stepName, object? detail = null)
@@ -1070,84 +1070,84 @@ public partial class OrderDetailUserControl : UserControl
     {
         if (CollectEditedValues() is string invalid) // ใช้ค่าที่เพิ่งพิมพ์บนจอ แม้ยังไม่ได้กดบันทึก
         {
-            Notify.WarnModal(this, "ค่าที่กรอกไม่ถูกต้อง", invalid);
-            return;
+            Notify.WarnModal(this, "ค่าที่กรอกไม่ถูกต้อง", invalid); // แจ้งค่าบนจอที่แปลงไม่ผ่าน
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
         if (PlcOrderService.UnsendableReason(_pattern) is string blank) // กันช่องจำเป็นว่างก่อนส่ง PLC ในทางทดสอบ
         {
-            Notify.WarnModal(this, "ส่งเข้า PLC ไม่ได้",
-                blank + Environment.NewLine + Environment.NewLine
-                + "กรอกค่าให้ครบแล้วลองใหม่");
-            return;
+            Notify.WarnModal(this, "ส่งเข้า PLC ไม่ได้", // แจ้งว่าค่าจำเป็นของ PLC ยังไม่ครบ
+                blank + Environment.NewLine + Environment.NewLine // แนบชื่อช่องที่ยังว่าง
+                + "กรอกค่าให้ครบแล้วลองใหม่"); // ให้กรอกค่าก่อนกดทดสอบใหม่
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
         var plan = await PlcOrderService.BuildPlanAsync(_api, _pattern, usedHeadsOnly: true); // จับค่ากับ register เฉพาะหัวที่งานใช้จริง
-        if (IsDisposed) return;
+        if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
-        if (plan.Count == 0)
+        if (plan.Count == 0) // ตรวจว่าไม่มีแผนค่า PLC ให้ส่ง
         {
-            Notify.WarnModal(this, "ทดสอบส่ง PLC", "ยังไม่มีข้อมูลงานให้ส่ง");
-            return;
+            Notify.WarnModal(this, "ทดสอบส่ง PLC", "ยังไม่มีข้อมูลงานให้ส่ง"); // แจ้งว่ายังไม่มีข้อมูลงานสำหรับทดสอบ
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
         var ready = plan.Where(f => f.Address != null).ToList(); // แยกรายการที่มี address พร้อมส่ง
         var missing = plan.Where(f => f.Address == null).ToList(); // รายการที่ยังไม่ map ต้องบอกผู้ทดสอบก่อนยืนยัน
 
-        if (ready.Count == 0)
+        if (ready.Count == 0) // ตรวจว่าไม่มีค่าที่ map address แล้ว
         {
-            Notify.WarnModal(this, "ทดสอบส่ง PLC",
-                "ไม่มีค่าไหน map address ไว้เลย — ตั้งค่าที่ตาราง register map ในหน้า PLC Setting ก่อน");
-            return;
+            Notify.WarnModal(this, "ทดสอบส่ง PLC", // แจ้งปัญหาการตั้ง register map
+                "ไม่มีค่าไหน map address ไว้เลย — ตั้งค่าที่ตาราง register map ในหน้า PLC Setting ก่อน"); // ชี้ให้ตั้ง address ในหน้า PLC Setting
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
-        var summary = string.Join(Environment.NewLine,
-            ready.Select(f => $"D{f.Address}   {f.Label}   =  {f.Value}"));
+        var summary = string.Join(Environment.NewLine, // รวมค่าที่จะส่งเป็นข้อความยืนยัน
+            ready.Select(f => $"D{f.Address}   {f.Label}   =  {f.Value}")); // แสดง address ชื่อค่า และค่าที่จะเขียน
 
-        if (missing.Count > 0)
+        if (missing.Count > 0) // มีรายการที่ยังขาด address
         {
-            summary += Environment.NewLine + Environment.NewLine
-                + "ข้ามเพราะยังไม่ได้ map: "
-                + string.Join(", ", missing.Select(f => f.ListName));
+            summary += Environment.NewLine + Environment.NewLine // เพิ่มส่วนแจ้งรายการที่จะข้าม
+                + "ข้ามเพราะยังไม่ได้ map: " // ระบุว่าข้ามเพราะยังไม่ map
+                + string.Join(", ", missing.Select(f => f.ListName)); // แนบชื่อรายการที่ไม่มี address
         }
 
-        var ip = CustomSettingsManager.Read("PLC_IP", "").Trim();
-        var port = CustomSettingsManager.Read("PLC_PORT", "502");
-        var target = ip.Length == 0 ? "(ยังไม่ได้ตั้ง IP)" : $"{ip}:{port}";
+        var ip = CustomSettingsManager.Read("PLC_IP", "").Trim(); // อ่าน IP ของ PLC ที่จะทดสอบ
+        var port = CustomSettingsManager.Read("PLC_PORT", "502"); // อ่านพอร์ต PLC หรือใช้ 502
+        var target = ip.Length == 0 ? "(ยังไม่ได้ตั้ง IP)" : $"{ip}:{port}"; // เตรียมปลายทางให้ผู้ใช้ตรวจในกล่องยืนยัน
 
-        if (!Confirm.Ask(this, "ยืนยันส่งค่าเข้า PLC",
-                $"PLC {target}" + Environment.NewLine + Environment.NewLine + summary
-                + Environment.NewLine + Environment.NewLine + "ยืนยันส่งหรือไม่?"))
-            return;
+        if (!Confirm.Ask(this, "ยืนยันส่งค่าเข้า PLC", // ให้ยืนยันก่อนเขียนค่าเข้า PLC
+                $"PLC {target}" + Environment.NewLine + Environment.NewLine + summary // แสดงปลายทางพร้อมค่าแต่ละ register
+                + Environment.NewLine + Environment.NewLine + "ยืนยันส่งหรือไม่?")) // ถามยืนยันส่งชุดที่แสดง
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
 
-        btnTestPlc.Enabled = false;
-        var originalText = btnTestPlc.Text;
-        btnTestPlc.Text = "กำลังส่ง...";
-        try
+        btnTestPlc.Enabled = false; // กันกด Test PLC ซ้ำระหว่างส่ง
+        var originalText = btnTestPlc.Text; // จำข้อความปุ่มเดิมไว้คืนตอนจบ
+        btnTestPlc.Text = "กำลังส่ง..."; // เปลี่ยนปุ่มให้รู้ว่ากำลังส่ง PLC
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
-            var lines = (await PlcOrderService.SendAsync(plan))
-                .Select(b =>
+            var lines = (await PlcOrderService.SendAsync(plan)) // ส่งชุดค่าแล้วเตรียมข้อความผลแต่ละ register
+                .Select(b => // แปลงผลแต่ละค่าเป็นรายการแจ้งบนจอ
                 {
-                    if (b.Error != null) return Notify.Bad($"{b.Name} — {b.Error}");
+                    if (b.Error != null) return Notify.Bad($"{b.Name} — {b.Error}"); // มีข้อผิดพลาด ให้แสดงชื่อค่าและสาเหตุ
 
-                    if (b.ReadBack == null)
-                        return Notify.Careful($"{b.Name} = {b.Value} (อ่านกลับไม่ได้)");
+                    if (b.ReadBack == null) // ตรวจว่ามีค่าที่อ่านกลับได้หรือไม่
+                        return Notify.Careful($"{b.Name} = {b.Value} (อ่านกลับไม่ได้)"); // เตือนว่าส่งแล้วแต่ยังยืนยันค่ากลับไม่ได้
 
-                    return b.ReadBack == b.Value
-                        ? Notify.Ok($"{b.Name} = {b.Value}")
-                        : Notify.Careful($"{b.Name} = {b.Value} · อ่านกลับได้ {b.ReadBack}");
+                    return b.ReadBack == b.Value // เทียบค่าที่อ่านกลับกับค่าที่ตั้งใจส่ง
+                        ? Notify.Ok($"{b.Name} = {b.Value}") // ค่าตรงกันให้แสดงผลผ่าน
+                        : Notify.Careful($"{b.Name} = {b.Value} · อ่านกลับได้ {b.ReadBack}"); // ค่าต่างกันให้แสดงทั้งสองค่าเพื่อเทียบ
                 })
-                .ToList();
+                .ToList(); // เก็บผลที่กรองแล้วเป็นรายการ
 
-            if (IsDisposed) return;
-            Notify.Result(this, "ผลการส่ง PLC", lines);
+            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
+            Notify.Result(this, "ผลการส่ง PLC", lines); // แสดงผลส่ง PLC ทั้งชุด
         }
-        finally
+        finally // ทำส่วนนี้เสมอ แม้ขั้นก่อนหน้ามีปัญหา
         {
-            if (!IsDisposed)
+            if (!IsDisposed) // ทำต่อเมื่อหน้ายังเปิดอยู่
             {
-                btnTestPlc.Text = originalText;
-                btnTestPlc.Enabled = true;
+                btnTestPlc.Text = originalText; // คืนข้อความปุ่มหลังจบทดสอบ
+                btnTestPlc.Enabled = true; // เปิดปุ่มให้ทดสอบครั้งถัดไป
             }
         }
     }
@@ -1213,15 +1213,15 @@ public partial class OrderDetailUserControl : UserControl
 
     private async Task ShowStageAsync(int jobId) // เติมเลข Q หรือด้านพิมพ์ท้ายสถานะ
     {
-        if (_api == null) return;
+        if (_api == null) return; // ยังไม่มีตัวเรียก Backend ให้หยุดก่อน
 
         var (rows, error) = await _api.GetMachineQueueAsync(); // อ่านคิวกลางก่อนเติมรายละเอียดท้ายสถานะ
-        if (error != null || IsDisposed) return;
+        if (error != null || IsDisposed) return; // อ่านคิวไม่ได้หรือปิดหน้าแล้ว ให้ใช้สถานะเดิม
 
         if (jobId != _jobId) return; // เปลี่ยน Job ระหว่างรอแล้ว ไม่ใช้คำตอบเก่าทับหน้าปัจจุบัน
 
         var stage = Services.JobStageService.Describe(jobId, _markingMethod, rows); // แปลงคิวเป็นเลข Q หรือด้านที่กำลังพิมพ์
-        if (stage == null || _baseStatusText.Length == 0) return;
+        if (stage == null || _baseStatusText.Length == 0) return; // ไม่มีสถานะย่อยหรือสถานะหลัก ให้ข้าม
 
         txtJobStatus.Text = $"{_baseStatusText} ({stage})"; // เติมรายละเอียดหลังสถานะ เช่น Process (Mark Plate)
     }
@@ -1480,148 +1480,148 @@ public partial class OrderDetailUserControl : UserControl
         if (string.Equals(_jobStatus, "Process", StringComparison.OrdinalIgnoreCase)) // งานปกติต้องเริ่มเป็น Process ก่อนสั่งแคลมป์
             return true;
 
-        Notify.WarnModal(this, "ยังสั่งแคลมป์ไม่ได้",
-            $"{JobText()} ยังไม่ได้เริ่มงาน (สถานะ {JobStatusDisplay.Text(_jobStatus)})\n\n"
-            + "กดเริ่มงานที่หน้ารายการงานก่อน จึงจะสั่งค่า IAI ได้");
+        Notify.WarnModal(this, "ยังสั่งแคลมป์ไม่ได้", // แจ้งว่างานยังไม่พร้อมสั่งแคลมป์
+            $"{JobText()} ยังไม่ได้เริ่มงาน (สถานะ {JobStatusDisplay.Text(_jobStatus)})\n\n" // แสดง Job และสถานะปัจจุบันที่ถูกกันไว้
+            + "กดเริ่มงานที่หน้ารายการงานก่อน จึงจะสั่งค่า IAI ได้"); // ให้เริ่มงานจาก List ก่อนสั่ง IAI
         return false;
     }
 
     private async Task IaiSendAsync(AntdUI.Input input, bool isPlate, string? zone) // ส่งระยะไปยังแกนแคลมป์ที่เลือก
     {
-        if (!CanCommandIai()) return;
+        if (!CanCommandIai()) return; // ตรวจสิทธิ์สั่งแคลมป์ก่อนทำต่อ
 
-        if (!int.TryParse(input.Text.Trim(), out int mm))
+        if (!int.TryParse(input.Text.Trim(), out int mm)) // ระยะต้องกรอกเป็นจำนวนเต็ม
         {
-            Notify.WarnModal(this, "แจ้งเตือน", "กรุณากรอกค่า IAI เป็นตัวเลข");
-            return;
+            Notify.WarnModal(this, "แจ้งเตือน", "กรุณากรอกค่า IAI เป็นตัวเลข"); // เตือนให้กรอกระยะเป็นตัวเลข
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
-        mm = ClampService.ClampMm(mm);
-        var s = ClampSettings.Load();
+        mm = ClampService.ClampMm(mm); // จำกัดระยะให้อยู่ในช่วงของแคลมป์
+        var s = ClampSettings.Load(); // อ่านค่าฐานข้อมูลและ PLC ของแคลมป์
 
-        if (string.IsNullOrEmpty(s.Ip))
+        if (string.IsNullOrEmpty(s.Ip)) // ตรวจว่ายังไม่ได้ตั้ง IP ของแคลมป์หรือไม่
         {
-            Notify.WarnModal(this, "แจ้งเตือน", "ยังไม่ได้ตั้งค่า Clamp PLC IP ในหน้า Setting");
-            return;
+            Notify.WarnModal(this, "แจ้งเตือน", "ยังไม่ได้ตั้งค่า Clamp PLC IP ในหน้า Setting"); // ชี้ให้ตั้ง IP ของ Clamp PLC ก่อน
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
-        var axis = s.Find(IaiAxisKey(isPlate, zone));
-        if (axis == null) return;
+        var axis = s.Find(IaiAxisKey(isPlate, zone)); // เลือกแกนให้ตรง Plate หรือ Shim และโซน
+        if (axis == null) return; // ไม่มีข้อมูลแกนนี้ จึงยังสั่งแคลมป์ไม่ได้
 
-        if (!axis.IsConfigured)
+        if (!axis.IsConfigured) // ตรวจว่า Target และ Run ตั้งครบหรือยัง
         {
-            var missing = axis.AddrTarget.Trim().Length == 0
-                ? (axis.AddrRun.Trim().Length == 0 ? "Target (D) และ Run (M)" : "Target (D)")
-                : "Run (M)";
+            var missing = axis.AddrTarget.Trim().Length == 0 // แยกว่าขาด address ของ Target หรือไม่
+                ? (axis.AddrRun.Trim().Length == 0 ? "Target (D) และ Run (M)" : "Target (D)") // ระบุว่าขาดทั้งสองช่องหรือขาดแค่ Target
+                : "Run (M)"; // มี Target แล้ว จึงเหลือช่อง Run ที่ขาด
 
-            Notify.WarnModal(this, "แจ้งเตือน",
-                $"แกน {axis.Display} ยังขาด {missing}\nตั้งค่าได้ที่ Setting -> Clamp Setting");
-            return;
+            Notify.WarnModal(this, "แจ้งเตือน", // เตือนเรื่อง address ของแกนที่ยังไม่ครบ
+                $"แกน {axis.Display} ยังขาด {missing}\nตั้งค่าได้ที่ Setting -> Clamp Setting"); // บอกชื่อแกนกับช่องที่ต้องตั้งเพิ่ม
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
-        if (!Confirm.Ask(this, "ยืนยันสั่งแคลมป์",
-                $"สั่ง {axis.Display} ไปที่ {mm} mm\n\n"
-                + $"-> {axis.AddrTarget} = {ClampService.ToRaw(mm)}\n"
-                + $"-> {axis.AddrRun} (pulse)\n\nยืนยันหรือไม่?"))
-            return;
+        if (!Confirm.Ask(this, "ยืนยันสั่งแคลมป์", // ให้ยืนยันแกนและปลายทางก่อนสั่งวิ่ง
+                $"สั่ง {axis.Display} ไปที่ {mm} mm\n\n" // แสดงแกนและระยะที่ผู้ใช้เลือก
+                + $"-> {axis.AddrTarget} = {ClampService.ToRaw(mm)}\n" // แสดง D และค่าที่แปลงให้ PLC แล้ว
+                + $"-> {axis.AddrRun} (pulse)\n\nยืนยันหรือไม่?")) // แสดงบิต Run ที่จะพัลส์ก่อนยืนยัน
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
 
-        SetIaiAdjustBusy(true);
-        try
+        SetIaiAdjustBusy(true); // กันกดสั่งแคลมป์ซ้ำระหว่างทำรายการ
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
             var result = await ClampService.ApplyAsync(s, axis, mm); // เขียนระยะลง D แล้วพัลส์ M ให้แกนวิ่ง
-            if (IsDisposed) return;
+            if (IsDisposed) return; // หน้าถูกปิดแล้ว ไม่อัปเดตต่อ
 
-            if (result.Ok)
-                Notify.Success(this, $"สั่ง {axis.Display} ไปที่ {mm} mm สำเร็จ");
-            else
-                Notify.ErrorModal(this, "สั่งแคลมป์ไม่สำเร็จ", result.Log);
+            if (result.Ok) // ตรวจผลเขียนระยะและพัลส์แกน
+                Notify.Success(this, $"สั่ง {axis.Display} ไปที่ {mm} mm สำเร็จ"); // แจ้งว่าออกคำสั่งแกนตามระยะแล้ว
+            else // กรณีไม่เข้าเงื่อนไขก่อนหน้า
+                Notify.ErrorModal(this, "สั่งแคลมป์ไม่สำเร็จ", result.Log); // แสดง log เมื่อสั่งแคลมป์ไม่ผ่าน
         }
-        finally
+        finally // ทำส่วนนี้เสมอ แม้ขั้นก่อนหน้ามีปัญหา
         {
-            if (!IsDisposed) SetIaiAdjustBusy(false);
+            if (!IsDisposed) SetIaiAdjustBusy(false); // จบรายการแล้วเปิดปุ่มแคลมป์ให้ใช้อีกครั้ง
         }
     }
 
     private async Task IaiUploadAsync(AntdUI.Input input, AntdUI.Input programInput, AntdUI.Input displayInput, bool isPlate, string? zone) // เก็บระยะที่ปรับไว้ใช้กับโปรแกรมและ Job นี้
     {
-        if (!CanCommandIai()) return;
+        if (!CanCommandIai()) return; // ตรวจสิทธิ์สั่งแคลมป์ก่อนทำต่อ
 
-        if (!int.TryParse(input.Text.Trim(), out int mm))
+        if (!int.TryParse(input.Text.Trim(), out int mm)) // ระยะต้องกรอกเป็นจำนวนเต็ม
         {
-            Notify.WarnModal(this, "แจ้งเตือน", "กรุณากรอกค่า IAI เป็นตัวเลข");
-            return;
+            Notify.WarnModal(this, "แจ้งเตือน", "กรุณากรอกค่า IAI เป็นตัวเลข"); // เตือนให้กรอกระยะเป็นตัวเลข
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
         string program = programInput.Text.Trim(); // ใช้ชื่อโปรแกรม UV หาระยะแคลมป์ในฐานต้นทาง
-        if (string.IsNullOrEmpty(program) || program == Dash)
+        if (string.IsNullOrEmpty(program) || program == Dash) // ต้องมีชื่อโปรแกรมจริงก่อน Upload
         {
-            Notify.WarnModal(this, "แจ้งเตือน", "ไม่มีชื่อโปรแกรม UV");
-            return;
+            Notify.WarnModal(this, "แจ้งเตือน", "ไม่มีชื่อโปรแกรม UV"); // แจ้งว่าช่องชื่อโปรแกรม UV ยังว่าง
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
-        var s = ClampSettings.Load();
-        if (string.IsNullOrEmpty(s.DbPath))
+        var s = ClampSettings.Load(); // อ่านค่าฐานข้อมูลและ PLC ของแคลมป์
+        if (string.IsNullOrEmpty(s.DbPath)) // ตรวจว่าตั้งไฟล์ฐานแคลมป์แล้วไหม
         {
-            Notify.WarnModal(this, "แจ้งเตือน", "ยังไม่ได้ตั้ง path ของ mydatabase.db3 ในหน้า Setting");
-            return;
+            Notify.WarnModal(this, "แจ้งเตือน", "ยังไม่ได้ตั้ง path ของ mydatabase.db3 ในหน้า Setting"); // ชี้ให้ตั้ง mydatabase.db3 ก่อนบันทึก
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
-        mm = ClampService.ClampMm(mm);
-        var axis = s.Find(IaiAxisKey(isPlate, zone));
-        if (axis == null) return;
+        mm = ClampService.ClampMm(mm); // จำกัดระยะให้อยู่ในช่วงของแคลมป์
+        var axis = s.Find(IaiAxisKey(isPlate, zone)); // เลือกแกนให้ตรง Plate หรือ Shim และโซน
+        if (axis == null) return; // ไม่มีข้อมูลแกนนี้ จึงยังสั่งแคลมป์ไม่ได้
         string col = axis.Column; // เลือกคอลัมน์ให้ตรงกับแกน Plate หรือ Shim
 
-        if (!Confirm.Ask(this, "ยืนยัน Upload",
-                $"บันทึก {col} = {mm} mm ให้ \"{program}\"\nไปยัง mydatabase และ Backend\n\nยืนยันหรือไม่?"))
-            return;
+        if (!Confirm.Ask(this, "ยืนยัน Upload", // ให้ยืนยันก่อนแก้ระยะในสองฐาน
+                $"บันทึก {col} = {mm} mm ให้ \"{program}\"\nไปยัง mydatabase และ Backend\n\nยืนยันหรือไม่?")) // แสดงแกน ระยะ โปรแกรม และฐานที่จะบันทึก
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
 
-        SetIaiAdjustBusy(true);
-        try
+        SetIaiAdjustBusy(true); // กันกดสั่งแคลมป์ซ้ำระหว่างทำรายการ
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
-            var errors = new List<string>();
+            var errors = new List<string>(); // เตรียมเก็บปัญหาที่พบในรอบนี้
 
             var (dbOk, dbMsg) = ClampService.Upload(s.DbPath, program, axis, mm); // อัปเดตระยะใน mydatabase ก่อนบันทึกฐานกลาง
             if (!dbOk) errors.Add($"mydatabase: {dbMsg}"); // เก็บข้อผิดพลาดไว้ โดยยังลองบันทึก Backend ต่อ
 
-            if (_api != null && _jobId > 0)
+            if (_api != null && _jobId > 0) // มี Backend และ Job สำหรับเก็บค่า IAI
             {
                 var request = new IaiCreateRequest { PrintJobsId = _jobId }; // ผูกค่าที่ปรับกับ Job ที่เปิดอยู่
-                if (isPlate)
+                if (isPlate) // เลือกค่าของฝั่ง Plate
                 {
-                    request.M1ProgramName = program;
-                    if (zone == null) request.Iaip = mm;
-                    else if (zone == "Z1") request.IaipZ1 = mm;
-                    else if (zone == "Z2") request.IaipZ2 = mm;
+                    request.M1ProgramName = program; // ใช้ชื่อโปรแกรมของ Plate
+                    if (zone == null) request.Iaip = mm; // บันทึกแกนหลักของ Plate
+                    else if (zone == "Z1") request.IaipZ1 = mm; // บันทึกแกน Z1 ของ Plate
+                    else if (zone == "Z2") request.IaipZ2 = mm; // บันทึกแกน Z2 ของ Plate
                 }
-                else
+                else // กรณีไม่เข้าเงื่อนไขก่อนหน้า
                 {
-                    request.M2ProgramName = program;
-                    if (zone == null) request.Iai = mm;
-                    else if (zone == "Z1") request.IaiZ1 = mm;
-                    else if (zone == "Z2") request.IaiZ2 = mm;
+                    request.M2ProgramName = program; // ใช้ชื่อโปรแกรมของ Shim
+                    if (zone == null) request.Iai = mm; // บันทึกแกนหลักของ Shim
+                    else if (zone == "Z1") request.IaiZ1 = mm; // บันทึกแกน Z1 ของ Shim
+                    else if (zone == "Z2") request.IaiZ2 = mm; // บันทึกแกน Z2 ของ Shim
                 }
 
                 var (apiOk, apiErr) = await _api.CreateIaiAsync(request); // บันทึก Backend แยกจาก mydatabase จึงอาจสำเร็จแค่ฝั่งเดียว
-                if (!apiOk) errors.Add($"Backend: {apiErr}");
+                if (!apiOk) errors.Add($"Backend: {apiErr}"); // เก็บเหตุที่ฝั่ง Backend บันทึกไม่ผ่าน
             }
-            else
+            else // กรณีไม่เข้าเงื่อนไขก่อนหน้า
             {
-                errors.Add("Backend: ไม่มีการเชื่อมต่อ API หรือยังไม่ได้โหลดงาน");
+                errors.Add("Backend: ไม่มีการเชื่อมต่อ API หรือยังไม่ได้โหลดงาน"); // จดว่าฐานกลางยังไม่มี Job หรือการเชื่อมต่อ
             }
 
-            if (errors.Count == 0)
+            if (errors.Count == 0) // ทั้งสองปลายทางไม่มีเหตุผิดพลาด
             {
-                Notify.Success(this, $"บันทึก {col} = {mm} mm ให้ \"{program}\" แล้ว");
-                displayInput.Text = mm.ToString();
+                Notify.Success(this, $"บันทึก {col} = {mm} mm ให้ \"{program}\" แล้ว"); // แจ้งโปรแกรมและระยะที่บันทึกแล้ว
+                displayInput.Text = mm.ToString(); // อัปเดตค่าระยะที่แสดงบนจอ
             }
-            else if (dbOk || (_api != null && _jobId > 0))
-                Notify.WarnDetail(this, "Upload บางส่วนไม่สำเร็จ", string.Join("\n", errors));
-            else
-                Notify.ErrorModal(this, "Upload ไม่สำเร็จ", string.Join("\n", errors));
+            else if (dbOk || (_api != null && _jobId > 0)) // เข้าเงื่อนไขแจ้งผลบันทึกบางส่วนตามทางเดิม
+                Notify.WarnDetail(this, "Upload บางส่วนไม่สำเร็จ", string.Join("\n", errors)); // แสดงส่วนที่ Upload ยังไม่ผ่าน
+            else // กรณีไม่เข้าเงื่อนไขก่อนหน้า
+                Notify.ErrorModal(this, "Upload ไม่สำเร็จ", string.Join("\n", errors)); // แสดงปัญหาเมื่อ Upload ทำต่อไม่ได้
         }
-        finally
+        finally // ทำส่วนนี้เสมอ แม้ขั้นก่อนหน้ามีปัญหา
         {
-            SetIaiAdjustBusy(false);
+            SetIaiAdjustBusy(false); // เปิดให้ปรับแคลมป์ได้หลังจบรอบ
         }
     }
 

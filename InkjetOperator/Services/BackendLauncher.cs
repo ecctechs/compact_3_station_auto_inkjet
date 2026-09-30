@@ -69,7 +69,7 @@ public static class BackendLauncher
         }
         catch
         {
-            return false;   // ถามระบบไม่ได้ ถือว่าเป็นเครื่องอื่นเหมือนเดิม
+            return false;
         }
     }
 
@@ -83,7 +83,7 @@ public static class BackendLauncher
         }
         catch
         {
-            return false;   // ถามระบบไม่ได้ก็ลองเปิดไปเลย ดีกว่าไม่เปิดแล้วใช้งานไม่ได้
+            return false;
         }
     }
 

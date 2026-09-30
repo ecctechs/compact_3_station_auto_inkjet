@@ -150,3 +150,4 @@ InkjetOperator/Views/StationOptionsUserControl.cs
 InkjetOperator/Views/SystemHealthUserControl.cs
 InkjetOperator/Views/UvTestUserControl.cs
 outputs/01a0ce44-update-20260929/Station_Code_Guide.xlsx
+InkjetOperator/Program.cs

@@ -25,23 +25,23 @@ public class SqliteDataService
 
     public CreatePatternRequest? GetPatternDetail(string barcode, int jobId) // อ่านค่าพิมพ์ MK และค่าประกอบ
     {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
+        using var conn = Open(); // เปิดฐานข้อมูลและปิดให้เมื่อจบขั้นนี้
+        using var cmd = conn.CreateCommand(); // เตรียมคำสั่ง SQL บนฐานที่เปิดไว้
         cmd.CommandText = "SELECT * FROM inkjet_data WHERE lot_no = @barcode LIMIT 1"; // ค้นแถวตั้งค่าพิมพ์ของ Lot นี้
-        cmd.Parameters.AddWithValue("@barcode", barcode);
+        cmd.Parameters.AddWithValue("@barcode", barcode); // ใช้ Barcode นี้เป็นเงื่อนไขค้นหา
 
-        using var reader = cmd.ExecuteReader();
-        if (!reader.Read()) return null;
+        using var reader = cmd.ExecuteReader(); // รันคำสั่งแล้วอ่านแถวผลลัพธ์
+        if (!reader.Read()) return null; // ไม่พบแถวข้อมูล จึงไม่มีผลให้ใช้ต่อ
 
         var pattern = new CreatePatternRequest // เตรียมชุด Pattern ส่ง Backend
         {
             Barcode = barcode, // เก็บ Barcode ของงาน
-            JobId = jobId,
+            JobId = jobId, // ผูก Pattern นี้กับ Job ที่รับมา
         };
 
         var mk1 = new InkjetConfigDto // เตรียมค่าหัวพิมพ์ MK1
         {
-            Ordinal = 1,
+            Ordinal = 1, // ระบุค่าของ MK หัวแรก
             ProgramNumber = ReadInt(reader, "mk1_program_no"), // อ่านเลขโปรแกรม MK1
             ProgramName = ReadStr(reader, "program_name"), // อ่านชื่อโปรแกรม MK1
             Width = ReadInt(reader, "ความกว้าง"), // อ่านความกว้างข้อความ MK1
@@ -51,14 +51,14 @@ public class SqliteDataService
             PosAct = ReadInt(reader, "pos_act"), // อ่านค่าตำแหน่ง
             Delay = ReadInt(reader, "delay"), // อ่านค่าหน่วง
         };
-        for (int b = 1; b <= 5; b++)
+        for (int b = 1; b <= 5; b++) // อ่านช่องข้อความตั้งแต่ 1 ถึง 5
         {
             var text = ReadStr(reader, $"mk1_block{b}_text"); // อ่านข้อความของบล็อก MK1
-            if (string.IsNullOrEmpty(text)) continue;
+            if (string.IsNullOrEmpty(text)) continue; // ช่องต้นทางว่างยังไม่สร้างบล็อกใน Pattern
             mk1.TextBlocks.Add(new TextBlockDto // เพิ่มบล็อกให้ MK1
             {
-                BlockNumber = b,
-                Text = text,
+                BlockNumber = b, // กำหนดลำดับช่องข้อความ
+                Text = text, // เก็บข้อความที่อ่านจากฐาน
                 X = ReadInt(reader, $"mk1_block{b}_x"), // อ่านตำแหน่ง Xของบล็อก MK1
                 Y = ReadInt(reader, $"mk1_block{b}_y"), // อ่านตำแหน่ง Yของบล็อก MK1
                 Size = ReadInt(reader, $"mk1_block{b}_size"), // อ่านขนาดข้อความของบล็อก MK1
@@ -69,7 +69,7 @@ public class SqliteDataService
 
         var mk2 = new InkjetConfigDto // เตรียมค่าหัวพิมพ์ MK2
         {
-            Ordinal = 2,
+            Ordinal = 2, // ระบุค่าของ MK หัวที่สอง
             ProgramNumber = ReadInt(reader, "mk2_program_no"), // อ่านเลขโปรแกรม MK2
             ProgramName = ReadStr(reader, "program_name3"), // อ่านชื่อโปรแกรม MK2
             Width = ReadInt(reader, "ความกว้าง14"), // อ่านความกว้างข้อความ MK2
@@ -77,14 +77,14 @@ public class SqliteDataService
             TriggerDelay = ReadInt(reader, "การหน่วง_ทริกเกอร์12"), // อ่านค่าหน่วงทริกเกอร์ MK2
             Direction = ReadInt(reader, "ทิศทางของข้อความ15"), // อ่านทิศทางข้อความ MK2
         };
-        for (int b = 1; b <= 5; b++)
+        for (int b = 1; b <= 5; b++) // อ่านช่องข้อความตั้งแต่ 1 ถึง 5
         {
             var text = ReadStr(reader, $"mk2_block{b}_text"); // อ่านข้อความของบล็อก MK2
-            if (string.IsNullOrEmpty(text)) continue;
+            if (string.IsNullOrEmpty(text)) continue; // ช่องต้นทางว่างยังไม่สร้างบล็อกใน Pattern
             mk2.TextBlocks.Add(new TextBlockDto // เพิ่มบล็อกให้ MK2
             {
-                BlockNumber = b,
-                Text = text,
+                BlockNumber = b, // กำหนดลำดับช่องข้อความ
+                Text = text, // เก็บข้อความที่อ่านจากฐาน
                 X = ReadInt(reader, $"mk2_block{b}_x"), // อ่านตำแหน่ง Xของบล็อก MK2
                 Y = ReadInt(reader, $"mk2_block{b}_y"), // อ่านตำแหน่ง Yของบล็อก MK2
                 Size = ReadInt(reader, $"mk2_block{b}_size"), // อ่านขนาดข้อความของบล็อก MK2
@@ -106,23 +106,23 @@ public class SqliteDataService
             new() { Ordinal = 2, PostAct = ReadDouble(reader, "pos_act_16"), Delay = ReadDouble(reader, "delay17") }, // อ่านตำแหน่งและค่าหน่วง Servo 2
         };
 
-        return pattern;
+        return pattern; // ส่ง Pattern ที่อ่านครบแล้ว
     }
 
     public LotSummary? GetLotSummary(string barcode) // อ่านหัวงานมาแสดงบนหน้าสแกน
     {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
+        using var conn = Open(); // เปิดฐานข้อมูลและปิดให้เมื่อจบขั้นนี้
+        using var cmd = conn.CreateCommand(); // เตรียมคำสั่ง SQL บนฐานที่เปิดไว้
         cmd.CommandText = "SELECT erp_mfg, qty FROM print_data WHERE lot_no = @barcode LIMIT 1"; // หา Order No และ Qty จาก Lot
-        cmd.Parameters.AddWithValue("@barcode", barcode);
+        cmd.Parameters.AddWithValue("@barcode", barcode); // ใช้ Barcode นี้เป็นเงื่อนไขค้นหา
 
-        using var reader = cmd.ExecuteReader();
-        if (!reader.Read()) return null;
+        using var reader = cmd.ExecuteReader(); // รันคำสั่งแล้วอ่านแถวผลลัพธ์
+        if (!reader.Read()) return null; // ไม่พบแถวข้อมูล จึงไม่มีผลให้ใช้ต่อ
 
-        return new LotSummary
+        return new LotSummary // สร้างชุดข้อมูลสรุป Lot ให้หน้าสแกน
         {
-            LotNo = barcode,
-            ErpMfg = ReadStr(reader, "erp_mfg"),
+            LotNo = barcode, // ใช้ Barcode เป็นเลข Lot
+            ErpMfg = ReadStr(reader, "erp_mfg"), // อ่าน ERP MFG จากแถวข้อมูล
             Qty = ReadInt(reader, "qty"),   // เก็บเป็น TEXT ใน DB3 → ReadInt แปลงให้
             MarkingMethod = GetPlanRouting(barcode, 0)?.MarkingMethod, // อ่านวิธีพิมพ์จาก plan_routing
             Customer = GetCustomer(barcode), // อ่านลูกค้าเก็บไว้ไปกับงาน
@@ -150,12 +150,12 @@ public class SqliteDataService
     public List<UvJobItem> GetUvDetail(string barcode) // อ่านข้อมูล UV1 และ UV2
     {
         var items = new List<UvJobItem>(); // เตรียมรายการ UV ของ Lot
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
+        using var conn = Open(); // เปิดฐานข้อมูลและปิดให้เมื่อจบขั้นนี้
+        using var cmd = conn.CreateCommand(); // เตรียมคำสั่ง SQL บนฐานที่เปิดไว้
         cmd.CommandText = "SELECT * FROM print_data WHERE lot_no = @barcode"; // ค้นทุกแถวของ Lot นี้
-        cmd.Parameters.AddWithValue("@barcode", barcode);
+        cmd.Parameters.AddWithValue("@barcode", barcode); // ใช้ Barcode นี้เป็นเงื่อนไขค้นหา
 
-        using var reader = cmd.ExecuteReader();
+        using var reader = cmd.ExecuteReader(); // รันคำสั่งแล้วอ่านแถวผลลัพธ์
         while (reader.Read()) // อ่านทีละแถวที่ค้นพบ
         {
             var lot = ReadStr(reader, "lot_no") ?? barcode; // ใช้ Lot จากแถว ถ้าไม่มีใช้ Barcode เดิม
@@ -165,7 +165,7 @@ public class SqliteDataService
             AddIfHasData(items, BuildUv(reader, "UV1", "MK063", "m1_", lot, erpMfg, qty)); // เก็บข้อมูล m1 เป็นงาน UV1
             AddIfHasData(items, BuildUv(reader, "UV2", "MK067", "m2_", lot, erpMfg, qty)); // เก็บข้อมูล m2 เป็นงาน UV2
         }
-        return items;
+        return items; // ส่งชุดข้อมูล UV ที่ค้นได้
     }
 
     private static UvJobItem BuildUv( // รวมค่าของเครื่อง UV หนึ่งรายการ
@@ -203,28 +203,28 @@ public class SqliteDataService
 
     public CreatePlanRoutingRequest? GetPlanRouting(string barcode, int jobId) // อ่านวิธีพิมพ์และลำดับกระบวนการ
     {
-        try
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
-            using var conn = Open();
-            using var cmd = conn.CreateCommand();
+            using var conn = Open(); // เปิดฐานข้อมูลและปิดให้เมื่อจบขั้นนี้
+            using var cmd = conn.CreateCommand(); // เตรียมคำสั่ง SQL บนฐานที่เปิดไว้
             cmd.CommandText = "SELECT * FROM plan_routing WHERE lot_no = @barcode LIMIT 1"; // ค้นแผนงานของ Lot นี้
-            cmd.Parameters.AddWithValue("@barcode", barcode);
+            cmd.Parameters.AddWithValue("@barcode", barcode); // ใช้ Barcode นี้เป็นเงื่อนไขค้นหา
 
-            using var reader = cmd.ExecuteReader();
-            if (!reader.Read()) return null;
+            using var reader = cmd.ExecuteReader(); // รันคำสั่งแล้วอ่านแถวผลลัพธ์
+            if (!reader.Read()) return null; // ไม่พบแถวข้อมูล จึงไม่มีผลให้ใช้ต่อ
 
-            return new CreatePlanRoutingRequest
+            return new CreatePlanRoutingRequest // เตรียม Routing สำหรับสร้างใน Backend
             {
                 PrintJobsId = jobId, // ระบุ Job ที่จะผูก Routing
                 LotNo = ReadStr(reader, "lot_no") ?? barcode, // อ่าน Lot ถ้าไม่มีใช้ Barcode เดิม
-                ErpMfg = ReadStr(reader, "erp_mfg"),
+                ErpMfg = ReadStr(reader, "erp_mfg"), // อ่าน ERP MFG จากแถวข้อมูล
                 MarkingMethod = ReadStr(reader, "marking_method"), // อ่านรหัสวิธีพิมพ์
                 ProcessSequence = ReadStr(reader, "process_sequence"), // อ่านลำดับกระบวนการตามต้นทาง
             };
         }
-        catch
+        catch // เข้าทางนี้เมื่อทำรายการไม่สำเร็จ
         {
-            return null;
+            return null; // จบโดยไม่มีข้อมูลให้ใช้ต่อ
         }
     }
 

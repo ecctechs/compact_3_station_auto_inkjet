@@ -20,12 +20,12 @@ internal sealed class SettingsStore
 
     public string Read(string key, string defaultValue = "") // อ่านค่าตั้งจากแคชและเช็กไฟล์ที่เปลี่ยน
     {
-        try
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
-            lock (_gate)
-                return Values().TryGetValue(key, out var value) ? value : defaultValue;
+            lock (_gate) // กันหลายเธรดอ่านหรือเปลี่ยนแคชพร้อมกัน
+                return Values().TryGetValue(key, out var value) ? value : defaultValue; // อ่านค่าตาม key ถ้าไม่มีใช้ค่าตั้งต้น
         }
-        catch { return defaultValue; }
+        catch { return defaultValue; } // อ่านไฟล์ไม่ได้ ให้ใช้ค่าตั้งต้นของผู้เรียก
     }
 
     public string? Write(string key, string value)

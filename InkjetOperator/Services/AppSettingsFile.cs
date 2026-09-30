@@ -14,24 +14,24 @@ public static class AppSettingsFile
     {
         var legacy = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName); // เก็บทางไปไฟล์ตั้งค่ารุ่นเดิมข้างโปรแกรม
 
-        try
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
-            Directory.CreateDirectory(Folder);
+            Directory.CreateDirectory(Folder); // สร้างโฟลเดอร์ค่าตั้งถ้ายังไม่มี
             var target = Path.Combine(Folder, fileName); // ใช้ไฟล์นี้ร่วมกันหลัง Build หรืออัปเดตโปรแกรม
 
             RestoreIfEmpty(target); // ถ้าไฟล์ว่าง ให้ลองกู้จาก .bak ก่อนอ่าน
 
-            if (!File.Exists(target))
+            if (!File.Exists(target)) // ยังไม่มีไฟล์ค่าตั้งในตำแหน่งใหม่
             {
                 if (File.Exists(legacy)) File.Copy(legacy, target); // เครื่องที่ยังไม่ย้ายค่า ให้ใช้ไฟล์เดิมเป็นจุดตั้งต้น
                 else if (SeedFor(fileName) is string seed) File.Copy(seed, target); // เครื่องติดตั้งใหม่ใช้ไฟล์ default ที่มากับโปรแกรม
             }
 
-            return target;
+            return target; // ใช้ไฟล์ค่าตั้งใน ProgramData
         }
-        catch
+        catch // เข้าทางนี้เมื่อทำรายการไม่สำเร็จ
         {
-            return legacy;
+            return legacy; // ใช้ไฟล์เดิมเมื่อย้ายไปตำแหน่งใหม่ไม่ได้
         }
     }
 
@@ -63,19 +63,19 @@ public static class AppSettingsFile
     {
         var temp = $"{path}.{Guid.NewGuid():N}.tmp"; // เขียนไฟล์ใหม่ให้ครบก่อนแทนของเดิม
 
-        try
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
             writeTo(temp); // บันทึกเนื้อหาลงไฟล์ชั่วคราวของรอบนี้
 
-            if (File.Exists(path))
+            if (File.Exists(path)) // ตรวจว่ามีไฟล์เดิมให้สลับแทนไหม
                 File.Replace(temp, path, path + BackupSuffix, ignoreMetadataErrors: true); // สลับไฟล์พร้อมเก็บชุดก่อนหน้าเป็น .bak
-            else
+            else // กรณีไม่เข้าเงื่อนไขก่อนหน้า
                 File.Move(temp, path); // ครั้งแรกยังไม่มีไฟล์เดิมให้แทน
         }
-        catch
+        catch // เข้าทางนี้เมื่อทำรายการไม่สำเร็จ
         {
-            try { if (File.Exists(temp)) File.Delete(temp); } catch { }
-            throw;
+            try { if (File.Exists(temp)) File.Delete(temp); } catch { } // ลบไฟล์ชั่วคราวที่เขียนค้างไว้
+            throw; // ส่งข้อผิดพลาดเดิมให้ผู้เรียกจัดการ
         }
     }
 

@@ -8,22 +8,22 @@ public static class CpiWriteService
         = new(StringComparer.OrdinalIgnoreCase);
 
     public static async Task<(bool ok, string msg)> WriteAsync( // เขียนข้อความลงตาราง CPI ของ UV ที่เลือก
-        string dbPath, string table, string? lot, string? name,
-        string? text1, string? text2, string? text3, string? text4, string? text5)
+        string dbPath, string table, string? lot, string? name, // รับฐาน CPI ตาราง Lot และชื่อชิ้นงาน
+        string? text1, string? text2, string? text3, string? text4, string? text5) // รับข้อความพิมพ์ทั้งห้าช่อง
     {
-        try
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
-            var key = Path.GetFullPath(dbPath.Trim()).Replace('/', '\\');
-            var gate = WriteLocks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
-            await gate.WaitAsync().ConfigureAwait(false);
-            try
+            var key = Path.GetFullPath(dbPath.Trim()).Replace('/', '\\'); // ทำเส้นทางไฟล์ให้เทียบเป็นไฟล์เดียวกันได้
+            var gate = WriteLocks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1)); // ใช้ตัวล็อกร่วมกันเมื่อเขียน CPI ไฟล์เดียวกัน
+            await gate.WaitAsync().ConfigureAwait(false); // รอให้การเขียนรอบก่อนปล่อยไฟล์ก่อน
+            try // ดักข้อผิดพลาดของขั้นนี้
             {
-                return await Task.Run(() => WriteCoreAsync(dbPath, table, lot, name,
-                    text1, text2, text3, text4, text5)).ConfigureAwait(false);
+                return await Task.Run(() => WriteCoreAsync(dbPath, table, lot, name, // ย้ายงานเขียน CPI ออกจากเธรดหน้าจอ
+                    text1, text2, text3, text4, text5)).ConfigureAwait(false); // ส่งข้อความทั้งห้าช่องให้ชุดเขียนฐาน
             }
-            finally { gate.Release(); }
+            finally { gate.Release(); } // ปล่อยล็อกไฟล์เสมอหลังจบการเขียน
         }
-        catch (Exception ex) { return (false, $"เขียน CPI.db3 ไม่สำเร็จ: {ex.Message}"); }
+        catch (Exception ex) { return (false, $"เขียน CPI.db3 ไม่สำเร็จ: {ex.Message}"); } // รายงานเหตุที่เขียน CPI ไม่ได้
     }
 
     private static async Task<(bool ok, string msg)> WriteCoreAsync(

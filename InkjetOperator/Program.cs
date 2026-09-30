@@ -8,31 +8,31 @@ static class Program
     private const string SingleInstanceName = "CompactInkjet.Operator.SingleInstance";
 
     [STAThread] // เตรียมโปรแกรมแล้วเปิดหน้าหลัก
-    static void Main()
+    static void Main() // จุดเริ่มต้นของโปรแกรม
     {
-        using var single = new Mutex(initiallyOwned: true, SingleInstanceName, out bool isFirst);
-        if (!isFirst)
+        using var single = new Mutex(initiallyOwned: true, SingleInstanceName, out bool isFirst); // จองสิทธิ์เปิดโปรแกรมเพียงหน้าต่างเดียว
+        if (!isFirst) // มีโปรแกรมเดิมเปิดอยู่แล้ว
         {
-            BringRunningInstanceToFront();
-            return;
+            BringRunningInstanceToFront(); // เรียกหน้าต่างเดิมขึ้นมาแทนเปิดใหม่
+            return; // จบขั้นนี้ ไม่ทำส่วนถัดไป
         }
 
-        ApplicationConfiguration.Initialize();
+        ApplicationConfiguration.Initialize(); // ตั้งค่าพื้นฐานของ WinForms
 
-        UseGregorianYears();
-        Services.LanguageService.Init();
-        ConfigureAntdUi();
+        UseGregorianYears(); // ใช้ปี ค.ศ. ในตัวเลือกวันที่
+        Services.LanguageService.Init(); // โหลดภาษาของโปรแกรม
+        ConfigureAntdUi(); // ตั้งค่ากลางของ AntdUI
 
-        PatternStore.Load();
-        PatternStore.SeedDefaults();
+        PatternStore.Load(); // โหลด Pattern ที่เก็บไว้
+        PatternStore.SeedDefaults(); // เติม Pattern เริ่มต้นตามเงื่อนไขของ Store
 
-        WarnIfSettingsReadOnly();
-        StartBackendIfNeeded();
+        WarnIfSettingsReadOnly(); // ตรวจว่าไฟล์ Setting บันทึกได้ไหม
+        StartBackendIfNeeded(); // เปิด Backend ตามค่าที่ตั้งไว้
 
-        StartHealthMonitorIfDevMode();
+        StartHealthMonitorIfDevMode(); // เปิดตัวตรวจระบบเฉพาะโหมดทดสอบ
 
-        Application.Run(new Views.MainShellForm());
-        HealthMonitor.Stop();
+        Application.Run(new Views.MainShellForm()); // เปิดหน้าหลักและรอผู้ใช้ทำงาน
+        HealthMonitor.Stop(); // ปิดตัวตรวจระบบเมื่อออกจากโปรแกรม
     }
 
     private static void StartHealthMonitorIfDevMode()

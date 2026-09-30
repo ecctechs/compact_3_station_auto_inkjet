@@ -11,23 +11,23 @@ public static class JobStageService
     {
         var all = rows as IList<MachineQueueRow> ?? rows.ToList(); // เก็บลำดับคิวตามที่ Backend ส่งมา
         var mine = all.Where(r => r.PrintJobsId == jobId).ToList(); // แยกแถวคิวของ Job ที่กำลังดู
-        if (mine.Count == 0) return null;
+        if (mine.Count == 0) return null; // ไม่มีคิวของ Job นี้ จึงไม่เติมสถานะย่อย
 
         if (mine.Any(r => r.NeedsSendReview)) return "กำลังส่ง / รอตรวจสอบผล"; // ถ้ายังไม่รู้ผลส่ง ให้บอกจุดนี้ก่อนแสดงด้านหรือเลขคิว
 
         var plan = MarkingMethodService.Resolve(markingMethod); // ใช้แผน Marking แยกว่าเครื่องกำลังทำ Plate หรือ Shim
 
         if (FirstInPlanOrder(plan, mine.Where(IsActive)) is { } holding) // งานที่ถือเครื่องอยู่แสดงด้านที่มาก่อนในแผน
-            return SideOf(plan, holding);
+            return SideOf(plan, holding); // แสดงด้านที่งานกำลังถือเครื่องอยู่
 
-        if (FirstInPlanOrder(plan, mine.Where(IsPending)) is not { } waiting) return null;
+        if (FirstInPlanOrder(plan, mine.Where(IsPending)) is not { } waiting) return null; // ถ้าไม่มีคิวรอ ก็ไม่มีเลข Q ให้แสดง
 
-        int position = all
+        int position = all // หาตำแหน่งงานในรายการคิวรอ
             .Where(r => IsPending(r) && SameMachine(r.Machine, waiting.Machine)) // นับลำดับเฉพาะคิวรอของเครื่องเดียวกัน
-            .ToList()
+            .ToList() // เก็บคิวที่กรองไว้เพื่อหาลำดับ
             .FindIndex(r => r.Id == waiting.Id); // หาตำแหน่งของงานนี้ก่อนแสดง Q1, Q2 ต่อกัน
 
-        return position < 0 ? null : $"Q{position + 1}";
+        return position < 0 ? null : $"Q{position + 1}"; // แปลงตำแหน่งเริ่มจากศูนย์เป็น Q1 เป็นต้นไป
     }
 
     private static MachineQueueRow? FirstInPlanOrder(

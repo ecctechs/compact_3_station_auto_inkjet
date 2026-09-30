@@ -91,40 +91,40 @@ public partial class MainShellForm : AntdUI.Window
 
     private void ApplyMenuLevel() // เลือกเมนูและหน้าแรกตาม Mode
     {
-        var raw = Services.CustomSettingsManager.Read("MENU_LEVEL", "1");
-        int.TryParse(raw, out var level);
+        var raw = Services.CustomSettingsManager.Read("MENU_LEVEL", "1"); // อ่าน Mode ที่ตั้งไว้ของ PC นี้
+        int.TryParse(raw, out var level); // แปลง Mode จากข้อความเป็นตัวเลข
 
-        var allTabs = new[] { btnInputOrder, btnOrderList, btnEditPattern, btnSetting };
-        var allPages = new Control[] { scanBarcodePage, orderListPage, editPatternPage, settingPage };
+        var allTabs = new[] { btnInputOrder, btnOrderList, btnEditPattern, btnSetting }; // เรียงปุ่มเมนูให้ตรงกับหน้าที่เปิด
+        var allPages = new Control[] { scanBarcodePage, orderListPage, editPatternPage, settingPage }; // รวมหน้าจอตามลำดับปุ่มเมนู
 
-        bool[] visible = level switch
+        bool[] visible = level switch // กำหนดเมนูที่แต่ละ Mode ใช้ได้
         {
-            0 => [true, false, false, true],
-            1 => [false, true, true, true],
+            0 => [true, false, false, true], // Mode 0 แสดงหน้าสแกนกับ Setting
+            1 => [false, true, true, true], // Mode 1 แสดงงาน Pattern และ Setting
             3 => [false, true, false, true],    // ST3 — Order List + Setting
             9 => [false, false, false, true],   // โหมดทดสอบหน้างาน — เข้าได้เฉพาะ Setting
-            _ => [true, true, true, true],
+            _ => [true, true, true, true], // Mode อื่นเริ่มจากเปิดทุกเมนู
         };
 
-        visible[EditPatternTab] = false;
+        visible[EditPatternTab] = false; // ซ่อนเมนู Edit Pattern เพิ่มตามเงื่อนไขด้านบน
 
-        for (int i = 0; i < allTabs.Length; i++)
+        for (int i = 0; i < allTabs.Length; i++) // ปรับปุ่มและหน้าจอทีละเมนู
         {
-            allTabs[i].Visible = visible[i];
-            allPages[i].Visible = visible[i];
-            tlpMenuBar.ColumnStyles[i].SizeType = visible[i]
-                ? System.Windows.Forms.SizeType.Absolute : System.Windows.Forms.SizeType.Absolute;
-            tlpMenuBar.ColumnStyles[i].Width = visible[i] ? 250F : 0F;
+            allTabs[i].Visible = visible[i]; // แสดงหรือซ่อนปุ่มเมนูนี้
+            allPages[i].Visible = visible[i]; // แสดงหรือซ่อนหน้าที่คู่กับเมนู
+            tlpMenuBar.ColumnStyles[i].SizeType = visible[i] // กำหนดชนิดความกว้างของช่องเมนู
+                ? System.Windows.Forms.SizeType.Absolute : System.Windows.Forms.SizeType.Absolute; // ใช้ความกว้างแบบระบุค่าคงที่
+            tlpMenuBar.ColumnStyles[i].Width = visible[i] ? 250F : 0F; // เมนูที่ซ่อนลดความกว้างเหลือศูนย์
         }
 
-        _visibleTabs = allTabs.Where((_, i) => visible[i]).ToArray();
+        _visibleTabs = allTabs.Where((_, i) => visible[i]).ToArray(); // เก็บเฉพาะปุ่มเมนูที่มองเห็น
 
-        if (_visibleTabs.Length > 0)
+        if (_visibleTabs.Length > 0) // มีเมนูให้เลือกอย่างน้อยหนึ่งหน้า
         {
-            var firstTab = _visibleTabs[0];
-            var firstPage = allPages[Array.IndexOf(allTabs, firstTab)];
-            firstPage.BringToFront();
-            SetActiveTab(firstTab);
+            var firstTab = _visibleTabs[0]; // เลือกปุ่มแรกเป็นเมนูเริ่มต้น
+            var firstPage = allPages[Array.IndexOf(allTabs, firstTab)]; // หาหน้าที่ตรงกับเมนูแรก
+            firstPage.BringToFront(); // นำหน้าแรกขึ้นมาแสดง
+            SetActiveTab(firstTab); // ทำเครื่องหมายเมนูที่เปิดอยู่
         }
     }
 

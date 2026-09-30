@@ -44,37 +44,37 @@ public class ApiClient
         catch { return false; }
     }
 
-    public async Task<(PrintJob? job, string? error)> CreateJobAsync(CreateJobRequest request)
+    public async Task<(PrintJob? job, string? error)> CreateJobAsync(CreateJobRequest request) // เรียก Backend สร้าง Job ใหม่
     {
-        try
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
-            var response = await _http.PostAsJsonAsync("/job/create", request, JsonOptions);
-            var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
-                return (null, $"[{(int)response.StatusCode}] {body}");
-            var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PrintJob>>(body, JsonOptions);
-            return (wrapper?.Data, null);
+            var response = await _http.PostAsJsonAsync("/job/create", request, JsonOptions); // ส่งข้อมูล Job ไปเส้นทางสร้างงาน
+            var body = await response.Content.ReadAsStringAsync(); // อ่านเนื้อหาที่ Backend ตอบกลับ
+            if (!response.IsSuccessStatusCode) // ตรวจว่า HTTP ตอบรหัสผิดพลาดหรือไม่
+                return (null, $"[{(int)response.StatusCode}] {body}"); // ส่งรหัส HTTP กับรายละเอียดปัญหากลับผู้เรียก
+            var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PrintJob>>(body, JsonOptions); // แปลงคำตอบ JSON เป็นข้อมูล Job
+            return (wrapper?.Data, null); // ส่ง Job ที่สร้างแล้วให้หน้าสแกนใช้ต่อ
         }
-        catch (Exception ex)
+        catch (Exception ex) // รับรายละเอียดข้อผิดพลาดไว้แจ้งต่อ
         {
-            return (null, ex.Message);
+            return (null, ex.Message); // ส่งเหตุที่เรียก Backend ไม่ได้
         }
     }
 
-    public async Task<(PatternDetail? pattern, string? error)> CreatePatternAsync(CreatePatternRequest request)
+    public async Task<(PatternDetail? pattern, string? error)> CreatePatternAsync(CreatePatternRequest request) // บันทึก Pattern ที่ผูกกับ Job
     {
-        try
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
-            var response = await _http.PostAsJsonAsync("/pattern/create", request, JsonOptions);
-            var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
-                return (null, $"[{(int)response.StatusCode}] {body}");
-            var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PatternDetail>>(body, JsonOptions);
-            return (wrapper?.Data, null);
+            var response = await _http.PostAsJsonAsync("/pattern/create", request, JsonOptions); // ส่งค่าพิมพ์ไปเส้นทางสร้าง Pattern
+            var body = await response.Content.ReadAsStringAsync(); // อ่านเนื้อหาที่ Backend ตอบกลับ
+            if (!response.IsSuccessStatusCode) // ตรวจว่า HTTP ตอบรหัสผิดพลาดหรือไม่
+                return (null, $"[{(int)response.StatusCode}] {body}"); // ส่งรหัส HTTP กับรายละเอียดปัญหากลับผู้เรียก
+            var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PatternDetail>>(body, JsonOptions); // แปลง JSON เป็น Pattern ของงาน
+            return (wrapper?.Data, null); // ส่ง Pattern ที่บันทึกแล้วกลับผู้เรียก
         }
-        catch (Exception ex)
+        catch (Exception ex) // รับรายละเอียดข้อผิดพลาดไว้แจ้งต่อ
         {
-            return (null, ex.Message);
+            return (null, ex.Message); // ส่งเหตุที่เรียก Backend ไม่ได้
         }
     }
 
@@ -119,19 +119,19 @@ public class ApiClient
         }
     }
 
-    public async Task<(bool ok, string? error)> CreateUvJobDataAsync(CreateUvJobRequest request)
+    public async Task<(bool ok, string? error)> CreateUvJobDataAsync(CreateUvJobRequest request) // บันทึกข้อมูล UV ของงาน
     {
-        try
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
-            var response = await _http.PostAsJsonAsync("/uv-job/create", request, JsonOptions);
-            var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
-                return (false, $"[{(int)response.StatusCode}] {body}");
-            return (true, null);
+            var response = await _http.PostAsJsonAsync("/uv-job/create", request, JsonOptions); // ส่งข้อมูลไปเส้นทางสร้างชุด UV
+            var body = await response.Content.ReadAsStringAsync(); // อ่านเนื้อหาที่ Backend ตอบกลับ
+            if (!response.IsSuccessStatusCode) // ตรวจว่า HTTP ตอบรหัสผิดพลาดหรือไม่
+                return (false, $"[{(int)response.StatusCode}] {body}"); // ส่งเหตุที่ Backend ปฏิเสธการบันทึก
+            return (true, null); // ยืนยันว่า Backend รับข้อมูล UV แล้ว
         }
-        catch (Exception ex)
+        catch (Exception ex) // รับรายละเอียดข้อผิดพลาดไว้แจ้งต่อ
         {
-            return (false, ex.Message);
+            return (false, ex.Message); // ส่งรายละเอียดปัญหาการเชื่อมต่อกลับผู้เรียก
         }
     }
 
@@ -186,19 +186,19 @@ public class ApiClient
         }
     }
 
-    public async Task<(bool ok, string? error)> CreatePlanRoutingAsync(CreatePlanRoutingRequest request)
+    public async Task<(bool ok, string? error)> CreatePlanRoutingAsync(CreatePlanRoutingRequest request) // บันทึกแผนการผลิตของงาน
     {
-        try
+        try // ดักข้อผิดพลาดของขั้นนี้
         {
-            var response = await _http.PostAsJsonAsync("/plan-routing/create", request, JsonOptions);
-            var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
-                return (false, $"[{(int)response.StatusCode}] {body}");
-            return (true, null);
+            var response = await _http.PostAsJsonAsync("/plan-routing/create", request, JsonOptions); // ส่งแผนไปเส้นทางสร้าง Routing
+            var body = await response.Content.ReadAsStringAsync(); // อ่านเนื้อหาที่ Backend ตอบกลับ
+            if (!response.IsSuccessStatusCode) // ตรวจว่า HTTP ตอบรหัสผิดพลาดหรือไม่
+                return (false, $"[{(int)response.StatusCode}] {body}"); // ส่งเหตุที่ Backend ปฏิเสธการบันทึก
+            return (true, null); // ยืนยันว่า Backend รับ Routing แล้ว
         }
-        catch (Exception ex)
+        catch (Exception ex) // รับรายละเอียดข้อผิดพลาดไว้แจ้งต่อ
         {
-            return (false, ex.Message);
+            return (false, ex.Message); // ส่งรายละเอียดปัญหาการเชื่อมต่อกลับผู้เรียก
         }
     }
 

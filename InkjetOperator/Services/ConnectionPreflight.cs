@@ -3,7 +3,7 @@ namespace InkjetOperator.Services;
 public static class ConnectionPreflight
 {
     public static async Task<bool[]> CheckAsync( // ตรวจปลายทางหลายเครื่องพร้อมกัน
-        IReadOnlyList<(string Host, int Port)> targets, Func<string, int, Task<bool>> connect)
+        IReadOnlyList<(string Host, int Port)> targets, Func<string, int, Task<bool>> connect) // รับรายการปลายทางและวิธีลองเชื่อมต่อ
     {
         var checks = new Dictionary<(string Host, int Port), Task<bool>>(); // แชร์ผลตรวจเมื่อมีหลายรายการใช้ IP และพอร์ตเดียวกัน
         var results = new List<Task<bool>>(); // จำผลตามลำดับรายการที่ผู้เรียกส่งมา
@@ -16,10 +16,10 @@ public static class ConnectionPreflight
         }
         return await Task.WhenAll(results); // รอครบทุกเครื่องก่อนตัดสินให้เริ่มงาน
 
-        async Task<bool> CheckOneAsync(string host, int port)
+        async Task<bool> CheckOneAsync(string host, int port) // ตรวจการเชื่อมต่อหนึ่งปลายทาง
         {
-            try { return await connect(host, port); }
-            catch { return false; }
+            try { return await connect(host, port); } // รอผลจากวิธีเชื่อมต่อที่ผู้เรียกส่งมา
+            catch { return false; } // ต่อไม่ได้ให้ถือว่าปลายทางไม่พร้อม
         }
     }
 }
