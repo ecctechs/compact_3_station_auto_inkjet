@@ -66,6 +66,8 @@ partial class OrderDetailUserControl
         txtMk1Program = new AntdUI.Input();
         lblMk1ProgramNo = new AntdUI.Label();
         txtMk1ProgramNo = new AntdUI.Input();
+        lblMk1Type = new AntdUI.Label();
+        txtMk1Type = new AntdUI.Input();
         picMk1Abc = new System.Windows.Forms.PictureBox();
         tblMk1Blocks = new AntdUI.Table();
         tlpMk1Position = new System.Windows.Forms.TableLayoutPanel();
@@ -90,6 +92,8 @@ partial class OrderDetailUserControl
         txtMk2Program = new AntdUI.Input();
         lblMk2ProgramNo = new AntdUI.Label();
         txtMk2ProgramNo = new AntdUI.Input();
+        lblMk2Type = new AntdUI.Label();
+        txtMk2Type = new AntdUI.Input();
         picMk2Abc = new System.Windows.Forms.PictureBox();
         btnMkSwap = new AntdUI.Button();
         tblMk2Blocks = new AntdUI.Table();
@@ -774,19 +778,23 @@ partial class OrderDetailUserControl
         // tlpMk1Head
         //
         tlpMk1Head.BackColor = System.Drawing.Color.Transparent;
-        tlpMk1Head.ColumnCount = 6;
+        tlpMk1Head.ColumnCount = 8;
         tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 92F));
+        tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 55F));
+        tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 46F));
         tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 105F));
         tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 95F));
-        tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80F));
-        tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 88F));
+        tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 60F));
+        tlpMk1Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
         tlpMk1Head.Controls.Add(pnlMk1Chip, 0, 0);
-        tlpMk1Head.Controls.Add(lblMk1Program, 1, 0);
-        tlpMk1Head.Controls.Add(txtMk1Program, 2, 0);
-        tlpMk1Head.Controls.Add(lblMk1ProgramNo, 3, 0);
-        tlpMk1Head.Controls.Add(txtMk1ProgramNo, 4, 0);
-        tlpMk1Head.Controls.Add(picMk1Abc, 5, 0);
+        tlpMk1Head.Controls.Add(lblMk1Type, 1, 0);
+        tlpMk1Head.Controls.Add(txtMk1Type, 2, 0);
+        tlpMk1Head.Controls.Add(lblMk1Program, 3, 0);
+        tlpMk1Head.Controls.Add(txtMk1Program, 4, 0);
+        tlpMk1Head.Controls.Add(lblMk1ProgramNo, 5, 0);
+        tlpMk1Head.Controls.Add(txtMk1ProgramNo, 6, 0);
+        tlpMk1Head.Controls.Add(picMk1Abc, 7, 0);
         tlpMk1Head.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpMk1Head.Location = new System.Drawing.Point(0, 0);
         tlpMk1Head.Margin = new System.Windows.Forms.Padding(0);
@@ -876,6 +884,32 @@ partial class OrderDetailUserControl
         txtMk1ProgramNo.Size = new System.Drawing.Size(80, 42);
         txtMk1ProgramNo.TabIndex = 4;
         txtMk1ProgramNo.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+        //
+        // lblMk1Type
+        //
+        lblMk1Type.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk1Type.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblMk1Type.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMk1Type.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMk1Type.Name = "lblMk1Type";
+        lblMk1Type.Size = new System.Drawing.Size(49, 58);
+        lblMk1Type.TabIndex = 6;
+        lblMk1Type.Text = "Type";
+        lblMk1Type.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtMk1Type - ประเภทเหล็ก I / O จาก DB3 แสดงอย่างเดียว ไม่ได้ส่งไป PLC หรือ MK
+        //
+        txtMk1Type.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMk1Type.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk1Type.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk1Type.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        txtMk1Type.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
+        txtMk1Type.Name = "txtMk1Type";
+        txtMk1Type.ReadOnly = true;
+        txtMk1Type.Radius = 8;
+        txtMk1Type.Size = new System.Drawing.Size(40, 42);
+        txtMk1Type.TabIndex = 7;
+        txtMk1Type.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
         //
         // picMk1Abc - กดสลับพิมพ์ปกติ / กลับหัว รูปสร้างตอนรันไทม์ที่ ApplyAbcButton
         //
@@ -1142,21 +1176,25 @@ partial class OrderDetailUserControl
         // tlpMk2Head
         //
         tlpMk2Head.BackColor = System.Drawing.Color.Transparent;
-        tlpMk2Head.ColumnCount = 7;
+        tlpMk2Head.ColumnCount = 9;
         tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 92F));
+        tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 55F));
+        tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 46F));
         tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 105F));
         tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 95F));
-        tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80F));
-        tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 88F));
+        tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 60F));
+        tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 76F));
         tlpMk2Head.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
         tlpMk2Head.Controls.Add(pnlMk2Chip, 0, 0);
-        tlpMk2Head.Controls.Add(lblMk2Program, 1, 0);
-        tlpMk2Head.Controls.Add(txtMk2Program, 2, 0);
-        tlpMk2Head.Controls.Add(lblMk2ProgramNo, 3, 0);
-        tlpMk2Head.Controls.Add(txtMk2ProgramNo, 4, 0);
-        tlpMk2Head.Controls.Add(picMk2Abc, 5, 0);
-        tlpMk2Head.Controls.Add(btnMkSwap, 6, 0);
+        tlpMk2Head.Controls.Add(lblMk2Type, 1, 0);
+        tlpMk2Head.Controls.Add(txtMk2Type, 2, 0);
+        tlpMk2Head.Controls.Add(lblMk2Program, 3, 0);
+        tlpMk2Head.Controls.Add(txtMk2Program, 4, 0);
+        tlpMk2Head.Controls.Add(lblMk2ProgramNo, 5, 0);
+        tlpMk2Head.Controls.Add(txtMk2ProgramNo, 6, 0);
+        tlpMk2Head.Controls.Add(picMk2Abc, 7, 0);
+        tlpMk2Head.Controls.Add(btnMkSwap, 8, 0);
         tlpMk2Head.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpMk2Head.Location = new System.Drawing.Point(0, 0);
         tlpMk2Head.Margin = new System.Windows.Forms.Padding(0);
@@ -1246,6 +1284,32 @@ partial class OrderDetailUserControl
         txtMk2ProgramNo.Size = new System.Drawing.Size(80, 42);
         txtMk2ProgramNo.TabIndex = 4;
         txtMk2ProgramNo.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+        //
+        // lblMk2Type
+        //
+        lblMk2Type.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMk2Type.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblMk2Type.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblMk2Type.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
+        lblMk2Type.Name = "lblMk2Type";
+        lblMk2Type.Size = new System.Drawing.Size(49, 58);
+        lblMk2Type.TabIndex = 6;
+        lblMk2Type.Text = "Type";
+        lblMk2Type.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        //
+        // txtMk2Type - ประเภทเหล็ก I / O จาก DB3 แสดงอย่างเดียว ไม่ได้ส่งไป PLC หรือ MK
+        //
+        txtMk2Type.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        txtMk2Type.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
+        txtMk2Type.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk2Type.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        txtMk2Type.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
+        txtMk2Type.Name = "txtMk2Type";
+        txtMk2Type.ReadOnly = true;
+        txtMk2Type.Radius = 8;
+        txtMk2Type.Size = new System.Drawing.Size(40, 42);
+        txtMk2Type.TabIndex = 7;
+        txtMk2Type.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
         //
         // picMk2Abc - กดสลับพิมพ์ปกติ / กลับหัว รูปสร้างตอนรันไทม์ที่ ApplyAbcButton
         //
@@ -3250,6 +3314,8 @@ partial class OrderDetailUserControl
     private AntdUI.Input txtMk1Program;
     private AntdUI.Label lblMk1ProgramNo;
     private AntdUI.Input txtMk1ProgramNo;
+    private AntdUI.Label lblMk1Type;
+    private AntdUI.Input txtMk1Type;
     private System.Windows.Forms.PictureBox picMk1Abc;
     private AntdUI.Table tblMk1Blocks;
     private System.Windows.Forms.TableLayoutPanel tlpMk1Position;
@@ -3274,6 +3340,8 @@ partial class OrderDetailUserControl
     private AntdUI.Input txtMk2Program;
     private AntdUI.Label lblMk2ProgramNo;
     private AntdUI.Input txtMk2ProgramNo;
+    private AntdUI.Label lblMk2Type;
+    private AntdUI.Input txtMk2Type;
     private System.Windows.Forms.PictureBox picMk2Abc;
     private AntdUI.Button btnMkSwap;
     private AntdUI.Table tblMk2Blocks;

@@ -1608,13 +1608,13 @@ public partial class OrderDetailUserControl : UserControl
         FillMk(
             configs.FirstOrDefault(c => c.Ordinal == 1),
             servos.FirstOrDefault(s => s.Ordinal == 1),
-            txtMk1Program, txtMk1ProgramNo, txtMk1Width, txtMk1Height,
+            txtMk1Program, txtMk1ProgramNo, txtMk1Width, txtMk1Height, txtMk1Type,
             txtMk1Trigger, txtMk1PosAct, txtMk1Delay, tblMk1Blocks);
 
         FillMk(
             configs.FirstOrDefault(c => c.Ordinal == 2),
             servos.FirstOrDefault(s => s.Ordinal == 2),
-            txtMk2Program, txtMk2ProgramNo, txtMk2Width, txtMk2Height,
+            txtMk2Program, txtMk2ProgramNo, txtMk2Width, txtMk2Height, txtMk2Type,
             txtMk2Trigger, txtMk2PosAct, txtMk2Delay, tblMk2Blocks);
 
         ApplyAbc(picMk1Abc, configs.FirstOrDefault(c => c.Ordinal == 1)?.Direction);
@@ -1624,7 +1624,7 @@ public partial class OrderDetailUserControl : UserControl
     private void FillMk(
         InkjetConfigDto? config, ServoConfigDto? servo,
         AntdUI.Input program, AntdUI.Input programNo,
-        AntdUI.Input width, AntdUI.Input height,
+        AntdUI.Input width, AntdUI.Input height, AntdUI.Input steelType,
         AntdUI.Input trigger, AntdUI.Input posAct, AntdUI.Input delay,
         AntdUI.Table table)
     {
@@ -1632,6 +1632,7 @@ public partial class OrderDetailUserControl : UserControl
         programNo.Text = Number(config?.ProgramNumber);
         width.Text = Number(config?.Width);
         height.Text = Number(config?.Height);
+        steelType.Text = OrDash(config?.SteelType); // ประเภทเหล็ก I / O แสดงตามข้อมูล ไม่มีผลกับการส่ง
         trigger.Text = Number(config?.TriggerDelay);
         posAct.Text = Number(servo?.PostAct);
         delay.Text = Number(servo?.Delay);

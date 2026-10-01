@@ -49,6 +49,7 @@ public class SqliteDataService
             Height = ReadInt(reader, "ความสูง"),
             TriggerDelay = ReadInt(reader, "การหน่วง_ทริกเกอร์"),
             Direction = ReadInt(reader, "ทิศทางของข้อความ"),
+            SteelType = ReadStr(reader, "mk058_i_o"), // ประเภทเหล็ก I / O ของหัว MK-058 — แสดงอย่างเดียว
             PosAct = ReadInt(reader, "pos_act"),
             Delay = ReadInt(reader, "delay"),
         };
@@ -78,6 +79,7 @@ public class SqliteDataService
             Height = ReadInt(reader, "ความสูง13"),
             TriggerDelay = ReadInt(reader, "การหน่วง_ทริกเกอร์12"),
             Direction = ReadInt(reader, "ทิศทางของข้อความ15"),
+            SteelType = ReadStr(reader, "mk059_i_o"), // ประเภทเหล็ก I / O ของหัว MK-059 — แสดงอย่างเดียว
         };
         for (int b = 1; b <= 5; b++)
         {
