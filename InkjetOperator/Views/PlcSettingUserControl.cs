@@ -72,6 +72,15 @@ public partial class PlcSettingUserControl : UserControl
         // ปุ่มทดสอบเลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้น — ของจริงทำเองตอนปล่อยเครื่องแล้วไม่มีคิว
         // ปุ่มนี้มีไว้ลองที่หน้างานโดยไม่ต้องรันงานจริงให้ครบวง
         btnResetPosition.Visible = StationService.IsDevMode;
+
+        // ตัวคูณความเร็วสายพานให้ปรับเฉพาะโหมด Dev — นอกโหมดนี้ซ่อนแถวแล้วคืนความสูงให้ตาราง
+        lblConveyorScaleLabel.Visible = StationService.IsDevMode;
+        txtConveyorScale.Visible = StationService.IsDevMode;
+        if (!StationService.IsDevMode)
+        {
+            tlpRoot.RowStyles[0].Height -= tlpConn.RowStyles[4].Height;
+            tlpConn.RowStyles[4].Height = 0;
+        }
         btnResetPosition.Click += async (_, _) => await ResetPositionAsync();
         btnReadAll.Click += async (_, _) => await ReadAllAsync();
         btnUnlock.Click += (_, _) => ToggleLock();
@@ -82,6 +91,8 @@ public partial class PlcSettingUserControl : UserControl
         txtPlc001Port.TextChanged += (_, _) => txtPlc001Port.BackColor = Color.LightYellow;
         txtHomePosition.TextChanged += (_, _) => txtHomePosition.BackColor = Color.LightYellow;
         NumericInput.DigitsOnly(txtHomePosition);
+        txtConveyorScale.TextChanged += (_, _) => txtConveyorScale.BackColor = Color.LightYellow;
+        NumericInput.DigitsOnly(txtConveyorScale);
 
         tblPlcMap.CellButtonClick += TblPlcMap_CellButtonClick;
         tblPlcMap.CellEndEdit += TblPlcMap_CellEndEdit;
@@ -101,6 +112,7 @@ public partial class PlcSettingUserControl : UserControl
         txtPlc001Ip.Text = CustomSettingsManager.Read("PLC_IP", "");
         txtPlc001Port.Text = CustomSettingsManager.Read("PLC_PORT", "502");
         txtHomePosition.Text = PlcOrderService.HomePosition.ToString();
+        txtConveyorScale.Text = PlcOrderService.ConveyorScale.ToString();
         lblPlcBadge.Text = CustomSettingsManager.Read("PLC_NAME", "PLC-001");
         ResetColors();
     }
@@ -142,6 +154,7 @@ public partial class PlcSettingUserControl : UserControl
         txtPlc001Ip.Enabled = _unlocked;
         txtPlc001Port.Enabled = _unlocked;
         txtHomePosition.Enabled = _unlocked;
+        txtConveyorScale.Enabled = _unlocked;
 
         tblPlcMap.EditMode = _unlocked ? AntdUI.TEditMode.Click : AntdUI.TEditMode.None;
     }
@@ -569,10 +582,13 @@ public partial class PlcSettingUserControl : UserControl
     {
         if (!ValidateRows()) return;
         if (!TryReadHomePosition(out int home)) return;
+        if (!TryReadConveyorScale(out int scale)) return;
 
         CustomSettingsManager.Write("PLC_IP", txtPlc001Ip.Text.Trim());
         CustomSettingsManager.Write("PLC_PORT", txtPlc001Port.Text.Trim());
         CustomSettingsManager.Write(PlcOrderService.HomePositionKey, home.ToString());
+        if (StationService.IsDevMode) // นอกโหมด Dev ช่องถูกซ่อน ไม่เขียนทับค่าที่ตั้งไว้
+            CustomSettingsManager.Write(PlcOrderService.ConveyorScaleKey, scale.ToString());
 
         lblPlcStatus.ForeColor = StatusGray;
         _ = CheckStatusAsync();
@@ -612,6 +628,27 @@ public partial class PlcSettingUserControl : UserControl
         txtPlc001Ip.BackColor = Color.White;
         txtPlc001Port.BackColor = Color.White;
         txtHomePosition.BackColor = Color.White;
+        txtConveyorScale.BackColor = Color.White;
+    }
+
+    private bool TryReadConveyorScale(out int scale)
+    {
+        // ช่องถูกซ่อนนอกโหมด Dev ค่าที่มองไม่เห็นต้องไม่มาขวางการบันทึก
+        if (!StationService.IsDevMode)
+        {
+            scale = PlcOrderService.ConveyorScale;
+            return true;
+        }
+
+        if (int.TryParse(txtConveyorScale.Text.Trim(), out scale)
+            && scale is >= 1 and <= PlcOrderService.MaxConveyorScale)
+            return true;
+
+        Notify.WarnModal(this, "ตัวคูณความเร็วสายพาน",
+            $"ใส่เลข 1 ถึง {PlcOrderService.MaxConveyorScale}"
+            + Environment.NewLine + Environment.NewLine
+            + "ค่า Hz ใน Pattern จะถูกคูณด้วยค่านี้ก่อนเขียนลง Conveyor Speed 1");
+        return false;
     }
 
     /// <summary>

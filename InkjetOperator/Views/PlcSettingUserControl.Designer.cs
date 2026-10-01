@@ -28,6 +28,8 @@ partial class PlcSettingUserControl
         txtPlc001Port = new AntdUI.Input();
         lblHomeLabel = new System.Windows.Forms.Label();
         txtHomePosition = new AntdUI.Input();
+        lblConveyorScaleLabel = new System.Windows.Forms.Label();
+        txtConveyorScale = new AntdUI.Input();
         grpRegisterMap = new System.Windows.Forms.GroupBox();
         tlpMap = new System.Windows.Forms.TableLayoutPanel();
         tlpMapHeader = new System.Windows.Forms.TableLayoutPanel();
@@ -67,7 +69,7 @@ partial class PlcSettingUserControl
         tlpRoot.Name = "tlpRoot";
         tlpRoot.Padding = new System.Windows.Forms.Padding(16);
         tlpRoot.RowCount = 4;
-        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 353F));
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 415F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 291F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 85F));
@@ -105,9 +107,12 @@ partial class PlcSettingUserControl
         tlpConn.Controls.Add(txtPlc001Port, 3, 2);
         tlpConn.Controls.Add(lblHomeLabel, 1, 3);
         tlpConn.Controls.Add(txtHomePosition, 3, 3);
+        tlpConn.Controls.Add(lblConveyorScaleLabel, 1, 4);
+        tlpConn.Controls.Add(txtConveyorScale, 3, 4);
         tlpConn.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpConn.Name = "tlpConn";
-        tlpConn.RowCount = 5;
+        tlpConn.RowCount = 6;
+        tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpConn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
@@ -217,6 +222,29 @@ partial class PlcSettingUserControl
         txtHomePosition.PlaceholderText = "1";
         txtHomePosition.Radius = 4;
         txtHomePosition.TabIndex = 8;
+        //
+        // lblConveyorScaleLabel
+        //
+        lblConveyorScaleLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblConveyorScaleLabel.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        lblConveyorScaleLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+        lblConveyorScaleLabel.Name = "lblConveyorScaleLabel";
+        tlpConn.SetColumnSpan(lblConveyorScaleLabel, 2);
+        lblConveyorScaleLabel.Padding = new System.Windows.Forms.Padding(0, 0, 8, 0);
+        lblConveyorScaleLabel.TabIndex = 9;
+        lblConveyorScaleLabel.Text = "ตัวคูณความเร็วสายพาน:";
+        lblConveyorScaleLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        //
+        // txtConveyorScale - Hz ใน Pattern คูณค่านี้ก่อนเขียนลง Conveyor Speed 1
+        //
+        txtConveyorScale.Dock = System.Windows.Forms.DockStyle.Fill;
+        txtConveyorScale.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        txtConveyorScale.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        txtConveyorScale.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
+        txtConveyorScale.Name = "txtConveyorScale";
+        txtConveyorScale.PlaceholderText = "120";
+        txtConveyorScale.Radius = 4;
+        txtConveyorScale.TabIndex = 10;
         //
         // grpRegisterMap
         //
@@ -464,6 +492,8 @@ partial class PlcSettingUserControl
     private AntdUI.Input txtPlc001Port;
     private System.Windows.Forms.Label lblHomeLabel;
     private AntdUI.Input txtHomePosition;
+    private System.Windows.Forms.Label lblConveyorScaleLabel;
+    private AntdUI.Input txtConveyorScale;
     private AntdUI.Button btnCheckStatus;
     private System.Windows.Forms.GroupBox grpRegisterMap;
     private System.Windows.Forms.TableLayoutPanel tlpMap;

@@ -60,7 +60,8 @@ public static class PlcOrderService
 
         // สายพานตัวเดียว — ตาราง register map เหลือ Conveyor Speed 1 แถวเดียว
         // โปรแกรมเดิมส่งสามตัวรวดเดียว (D10-D12) แต่ของใหม่ตกลงกันว่าเหลือตัวแรก
-        Add(fields, map, "Conveyor Speed 1", "Conveyor 1 (Hz)", Whole(speeds?.Speed1));
+        // Pattern เก็บเป็น Hz แต่ PLC รับเป็นสเกลของตัวเอง จึงคูณ ConveyorScale ก่อน
+        Add(fields, map, "Conveyor Speed 1", $"Conveyor 1 (Hz ×{ConveyorScale})", ScaleSpeed(speeds?.Speed1));
 
         return fields;
     }
@@ -70,7 +71,8 @@ public static class PlcOrderService
     /// <para>
     /// เขียนทีละ register ด้วย FC 6 แล้วอ่านกลับมายืนยัน — วิธีเดียวกับปุ่ม Write
     /// ในตาราง register map หน้า PLC Setting ทุกประการ ค่าที่ส่งคือตัวเลขที่เห็น
-    /// บนหน้าจอตรง ๆ ไม่มีการคูณหรือแปลงหน่วยใด ๆ ระหว่างทาง
+    /// บนหน้าจอตรง ๆ ไม่มีการคูณหรือแปลงหน่วยใด ๆ ระหว่างทาง — ยกเว้นความเร็วสายพาน
+    /// ที่ <see cref="BuildPlanAsync"/> คูณ <see cref="ConveyorScale"/> ไว้ให้แล้วในแผน
     /// </para>
     /// <para>
     /// เดิมรวม address ที่ติดกันแล้วยิงเป็นชุดเดียวด้วย FC 16 ซึ่งต่างจากที่หน้า
@@ -170,6 +172,34 @@ public static class PlcOrderService
         && value is >= 1 and <= MaxHomePosition
             ? value
             : DefaultHomePosition;
+
+    /// <summary>คีย์ใน Setting.config ของตัวคูณความเร็วสายพาน — ตั้งที่หน้า PLC Setting (เฉพาะโหมด Dev)</summary>
+    public const string ConveyorScaleKey = "CONVEYOR_SPEED_SCALE";
+
+    /// <summary>
+    /// ค่าที่ใช้เมื่อยังไม่ได้ตั้ง
+    ///
+    /// <para>
+    /// ladder เอา DATA_WORD_RD[10] เข้า LINEAR_SCALING ช่วง 0–6000 ออกเป็น analog
+    /// เต็มช่วงไปที่อินเวอร์เตอร์ซึ่งรับ 0–50 Hz ส่ง Hz ตรง ๆ จึงได้ไฟไม่ถึง 0.1V
+    /// สายพานไม่วิ่งทั้งที่เขียนผ่านและอ่านกลับตรง 6000 ÷ 50 = 120
+    /// </para>
+    /// </summary>
+    public const int DefaultConveyorScale = 120;
+
+    /// <summary>ตัวคูณสูงสุดที่ใส่ได้</summary>
+    public const int MaxConveyorScale = 1000;
+
+    /// <summary>ตัวคูณที่ใช้แปลง Hz ใน Pattern เป็นค่าที่เขียนลง Conveyor Speed 1</summary>
+    public static int ConveyorScale =>
+        int.TryParse(CustomSettingsManager.Read(ConveyorScaleKey, ""), out var value)
+        && value is >= 1 and <= MaxConveyorScale
+            ? value
+            : DefaultConveyorScale;
+
+    /// <summary>คูณ Hz ด้วยตัวคูณ แล้วตัดไม่ให้เกินเลขมีเครื่องหมาย 16 บิตของ register</summary>
+    private static int ScaleSpeed(int? hz) =>
+        (int)Math.Min((long)Whole(hz) * ConveyorScale, short.MaxValue);
 
     /// <summary>
     /// เลื่อนหัวพิมพ์ทั้งสองตัวกลับตำแหน่งเริ่มต้น — ใช้ตอนเครื่องว่างและไม่มีงานรอคิว
