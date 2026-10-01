@@ -897,15 +897,14 @@ partial class OrderDetailUserControl
         lblMk1Type.Text = "Type";
         lblMk1Type.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
         //
-        // txtMk1Type - ประเภทเหล็ก I / O จาก DB3 แสดงอย่างเดียว ไม่ได้ส่งไป PLC หรือ MK
+        // txtMk1Type - ประเภทเหล็ก I / O แก้ได้ บันทึกพร้อมปุ่ม Save ไม่ได้ส่งไป PLC หรือ MK
         //
         txtMk1Type.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk1Type.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtMk1Type.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk1Type.BackColor = System.Drawing.Color.White;
+        txtMk1Type.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtMk1Type.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk1Type.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
         txtMk1Type.Name = "txtMk1Type";
-        txtMk1Type.ReadOnly = true;
         txtMk1Type.Radius = 8;
         txtMk1Type.Size = new System.Drawing.Size(40, 42);
         txtMk1Type.TabIndex = 7;
@@ -1297,15 +1296,14 @@ partial class OrderDetailUserControl
         lblMk2Type.Text = "Type";
         lblMk2Type.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
         //
-        // txtMk2Type - ประเภทเหล็ก I / O จาก DB3 แสดงอย่างเดียว ไม่ได้ส่งไป PLC หรือ MK
+        // txtMk2Type - ประเภทเหล็ก I / O แก้ได้ บันทึกพร้อมปุ่ม Save ไม่ได้ส่งไป PLC หรือ MK
         //
         txtMk2Type.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-        txtMk2Type.BackColor = System.Drawing.Color.FromArgb(237, 243, 249);
-        txtMk2Type.BorderColor = System.Drawing.Color.FromArgb(175, 200, 224);
+        txtMk2Type.BackColor = System.Drawing.Color.White;
+        txtMk2Type.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
         txtMk2Type.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtMk2Type.Margin = new System.Windows.Forms.Padding(3, 6, 3, 6);
         txtMk2Type.Name = "txtMk2Type";
-        txtMk2Type.ReadOnly = true;
         txtMk2Type.Radius = 8;
         txtMk2Type.Size = new System.Drawing.Size(40, 42);
         txtMk2Type.TabIndex = 7;

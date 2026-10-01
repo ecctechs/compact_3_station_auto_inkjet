@@ -655,6 +655,20 @@ public partial class OrderDetailUserControl : UserControl
         // เป็นตัวชี้ว่าจะใช้โปรแกรมไหนในเครื่อง เปลี่ยนคือพิมพ์คนละแบบทั้งใบ
         //
         // อ่านช่องที่เหลือให้ครบก่อน แม้เจอที่ผิดแล้ว จะได้บอกทีเดียวว่าผิดตรงไหนบ้าง
+        // ประเภทเหล็กรับแค่ I หรือ O ตามที่ใช้ในฐานข้อมูล ปล่อยว่างคือไม่ระบุ
+        // พิมพ์ตัวเล็กมาก็รับ แปลงเป็นตัวใหญ่ให้ตรงกับข้อมูลเดิม
+        string? Steel(AntdUI.Input box, string label)
+        {
+            var text = box.Text.Trim().ToUpperInvariant();
+            if (text.Length == 0 || text == Dash) return null;
+            if (text is "I" or "O") return text;
+            errors.Add($"{label}: \"{box.Text.Trim()}\" ต้องเป็น I หรือ O");
+            return null;
+        }
+
+        var steel1 = Steel(txtMk1Type, $"{mk1} Type");
+        var steel2 = Steel(txtMk2Type, $"{mk2} Type");
+
         var v1 = (W: Int(txtMk1Width, $"{mk1} Width"), H: Int(txtMk1Height, $"{mk1} Height"),
                   Trig: Int(txtMk1Trigger, $"{mk1} Trigger Delay"),
                   Act: Dbl(txtMk1PosAct, $"{mk1} Pos Act"), Dly: Dbl(txtMk1Delay, $"{mk1} Delay"));
@@ -673,7 +687,7 @@ public partial class OrderDetailUserControl : UserControl
         if (errors.Count > 0) return string.Join(Environment.NewLine, errors);
 
         void ApplyMk(int ordinal,
-            (int? W, int? H, int? Trig, double? Act, double? Dly) v)
+            (int? W, int? H, int? Trig, double? Act, double? Dly) v, string? steel)
         {
             var config = _pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
             if (config != null)
@@ -681,6 +695,7 @@ public partial class OrderDetailUserControl : UserControl
                 config.Width = v.W;
                 config.Height = v.H;
                 config.TriggerDelay = v.Trig;
+                config.SteelType = steel;
             }
 
             // PosAct กับ Delay อยู่บน ServoConfig ไม่ใช่ InkjetConfig — เป็นค่าที่ส่งเข้า PLC
@@ -692,8 +707,8 @@ public partial class OrderDetailUserControl : UserControl
             }
         }
 
-        ApplyMk(1, v1);
-        ApplyMk(2, v2);
+        ApplyMk(1, v1, steel1);
+        ApplyMk(2, v2, steel2);
         ApplyBlocks(1, blocks1);
         ApplyBlocks(2, blocks2);
 
@@ -1632,7 +1647,7 @@ public partial class OrderDetailUserControl : UserControl
         programNo.Text = Number(config?.ProgramNumber);
         width.Text = Number(config?.Width);
         height.Text = Number(config?.Height);
-        steelType.Text = OrDash(config?.SteelType); // ประเภทเหล็ก I / O แสดงตามข้อมูล ไม่มีผลกับการส่ง
+        steelType.Text = OrDash(config?.SteelType); // ประเภทเหล็ก I / O แก้ได้ ไม่มีผลกับการส่ง
         trigger.Text = Number(config?.TriggerDelay);
         posAct.Text = Number(servo?.PostAct);
         delay.Text = Number(servo?.Delay);
