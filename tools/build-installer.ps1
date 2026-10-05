@@ -7,7 +7,9 @@
 #      (ถ้าไม่เปลี่ยน Windows จะไม่ยอมติดตั้งทับ)
 #   4. build ทั้ง solution แบบ Release ด้วย devenv  (MSBuild สร้าง .vdproj ไม่ได้)
 #   5. copy .msi ออกมาพร้อมเลขเวอร์ชันในชื่อไฟล์
-#      (ก่อน copy แก้ .msi ให้ shortcut ชี้ไปที่ InkjetOperator.exe ตรง ๆ ไม่ใช่แบบ advertised)
+#      (ก่อน copy แก้ .msi ให้ shortcut ชี้ไปที่ InkjetOperator.exe ตรง ๆ ไม่ใช่แบบ advertised
+#       และให้เช็คว่าเครื่องปลายทางมี .NET 8 Desktop Runtime ก่อนติดตั้ง)
+#   6. copy ตัวติดตั้ง .NET 8 Desktop Runtime จาก tools\prereq\ ไปไว้ข้าง ๆ (ถ้ามี)
 #
 # UpgradeCode ไม่ถูกแตะ — ตัวนี้ต้องคงเดิมตลอดอายุโปรแกรม เป็นตัวที่บอก Windows
 # ว่านี่คือโปรแกรมเดียวกัน ถ้าเปลี่ยนจะกลายเป็นคนละตัวแล้วลงซ้อนกัน
@@ -240,6 +242,91 @@ function Set-MsiShortcutsToExe($msiPath) {
     }
 }
 
+# ไม่ให้ติดตั้งบนเครื่องที่ไม่มี .NET 8 Desktop Runtime (x64)
+#
+# โปรแกรมเป็น .NET 8 ที่ต้องมี runtime ลงไว้ในเครื่องก่อน แต่ Setup Project ของ VS
+# รู้จักแค่ .NET Framework ตัวเก่า — เดิมตั้งให้เช็ค .NET Framework 4.7.2 ซึ่งมีติดมา
+# กับ Windows ทุกเครื่องอยู่แล้ว เช็คไปก็ผ่านเสมอ เครื่องที่ไม่มี .NET 8 จึงลงผ่าน
+# แต่เปิดโปรแกรมแล้วขึ้นหน้าต่างให้ไปโหลด runtime โปรแกรมไม่เปิด
+#
+# ใส่การค้นหาไฟล์ของ Windows Installer เอง (เหตุผลเดียวกับไอคอน — .vdproj ไม่มีเอกสาร)
+# หา System.Windows.Forms.dll เวอร์ชัน 8.x ในโฟลเดอร์ runtime ของ .NET แบบ 64 บิต
+# ไม่เจอก็หยุดตั้งแต่หน้าแรก ยังไม่มีไฟล์ไหนถูกแตะ
+#
+# เช็คเฉพาะ 8.x — มี 9 หรือ 10 อย่างเดียวไม่พอ .NET ไม่ข้ามเลขหลักให้เองถ้าไม่ได้ตั้งไว้
+#
+# ข้อความเป็นภาษาอังกฤษ เพราะไฟล์ติดตั้งของ VS ใช้ code page 1252 เก็บอักษรไทยไม่ได้
+function Set-MsiDesktopRuntimeCheck($msiPath) {
+    $wi = New-Object -ComObject WindowsInstaller.Installer
+    $db = $null
+    try {
+        $db = $wi.GetType().InvokeMember('OpenDatabase', 'InvokeMethod', $null, $wi,
+            [object[]]@([string]$msiPath, [int]1))
+
+        # view ต้องอยู่ใน scriptblock ถ้าค้างอยู่ระดับฟังก์ชัน ไฟล์จะยังถูกจับไว้จนเปิดซ้ำไม่ได้
+        $run = {
+            param($sql, $rec)
+            $v = $db.GetType().InvokeMember('OpenView', 'InvokeMethod', $null, $db, [object[]]@([string]$sql))
+            [void]$v.GetType().InvokeMember('Execute', 'InvokeMethod', $null, $v, @($rec))
+            [void]$v.GetType().InvokeMember('Close', 'InvokeMethod', $null, $v, $null)
+        }
+
+        # 1 = มีตารางนี้แล้ว — VS ไม่สร้างตารางค้นหาให้ถ้าใน .vdproj ไม่มีการค้นหา
+        $has = {
+            param($table)
+            $db.GetType().InvokeMember('TablePersistent', 'GetProperty', $null, $db, [object[]]@([string]$table)) -eq 1
+        }
+
+        if (-not (& $has 'Signature')) {
+            & $run ('CREATE TABLE `Signature` (`Signature` CHAR(72) NOT NULL, `FileName` CHAR(255) NOT NULL LOCALIZABLE, ' +
+                    '`MinVersion` CHAR(20), `MaxVersion` CHAR(20), `MinSize` LONG, `MaxSize` LONG, `MinDate` LONG, ' +
+                    '`MaxDate` LONG, `Languages` CHAR(255) PRIMARY KEY `Signature`)')
+        }
+        if (-not (& $has 'DrLocator')) {
+            & $run ('CREATE TABLE `DrLocator` (`Signature_` CHAR(72) NOT NULL, `Parent` CHAR(72), `Path` CHAR(255), ' +
+                    '`Depth` SHORT PRIMARY KEY `Signature_`, `Parent`, `Path`)')
+        }
+        if (-not (& $has 'AppSearch')) {
+            & $run ('CREATE TABLE `AppSearch` (`Property` CHAR(72) NOT NULL, `Signature_` CHAR(72) NOT NULL ' +
+                    'PRIMARY KEY `Property`, `Signature_`)')
+        }
+
+        # ลบของเดิมก่อน เผื่อมีการรันซ้ำบนไฟล์เดียวกัน
+        & $run 'DELETE FROM `AppSearch` WHERE `Property` = ''NETDESKTOP8'''
+        & $run 'DELETE FROM `DrLocator` WHERE `Signature_` = ''NetDesktop8'''
+        & $run 'DELETE FROM `Signature` WHERE `Signature` = ''NetDesktop8'''
+        & $run 'DELETE FROM `LaunchCondition` WHERE `Condition` = ''Installed OR NETDESKTOP8'''
+
+        # เลขไฟล์ของ .NET 8 เป็น 8.0.xxxx.yyyy (เช่น 8.0.2526.11204) แต่ละช่องสูงสุด 65535
+        & $run ('INSERT INTO `Signature` (`Signature`, `FileName`, `MinVersion`, `MaxVersion`) ' +
+                'VALUES (''NetDesktop8'', ''System.Windows.Forms.dll'', ''8.0.0.0'', ''8.65535.65535.65535'')')
+
+        # ไล่ลงไปหนึ่งชั้น = โฟลเดอร์ตามเลขเวอร์ชัน เช่น ...\Microsoft.WindowsDesktop.App\8.0.25\
+        & $run ('INSERT INTO `DrLocator` (`Signature_`, `Path`, `Depth`) ' +
+                'VALUES (''NetDesktop8'', ''[ProgramFiles64Folder]dotnet\shared\Microsoft.WindowsDesktop.App'', 1)')
+
+        & $run 'INSERT INTO `AppSearch` (`Property`, `Signature_`) VALUES (''NETDESKTOP8'', ''NetDesktop8'')'
+
+        # Installed — ตอนถอนหรือซ่อมไม่ต้องเช็ค เครื่องที่ถอน runtime ไปแล้วจะได้ถอนโปรแกรมได้
+        $msg = 'Compact needs the .NET 8 Desktop Runtime (x64), which is not installed on this computer.' +
+               "`r`n`r`n" +
+               'Install windowsdesktop-runtime-8.0.x-win-x64.exe first (it comes in the same folder as this installer, ' +
+               'or download it from https://dotnet.microsoft.com/download/dotnet/8.0), then run this setup again.'
+        $rec = $wi.GetType().InvokeMember('CreateRecord', 'InvokeMethod', $null, $wi, [object[]]@([int]1))
+        [void]$rec.GetType().InvokeMember('StringData', 'SetProperty', $null, $rec, [object[]]@([int]1, [string]$msg))
+        & $run 'INSERT INTO `LaunchCondition` (`Condition`, `Description`) VALUES (''Installed OR NETDESKTOP8'', ?)' $rec
+
+        [void]$db.GetType().InvokeMember('Commit', 'InvokeMethod', $null, $db, $null)
+        return $null
+    }
+    catch { return $_.Exception.Message }
+    finally {
+        if ($db) { [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($db) }
+        [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($wi)
+        [GC]::Collect(); [GC]::WaitForPendingFinalizers()
+    }
+}
+
 try {
     Write-Host ''
     Write-Host '=== Compact Inkjet - build installer ===' -ForegroundColor White
@@ -341,6 +428,15 @@ try {
     }
     $old = "$($Matches[1]).$($Matches[2]).$($Matches[3])"
     $new = "$($Matches[1]).$($Matches[2]).$([int]$Matches[3] + 1)"
+
+    # เลขนี้เคยถูกใช้ไปแล้ว — แปลว่ารอบก่อนบวกเลขแล้วแต่ไม่ได้ commit สองไฟล์นี้ไว้
+    # ถ้าปล่อยไปจะได้ตัวติดตั้งเลขซ้ำกับตัวที่ลงไปแล้ว Windows ไม่ถอดตัวเก่าให้
+    # (ถอดเฉพาะเลขที่ต่ำกว่า) จะกลายเป็นสองตัวใน Add/Remove ที่ใช้โฟลเดอร์เดียวกัน
+    $used = @(Get-ChildItem $dist -Filter "CompactDemo-$new-*.msi" -ErrorAction SilentlyContinue)
+    if ($used.Count -gt 0) {
+        Fail ("เวอร์ชัน $new เคย build ไปแล้ว ($($used[0].Name)) — แก้เลขใน CompactDemo.vdproj " +
+              "กับ InkjetOperator.csproj เป็น $new แล้ว commit ก่อน รอบนี้จะได้ขยับเป็นเลขถัดไป")
+    }
 
     $product = [guid]::NewGuid().ToString().ToUpper()
     $package = [guid]::NewGuid().ToString().ToUpper()
@@ -496,6 +592,11 @@ try {
     if ($sc -is [string]) { Fail "ตั้ง shortcut ให้ชี้ไปที่ .exe ไม่สำเร็จ: $sc" }
     Good "shortcut $($sc.Count) อัน ($($sc.Names -join ', ')) ชี้ไปที่ InkjetOperator.exe โดยตรง ไม่ใช่แบบ advertised"
 
+    # ล้ม build ถ้าใส่ไม่ได้ — ตัวติดตั้งที่ไม่เช็คจะลงผ่านบนเครื่องที่เปิดโปรแกรมไม่ขึ้น
+    $rt = Set-MsiDesktopRuntimeCheck $msi
+    if ($rt) { Fail "ใส่การเช็ค .NET 8 Desktop Runtime ในตัวติดตั้งไม่สำเร็จ: $rt" }
+    Good 'ตัวติดตั้งจะไม่ยอมลงถ้าเครื่องไม่มี .NET 8 Desktop Runtime (x64)'
+
     # ใส่เลข commit ในชื่อไฟล์ด้วย — เลขเวอร์ชันอย่างเดียวไม่พอ เพราะมันย้อนกลับได้
     # เวลามีใคร reset แล้ว build ใหม่ จะได้เลขเดิมซ้ำแล้วทับไฟล์เก่าจนแยกไม่ออก
     $stamp = if ($commit) { "-$commit" } else { "" }
@@ -509,6 +610,22 @@ try {
 
     $mb = [math]::Round((Get-Item $out).Length / 1MB, 1)
 
+    # ตัวติดตั้ง .NET 8 Desktop Runtime ไปพร้อมกัน เครื่องหน้างานส่วนใหญ่ไม่มีเน็ต
+    # ไฟล์ใหญ่ราว 55 MB จึงไม่เก็บใน git — โหลดมาวางไว้ที่ tools\prereq\ เองครั้งเดียว
+    $prereq  = Join-Path $PSScriptRoot 'prereq'
+    $runtime = Get-ChildItem $prereq -Filter 'windowsdesktop-runtime-8.*-win-x64.exe' -ErrorAction SilentlyContinue |
+               Sort-Object { try { [version]($_.Name -replace '^windowsdesktop-runtime-([\d.]+)-win-x64\.exe$', '$1') } catch { [version]'0.0' } } -Descending |
+               Select-Object -First 1
+    if ($runtime) {
+        $runtimeOut = Join-Path $dist $runtime.Name
+        if (-not (Test-Path $runtimeOut)) { Copy-Item $runtime.FullName $runtimeOut }
+        Good "ตัวติดตั้ง runtime อยู่ข้าง ๆ แล้ว: $($runtime.Name)"
+    } else {
+        Note 'ไม่พบ windowsdesktop-runtime-8.x-win-x64.exe ใน tools\prereq'
+        Note 'โหลดจาก https://dotnet.microsoft.com/download/dotnet/8.0 (.NET Desktop Runtime, Windows x64)'
+        Note 'แล้วเอาไปพร้อมไฟล์ติดตั้ง สำหรับเครื่องที่ยังไม่มี .NET 8'
+    }
+
     Write-Host ''
     Write-Host '  =============== สำเร็จ ===============' -ForegroundColor Green
     Write-Host "  ไฟล์ติดตั้ง : $out" -ForegroundColor Green
@@ -516,7 +633,11 @@ try {
     if ($commit) { Write-Host "  จาก commit  : $commit" -ForegroundColor Green }
     Write-Host ''
     Write-Host '  เอาไฟล์นี้ไปติดตั้งที่เครื่องปลายทางได้เลย' -ForegroundColor Gray
-    Write-Host '  ติดตั้งทับตัวเก่าได้ ไม่ต้องถอนก่อน' -ForegroundColor Gray
+    Write-Host '  เครื่องที่ยังไม่มี .NET 8 Desktop Runtime (x64) ต้องลง runtime ก่อน' -ForegroundColor Gray
+    Write-Host '  ติดตั้งทับตัวเก่าได้ ไม่ต้องถอนก่อน — ยกเว้นเครื่องที่ลงรุ่น 1.0.27 หรือเก่ากว่า' -ForegroundColor Gray
+    Write-Host '  แบบ "Just me" ให้ถอนตัวเก่าใน Apps & features ก่อน (รุ่นนี้ลงแบบทุกบัญชี)' -ForegroundColor Gray
+    Write-Host ''
+    Write-Host '  อย่าลืม commit CompactDemo.vdproj กับ InkjetOperator.csproj (เลขเวอร์ชันใหม่)' -ForegroundColor Yellow
     Write-Host ''
 
     $ok = $true

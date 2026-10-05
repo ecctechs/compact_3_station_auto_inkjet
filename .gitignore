@@ -42,3 +42,6 @@ Desktop.ini
 
 # ผลลัพธ์จาก build-installer.bat — ไฟล์ติดตั้งกับ log ไม่ต้องเก็บใน git
 dist/
+
+# ตัวติดตั้ง .NET runtime ที่สคริปต์ build-installer copy ไปพร้อมไฟล์ติดตั้ง (ไฟล์ใหญ่)
+tools/prereq/

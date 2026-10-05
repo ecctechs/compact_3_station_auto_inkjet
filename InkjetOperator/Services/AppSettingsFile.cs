@@ -1,4 +1,6 @@
-﻿using System.Xml.Linq;
+﻿using System.Security.AccessControl;
+using System.Security.Principal;
+using System.Xml.Linq;
 
 namespace InkjetOperator.Services;
 
@@ -43,6 +45,7 @@ public static class AppSettingsFile
         try
         {
             Directory.CreateDirectory(Folder);
+            LetAllUsersWrite(Folder);
             var target = Path.Combine(Folder, fileName);
 
             RestoreIfEmpty(target);
@@ -59,6 +62,49 @@ public static class AppSettingsFile
         {
             return legacy;
         }
+    }
+
+    private static bool _accessChecked;
+
+    /// <summary>
+    /// ให้ทุกบัญชีในเครื่องแก้ไฟล์ในโฟลเดอร์ตั้งค่าได้
+    /// <para>
+    /// สิทธิ์ตั้งต้นของ <c>C:\ProgramData</c> ให้คนสร้างไฟล์แก้ได้คนเดียว บัญชีอื่น
+    /// อ่านได้อย่างเดียว ถ้าเปิดโปรแกรมครั้งแรกด้วย "Run as administrator" หรือด้วย
+    /// บัญชีอื่น ไฟล์ตั้งค่าจะตกเป็นของคนนั้น พอเปิดแบบปกติครั้งต่อไปกด Save ไม่ผ่าน
+    /// </para>
+    /// <para>
+    /// เพิ่มสิทธิ์ Modify ให้กลุ่ม Users ที่ตัวโฟลเดอร์ แบบส่งต่อลงไฟล์ข้างใน ไฟล์ที่
+    /// สร้างทีหลังและ <c>.bak</c> ที่ <see cref="SaveAtomic"/> สลับเข้ามาจึงได้สิทธิ์นี้ไปด้วย
+    /// เพิ่มได้เฉพาะเจ้าของโฟลเดอร์หรือ admin ถ้าไม่มีสิทธิ์ก็ข้ามไป โปรแกรมยังใช้ได้ตามเดิม
+    /// </para>
+    /// </summary>
+    private static void LetAllUsersWrite(string folder)
+    {
+        if (_accessChecked) return;
+        _accessChecked = true;
+
+        try
+        {
+            var dir = new DirectoryInfo(folder);
+            var acl = dir.GetAccessControl();
+            var users = new SecurityIdentifier(WellKnownSidType.BuiltinUsersSid, null);
+            const InheritanceFlags both = InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit;
+
+            // มีอยู่แล้วไม่ต้องเขียนซ้ำ ทุกครั้งที่เปิดโปรแกรมจะได้ไม่ไปแตะสิทธิ์ของโฟลเดอร์
+            bool already = acl.GetAccessRules(true, true, typeof(SecurityIdentifier))
+                .OfType<FileSystemAccessRule>()
+                .Any(r => r.IdentityReference == users
+                       && r.AccessControlType == AccessControlType.Allow
+                       && (r.FileSystemRights & FileSystemRights.Modify) == FileSystemRights.Modify
+                       && (r.InheritanceFlags & both) == both);
+            if (already) return;
+
+            acl.AddAccessRule(new FileSystemAccessRule(
+                users, FileSystemRights.Modify, both, PropagationFlags.None, AccessControlType.Allow));
+            dir.SetAccessControl(acl);
+        }
+        catch { /* ไม่ใช่เจ้าของโฟลเดอร์ — ใช้สิทธิ์เท่าที่มีไป */ }
     }
 
     /// <summary>
