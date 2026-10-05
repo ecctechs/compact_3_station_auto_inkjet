@@ -88,13 +88,19 @@ public partial class OrderListUserControl : UserControl
             new AntdUI.Column("ErpMfg", "ERP MFG", AntdUI.ColumnAlign.Center) { Width = "12%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("LotNo", "Lot Number", AntdUI.ColumnAlign.Center) { Width = "12%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("ProcessSequence", "Process Sequence", AntdUI.ColumnAlign.Center) { Width = "13%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("ProcessSequence", "Process Sequence", AntdUI.ColumnAlign.Center) { Width = "10%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Plate", "Plate", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Shim", "Shim", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Station", "Station", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Status", "Status", AntdUI.ColumnAlign.Center) { Width = "8%", SortOrder = true, ColBreak = true },
-            // กว้างกว่าคอลัมน์อื่นเพราะแท็บ List ใส่ได้ถึงสามปุ่ม — เริ่ม/จบงาน + ยกเลิก + รายละเอียด
-            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "12%" },
+            // กว้างกว่าคอลัมน์อื่นเพราะแท็บ List ใส่ได้ถึงสี่ปุ่ม — งาน 22 ที่รอรอบสองมี
+            // เริ่มงานรอบสอง + จบงาน + ยกเลิก + รายละเอียด
+            //
+            // AntdUI วางปุ่มในเซลล์เป็นแถวเดียวเสมอ (ตั้ง LineBreak ก็ไม่ตัดขึ้นบรรทัดใหม่)
+            // ปุ่มรอบสองจึงเขียนข้อความสองบรรทัดให้แคบลง แล้วขยายคอลัมน์นี้จาก 12% เป็น 15%
+            // โดยเอามาจาก Process Sequence ซึ่งเหลือแค่คำสั้น ๆ In-line / Off-line — วัดแล้ว
+            // ที่ 12% สี่ปุ่มล้นบนจอ FHD (ตารางกว้าง ~1660px) ปุ่มแรกโดนตัด ปุ่มท้ายตกขอบ
+            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "15%" },
             machineStatusColumn,
         };
 
@@ -136,7 +142,7 @@ public partial class OrderListUserControl : UserControl
         ("ErpMfg", "14%", "12%"),
         ("LotNo", "14%", "12%"),
         ("Qty", "7%", "6%"),
-        ("ProcessSequence", "15%", "13%"),
+        ("ProcessSequence", "12%", "10%"),
         ("Plate", "7%", "6%"),
         ("Shim", "7%", "6%"),
     ];
@@ -171,10 +177,9 @@ public partial class OrderListUserControl : UserControl
     private void SetupEvents()
     {
         btnTabList.Click += (_, _) => SwitchTab(false);
-        btnTabOnline.Click += (_, _) => SwitchTab(false, JobProcessService.Online);
-        btnTabOffline.Click += (_, _) => SwitchTab(false, JobProcessService.Offline);
         btnTabHistory.Click += (_, _) => SwitchTab(true);
-        ApplyProcessTabs();
+        selProcessFilter.SelectedIndexChanged += (_, e) => ChangeProcessFilter(e.Value);
+        ApplyProcessFilter();
 
         // ST3 ไม่มีแท็บ History — ซ่อนปุ่มไปเลย ไม่ใช่แค่กรองรายการให้ว่าง
         // จอหน้างานมีหน้าที่เดียวคือทำงานที่ค้างอยู่ ไม่ได้ใช้ย้อนดูประวัติ
@@ -446,10 +451,10 @@ public partial class OrderListUserControl : UserControl
             }
             var holder = queue.FirstOrDefault(r => r.Machine == machine && r.State == "active");
 
-            // งานที่เข้าเครื่องเดิมหลายรอบจะถือเครื่องไว้ให้รอบถัดไปหรือไม่
-            // เป็นตัวเลือกที่ Setting → ตัวเลือกหน้างาน ค่าเริ่มต้นคือถือไว้
-            var (release, error) = await _api.ReleaseMachineAsync(
-                machine, holder?.Id, StationService.HoldForNextRound);
+            // ไม่ถือเครื่องไว้ให้รอบถัดไปของงานเดิม — งานที่เข้าเครื่องเดิมสองรอบ
+            // (marking 22) ไม่ได้จองรอบสองไว้ล่วงหน้าแล้ว ปุ่มหน้างานรอบแรกจึงปล่อย
+            // เครื่องเหมือนจบงาน งานอื่นเข้าต่อได้ทันที รอบสองค่อยจองตอนคนกดเริ่มงานรอบสอง
+            var (release, error) = await _api.ReleaseMachineAsync(machine, holder?.Id);
             if (IsDisposed) return;
 
             if (release == null)
@@ -661,7 +666,7 @@ public partial class OrderListUserControl : UserControl
     private async Task RefreshDataAsync(bool force = false)
     {
         if (_api == null || IsDisposed) return;
-        ApplyProcessTabs();
+        ApplyProcessFilter();
         _refreshRequested |= force;
 
         // ระหว่างส่งงานห้ามผูก DataSource ใหม่ ไม่งั้นแถวขยับใต้มือผู้ใช้
@@ -789,73 +794,57 @@ public partial class OrderListUserControl : UserControl
     }
 
     /// <summary>
-    /// แท็บ Online / Offline ที่เลือกอยู่ — null คือแท็บ List ธรรมดา เห็นทุกงาน
+    /// ตัวกรอง In-line / Off-line ที่เลือกอยู่ — null คือ "ทั้งหมด"
     ///
     /// <para>
-    /// สองแท็บนี้เป็นมุมมองย่อยของ List ไม่ใช่ชุดงานใหม่ งานที่ยังไม่จบชุดเดียวกัน
-    /// แค่กรองตาม <see cref="JobProcessService.Current"/> แท็บ History ไม่มีตัวกรองนี้
+    /// กรองตาม <see cref="JobProcessService.Current"/> ใช้ได้ทั้งแท็บ List และ History
+    /// สลับแท็บแล้วยังเลือกค่าเดิมค้างไว้ เพราะ dropdown อยู่ในแถวเดียวกันมองเห็นตลอด
+    /// ไม่มีทางที่คนจะลืมว่ากำลังกรองอยู่
     /// </para>
     /// </summary>
     private string? _processFilter;
 
+    /// <summary>ลำดับตัวเลือกใน dropdown — ตรงกับที่ใส่ไว้ใน Designer</summary>
+    private static readonly string?[] ProcessFilterOptions =
+        [null, JobProcessService.InLine, JobProcessService.OffLine];
+
+    private void ChangeProcessFilter(int index)
+    {
+        var filter = index >= 0 && index < ProcessFilterOptions.Length ? ProcessFilterOptions[index] : null;
+        if (filter == _processFilter) return;
+
+        _processFilter = filter;
+
+        // งานที่เลือกไว้อาจไม่อยู่ในรายการที่กรองแล้ว ล้างไฮไลต์กับรูปทิ้ง
+        _selectedJobId = null;
+        ShowPreviewSides(null, null);
+        RebindTable();
+    }
+
     /// <summary>
-    /// โชว์หรือซ่อนแท็บ Online / Offline ตามตัวเลือกหน้างาน
+    /// โชว์หรือซ่อนตัวกรองตามตัวเลือกหน้างาน
     ///
     /// <para>
     /// เรียกทุกรอบ poll ด้วย เพื่อให้เปลี่ยนตัวเลือกแล้วเห็นผลภายในไม่กี่วินาที
-    /// ไม่ต้องปิดเปิดโปรแกรม ถ้ากำลังดูแท็บที่เพิ่งถูกปิดอยู่ ให้กลับไปที่ List
-    /// ไม่งั้นตารางจะค้างเป็นรายการที่กรองไว้โดยไม่มีปุ่มให้กดออก
+    /// ไม่ต้องปิดเปิดโปรแกรม ถ้าตัวกรองถูกปิดตอนที่เลือกค่าอื่นค้างไว้ ให้กลับเป็น
+    /// "ทั้งหมด" ไม่งั้นตารางจะค้างเป็นรายการที่กรองไว้โดยไม่มีตัวเลือกให้กดออก
     /// </para>
     /// </summary>
-    private void ApplyProcessTabs()
+    private void ApplyProcessFilter()
     {
-        bool enabled = StationService.ShowProcessTabs;
-        bool changed = enabled != _processTabsEnabled;
-        _processTabsEnabled = enabled;
+        bool show = StationService.ShowProcessTabs;
+        if (selProcessFilter.Visible == show) return;
 
-        ShowProcessTabButtons();
-        if (!changed) return;
-
-        if (!enabled && _processFilter != null)
-        {
-            SwitchTab(false);
-            return;
-        }
-
-        // คอลัมน์ Process seq ขึ้นกับตัวเลือกนี้ด้วย แต่ข้อมูลงานไม่ได้เปลี่ยน รอบ poll
-        // จึงไม่ผูกตารางใหม่ให้เอง ต้องสั่งเอง — ยังไม่มีงานก็ไม่ต้อง
-        if (_allJobs.Count > 0) RebindTable();
+        selProcessFilter.Visible = show;
+        if (!show && selProcessFilter.SelectedIndex != 0) selProcessFilter.SelectedIndex = 0;
     }
 
-    /// <summary>ตัวเลือกหน้างานเปิดแท็บ Online / Offline ให้เครื่องนี้อยู่ไหม — ค่าล่าสุดที่อ่านได้</summary>
-    private bool _processTabsEnabled;
-
-    /// <summary>
-    /// ซ่อนแท็บ Online / Offline ตอนอยู่แท็บ History
-    ///
-    /// <para>
-    /// สองแท็บนี้กรองได้เฉพาะงานที่ยังไม่จบ อยู่ใน History ก็ไม่มีความหมาย และแท็บ
-    /// History มีตัวกรองวันที่โผล่มาอีกสี่ชิ้นในแถวเดียวกัน วัดแล้วแถวล้นขอบ ปุ่มล้าง
-    /// วันที่ถูกตัดตกจอ จะกลับไปดู Online / Offline ให้กด List ก่อน
-    /// </para>
-    /// </summary>
-    private void ShowProcessTabButtons()
-    {
-        bool show = _processTabsEnabled && !_showHistory;
-        btnTabOnline.Visible = show;
-        btnTabOffline.Visible = show;
-    }
-
-    private void SwitchTab(bool showHistory, string? process = null)
+    private void SwitchTab(bool showHistory)
     {
         _showHistory = showHistory;
-        _processFilter = showHistory ? null : process;
 
-        ButtonStyles.SetSelected(btnTabList, !showHistory && _processFilter == null);
-        ButtonStyles.SetSelected(btnTabOnline, _processFilter == JobProcessService.Online);
-        ButtonStyles.SetSelected(btnTabOffline, _processFilter == JobProcessService.Offline);
+        ButtonStyles.SetSelected(btnTabList, !showHistory);
         ButtonStyles.SetSelected(btnTabHistory, showHistory);
-        ShowProcessTabButtons();
 
         // ตัวกรองวันที่มีเฉพาะแท็บ History — ออกจากแท็บแล้วล้างค่าทิ้ง
         // ไม่งั้นกลับเข้ามาใหม่จะเห็นรายการหายไปโดยไม่รู้ว่าโดนกรองอยู่
@@ -942,6 +931,8 @@ public partial class OrderListUserControl : UserControl
     private int? _startingJobId;
 
     private const string StartButtonText = "เริ่มงาน";
+    // สองบรรทัด กว้างพอ ๆ กับปุ่มเริ่มงาน — บรรทัดเดียวยาวจนสี่ปุ่มล้นคอลัมน์
+    private const string NextRoundButtonText = "เริ่มงาน\nรอบสอง";
 
     /// <summary>
     /// ให้ปุ่ม "เริ่มงาน" ของแถวที่กดหมุน จนกว่าจะส่งเสร็จ — null คือหยุดหมุน
@@ -978,7 +969,13 @@ public partial class OrderListUserControl : UserControl
         {
             foreach (var button in row.Op)
             {
-                if (button.Id != "start") continue;
+                string? text = button.Id switch
+                {
+                    "start" => StartButtonText,
+                    "round2" => NextRoundButtonText,
+                    _ => null,
+                };
+                if (text == null) continue;
 
                 bool spin = row.Id == _startingJobId;
                 button.Loading = spin;
@@ -986,7 +983,7 @@ public partial class OrderListUserControl : UserControl
                 // ตอนหมุนเหลือแค่ตัวหมุน ไม่มีข้อความ — ตัวหมุนกินที่เพิ่มหน้าข้อความ
                 // ปุ่มจึงกว้างเกินคอลัมน์ ดันปุ่มดูรายละเอียดตกขอบตาราง และตัวหมุนเอง
                 // ถูกตัดครึ่ง (วัดจากภาพแล้ว) ส่วนคำว่ากำลังส่งมีในคอลัมน์รายเครื่องอยู่แล้ว
-                button.Text = spin ? "" : StartButtonText;
+                button.Text = spin ? "" : text;
             }
         }
     }
@@ -1076,7 +1073,7 @@ public partial class OrderListUserControl : UserControl
             }
             await ShowDetailDialogAsync(resolved);
         }
-        else if (buttonId == "start")
+        else if (buttonId is "start" or "round2")
         {
             // กดซ้ำระหว่างที่ใบก่อนยังไม่จบ — ปุ่มที่หมุนอยู่ไม่รับคลิกอยู่แล้ว
             // ตัวนี้กันการกดเริ่มใบอื่นแทรกเข้ามาก่อนใบแรกจะส่งเสร็จ
@@ -1085,7 +1082,8 @@ public partial class OrderListUserControl : UserControl
             ShowStartLoading(row.Id);
             try
             {
-                await StartJobAsync(row.Id);
+                if (buttonId == "start") await StartJobAsync(row.Id);
+                else await StartNextRoundAsync(row.Id);
             }
             finally
             {
@@ -1380,8 +1378,12 @@ public partial class OrderListUserControl : UserControl
         // จองก่อนส่งเสมอ เพราะการจองคือสิ่งที่บอกว่างานนี้มีสิทธิ์ในเครื่องไหนบ้าง
         // เครื่องที่ว่างจะถูกส่งต่อทันทีข้างล่าง ส่วนเครื่องที่ไม่ว่างก็รออยู่ในคิว
         // จนกว่าคนหน้างานจะกดปุ่มปล่อยเครื่อง
+        //
+        // ยกเว้นรอบถัดไปของเครื่องที่ต้องเข้าซ้ำ (marking 22 เป็น MK สองรอบ) — รอบสอง
+        // ต้องรอชิ้นงานออกไปติด shim นอกไลน์ก่อน คนจะกดเริ่มงานรอบสองเองตอนชิ้นงานพร้อม
+        // ถ้าจองไว้ตั้งแต่ตอนนี้ เครื่องจะส่งรอบสองให้ทันทีที่ว่าง ทั้งที่ชิ้นงานยังไม่กลับมา
         var (queued, queueError) = await _api.EnqueueMachinesAsync(
-            jobId, QueueItemsFor(plan.Steps, uvPicks));
+            jobId, QueueItemsFor(plan.Steps, uvPicks).Where(i => i.Round == 1).ToList());
         if (IsDisposed) return;
 
         if (!queued)
@@ -1407,6 +1409,112 @@ public partial class OrderListUserControl : UserControl
         }
 
         await SendQueuedForJobAsync(jobId, resolved, $"เริ่มงาน {JobName(jobId)}");
+    }
+
+    /// <summary>
+    /// งานนี้ขึ้นปุ่ม "เริ่มงานรอบสอง" ได้ไหม
+    ///
+    /// <para>
+    /// ใช้กับงานที่เข้าเครื่องเดิมหลายรอบ (marking 22) ขึ้นเมื่อส่งรอบแรกไปแล้ว และ
+    /// กดปุ่มหน้างานปล่อยเครื่องแล้ว คือไม่มีแถวของเครื่องนั้นค้างอยู่ในคิวเลย
+    /// ระหว่างที่รอบแรกยังถือเครื่องอยู่ไม่ขึ้น เพราะชิ้นงานยังไม่ได้ออกไปติด shim
+    /// และงานแบบเก่าที่จองรอบสองไว้แล้วก็ไม่ขึ้น เพราะรอบสองต่อคิวอยู่แล้ว
+    /// </para>
+    /// <para>
+    /// เห็นเฉพาะสถานีที่เริ่มงานนี้ได้ — งาน 22 ใช้ MK ซึ่งอยู่ที่ ST1
+    /// </para>
+    /// </summary>
+    private bool CanStartNextRound(PrintJob job)
+    {
+        if (!string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase)) return false;
+
+        var method = job.PlanRouting?.MarkingMethod;
+        if (!MarkingMethodService.CanStartAt(StationService.Current, method)) return false;
+        if (JobStageService.NextRound(method, job.Commands) is not { } next) return false;
+
+        return !HoldsOrQueues(_queueRows, job.Id, next.Machine);
+    }
+
+    /// <summary>งานนี้ยังมีแถวของเครื่องนั้นค้างอยู่ในคิว — ถือเครื่องอยู่ หรือรอคิวอยู่</summary>
+    private static bool HoldsOrQueues(IEnumerable<MachineQueueRow> rows, int jobId, string machine) =>
+        rows.Any(r => r.PrintJobsId == jobId
+            && string.Equals(r.Machine, machine, StringComparison.OrdinalIgnoreCase)
+            && r.State is "pending" or "active");
+
+    /// <summary>
+    /// เริ่มรอบถัดไปของงานที่เข้าเครื่องเดิมหลายรอบ — จองคิวรอบนั้นแล้วส่ง
+    ///
+    /// <para>
+    /// ทางส่งเดียวกับปุ่มเริ่มงาน: เครื่องว่างส่งทันที เครื่องไม่ว่างต่อท้ายคิวรอไว้
+    /// ไม่แซงงานที่ต่อคิวอยู่ก่อน เพราะงานพวกนั้นเข้ามาระหว่างที่ชิ้นงานนี้ออกไปติด shim
+    /// </para>
+    /// <para>
+    /// อ่านงานและคิวสดก่อนทุกครั้ง ตารางอาจค้างได้ถึง 5 วินาที ระหว่างนั้นอาจมีคนกด
+    /// รอบสองไปแล้วจากอีกจอ ถ้าเชื่อตารางจะจองซ้ำแล้วพ่นซ้ำลงชิ้นงานเดิม
+    /// </para>
+    /// </summary>
+    private async Task StartNextRoundAsync(int jobId)
+    {
+        if (_api == null || _sending) return;
+
+        var resolved = await LoadJobAsync(jobId, $"กำลังโหลดข้อมูล · {JobName(jobId)}");
+        if (IsDisposed) return;
+        if (resolved == null)
+        {
+            Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลดข้อมูล {JobName(jobId)} ได้");
+            return;
+        }
+
+        var method = resolved.PlanRouting?.MarkingMethod;
+        if (JobStageService.NextRound(method, resolved.Commands) is not { } next)
+        {
+            Notify.Warn(this, $"{JobName(jobId)} ส่งครบทุกรอบแล้ว ไม่มีรอบที่ต้องเริ่มต่อ");
+            await RefreshDataAsync(force: true);
+            return;
+        }
+
+        var (queue, queueError) = await _api.GetMachineQueueAsync();
+        if (IsDisposed) return;
+        if (queueError != null)
+        {
+            Notify.Warn(this, $"อ่านคิว {next.Machine} ไม่สำเร็จ — {queueError}");
+            return;
+        }
+        if (HoldsOrQueues(queue, jobId, next.Machine))
+        {
+            Notify.Warn(this, $"{JobName(jobId)} ยังถือเครื่อง {next.Machine} อยู่ หรือเข้าคิวรอบ {next.Round} ไปแล้ว");
+            await RefreshDataAsync(force: true);
+            return;
+        }
+
+        // ถามก่อนจอง — ชิ้นงานต้องกลับมาจากการติด shim และวางพร้อมพิมพ์แล้วจริง
+        // กดเริ่มตอนชิ้นงานยังไม่กลับมา เครื่องจะพ่นรอบสองลงอากาศหรือลงชิ้นงานใบอื่น
+        if (!Confirm.Ask(this, "เริ่มงานรอบสอง",
+                $"{JobName(jobId)} — ส่งเข้า {next.Machine} รอบ {next.Round}"
+                + Environment.NewLine + Environment.NewLine
+                + "ชิ้นงานติด shim เสร็จ และวางพร้อมพิมพ์รอบสองแล้วใช่ไหม"
+                + Environment.NewLine + Environment.NewLine
+                + "เครื่องว่างจะส่งทันที ถ้าไม่ว่างจะต่อคิวไว้"))
+            return;
+        if (IsDisposed) return;
+
+        // ด่านเดียวกับปุ่มเริ่มงาน — ต่อเครื่องไม่ติดก็ยังไม่จอง
+        if (await BlockedByUnreachableAsync(jobId, MarkingMethodService.Resolve(method), resolved)) return;
+        if (IsDisposed) return;
+
+        var (queued, enqueueError) = await _api.EnqueueMachinesAsync(
+            jobId, [new MachineQueueItem { Machine = next.Machine, Round = next.Round }]);
+        if (IsDisposed) return;
+
+        if (!queued)
+        {
+            Notify.ErrorModal(this, "จองเครื่องไม่สำเร็จ",
+                $"{JobName(jobId)} รอบ {next.Round} ยังไม่ได้เข้าคิว" + Environment.NewLine + Environment.NewLine
+                + (enqueueError ?? "ติดต่อ backend ไม่ได้"));
+            return;
+        }
+
+        await SendQueuedForJobAsync(jobId, resolved, $"เริ่มงานรอบสอง {JobName(jobId)}");
     }
 
     // ขอสิทธิ์อย่างเดียว ไม่ส่งเครื่องจาก ST3 และไม่ปล่อยงานที่กำลังถือเครื่องอยู่
@@ -1460,9 +1568,21 @@ public partial class OrderListUserControl : UserControl
             "",
         };
 
+        var rounds = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         foreach (var step in plan.Steps)
         {
             int station = JobStationService.StationOf(step) ?? 0;
+            rounds[step] = rounds.TryGetValue(step, out int used) ? used + 1 : 1;
+
+            // รอบถัดไปของเครื่องเดิม (marking 22) ไม่ได้จองตอนกดเริ่ม — บอกให้ตรงว่าจะเกิดเมื่อไหร่
+            // ไม่งั้นกล่องจะขึ้น "ส่งเดี๋ยวนี้" สองครั้ง ทั้งที่รอบสองยังไม่ส่ง
+            if (rounds[step] > 1)
+            {
+                body.Add($"[ {step} รอบ {rounds[step]} · ST{station} ]  ยังไม่ส่ง · กดเริ่มงานรอบสองเมื่อชิ้นงานติด shim เสร็จ");
+                body.Add("");
+                continue;
+            }
+
             var holder = rows.FirstOrDefault(r => r.Machine == step && r.State == "active");
 
             var state = holder == null
@@ -2690,6 +2810,14 @@ public partial class OrderListUserControl : UserControl
             else if (MarkingMethodService.CanCompleteAt(
                          StationService.Current, job.PlanRouting?.MarkingMethod))
             {
+                // งาน 22 ที่กดปุ่มหน้างานรอบแรกแล้ว — เพิ่มปุ่มเริ่มรอบสอง ปุ่มจบงานยังอยู่
+                // ข้อความสองบรรทัด (ดู NextRoundButtonText) ให้สี่ปุ่มใส่คอลัมน์นี้ได้
+                if (CanStartNextRound(job))
+                {
+                    buttons.Add(new AntdUI.CellButton("round2", NextRoundButtonText, AntdUI.TTypeMini.Primary)
+                    { Radius = 6 });
+                }
+
                 // เขียว = ส่งครบแล้วจบได้เลย · ส้ม = ยังไม่ครบ กดได้แต่จะเตือนก่อน
                 // commands / plan_routing มาจาก /job/getAll ที่ include ไว้ให้แล้ว
                 var steps = CheckSteps(job.PlanRouting?.MarkingMethod, job.Commands);
@@ -2728,15 +2856,9 @@ public partial class OrderListUserControl : UserControl
             // ใช้ตัวที่มีค่าจริง เผื่องานเก่าที่กรอกมาคนละทาง
             LotNo = FirstFilled(job.LotNumber, job.BarcodeRaw),
             Qty = job.Qty?.ToString() ?? "",
-            // ค่าดิบจาก plan_routing.process_sequence เช่น "Online" / "Offline"
+            // ค่าดิบจาก plan_routing.process_sequence เช่น "In-line" / "Off-line"
             // โชว์ตามที่ database ส่งมาตรง ๆ ไม่แปลง ไม่ normalize ตัวพิมพ์
-            //
-            // ยกเว้นตอนเปิดแท็บ Online / Offline ไว้ งาน 22 ที่อยู่ระหว่างรอบขึ้นเป็น
-            // Offline ให้ตรงกับแท็บที่มันอยู่ ไม่งั้นแถวในแท็บ Offline จะเขียนว่า Online
-            ProcessSequence = StationService.ShowProcessTabs
-                && JobProcessService.BetweenRounds(job.PlanRouting?.MarkingMethod, job.Commands)
-                    ? JobProcessService.Offline
-                    : job.PlanRouting?.ProcessSequence ?? "",
+            ProcessSequence = job.PlanRouting?.ProcessSequence ?? "",
             Plate = plan.NoCase ? Dash : MachineCell(plan.Plate),
             Shim = plan.NoCase ? Dash : MachineCell(plan.Shim),
             Station = OrDashStation(JobStationService.Current(job.Commands)),

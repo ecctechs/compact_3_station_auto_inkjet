@@ -58,24 +58,10 @@ public static class StationService
     public static bool ManualRemoteSendEnabled =>
         CustomSettingsManager.Read(ManualRemoteSendKey, "0") == "1";
 
-    /// <summary>
-    /// คีย์ใน Setting.config ที่บอกว่างานเข้าเครื่องเดิมหลายรอบจะถือเครื่องไว้ไหม
-    ///
-    /// <para>
-    /// ใช้กับ marking 22 ที่ชิ้นงานเข้าเครื่อง MK สองรอบ โดยมีการเอาออกไปติด shim
-    /// นอกไลน์คั่นกลาง ค่าเริ่มต้นคือถือเครื่องไว้ ตามที่ตกลงกับหัวหน้างาน
-    /// </para>
-    /// </summary>
-    public const string HoldForNextRoundKey = "MK_HOLD_FOR_ROUND2";
-
-    /// <summary>ถือเครื่องไว้ให้รอบถัดไปของงานเดิมไหม — ค่าเริ่มต้นคือถือ</summary>
-    public static bool HoldForNextRound =>
-        CustomSettingsManager.Read(HoldForNextRoundKey, "1") == "1";
-
-    /// <summary>คีย์ใน Setting.config ที่คุมแท็บ Online / Offline ในหน้า Order List</summary>
+    /// <summary>คีย์ใน Setting.config ที่คุมตัวกรอง In-line / Off-line ในหน้า Order List</summary>
     public const string ProcessTabsKey = "ORDER_PROCESS_TABS";
 
-    /// <summary>ใครเห็นแท็บ Online / Offline — ตั้งได้ที่ Setting → ตัวเลือกหน้างาน (โหมดทดสอบ)</summary>
+    /// <summary>ใครเห็นตัวกรอง In-line / Off-line — ตั้งได้ที่ Setting → ตัวเลือกหน้างาน (โหมดทดสอบ)</summary>
     public enum ProcessTabsMode
     {
         /// <summary>ปิดทั้งหมด ไม่มีเครื่องไหนเห็น</summary>
@@ -106,7 +92,7 @@ public static class StationService
     };
 
     /// <summary>
-    /// เครื่องนี้ควรเห็นแท็บ Online / Offline ไหม
+    /// เครื่องนี้ควรเห็นตัวกรอง In-line / Off-line ไหม
     ///
     /// <para>
     /// เปิดให้สถานีแล้ว โหมดทดสอบก็ยังเห็นด้วย เพราะโหมดทดสอบเห็นทุกอย่างเสมอ

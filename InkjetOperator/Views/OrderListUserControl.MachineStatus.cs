@@ -1,4 +1,4 @@
-using InkjetOperator.Models;
+﻿using InkjetOperator.Models;
 using InkjetOperator.Services;
 
 namespace InkjetOperator.Views;

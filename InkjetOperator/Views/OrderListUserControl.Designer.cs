@@ -32,8 +32,7 @@ partial class OrderListUserControl
         tlpTableInner = new System.Windows.Forms.TableLayoutPanel();
         flpTabs = new System.Windows.Forms.FlowLayoutPanel();
         btnTabList = new AntdUI.Button();
-        btnTabOnline = new AntdUI.Button();
-        btnTabOffline = new AntdUI.Button();
+        selProcessFilter = new AntdUI.Select();
         btnTabHistory = new AntdUI.Button();
         lblDateFilter = new System.Windows.Forms.Label();
         dtpHistoryRange = new AntdUI.DatePickerRange();
@@ -145,9 +144,8 @@ partial class OrderListUserControl
         //
         flpTabs.BackColor = System.Drawing.Color.White;
         flpTabs.Controls.Add(btnTabList);
-        flpTabs.Controls.Add(btnTabOnline);
-        flpTabs.Controls.Add(btnTabOffline);
         flpTabs.Controls.Add(btnTabHistory);
+        flpTabs.Controls.Add(selProcessFilter);
         flpTabs.Controls.Add(lblDateFilter);
         flpTabs.Controls.Add(dtpHistoryRange);
         flpTabs.Controls.Add(btnSearchDate);
@@ -174,35 +172,21 @@ partial class OrderListUserControl
         btnTabList.Text = "List";
         btnTabList.Type = AntdUI.TTypeMini.Primary;
         //
-        // btnTabOnline - มุมมองย่อยของแท็บ List ซ่อนไว้จนกว่าตัวเลือกหน้างานจะเปิดให้เครื่องนี้เห็น
+        // selProcessFilter - ตัวกรอง In-line / Off-line ใช้ได้ทั้งแท็บ List และ History
+        // ซ่อนไว้จนกว่าตัวเลือกหน้างานจะเปิดให้เครื่องนี้เห็น
         //
-        btnTabOnline.DefaultBorderColor = System.Drawing.Color.FromArgb(180, 180, 180);
-        btnTabOnline.BorderWidth = 1F;
-        btnTabOnline.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
-        btnTabOnline.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-        btnTabOnline.Margin = new System.Windows.Forms.Padding(3);
-        btnTabOnline.Name = "btnTabOnline";
-        btnTabOnline.Radius = 6;
-        btnTabOnline.Size = new System.Drawing.Size(138, 45);
-        btnTabOnline.TabIndex = 10;
-        btnTabOnline.Text = "Online";
-        btnTabOnline.Type = AntdUI.TTypeMini.Default;
-        btnTabOnline.Visible = false;
-        //
-        // btnTabOffline - มุมมองย่อยของแท็บ List ซ่อนไว้จนกว่าตัวเลือกหน้างานจะเปิดให้เครื่องนี้เห็น
-        //
-        btnTabOffline.DefaultBorderColor = System.Drawing.Color.FromArgb(180, 180, 180);
-        btnTabOffline.BorderWidth = 1F;
-        btnTabOffline.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
-        btnTabOffline.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-        btnTabOffline.Margin = new System.Windows.Forms.Padding(3);
-        btnTabOffline.Name = "btnTabOffline";
-        btnTabOffline.Radius = 6;
-        btnTabOffline.Size = new System.Drawing.Size(138, 45);
-        btnTabOffline.TabIndex = 11;
-        btnTabOffline.Text = "Offline";
-        btnTabOffline.Type = AntdUI.TTypeMini.Default;
-        btnTabOffline.Visible = false;
+        selProcessFilter.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        selProcessFilter.DropDownArrow = true;
+        selProcessFilter.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+        selProcessFilter.Items.AddRange(new object[] { "ทั้งหมด", "In-line", "Off-line" });
+        selProcessFilter.List = true;
+        selProcessFilter.Margin = new System.Windows.Forms.Padding(20, 3, 3, 3);
+        selProcessFilter.Name = "selProcessFilter";
+        selProcessFilter.Radius = 6;
+        selProcessFilter.SelectedIndex = 0;
+        selProcessFilter.Size = new System.Drawing.Size(150, 45);
+        selProcessFilter.TabIndex = 10;
+        selProcessFilter.Visible = false;
         //
         // btnTabHistory
         //
@@ -790,8 +774,7 @@ partial class OrderListUserControl
     private System.Windows.Forms.TableLayoutPanel tlpTableInner;
     private System.Windows.Forms.FlowLayoutPanel flpTabs;
     private AntdUI.Button btnTabList;
-    private AntdUI.Button btnTabOnline;
-    private AntdUI.Button btnTabOffline;
+    private AntdUI.Select selProcessFilter;
     private AntdUI.Button btnTabHistory;
     private System.Windows.Forms.Label lblDateFilter;
     private AntdUI.DatePickerRange dtpHistoryRange;

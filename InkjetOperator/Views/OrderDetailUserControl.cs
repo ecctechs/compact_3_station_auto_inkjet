@@ -1577,7 +1577,7 @@ public partial class OrderDetailUserControl : UserControl
         _baseStatusText = jobStatus.Text;
 
         // ต่อท้ายว่างานรออะไรอยู่ ต้องถามคิวจาก backend จึงทำแยกไม่ให้หน่วงการเปิดหน้า
-        _ = ShowStageAsync(job.Id);
+        _ = ShowStageAsync(job.Id, resolved.Commands);
 
         var marking = resolved.PlanRouting?.MarkingMethod;
         txtMarkingMethod.Text = string.IsNullOrWhiteSpace(marking) ? "ไม่ระบุ" : marking;
@@ -1599,7 +1599,7 @@ public partial class OrderDetailUserControl : UserControl
     /// ขาดแล้วอ่านหน้านี้ไม่รู้เรื่อง
     /// </para>
     /// </summary>
-    private async Task ShowStageAsync(int jobId)
+    private async Task ShowStageAsync(int jobId, IEnumerable<CommandResult>? commands)
     {
         if (_api == null) return;
 
@@ -1609,7 +1609,7 @@ public partial class OrderDetailUserControl : UserControl
         // งานเปลี่ยนไปแล้วระหว่างรอคำตอบ อย่าเขียนทับของงานใบใหม่
         if (jobId != _jobId) return;
 
-        var stage = Services.JobStageService.Describe(jobId, _markingMethod, rows);
+        var stage = Services.JobStageService.Describe(jobId, _markingMethod, rows, commands);
         if (stage == null || _baseStatusText.Length == 0) return;
 
         txtJobStatus.Text = $"{_baseStatusText} ({stage})";

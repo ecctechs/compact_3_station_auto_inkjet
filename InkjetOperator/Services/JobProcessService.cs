@@ -3,70 +3,39 @@ using InkjetOperator.Models;
 namespace InkjetOperator.Services;
 
 /// <summary>
-/// งานนี้ตอนนี้อยู่ในไลน์ (Online) หรือนอกไลน์ (Offline) — ใช้แยกแท็บในหน้า Order List
+/// งานนี้เดินในไลน์ (In-line) หรือออกนอกไลน์ (Off-line) — ใช้กับตัวกรองในหน้า Order List
 ///
 /// <para>
-/// ปกติอ่านตรง ๆ จากช่อง Process seq ของแผนการผลิต ซึ่งหน้างานกรอกเป็นคำว่า
-/// Online หรือ Offline อยู่แล้ว
-/// </para>
-/// <para>
-/// ยกเว้นงานที่เข้าเครื่องเดิมหลายรอบ (marking 22) — รอบแรกพ่นในไลน์ แล้วเอาชิ้นงาน
-/// ออกไปติด shim นอกไลน์ ก่อนกลับมาพ่นรอบสอง ช่วงที่ส่งรอบแรกไปแล้วแต่ยังไม่ได้ส่ง
-/// รอบสองจึงนับเป็น Offline ส่งรอบสองแล้วกลับเป็นค่าตามแผนเหมือนเดิม
+/// อ่านจากช่อง Process seq ของแผนการผลิตอย่างเดียว ตามที่หน้างานตกลงไว้ว่าการออกนอกไลน์
+/// ไม่ได้ขึ้นกับ marking method งานไหนก็อยู่ในไลน์หรือนอกไลน์ได้ และโปรแกรมไม่ได้
+/// อัปเดตหรือเปลี่ยนค่านี้เอง แค่อ่านมาแสดง
 /// </para>
 /// </summary>
 public static class JobProcessService
 {
-    public const string Online = "Online";
-    public const string Offline = "Offline";
+    public const string InLine = "In-line";
+    public const string OffLine = "Off-line";
+
+    public static string? Current(PrintJob job) => // หา In-line หรือ Off-line ของงาน
+        FromPlan(job.PlanRouting?.ProcessSequence); // ใช้ค่าจาก Process seq ตรง ๆ ไม่มีกติกาอื่นมาทับ
 
     /// <summary>
-    /// ตอนนี้งานอยู่ Online หรือ Offline — null เมื่อช่อง Process seq ไม่ใช่สองคำนี้
+    /// แปลงคำในช่องเป็นค่ามาตรฐาน — null เมื่อไม่ใช่สองคำนี้
     ///
     /// <para>
-    /// ค่าอื่นไม่เดา ไม่เอาไปใส่แท็บไหน งานพวกนั้นยังเห็นครบในแท็บ List
-    /// ข้อมูลทดสอบบางชุดเก็บช่องนี้เป็นรหัสตัวเลข (02, 05, 10 …) ซึ่งบอกไม่ได้ว่า
-    /// ในไลน์หรือนอกไลน์
+    /// หน้างานเขียนว่า In-line / Off-line ยอมให้ต่างกันแค่ตัวพิมพ์ ขีด และช่องว่าง
+    /// (เช่น Inline, OFF-LINE) เพราะเป็นข้อมูลที่คนพิมพ์เข้าระบบ ค่าอื่นไม่เดา
+    /// งานพวกนั้นยังเห็นครบเมื่อเลือก "ทั้งหมด"
     /// </para>
     /// </summary>
-    public static string? Current(PrintJob job) =>
-        BetweenRounds(job.PlanRouting?.MarkingMethod, job.Commands)
-            ? Offline
-            : FromPlan(job.PlanRouting?.ProcessSequence);
-
-    /// <summary>
-    /// ส่งรอบแรกของเครื่องที่ต้องเข้าซ้ำไปแล้ว แต่ยังส่งไม่ครบทุกรอบ
-    ///
-    /// <para>
-    /// ดูจากแผนว่ามีเครื่องไหนต้องเข้ามากกว่าหนึ่งครั้ง (วันนี้มีแค่ marking 22 ที่เป็น
-    /// MK สองรอบ) แล้วนับจากประวัติว่าส่งเข้าเครื่องนั้นสำเร็จไปแล้วกี่ครั้ง ใช้วิธีนับ
-    /// เดียวกับที่ปุ่มในตารางดูว่าขั้นไหนส่งไปแล้ว
-    /// </para>
-    /// </summary>
-    public static bool BetweenRounds(string? markingMethod, IEnumerable<CommandResult>? commands)
-    {
-        var steps = MarkingMethodService.Resolve(markingMethod).Steps;
-
-        foreach (var machine in steps.Distinct(StringComparer.OrdinalIgnoreCase))
-        {
-            int rounds = steps.Count(s => Same(s, machine));
-            if (rounds < 2) continue;
-
-            int sent = commands?.Count(c => c.Success && Same(c.Command, machine)) ?? 0;
-            if (sent > 0 && sent < rounds) return true;
-        }
-
-        return false;
-    }
-
     private static string? FromPlan(string? processSequence)
     {
-        var value = processSequence?.Trim();
-        if (Same(value, Online)) return Online;
-        if (Same(value, Offline)) return Offline;
+        var value = Normalize(processSequence); // ตัดขีด ช่องว่าง และตัวพิมพ์ใหญ่เล็กออกก่อนเทียบ
+        if (value == Normalize(InLine)) return InLine;
+        if (value == Normalize(OffLine)) return OffLine;
         return null;
     }
 
-    private static bool Same(string? a, string? b) =>
-        string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+    private static string Normalize(string? value) =>
+        new string((value ?? "").Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
 }

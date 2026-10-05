@@ -24,11 +24,6 @@ partial class StationOptionsUserControl
         tlpRemoteSend = new System.Windows.Forms.TableLayoutPanel();
         chkManualRemoteSend = new AntdUI.Checkbox();
         lblRemoteSendHelp = new AntdUI.Label();
-        pnlHoldRound = new AntdUI.Panel();
-        tlpHoldRound = new System.Windows.Forms.TableLayoutPanel();
-        lblHoldRoundHeading = new AntdUI.Label();
-        chkHoldRound = new AntdUI.Checkbox();
-        lblHoldRoundHelp = new AntdUI.Label();
         pnlProcessTabs = new AntdUI.Panel();
         tlpProcessTabs = new System.Windows.Forms.TableLayoutPanel();
         lblProcessTabsHeading = new AntdUI.Label();
@@ -44,13 +39,11 @@ partial class StationOptionsUserControl
         lblResetHelp = new AntdUI.Label();
         tlpOptionsRoot.SuspendLayout();
         pnlRemoteSend.SuspendLayout();
-        pnlHoldRound.SuspendLayout();
         pnlProcessTabs.SuspendLayout();
         tlpProcessTabs.SuspendLayout();
         flpProcessTabs.SuspendLayout();
         pnlReset.SuspendLayout();
         tlpReset.SuspendLayout();
-        tlpHoldRound.SuspendLayout();
         tlpRemoteSend.SuspendLayout();
         SuspendLayout();
         //
@@ -60,21 +53,19 @@ partial class StationOptionsUserControl
         tlpOptionsRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpOptionsRoot.Controls.Add(lblOptionsTitle, 0, 0);
         tlpOptionsRoot.Controls.Add(pnlRemoteSend, 0, 1);
-        tlpOptionsRoot.Controls.Add(pnlHoldRound, 0, 2);
-        tlpOptionsRoot.Controls.Add(pnlProcessTabs, 0, 3);
-        tlpOptionsRoot.Controls.Add(pnlReset, 0, 4);
+        tlpOptionsRoot.Controls.Add(pnlProcessTabs, 0, 2);
+        tlpOptionsRoot.Controls.Add(pnlReset, 0, 3);
         tlpOptionsRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpOptionsRoot.Location = new System.Drawing.Point(32, 32);
         tlpOptionsRoot.Margin = new System.Windows.Forms.Padding(0);
         tlpOptionsRoot.Name = "tlpOptionsRoot";
-        tlpOptionsRoot.RowCount = 6;
+        tlpOptionsRoot.RowCount = 5;
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 66F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 210F));
-        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 252F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 232F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 214F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 968);
+        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 716);
         tlpOptionsRoot.TabIndex = 0;
         //
         // lblOptionsTitle
@@ -122,70 +113,6 @@ partial class StationOptionsUserControl
         tlpRemoteSend.Size = new System.Drawing.Size(1168, 162);
         tlpRemoteSend.TabIndex = 0;
         //
-        // pnlHoldRound
-        //
-        pnlHoldRound.Back = System.Drawing.Color.White;
-        pnlHoldRound.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        pnlHoldRound.BorderWidth = 2F;
-        pnlHoldRound.Controls.Add(tlpHoldRound);
-        pnlHoldRound.Dock = System.Windows.Forms.DockStyle.Fill;
-        pnlHoldRound.Margin = new System.Windows.Forms.Padding(0, 16, 0, 0);
-        pnlHoldRound.Name = "pnlHoldRound";
-        pnlHoldRound.Padding = new System.Windows.Forms.Padding(24);
-        pnlHoldRound.Radius = 10;
-        pnlHoldRound.Size = new System.Drawing.Size(1216, 236);
-        pnlHoldRound.TabIndex = 2;
-        //
-        // tlpHoldRound
-        //
-        tlpHoldRound.ColumnCount = 1;
-        tlpHoldRound.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpHoldRound.Controls.Add(lblHoldRoundHeading, 0, 0);
-        tlpHoldRound.Controls.Add(chkHoldRound, 0, 1);
-        tlpHoldRound.Controls.Add(lblHoldRoundHelp, 0, 2);
-        tlpHoldRound.Dock = System.Windows.Forms.DockStyle.Fill;
-        tlpHoldRound.Margin = new System.Windows.Forms.Padding(0);
-        tlpHoldRound.Name = "tlpHoldRound";
-        tlpHoldRound.RowCount = 3;
-        tlpHoldRound.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
-        tlpHoldRound.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
-        tlpHoldRound.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpHoldRound.Size = new System.Drawing.Size(1168, 188);
-        tlpHoldRound.TabIndex = 0;
-        //
-        // lblHoldRoundHeading
-        //
-        lblHoldRoundHeading.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblHoldRoundHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
-        lblHoldRoundHeading.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        lblHoldRoundHeading.Margin = new System.Windows.Forms.Padding(0);
-        lblHoldRoundHeading.Name = "lblHoldRoundHeading";
-        lblHoldRoundHeading.Size = new System.Drawing.Size(1168, 42);
-        lblHoldRoundHeading.TabIndex = 0;
-        lblHoldRoundHeading.Text = "งานที่เข้าเครื่องเดิมสองรอบ (marking 22)";
-        //
-        // chkHoldRound
-        //
-        chkHoldRound.Dock = System.Windows.Forms.DockStyle.Fill;
-        chkHoldRound.Font = new System.Drawing.Font("Segoe UI", 15F);
-        chkHoldRound.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
-        chkHoldRound.Margin = new System.Windows.Forms.Padding(0, 0, 0, 12);
-        chkHoldRound.Name = "chkHoldRound";
-        chkHoldRound.Size = new System.Drawing.Size(1168, 32);
-        chkHoldRound.TabIndex = 1;
-        chkHoldRound.Text = "ถือเครื่องไว้ให้รอบสอง ห้ามงานอื่นแทรก";
-        //
-        // lblHoldRoundHelp
-        //
-        lblHoldRoundHelp.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblHoldRoundHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
-        lblHoldRoundHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
-        lblHoldRoundHelp.Margin = new System.Windows.Forms.Padding(0);
-        lblHoldRoundHelp.Name = "lblHoldRoundHelp";
-        lblHoldRoundHelp.Size = new System.Drawing.Size(1168, 102);
-        lblHoldRoundHelp.TabIndex = 2;
-        lblHoldRoundHelp.Text = "ก. ถือเครื่องไว้ (ค่าเริ่มต้น ตามที่ตกลงกับหัวหน้างาน) — พ่นรอบแรกเสร็จแล้วกดปุ่มหน้างาน เครื่องยังเป็นของงานใบนี้อยู่ งานใบอื่นที่รอคิวเครื่องนี้แทรกไม่ได้ จนกว่าชิ้นงานจะกลับมาพ่นรอบสองเสร็จ เครื่องจะจอดรอระหว่างที่คนเอางานออกไปติด shim นอกไลน์\r\nข. ปล่อยเครื่อง (ติ๊กออก) — กดปุ่มหน้างานแล้วเครื่องว่างทันที งานใบอื่นแทรกเข้ามาทำได้ เครื่องไม่จอดเปล่า แต่พอชิ้นงานกลับมา รอบสองต้องไปต่อท้ายคิว อาจค้างกลางไลน์นานกว่าที่คิด\r\nมีผลเฉพาะงานที่เข้าเครื่องเดิมมากกว่าหนึ่งรอบ (marking 22) งานอื่นไม่เกี่ยว";
-        //
         // pnlProcessTabs
         //
         pnlProcessTabs.Back = System.Drawing.Color.White;
@@ -198,7 +125,7 @@ partial class StationOptionsUserControl
         pnlProcessTabs.Padding = new System.Windows.Forms.Padding(24);
         pnlProcessTabs.Radius = 10;
         pnlProcessTabs.Size = new System.Drawing.Size(1216, 216);
-        pnlProcessTabs.TabIndex = 3;
+        pnlProcessTabs.TabIndex = 2;
         //
         // tlpProcessTabs
         //
@@ -226,7 +153,7 @@ partial class StationOptionsUserControl
         lblProcessTabsHeading.Name = "lblProcessTabsHeading";
         lblProcessTabsHeading.Size = new System.Drawing.Size(1168, 42);
         lblProcessTabsHeading.TabIndex = 0;
-        lblProcessTabsHeading.Text = "แท็บ Online / Offline ในหน้า Order List";
+        lblProcessTabsHeading.Text = "ตัวกรอง In-line / Off-line ในหน้า Order List";
         //
         // flpProcessTabs - สามตัวเลือกอยู่ใน parent เดียวกัน Radio จึงเลือกได้ทีละข้อเอง
         //
@@ -279,7 +206,7 @@ partial class StationOptionsUserControl
         lblProcessTabsHelp.Name = "lblProcessTabsHelp";
         lblProcessTabsHelp.Size = new System.Drawing.Size(1168, 82);
         lblProcessTabsHelp.TabIndex = 2;
-        lblProcessTabsHelp.Text = "เพิ่มแท็บ Online กับ Offline ข้างแท็บ List ใช้กรองงานที่ยังไม่จบ อ่านจากช่อง Process seq ของงาน\r\nยกเว้นงานที่เข้าเครื่องเดิมสองรอบ (marking 22) — ส่งรอบแรกแล้วแต่ยังไม่ได้ส่งรอบสองนับเป็น Offline เพราะชิ้นงานอยู่นอกไลน์ไปติด shim ส่งรอบสองแล้วกลับเป็นตามช่อง Process seq\r\nเปลี่ยนแล้วหน้า Order List เห็นผลภายในไม่กี่วินาที ไม่ต้องปิดเปิดโปรแกรม";
+        lblProcessTabsHelp.Text = "เพิ่ม dropdown กรองงานเป็น In-line หรือ Off-line ในหน้า Order List ใช้ได้ทั้งแท็บ List และ History\r\nอ่านจากช่อง Process seq ของงานตรง ๆ โปรแกรมไม่ได้เปลี่ยนค่านี้เอง งานที่ช่องนี้ไม่ใช่ In-line หรือ Off-line เห็นเมื่อเลือก \"ทั้งหมด\"\r\nเปลี่ยนแล้วหน้า Order List เห็นผลภายในไม่กี่วินาที ไม่ต้องปิดเปิดโปรแกรม";
         //
         // pnlReset
         //
@@ -293,7 +220,7 @@ partial class StationOptionsUserControl
         pnlReset.Padding = new System.Windows.Forms.Padding(24);
         pnlReset.Radius = 10;
         pnlReset.Size = new System.Drawing.Size(1216, 198);
-        pnlReset.TabIndex = 4;
+        pnlReset.TabIndex = 3;
         //
         // tlpReset
         //
@@ -392,15 +319,13 @@ partial class StationOptionsUserControl
         Controls.Add(tlpOptionsRoot);
         Name = "StationOptionsUserControl";
         Padding = new System.Windows.Forms.Padding(32);
-        Size = new System.Drawing.Size(1280, 1032);
+        Size = new System.Drawing.Size(1280, 780);
         tlpOptionsRoot.ResumeLayout(false);
         tlpReset.ResumeLayout(false);
         flpProcessTabs.ResumeLayout(false);
         tlpProcessTabs.ResumeLayout(false);
         pnlProcessTabs.ResumeLayout(false);
         pnlReset.ResumeLayout(false);
-        tlpHoldRound.ResumeLayout(false);
-        pnlHoldRound.ResumeLayout(false);
         pnlRemoteSend.ResumeLayout(false);
         tlpRemoteSend.ResumeLayout(false);
         ResumeLayout(false);
@@ -412,11 +337,6 @@ partial class StationOptionsUserControl
     private AntdUI.Label lblOptionsTitle;
     private AntdUI.Panel pnlRemoteSend;
     private AntdUI.Label lblRemoteSendHeading;
-    private AntdUI.Panel pnlHoldRound;
-    private System.Windows.Forms.TableLayoutPanel tlpHoldRound;
-    private AntdUI.Label lblHoldRoundHeading;
-    private AntdUI.Checkbox chkHoldRound;
-    private AntdUI.Label lblHoldRoundHelp;
     private AntdUI.Panel pnlProcessTabs;
     private System.Windows.Forms.TableLayoutPanel tlpProcessTabs;
     private AntdUI.Label lblProcessTabsHeading;

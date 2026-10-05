@@ -228,6 +228,49 @@ test("marking 22 holds round 2 or moves it behind waiting jobs as configured", a
   }
 });
 
+test("marking 22 books round 2 later: first push frees MK, round 2 waits its turn", async () => {
+  // กดเริ่มงาน — จองแค่รอบแรก
+  const a = await job();
+  await enqueue(a.id, [{ machine: "MK", round: 1 }]);
+  const a1 = (await claim(a.id)).data.claimed; await sent(a1);
+
+  // งานอื่นมาต่อคิว MK ระหว่างที่ A อยู่ในเครื่อง
+  const b = await job(); await enqueue(b.id);
+
+  // ปุ่มหน้างานรอบแรก — ปล่อยเหมือนจบงาน B ได้เครื่องต่อทันที
+  const first = await release(a1.id);
+  assert.equal(first.status, 200);
+  assert.equal(first.data.next.print_jobs_id, b.id);
+
+  // กดเริ่มงานรอบสองตอน B ยังถือเครื่อง — จองได้ แต่ต้องรอคิว ไม่แซง B
+  const booked = await enqueue(a.id, [{ machine: "MK", round: 2 }]);
+  assert.equal(booked.status, 201);
+  const early = await claim(a.id);
+  assert.equal(early.status, 200);
+  assert.equal(early.data.claimed, null);
+
+  // กดซ้ำไม่เกิดแถวรอบสองซ้อน
+  await enqueue(a.id, [{ machine: "MK", round: 2 }]);
+  assert.equal(await MachineQueue.count({ where: { print_jobs_id: a.id, machine: "MK", round: 2 } }), 1);
+
+  // B ส่งแล้วกดปุ่มหน้างาน — รอบสองของ A ได้เครื่องต่อ
+  const bRow = first.data.next; await sent(bRow);
+  const second = await release(bRow.id);
+  assert.equal(second.data.next.print_jobs_id, a.id);
+  assert.equal(second.data.next.round, 2);
+});
+
+test("marking 22 round 2 on an idle MK is claimable straight away", async () => {
+  const a = await job();
+  await enqueue(a.id, [{ machine: "MK", round: 1 }]);
+  const a1 = (await claim(a.id)).data.claimed; await sent(a1);
+  assert.equal((await release(a1.id)).data.next, null);
+
+  await enqueue(a.id, [{ machine: "MK", round: 2 }]);
+  const now = await claim(a.id);
+  assert.equal(now.data.claimed.round, 2);
+});
+
 test("cancel and queue cleanup commit together and block later enqueue", async () => {
   const { job: j, row } = await active(); await sent(row);
   const cancelled = await request(`/job/${j.id}/status`, { status: "Cancel" }, "PATCH");

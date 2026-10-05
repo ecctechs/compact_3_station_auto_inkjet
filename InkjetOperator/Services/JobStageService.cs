@@ -20,18 +20,30 @@ public static class JobStageService
     private const string Pending = "pending";
     private const string Active = "active";
 
+    /// <summary>คำในวงเล็บของงานที่จบรอบหนึ่งแล้ว รอคนกดเริ่มงานรอบสอง</summary>
+    public const string AwaitingRoundTwo = "รอรอบสอง";
+
     /// <summary>
-    /// คำในวงเล็บของงานนี้ — null เมื่อไม่มีอะไรต้องบอก (ไม่มีแถวในคิวเลย)
+    /// คำในวงเล็บของงานนี้ — null เมื่อไม่มีอะไรต้องบอก
     /// </summary>
     /// <param name="rows">
     /// คิวทั้งหมดที่ยังไม่ปล่อยเครื่อง ตามลำดับที่ backend คืนมา ซึ่งเรียงตามลำดับ
     /// ที่แต่ละเครื่องจะยกให้อยู่แล้ว — ลำดับนี้คือที่มาของเลข Q
     /// </param>
-    public static string? Describe(int jobId, string? markingMethod, IEnumerable<MachineQueueRow> rows)
+    /// <param name="commands">
+    /// ประวัติการส่งของงานนี้ — ใช้บอกว่างานที่ไม่มีแถวในคิวแล้วกำลังรอรอบถัดไปอยู่
+    /// ไม่ส่งมาก็ไม่บอกเรื่องนี้
+    /// </param>
+    public static string? Describe(
+        int jobId, string? markingMethod, IEnumerable<MachineQueueRow> rows,
+        IEnumerable<CommandResult>? commands = null)
     {
         var all = rows as IList<MachineQueueRow> ?? rows.ToList();
         var mine = all.Where(r => r.PrintJobsId == jobId).ToList();
-        if (mine.Count == 0) return null;
+
+        // ไม่มีแถวในคิว แต่ยังส่งไม่ครบทุกรอบ = กดปุ่มหน้างานรอบแรกแล้ว รอคนกดรอบสอง
+        if (mine.Count == 0)
+            return NextRound(markingMethod, commands) is not null ? AwaitingRoundTwo : null;
 
         if (mine.Any(r => r.NeedsSendReview)) return "กำลังส่ง / รอตรวจสอบผล";
 
@@ -86,6 +98,36 @@ public static class JobStageService
 
         if (SameMachine(MarkingMethodService.Label(plan.Plate), row.Machine)) return "Mark Plate";
         if (SameMachine(MarkingMethodService.Label(plan.Shim), row.Machine)) return "Mark Shim";
+
+        return null;
+    }
+
+    /// <summary>
+    /// รอบถัดไปของเครื่องที่งานนี้ต้องเข้าซ้ำ — null เมื่อไม่มีรอบค้าง
+    ///
+    /// <para>
+    /// ใช้กับงานที่แผนให้เข้าเครื่องเดิมหลายรอบ วันนี้มีแค่ marking 22 ที่เป็น MK สองรอบ
+    /// รอบแรกพ่นในไลน์ แล้วเอาชิ้นงานออกไปติด shim ก่อนกลับมาพ่นรอบสอง รอบสองไม่ได้
+    /// จองคิวไว้ล่วงหน้า คนต้องกดเริ่มงานรอบสองเองเมื่อชิ้นงานพร้อม
+    /// </para>
+    /// <para>
+    /// นับจากประวัติว่าส่งเข้าเครื่องนั้นสำเร็จไปแล้วกี่ครั้ง ด้วยวิธีเดียวกับที่ปุ่ม
+    /// ในตารางใช้ดูว่าขั้นไหนส่งไปแล้ว ยังไม่เคยส่งเลยไม่นับ เพราะนั่นคืองานที่ยังไม่เริ่ม
+    /// </para>
+    /// </summary>
+    public static (string Machine, int Round)? NextRound(
+        string? markingMethod, IEnumerable<CommandResult>? commands)
+    {
+        var steps = MarkingMethodService.Resolve(markingMethod).Steps;
+
+        foreach (var machine in steps.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            int rounds = steps.Count(s => SameMachine(s, machine));
+            if (rounds < 2) continue;
+
+            int sent = commands?.Count(c => c.Success && SameMachine(c.Command, machine)) ?? 0;
+            if (sent > 0 && sent < rounds) return (machine, sent + 1);
+        }
 
         return null;
     }
