@@ -128,7 +128,7 @@ partial class ClampSettingUserControl
         grpConnection.Padding = new System.Windows.Forms.Padding(16, 24, 16, 10);
         grpConnection.TabIndex = 0;
         grpConnection.TabStop = false;
-        grpConnection.Text = "1. PLC แคลมป์ (MC Protocol) — คุมทั้ง 6 แกน";
+        grpConnection.Text = "PLC แคลมป์ (MC Protocol) — คุมทั้ง 6 แกน";
         //
         // tlpConn — label(150) | input(fill) | label(60) | input(110) | button(130)
         //
@@ -223,7 +223,7 @@ partial class ClampSettingUserControl
         lblIpLabel.Name = "lblIpLabel";
         lblIpLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
         lblIpLabel.TabIndex = 0;
-        lblIpLabel.Text = "PLC IP:";
+        lblIpLabel.Text = "IP Address:";
         lblIpLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
         //
         // txtIp
@@ -333,7 +333,7 @@ partial class ClampSettingUserControl
         grpProgram.Padding = new System.Windows.Forms.Padding(16, 24, 16, 10);
         grpProgram.TabIndex = 1;
         grpProgram.TabStop = false;
-        grpProgram.Text = "2. ชื่อโปรแกรมของแต่ละฝั่ง";
+        grpProgram.Text = "ชื่อโปรแกรมของแต่ละฝั่ง";
         //
         // tlpProgram — label(150) | input(fill) | label(150) | input(fill)
         //
@@ -466,7 +466,7 @@ partial class ClampSettingUserControl
         grpAxes.Padding = new System.Windows.Forms.Padding(16, 24, 16, 10);
         grpAxes.TabIndex = 2;
         grpAxes.TabStop = false;
-        grpAxes.Text = "3. แกนแคลมป์ (Plate / Shim × X, Z1, Z2)";
+        grpAxes.Text = "แกนแคลมป์ (Plate / Shim × X, Z1, Z2)";
         //
         // tlpAxes
         //
@@ -552,7 +552,7 @@ partial class ClampSettingUserControl
         grpPushButton.Padding = new System.Windows.Forms.Padding(16, 24, 16, 10);
         grpPushButton.TabIndex = 3;
         grpPushButton.TabStop = false;
-        grpPushButton.Text = "4. ปุ่มกดหน้างาน (Push Button) — สั่งส่งงานไปสถานีถัดไป";
+        grpPushButton.Text = "ปุ่มกดหน้างาน (Push Button)";
         //
         // tlpPush — label(188) | input(fill) | label(188) | input(fill)
         //

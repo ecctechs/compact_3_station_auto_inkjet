@@ -47,6 +47,9 @@ static class Program
         PatternStore.Load();
         PatternStore.SeedDefaults();
 
+        // IP เครื่องพิมพ์กับ PLC ตั้งต้นของ ST1 — ลงทับครั้งเดียว แล้วแก้เองได้
+        St1DefaultSettings.ApplyIfSt1();
+
         WarnIfSettingsReadOnly();
         StartBackendIfNeeded();
 

@@ -29,6 +29,11 @@ public partial class ClampSettingUserControl : UserControl
     public ClampSettingUserControl()
     {
         InitializeComponent();
+
+        // หัวข้อชื่อโปรแกรมกับปุ่ม Load / สั่ง / Upload ทั้งชุด ไม่ให้เห็นในเมนูของ ST1
+        // แถวนี้เป็น AutoSize ซ่อนแล้วหัวข้อข้างล่างเลื่อนขึ้นมาแทนเอง
+        grpProgram.Visible = !StationService.IsSt1Menu;
+
         ConfigureColumns();
         SetupEvents();
         LoadSettings();
@@ -306,20 +311,20 @@ public partial class ClampSettingUserControl : UserControl
     {
         btnUnlock.Text = _unlocked ? "🔓 Lock" : "🔒 Unlock";
 
-        // 1. การเชื่อมต่อ — btnCheckStatus ไม่ล็อก เพราะแค่ ping ไม่เปลี่ยนอะไร
+        // การเชื่อมต่อ — btnCheckStatus ไม่ล็อก เพราะแค่ ping ไม่เปลี่ยนอะไร
         txtIp.Enabled = _unlocked;
         txtPort.Enabled = _unlocked;
         txtDbPath.Enabled = _unlocked;
         btnBrowse.Enabled = _unlocked;
 
-        // 2. ชื่อโปรแกรม
+        // ชื่อโปรแกรม
         txtPlateProgram.Enabled = _unlocked;
         txtShimProgram.Enabled = _unlocked;
         btnLoadAll.Enabled = _unlocked;
         btnApplyAll.Enabled = _unlocked;
         btnUploadAll.Enabled = _unlocked;
 
-        // 4. ปุ่มกดหน้างาน — ปุ่มทดสอบไม่ล็อก เพราะแค่อ่านค่า ไม่เปลี่ยนอะไร
+        // ปุ่มกดหน้างาน — ปุ่มทดสอบไม่ล็อก เพราะแค่อ่านค่า ไม่เปลี่ยนอะไร
         chkPushEnabled.Enabled = _unlocked;
         txtPushAddrSt1.Enabled = _unlocked;
         txtPushAddrSt2.Enabled = _unlocked;

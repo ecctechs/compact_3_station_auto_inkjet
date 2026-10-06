@@ -115,6 +115,14 @@ public static class StationService
     /// </summary>
     public static bool IsDevMode => Level == 99;
 
+    /// <summary>
+    /// เมนูของพนักงาน ST1 — <c>MENU_LEVEL</c> 1 ตรง ๆ
+    ///
+    /// ต่างจาก <see cref="Current"/> ที่นับโหมดทดสอบเป็น ST1 ด้วย ตัวนี้ใช้กับสิ่งที่
+    /// ตั้งให้เฉพาะเครื่องหน้างาน เช่นซ่อนเครื่องมือที่พนักงานไม่ต้องใช้
+    /// </summary>
+    public static bool IsSt1Menu => Level == St1;
+
     private static int Level
     {
         get
