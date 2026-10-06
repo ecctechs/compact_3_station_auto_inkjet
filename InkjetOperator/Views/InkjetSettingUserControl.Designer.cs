@@ -279,7 +279,7 @@ partial class InkjetSettingUserControl
         tlpUv.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 125F));
         tlpUv.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpUv.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 25F));
-        tlpUv.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 70F));
+        tlpUv.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 112F));
         tlpUv.Controls.Add(lblUv1Header, 0, 0);
         tlpUv.Controls.Add(lblUv1Dot, 0, 1);
         tlpUv.Controls.Add(lblUv1Badge, 1, 1);
@@ -402,7 +402,7 @@ partial class InkjetSettingUserControl
         txtUv1Port.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtUv1Port.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtUv1Port.Name = "txtUv1Port";
-        txtUv1Port.PlaceholderText = "Port";
+        txtUv1Port.PlaceholderText = "10086";
         txtUv1Port.Radius = 4;
         txtUv1Port.TabIndex = 7;
         //
