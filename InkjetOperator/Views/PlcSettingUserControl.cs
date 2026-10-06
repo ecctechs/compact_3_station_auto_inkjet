@@ -146,7 +146,7 @@ public partial class PlcSettingUserControl : UserControl
 
     private void ApplyLockState()
     {
-        btnUnlock.Text = _unlocked ? "🔓 Lock" : "🔒 Unlock";
+        btnUnlock.Text = _unlocked ? "Lock" : "Unlock";
         btnAddRow.Enabled = _unlocked && StationService.IsDevMode;
         btnSave.Enabled = _unlocked;
         btnCancel.Enabled = _unlocked;

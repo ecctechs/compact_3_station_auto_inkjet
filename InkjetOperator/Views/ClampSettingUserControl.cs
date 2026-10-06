@@ -309,7 +309,7 @@ public partial class ClampSettingUserControl : UserControl
 
     private void ApplyLockState()
     {
-        btnUnlock.Text = _unlocked ? "🔓 Lock" : "🔒 Unlock";
+        btnUnlock.Text = _unlocked ? "Lock" : "Unlock";
 
         // การเชื่อมต่อ — btnCheckStatus ไม่ล็อก เพราะแค่ ping ไม่เปลี่ยนอะไร
         txtIp.Enabled = _unlocked;

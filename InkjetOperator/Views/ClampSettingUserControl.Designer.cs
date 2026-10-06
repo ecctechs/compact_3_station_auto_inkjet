@@ -519,7 +519,7 @@ partial class ClampSettingUserControl
         btnUnlock.Radius = 8;
         btnUnlock.Size = new System.Drawing.Size(168, 52);
         btnUnlock.TabIndex = 1;
-        btnUnlock.Text = "🔒 Unlock";
+        btnUnlock.Text = "Unlock";
         btnUnlock.Type = AntdUI.TTypeMini.Default;
         //
         // tblAxes
