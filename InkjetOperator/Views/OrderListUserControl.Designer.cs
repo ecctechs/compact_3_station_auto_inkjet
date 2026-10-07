@@ -483,6 +483,9 @@ partial class OrderListUserControl
         tblOrders.Name = "tblOrders";
         tblOrders.Radius = 0;
         tblOrders.RowHeight = 85;
+        // แถวที่เลือก: ทับด้วยน้ำเงินเข้มแบบโปร่ง ไม่ใช่สีทึบ — แถว Working ที่ระบายเขียว
+        // จะยังเป็นเขียว (เข้มขึ้น) ตอนถูกเลือก แถวธรรมดาเป็นฟ้าเทาอ่อน
+        tblOrders.RowSelectedBg = System.Drawing.Color.FromArgb(40, 36, 71, 101);
         tblOrders.Size = new System.Drawing.Size(1282, 810);
         tblOrders.TabIndex = 1;
         //
