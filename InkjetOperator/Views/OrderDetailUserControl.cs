@@ -393,6 +393,10 @@ public partial class OrderDetailUserControl : UserControl
     private static async Task<bool> TcpCheckAsync(string ip, int port)
     {
         if (string.IsNullOrWhiteSpace(ip) || port <= 0) return false;
+
+        // โหมด Mockup สถานะ (ตัวเลือกหน้างาน) — ขึ้นว่าต่อได้โดยไม่ต่อจริง ใช้ถ่ายรูปคู่มือ
+        if (StatusMockup.Enabled) return true;
+
         var tcp = new TcpManager();
         var connect = tcp.ConnectAsync(ip, port);
 

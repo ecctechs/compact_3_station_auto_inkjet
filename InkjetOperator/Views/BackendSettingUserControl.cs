@@ -147,6 +147,13 @@ public partial class BackendSettingUserControl : UserControl
             return;
         }
 
+        // โหมด Mockup สถานะ (ตัวเลือกหน้างาน) — ขึ้นว่าต่อได้โดยไม่ต่อจริง ใช้ถ่ายรูปคู่มือ
+        if (StatusMockup.Enabled)
+        {
+            SetStatus(DesignTokens.Success);
+            return;
+        }
+
         if (!quiet)
         {
             btnCheckStatus.Loading = true;

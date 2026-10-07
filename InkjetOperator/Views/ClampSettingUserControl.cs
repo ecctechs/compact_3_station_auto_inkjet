@@ -181,8 +181,10 @@ public partial class ClampSettingUserControl : UserControl
             int okCount = 0;
             foreach (var (station, address) in filled)
             {
-                var (ok, on, error) = await McProtocolService.ReadBitAsync(
-                    probe.Ip, probe.Port, address);
+                // โหมด Mockup สถานะ — ถือว่าอ่านได้ และไม่มีใครกดปุ่มอยู่
+                var (ok, on, error) = StatusMockup.Enabled
+                    ? (true, false, "")
+                    : await McProtocolService.ReadBitAsync(probe.Ip, probe.Port, address);
 
                 if (IsDisposed) return;
 
@@ -708,6 +710,14 @@ public partial class ClampSettingUserControl : UserControl
         {
             SetConnDot(Color.Gray);
             Note(ip.Length == 0 ? "ยังไม่ได้ตั้ง IP ของ PLC แคลมป์" : "Port ไม่ถูกต้อง");
+            return;
+        }
+
+        // โหมด Mockup สถานะ (ตัวเลือกหน้างาน) — ขึ้นว่าต่อได้โดยไม่ต่อจริง ใช้ถ่ายรูปคู่มือ
+        if (StatusMockup.Enabled)
+        {
+            SetConnDot(Green);
+            Note($"เชื่อมต่อ {ip}:{port} ได้");
             return;
         }
 

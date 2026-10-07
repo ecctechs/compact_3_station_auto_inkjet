@@ -147,6 +147,10 @@ public partial class InkjetSettingUserControl : UserControl
     private static async Task CheckMkPrinterAsync(string ip, Label dot)
     {
         if (string.IsNullOrWhiteSpace(ip)) { SetDotColor(dot, Color.Gray); return; }
+
+        // โหมด Mockup สถานะ (ตัวเลือกหน้างาน) — ขึ้นว่าต่อได้โดยไม่ต่อจริง ใช้ถ่ายรูปคู่มือ
+        if (StatusMockup.Enabled) { SetDotColor(dot, DesignTokens.Success); return; }
+
         try
         {
             using var tcp = new TcpClient();
@@ -164,7 +168,14 @@ public partial class InkjetSettingUserControl : UserControl
                        && !string.IsNullOrWhiteSpace(folder);
 
         var ipOk = false;
-        if (!string.IsNullOrWhiteSpace(ip) && int.TryParse(portText, out var port) && port > 0)
+
+        // โหมด Mockup สถานะ (ตัวเลือกหน้างาน) — ขึ้นว่าต่อได้โดยไม่ต่อจริง ใช้ถ่ายรูปคู่มือ
+        if (StatusMockup.Enabled && !string.IsNullOrWhiteSpace(ip))
+        {
+            folderOk = true;
+            ipOk = true;
+        }
+        else if (!string.IsNullOrWhiteSpace(ip) && int.TryParse(portText, out var port) && port > 0)
         {
             try
             {

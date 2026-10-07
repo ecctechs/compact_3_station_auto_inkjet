@@ -220,6 +220,13 @@ public partial class UvTestUserControl : UserControl
     {
         if (!TryGetEndpoint(out var ip, out int port)) return;
 
+        // โหมด Mockup สถานะ (ตัวเลือกหน้างาน) — ขึ้นว่าต่อได้โดยไม่ต่อจริง ใช้ถ่ายรูปคู่มือ
+        if (StatusMockup.Enabled)
+        {
+            Log($"เชื่อมต่อ {ip}:{port} ได้");
+            return;
+        }
+
         SetBusy(true);
         try
         {

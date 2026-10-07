@@ -171,6 +171,10 @@ public static class HealthMonitor
             return new HealthItem(group, name, HealthState.NotConfigured, "ยังไม่ได้ตั้งค่า");
 
         var where = $"{host}:{tcpPort}";
+
+        // โหมด Mockup สถานะ (ตัวเลือกหน้างาน) — ขึ้นว่าต่อได้โดยไม่ต่อจริง ใช้ถ่ายรูปคู่มือ
+        if (StatusMockup.Enabled) return new HealthItem(group, name, HealthState.Ok, where);
+
         try
         {
             using var client = new TcpClient();

@@ -32,6 +32,11 @@ partial class StationOptionsUserControl
         rdoProcessTabsDev = new AntdUI.Radio();
         rdoProcessTabsOff = new AntdUI.Radio();
         lblProcessTabsHelp = new AntdUI.Label();
+        pnlMockup = new AntdUI.Panel();
+        tlpMockup = new System.Windows.Forms.TableLayoutPanel();
+        lblMockupHeading = new AntdUI.Label();
+        chkMockupStatus = new AntdUI.Checkbox();
+        lblMockupHelp = new AntdUI.Label();
         pnlReset = new AntdUI.Panel();
         tlpReset = new System.Windows.Forms.TableLayoutPanel();
         lblResetHeading = new AntdUI.Label();
@@ -42,6 +47,8 @@ partial class StationOptionsUserControl
         pnlProcessTabs.SuspendLayout();
         tlpProcessTabs.SuspendLayout();
         flpProcessTabs.SuspendLayout();
+        pnlMockup.SuspendLayout();
+        tlpMockup.SuspendLayout();
         pnlReset.SuspendLayout();
         tlpReset.SuspendLayout();
         tlpRemoteSend.SuspendLayout();
@@ -54,18 +61,20 @@ partial class StationOptionsUserControl
         tlpOptionsRoot.Controls.Add(lblOptionsTitle, 0, 0);
         tlpOptionsRoot.Controls.Add(pnlRemoteSend, 0, 1);
         tlpOptionsRoot.Controls.Add(pnlProcessTabs, 0, 2);
-        tlpOptionsRoot.Controls.Add(pnlReset, 0, 3);
+        tlpOptionsRoot.Controls.Add(pnlMockup, 0, 3);
+        tlpOptionsRoot.Controls.Add(pnlReset, 0, 4);
         tlpOptionsRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpOptionsRoot.Location = new System.Drawing.Point(32, 32);
         tlpOptionsRoot.Margin = new System.Windows.Forms.Padding(0);
         tlpOptionsRoot.Name = "tlpOptionsRoot";
-        tlpOptionsRoot.RowCount = 5;
+        tlpOptionsRoot.RowCount = 6;
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 66F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 210F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 232F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 240F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 214F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 716);
+        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 976);
         tlpOptionsRoot.TabIndex = 0;
         //
         // lblOptionsTitle
@@ -208,6 +217,70 @@ partial class StationOptionsUserControl
         lblProcessTabsHelp.TabIndex = 2;
         lblProcessTabsHelp.Text = "เพิ่ม dropdown กรองงานเป็น In-line หรือ Off-line ในหน้า Order List ใช้ได้ทั้งแท็บ List และ History\r\nอ่านจากช่อง Process seq ของงานตรง ๆ โปรแกรมไม่ได้เปลี่ยนค่านี้เอง งานที่ช่องนี้ไม่ใช่ In-line หรือ Off-line เห็นเมื่อเลือก \"ทั้งหมด\"\r\nเปลี่ยนแล้วหน้า Order List เห็นผลภายในไม่กี่วินาที ไม่ต้องปิดเปิดโปรแกรม";
         //
+        // pnlMockup — ขอบส้ม: เป็นของที่ต้องกลับมาปิด ไม่ใช่ตั้งทิ้งไว้
+        //
+        pnlMockup.Back = System.Drawing.Color.White;
+        pnlMockup.BorderColor = System.Drawing.Color.FromArgb(217, 119, 6);
+        pnlMockup.BorderWidth = 2F;
+        pnlMockup.Controls.Add(tlpMockup);
+        pnlMockup.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlMockup.Margin = new System.Windows.Forms.Padding(0, 16, 0, 0);
+        pnlMockup.Name = "pnlMockup";
+        pnlMockup.Padding = new System.Windows.Forms.Padding(24);
+        pnlMockup.Radius = 10;
+        pnlMockup.Size = new System.Drawing.Size(1216, 224);
+        pnlMockup.TabIndex = 3;
+        //
+        // tlpMockup
+        //
+        tlpMockup.ColumnCount = 1;
+        tlpMockup.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMockup.Controls.Add(lblMockupHeading, 0, 0);
+        tlpMockup.Controls.Add(chkMockupStatus, 0, 1);
+        tlpMockup.Controls.Add(lblMockupHelp, 0, 2);
+        tlpMockup.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpMockup.Margin = new System.Windows.Forms.Padding(0);
+        tlpMockup.Name = "tlpMockup";
+        tlpMockup.RowCount = 3;
+        tlpMockup.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
+        tlpMockup.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpMockup.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMockup.Size = new System.Drawing.Size(1168, 176);
+        tlpMockup.TabIndex = 0;
+        //
+        // lblMockupHeading
+        //
+        lblMockupHeading.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMockupHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        lblMockupHeading.ForeColor = System.Drawing.Color.FromArgb(217, 119, 6);
+        lblMockupHeading.Margin = new System.Windows.Forms.Padding(0);
+        lblMockupHeading.Name = "lblMockupHeading";
+        lblMockupHeading.Size = new System.Drawing.Size(1168, 42);
+        lblMockupHeading.TabIndex = 0;
+        lblMockupHeading.Text = "Mockup สถานะการเชื่อมต่อ (สำหรับถ่ายรูปคู่มือ)";
+        //
+        // chkMockupStatus
+        //
+        chkMockupStatus.Dock = System.Windows.Forms.DockStyle.Fill;
+        chkMockupStatus.Font = new System.Drawing.Font("Segoe UI", 15F);
+        chkMockupStatus.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        chkMockupStatus.Margin = new System.Windows.Forms.Padding(0, 0, 0, 12);
+        chkMockupStatus.Name = "chkMockupStatus";
+        chkMockupStatus.Size = new System.Drawing.Size(1168, 32);
+        chkMockupStatus.TabIndex = 1;
+        chkMockupStatus.Text = "ให้ทุกหน้าแสดงสถานะเชื่อมต่อสำเร็จทั้งหมด";
+        //
+        // lblMockupHelp
+        //
+        lblMockupHelp.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblMockupHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblMockupHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
+        lblMockupHelp.Margin = new System.Windows.Forms.Padding(0);
+        lblMockupHelp.Name = "lblMockupHelp";
+        lblMockupHelp.Size = new System.Drawing.Size(1168, 90);
+        lblMockupHelp.TabIndex = 2;
+        lblMockupHelp.Text = "ไฟสถานะ ป้ายผลตรวจ และบรรทัดในกล่องผลการทำงานของทุกหน้า ขึ้นว่าเชื่อมต่อได้ทั้งหมด โดยไม่ได้ต่อเครื่องจริง ใช้ถ่ายรูปทำคู่มือ\r\nมีผลทุกสถานีบนเครื่องนี้ (Scan Barcode · ST1 · ST3) เปลี่ยน MENU_LEVEL ไปถ่ายหน้าของสถานีอื่นได้ ค่ายังค้างอยู่\r\nไม่แตะการส่งงาน การเขียนค่าเข้า PLC หรือการสั่งเครื่องจริง — ของพวกนั้นยังรายงานผลจริงเสมอ\r\nถ่ายเสร็จต้องกลับมาปิดที่หน้านี้ (MENU_LEVEL 99) ห้ามเปิดค้างไว้ที่เครื่องหน้างาน";
+        //
         // pnlReset
         //
         pnlReset.Back = System.Drawing.Color.White;
@@ -220,7 +293,7 @@ partial class StationOptionsUserControl
         pnlReset.Padding = new System.Windows.Forms.Padding(24);
         pnlReset.Radius = 10;
         pnlReset.Size = new System.Drawing.Size(1216, 198);
-        pnlReset.TabIndex = 3;
+        pnlReset.TabIndex = 4;
         //
         // tlpReset
         //
@@ -319,12 +392,14 @@ partial class StationOptionsUserControl
         Controls.Add(tlpOptionsRoot);
         Name = "StationOptionsUserControl";
         Padding = new System.Windows.Forms.Padding(32);
-        Size = new System.Drawing.Size(1280, 780);
+        Size = new System.Drawing.Size(1280, 1040);
         tlpOptionsRoot.ResumeLayout(false);
         tlpReset.ResumeLayout(false);
         flpProcessTabs.ResumeLayout(false);
         tlpProcessTabs.ResumeLayout(false);
         pnlProcessTabs.ResumeLayout(false);
+        tlpMockup.ResumeLayout(false);
+        pnlMockup.ResumeLayout(false);
         pnlReset.ResumeLayout(false);
         pnlRemoteSend.ResumeLayout(false);
         tlpRemoteSend.ResumeLayout(false);
@@ -345,6 +420,11 @@ partial class StationOptionsUserControl
     private AntdUI.Radio rdoProcessTabsDev;
     private AntdUI.Radio rdoProcessTabsOff;
     private AntdUI.Label lblProcessTabsHelp;
+    private AntdUI.Panel pnlMockup;
+    private System.Windows.Forms.TableLayoutPanel tlpMockup;
+    private AntdUI.Label lblMockupHeading;
+    private AntdUI.Checkbox chkMockupStatus;
+    private AntdUI.Label lblMockupHelp;
     private AntdUI.Panel pnlReset;
     private System.Windows.Forms.TableLayoutPanel tlpReset;
     private AntdUI.Label lblResetHeading;
