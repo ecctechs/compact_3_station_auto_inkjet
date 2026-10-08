@@ -55,6 +55,17 @@ function Fail($msg) { $script:known = $true; throw $msg }
 #
 # ถ้าพลาดจะไม่ล้มทั้ง build เพราะ shortcut บน Desktop กับ Start Menu ได้ไอคอน
 # จากตัว .exe อยู่แล้ว ขาดแค่รูปในหน้า Programs and Features
+# ปล่อย COM object ของ Windows Installer ทันทีที่ใช้เสร็จ
+#
+# view และ record แต่ละตัวถือ handle ของไฟล์ .msi ไว้ด้วย ถ้ารอให้ GC เก็บเอง
+# บางตัวยังค้างอยู่ตอนขั้นถัดไปเปิดไฟล์ซ้ำ OpenDatabase จะล้มด้วยข้อความ
+# "OpenDatabase,DatabasePath,OpenMode" — เจอตอนรันสามขั้น (ไอคอน shortcut .NET 8) ต่อกัน
+function Release($com) {
+    if ($null -ne $com -and [Runtime.InteropServices.Marshal]::IsComObject($com)) {
+        [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($com)
+    }
+}
+
 function Set-MsiIcons($msiPath, $icoPath) {
     $wi = New-Object -ComObject WindowsInstaller.Installer
     $db = $null
@@ -68,6 +79,7 @@ function Set-MsiIcons($msiPath, $icoPath) {
             $v = $db.GetType().InvokeMember('OpenView', 'InvokeMethod', $null, $db, [object[]]@([string]$sql))
             [void]$v.GetType().InvokeMember('Execute', 'InvokeMethod', $null, $v, @($rec))
             [void]$v.GetType().InvokeMember('Close', 'InvokeMethod', $null, $v, $null)
+            Release $v
         }
 
         # ลบของเดิมก่อน เผื่อมีการรันซ้ำบนไฟล์เดียวกัน
@@ -79,6 +91,7 @@ function Set-MsiIcons($msiPath, $icoPath) {
         [void]$rec.GetType().InvokeMember('SetStream', 'InvokeMethod', $null, $rec,
             [object[]]@([int]1, [string]$icoPath))
         & $run 'INSERT INTO `Icon` (`Name`, `Data`) VALUES (''app.ico'', ?)' $rec
+        Release $rec
 
         & $run 'INSERT INTO `Property` (`Property`, `Value`) VALUES (''ARPPRODUCTICON'', ''app.ico'')' $null
 
@@ -98,9 +111,9 @@ function Set-MsiIcons($msiPath, $icoPath) {
     catch { return $_.Exception.Message }
     finally {
         # ต้องปล่อย COM ให้หมด ไม่งั้น handle ค้างจนแตะไฟล์ต่อไม่ได้
-        if ($db) { [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($db) }
-        [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($wi)
-        [GC]::Collect(); [GC]::WaitForPendingFinalizers()
+        Release $db
+        Release $wi
+        [GC]::Collect(); [GC]::WaitForPendingFinalizers(); [GC]::Collect()
     }
 }
 
@@ -184,6 +197,7 @@ function Set-MsiShortcutsToExe($msiPath) {
             $v = $db.GetType().InvokeMember('OpenView', 'InvokeMethod', $null, $db, [object[]]@([string]$sql))
             [void]$v.GetType().InvokeMember('Execute', 'InvokeMethod', $null, $v, $null)
             [void]$v.GetType().InvokeMember('Close', 'InvokeMethod', $null, $v, $null)
+            Release $v
         }
 
         $query = {
@@ -198,9 +212,11 @@ function Set-MsiShortcutsToExe($msiPath) {
                 for ($i = 1; $i -le $cols; $i++) {
                     $row += $rec.GetType().InvokeMember('StringData', 'GetProperty', $null, $rec, [object[]]@([int]$i))
                 }
+                Release $rec
                 $rows += , $row
             }
             [void]$v.GetType().InvokeMember('Close', 'InvokeMethod', $null, $v, $null)
+            Release $v
             return , $rows
         }
 
@@ -236,9 +252,9 @@ function Set-MsiShortcutsToExe($msiPath) {
     }
     catch { return $_.Exception.Message }
     finally {
-        if ($db) { [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($db) }
-        [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($wi)
-        [GC]::Collect(); [GC]::WaitForPendingFinalizers()
+        Release $db
+        Release $wi
+        [GC]::Collect(); [GC]::WaitForPendingFinalizers(); [GC]::Collect()
     }
 }
 
@@ -269,6 +285,7 @@ function Set-MsiDesktopRuntimeCheck($msiPath) {
             $v = $db.GetType().InvokeMember('OpenView', 'InvokeMethod', $null, $db, [object[]]@([string]$sql))
             [void]$v.GetType().InvokeMember('Execute', 'InvokeMethod', $null, $v, @($rec))
             [void]$v.GetType().InvokeMember('Close', 'InvokeMethod', $null, $v, $null)
+            Release $v
         }
 
         # 1 = มีตารางนี้แล้ว — VS ไม่สร้างตารางค้นหาให้ถ้าใน .vdproj ไม่มีการค้นหา
@@ -315,15 +332,16 @@ function Set-MsiDesktopRuntimeCheck($msiPath) {
         $rec = $wi.GetType().InvokeMember('CreateRecord', 'InvokeMethod', $null, $wi, [object[]]@([int]1))
         [void]$rec.GetType().InvokeMember('StringData', 'SetProperty', $null, $rec, [object[]]@([int]1, [string]$msg))
         & $run 'INSERT INTO `LaunchCondition` (`Condition`, `Description`) VALUES (''Installed OR NETDESKTOP8'', ?)' $rec
+        Release $rec
 
         [void]$db.GetType().InvokeMember('Commit', 'InvokeMethod', $null, $db, $null)
         return $null
     }
     catch { return $_.Exception.Message }
     finally {
-        if ($db) { [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($db) }
-        [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($wi)
-        [GC]::Collect(); [GC]::WaitForPendingFinalizers()
+        Release $db
+        Release $wi
+        [GC]::Collect(); [GC]::WaitForPendingFinalizers(); [GC]::Collect()
     }
 }
 
@@ -344,6 +362,14 @@ try {
         Fail 'โปรแกรม InkjetOperator เปิดค้างอยู่ — ปิดโปรแกรมก่อนแล้วรันใหม่'
     }
     Note 'ไม่มีโปรแกรมเปิดค้าง'
+
+    # ไฟล์ที่ลึกที่สุดตอน build ยาวราว 100 ตัวอักษรนับจากโฟลเดอร์โปรเจค
+    # (bin\Release\...\runtimes\browser-wasm\nativeassets\...) Windows รับ path ได้ไม่เกิน 260
+    # ถ้าโฟลเดอร์โปรเจคอยู่ลึกเกินไป dotnet build จะล้มด้วย error MSB3021 ยาวเหยียด
+    if ($root.Length -gt 150) {
+        Fail ("โฟลเดอร์โปรเจคอยู่ลึกเกินไป ($($root.Length) ตัวอักษร) path ตอน build จะยาวเกิน 260 ที่ Windows รับได้ — " +
+              'ย้ายโฟลเดอร์ไปไว้ที่สั้นกว่านี้ เช่น C:\src\compact_3_station_auto_inkjet แล้วรันใหม่')
+    }
 
     # ไม่ใช่ปัญหา แต่ควรรู้ไว้ ถ้า VS เปิดอยู่ devenv ที่สคริปต์เรียกจะโยนงาน
     # ไปให้ IDE ตัวที่เปิดอยู่ทำแทน แล้วจบตัวเองทันที รหัสที่คืนมาจึงเชื่อไม่ได้
@@ -474,6 +500,17 @@ try {
     # dotnet build ไม่ผ่าน IDE จึงเห็นไฟล์บนดิสก์ตามจริงเสมอ
     Step 4 'คอมไพล์โปรแกรม'
 
+    # เครื่องที่ลงแค่ Visual Studio แต่ไม่ได้ติ๊ก .NET desktop development จะไม่มี
+    # dotnet ให้เรียก ถ้าไม่ดักตรงนี้สคริปต์จะล้มด้วย error ของ PowerShell ที่อ่านไม่รู้เรื่อง
+    if (-not (Get-Command dotnet -CommandType Application -ErrorAction SilentlyContinue)) {
+        Fail ('ไม่พบคำสั่ง dotnet — ติดตั้ง .NET 8 SDK (หรือใหม่กว่า) จาก ' +
+              'https://dotnet.microsoft.com/download แล้วเปิดหน้าต่างใหม่รันอีกครั้ง')
+    }
+    $sdks = @(& dotnet --list-sdks 2>$null | ForEach-Object { [int](("$_" -split '\.')[0]) })
+    if (-not ($sdks | Where-Object { $_ -ge 8 })) {
+        Fail 'เครื่องนี้ไม่มี .NET SDK เวอร์ชัน 8 ขึ้นไป — ติดตั้ง .NET 8 SDK จาก https://dotnet.microsoft.com/download'
+    }
+
     $csprojDir = Split-Path $csproj -Parent
     $buildOut = & dotnet build $csproj -c Release --nologo 2>&1
     if ($LASTEXITCODE -ne 0) {
@@ -509,8 +546,12 @@ try {
     # devenv ทิ้ง VBCSCompiler กับ MSBuild node ไว้ให้ค้างเผื่อ build รอบหน้า
     # พวกนี้หมดอายุเองราว 10-15 นาที สคริปต์เลยนั่งรอมันเปล่า ๆ
     # WaitForExit() รอเฉพาะ devenv ตัวเดียว ไม่สนลูกหลาน
+    #
+    # ใส่เครื่องหมายคำพูดครอบ path เอง เพราะ Start-Process ของ PowerShell 5.1 เอาแต่ละ
+    # ช่องมาต่อกันด้วยช่องว่างเฉย ๆ ถ้าโฟลเดอร์มีช่องว่าง (เช่น C:\Users\John Doe\...)
+    # devenv จะได้ path ขาดเป็นสองท่อนแล้วหาไฟล์ไม่เจอ
     $p = Start-Process -FilePath $devenv `
-        -ArgumentList @($sln, '/build', 'Release', '/out', $log) `
+        -ArgumentList @("`"$sln`"", '/build', 'Release', '/out', "`"$log`"") `
         -PassThru -NoNewWindow
     $p.WaitForExit()
 
@@ -538,6 +579,18 @@ try {
     }
 
     $failed = [int]$summary.Matches[0].Groups[2].Value
+
+    # อาการที่เจอบ่อยในเครื่องที่เพิ่งลง extension — VS สร้าง .vdproj จาก command line
+    # ไม่ได้จนกว่าจะปิด out-of-process build ของ extension ตัวนี้
+    if ($failed -gt 0 -and (Select-String -Path $log -Pattern "HRESULT = '8000000A'" -SimpleMatch -Quiet)) {
+        $fix = Get-ChildItem (Join-Path (Split-Path $devenv -Parent) 'CommonExtensions\Microsoft\VSI') `
+                   -Recurse -Filter 'DisableOutOfProcBuild.exe' -ErrorAction SilentlyContinue |
+               Select-Object -First 1
+        $where = if ($fix) { "`"$($fix.FullName)`"" } else { 'DisableOutOfProcBuild.exe (อยู่ในโฟลเดอร์ของ extension Installer Projects)' }
+        Fail ("Visual Studio สร้างตัวติดตั้งจาก command line ไม่ได้ (HRESULT 8000000A) — " +
+              "ปิด Visual Studio แล้วรัน $where ครั้งเดียว จากนั้นรันสคริปต์นี้ใหม่")
+    }
+
     if ($failed -gt 0) {
         Write-Host ''
         Write-Host '      บรรทัดท้าย ๆ ของ log:' -ForegroundColor DarkYellow
