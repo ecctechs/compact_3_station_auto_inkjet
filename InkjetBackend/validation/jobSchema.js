@@ -1,14 +1,41 @@
 const { z } = require("zod");
 
+// ทุกช่องที่ไม่บังคับต้องรับ null ด้วย ไม่ใช่แค่ optional
+//
+// .optional() เฉย ๆ แปลว่า "ไม่ส่ง key มาก็ได้" แต่ถ้าส่งมาต้องเป็น string —
+// ส่ง null มาจะโดนตีกลับ 400 ทันที ซึ่งเป็นสิ่งที่เกิดขึ้นตอนหน้า Scan Barcode
+// เปลี่ยนไปดึง customer_name จาก inkjet_data แล้ว lot นั้นไม่มีชื่อลูกค้า
+//
+// คอลัมน์พวกนี้ใน print_jobs เป็น NULL ได้อยู่แล้ว และ schema อื่นในโปรเจกต์
+// (plan_routing, uv_job_data) ก็ใช้ .nullable().optional() มาตั้งแต่แรก
 const createJobSchema = z.object({
   barcode_raw: z.string().min(1),
   created_by: z.enum(["scanner", "operator"]).default("scanner"),
+  order_no: z.string().nullable().optional(),
+  customer_name: z.string().nullable().optional(),
+  type: z.string().nullable().optional(),
+  qty: z.number().int().nullable().optional(),
+  st_status: z.string().nullable().optional(),
 });
 
+// ทุกช่องที่หน้าเว็บส่งมาต้องประกาศไว้ที่นี่ให้ครบ
+//
+// middleware validate เขียนทับ req.query ด้วยผลที่ zod แปลงแล้ว และ z.object
+// ตัดคีย์ที่ไม่ได้ประกาศทิ้งเป็นค่าเริ่มต้น คีย์ที่ลืมใส่จึงหายไปก่อนถึง controller
+// เงียบ ๆ ไม่มี error อะไรให้เห็น — from กับ to ของตัวกรองวันที่หน้า History
+// หายแบบนี้มาตลอด โค้ดกรองวันที่ใน controller จึงไม่เคยได้ทำงานเลย
 const jobFilterSchema = z.object({
-  status: z.enum(["pending", "executing", "completed", "failed"]).optional(),
+  status: z
+    .enum(["Waiting", "executing", "completed", "failed"])
+    .optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
+
+  // ตัวกรองวันที่ของหน้า History — ฝั่ง client ส่ง ISO (UTC) ที่ขยายเป็นทั้งวัน
+  // ตามเวลาไทยมาแล้ว coerce.date ตีกลับ 400 ทันทีถ้าส่งของที่อ่านเป็นวันไม่ได้
+  // ดีกว่าปล่อยผ่านแล้วเงียบ ๆ ไม่กรองให้เหมือนเดิม
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
 });
 
 const commandResultSchema = z.object({

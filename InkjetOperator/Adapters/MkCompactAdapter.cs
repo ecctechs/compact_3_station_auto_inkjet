@@ -1,4 +1,5 @@
-using System.Globalization;
+﻿using System.Globalization;
+using System.Text;
 using InkjetOperator.Managers;
 using InkjetOperator.Models;
 
@@ -19,6 +20,9 @@ public class MkCompactAdapter : IInkjetAdapter
     /// Size conversion dict — from rs232_connector.py lines 8-22.
     /// Maps logical size to device encoding.
     /// </summary>
+    /// <summary>ตัวคูณของช่องหน่วงทริกเกอร์ในคำสั่ง FM — เก็บเป็น มม. ส่งเป็นสิบเท่า</summary>
+    private const int TriggerDelayScale = 10;
+
     private static readonly Dictionary<string, string> SizeConversion = new()
     {
         { "1", "0" },
@@ -77,13 +81,27 @@ public class MkCompactAdapter : IInkjetAdapter
         return "";
     }
 
+    /// <summary>
+    /// คำตอบที่แปลว่าเครื่องไม่รับคำสั่ง — ขึ้นต้นด้วย ER แล้วตามด้วยคำสั่งกับรหัส
+    ///
+    /// <para>
+    /// ยิงคำสั่งที่เครื่องไม่รู้จักเข้าไปจะได้ <c>ER,test,00</c> กลับมา ซึ่งเป็นคำตอบ
+    /// ที่ไม่ว่าง การนับว่า "ตอบกลับมา = สำเร็จ" จึงทำให้คำสั่งที่เครื่องปฏิเสธถูก
+    /// รายงานว่าส่งสำเร็จ แล้วงานก็ไม่เข้าเครื่องโดยไม่มีอะไรบอก
+    /// </para>
+    /// </summary>
+    private static bool IsRejected(string response) =>
+        response.StartsWith("ER", StringComparison.OrdinalIgnoreCase);
+
     private CommandResult MakeResult(string command, string response, int? ordinal = null)
     {
         return new CommandResult
         {
             Command = command,
             Response = response,
-            Success = response != "", // empty = connection problem (rs232_connector.py line 33)
+
+            // ว่าง = ต่อไม่ติดหรือเครื่องเงียบ · ขึ้นต้น ER = เครื่องรับคำสั่งแล้วปฏิเสธ
+            Success = response != "" && !IsRejected(response),
             SentAt = DateTime.UtcNow.ToString("o"),
             Ordinal = ordinal,
         };
@@ -152,6 +170,18 @@ public class MkCompactAdapter : IInkjetAdapter
         return MakeResult("text_block", f1Response);
     }
 
+    // ── ทิศทางการพิมพ์ (ปุ่ม ABC) ──────────────────────────
+
+    // ค่าที่เก็บใน inkjet_config.direction มาจากไฟล์ตั้งต้นชุดเดียวกับโปรแกรมเดิม
+    // (PySocketClient) ซึ่งใช้ 1 = ปกติ · 2 = กลับหัว ส่วน 0 กับ 3 เป็นค่าที่
+    // คำสั่ง FM รับ ตัวอ่านจึงรับทั้งสองชุด เพราะข้อมูลที่มีอยู่ยังไม่ได้ยืนยัน
+    // ว่าถูกบันทึกด้วยชุดไหน แต่ตอนส่งออกจะเป็น 0/3 เสมอตามที่เครื่องรู้จัก
+    public const int DirectionNormal = 1;
+    public const int DirectionFlipped = 2;
+
+    /// <summary>ค่าไหนที่แปลว่ากลับหัว — 2 (ไฟล์ตั้งต้น) หรือ 3 (คำสั่ง FM)</summary>
+    public static bool IsFlipped(int? direction) => direction == 2 || direction == 3;
+
     /// <summary>
     /// Send FM (program/message configuration).
     /// From rs232_connector.py send_config() lines 74-83:
@@ -164,8 +194,12 @@ public class MkCompactAdapter : IInkjetAdapter
         // Normalize like Python: unicodedata.normalize('NFKD', ch)
         string normalizedName = progName.Normalize(NormalizationForm.FormKD);
 
-        string direction = (config.Direction ?? 0).ToString();
-        string delay = (config.TriggerDelay ?? 0).ToString();
+        string direction = IsFlipped(config.Direction) ? "3" : "0";
+
+        // ค่าที่เก็บเป็นมิลลิเมตร แต่ช่องนี้ของคำสั่ง FM รับเป็นหน่วยสิบเท่า
+        // จึงต้องคูณ 10 ก่อนส่ง ตรงกับโปรแกรมเดิมที่ทำ int(float(delay) * 10)
+        // ลืมคูณแล้วหมึกจะลงเร็วกว่าที่ตั้งไว้สิบเท่า คือผิดตำแหน่งบนชิ้นงานจริง
+        string delay = ((config.TriggerDelay ?? 0) * TriggerDelayScale).ToString();
         string height = (config.Height ?? 100).ToString();
         string width = (config.Width ?? 200).ToString();
 

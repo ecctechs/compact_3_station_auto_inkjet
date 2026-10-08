@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -6,11 +6,81 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+
+    <!--
+      Rendering configuration (Phase 1). ApplicationConfiguration.Initialize() in
+      Program.cs reads these three properties; they are the only supported way to
+      set them, because AntdUI.Config.Font is [Obsolete] in AntdUI 2.4.3.
+
+      ApplicationHighDpiMode: the app previously declared no DPI awareness at all,
+      so Windows rendered it at 96 DPI and bitmap-stretched the result on every
+      display scaled above 100% - that is what made text and borders look soft.
+      PerMonitorV2 makes it render at the monitor's real DPI instead.
+
+      ApplicationDefaultFont: pins the font that controls without an explicit Font
+      inherit. Segoe UI 9pt is what Control.DefaultFont already resolved to here,
+      so this changes nothing visually - it only stops the default from following
+      the machine's UI language (a th-TH machine resolves a different face).
+    -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationDefaultFont>Segoe UI, 9pt</ApplicationDefaultFont>
+
+    <!-- ข้อมูลบริษัทและชื่อโปรแกรมที่ฝังใน .exe
+         โผล่ที่ คลิกขวาไฟล์ > Properties > Details, ที่ Task Manager
+         และเป็นค่าที่ตัวติดตั้งกับ Programs and Features หยิบไปแสดง -->
+    <Company>ECC Solutions (Thailand) Co., Ltd</Company>
+    <Product>Compact</Product>
+    <AssemblyTitle>Compact</AssemblyTitle>
+    <Description>Compact 3 Station Auto Inkjet</Description>
+    <Copyright>Copyright (c) ECC Solutions (Thailand) Co., Ltd</Copyright>
+
+    <!-- เลขเวอร์ชันที่ฝังใน .exe — ต้องตรงกับเลขของตัวติดตั้งเสมอ
+         tools/build-installer.ps1 เป็นคนบวกเลขให้ทั้งไฟล์นี้และ CompactDemo.vdproj
+         พร้อมกัน ห้ามแก้มือทีละที่ ไม่งั้นเลขบน exe กับบนตัวติดตั้งจะไม่ตรงกัน
+         เดิมไม่มีบรรทัดนี้ .NET จึงใส่ 1.0.0.0 ให้ตลอด ดูที่ไฟล์แล้วเหมือนไม่เคยอัปเดต -->
+    <Version>1.0.28</Version>
+
+    <!-- ไม่ต่อท้ายด้วยเลข commit ใน ProductVersion — คนที่เปิดดูคุณสมบัติไฟล์
+         อยากเห็นแค่ 1.0.20 ไม่ใช่ 1.0.20+ac281ba0252... -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+
+    <!-- ไอคอนของ .exe — ไฟล์เดียวเก็บหลายขนาดไว้ 16 ถึง 256 เพราะ Windows
+         หยิบไปใช้คนละขนาดตามที่ ทั้งแถบงาน มุมหน้าต่าง Alt-Tab และในโฟลเดอร์ -->
+    <ApplicationIcon>Resources\app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AntdUI" Version="2.4.3" />
     <PackageReference Include="System.IO.Ports" Version="8.0.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      ค่าตั้งต้นที่ไปกับตัวโปรแกรม ใช้ครั้งเดียวตอนเครื่องยังไม่มีไฟล์ตั้งค่าของตัวเอง
+      (AppSettingsFile.Resolve) ชื่อไฟล์ต้องไม่ใช่ Setting.config เพราะชื่อนั้นเป็น
+      ของไฟล์จริงใน ProgramData ถ้าใช้ชื่อเดียวกัน ตัวที่ถูกก๊อปมาไว้ข้าง ๆ .exe
+      จะไปทับหรือถูกเข้าใจผิดว่าเป็นไฟล์จริง — รายละเอียดในหัวไฟล์นั้น
+    -->
+    <None Update="Setting.default.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

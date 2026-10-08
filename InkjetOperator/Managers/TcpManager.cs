@@ -13,31 +13,28 @@ public class TcpManager
     private TcpClient? _client;
     private NetworkStream? _stream;
 
-    private readonly Queue<byte[]> _sendQueue = new();
-    private bool _isSending = false;
-    private readonly object _sendLock = new();
+    private const int CommandTimeoutMs = 3000;
+    private readonly SemaphoreSlim _sendGate = new(1, 1);
 
     public event EventHandler<TcpDataReceivedEventArgs>? DataReceived;
 
     public TcpManager() { }
 
     /// <summary>
-    /// Connect to TCP endpoint.
-    /// From socket_client.py lines 33-49:
-    ///   socket.socket(AF_INET, SOCK_STREAM), settimeout(0.1), connect(address)
+    /// Connect to TCP endpoint with a bounded asynchronous timeout.
     /// </summary>
     public async Task ConnectAsync(string ipAddress, int port)
     {
         try
         {
             _client = new TcpClient();
-            _client.ReceiveTimeout = 100; // 0.1s timeout matching Python
-            _client.SendTimeout = 100;
-            await _client.ConnectAsync(ipAddress, port);
+            using var timeout = new CancellationTokenSource(CommandTimeoutMs);
+            await _client.ConnectAsync(ipAddress, port, timeout.Token);
             _stream = _client.GetStream();
         }
         catch (Exception ex)
         {
+            Disconnect();
             Console.WriteLine("TCP connection error: " + ex.Message);
             throw;
         }
@@ -66,72 +63,45 @@ public class TcpManager
     /// <summary>
     /// Send command and receive response.
     /// From socket_client.py: sock.sendall(msg), data = sock.recv(16)
-    /// Uses queue pattern from Linx TcpClientManager to prevent send collisions.
+    /// รอทีละคำสั่ง เพื่อให้ผู้เรียกได้คำตอบของตัวเอง
     /// </summary>
     public async Task<string> SendCommandAsync(string command)
     {
-        if (_stream == null || !IsConnected())
-        {
-            return "";
-        }
-
-        byte[] commandBytes = Encoding.ASCII.GetBytes(command);
-
-        lock (_sendLock)
-        {
-            _sendQueue.Enqueue(commandBytes);
-        }
-
-        return await ProcessSendQueueAsync();
-    }
-
-    private async Task<string> ProcessSendQueueAsync()
-    {
-        if (_isSending) return "";
-        _isSending = true;
-
-        string lastResponse = "";
-
+        var stream = _stream;
+        if (stream == null || !IsConnected()) return "";
+        await _sendGate.WaitAsync();
         try
         {
-            while (true)
-            {
-                byte[] cmd;
-                lock (_sendLock)
-                {
-                    if (_sendQueue.Count == 0) break;
-                    cmd = _sendQueue.Dequeue();
-                }
+            // คำสั่งที่รออยู่ห้ามข้ามไปส่งบน connection ใหม่หลังรอบก่อนหมดเวลา
+            if (!ReferenceEquals(stream, _stream) || !IsConnected()) return "";
+            using var timeout = new CancellationTokenSource(CommandTimeoutMs);
+            byte[] cmd = Encoding.ASCII.GetBytes(command);
+            await stream.WriteAsync(cmd.AsMemory(), timeout.Token);
+            await stream.FlushAsync(timeout.Token);
 
-                await _stream!.WriteAsync(cmd, 0, cmd.Length);
-                await _stream.FlushAsync();
-
-                // Read response (recv(16) in Python)
-                byte[] buffer = new byte[16];
-                try
-                {
-                    int bytesRead = await _stream.ReadAsync(buffer, 0, buffer.Length);
-                    if (bytesRead > 0)
-                    {
-                        lastResponse = Encoding.ASCII.GetString(buffer, 0, bytesRead).TrimEnd('\r', '\n');
-                        OnDataReceived(lastResponse);
-                    }
-                }
-                catch (IOException)
-                {
-                    // Read timeout — no response
-                    lastResponse = "";
-                }
-
-                await Task.Delay(50); // Prevent rapid succession (Linx pattern)
-            }
+            byte[] buffer = new byte[16];
+            int bytesRead = await stream.ReadAsync(buffer.AsMemory(), timeout.Token);
+            if (bytesRead == 0) throw new IOException("MK ปิดการเชื่อมต่อโดยไม่ตอบกลับ");
+            string response = Encoding.ASCII.GetString(buffer, 0, bytesRead).TrimEnd('\r', '\n');
+            OnDataReceived(response);
+            await Task.Delay(50); // เว้นช่วงคำสั่งตามเดิม
+            return response;
+        }
+        catch (OperationCanceledException)
+        {
+            // ปิด socket เพื่อไม่ให้คำตอบที่มาช้าถูกนับเป็นคำตอบของคำสั่งถัดไป
+            if (ReferenceEquals(stream, _stream)) Disconnect();
+            throw new TimeoutException("MK ไม่ตอบกลับภายใน 3 วินาที — ตรวจสอบผลก่อนส่งซ้ำ");
+        }
+        catch
+        {
+            if (ReferenceEquals(stream, _stream)) Disconnect();
+            throw;
         }
         finally
         {
-            _isSending = false;
+            _sendGate.Release();
         }
-
-        return lastResponse;
     }
 
     private void OnDataReceived(string data)
