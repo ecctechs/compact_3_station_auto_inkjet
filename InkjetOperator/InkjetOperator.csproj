@@ -48,17 +48,6 @@
     <!-- ไอคอนของ .exe — ไฟล์เดียวเก็บหลายขนาดไว้ 16 ถึง 256 เพราะ Windows
          หยิบไปใช้คนละขนาดตามที่ ทั้งแถบงาน มุมหน้าต่าง Alt-Tab และในโฟลเดอร์ -->
     <ApplicationIcon>Resources\app.ico</ApplicationIcon>
-
-    <!--
-      AntdUI-main\ and NastoKeyence\ are reference checkouts that happen to sit
-      inside this project's folder. An SDK-style project globs **/*.cs, so without
-      this both trees are compiled into InkjetOperator (2456 errors: duplicate
-      assembly attributes, unsafe code, missing xunit/DI references). AntdUI itself
-      is consumed through the NuGet package below, not from AntdUI-main\.
-
-      Remove these two entries if the folders are ever moved out of InkjetOperator\.
-    -->
-    <DefaultItemExcludes>$(DefaultItemExcludes);AntdUI-main\**;NastoKeyence\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
