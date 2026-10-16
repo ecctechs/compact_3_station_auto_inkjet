@@ -5,9 +5,22 @@ namespace InkjetOperator.Views;
 /// <summary>
 /// Application main window (shell): top menu bar + content host. The pages are
 /// placed in pnlContent (Dock=Fill) at design time; menu buttons switch between
-/// them by z-order (BringToFront) and update the active-tab colour. The Input
-/// Order tab shows the Scan Barcode page. Only navigation/tab-state code lives
-/// here — no other business logic, no runtime control creation, no custom paint.
+/// them by showing one page and hiding the rest. The Input Order tab shows the
+/// Scan Barcode page. Only navigation/tab-state code lives here — no other
+/// business logic, no runtime control creation, no custom paint.
+/// <para>
+/// เดิมสลับหน้าด้วย <c>BringToFront()</c> อย่างเดียว ซึ่งเปลี่ยนแค่ลำดับการวางทับ
+/// ทุกหน้าจึงยัง Visible อยู่พร้อมกันทั้งหมด pnlContent เปิด AutoScroll ไว้และคิด
+/// พื้นที่เลื่อนจากลูก <b>ทุกตัว</b> ไม่ใช่แค่ตัวที่อยู่หน้าสุด พอหน้า Setting ขยาย
+/// ความสูงตอนรัน (SettingUserControl.EnsureSubPage ตั้ง MinimumSize ของหน้าย่อย)
+/// พื้นที่เลื่อนของแผงที่ใช้ร่วมกันก็โตตาม แถบเลื่อนโผล่ แล้วหน้าอื่นที่ Dock=Fill
+/// อยู่ในแผงเดียวกันก็ถือขนาดที่ผิดไปด้วย — กลับมาหน้า Order List แล้วกรอบ Preview
+/// กับ Processing หลุดออกนอกพื้นที่ที่ถูก clip เหลือแต่พื้นสีฟ้าของ pnlContent
+/// </para>
+/// <para>
+/// โชว์ทีละหน้าแล้วซ่อนที่เหลือ AutoScroll จึงคิดจากหน้าที่เห็นอยู่หน้าเดียว และ
+/// หน้าที่ถูกโชว์ได้ layout รอบใหม่ทุกครั้งที่สลับ
+/// </para>
 /// </summary>
 public partial class MainShellForm : AntdUI.Window
 {
@@ -15,6 +28,9 @@ public partial class MainShellForm : AntdUI.Window
     private static readonly System.Drawing.Color InactiveTab = DesignTokens.Inactive;
 
     private AntdUI.Button[] _visibleTabs = [];
+
+    /// <summary>หน้าที่สถานีนี้เข้าได้ เรียงคู่กับ <see cref="_visibleTabs"/> ทีละตัว</summary>
+    private Control[] _visiblePages = [];
 
     public MainShellForm()
     {
@@ -171,7 +187,11 @@ public partial class MainShellForm : AntdUI.Window
         for (int i = 0; i < allTabs.Length; i++)
         {
             allTabs[i].Visible = visible[i];
-            allPages[i].Visible = visible[i];
+
+            // ซ่อนทุกหน้าไว้ก่อน แล้วให้ ShowPage เปิดหน้าแรกให้ทีเดียว — หน้าที่
+            // สถานีนี้เข้าไม่ได้จะไม่ถูกเปิดเลย เพราะ ShowPage มองแค่ _visiblePages
+            allPages[i].Visible = false;
+
             tlpMenuBar.ColumnStyles[i].SizeType = visible[i]
                 ? System.Windows.Forms.SizeType.Absolute : System.Windows.Forms.SizeType.Absolute;
             // แท็บชิดกันเป็นแถบเดียว กว้างพอดีข้อความที่ 17pt ไม่เว้นร่อง
@@ -179,14 +199,55 @@ public partial class MainShellForm : AntdUI.Window
         }
 
         _visibleTabs = allTabs.Where((_, i) => visible[i]).ToArray();
+        _visiblePages = allPages.Where((_, i) => visible[i]).ToArray();
 
         if (_visibleTabs.Length > 0)
+            ShowPage(_visiblePages[0], _visibleTabs[0]);
+    }
+
+    /// <summary>
+    /// โชว์หน้าเดียว ซ่อนที่เหลือ แล้วค่อยตั้งสีแท็บ
+    ///
+    /// <para>
+    /// ต้องซ่อนของจริง ไม่ใช่แค่ BringToFront เพราะหน้าทั้งหมดอยู่ใน pnlContent
+    /// แผงเดียวกันและแผงนั้นเปิด AutoScroll ไว้ เหตุผลเต็ม ๆ อยู่ที่หัวคลาส
+    /// </para>
+    /// </summary>
+    private void ShowPage(Control page, AntdUI.Button tab)
+    {
+        foreach (var p in _visiblePages)
         {
-            var firstTab = _visibleTabs[0];
-            var firstPage = allPages[Array.IndexOf(allTabs, firstTab)];
-            firstPage.BringToFront();
-            SetActiveTab(firstTab);
+            if (!ReferenceEquals(p, page)) p.Visible = false;
         }
+
+        page.Visible = true;
+        page.BringToFront();
+
+        // หน้าก่อนหน้าอาจเลื่อนค้างไว้ หน้าใหม่ต้องเริ่มที่หัวเสมอ ไม่งั้นเปิดมา
+        // เจอกลางหน้าโดยไม่มีใครสั่งเลื่อน
+        //
+        // ข้ามตอนยังไม่มี handle — ApplyMenuLevel เรียกฟังก์ชันนี้ตั้งแต่ใน constructor
+        // ซึ่งตอนนั้นยังไม่มีอะไรให้เลื่อนอยู่แล้ว
+        if (pnlContent.IsHandleCreated)
+        {
+            pnlContent.AutoScrollPosition = new Point(0, 0);
+
+            // สั่งวาดใหม่ทั้งแผงรวมลูกทุกชั้น
+            //
+            // ลูกหลายตัวในหน้า Order List ตั้งพื้นหลังเป็น Transparent ซึ่ง WinForms
+            // วาดโดยไปขอให้พ่อแม่วาดพื้นให้ก่อน การโชว์หน้าเฉย ๆ ไม่ได้สั่งวาดพื้น
+            // ของแผงใหม่ พื้นที่นั้นจึงค้างสีฟ้าที่ pnlContent ลบทิ้งไว้ แล้วตัวหนังสือ
+            // กับรูปไม่ถูกวาดทับ กลายเป็นกรอบเปล่าสีฟ้า
+            //
+            // เจอจริงที่ ST3 — กด Setting แล้วกดกลับ Order List กรอบ Preview กับ
+            // Processing หายทั้งพื้นและตัวหนังสือ เหลือแต่เส้นขอบ ย่อหน้าต่างแล้วคืน
+            // ขึ้นมาก็หายเอง ซึ่งยืนยันว่าเป็นเรื่องการวาด ไม่ใช่ layout หรือข้อมูล
+            //
+            // Refresh() = Invalidate(true) + Update() คือวาดทันที ไม่รอรอบ idle
+            pnlContent.Refresh();
+        }
+
+        SetActiveTab(tab);
     }
 
     private void SetActiveTab(AntdUI.Button active)
@@ -200,26 +261,16 @@ public partial class MainShellForm : AntdUI.Window
 
     private void btnInputOrder_Click(object sender, EventArgs e)
     {
-        scanBarcodePage.BringToFront();
-        SetActiveTab(btnInputOrder);
+        ShowPage(scanBarcodePage, btnInputOrder);
         scanBarcodePage.FocusBarcode();
     }
 
-    private void btnOrderList_Click(object sender, EventArgs e)
-    {
-        orderListPage.BringToFront();
-        SetActiveTab(btnOrderList);
-    }
+    private void btnOrderList_Click(object sender, EventArgs e) =>
+        ShowPage(orderListPage, btnOrderList);
 
-    private void btnEditPattern_Click(object sender, EventArgs e)
-    {
-        editPatternPage.BringToFront();
-        SetActiveTab(btnEditPattern);
-    }
+    private void btnEditPattern_Click(object sender, EventArgs e) =>
+        ShowPage(editPatternPage, btnEditPattern);
 
-    private void btnSetting_Click(object sender, EventArgs e)
-    {
-        settingPage.BringToFront();
-        SetActiveTab(btnSetting);
-    }
+    private void btnSetting_Click(object sender, EventArgs e) =>
+        ShowPage(settingPage, btnSetting);
 }
