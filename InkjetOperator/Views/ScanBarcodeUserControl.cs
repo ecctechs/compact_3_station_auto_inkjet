@@ -156,7 +156,19 @@ public partial class ScanBarcodeUserControl : UserControl
             return false;
         }
 
-        var lot = sqlite.GetLotSummary(barcode);
+        LotSummary? lot;
+        try
+        {
+            lot = sqlite.GetLotSummary(barcode);
+        }
+        catch (Exception ex)
+        {
+            // PrintData.db3 อยู่บนไดรฟ์เครือข่าย หลุดกลางคันได้แม้ CanConnect เพิ่งผ่าน
+            AppLog.Error("ScanBarcode.LoadLot", ex);
+            if (!quiet) ShowError(ReadFailedMessage(ex));
+            return false;
+        }
+
         if (lot == null)
         {
             if (quiet) return false;
@@ -270,15 +282,30 @@ public partial class ScanBarcodeUserControl : UserControl
         if (!ConfirmClampDatabase()) return;
 
         // Step 1: Query SQLite
-        var patternTemplate = sqlite.GetPatternDetail(barcode, 0);
+        //
+        // อ่านให้ครบทั้งสามส่วนก่อนสร้างอะไรใน backend — ถ้าไดรฟ์หลุดกลางทาง
+        // จะได้หยุดก่อนมีงานครึ่ง ๆ กลาง ๆ ค้างอยู่ในระบบ
+        CreatePatternRequest? patternTemplate;
+        List<UvJobItem> uvItems;
+        CreatePlanRoutingRequest? planRouting;
+        try
+        {
+            patternTemplate = sqlite.GetPatternDetail(barcode, 0);
+            uvItems = sqlite.GetUvDetail(barcode);
+            planRouting = sqlite.GetPlanRouting(barcode, 0);
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("ScanBarcode.ProcessBarcode", ex);
+            ShowError(ReadFailedMessage(ex));
+            return;
+        }
+
         if (patternTemplate == null)
         {
             ShowWarning($"ไม่พบข้อมูลใน inkjet_data สำหรับ barcode: {barcode}");
             return;
         }
-
-        var uvItems = sqlite.GetUvDetail(barcode);
-        var planRouting = sqlite.GetPlanRouting(barcode, 0);
 
         // Step 2A: POST /job/create
         var jobRequest = new CreateJobRequest
@@ -451,6 +478,11 @@ public partial class ScanBarcodeUserControl : UserControl
         txtQty.Text = "";
         btnEditQty.Enabled = false;
     }
+
+    private static string ReadFailedMessage(Exception ex) =>
+        "อ่านข้อมูลจาก PrintData.db3 ไม่ได้\n"
+        + $"{ex.Message}\n\n"
+        + "ตรวจว่าไดรฟ์ที่เก็บไฟล์ยังเชื่อมต่ออยู่ แล้วลองสแกนใหม่";
 
     private static void ShowWarning(string msg) =>
         Notify.WarnModal(null, "แจ้งเตือน", msg);

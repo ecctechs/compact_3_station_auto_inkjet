@@ -147,7 +147,8 @@ Order Detail ของ Station 3 รูปนี้เป็นงาน Marking
 ## ตั้งค่าแต่ละเครื่อง
 
 ค่าทั้งหมดอยู่ที่ `C:\ProgramData\CompactInkjet\Setting.config` โปรแกรมสร้างไฟล์ให้เองตอนเปิดครั้งแรก
-IP กับ path ต่าง ๆ แก้ในหน้า Setting ของโปรแกรม ส่วน `MENU_LEVEL` แก้ในไฟล์
+IP กับ path ต่าง ๆ แก้ในหน้า Setting ของโปรแกรม
+`MENU_LEVEL` เลือกจากหน้าเลือกสถานีที่ขึ้นเองตอนเปิดโปรแกรมครั้งแรกบนเครื่องใหม่ ถ้าจะเปลี่ยนทีหลังให้แก้ในไฟล์
 
 | `MENU_LEVEL` | เครื่อง | เห็นเมนู |
 | :---: | :--- | :--- |
@@ -168,6 +169,8 @@ IP กับ path ต่าง ๆ แก้ในหน้า Setting ของ
 | ปุ่มกดหน้างาน ST1 / ST2 / ST3 | M4000 / M4001 / M4003 | |
 
 รายละเอียดเรื่องไฟล์ตั้งค่าอยู่ใน [docs/settings-file-locations.md](docs/settings-file-locations.md)
+
+เวลามีปัญหาที่หน้างาน ดู log ได้ที่ `C:\ProgramData\CompactInkjet\logs\` (โปรแกรม) และ `InkjetBackend\logs\` บนเครื่อง Station 1 (backend) เก็บไว้ 30 วัน
 
 ---
 

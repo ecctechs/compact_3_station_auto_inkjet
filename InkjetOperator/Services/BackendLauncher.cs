@@ -75,6 +75,70 @@ public static class BackendLauncher
               + "ตรวจว่า PostgreSQL เปิดอยู่ และไฟล์ .env ของ backend ถูกต้อง";
     }
 
+    /// <summary>ตรวจทุกกี่มิลลิวินาทีว่า backend ยังอยู่</summary>
+    private const int WatchdogMs = 15000;
+
+    private static System.Threading.Timer? _watchdog;
+
+    /// <summary>1 = กำลังเปิด backend ใหม่อยู่ — กันรอบตรวจถัดไปเปิดซ้อน</summary>
+    private static int _restarting;
+
+    /// <summary>ปัญหาล่าสุดที่บันทึกไว้ — บันทึกซ้ำเฉพาะตอนเปลี่ยน ไม่ให้ log ท่วม</summary>
+    private static string? _lastProblem;
+
+    /// <summary>
+    /// คอยดูว่า backend ยังทำงานอยู่ ถ้าหายไปให้เปิดใหม่ — ทำเฉพาะเครื่องที่ backend อยู่
+    /// <para>
+    /// เดิมเปิดให้ครั้งเดียวตอนเปิดโปรแกรม ถ้า backend ล้มกลางกะ ทั้งสามสถานีต่อไม่ได้
+    /// จนกว่าจะมีคนปิดเปิดโปรแกรม ST1 ใหม่ ซึ่งหน้างานไม่รู้ว่าต้องทำ
+    /// </para>
+    /// <para>
+    /// ดูแค่ว่ามีใครฟังพอร์ตอยู่ไหม ไม่ได้ถามว่าฐานข้อมูลพร้อมหรือยัง — backend
+    /// ลองต่อฐานข้อมูลใหม่เองอยู่แล้ว ตรงนี้มีหน้าที่แค่ไม่ให้ process หายไปเฉย ๆ
+    /// </para>
+    /// </summary>
+    public static void StartWatchdog()
+    {
+        if (_watchdog != null || !BackendIsLocal()) return;
+        _watchdog = new System.Threading.Timer(_ => _ = CheckAliveAsync(), null, WatchdogMs, WatchdogMs);
+    }
+
+    public static void StopWatchdog()
+    {
+        _watchdog?.Dispose();
+        _watchdog = null;
+    }
+
+    private static async Task CheckAliveAsync()
+    {
+        if (IsListening()) return;
+        if (Interlocked.Exchange(ref _restarting, 1) == 1) return;
+
+        try
+        {
+            if (_lastProblem == null) AppLog.Warn("Backend", "backend ไม่ตอบที่พอร์ต 3000 — กำลังเปิดใหม่");
+
+            var problem = await EnsureRunningAsync();
+            if (problem == null)
+            {
+                AppLog.Info("Backend", "เปิด backend ใหม่แล้ว");
+            }
+            else if (problem != _lastProblem)
+            {
+                AppLog.Warn("Backend", problem);
+            }
+            _lastProblem = problem;
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("Backend.Watchdog", ex);
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _restarting, 0);
+        }
+    }
+
     /// <summary>
     /// backend อยู่เครื่องนี้ไหม — ดูจากที่อยู่ที่ทุกหน้าใช้ต่อ
     /// ตั้งไม่ตรงกับความจริงคือตั้งค่าผิด ไม่ใช่เรื่องที่ตรงนี้จะเดาให้

@@ -31,6 +31,8 @@ static class Program
             return;
         }
 
+        CatchUnhandledErrors();
+
         // Must be the very first call. It applies <ApplicationHighDpiMode>,
         // <ApplicationDefaultFont>, EnableVisualStyles() and
         // SetCompatibleTextRenderingDefault(false) from InkjetOperator.csproj.
@@ -43,6 +45,14 @@ static class Program
         Services.LanguageService.Init();
         ConfigureAntdUi();
 
+        // เครื่องที่เพิ่งติดตั้งยังไม่รู้ว่าเป็นสถานีไหน — ต้องรู้ก่อนขั้นอื่นทั้งหมด
+        // เพราะค่าตั้งต้นของ ST1, การเปิด backend และเมนูที่เห็น ขึ้นกับคำตอบนี้
+        if (!EnsureStationChosen()) return;
+
+        AppLog.Cleanup();
+        AppLog.Info("Startup",
+            $"เปิดโปรแกรม เวอร์ชัน {Application.ProductVersion} · MENU_LEVEL {CustomSettingsManager.Read("MENU_LEVEL", "")}");
+
         // Load local transform patterns (patterns.xml in ProgramData — see PatternStore).
         PatternStore.Load();
         PatternStore.SeedDefaults();
@@ -52,10 +62,12 @@ static class Program
 
         WarnIfSettingsReadOnly();
         StartBackendIfNeeded();
+        BackendLauncher.StartWatchdog();
 
         StartHealthMonitorIfDevMode();
 
         Application.Run(new Views.MainShellForm());
+        BackendLauncher.StopWatchdog();
         HealthMonitor.Stop();
     }
 
@@ -77,6 +89,89 @@ static class Program
 
     /// <summary>ระดับเมนูของโหมดทดสอบ — ตัวเดียวกับที่หน้า Setting และ Order Detail ใช้</summary>
     private const int DevMenuLevel = 99;
+
+    /// <summary>กำลังเปิดกล่องแจ้ง error อยู่ — กันกล่องซ้อนกันเมื่อ error เกิดรัว ๆ</summary>
+    private static bool _showingError;
+
+    /// <summary>
+    /// ดัก error ที่ไม่มีใครจับ แล้วบอกพนักงานเป็นภาษาไทย พร้อมบันทึกลง log
+    /// <para>
+    /// เดิมไม่ได้ดักไว้เลย error ที่หลุดมาจะขึ้นกล่องสำเร็จรูปของ .NET เป็นภาษาอังกฤษ
+    /// มี stack trace ยาวเหยียดกับปุ่ม Continue / Quit พนักงานอ่านไม่ออกและมักกด Quit
+    /// ทั้งที่โปรแกรมยังทำงานต่อได้ แล้วก็ไม่มีอะไรเหลือให้ตามหาสาเหตุ
+    /// </para>
+    /// <para>
+    /// error บนหน้าจอ (รวม async void ของปุ่มและ timer) ไปลงที่ ThreadException
+    /// ซึ่งโปรแกรมทำงานต่อได้ ส่วน error จาก thread อื่นที่ไม่มีใครจับ .NET จะปิดโปรแกรม
+    /// เสมอ ทำได้แค่บันทึกไว้ก่อนปิด
+    /// </para>
+    /// </summary>
+    private static void CatchUnhandledErrors()
+    {
+        // ต้องตั้งก่อนสร้างหน้าต่างแรก
+        Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+
+        Application.ThreadException += (_, e) =>
+        {
+            AppLog.Error("UI", e.Exception);
+            if (_showingError) return;
+
+            _showingError = true;
+            try
+            {
+                MessageBox.Show(
+                    "เกิดข้อผิดพลาดที่ไม่ได้คาดไว้\n\n"
+                    + $"{e.Exception.Message}\n\n"
+                    + "โปรแกรมยังใช้งานต่อได้ ถ้าเกิดซ้ำให้แจ้งผู้ดูแล\n"
+                    + $"รายละเอียดอยู่ในไฟล์ log ที่ {AppLog.Folder}",
+                    "Compact Inkjet", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            finally
+            {
+                _showingError = false;
+            }
+        };
+
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+        {
+            if (e.ExceptionObject is Exception ex) AppLog.Error("Fatal", ex);
+            else AppLog.Warn("Fatal", $"{e.ExceptionObject}");
+        };
+
+        // task ที่ล้มแล้วไม่มีใคร await — ไม่ทำให้โปรแกรมปิด แต่ควรรู้ว่ามี
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            AppLog.Error("Task", e.Exception);
+            e.SetObserved();
+        };
+    }
+
+    /// <summary>
+    /// ถามสถานีครั้งแรกที่เปิดบนเครื่องใหม่ — คืน false เมื่อผู้ใช้ปิดหน้าต่างโดยไม่เลือก
+    /// <para>
+    /// ดูจากว่ามี <c>MENU_LEVEL</c> ในไฟล์ตั้งค่าหรือยัง เครื่องที่ตั้งไว้แล้ว (รวมเครื่องนักพัฒนา
+    /// ที่เป็น 99) จะไม่ถูกถามซ้ำ
+    /// </para>
+    /// <para>
+    /// ปิดโปรแกรมถ้าไม่เลือก แทนการเดาสถานีให้ — เดาผิดคือเครื่อง ST3 ไปลงค่า IP
+    /// ของ ST1 หรือเปิด backend ซ้อน เปิดใหม่แล้วจะถามอีกครั้ง
+    /// </para>
+    /// </summary>
+    private static bool EnsureStationChosen()
+    {
+        if (!string.IsNullOrWhiteSpace(CustomSettingsManager.Read("MENU_LEVEL", ""))) return true;
+
+        using var dialog = new Views.StationPickerDialog();
+        if (dialog.ShowDialog() != DialogResult.OK || dialog.SelectedLevel < 0) return false;
+
+        if (CustomSettingsManager.Write("MENU_LEVEL", dialog.SelectedLevel.ToString())) return true;
+
+        MessageBox.Show(
+            $"บันทึกสถานีลงไฟล์ตั้งค่าไม่ได้\n{Services.AppSettingsFile.Folder}\n\n"
+            + "แจ้งผู้ดูแลให้เปิดสิทธิ์เขียนโฟลเดอร์นี้ แล้วเปิดโปรแกรมใหม่",
+            "ตั้งสถานีไม่ได้", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        return false;
+    }
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern bool SetForegroundWindow(IntPtr hWnd);
@@ -141,6 +236,7 @@ static class Program
         var problem = BackendLauncher.EnsureRunningAsync().GetAwaiter().GetResult();
         if (problem == null) return;
 
+        AppLog.Warn("Backend", problem);
         MessageBox.Show(
             $"{problem}\n\n"
             + "โปรแกรมยังเปิดใช้งานได้ แต่จะดึงข้อมูลไม่ได้จนกว่า backend จะทำงาน",
