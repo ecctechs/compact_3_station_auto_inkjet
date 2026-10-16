@@ -29,6 +29,12 @@ public partial class OrderListUserControl : UserControl
     private readonly Dictionary<string, Guid> _dispatchingMachines = new(StringComparer.OrdinalIgnoreCase);
     private bool _preparingPrograms;
     private readonly List<Notify.ResultLine> _sendReports = [];
+
+    /// <summary>
+    /// ผลของงานที่ ST1 หยิบจากคิวไปส่งเอง (คำขอจาก ST3, ปุ่มกดหน้าเครื่อง) — ไม่มีใคร
+    /// ยืนกดอยู่หน้าจอนี้ จึงแจ้งเป็นข้อความลอย ไม่ใช่กล่องที่ต้องเดินมากด OK
+    /// </summary>
+    private readonly List<Notify.ResultLine> _queueReports = [];
     private bool _showingSendReport;
 
     /// <summary>กำลังดึงข้อมูลรอบ poll อยู่ — กันรอบใหม่ทับรอบเก่าตอน backend ช้า</summary>
@@ -1286,6 +1292,13 @@ public partial class OrderListUserControl : UserControl
                     _sendReports.Clear();
                     Notify.Result(this, "ผลส่งงาน", lines);
                 }
+
+                if (!_sending && _queueReports.Count > 0 && !IsDisposed)
+                {
+                    var lines = _queueReports.ToArray();
+                    _queueReports.Clear();
+                    Notify.ResultToast(this, "ผลส่งงาน", lines);
+                }
             }
             finally { _showingSendReport = false; }
         }
@@ -2428,7 +2441,7 @@ public partial class OrderListUserControl : UserControl
             }
             var results = await SendPreparedBatchAsync(prepared, includeJobNames: true, machinesReserved: true);
             lines.AddRange(results.SelectMany(r => r.Lines));
-            if (!IsDisposed) _sendReports.AddRange(lines);
+            if (!IsDisposed) _queueReports.AddRange(lines);
             return ready.Count > 0;
         }
         finally

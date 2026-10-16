@@ -319,6 +319,35 @@ internal static class Notify
         }));
     }
 
+    /// <summary>
+    /// เหมือน <see cref="Result"/> แต่เป็นข้อความลอยกลางจอด้านบนเสมอ ไม่ว่าผลจะเป็นอะไร
+    /// <para>
+    /// ใช้กับงานที่ ST1 ส่งเองจากคิว (คำขอจาก ST3, ปุ่มกดหน้าเครื่อง) ซึ่งไม่มีใคร
+    /// ยืนกดอยู่หน้าจอ ST1 ถ้าเป็นกล่องที่ต้องกด OK มันจะค้างบังจอไว้จนกว่าจะมีคนเดินมาปิด
+    /// คนที่ ST3 รู้ผลจากจอตัวเองอยู่แล้ว
+    /// </para>
+    /// <para>
+    /// มีไม่ผ่านค้างไว้นานกว่าปกติ (<see cref="DetailSeconds"/>) ให้มีเวลาอ่าน
+    /// </para>
+    /// </summary>
+    public static void ResultToast(Control? owner, string title, IEnumerable<ResultLine> lines)
+    {
+        var list = lines.ToList();
+        if (list.Count == 0) return;
+
+        var worst = list.Any(l => l.Kind == ResultKind.Error) ? AntdUI.TType.Error
+            : list.Any(l => l.Kind == ResultKind.Warn) ? AntdUI.TType.Warn
+            : AntdUI.TType.Success;
+
+        bool problem = worst != AntdUI.TType.Success;
+        (problem ? System.Media.SystemSounds.Exclamation : System.Media.SystemSounds.Asterisk).Play();
+
+        var body = string.Join(Environment.NewLine, list.Select(l => $"{Mark(l.Kind)}  {l.Text}"));
+        Toast(owner, worst, $"{title}{Environment.NewLine}{body}",
+            problem ? DetailSeconds : ResultSeconds,
+            problem ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
+    }
+
     /// <summary>ไอคอนหน้าบรรทัด — ใช้ตัวอักษรเพื่อให้เข้าชุดกับ log ของหน้าส่งงานที่ใช้อยู่แล้ว</summary>
     private static string Mark(ResultKind kind) => kind switch
     {
