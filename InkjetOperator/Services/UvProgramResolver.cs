@@ -27,9 +27,38 @@ public static class UvProgramResolver
     /// ไม่รู้จักโฟลเดอร์ document → ส่งชื่อที่ได้มาตรงๆ ให้เครื่องตัดสินเอง
     /// </summary>
     public static UvProgramPick Resolve(string? programName, string? docFolder, IWin32Window? owner = null)
+        => Choose(FindVariants(programName, docFolder), owner);
+
+    /// <summary>
+    /// เหมือน <see cref="Resolve"/> แต่ส่วนที่แตะแชร์ของเครื่อง UV (หาโฟลเดอร์ document,
+    /// ไล่รายชื่อไฟล์ .uvdx, อ่านรายชื่อรูป) ทำบนเธรดพื้นหลังทั้งหมด
+    /// เหลือแค่หน้าจอเลือกรุ่นย่อยที่กลับมาเปิดบนเธรดหน้าจอ — ผลที่ได้เหมือนเดิมทุกประการ
+    /// </summary>
+    public static async Task<UvProgramPick> ResolveAsync(string? programName, int uvNumber, IWin32Window? owner = null)
+    {
+        var docFolder = await UvSettingsManager.GetDocumentFolderAsync(uvNumber);
+        return await ResolveAsync(programName, docFolder, owner);
+    }
+
+    /// <inheritdoc cref="ResolveAsync(string?, int, IWin32Window?)"/>
+    public static async Task<UvProgramPick> ResolveAsync(string? programName, string? docFolder, IWin32Window? owner = null)
+    {
+        var found = await Task.Run(() => FindVariants(programName, docFolder));
+
+        // หน้าจอเลือกรุ่นย่อยค้นรูปรุ่นละครั้ง อ่านรายชื่อรูปเตรียมไว้ก่อน หน้าจอจะเปิดทันที
+        if (found.Candidates is { Count: > 1 }) await MarkingRefImageService.WarmAsync();
+
+        return Choose(found, owner);
+    }
+
+    /// <summary>ผลการไล่ไฟล์ — Candidates = null คือไม่รู้จักโฟลเดอร์ ส่งชื่อที่ได้มาตรง ๆ</summary>
+    private sealed record Variants(string BaseName, List<string>? Candidates);
+
+    /// <summary>ส่วนที่แตะดิสก์ / แชร์ — ไม่มีหน้าจอ เรียกจากเธรดไหนก็ได้</summary>
+    private static Variants FindVariants(string? programName, string? docFolder)
     {
         var baseName = (programName ?? "").Trim();
-        if (baseName.Length == 0) return new UvProgramPick(null, false);
+        if (baseName.Length == 0) return new Variants("", null);
 
         // ชื่อโปรแกรมมีจุดอยู่ในตัวได้ เช่น "AKBONO.Lot664" — ห้ามใช้
         // GetFileNameWithoutExtension เพราะมันมองว่า ".Lot664" เป็นนามสกุลแล้วตัดทิ้ง
@@ -38,24 +67,35 @@ public static class UvProgramResolver
         // ตัดเฉพาะ ".uvdx" ท้ายชื่อ เผื่อค่าที่เก็บมาติดนามสกุลมาด้วย
         if (baseName.EndsWith(UvdxExtension, StringComparison.OrdinalIgnoreCase))
             baseName = baseName[..^UvdxExtension.Length];
-        if (docFolder == null) return new UvProgramPick(baseName, false);
+        if (docFolder == null) return new Variants(baseName, null);
 
-        List<string> candidates;
         try
         {
-            candidates = Directory.GetFiles(docFolder, "*.uvdx")
+            var candidates = Directory.GetFiles(docFolder, "*.uvdx")
                 .Select(Path.GetFileNameWithoutExtension)
                 .Where(f => !string.IsNullOrEmpty(f))
                 .Where(f => f! == baseName ||
                             f!.StartsWith(baseName + "-", StringComparison.Ordinal))
                 .OrderBy(f => f)
                 .ToList()!;
+            return new Variants(baseName, candidates!);
         }
         catch
         {
-            return new UvProgramPick(baseName, false);
+            return new Variants(baseName, null);
         }
+    }
 
+    /// <summary>
+    /// เจอ 1 ไฟล์ → ใช้เลย · เจอหลายไฟล์ → ให้เลือก · ไม่เจอ → default
+    /// ไม่รู้จักโฟลเดอร์ document → ส่งชื่อที่ได้มาตรงๆ ให้เครื่องตัดสินเอง
+    /// </summary>
+    private static UvProgramPick Choose(Variants found, IWin32Window? owner)
+    {
+        if (found.BaseName.Length == 0) return new UvProgramPick(null, false);
+        if (found.Candidates == null) return new UvProgramPick(found.BaseName, false);
+
+        var candidates = found.Candidates;
         if (candidates.Count == 1) return new UvProgramPick(candidates[0], false);
         if (candidates.Count > 1) return new UvProgramPick(PromptVariant(candidates, owner), false);
 

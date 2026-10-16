@@ -216,7 +216,8 @@ public static class JobSendService
                 continue;
             }
 
-            if (UvSettingsManager.GetCpiPath(uvNumber) == null)
+            // เช็คไฟล์บนเครื่อง UV ผ่านเครือข่าย — ทำเบื้องหลัง ไม่ให้หน้าจอรอ
+            if (await UvSettingsManager.GetCpiPathAsync(uvNumber) == null)
             {
                 bad.Add(new UnreachableMachine(uvName, $"ยังไม่ได้ตั้งโฟลเดอร์ UV{uvNumber} หรือไม่พบ CPI.db3"));
                 continue;
@@ -563,7 +564,7 @@ public static class JobSendService
         if (uvRow == null)
             return Blocked(uvName, $"ยังไม่มีข้อมูล {stepName} ของงานที่เลือก");
 
-        var cpiPath = UvSettingsManager.GetCpiPath(uvNumber);
+        var cpiPath = await UvSettingsManager.GetCpiPathAsync(uvNumber);
         if (cpiPath == null)
             return Blocked(uvName, $"ยังไม่ได้ตั้งค่าโฟลเดอร์ UV{uvNumber} หรือไม่พบ CPI.db3");
 
@@ -582,8 +583,7 @@ public static class JobSendService
         if (string.IsNullOrWhiteSpace(forcedProgram))
         {
             if (!allowPrompt) return Blocked(uvName, "ยังไม่ได้เลือกโปรแกรม UV ก่อนส่ง");
-            var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber);
-            pick = UvProgramResolver.Resolve(uvRow.ProgramName, docFolder, owner);
+            pick = await UvProgramResolver.ResolveAsync(uvRow.ProgramName, uvNumber, owner);
         }
         else
         {

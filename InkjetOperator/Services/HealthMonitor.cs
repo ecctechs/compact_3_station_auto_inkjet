@@ -146,12 +146,16 @@ public static class HealthMonitor
         //
         // PathProbe เช็คตัวเครื่องก่อนแตะไฟล์ เครื่องดับจึงรู้ใน 1 วินาทีและไม่ไป
         // แตะไฟล์เลย รายละเอียดอยู่ในคลาสนั้น
+        //
+        // GetDocumentFolder แตะแชร์ของเครื่อง UV ตรง ๆ จึงต้องออกไปทำนอกเธรดหน้าจอก่อน
+        var uvDocs = await Task.WhenAll(
+            UvSettingsManager.GetDocumentFolderAsync(1), UvSettingsManager.GetDocumentFolderAsync(2));
         var onDisk = await Task.WhenAll(
             PathItemAsync(files, "PrintData.db3", CustomSettingsManager.Read("DB_PATH"), folder: false),
             PathItemAsync(files, "mydatabase.db3 (แคลมป์)", CustomSettingsManager.Read("CLAMP_DB_PATH"), folder: false),
             PathItemAsync(files, "โฟลเดอร์รูปอ้างอิง", CustomSettingsManager.Read("MARKING_REF_FOLDER"), folder: true),
-            PathItemAsync(files, $"โฟลเดอร์โปรแกรม {uv1Name}", UvSettingsManager.GetDocumentFolder(1), folder: true),
-            PathItemAsync(files, $"โฟลเดอร์โปรแกรม {uv2Name}", UvSettingsManager.GetDocumentFolder(2), folder: true),
+            PathItemAsync(files, $"โฟลเดอร์โปรแกรม {uv1Name}", uvDocs[0], folder: true),
+            PathItemAsync(files, $"โฟลเดอร์โปรแกรม {uv2Name}", uvDocs[1], folder: true),
             BackendFolderItemAsync(files),
             Task.FromResult(SettingsItem(files)));
 

@@ -750,7 +750,9 @@ public partial class OrderListUserControl : UserControl
 
             _lastSignature = signature;
             RebindTable();
-            await UpdateProcessingAsync();
+
+            // ไม่รอรูป — รูปโหลดนอกเธรดหน้าจอและจัดการ error เอง รอบ refresh จบได้ทันที
+            _ = UpdateProcessingAsync();
         }
         catch (Exception ex)
         {
@@ -1119,6 +1121,15 @@ public partial class OrderListUserControl : UserControl
             if (_startingJobId != null) return;
 
             ShowStartLoading(row.Id);
+
+            // แผง Preview ตามแถวที่กดเริ่ม — เดิมเปลี่ยนเฉพาะตอนคลิกตัวแถว
+            // กดปุ่มเริ่มของแถวอื่นแล้วแผงยังโชว์รูปของงานเดิม ชวนให้ยืนยันผิดงาน
+            if (_selectedJobId != row.Id)
+            {
+                _selectedJobId = row.Id;
+                RestoreSelection();
+                _ = UpdatePreviewAsync();
+            }
             try
             {
                 if (buttonId == "start") await StartJobAsync(row.Id);
@@ -1340,10 +1351,26 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private async Task StartJobAsync(int jobId)
     {
+        // จดเวลาแต่ละขั้นลง log — ไว้ตอบว่า "กดเริ่มแล้วหน่วง" หน่วงที่ขั้นไหน
+        // ขั้นยืนยันรวมเวลาที่คนอ่านกล่องด้วย ไม่ใช่เวลาที่โปรแกรมทำงาน
+        var timing = new StepTiming("OrderList.Start", $"เริ่มงาน {JobName(jobId)} (id {jobId})");
+        try
+        {
+            await StartJobCoreAsync(jobId, timing);
+        }
+        finally
+        {
+            timing.Write();
+        }
+    }
+
+    private async Task StartJobCoreAsync(int jobId, StepTiming timing)
+    {
         if (_api == null || _sending) return;
 
         // อ่านสดก่อนตัดสินใจ — ตารางอาจค้างได้ถึง 5 วิตามรอบ poll
         var resolved = await LoadJobAsync(jobId, $"กำลังโหลดข้อมูล · {JobName(jobId)}");
+        timing.Mark("โหลดงาน");
         if (IsDisposed) return;
         if (resolved == null)
         {
@@ -1384,13 +1411,16 @@ public partial class OrderListUserControl : UserControl
         //
         // กล่องเลือกรุ่นย่อยกับกล่องยืนยัน default ต้องเด้งที่จอของคนที่กดเริ่ม
         // ไม่ใช่ไปเด้งตอนส่งจริงซึ่งเกิดที่ ST1 เสมอ
-        var uvPicks = PickUvPrograms(plan, resolved);
+        var uvPicks = await PickUvProgramsAsync(plan, resolved);
+        timing.Mark("เลือกโปรแกรม UV");
         if (uvPicks == null || IsDisposed) return;
 
         // สรุปให้ดูก่อนว่าจะส่งอะไรเข้าเครื่องไหนบ้าง แล้วค่อยลงมือ
         //
         // ถามก่อนจอง ไม่ใช่หลังจอง — กดยกเลิกแล้วต้องไม่มีอะไรค้างอยู่ในคิวเลย
-        if (!await ConfirmStartAsync(jobId, resolved, plan, uvPicks)) return;
+        bool confirmed = await ConfirmStartAsync(jobId, resolved, plan, uvPicks);
+        timing.Mark("ยืนยัน (รวมเวลาคนกด)");
+        if (!confirmed) return;
         if (IsDisposed) return;
 
         // ต่อให้ครบทุกเครื่องก่อน ถึงจะจองคิวและเริ่มส่ง
@@ -1409,7 +1439,9 @@ public partial class OrderListUserControl : UserControl
         // ไม่เสียอะไรด้วย เพราะงานที่ ST3 กดเริ่มได้มีแต่รหัส 10 ซึ่งใช้เครื่องเดียว
         // (UV2) ไม่มีเคสเริ่มไปได้ครึ่งทางแบบงานหลายเครื่องที่ด่านนี้มีไว้กัน และถ้า
         // ST1 ส่งไม่ผ่านจริง มันรายงานกลับมาที่จอ ST3 ให้อยู่แล้ว
-        if (!StationService.IsSt3 && await BlockedByUnreachableAsync(jobId, plan, resolved)) return;
+        bool blocked = !StationService.IsSt3 && await BlockedByUnreachableAsync(jobId, plan, resolved);
+        timing.Mark("ตรวจการเชื่อมต่อ");
+        if (blocked) return;
         if (IsDisposed) return;
 
         // จองทุกเครื่องที่แผนของงานนี้ต้องใช้ ในคราวเดียว
@@ -1423,6 +1455,7 @@ public partial class OrderListUserControl : UserControl
         // ถ้าจองไว้ตั้งแต่ตอนนี้ เครื่องจะส่งรอบสองให้ทันทีที่ว่าง ทั้งที่ชิ้นงานยังไม่กลับมา
         var (queued, queueError) = await _api.EnqueueMachinesAsync(
             jobId, QueueItemsFor(plan.Steps, uvPicks).Where(i => i.Round == 1).ToList());
+        timing.Mark("จองคิว");
         if (IsDisposed) return;
 
         if (!queued)
@@ -1437,6 +1470,7 @@ public partial class OrderListUserControl : UserControl
         if (station == StationService.St3)
         {
             var errors = await ClaimRemoteQueueAsync(jobId, plan.Steps);
+            timing.Mark("ขอเริ่มคิว");
             if (IsDisposed) return;
             if (errors.Count == 0)
                 Notify.Success(this, $"{JobName(jobId)} เข้าคิวแล้ว · ST1 จะส่งตามลำดับคิว");
@@ -1448,6 +1482,7 @@ public partial class OrderListUserControl : UserControl
         }
 
         await SendQueuedForJobAsync(jobId, resolved, $"เริ่มงาน {JobName(jobId)}");
+        timing.Mark("ส่งเข้าเครื่อง");
     }
 
     /// <summary>
@@ -1589,7 +1624,14 @@ public partial class OrderListUserControl : UserControl
         int jobId, ResolvedJobResponse resolved, MarkingPlan plan,
         Dictionary<string, string> uvPicks)
     {
+        // อ่านคิวไปพร้อมกับเช็คโฟลเดอร์ UV ที่ข้อความสรุปต้องใช้ (แตะแชร์ของเครื่อง UV)
+        // พอสร้างข้อความบนเธรดหน้าจอ ผลเช็คถูกจำไว้แล้ว ไม่ต้องรอเครือข่ายอีก
+        var warm = Task.WhenAll(plan.Steps
+            .Where(step => !uvPicks.ContainsKey(step))
+            .Select(UvNumberOf).OfType<int>().Distinct()
+            .Select(UvSettingsManager.GetDocumentFolderAsync));
         var (rows, _) = await _api!.GetMachineQueueAsync();
+        await warm;
         if (IsDisposed) return false;
 
         return Confirm.Ask(this, "ยืนยันเริ่มงาน",
@@ -1719,7 +1761,7 @@ public partial class OrderListUserControl : UserControl
     /// การปล่อยให้ ST1 ถามเองเหมือนเดิม กล่องสรุปจะบอกไว้ว่าขั้นไหนเข้าข่ายนี้
     /// </para>
     /// </summary>
-    private Dictionary<string, string>? PickUvPrograms(MarkingPlan plan, ResolvedJobResponse resolved)
+    private async Task<Dictionary<string, string>?> PickUvProgramsAsync(MarkingPlan plan, ResolvedJobResponse resolved)
     {
         var picks = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -1734,11 +1776,13 @@ public partial class OrderListUserControl : UserControl
             // ตอนส่งจริงเป็นคนบอกเองว่าข้อมูลของเครื่องนี้ไม่ครบ
             if (string.IsNullOrWhiteSpace(uvRow?.ProgramName)) continue;
 
-            var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber);
+            // โฟลเดอร์อยู่บนเครื่อง UV — แตะนอกเธรดหน้าจอ ไม่งั้นแชร์ช้าแล้วจอนิ่ง
+            var docFolder = await UvSettingsManager.GetDocumentFolderAsync(uvNumber);
             if (docFolder == null) continue;
+            if (IsDisposed) return null;
 
-            var pick = UvProgramResolver.Resolve(uvRow.ProgramName, docFolder, this);
-            if (pick.Program == null) return null;
+            var pick = await UvProgramResolver.ResolveAsync(uvRow.ProgramName, docFolder, this);
+            if (pick.Program == null || IsDisposed) return null;
 
             var uvName = UvSettingsManager.Read(
                 uvNumber == 1 ? "UV1_NAME" : "UV2_NAME", $"UV-00{uvNumber}");
@@ -1903,7 +1947,7 @@ public partial class OrderListUserControl : UserControl
                     try
                     {
                         var requested = item.Job.UvJobData?.FirstOrDefault(u => u.Machine == row.Machine)?.ProgramName;
-                        var pick = UvProgramResolver.Resolve(requested, UvSettingsManager.GetDocumentFolder(uvNumber), this);
+                        var pick = await UvProgramResolver.ResolveAsync(requested, uvNumber, this);
                         if (pick.Program == null || (pick.IsDefault &&
                             !UvProgramResolver.ConfirmDefault(requested ?? "", row.Machine, this)))
                         {
@@ -1975,10 +2019,13 @@ public partial class OrderListUserControl : UserControl
         if (lease == null)
             return new(false, [Notify.Note($"{row.Machine}: รอการส่งรอบปัจจุบันจบก่อน")], HeldForReview: true);
         SetMachineStatus(row, "กำลังเตรียมส่ง", AntdUI.TTypeMini.Primary);
+        var timing = new StepTiming("OrderList.Send", $"ส่ง {row.Machine} คิว {row.Id} งาน {row.PrintJobsId}");
         var token = Guid.NewGuid().ToString();
         var (began, beginError) = await _api!.BeginQueueSendAsync(row.Id, token);
+        timing.Mark("จองการส่ง");
         if (!began)
         {
+            timing.Write("ยังไม่ส่ง");
             SetMachineStatus(row, "ตรวจสอบคิวก่อนส่งซ้ำ", AntdUI.TTypeMini.Warn);
             return new(false, [Notify.Bad($"{row.Machine}: ยังไม่ส่ง — {beginError}")], HeldForReview: true);
         }
@@ -1994,6 +2041,7 @@ public partial class OrderListUserControl : UserControl
         {
             result = new(false, [Notify.Bad($"{row.Machine}: {ex.Message}")]);
         }
+        timing.Mark("คุยกับเครื่อง");
 
         var outcome = result.Sent ? "sent" : result.SafeToRetry ? "not_sent" : "unknown";
         var error = string.Join(" · ", result.Lines.Where(l => l.Kind == Notify.ResultKind.Error).Select(l => l.Text));
@@ -2003,6 +2051,8 @@ public partial class OrderListUserControl : UserControl
         // ลองบันทึกผลซ้ำได้ แต่ห้ามเรียกส่งเครื่องซ้ำ
         if (!recorded.ok)
             recorded = await _api.FinishQueueSendAsync(row.Id, token, outcome, result.Detail, error);
+        timing.Mark("บันทึกผล");
+        timing.Write(outcome);
 
         bool held = !recorded.ok || outcome == "unknown";
         if (held)
@@ -2139,8 +2189,8 @@ public partial class OrderListUserControl : UserControl
         int uvNumber = step == "UV1" ? 1 : 2;
         var uvRow = resolved.UvJobData.FirstOrDefault(r => r.Machine == step);
 
-        var pick = UvProgramResolver.Resolve(
-            uvRow?.ProgramName, UvSettingsManager.GetDocumentFolder(uvNumber), this);
+        var pick = await UvProgramResolver.ResolveAsync(uvRow?.ProgramName, uvNumber, this);
+        if (IsDisposed) return;
 
         if (pick.Program == null) return;   // ผู้ใช้ปิดกล่องเลือกรุ่นย่อย
 
@@ -2919,6 +2969,16 @@ public partial class OrderListUserControl : UserControl
     private int? _processingJobId;
     private long _processingStamp;
 
+    /// <summary>
+    /// เลขรอบของแต่ละแผง — รูปโหลดบนเธรดพื้นหลัง ระหว่างนั้นอาจมีคนคลิกแถวอื่นไปแล้ว
+    /// รอบที่โหลดเสร็จช้ากว่าและเลขไม่ตรงกับรอบล่าสุดจะถูกทิ้ง ไม่ไปทับรูปของงานที่เลือกใหม่
+    /// </summary>
+    private int _previewVersion;
+    private int _processingVersion;
+
+    /// <summary>โหลดเกินเท่านี้ค่อยขึ้น "กำลังโหลดรูป…" — โหลดเร็วจะได้ไม่เห็นข้อความกะพริบ</summary>
+    private const int LoadingHintMs = 300;
+
     private void WirePanels()
     {
         tblOrders.CellClick += TblOrders_CellClick;
@@ -2960,10 +3020,28 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        var sides = await BuildSidesAsync(job);
-        if (IsDisposed) return;
+        // โหลดรูปนอกเธรดหน้าจอ — โฟลเดอร์รูปอยู่บนแชร์ ช้าหรือหลุดแล้วจอต้องไม่นิ่ง
+        int version = ++_previewVersion;
+        var load = LoadSidesAsync(job, sentOnly: false);
+        await HintWhileLoadingAsync(load, () => version == _previewVersion,
+            picPrevPlate, lblPrevPlateCaption, picPrevShim, lblPrevShimCaption);
 
-        ShowPreviewSides(Find(sides, "Plate"), Find(sides, "Shim"));
+        SideView? plate, shim;
+        try { (plate, shim) = await load; }
+        catch (Exception ex)
+        {
+            AppLog.Error("OrderList.Preview", ex);
+            return;
+        }
+
+        if (IsDisposed || version != _previewVersion)
+        {
+            plate?.Image?.Dispose();
+            shim?.Image?.Dispose();
+            return;
+        }
+
+        ShowPreviewSides(plate, shim);
     }
 
     /// <summary>
@@ -3000,14 +3078,50 @@ public partial class OrderListUserControl : UserControl
         _processingJobId = job.Id;
         _processingStamp = stamp;
 
-        var sides = await BuildSidesAsync(job);
-        if (IsDisposed) return;
-
         // แผงนี้บอกว่า "ส่งอะไรเข้าเครื่องไปแล้ว" ไม่ใช่ "งานนี้ต้องทำอะไรบ้าง"
         // method 12 กดส่ง MK อย่างเดียวต้องเห็นแค่ด้านของ MK จนกว่าจะกดส่ง UV2
-        sides = OnlySent(sides, job.Commands);
+        int version = ++_processingVersion;
+        var load = LoadSidesAsync(job, sentOnly: true);
+        await HintWhileLoadingAsync(load, () => version == _processingVersion,
+            picProcPlate, lblProcPlateCaption, picProcShim, lblProcShimCaption);
 
-        ShowProcessingSides(Find(sides, "Plate"), Find(sides, "Shim"));
+        SideView? plate, shim;
+        try { (plate, shim) = await load; }
+        catch (Exception ex)
+        {
+            // โหลดไม่สำเร็จ — ล้างตัวจำไว้ รอบ poll หน้าจะลองใหม่เอง
+            AppLog.Error("OrderList.Processing", ex);
+            if (version == _processingVersion) _processingJobId = null;
+            return;
+        }
+
+        if (IsDisposed || version != _processingVersion)
+        {
+            plate?.Image?.Dispose();
+            shim?.Image?.Dispose();
+            return;
+        }
+
+        ShowProcessingSides(plate, shim);
+    }
+
+    /// <summary>
+    /// โหลดเกิน <see cref="LoadingHintMs"/> แล้วยังไม่เสร็จ — เอารูปของงานก่อนหน้าออก
+    /// และขึ้น "กำลังโหลดรูป…" ไม่ให้คนดูเข้าใจผิดว่ารูปเดิมเป็นของงานที่เพิ่งเลือก
+    /// </summary>
+    private async Task HintWhileLoadingAsync(Task load, Func<bool> stillCurrent,
+        PictureBox plateBox, Label plateCaption, PictureBox shimBox, Label shimCaption)
+    {
+        if (await Task.WhenAny(load, Task.Delay(LoadingHintMs)) == load) return;
+        if (IsDisposed || !stillCurrent()) return;
+
+        foreach (var (box, caption) in new[] { (plateBox, plateCaption), (shimBox, shimCaption) })
+        {
+            if (!box.Visible) continue;
+            box.Image?.Dispose();
+            box.Image = null;
+            caption.Text = "กำลังโหลดรูป…";
+        }
     }
 
     /// <summary>
@@ -3177,7 +3291,25 @@ public partial class OrderListUserControl : UserControl
             }
         }
 
-        return MarkingRefResolver.Resolve(method, job.PlanRouting?.ErpMfg, uv1, uv2);
+        // ค้นรูปในโฟลเดอร์บนแชร์ — ทำนอกเธรดหน้าจอ
+        var erp = job.PlanRouting?.ErpMfg;
+        return await Task.Run(() => MarkingRefResolver.Resolve(method, erp, uv1, uv2));
+    }
+
+    /// <summary>
+    /// ทุกอย่างที่ช่องรูปหนึ่งช่องต้องใช้ — รูปที่เปิดแล้วกับข้อความใต้รูป
+    /// เตรียมบนเธรดพื้นหลังให้เสร็จ เธรดหน้าจอแค่เอาไปวาง
+    /// </summary>
+    private sealed record SideView(MarkingRefSide Side, Image? Image, string Caption);
+
+    private async Task<(SideView? Plate, SideView? Shim)> LoadSidesAsync(PrintJob job, bool sentOnly)
+    {
+        var sides = await BuildSidesAsync(job);
+        if (sentOnly) sides = OnlySent(sides, job.Commands);
+
+        var plate = Find(sides, "Plate");
+        var shim = Find(sides, "Shim");
+        return await Task.Run(() => (PrepareSide(plate), PrepareSide(shim)));
     }
 
     /// <summary>
@@ -3205,15 +3337,18 @@ public partial class OrderListUserControl : UserControl
 
     // ── แผงรูปทั้งแผง ──────────────────────────────────────
 
-    private void ShowPreviewSides(MarkingRefSide? plate, MarkingRefSide? shim)
+    private void ShowPreviewSides(SideView? plate, SideView? shim)
     {
+        // วางของใหม่แล้ว รอบที่ยังโหลดค้างอยู่ถือว่าเก่า ห้ามมาทับ
+        _previewVersion++;
         ApplySide(plate, picPrevPlate, lblPrevPlateCaption);
         ApplySide(shim, picPrevShim, lblPrevShimCaption);
         BalanceSlots(tlpPreviewSlots, picPrevPlate, picPrevShim);
     }
 
-    private void ShowProcessingSides(MarkingRefSide? plate, MarkingRefSide? shim)
+    private void ShowProcessingSides(SideView? plate, SideView? shim)
     {
+        _processingVersion++;
         ApplySide(plate, picProcPlate, lblProcPlateCaption);
         ApplySide(shim, picProcShim, lblProcShimCaption);
         BalanceSlots(tlpProcessingSlots, picProcPlate, picProcShim);
@@ -3273,21 +3408,13 @@ public partial class OrderListUserControl : UserControl
     /// <summary>
     /// ด้านที่ marking method ไม่ได้ใช้ → ซ่อนทั้งช่อง
     /// ด้านที่ใช้แต่ไม่มีรูป → ยังโชว์ป้ายไว้ พร้อมบอกสาเหตุ ไม่ปล่อยว่างเปล่า
+    /// <para>
+    /// ทำนอกเธรดหน้าจอ — ทั้งการเช็คโฟลเดอร์และการเปิดไฟล์รูปแตะแชร์ทั้งคู่
+    /// </para>
     /// </summary>
-    private static void ApplySide(MarkingRefSide? side, PictureBox box, Label caption)
+    private static SideView? PrepareSide(MarkingRefSide? side)
     {
-        box.Image?.Dispose();
-        box.Image = null;
-
-        if (side == null)
-        {
-            ClearSlot(box, caption);
-            return;
-        }
-
-        box.Tag = side;
-        box.Visible = true;
-        caption.Visible = true;
+        if (side == null) return null;
 
         var path = side.Images.FirstOrDefault();
         if (path == null)
@@ -3297,29 +3424,39 @@ public partial class OrderListUserControl : UserControl
                 : side.NearMiss > 0
                     ? $"ไม่พบรูปชื่อ {side.LookupName} (มี {side.NearMiss} ไฟล์ชื่อใกล้เคียง)"
                     : MarkingRefImageService.DescribeEmpty(MarkingRefImageService.CheckFolder());
-            caption.Text = $"{side.Side} · {side.Machine} · {reason}";
-            box.Image = MarkingRefImageService.Placeholder();
-            return;
+            return new SideView(side, MarkingRefImageService.Placeholder(), $"{side.Side} · {side.Machine} · {reason}");
         }
 
         // ยังไม่ได้เลือกรุ่นย่อย — หยิบใบไหนมาโชว์ก็ดูเหมือนระบบเลือกไว้ให้แล้ว
         // ปล่อยกรอบว่างไว้แล้วบอกตรง ๆ ว่ามีให้เลือกกี่แบบ (กดที่กรอบดูตัวอย่างได้)
         if (side.Pending)
-        {
-            caption.Text = $"{side.Side} · {side.Machine} · ยังไม่ได้เลือกรุ่น ({side.Images.Count} แบบ)";
-            return;
-        }
+            return new SideView(side, null, $"{side.Side} · {side.Machine} · ยังไม่ได้เลือกรุ่น ({side.Images.Count} แบบ)");
 
-        box.Image = MarkingRefImageService.LoadImageNoLock(path);
-        if (box.Image == null)
-        {
-            caption.Text = $"{side.Side} · {side.Machine} · เปิดไฟล์รูปไม่ได้";
-            box.Image = MarkingRefImageService.Placeholder();
-            return;
-        }
+        var image = MarkingRefImageService.LoadImageNoLock(path);
+        if (image == null)
+            return new SideView(side, MarkingRefImageService.Placeholder(), $"{side.Side} · {side.Machine} · เปิดไฟล์รูปไม่ได้");
 
         var more = side.Images.Count > 1 ? $"  (+{side.Images.Count - 1})" : "";
-        caption.Text = $"{side.Side} · {side.Machine} · {Path.GetFileName(path)}{more}";
+        return new SideView(side, image, $"{side.Side} · {side.Machine} · {Path.GetFileName(path)}{more}");
+    }
+
+    /// <summary>วางของที่เตรียมไว้ลงช่อง — งานหน้าจอล้วน ไม่แตะดิสก์</summary>
+    private static void ApplySide(SideView? view, PictureBox box, Label caption)
+    {
+        box.Image?.Dispose();
+        box.Image = null;
+
+        if (view == null)
+        {
+            ClearSlot(box, caption);
+            return;
+        }
+
+        box.Tag = view.Side;
+        box.Visible = true;
+        caption.Visible = true;
+        caption.Text = view.Caption;
+        box.Image = view.Image;
     }
 
     /// <summary>
@@ -3344,7 +3481,8 @@ public partial class OrderListUserControl : UserControl
 
         var reordered = new List<string> { chosen };
         reordered.AddRange(side.Images.Where(path => path != chosen));
-        ApplySide(side with { Images = reordered, Pending = false }, box, caption);
+        // เปิดรูปใบเดียวที่เพิ่งเลือกจากกล่อง ซึ่งเพิ่งอ่านไฟล์เดียวกันไปเมื่อครู่ — ทำตรงนี้ได้
+        ApplySide(PrepareSide(side with { Images = reordered, Pending = false }), box, caption);
 
         // เปิดดูเองตอนที่ยังไม่ได้เลือกรุ่น ต้องไม่ให้เข้าใจว่านี่คือรุ่นที่จะพิมพ์
         if (side.Pending) caption.Text += "  (ตัวอย่าง)";

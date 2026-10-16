@@ -32,19 +32,119 @@ public static class MarkingRefImageService
     }
 
     /// <summary>ตรวจโฟลเดอร์รูปหนึ่งครั้ง เพื่อเลือกข้อความที่จะบอกผู้ใช้</summary>
-    public static FolderState CheckFolder()
+    public static FolderState CheckFolder() => GetListing().State;
+
+    /// <summary>
+    /// อ่านรายชื่อไฟล์ในโฟลเดอร์รูปเตรียมไว้บนเธรดพื้นหลัง
+    /// เรียกก่อนเปิดหน้าจอที่จะค้นรูปหลายครั้ง การค้นหลังจากนั้นใช้รายชื่อที่จำไว้ ไม่แตะแชร์อีก
+    /// </summary>
+    public static Task WarmAsync() => Task.Run(() => GetListing());
+
+    // ── รายชื่อไฟล์ที่จำไว้ ─────────────────────────────────
+    //
+    // เดิมค้นรูปหนึ่งครั้ง = ไล่รายชื่อไฟล์ทั้งโฟลเดอร์บนแชร์หนึ่งรอบ หน้า Preview หนึ่งงาน
+    // ค้น 2–4 ครั้ง หน้าเลือกรุ่นย่อยค้นรุ่นละครั้ง ทุกครั้งวิ่งข้ามเครือข่ายใหม่หมด
+    // และแชร์ที่ดับทำให้ค้างรอบละ 20–60 วินาที
+    //
+    // ตอนนี้อ่านรายชื่อครั้งเดียวแล้วจำไว้สั้น ๆ การจับคู่ชื่อ / เรียงลำดับยังทำแบบเดิมทุกอย่าง
+    // ผลที่ได้จึงเหมือนเดิม ต่างแค่ไม่วิ่งไปถามแชร์ซ้ำ ๆ
+    //
+    // ไฟล์รูปที่เพิ่งวางลงโฟลเดอร์จะเห็นภายในไม่เกิน ListingCacheFor
+
+    private sealed record Listing(FolderState State, string[] Files, DateTime At);
+
+    private static readonly TimeSpan ListingCacheFor = TimeSpan.FromSeconds(10);
+
+    /// <summary>ผลที่เข้าไม่ถึง จำไว้สั้นกว่า — แก้สายแล้วจะเห็นรูปเร็ว</summary>
+    private static readonly TimeSpan FailedCacheFor = TimeSpan.FromSeconds(3);
+
+    /// <summary>
+    /// เพดานเวลารอรายชื่อ — เครื่องตอบแต่แชร์อ่านไม่ได้ก็มี ผู้เรียกจะไม่ค้างเกินนี้
+    /// (การอ่านยังวิ่งต่อข้างหลัง เสร็จเมื่อไหร่ก็เก็บไว้ใช้รอบหน้า)
+    /// </summary>
+    private static readonly TimeSpan ListTimeout = TimeSpan.FromSeconds(6);
+
+    private static readonly object Gate = new();
+    private static Listing? _cached;
+    private static string? _cachedFolder;
+    private static Task<Listing>? _loading;
+    private static string? _loadingFolder;
+
+    private static Listing GetListing()
     {
         var folder = FolderPath;
-        if (string.IsNullOrWhiteSpace(folder)) return FolderState.NotConfigured;
+        if (string.IsNullOrWhiteSpace(folder))
+            return new Listing(FolderState.NotConfigured, [], DateTime.UtcNow);
+
+        Task<Listing> task;
+        lock (Gate)
+        {
+            if (_cached != null &&
+                string.Equals(_cachedFolder, folder, StringComparison.OrdinalIgnoreCase) &&
+                DateTime.UtcNow - _cached.At < (_cached.State == FolderState.Ok ? ListingCacheFor : FailedCacheFor))
+                return _cached;
+
+            // มีคนกำลังอ่านโฟลเดอร์เดียวกันอยู่ก็รอตัวนั้น ไม่เปิดเธรดใหม่ไปค้างซ้อน
+            if (_loading != null && string.Equals(_loadingFolder, folder, StringComparison.OrdinalIgnoreCase))
+            {
+                task = _loading;
+            }
+            else
+            {
+                task = Task.Run(() => Load(folder));
+                _loading = task;
+                _loadingFolder = folder;
+            }
+        }
 
         try
         {
-            return Directory.Exists(folder) ? FolderState.Ok : FolderState.Unreachable;
+            return task.WaitAsync(ListTimeout).GetAwaiter().GetResult();
         }
         catch
         {
-            return FolderState.Unreachable;
+            return new Listing(FolderState.Unreachable, [], DateTime.UtcNow);
         }
+    }
+
+    private static Listing Load(string folder)
+    {
+        Listing listing;
+        try
+        {
+            if (PathProbe.HostOf(folder) is string host && !PathProbe.HostUpAsync(host).GetAwaiter().GetResult())
+            {
+                listing = new Listing(FolderState.Unreachable, [], DateTime.UtcNow);
+            }
+            else if (!Directory.Exists(folder))
+            {
+                listing = new Listing(FolderState.Unreachable, [], DateTime.UtcNow);
+            }
+            else
+            {
+                var files = Directory.EnumerateFiles(folder)
+                    .Where(f => Array.IndexOf(Extensions, Path.GetExtension(f).ToLowerInvariant()) >= 0)
+                    .ToArray();
+                listing = new Listing(FolderState.Ok, files, DateTime.UtcNow);
+            }
+        }
+        catch
+        {
+            // share unavailable / permission — treat as no images
+            listing = new Listing(FolderState.Unreachable, [], DateTime.UtcNow);
+        }
+
+        lock (Gate)
+        {
+            _cached = listing;
+            _cachedFolder = folder;
+            if (string.Equals(_loadingFolder, folder, StringComparison.OrdinalIgnoreCase))
+            {
+                _loading = null;
+                _loadingFolder = null;
+            }
+        }
+        return listing;
     }
 
     /// <summary>ข้อความอธิบายสาเหตุที่ไม่มีรูป ให้ทุกหน้าพูดเหมือนกัน</summary>
@@ -76,28 +176,17 @@ public static class MarkingRefImageService
         var result = new List<string>();
         if (string.IsNullOrWhiteSpace(programName)) return result;
 
-        string folder = FolderPath;
-        if (string.IsNullOrWhiteSpace(folder) || !Directory.Exists(folder)) return result;
+        var listing = GetListing();
+        if (listing.State != FolderState.Ok) return result;
 
         string name = programName.Trim();
-        try
+        foreach (var file in listing.Files)
         {
-            foreach (var file in Directory.EnumerateFiles(folder))
-            {
-                if (Array.IndexOf(Extensions, Path.GetExtension(file).ToLowerInvariant()) < 0)
-                    continue;
+            string stem = Path.GetFileNameWithoutExtension(file);
+            bool match = stem.Equals(name, StringComparison.OrdinalIgnoreCase) ||
+                (includeSuffixed && stem.StartsWith(name + "-", StringComparison.OrdinalIgnoreCase));
 
-                string stem = Path.GetFileNameWithoutExtension(file);
-                bool match = stem.Equals(name, StringComparison.OrdinalIgnoreCase) ||
-                    (includeSuffixed && stem.StartsWith(name + "-", StringComparison.OrdinalIgnoreCase));
-
-                if (match) result.Add(file);
-            }
-        }
-        catch
-        {
-            // share unavailable / permission — treat as no images
-            return new List<string>();
+            if (match) result.Add(file);
         }
 
         result.Sort(StringComparer.OrdinalIgnoreCase);
