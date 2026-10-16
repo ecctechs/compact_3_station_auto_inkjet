@@ -41,6 +41,8 @@ public partial class ScanBarcodeUserControl : UserControl
         btnEditQty.Click += BtnEditQty_Click;
         txtBarcode.KeyDown += TxtBarcode_KeyDown;
         txtBarcode.TextChanged += TxtBarcode_TextChanged;
+        txtBarcode.GotFocus += (_, _) => UseEnglishKeyboard();
+        txtBarcode.LostFocus += (_, _) => RestoreKeyboard();
 
         // จอที่หน้างานเป็นทัชสกรีน ไม่มีคีย์บอร์ดให้กด Enter — โปรแกรมจึงต้องดึงข้อมูล
         // ให้เองเมื่อพนักงานพิมพ์เลขเสร็จ ไม่ใช่รอให้สั่ง
@@ -73,6 +75,74 @@ public partial class ScanBarcodeUserControl : UserControl
             if (IsDisposed || !txtBarcode.Visible) return;
             txtBarcode.Focus();
         });
+    }
+
+    /// <summary>
+    /// คืนเคอร์เซอร์ให้ช่องบาร์โค้ด และเลือกข้อความเดิมไว้ทั้งหมด
+    /// <para>
+    /// เรียกหลังจบทุกการกระทำบนหน้านี้ (ดึงข้อมูล, กด OK, แก้ Qty, กล่องเตือน)
+    /// เดิมหลังกดปุ่มหรือปิดกล่อง โฟกัสค้างอยู่ที่ปุ่ม — โดยเฉพาะตอนกด OK ซึ่งปุ่มถูกปิด
+    /// ชั่วคราวระหว่างทำงาน โฟกัสเลยกระโดดไปปุ่ม Clear ยิงบาร์โค้ดใบถัดไปแล้วหายเงียบ
+    /// </para>
+    /// <para>
+    /// เลือกข้อความเดิมไว้ เพราะเครื่องสแกนพิมพ์ต่อท้ายของที่อยู่ในช่อง ยิงใบใหม่ทับ
+    /// ใบที่หาไม่เจอหรือใบที่ดึงข้อมูลแล้วจะกลายเป็น "C260721-001C260721-002"
+    /// การเลือกไว้ทำให้ใบใหม่เขียนทับแทน พนักงานไม่ต้องกด Clear ก่อน
+    /// </para>
+    /// </summary>
+    private void ReturnToBarcode()
+    {
+        if (!IsHandleCreated) return;
+        BeginInvoke(() =>
+        {
+            if (IsDisposed || !txtBarcode.Visible) return;
+            txtBarcode.Focus();
+            txtBarcode.SelectAll();
+        });
+    }
+
+    /// <summary>ภาษาแป้นพิมพ์ก่อนช่องบาร์โค้ดได้โฟกัส — คืนให้ตอนออกจากช่อง</summary>
+    private InputLanguage? _keyboardBeforeScan;
+
+    /// <summary>
+    /// สลับแป้นพิมพ์เป็นภาษาอังกฤษตอนอยู่ในช่องบาร์โค้ด
+    /// <para>
+    /// เครื่องสแกนแบบ keyboard wedge ส่ง "ปุ่มที่กด" ไม่ใช่ตัวอักษร ถ้า Windows อยู่ภาษาไทย
+    /// C260721-001 จะกลายเป็น "ฉ/ุจึ/ๅขจจๅ" แล้วหาไม่เจอทุกใบ (ทดสอบแล้วเป็นแบบนี้จริง)
+    /// </para>
+    /// <para>
+    /// ไม่มีภาษาอังกฤษติดตั้งในเครื่องก็ไม่ทำอะไร สลับไม่ได้ก็ปล่อยไว้ ไม่ให้ช่องใช้ไม่ได้
+    /// </para>
+    /// </summary>
+    private void UseEnglishKeyboard()
+    {
+        try
+        {
+            var current = InputLanguage.CurrentInputLanguage;
+            if (current.Culture.TwoLetterISOLanguageName == "en") return;
+
+            var english = InputLanguage.InstalledInputLanguages.Cast<InputLanguage>()
+                .FirstOrDefault(l => l.Culture.TwoLetterISOLanguageName == "en");
+            if (english == null) return;
+
+            _keyboardBeforeScan = current;
+            InputLanguage.CurrentInputLanguage = english;
+        }
+        catch
+        {
+            // สลับไม่ได้ก็พิมพ์ด้วยภาษาเดิมไป
+        }
+    }
+
+    /// <summary>ออกจากช่องบาร์โค้ด — คืนภาษาเดิมที่ผู้ใช้ตั้งไว้</summary>
+    private void RestoreKeyboard()
+    {
+        var previous = _keyboardBeforeScan;
+        _keyboardBeforeScan = null;
+        if (previous == null) return;
+
+        try { InputLanguage.CurrentInputLanguage = previous; }
+        catch { }
     }
 
     private (ApiClient api, SqliteDataService sqlite) GetServices()
@@ -144,7 +214,11 @@ public partial class ScanBarcodeUserControl : UserControl
         var barcode = txtBarcode.Text.Trim();
         if (string.IsNullOrWhiteSpace(barcode))
         {
-            if (!quiet) ShowWarning("กรุณาสแกนหรือพิมพ์ Barcode");
+            if (!quiet)
+            {
+                ShowWarning("กรุณาสแกนหรือพิมพ์ Barcode");
+                ReturnToBarcode();
+            }
             return false;
         }
 
@@ -152,7 +226,10 @@ public partial class ScanBarcodeUserControl : UserControl
         if (!sqlite.CanConnect())
         {
             if (!quiet)
+            {
                 ShowError("ไม่สามารถเชื่อมต่อ PrintData.db3 ได้\nกรุณาตรวจสอบ Database Path ใน Setting");
+                ReturnToBarcode();
+            }
             return false;
         }
 
@@ -165,7 +242,11 @@ public partial class ScanBarcodeUserControl : UserControl
         {
             // PrintData.db3 อยู่บนไดรฟ์เครือข่าย หลุดกลางคันได้แม้ CanConnect เพิ่งผ่าน
             AppLog.Error("ScanBarcode.LoadLot", ex);
-            if (!quiet) ShowError(ReadFailedMessage(ex));
+            if (!quiet)
+            {
+                ShowError(ReadFailedMessage(ex));
+                ReturnToBarcode();
+            }
             return false;
         }
 
@@ -175,7 +256,7 @@ public partial class ScanBarcodeUserControl : UserControl
 
             ClearLotInfo();
             ShowWarning($"ไม่พบข้อมูลใน print_data สำหรับ barcode: {barcode}");
-            txtBarcode.Focus();
+            ReturnToBarcode();
             return false;
         }
 
@@ -187,6 +268,9 @@ public partial class ScanBarcodeUserControl : UserControl
         txtMarkingMethod.Text = lot.MarkingMethod ?? "";
         txtQty.Text = lot.Qty?.ToString() ?? "";
         btnEditQty.Enabled = true;
+
+        // ยิงใบถัดไปได้เลย เขียนทับใบนี้ ไม่ต่อท้าย
+        ReturnToBarcode();
         return true;
     }
 
@@ -198,6 +282,18 @@ public partial class ScanBarcodeUserControl : UserControl
     /// ซึ่งยังเก็บค่าดิบจาก print_data ตามเดิม
     /// </summary>
     private void BtnEditQty_Click(object? sender, EventArgs e)
+    {
+        try
+        {
+            EditQty();
+        }
+        finally
+        {
+            ReturnToBarcode();
+        }
+    }
+
+    private void EditQty()
     {
         using var dlg = new InputDialog("Edit Qty", "Qty:", txtQty.Text.Trim());
         if (dlg.ShowDialog(this) != DialogResult.OK) return;
@@ -213,7 +309,12 @@ public partial class ScanBarcodeUserControl : UserControl
 
     private async void BtnConfirm_Click(object? sender, EventArgs e)
     {
-        if (!ValidateForm()) return;
+        if (!ValidateForm())
+        {
+            // ยังไม่ลงทะเบียน (ดึงข้อมูลให้ดูก่อน / Qty ไม่ถูก) — โฟกัสยังค้างที่ปุ่ม OK อยู่
+            ReturnToBarcode();
+            return;
+        }
 
         btnConfirm.Loading = true;
         btnConfirm.Enabled = false;
@@ -225,6 +326,7 @@ public partial class ScanBarcodeUserControl : UserControl
         {
             btnConfirm.Loading = false;
             btnConfirm.Enabled = true;
+            ReturnToBarcode();
         }
     }
 
