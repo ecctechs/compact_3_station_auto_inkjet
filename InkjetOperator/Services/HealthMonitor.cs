@@ -178,7 +178,7 @@ public static class HealthMonitor
         try
         {
             using var client = new TcpClient();
-            await client.ConnectAsync(host, tcpPort).WaitAsync(Timeout);
+            await TcpConnect.ConnectAsync(client, host, tcpPort, Timeout);
             return new HealthItem(group, name, HealthState.Ok, where);
         }
         catch (TimeoutException)

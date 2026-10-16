@@ -649,8 +649,7 @@ public static class JobSendService
         try
         {
             using var tcp = new System.Net.Sockets.TcpClient();
-            await tcp.ConnectAsync(ip, port)
-                .WaitAsync(TimeSpan.FromSeconds(ConnectTimeoutSeconds));
+            await TcpConnect.ConnectAsync(tcp, ip, port, TimeSpan.FromSeconds(ConnectTimeoutSeconds));
             return true;
         }
         catch

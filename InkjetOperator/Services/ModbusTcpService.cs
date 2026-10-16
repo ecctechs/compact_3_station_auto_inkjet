@@ -47,7 +47,7 @@ public static class ModbusTcpService
             var tcp = new TcpClient();
             try
             {
-                await tcp.ConnectAsync(ip, port).WaitAsync(TimeSpan.FromMilliseconds(TimeoutMs));
+                await TcpConnect.ConnectAsync(tcp, ip, port, TimeSpan.FromMilliseconds(TimeoutMs));
                 return (new Session(tcp), "");
             }
             catch (Exception ex)

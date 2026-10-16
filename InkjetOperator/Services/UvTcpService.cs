@@ -63,7 +63,7 @@ public class UvTcpService
         using var client = new TcpClient();
         try
         {
-            await client.ConnectAsync(ip, port).WaitAsync(TimeSpan.FromMilliseconds(ConnectTimeoutMs));
+            await TcpConnect.ConnectAsync(client, ip, port, TimeSpan.FromMilliseconds(ConnectTimeoutMs));
         }
         catch (Exception ex)
         {

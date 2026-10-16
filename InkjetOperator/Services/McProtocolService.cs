@@ -222,7 +222,7 @@ public static class McProtocolService
         try
         {
             using var tcp = new TcpClient();
-            await tcp.ConnectAsync(ip, port).WaitAsync(TimeSpan.FromMilliseconds(TimeoutMs));
+            await TcpConnect.ConnectAsync(tcp, ip, port, TimeSpan.FromMilliseconds(TimeoutMs));
             var stream = tcp.GetStream();
 
             await stream.WriteAsync(BuildFrame(command, subcommand, requestData));

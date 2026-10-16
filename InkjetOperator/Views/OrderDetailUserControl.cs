@@ -1530,7 +1530,7 @@ public partial class OrderDetailUserControl : UserControl
         try
         {
             using var tcp = new System.Net.Sockets.TcpClient();
-            await tcp.ConnectAsync(ip, port).WaitAsync(TimeSpan.FromSeconds(3));
+            await Services.TcpConnect.ConnectAsync(tcp, ip, port, TimeSpan.FromSeconds(3));
             return true;
         }
         catch

@@ -154,7 +154,7 @@ public partial class InkjetSettingUserControl : UserControl
         try
         {
             using var tcp = new TcpClient();
-            await tcp.ConnectAsync(ip, MkPrinterPort).WaitAsync(TimeSpan.FromSeconds(3));
+            await Services.TcpConnect.ConnectAsync(tcp, ip, MkPrinterPort, TimeSpan.FromSeconds(3));
             SetDotColor(dot, DesignTokens.Success);
         }
         catch { SetDotColor(dot, DesignTokens.Danger); }
@@ -180,7 +180,7 @@ public partial class InkjetSettingUserControl : UserControl
             try
             {
                 using var tcp = new TcpClient();
-                await tcp.ConnectAsync(ip, port).WaitAsync(TimeSpan.FromSeconds(3));
+                await Services.TcpConnect.ConnectAsync(tcp, ip, port, TimeSpan.FromSeconds(3));
                 ipOk = true;
             }
             catch { /* ipOk stays false */ }
