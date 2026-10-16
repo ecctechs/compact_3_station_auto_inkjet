@@ -445,6 +445,23 @@ try {
     if (-not $devenv -or -not (Test-Path $devenv)) { Fail 'ไม่พบ devenv.exe' }
     Note $devenv
 
+    # MSBuild ของ VS ใช้คอมไพล์ .exe ใน step 4 แทน dotnet build
+    #
+    # dotnet build ของ SDK 8 แปลง ResXFileRef ใน .resx ไม่ได้ — Properties\Resources.resx
+    # เก็บรูป no-image-available.jpg เป็น "ลิงก์ไปไฟล์" ไม่ได้ฝัง byte ไว้ในตัว resx
+    # เจอ error MSB3554 บอกว่าหาโฟลเดอร์ Properties\ ไม่เจอ ซึ่งทำให้เข้าใจผิด
+    # เพราะโฟลเดอร์อยู่ครบ ที่หายคือชื่อไฟล์ในลิงก์ที่ถูกทิ้งไป
+    #
+    # MSBuild.exe รันบน .NET Framework แปลง ResXFileRef ได้ และไม่ใช่ devenv
+    # จึงไม่โยนงานไปให้ IDE ที่เปิดอยู่ — ยังเห็นไฟล์บนดิสก์ตามจริงเหมือน dotnet build
+    $msbuild = & $vswhere -latest -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' |
+               Select-Object -First 1
+    if (-not $msbuild -or -not (Test-Path $msbuild)) {
+        Fail ('ไม่พบ MSBuild.exe ของ Visual Studio — เปิด Visual Studio Installer ' +
+              'แล้วติ๊ก ".NET desktop development" ให้ครบ')
+    }
+    Note $msbuild
+
     # ── เลขเวอร์ชันและ GUID ─────────────────────────────────
     Step 3 'เพิ่มเลขเวอร์ชัน'
 
@@ -497,22 +514,22 @@ try {
     #
     # เจอจริง — csproj เป็น 1.0.22 แต่ exe ที่ถูกห่อยังเป็นของ build เมื่อ 16 นาทีก่อน
     #
-    # dotnet build ไม่ผ่าน IDE จึงเห็นไฟล์บนดิสก์ตามจริงเสมอ
+    # MSBuild.exe ไม่ผ่าน IDE จึงเห็นไฟล์บนดิสก์ตามจริงเสมอ
     Step 4 'คอมไพล์โปรแกรม'
 
-    # เครื่องที่ลงแค่ Visual Studio แต่ไม่ได้ติ๊ก .NET desktop development จะไม่มี
-    # dotnet ให้เรียก ถ้าไม่ดักตรงนี้สคริปต์จะล้มด้วย error ของ PowerShell ที่อ่านไม่รู้เรื่อง
-    if (-not (Get-Command dotnet -CommandType Application -ErrorAction SilentlyContinue)) {
-        Fail ('ไม่พบคำสั่ง dotnet — ติดตั้ง .NET 8 SDK (หรือใหม่กว่า) จาก ' +
-              'https://dotnet.microsoft.com/download แล้วเปิดหน้าต่างใหม่รันอีกครั้ง')
-    }
-    $sdks = @(& dotnet --list-sdks 2>$null | ForEach-Object { [int](("$_" -split '\.')[0]) })
-    if (-not ($sdks | Where-Object { $_ -ge 8 })) {
-        Fail 'เครื่องนี้ไม่มี .NET SDK เวอร์ชัน 8 ขึ้นไป — ติดตั้ง .NET 8 SDK จาก https://dotnet.microsoft.com/download'
+    # restore ก่อน เพราะเรียก MSBuild.exe ตรง ๆ มันไม่ restore ให้เองเหมือน dotnet build
+    # ถ้า package ยังไม่ครบจะล้มตอนคอมไพล์ด้วย error เรื่อง reference ที่อ่านไม่รู้เรื่อง
+    $csprojDir = Split-Path $csproj -Parent
+    $restoreOut = & $msbuild $csproj -t:Restore -p:Configuration=Release -v:m -nologo 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host ''
+        $restoreOut | Select-Object -Last 15 | ForEach-Object {
+            Write-Host "      $_" -ForegroundColor DarkYellow
+        }
+        Fail 'restore package ไม่ผ่าน'
     }
 
-    $csprojDir = Split-Path $csproj -Parent
-    $buildOut = & dotnet build $csproj -c Release --nologo 2>&1
+    $buildOut = & $msbuild $csproj -t:Build -p:Configuration=Release -v:m -nologo 2>&1
     if ($LASTEXITCODE -ne 0) {
         Write-Host ''
         $buildOut | Select-Object -Last 15 | ForEach-Object {
