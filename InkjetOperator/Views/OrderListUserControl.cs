@@ -259,6 +259,7 @@ public partial class OrderListUserControl : UserControl
         _pollTimer?.Stop();
         _pollTimer?.Dispose();
         _pushButton.Dispose();
+        StopSpinners(_displayRows);
         DisposePanelImages();
     }
 
@@ -931,6 +932,9 @@ public partial class OrderListUserControl : UserControl
         // การตั้งเป็น null แล้วตั้งค่าใหม่ทำให้ตารางสร้างแถวใหม่และวาดใหม่สองรอบ
         // ต่อการรีเฟรชหนึ่งครั้ง และมีจังหวะที่ตารางว่างคาอยู่ระหว่างสองบรรทัดนั้น
         // ซึ่งเห็นเป็นอาการกระพริบ การตั้งลิสต์ใหม่ทับไปเลยได้ผลเหมือนกันในรอบเดียว
+        //
+        // ปุ่มที่หมุนอยู่ในแถวชุดเก่าต้องสั่งหยุดก่อนทิ้ง — ดู StopSpinners
+        StopSpinners(_displayRows);
         _displayRows = rows;
         tblOrders.DataSource = rows;
         ReapplySort();
@@ -999,6 +1003,28 @@ public partial class OrderListUserControl : UserControl
                 button.Text = spin ? "" : text;
             }
         }
+    }
+
+    /// <summary>
+    /// หยุดตัวหมุนของปุ่มในแถวชุดที่กำลังจะถูกทิ้ง
+    ///
+    /// <para>
+    /// ตัวหมุนของปุ่มในตาราง AntdUI วิ่งบนเธรดของมันเอง และสั่งวาดตารางใหม่ทุก 10 ms
+    /// จนกว่าจะมีคนตั้ง <c>Loading = false</c> ที่ปุ่มตัวนั้น — ทิ้งแถวไปเฉย ๆ มันไม่หยุด
+    /// </para>
+    /// <para>
+    /// ตารางถูกผูกใหม่ระหว่างที่ปุ่มเริ่มงานหมุนอยู่ได้ทุกเมื่อ (รอบ refresh 5 วิ ตอนกล่อง
+    /// เลือกโปรแกรมหรือกล่องยืนยันเปิดค้าง) ปุ่มเก่าที่หมุนค้างจึงหลุดมือไปทุกครั้ง
+    /// เจอจริงในเครื่องที่กดเริ่มงานไปสองครั้ง: ตัวหมุนสองตัววิ่งค้าง วาดตารางทั้งตาราง
+    /// ไม่หยุด เธรดหน้าจอใช้ CPU 100% แผง Preview ที่ต้องรอคิววาดเลยเปลี่ยนรูปช้าไป
+    /// หลายวินาทีจนดูเหมือนค้าง
+    /// </para>
+    /// </summary>
+    private static void StopSpinners(IEnumerable<OrderRow> rows)
+    {
+        foreach (var row in rows)
+            foreach (var button in row.Op)
+                if (button.Loading) button.Loading = false;
     }
 
     /// <summary>
