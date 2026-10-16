@@ -45,3 +45,6 @@ dist/
 
 # ตัวติดตั้ง .NET runtime ที่สคริปต์ build-installer copy ไปพร้อมไฟล์ติดตั้ง (ไฟล์ใหญ่)
 tools/prereq/
+
+# log ของ backend (utils/logger.js) — อยู่ที่เครื่อง ST1 ไม่ต้องเก็บใน git
+InkjetBackend/logs/
