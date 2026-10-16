@@ -17,7 +17,7 @@ allowed-tools: Bash, PowerShell, Read, Grep, Glob
 โปรแกรมนี้คุยกับเครื่องจักรจริงและไฟล์ตั้งค่าตัวจริงของทั้งเครื่อง ผิดครั้งเดียวกระทบหน้างาน
 
 - **ห้ามเขียน `C:\ProgramData\CompactInkjet\*`** (`Setting.config`, `uv.config`, `patterns.xml`)
-  - ห้ามเรียก `CustomSettingsManager.Write`, `UvSettingsManager`, `PatternStore.Save`, `St1DefaultSettings.ApplyIfSt1` จากเทสหรือ probe
+  - ห้ามเรียก `CustomSettingsManager.Write`, `UvSettingsManager`, `PatternStore.Save` จากเทสหรือ probe
   - ถ้าจำเป็นต้องใช้ค่าตั้ง ให้เปลี่ยน `_store._path` ไปที่ไฟล์ปลอมใน scratchpad ก่อน และตั้ง `AppSettingsFile._accessChecked = true` กันไม่ให้ไปแก้สิทธิ์โฟลเดอร์จริง
 - **ห้ามต่อเครื่องจริงหรือ backend จริง**
   - ห้าม 10.10.100.x, 192.168.1.1, IP ที่อ่านได้จาก Setting.config

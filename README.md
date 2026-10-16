@@ -158,15 +158,15 @@ IP กับ path ต่าง ๆ แก้ในหน้า Setting ของ
 | 9 | ทดสอบหน้างาน | Setting อย่างเดียว |
 | 99 | สำหรับพัฒนา | ทุกหน้า |
 
-ค่าตั้งต้นของ Station 1 (เครื่องที่ตั้งเป็น Station 1 จะได้ค่าพวกนี้เองตอนเปิดครั้งแรก)
+โปรแกรมไม่ลงค่า IP ตั้งต้นให้ ตั้งครั้งเดียวที่หน้า Setting ของแต่ละเครื่อง
 
-| เครื่อง | IP Address | Port |
-| :--- | :--- | :--- |
-| MK-058 / MK-059 | 10.10.100.103 / 10.10.100.104 | |
-| UV1 / UV2 | 10.10.100.4 / 10.10.100.3 | 10086 |
-| PLC MK | 192.168.1.1 | 502 |
-| PLC แคลมป์ | 10.10.100.100 | 5012 |
-| ปุ่มกดหน้างาน ST1 / ST2 / ST3 | M4000 / M4001 / M4003 | |
+| เครื่อง | ต้องตั้ง |
+| :--- | :--- |
+| Scan Barcode | Database Setting (`PrintData.db3`, `mydatabase.db3`) · Backend DB Setting (IP ของเครื่อง Station 1) |
+| Station 1 | Printer Setting (MK-058 / MK-059, UV1 / UV2) · PLC MK Setting · PLC UV Setting และปุ่มกดหน้างาน · Backend DB Setting |
+| Station 3 | Backend DB Setting (IP ของเครื่อง Station 1) |
+
+ไฟล์ตั้งค่าไม่ถูกลบตอนถอนโปรแกรม ถอนแล้วลงใหม่หรือลงเวอร์ชันใหม่ทับ ค่าเดิมและสถานีที่เลือกไว้ยังอยู่ครบ
 
 รายละเอียดเรื่องไฟล์ตั้งค่าอยู่ใน [docs/settings-file-locations.md](docs/settings-file-locations.md)
 
