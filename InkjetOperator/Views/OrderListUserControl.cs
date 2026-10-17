@@ -3057,8 +3057,13 @@ public partial class OrderListUserControl : UserControl
         // งานที่เข้าคิวรอเครื่องอยู่ บอกตรง ๆ ว่ารอคิวเครื่องไหน ที่เท่าไร แทนคำว่า Waiting
         // ซึ่งดูเหมือนงานที่ยังไม่มีใครกดเริ่ม — ดู QueueWaitLabel
         var queueLabel = QueueWaitLabel(job);
+        // Waiting (Qn) ใช้สีเดียวกับ Waiting (แดง) — ยังเป็นงานที่ยังไม่เริ่ม แค่บอกคิวเพิ่ม
+        // Starting ใช้สีส้ม — ได้เครื่องแล้ว กำลังจะถูกส่ง
         var statusText = queueLabel != null
-            ? new AntdUI.CellText(queueLabel) { Fore = WaitingColor }
+            ? new AntdUI.CellText(queueLabel)
+            {
+                Fore = queueLabel.StartsWith("Waiting", StringComparison.Ordinal) ? statusColor : WaitingColor,
+            }
             : new AntdUI.CellText(statusLabel) { Fore = statusColor };
 
         var buttons = new List<AntdUI.CellButton>();
