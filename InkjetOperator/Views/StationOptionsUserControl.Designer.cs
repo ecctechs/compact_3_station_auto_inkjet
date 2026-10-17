@@ -43,6 +43,14 @@ partial class StationOptionsUserControl
         chkAllOrNothing = new AntdUI.Checkbox();
         lblAllOrNothingHelp = new AntdUI.Label();
         pnlReset = new AntdUI.Panel();
+        pnlJobData = new AntdUI.Panel();
+        tlpJobData = new System.Windows.Forms.TableLayoutPanel();
+        lblJobDataHeading = new AntdUI.Label();
+        lblJobDataHelp = new AntdUI.Label();
+        flpJobData = new System.Windows.Forms.FlowLayoutPanel();
+        btnSaveJobData = new AntdUI.Button();
+        btnImportJobData = new AntdUI.Button();
+        btnClearJobData = new AntdUI.Button();
         tlpReset = new System.Windows.Forms.TableLayoutPanel();
         lblResetHeading = new AntdUI.Label();
         btnResetRuntime = new AntdUI.Button();
@@ -58,6 +66,9 @@ partial class StationOptionsUserControl
         tlpAllOrNothing.SuspendLayout();
         pnlReset.SuspendLayout();
         tlpReset.SuspendLayout();
+        pnlJobData.SuspendLayout();
+        tlpJobData.SuspendLayout();
+        flpJobData.SuspendLayout();
         tlpRemoteSend.SuspendLayout();
         SuspendLayout();
         //
@@ -71,19 +82,21 @@ partial class StationOptionsUserControl
         tlpOptionsRoot.Controls.Add(pnlMockup, 0, 3);
         tlpOptionsRoot.Controls.Add(pnlAllOrNothing, 0, 4);
         tlpOptionsRoot.Controls.Add(pnlReset, 0, 5);
+        tlpOptionsRoot.Controls.Add(pnlJobData, 0, 6);
         tlpOptionsRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpOptionsRoot.Location = new System.Drawing.Point(32, 32);
         tlpOptionsRoot.Margin = new System.Windows.Forms.Padding(0);
         tlpOptionsRoot.Name = "tlpOptionsRoot";
-        tlpOptionsRoot.RowCount = 7;
+        tlpOptionsRoot.RowCount = 8;
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 66F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 210F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 232F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 240F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 286F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 214F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 262F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 1262);
+        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 1524);
         tlpOptionsRoot.TabIndex = 0;
         //
         // lblOptionsTitle
@@ -420,6 +433,108 @@ partial class StationOptionsUserControl
         btnResetRuntime.Text = "รีเซ็ตกลับเป็นค่าเริ่มต้น";
         btnResetRuntime.Type = AntdUI.TTypeMini.Error;
         //
+        // pnlJobData — ขอบแดง: ล้าง / นำเข้า แทนที่ข้อมูลงานทั้งระบบ ย้อนกลับไม่ได้
+        //
+        pnlJobData.Back = System.Drawing.Color.White;
+        pnlJobData.BorderColor = System.Drawing.Color.FromArgb(245, 34, 45);
+        pnlJobData.BorderWidth = 2F;
+        pnlJobData.Controls.Add(tlpJobData);
+        pnlJobData.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlJobData.Margin = new System.Windows.Forms.Padding(0, 16, 0, 0);
+        pnlJobData.Name = "pnlJobData";
+        pnlJobData.Padding = new System.Windows.Forms.Padding(24);
+        pnlJobData.Radius = 10;
+        pnlJobData.Size = new System.Drawing.Size(1216, 246);
+        pnlJobData.TabIndex = 6;
+        //
+        // tlpJobData
+        //
+        tlpJobData.ColumnCount = 1;
+        tlpJobData.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpJobData.Controls.Add(lblJobDataHeading, 0, 0);
+        tlpJobData.Controls.Add(lblJobDataHelp, 0, 1);
+        tlpJobData.Controls.Add(flpJobData, 0, 2);
+        tlpJobData.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpJobData.Margin = new System.Windows.Forms.Padding(0);
+        tlpJobData.Name = "tlpJobData";
+        tlpJobData.RowCount = 3;
+        tlpJobData.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
+        tlpJobData.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpJobData.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
+        tlpJobData.Size = new System.Drawing.Size(1168, 198);
+        tlpJobData.TabIndex = 0;
+        //
+        // lblJobDataHeading
+        //
+        lblJobDataHeading.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblJobDataHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        lblJobDataHeading.ForeColor = System.Drawing.Color.FromArgb(245, 34, 45);
+        lblJobDataHeading.Margin = new System.Windows.Forms.Padding(0);
+        lblJobDataHeading.Name = "lblJobDataHeading";
+        lblJobDataHeading.Size = new System.Drawing.Size(1168, 42);
+        lblJobDataHeading.TabIndex = 0;
+        lblJobDataHeading.Text = "ชุดข้อมูลงานทดสอบ (บันทึก / นำเข้า / ล้าง)";
+        //
+        // lblJobDataHelp
+        //
+        lblJobDataHelp.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblJobDataHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblJobDataHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
+        lblJobDataHelp.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
+        lblJobDataHelp.Name = "lblJobDataHelp";
+        lblJobDataHelp.Size = new System.Drawing.Size(1168, 88);
+        lblJobDataHelp.TabIndex = 1;
+        lblJobDataHelp.Text = "บันทึก: เก็บข้อมูลงานทั้งหมดตอนนี้ (ตัวงาน pattern ข้อความ MK ข้อมูล UV แผนการผลิต ค่าแคลมป์) เป็นไฟล์ .json ใน C:\\ProgramData\\CompactInkjet\\test-data — คัดลอกไฟล์ไปเครื่องอื่นได้\r\nนำเข้า: เลือกไฟล์ แทนที่ข้อมูลงานทั้งหมดในฐาน · ทุกใบกลับเป็นรอเริ่ม ไม่มีคิว · id ตามไฟล์\r\nล้าง: ลบข้อมูลงานทั้งหมด id เริ่มใหม่ที่ 1 · ค่าตั้ง (register map PLC, Setting) ไม่ถูกแตะ\r\nมีผลกับทุกเครื่องที่ต่อ backend เดียวกัน และย้อนกลับไม่ได้ — กดบันทึกไว้ก่อนล้างหรือนำเข้าเสมอ";
+        //
+        // flpJobData
+        //
+        flpJobData.AutoSize = true;
+        flpJobData.Controls.Add(btnSaveJobData);
+        flpJobData.Controls.Add(btnImportJobData);
+        flpJobData.Controls.Add(btnClearJobData);
+        flpJobData.Dock = System.Windows.Forms.DockStyle.Fill;
+        flpJobData.Margin = new System.Windows.Forms.Padding(0);
+        flpJobData.Name = "flpJobData";
+        flpJobData.Size = new System.Drawing.Size(1168, 52);
+        flpJobData.TabIndex = 2;
+        flpJobData.WrapContents = false;
+        //
+        // btnSaveJobData
+        //
+        btnSaveJobData.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        btnSaveJobData.Margin = new System.Windows.Forms.Padding(0, 0, 16, 0);
+        btnSaveJobData.Name = "btnSaveJobData";
+        btnSaveJobData.Radius = 8;
+        btnSaveJobData.Size = new System.Drawing.Size(300, 52);
+        btnSaveJobData.TabIndex = 0;
+        btnSaveJobData.Text = "บันทึกข้อมูลงานตอนนี้";
+        btnSaveJobData.Type = AntdUI.TTypeMini.Primary;
+        //
+        // btnImportJobData
+        //
+        btnImportJobData.DefaultBorderColor = System.Drawing.Color.FromArgb(245, 34, 45);
+        btnImportJobData.BorderWidth = 2F;
+        btnImportJobData.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        btnImportJobData.ForeColor = System.Drawing.Color.FromArgb(245, 34, 45);
+        btnImportJobData.Margin = new System.Windows.Forms.Padding(0, 0, 16, 0);
+        btnImportJobData.Name = "btnImportJobData";
+        btnImportJobData.Radius = 8;
+        btnImportJobData.Size = new System.Drawing.Size(300, 52);
+        btnImportJobData.TabIndex = 1;
+        btnImportJobData.Text = "นำเข้าจากไฟล์...";
+        //
+        // btnClearJobData
+        //
+        btnClearJobData.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        btnClearJobData.ForeColor = System.Drawing.Color.White;
+        btnClearJobData.Margin = new System.Windows.Forms.Padding(0);
+        btnClearJobData.Name = "btnClearJobData";
+        btnClearJobData.Radius = 8;
+        btnClearJobData.Size = new System.Drawing.Size(300, 52);
+        btnClearJobData.TabIndex = 2;
+        btnClearJobData.Text = "ล้างข้อมูลงานทั้งหมด";
+        btnClearJobData.Type = AntdUI.TTypeMini.Error;
+        //
         // lblRemoteSendHeading
         //
         lblRemoteSendHeading.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -465,9 +580,14 @@ partial class StationOptionsUserControl
         Controls.Add(tlpOptionsRoot);
         Name = "StationOptionsUserControl";
         Padding = new System.Windows.Forms.Padding(32);
-        Size = new System.Drawing.Size(1280, 1326);
+        Size = new System.Drawing.Size(1280, 1588);
         tlpOptionsRoot.ResumeLayout(false);
         tlpReset.ResumeLayout(false);
+        flpJobData.ResumeLayout(false);
+        tlpJobData.ResumeLayout(false);
+        tlpJobData.PerformLayout();
+        pnlJobData.ResumeLayout(false);
+        pnlJobData.PerformLayout();
         flpProcessTabs.ResumeLayout(false);
         tlpProcessTabs.ResumeLayout(false);
         pnlProcessTabs.ResumeLayout(false);
@@ -510,6 +630,14 @@ partial class StationOptionsUserControl
     private AntdUI.Label lblResetHeading;
     private AntdUI.Button btnResetRuntime;
     private AntdUI.Label lblResetHelp;
+    private AntdUI.Panel pnlJobData;
+    private System.Windows.Forms.TableLayoutPanel tlpJobData;
+    private AntdUI.Label lblJobDataHeading;
+    private AntdUI.Label lblJobDataHelp;
+    private System.Windows.Forms.FlowLayoutPanel flpJobData;
+    private AntdUI.Button btnSaveJobData;
+    private AntdUI.Button btnImportJobData;
+    private AntdUI.Button btnClearJobData;
     private System.Windows.Forms.TableLayoutPanel tlpRemoteSend;
     private AntdUI.Checkbox chkManualRemoteSend;
     private AntdUI.Label lblRemoteSendHelp;

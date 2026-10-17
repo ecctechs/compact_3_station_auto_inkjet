@@ -70,6 +70,8 @@ const iaiRoute = require("./routes/Iai");
 const machineQueueRoute = require("./routes/MachineQueue");
 
 const app = express();
+// ไฟล์ชุดข้อมูลงานใหญ่กว่าเพดานปกติ (100 KB) — อ่านก่อนตัวอ่านทั่วไป เฉพาะเส้นนี้
+app.use("/system/importJobData", express.json({ limit: "50mb" }));
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(cors());

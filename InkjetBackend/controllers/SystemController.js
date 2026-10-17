@@ -1,5 +1,6 @@
 const ResponseManager = require("../middleware/ResponseManager");
 const sequelize = require("../database");
+const jobDataset = require("../services/jobDataset");
 
 /**
  * Size conversion dict — ported from rs232_connector.py lines 8-22.
@@ -115,6 +116,37 @@ class SystemController {
       });
     } catch (err) {
       await t.rollback();
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  /**
+   * POST /system/clearJobData — ล้างข้อมูลงานทั้งหมด เริ่ม id ใหม่ที่ 1 (เครื่องมือโหมด Dev)
+   * ค่าตั้งของเครื่อง (plc_register_maps) ไม่ถูกแตะ — ดู services/jobDataset.js
+   */
+  static async clearJobData(req, res) {
+    try {
+      return ResponseManager.SuccessResponse(req, res, 200, await jobDataset.clearAll());
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  /** GET /system/exportJobData — ชุดข้อมูลงานทั้งหมดตอนนี้ เป็น JSON ไว้บันทึกเป็นไฟล์ */
+  static async exportJobData(req, res) {
+    try {
+      return ResponseManager.SuccessResponse(req, res, 200, await jobDataset.exportAll());
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  /** POST /system/importJobData — แทนที่ข้อมูลงานทั้งหมดด้วยชุดในไฟล์ (body = ไฟล์ที่ส่งออกไว้) */
+  static async importJobData(req, res) {
+    try {
+      return ResponseManager.SuccessResponse(req, res, 200, await jobDataset.importAll(req.body));
+    } catch (err) {
+      if (err.statusCode === 400) return ResponseManager.ErrorResponse(req, res, 400, err.message);
       return ResponseManager.CatchResponse(req, res, err.message);
     }
   }

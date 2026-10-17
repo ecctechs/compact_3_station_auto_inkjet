@@ -6,10 +6,10 @@ namespace InkjetOperator.Views;
 /// สวิตช์เปิด/ปิดของที่ไม่ได้เปิดไว้ตลอด — หน้านี้เห็นเฉพาะโหมดทดสอบ
 ///
 /// <para>
-/// มีห้ารายการ — ปุ่มสำรอง "ขอให้ ST1 ส่ง" ในหน้า Order Detail ของ ST3 ซึ่งเป็น
+/// มีหกรายการ — ปุ่มสำรอง "ขอให้ ST1 ส่ง" ในหน้า Order Detail ของ ST3 ซึ่งเป็น
 /// ทางออกตอนปุ่มกดหน้างานหรือ PLC ใช้ไม่ได้ · ใครเห็นตัวกรอง In-line / Off-line
 /// ในหน้า Order List · Mockup สถานะการเชื่อมต่อสำหรับถ่ายรูปคู่มือ · โหมดส่งไม่ครบ ไม่ส่งเลย
-/// และปุ่มรีเซ็ตทุกอย่างกลับเป็นค่าเริ่มต้นสำหรับทดสอบ
+/// ปุ่มรีเซ็ตทุกอย่างกลับเป็นค่าเริ่มต้นสำหรับทดสอบ และชุดข้อมูลงานทดสอบ (บันทึก / นำเข้า / ล้าง)
 /// </para>
 /// <para>
 /// เซฟทันทีที่กด ไม่มีปุ่ม Save — มีช่องเดียวและเป็นค่า เปิด/ปิด กดแล้วลืมกดเซฟ
@@ -36,6 +36,10 @@ public partial class StationOptionsUserControl : UserControl
         chkAllOrNothing.CheckedChanged += AllOrNothing_CheckedChanged;
 
         btnResetRuntime.Click += async (_, _) => await ResetRuntimeAsync();
+
+        btnSaveJobData.Click += async (_, _) => await SaveJobDataAsync();
+        btnImportJobData.Click += async (_, _) => await ImportJobDataAsync();
+        btnClearJobData.Click += async (_, _) => await ClearJobDataAsync();
     }
 
     /// <summary>
@@ -188,6 +192,195 @@ public partial class StationOptionsUserControl : UserControl
                 btnResetRuntime.Text = originalText;
                 btnResetRuntime.Enabled = true;
             }
+        }
+    }
+
+    // ── ชุดข้อมูลงานทดสอบ ─────────────────────────────────
+
+    /// <summary>โฟลเดอร์เก็บไฟล์ชุดข้อมูล — ข้างไฟล์ตั้งค่า หาง่าย คัดลอกไปเครื่องอื่นได้</summary>
+    private static string JobDataFolder => Path.Combine(AppSettingsFile.Folder, "test-data");
+
+    private static ApiClient Backend() =>
+        new($"http://{CustomSettingsManager.Read("PC_IP", "127.0.0.1")}:3000");
+
+    /// <summary>ระหว่างคุยกับ backend ปิดทั้งสามปุ่ม กันกดซ้อนกัน (เช่นล้างระหว่างนำเข้า)</summary>
+    private void SetJobDataBusy(bool busy)
+    {
+        btnSaveJobData.Enabled = btnImportJobData.Enabled = btnClearJobData.Enabled = !busy;
+    }
+
+    /// <summary>สรุปจำนวนแถวที่คนอ่านแล้วเข้าใจ — งาน / pattern / ข้อมูล UV</summary>
+    private static string Summary(IReadOnlyDictionary<string, int> counts)
+    {
+        int Of(string t) => counts.TryGetValue(t, out var n) ? n : 0;
+        return $"งาน {Of("print_jobs")} ใบ · pattern {Of("patterns")} · ข้อความ MK {Of("text_blocks")} ช่อง"
+            + $" · ข้อมูล UV {Of("uv_job_data")} แถว · แผนการผลิต {Of("plan_routings")} · ค่าแคลมป์ {Of("iai_clamp_settings")}";
+    }
+
+    /// <summary>จำนวนแถวต่อตารางในไฟล์ชุดข้อมูล — null = ไม่ใช่ไฟล์ชุดข้อมูลของโปรแกรมนี้</summary>
+    private static (Dictionary<string, int> Counts, string? ExportedAt)? ReadDatasetInfo(string json)
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            if (root.ValueKind != System.Text.Json.JsonValueKind.Object) return null;
+            if (!root.TryGetProperty("format", out var f) || f.ValueKind != System.Text.Json.JsonValueKind.String
+                || f.GetString() != "compact-inkjet-job-dataset") return null;
+            if (!root.TryGetProperty("tables", out var tables) || tables.ValueKind != System.Text.Json.JsonValueKind.Object) return null;
+
+            var counts = tables.EnumerateObject()
+                .Where(t => t.Value.ValueKind == System.Text.Json.JsonValueKind.Array)
+                .ToDictionary(t => t.Name, t => t.Value.GetArrayLength());
+            var at = root.TryGetProperty("exported_at", out var e) && e.ValueKind == System.Text.Json.JsonValueKind.String
+                ? e.GetString() : null;
+            return (counts, at);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// บันทึกข้อมูลงานทั้งหมดตอนนี้เป็นไฟล์ — อ่านอย่างเดียว ไม่แตะข้อมูลในฐาน
+    /// </summary>
+    private async Task SaveJobDataAsync()
+    {
+        SetJobDataBusy(true);
+        try
+        {
+            var (json, error) = await Backend().ExportJobDataAsync();
+            if (IsDisposed) return;
+            if (json == null || ReadDatasetInfo(json) is not { } info)
+            {
+                Notify.ErrorModal(this, "บันทึกไม่สำเร็จ", error ?? "backend ส่งข้อมูลกลับมาไม่ถูกรูปแบบ — อัปเดต backend ก่อน");
+                return;
+            }
+
+            Directory.CreateDirectory(JobDataFolder);
+            using var dialog = new SaveFileDialog
+            {
+                Title = "บันทึกชุดข้อมูลงาน",
+                InitialDirectory = JobDataFolder,
+                FileName = $"job-dataset-{DateTime.Now.ToString("yyyyMMdd-HHmm", System.Globalization.CultureInfo.InvariantCulture)}.json",
+                Filter = "ชุดข้อมูลงาน (*.json)|*.json",
+                DefaultExt = "json",
+                OverwritePrompt = true,
+            };
+            if (dialog.ShowDialog(this) != DialogResult.OK) return;
+
+            File.WriteAllText(dialog.FileName, json, new System.Text.UTF8Encoding(false));
+            Notify.SuccessDetail(this, "บันทึกชุดข้อมูลงานแล้ว",
+                Summary(info.Counts) + Environment.NewLine + Environment.NewLine
+                + dialog.FileName + Environment.NewLine + Environment.NewLine
+                + "คัดลอกไฟล์นี้ไปเครื่องอื่น แล้วกด นำเข้าจากไฟล์ ที่หน้านี้");
+        }
+        catch (Exception ex)
+        {
+            Notify.ErrorModal(this, "บันทึกไม่สำเร็จ", ex.Message);
+        }
+        finally
+        {
+            if (!IsDisposed) SetJobDataBusy(false);
+        }
+    }
+
+    /// <summary>
+    /// แทนที่ข้อมูลงานทั้งหมดด้วยชุดในไฟล์ — ถามยืนยันพร้อมบอกว่าในไฟล์มีอะไรก่อนลงมือ
+    /// backend ทำในทรานแซกชันเดียว ล้มกลางทางข้อมูลเดิมยังอยู่ครบ
+    /// </summary>
+    private async Task ImportJobDataAsync()
+    {
+        using var dialog = new OpenFileDialog
+        {
+            Title = "เลือกไฟล์ชุดข้อมูลงาน",
+            InitialDirectory = Directory.Exists(JobDataFolder) ? JobDataFolder : AppSettingsFile.Folder,
+            Filter = "ชุดข้อมูลงาน (*.json)|*.json",
+        };
+        if (dialog.ShowDialog(this) != DialogResult.OK) return;
+
+        string json;
+        try { json = File.ReadAllText(dialog.FileName); }
+        catch (Exception ex)
+        {
+            Notify.ErrorModal(this, "เปิดไฟล์ไม่ได้", ex.Message);
+            return;
+        }
+
+        if (ReadDatasetInfo(json) is not { } info)
+        {
+            Notify.WarnModal(this, "นำเข้าไม่ได้", "ไฟล์นี้ไม่ใช่ชุดข้อมูลงานที่บันทึกจากหน้านี้");
+            return;
+        }
+
+        var when = DateTime.TryParse(info.ExportedAt, System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.RoundtripKind, out var at)
+            ? at.ToLocalTime().ToString("dd/MM/yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture)
+            : "-";
+
+        if (!Confirm.Ask(this, "นำเข้าชุดข้อมูลงาน",
+                $"ไฟล์: {Path.GetFileName(dialog.FileName)} (บันทึกเมื่อ {when})" + Environment.NewLine
+                + Summary(info.Counts) + Environment.NewLine + Environment.NewLine
+                + "ข้อมูลงานทั้งหมดในฐานตอนนี้จะถูกลบแล้วแทนที่ด้วยชุดนี้ ทุกใบเป็นรอเริ่ม ไม่มีคิว" + Environment.NewLine
+                + "มีผลกับทุกเครื่องที่ต่อ backend เดียวกัน และย้อนกลับไม่ได้" + Environment.NewLine + Environment.NewLine
+                + "ยืนยันหรือไม่?"))
+            return;
+
+        SetJobDataBusy(true);
+        try
+        {
+            var (counts, error) = await Backend().ImportJobDataAsync(json);
+            if (IsDisposed) return;
+            if (counts == null)
+            {
+                Notify.ErrorModal(this, "นำเข้าไม่สำเร็จ",
+                    "ข้อมูลเดิมยังอยู่ครบ ไม่มีอะไรถูกเปลี่ยน" + Environment.NewLine + Environment.NewLine
+                    + (error ?? "ติดต่อ backend ไม่ได้"));
+                return;
+            }
+
+            Notify.SuccessDetail(this, "นำเข้าชุดข้อมูลงานแล้ว",
+                Summary(counts) + Environment.NewLine + Environment.NewLine
+                + "กลับไปหน้า Order List แล้วตารางจะอัปเดตเองในรอบถัดไป");
+        }
+        finally
+        {
+            if (!IsDisposed) SetJobDataBusy(false);
+        }
+    }
+
+    /// <summary>ล้างข้อมูลงานทั้งหมด id เริ่มใหม่ที่ 1 — ค่าตั้งของเครื่องไม่ถูกแตะ</summary>
+    private async Task ClearJobDataAsync()
+    {
+        if (!Confirm.Ask(this, "ล้างข้อมูลงานทั้งหมด",
+                "จะลบข้อมูลงานทุกใบ พร้อม pattern ข้อความ MK ข้อมูล UV แผนการผลิต ค่าแคลมป์" + Environment.NewLine
+                + "คิวเครื่อง และประวัติคำสั่ง แล้วเริ่มนับ id ใหม่ที่ 1" + Environment.NewLine + Environment.NewLine
+                + "ไม่แตะ: register map ของ PLC และไฟล์ Setting" + Environment.NewLine + Environment.NewLine
+                + "มีผลกับทุกเครื่องที่ต่อ backend เดียวกัน และย้อนกลับไม่ได้" + Environment.NewLine
+                + "ถ้ายังไม่ได้บันทึกไว้ กด No แล้วกด บันทึกข้อมูลงานตอนนี้ ก่อน" + Environment.NewLine + Environment.NewLine
+                + "ยืนยันหรือไม่?"))
+            return;
+
+        SetJobDataBusy(true);
+        try
+        {
+            var (counts, error) = await Backend().ClearJobDataAsync();
+            if (IsDisposed) return;
+            if (counts == null)
+            {
+                Notify.ErrorModal(this, "ล้างไม่สำเร็จ",
+                    "ยังไม่มีอะไรถูกลบ" + Environment.NewLine + Environment.NewLine + (error ?? "ติดต่อ backend ไม่ได้"));
+                return;
+            }
+
+            Notify.SuccessDetail(this, "ล้างข้อมูลงานแล้ว",
+                "ลบไป: " + Summary(counts) + Environment.NewLine + Environment.NewLine
+                + "งานที่ลงทะเบียนใหม่จะเริ่ม id ที่ 1");
+        }
+        finally
+        {
+            if (!IsDisposed) SetJobDataBusy(false);
         }
     }
 

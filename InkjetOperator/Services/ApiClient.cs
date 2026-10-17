@@ -169,6 +169,71 @@ public class ApiClient
         }
     }
 
+    // ── ชุดข้อมูลงานทดสอบ (หน้า Station Options โหมด Dev) ─────────────────────
+
+    /// <summary>ล้างข้อมูลงานทั้งหมด id เริ่มใหม่ที่ 1 — คืนจำนวนแถวที่ลบต่อตาราง</summary>
+    public Task<(Dictionary<string, int>? counts, string? error)> ClearJobDataAsync() =>
+        SendDatasetAsync(HttpMethod.Post, "/system/clearJobData", null, "removed");
+
+    /// <summary>นำเข้าชุดข้อมูลงานจากไฟล์ (แทนที่ของเดิมทั้งหมด) — คืนจำนวนแถวที่นำเข้าต่อตาราง</summary>
+    public Task<(Dictionary<string, int>? counts, string? error)> ImportJobDataAsync(string datasetJson) =>
+        SendDatasetAsync(HttpMethod.Post, "/system/importJobData", datasetJson, "imported");
+
+    /// <summary>ชุดข้อมูลงานทั้งหมดตอนนี้ เป็นข้อความ JSON พร้อมบันทึกลงไฟล์</summary>
+    public async Task<(string? json, string? error)> ExportJobDataAsync()
+    {
+        try
+        {
+            var response = await _http.GetAsync("/system/exportJobData");
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return (null, DatasetNotSupported);
+            var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return (null, $"[{(int)response.StatusCode}] {body}");
+
+            using var doc = System.Text.Json.JsonDocument.Parse(body);
+            return (doc.RootElement.GetProperty("data").GetRawText(), null);
+        }
+        catch (Exception ex)
+        {
+            return (null, ex.Message);
+        }
+    }
+
+    // 404 = backend ที่รันอยู่ยังไม่มีคำสั่งชุดข้อมูล (รุ่นเก่า หรืออัปเดตไฟล์แล้วแต่ยังไม่รีสตาร์ท)
+    // บอกสิ่งที่ต้องทำแทนการโชว์หน้า HTML ของ Express
+    private const string DatasetNotSupported =
+        "backend ที่รันอยู่ยังไม่มีคำสั่งนี้ — อัปเดต backend เป็นรุ่นล่าสุด แล้วปิดเปิด backend ใหม่ (รีสตาร์ท)";
+
+    private async Task<(Dictionary<string, int>? counts, string? error)> SendDatasetAsync(
+        HttpMethod method, string path, string? json, string countsKey)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(method, path);
+            if (json != null)
+                request.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            var response = await _http.SendAsync(request);
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return (null, DatasetNotSupported);
+            var body = await response.Content.ReadAsStringAsync();
+            using var doc = System.Text.Json.JsonDocument.Parse(body);
+            var data = doc.RootElement.GetProperty("data");
+            if (!response.IsSuccessStatusCode)
+                return (null, data.ValueKind == System.Text.Json.JsonValueKind.String
+                    ? data.GetString()
+                    : $"[{(int)response.StatusCode}] {body}");
+
+            var counts = new Dictionary<string, int>();
+            if (data.TryGetProperty(countsKey, out var c))
+                foreach (var p in c.EnumerateObject())
+                    counts[p.Name] = p.Value.GetInt32();
+            return (counts, null);
+        }
+        catch (Exception ex)
+        {
+            return (null, ex.Message);
+        }
+    }
+
     public async Task<(bool ok, string? error)> CreateUvJobDataAsync(CreateUvJobRequest request)
     {
         try
