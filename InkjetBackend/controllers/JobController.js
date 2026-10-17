@@ -3,7 +3,7 @@ const sequelize = require("../database");
 const ResponseManager = require("../middleware/ResponseManager");
 const { PrintJob, PrintJobCommand } = require("../model/jobModel");
 const { MachineQueue } = require("../model/machineQueueModel");
-const { withQueueLock, assertNoUnresolved, conflict } = require("../services/queueGuard");
+const { withQueueLock, assertNoUnresolved, resolveUnresolved, conflict } = require("../services/queueGuard");
 const {
   Pattern,
   InkjetConfig,
@@ -359,6 +359,9 @@ class JobController {
         const job = await PrintJob.findByPk(req.params.id, { transaction });
         if (!job) conflict("Job not found");
         const rows = await MachineQueue.findAll({ where: { print_jobs_id: job.id }, transaction });
+        // โหมด "ส่งไม่ครบ ไม่ส่งเลย": คนหน้างานกดยกเลิก / จบงานเอง ปลดผลที่ค้างได้ — ดู resolveUnresolved
+        if (req.body.resolve_unresolved === true && status !== "Process")
+          await resolveUnresolved(rows, transaction);
         // ห้ามเปลี่ยนเป็นรอ/จบ/ยกเลิก ขณะที่เครื่องอาจรับงานไปแล้ว
         if (status !== "Process") await assertNoUnresolved(rows, transaction);
         if (["Success", "Cancel"].includes(status))

@@ -3,7 +3,7 @@ const sequelize = require("../database");
 const ResponseManager = require("../middleware/ResponseManager");
 const { MachineQueue } = require("../model/machineQueueModel");
 const { PrintJob, PrintJobCommand } = require("../model/jobModel");
-const { DISPATCH, withQueueLock, conflict, latestDispatch, assertNoUnresolved } = require("../services/queueGuard");
+const { DISPATCH, withQueueLock, conflict, latestDispatch, unresolved, assertNoUnresolved, resolveUnresolved } = require("../services/queueGuard");
 
 const reportError = (req, res, error) =>
   ResponseManager.ErrorResponse(req, res, error.statusCode || 500, error.message);
@@ -184,7 +184,7 @@ class MachineQueueController {
   static async release(req, res) {
     try {
       const result = await withQueueLock(async (t) => {
-        const { machine, hold_for_next_round, expected_holder_id } = req.body;
+        const { machine, hold_for_next_round, expected_holder_id, resolve_unresolved } = req.body;
 
         const holder = await MachineQueue.findOne({
           where: { machine, state: ACTIVE },
@@ -196,8 +196,13 @@ class MachineQueueController {
         if ((holder?.id ?? null) !== expected_holder_id)
           conflict("คิวเปลี่ยนแล้ว กรุณาตรวจงานที่ถือเครื่องก่อนกดอีกครั้ง");
         if (holder) {
+          // โหมด "ส่งไม่ครบ ไม่ส่งเลย": คนกดปุ่มยืนอยู่หน้าเครื่องแล้ว = ตรวจเครื่องแล้ว
+          // ปลดผลที่ค้างได้ และปล่อยแถวที่ค้างเพราะไม่รู้ผลได้ (ไม่งั้นเครื่องถูกถือไว้ตลอดไป)
+          const wasUnresolved = resolve_unresolved === true
+            && unresolved(await latestDispatch(holder.id, t));
+          if (wasUnresolved) await resolveUnresolved([holder], t);
           await assertNoUnresolved([holder], t);
-          if (!holder.sent_at) conflict("งานนี้ยังไม่ได้ส่งเข้าเครื่อง ปล่อยคิวไม่ได้");
+          if (!holder.sent_at && !wasUnresolved) conflict("งานนี้ยังไม่ได้ส่งเข้าเครื่อง ปล่อยคิวไม่ได้");
         }
 
         if (holder) {
@@ -323,6 +328,8 @@ class MachineQueueController {
     try {
       const removed = await withQueueLock(async (t) => {
         const rows = await MachineQueue.findAll({ where: { print_jobs_id: req.params.jobId }, transaction: t });
+        // โหมด "ส่งไม่ครบ ไม่ส่งเลย" — ดู resolveUnresolved
+        if (req.query.resolve === "true") await resolveUnresolved(rows, t);
         await assertNoUnresolved(rows, t);
         if (req.query.only_unsent === "true" && rows.some(r => r.state !== PENDING || r.sent_at))
           conflict("มีคิวที่ถูกหยิบหรือส่งแล้ว ห้ามล้างทั้งงาน");

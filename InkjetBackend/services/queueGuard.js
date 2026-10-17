@@ -36,4 +36,31 @@ async function assertNoUnresolved(rows, transaction) {
   }
 }
 
-module.exports = { DISPATCH, withQueueLock, conflict, latestDispatch, unresolved, assertNoUnresolved };
+// ปลดผลส่งที่ยังไม่รู้ (sending / unknown) ให้เป็น "ไม่ได้ส่ง" — ใช้เฉพาะเมื่อโปรแกรมขอมาเอง
+//
+// โปรแกรมขอได้เฉพาะตอนเปิดโหมด "ส่งไม่ครบ ไม่ส่งเลย" ในหน้า Setting (โหมด Dev) และ
+// เป็นการกระทำของคนหน้างานเท่านั้น — กดปุ่มหน้าเครื่อง (ยืนอยู่หน้าเครื่องแล้ว) หรือกด
+// ยกเลิก / จบงาน หรือโปรแกรมตีงานกลับเป็นรอเริ่มเพราะส่งไม่ครบ
+// ไม่ส่งมา = กฎเดิมทุกอย่าง (assertNoUnresolved ยังห้ามเหมือนเดิม)
+//
+// เก็บร่องรอยไว้ใน payload ว่าใครปลด ไม่ลบแถว QUEUE_DISPATCH ทิ้ง
+async function resolveUnresolved(rows, transaction) {
+  let resolved = 0;
+  for (const row of rows) {
+    const attempt = await latestDispatch(row.id, transaction);
+    if (!unresolved(attempt)) continue;
+    await attempt.update({
+      payload: {
+        ...attempt.payload,
+        outcome: "not_sent",
+        resolved_from: attempt.payload.outcome,
+        resolved_by: "operator",
+        resolved_at: new Date().toISOString(),
+      },
+    }, { transaction });
+    resolved++;
+  }
+  return resolved;
+}
+
+module.exports = { DISPATCH, withQueueLock, conflict, latestDispatch, unresolved, assertNoUnresolved, resolveUnresolved };

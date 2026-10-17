@@ -23,6 +23,8 @@ const releaseSchema = z.object({
   machine: machineName,
   expected_holder_id: z.number().int().positive().nullable(),
   hold_for_next_round: z.boolean().optional(),
+  // โหมด "ส่งไม่ครบ ไม่ส่งเลย" — ไม่ส่งมา = กฎเดิม
+  resolve_unresolved: z.boolean().optional(),
 });
 
 // ระบุงานได้ แต่ต้องเป็นหัวคิวของเครื่องนั้นด้วย ห้ามข้ามใบที่รอก่อน

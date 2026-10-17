@@ -474,7 +474,8 @@ public partial class OrderListUserControl : UserControl
             // ไม่ถือเครื่องไว้ให้รอบถัดไปของงานเดิม — งานที่เข้าเครื่องเดิมสองรอบ
             // (marking 22) ไม่ได้จองรอบสองไว้ล่วงหน้าแล้ว ปุ่มหน้างานรอบแรกจึงปล่อย
             // เครื่องเหมือนจบงาน งานอื่นเข้าต่อได้ทันที รอบสองค่อยจองตอนคนกดเริ่มงานรอบสอง
-            var (release, error) = await _api.ReleaseMachineAsync(machine, holder?.Id);
+            var (release, error) = await _api.ReleaseMachineAsync(
+                machine, holder?.Id, resolveUnresolved: AllOrNothingSend.Enabled);
             if (IsDisposed) return;
 
             if (release == null)
@@ -1252,7 +1253,8 @@ public partial class OrderListUserControl : UserControl
             return;
 
         // Backend ล้างคิวกับเปลี่ยนสถานะใน Transaction เดียวกัน
-        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Cancel");
+        var (ok, err) = await _api.UpdateJobStatusAsync(
+            jobId, "Cancel", resolveUnresolved: AllOrNothingSend.Enabled);
         if (IsDisposed) return;
 
         if (!ok)
@@ -1931,6 +1933,63 @@ public partial class OrderListUserControl : UserControl
 
     private sealed record PreparedQueueSend(MachineQueueRow Row, ResolvedJobResponse Job);
 
+    /// <summary>
+    /// โหมด "ส่งไม่ครบ ไม่ส่งเลย" — งานนี้มีเครื่องส่งไม่ผ่าน ล้างคิวทั้งงานแล้วตีกลับเป็นรอเริ่ม
+    /// <para>
+    /// ไม่ส่ง resolve ไปกับคำขอ — ผลของทุกเครื่องในรอบนี้บันทึกไปแล้วด้วยมือเราเอง
+    /// ถ้า backend ยังเห็นว่ามีคิวไม่รู้ผล แปลว่ามีอย่างอื่นเกิดขึ้น (เช่นบันทึกผลไม่ได้)
+    /// ปล่อยให้คนกดยกเลิกงานเองซึ่งปลดให้ได้ ดีกว่าเดาแทน
+    /// </para>
+    /// <para>
+    /// งานที่ปล่อยเครื่องไปแล้วบางเครื่อง (ส่งครบไปรอบหนึ่งแล้ว เช่นรอบสองของงาน 22
+    /// หรือเครื่องที่รอคิวอยู่นาน) ไม่ตีทั้งงานกลับ เพราะชิ้นงานเดินไปแล้วจริง
+    /// คิวของเครื่องที่ล้มกลับเป็นรอไว้ แก้เครื่องแล้วกดปุ่มหน้าเครื่องนั้นเพื่อส่งใหม่
+    /// </para>
+    /// </summary>
+    private async Task<List<Notify.ResultLine>> RollbackJobAsync(
+        int jobId, List<string> failed, List<string> received, string? reason)
+    {
+        var bad = string.Join(", ", failed);
+        var lines = new List<Notify.ResultLine>();
+
+        var (queue, queueError) = await _api!.GetMachineQueueAsync();
+        if (IsDisposed) return lines;
+        bool releasedBefore = queue.Any(r => r.PrintJobsId == jobId && r.State == "done");
+        if (queueError != null || releasedBefore)
+        {
+            lines.Add(Notify.Bad($"{bad} ส่งไม่ผ่าน — ตรวจ {bad} แล้วกดปุ่มหน้าเครื่อง {bad} เพื่อส่งใหม่"
+                + (reason != null ? $" ({reason})" : "")));
+            return lines;
+        }
+
+        var (cleared, clearError) = await _api.ClearMachineQueueAsync(jobId);
+        var (reset, resetError) = cleared
+            ? await _api.UpdateJobStatusAsync(jobId, "Waiting")
+            : (false, clearError);
+        if (IsDisposed) return lines;
+
+        if (!reset)
+        {
+            lines.Add(Notify.Bad($"{bad} ส่งไม่ผ่าน และตีงานกลับเป็นรอเริ่มไม่ได้ — {resetError}"
+                + " · ตรวจเครื่องแล้วกดยกเลิกงานนี้"));
+            return lines;
+        }
+
+        var message = $"{bad} ส่งไม่ผ่าน — ตรวจ {bad} (เปิดเครื่อง / สาย / โปรแกรม) แล้วกดเริ่มงานใหม่"
+            + (reason != null ? $" · {reason}" : "");
+        lines.Add(Notify.Bad($"ยังไม่เริ่ม · {message}"));
+        if (received.Count > 0)
+            lines.Add(Notify.Careful($"{string.Join(", ", received)} รับข้อมูลงานนี้ไปแล้ว — กดเริ่มงานใหม่ระบบจะส่งทับให้"));
+        lines.Add(Notify.Note("ล้างคิวของงานนี้แล้ว งานกลับเป็นรอเริ่ม"));
+
+        // งานที่ ST3 เห็น (10 / 11 / 12) — ฝากข้อความไว้ให้จอ ST3 เด้งบอกคนที่กดเริ่ม
+        var method = _allJobs.FirstOrDefault(j => j.Id == jobId)?.PlanRouting?.MarkingMethod;
+        if (MarkingMethodService.VisibleAt(StationService.St3, method))
+            await _api.SetRemoteStartAsync(jobId, requested: false, failure: message);
+
+        return lines;
+    }
+
     private async Task<StepSendResult[]> SendPreparedBatchAsync(List<PreparedQueueSend> items, bool includeJobNames = false, bool machinesReserved = false)
     {
         if (_preparingPrograms) return [new(false, [], HeldForReview: true)];
@@ -1983,6 +2042,27 @@ public partial class OrderListUserControl : UserControl
                 ready.Add(item);
             }
             if (IsDisposed) return results.ToArray();
+
+            // โหมด "ส่งไม่ครบ ไม่ส่งเลย": ต่อเครื่องของงานไหนไม่ติดแม้แต่เครื่องเดียว
+            // ไม่แตะเครื่องไหนของงานนั้นเลย — งานที่กดจาก ST3 ไม่ได้ผ่านด่านตรวจตอนกดเริ่ม
+            // ด่านนี้จึงเป็นด่านเดียวของมัน
+            var blocked = new List<(PreparedQueueSend Item, string Reason)>();
+            if (AllOrNothingSend.Enabled)
+            {
+                foreach (var job in ready.GroupBy(i => i.Row.PrintJobsId).ToList())
+                {
+                    var first = job.First().Job;
+                    var bad = await JobSendService.UnreachableAsync(
+                        job.Select(i => i.Row.Machine), first.Pattern, first.UvJobData);
+                    if (IsDisposed) return results.ToArray();
+                    if (bad.Count == 0) continue;
+
+                    var reason = string.Join(" · ", bad.Select(b => $"{b.Name} — {b.Reason}"));
+                    foreach (var item in job) blocked.Add((item, reason));
+                }
+                ready.RemoveAll(i => blocked.Any(b => ReferenceEquals(b.Item, i)));
+            }
+
             foreach (var (machine, token) in owned)
                 if (!ready.Any(i => i.Row.Machine == machine)) ReleaseDispatch(machine, token);
             if (ready.Count > 0) ShowSending($"กำลังส่งไปที่ {string.Join(" / ", _dispatchingMachines.Keys)}");
@@ -2006,6 +2086,32 @@ public partial class OrderListUserControl : UserControl
                 (i, ex) => new StepSendResult(false,
                     [Notify.Bad($"{i.Row.Machine} คิว {i.Row.Id}: ตรวจสอบผลก่อนส่งซ้ำ — {ex.Message}")], HeldForReview: true));
             results.AddRange(sent);
+
+            if (AllOrNothingSend.Enabled && !IsDisposed)
+            {
+                var outcomes = ready.Zip(sent, (item, result) => (item, result)).ToList();
+                var jobs = outcomes.Select(o => o.item.Row.PrintJobsId)
+                    .Concat(blocked.Select(b => b.Item.Row.PrintJobsId)).Distinct().ToList();
+                foreach (int jobId in jobs)
+                {
+                    var failed = outcomes.Where(o => o.item.Row.PrintJobsId == jobId && !o.result.Sent)
+                        .Select(o => o.item.Row.Machine)
+                        .Concat(blocked.Where(b => b.Item.Row.PrintJobsId == jobId).Select(b => b.Item.Row.Machine))
+                        .Distinct().ToList();
+                    if (failed.Count == 0) continue;
+
+                    var received = outcomes.Where(o => o.item.Row.PrintJobsId == jobId && o.result.Sent)
+                        .Select(o => o.item.Row.Machine).ToList();
+                    var reason = blocked.FirstOrDefault(b => b.Item.Row.PrintJobsId == jobId).Reason;
+                    var lines = await RollbackJobAsync(jobId, failed, received, reason);
+                    // ทางกดเริ่มงานเติมชื่องานไว้หน้าทุกบรรทัดให้อยู่แล้ว ทางคิว (includeJobNames) ต้องเติมเอง
+                    results.Add(new(false, includeJobNames
+                        ? lines.Select(l => l with { Text = $"{JobName(jobId)} · {l.Text}" }).ToList()
+                        : lines));
+                    if (IsDisposed) break;
+                }
+            }
+
             return results.ToArray();
         }
         finally
@@ -2056,7 +2162,11 @@ public partial class OrderListUserControl : UserControl
         }
         timing.Mark("คุยกับเครื่อง");
 
-        var outcome = result.Sent ? "sent" : result.SafeToRetry ? "not_sent" : "unknown";
+        // โหมด "ส่งไม่ครบ ไม่ส่งเลย": ไม่มีผล "ไม่แน่นอน" ที่ทำให้คิวค้าง ไม่ผ่านก็คือไม่ผ่าน
+        // แล้ว SendPreparedBatchAsync ตีทั้งงานกลับเป็นรอเริ่ม — ดู AllOrNothingSend
+        var outcome = result.Sent ? "sent"
+            : result.SafeToRetry || AllOrNothingSend.Enabled ? "not_sent"
+            : "unknown";
         var error = string.Join(" · ", result.Lines.Where(l => l.Kind == Notify.ResultKind.Error).Select(l => l.Text));
         if (error.Length > 4000) error = error[..4000];
         SetMachineStatus(row, "กำลังบันทึกผล", AntdUI.TTypeMini.Primary);
@@ -2678,7 +2788,8 @@ public partial class OrderListUserControl : UserControl
         }
 
         // เปลี่ยนสถานะและล้างคิวพร้อมกัน ฝั่ง Backend จะกันงานที่ยังไม่รู้ผลส่ง
-        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Success");
+        var (ok, err) = await _api.UpdateJobStatusAsync(
+            jobId, "Success", resolveUnresolved: AllOrNothingSend.Enabled);
         if (ok)
         {
             if (manual && !await _api.SaveSendStepAsync(jobId, "MANUAL_COMPLETE"))

@@ -552,15 +552,19 @@ public class ApiClient
     }
 
     /// <summary>ปล่อยเครื่อง — คนกดปุ่มหน้างานแล้ว แปลว่าพิมพ์ชิ้นเดิมเสร็จ</summary>
+    /// <param name="resolveUnresolved">
+    /// โหมด "ส่งไม่ครบ ไม่ส่งเลย" เท่านั้น — ปลดคิวที่ค้างเพราะไม่รู้ผลส่งได้ (คนกดยืนอยู่หน้าเครื่องแล้ว)
+    /// ไม่ส่งค่านี้ไปเลยเมื่อปิดโหมด คำขอจึงเหมือนเดิมทุกตัวอักษร
+    /// </param>
     public async Task<(ReleaseResult? result, string? error)> ReleaseMachineAsync(
-        string machine, int? expectedHolderId, bool holdForNextRound = false)
+        string machine, int? expectedHolderId, bool holdForNextRound = false, bool resolveUnresolved = false)
     {
         try
         {
-            var response = await _http.PostAsJsonAsync(
-                "/machine-queue/release",
-                new { machine, expected_holder_id = expectedHolderId, hold_for_next_round = holdForNextRound },
-                JsonOptions);
+            object payload = resolveUnresolved
+                ? new { machine, expected_holder_id = expectedHolderId, hold_for_next_round = holdForNextRound, resolve_unresolved = true }
+                : new { machine, expected_holder_id = expectedHolderId, hold_for_next_round = holdForNextRound };
+            var response = await _http.PostAsJsonAsync("/machine-queue/release", payload, JsonOptions);
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return (null, $"[{(int)response.StatusCode}] {body}");
 
@@ -632,11 +636,16 @@ public class ApiClient
     }
 
     /// <summary>ล้างคิวของงานหนึ่งทิ้ง — ยกเลิกงาน จบงาน หรือสั่งพิมพ์ใหม่</summary>
-    public async Task<(bool ok, string? error)> ClearMachineQueueAsync(int jobId, bool onlyUnsent = false)
+    /// <param name="resolveUnresolved">โหมด "ส่งไม่ครบ ไม่ส่งเลย" เท่านั้น — ดู <see cref="ReleaseMachineAsync"/></param>
+    public async Task<(bool ok, string? error)> ClearMachineQueueAsync(int jobId, bool onlyUnsent = false, bool resolveUnresolved = false)
     {
         try
         {
-            var response = await _http.DeleteAsync($"/machine-queue/job/{jobId}" + (onlyUnsent ? "?only_unsent=true" : ""));
+            var query = new List<string>();
+            if (onlyUnsent) query.Add("only_unsent=true");
+            if (resolveUnresolved) query.Add("resolve=true");
+            var response = await _http.DeleteAsync($"/machine-queue/job/{jobId}"
+                + (query.Count > 0 ? "?" + string.Join("&", query) : ""));
             var body = await response.Content.ReadAsStringAsync();
 
             return response.IsSuccessStatusCode
@@ -678,11 +687,12 @@ public class ApiClient
         }
     }
 
-    public async Task<(bool ok, string? error)> UpdateJobStatusAsync(int jobId, string status)
+    /// <param name="resolveUnresolved">โหมด "ส่งไม่ครบ ไม่ส่งเลย" เท่านั้น — ดู <see cref="ReleaseMachineAsync"/></param>
+    public async Task<(bool ok, string? error)> UpdateJobStatusAsync(int jobId, string status, bool resolveUnresolved = false)
     {
         try
         {
-            var payload = new { status };
+            object payload = resolveUnresolved ? new { status, resolve_unresolved = true } : new { status };
             var response = await _http.PatchAsync($"/job/{jobId}/status",
                 JsonContent.Create(payload, options: JsonOptions));
             var body = await response.Content.ReadAsStringAsync();

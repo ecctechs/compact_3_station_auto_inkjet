@@ -37,6 +37,11 @@ partial class StationOptionsUserControl
         lblMockupHeading = new AntdUI.Label();
         chkMockupStatus = new AntdUI.Checkbox();
         lblMockupHelp = new AntdUI.Label();
+        pnlAllOrNothing = new AntdUI.Panel();
+        tlpAllOrNothing = new System.Windows.Forms.TableLayoutPanel();
+        lblAllOrNothingHeading = new AntdUI.Label();
+        chkAllOrNothing = new AntdUI.Checkbox();
+        lblAllOrNothingHelp = new AntdUI.Label();
         pnlReset = new AntdUI.Panel();
         tlpReset = new System.Windows.Forms.TableLayoutPanel();
         lblResetHeading = new AntdUI.Label();
@@ -49,6 +54,8 @@ partial class StationOptionsUserControl
         flpProcessTabs.SuspendLayout();
         pnlMockup.SuspendLayout();
         tlpMockup.SuspendLayout();
+        pnlAllOrNothing.SuspendLayout();
+        tlpAllOrNothing.SuspendLayout();
         pnlReset.SuspendLayout();
         tlpReset.SuspendLayout();
         tlpRemoteSend.SuspendLayout();
@@ -62,19 +69,21 @@ partial class StationOptionsUserControl
         tlpOptionsRoot.Controls.Add(pnlRemoteSend, 0, 1);
         tlpOptionsRoot.Controls.Add(pnlProcessTabs, 0, 2);
         tlpOptionsRoot.Controls.Add(pnlMockup, 0, 3);
-        tlpOptionsRoot.Controls.Add(pnlReset, 0, 4);
+        tlpOptionsRoot.Controls.Add(pnlAllOrNothing, 0, 4);
+        tlpOptionsRoot.Controls.Add(pnlReset, 0, 5);
         tlpOptionsRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpOptionsRoot.Location = new System.Drawing.Point(32, 32);
         tlpOptionsRoot.Margin = new System.Windows.Forms.Padding(0);
         tlpOptionsRoot.Name = "tlpOptionsRoot";
-        tlpOptionsRoot.RowCount = 6;
+        tlpOptionsRoot.RowCount = 7;
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 66F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 210F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 232F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 240F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 286F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 214F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 976);
+        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 1262);
         tlpOptionsRoot.TabIndex = 0;
         //
         // lblOptionsTitle
@@ -281,6 +290,70 @@ partial class StationOptionsUserControl
         lblMockupHelp.TabIndex = 2;
         lblMockupHelp.Text = "ไฟสถานะ ป้ายผลตรวจ และบรรทัดในกล่องผลการทำงานของทุกหน้า ขึ้นว่าเชื่อมต่อได้ทั้งหมด โดยไม่ได้ต่อเครื่องจริง ใช้ถ่ายรูปทำคู่มือ\r\nมีผลทุกสถานีบนเครื่องนี้ (Scan Barcode · ST1 · ST3) เปลี่ยน MENU_LEVEL ไปถ่ายหน้าของสถานีอื่นได้ ค่ายังค้างอยู่\r\nไม่แตะการส่งงาน การเขียนค่าเข้า PLC หรือการสั่งเครื่องจริง — ของพวกนั้นยังรายงานผลจริงเสมอ\r\nถ่ายเสร็จต้องกลับมาปิดที่หน้านี้ (MENU_LEVEL 99) ห้ามเปิดค้างไว้ที่เครื่องหน้างาน";
         //
+        // pnlAllOrNothing — ขอบน้ำเงิน: ตัวเลือกของการส่งงาน เปิดทิ้งไว้ใช้งานจริงได้
+        //
+        pnlAllOrNothing.Back = System.Drawing.Color.White;
+        pnlAllOrNothing.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlAllOrNothing.BorderWidth = 2F;
+        pnlAllOrNothing.Controls.Add(tlpAllOrNothing);
+        pnlAllOrNothing.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlAllOrNothing.Margin = new System.Windows.Forms.Padding(0, 16, 0, 0);
+        pnlAllOrNothing.Name = "pnlAllOrNothing";
+        pnlAllOrNothing.Padding = new System.Windows.Forms.Padding(24);
+        pnlAllOrNothing.Radius = 10;
+        pnlAllOrNothing.Size = new System.Drawing.Size(1216, 270);
+        pnlAllOrNothing.TabIndex = 4;
+        //
+        // tlpAllOrNothing
+        //
+        tlpAllOrNothing.ColumnCount = 1;
+        tlpAllOrNothing.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpAllOrNothing.Controls.Add(lblAllOrNothingHeading, 0, 0);
+        tlpAllOrNothing.Controls.Add(chkAllOrNothing, 0, 1);
+        tlpAllOrNothing.Controls.Add(lblAllOrNothingHelp, 0, 2);
+        tlpAllOrNothing.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpAllOrNothing.Margin = new System.Windows.Forms.Padding(0);
+        tlpAllOrNothing.Name = "tlpAllOrNothing";
+        tlpAllOrNothing.RowCount = 3;
+        tlpAllOrNothing.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
+        tlpAllOrNothing.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpAllOrNothing.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpAllOrNothing.Size = new System.Drawing.Size(1168, 222);
+        tlpAllOrNothing.TabIndex = 0;
+        //
+        // lblAllOrNothingHeading
+        //
+        lblAllOrNothingHeading.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblAllOrNothingHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        lblAllOrNothingHeading.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblAllOrNothingHeading.Margin = new System.Windows.Forms.Padding(0);
+        lblAllOrNothingHeading.Name = "lblAllOrNothingHeading";
+        lblAllOrNothingHeading.Size = new System.Drawing.Size(1168, 42);
+        lblAllOrNothingHeading.TabIndex = 0;
+        lblAllOrNothingHeading.Text = "ส่งไม่ครบ ไม่ส่งเลย (งานที่ใช้หลายเครื่อง)";
+        //
+        // chkAllOrNothing
+        //
+        chkAllOrNothing.Dock = System.Windows.Forms.DockStyle.Fill;
+        chkAllOrNothing.Font = new System.Drawing.Font("Segoe UI", 15F);
+        chkAllOrNothing.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        chkAllOrNothing.Margin = new System.Windows.Forms.Padding(0, 0, 0, 12);
+        chkAllOrNothing.Name = "chkAllOrNothing";
+        chkAllOrNothing.Size = new System.Drawing.Size(1168, 32);
+        chkAllOrNothing.TabIndex = 1;
+        chkAllOrNothing.Text = "เครื่องไหนส่งไม่ผ่าน ตีทั้งงานกลับเป็นรอเริ่ม ไม่ค้างคิว";
+        //
+        // lblAllOrNothingHelp
+        //
+        lblAllOrNothingHelp.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblAllOrNothingHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblAllOrNothingHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
+        lblAllOrNothingHelp.Margin = new System.Windows.Forms.Padding(0);
+        lblAllOrNothingHelp.Name = "lblAllOrNothingHelp";
+        lblAllOrNothingHelp.Size = new System.Drawing.Size(1168, 136);
+        lblAllOrNothingHelp.TabIndex = 2;
+        lblAllOrNothingHelp.Text = "ใช้กับงานที่ส่งหลายเครื่อง (MK1 + MK2, UV1 + UV2, MK + UV2) — เครื่องไหนต่อไม่ติดหรือส่งไม่ผ่าน (รวมส่งไปแล้วไม่ได้คำตอบ) ไม่ส่งเครื่องไหนต่อ ล้างคิวของงาน ตีงานกลับเป็นรอเริ่ม แล้วบอกชื่อเครื่องที่ต้องไปตรวจ\r\nไม่มีคิวค้าง \"รอตรวจผล\" อีก คิวที่ค้างอยู่แล้ว ปลดได้ด้วยปุ่มหน้าเครื่อง หรือปุ่มยกเลิก / จบงาน · เครื่องไม่ว่างยังเข้าคิวรอเหมือนเดิม\r\nข้อแลก: เครื่องที่รับงานไปก่อนอีกเครื่องจะล้ม ได้ข้อมูลไปแล้วจริง ระบบเตือนชื่อเครื่องนั้นให้ กดเริ่มงานใหม่จะส่งทับ\r\nต้องเปิดที่เครื่อง ST1 (ST1 เป็นคนส่งทุกงาน รวมงานที่กดจาก ST3) และต้องใช้ backend รุ่นที่รองรับ";
+        //
         // pnlReset
         //
         pnlReset.Back = System.Drawing.Color.White;
@@ -293,7 +366,7 @@ partial class StationOptionsUserControl
         pnlReset.Padding = new System.Windows.Forms.Padding(24);
         pnlReset.Radius = 10;
         pnlReset.Size = new System.Drawing.Size(1216, 198);
-        pnlReset.TabIndex = 4;
+        pnlReset.TabIndex = 5;
         //
         // tlpReset
         //
@@ -392,7 +465,7 @@ partial class StationOptionsUserControl
         Controls.Add(tlpOptionsRoot);
         Name = "StationOptionsUserControl";
         Padding = new System.Windows.Forms.Padding(32);
-        Size = new System.Drawing.Size(1280, 1040);
+        Size = new System.Drawing.Size(1280, 1326);
         tlpOptionsRoot.ResumeLayout(false);
         tlpReset.ResumeLayout(false);
         flpProcessTabs.ResumeLayout(false);
@@ -400,6 +473,8 @@ partial class StationOptionsUserControl
         pnlProcessTabs.ResumeLayout(false);
         tlpMockup.ResumeLayout(false);
         pnlMockup.ResumeLayout(false);
+        tlpAllOrNothing.ResumeLayout(false);
+        pnlAllOrNothing.ResumeLayout(false);
         pnlReset.ResumeLayout(false);
         pnlRemoteSend.ResumeLayout(false);
         tlpRemoteSend.ResumeLayout(false);
@@ -425,6 +500,11 @@ partial class StationOptionsUserControl
     private AntdUI.Label lblMockupHeading;
     private AntdUI.Checkbox chkMockupStatus;
     private AntdUI.Label lblMockupHelp;
+    private AntdUI.Panel pnlAllOrNothing;
+    private System.Windows.Forms.TableLayoutPanel tlpAllOrNothing;
+    private AntdUI.Label lblAllOrNothingHeading;
+    private AntdUI.Checkbox chkAllOrNothing;
+    private AntdUI.Label lblAllOrNothingHelp;
     private AntdUI.Panel pnlReset;
     private System.Windows.Forms.TableLayoutPanel tlpReset;
     private AntdUI.Label lblResetHeading;

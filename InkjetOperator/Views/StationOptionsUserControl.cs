@@ -6,9 +6,9 @@ namespace InkjetOperator.Views;
 /// สวิตช์เปิด/ปิดของที่ไม่ได้เปิดไว้ตลอด — หน้านี้เห็นเฉพาะโหมดทดสอบ
 ///
 /// <para>
-/// มีสี่รายการ — ปุ่มสำรอง "ขอให้ ST1 ส่ง" ในหน้า Order Detail ของ ST3 ซึ่งเป็น
+/// มีห้ารายการ — ปุ่มสำรอง "ขอให้ ST1 ส่ง" ในหน้า Order Detail ของ ST3 ซึ่งเป็น
 /// ทางออกตอนปุ่มกดหน้างานหรือ PLC ใช้ไม่ได้ · ใครเห็นตัวกรอง In-line / Off-line
-/// ในหน้า Order List · Mockup สถานะการเชื่อมต่อสำหรับถ่ายรูปคู่มือ
+/// ในหน้า Order List · Mockup สถานะการเชื่อมต่อสำหรับถ่ายรูปคู่มือ · โหมดส่งไม่ครบ ไม่ส่งเลย
 /// และปุ่มรีเซ็ตทุกอย่างกลับเป็นค่าเริ่มต้นสำหรับทดสอบ
 /// </para>
 /// <para>
@@ -32,6 +32,9 @@ public partial class StationOptionsUserControl : UserControl
         chkMockupStatus.Checked = StatusMockup.Enabled;
         chkMockupStatus.CheckedChanged += MockupStatus_CheckedChanged;
 
+        chkAllOrNothing.Checked = AllOrNothingSend.Enabled;
+        chkAllOrNothing.CheckedChanged += AllOrNothing_CheckedChanged;
+
         btnResetRuntime.Click += async (_, _) => await ResetRuntimeAsync();
     }
 
@@ -52,6 +55,28 @@ public partial class StationOptionsUserControl : UserControl
         chkMockupStatus.CheckedChanged -= MockupStatus_CheckedChanged;
         chkMockupStatus.Checked = !e.Value;
         chkMockupStatus.CheckedChanged += MockupStatus_CheckedChanged;
+
+        Notify.WarnModal(this, "บันทึกไม่สำเร็จ",
+            CustomSettingsManager.LastError ?? "เขียนไฟล์ตั้งค่าไม่ได้");
+    }
+
+    /// <summary>
+    /// เปิด/ปิดโหมด "ส่งไม่ครบ ไม่ส่งเลย" — เซฟทันทีที่ติ๊ก รายละเอียดอยู่ที่ <see cref="AllOrNothingSend"/>
+    /// </summary>
+    private void AllOrNothing_CheckedChanged(object? sender, AntdUI.BoolEventArgs e)
+    {
+        if (CustomSettingsManager.Write(AllOrNothingSend.Key, e.Value ? "1" : "0"))
+        {
+            Notify.Success(this, e.Value
+                ? "เปิดโหมดส่งไม่ครบ ไม่ส่งเลยแล้ว — มีผลกับการส่งรอบถัดไป (ต้องเปิดที่เครื่อง ST1)"
+                : "ปิดโหมดส่งไม่ครบ ไม่ส่งเลยแล้ว — กลับไปใช้กฎเดิม (ผลไม่แน่นอนถือคิวไว้ตรวจ)");
+            return;
+        }
+
+        // เขียนไฟล์ไม่ผ่าน ติ๊กที่ค้างอยู่จะโกหกว่าเซฟแล้ว ต้องดีดกลับ
+        chkAllOrNothing.CheckedChanged -= AllOrNothing_CheckedChanged;
+        chkAllOrNothing.Checked = !e.Value;
+        chkAllOrNothing.CheckedChanged += AllOrNothing_CheckedChanged;
 
         Notify.WarnModal(this, "บันทึกไม่สำเร็จ",
             CustomSettingsManager.LastError ?? "เขียนไฟล์ตั้งค่าไม่ได้");
