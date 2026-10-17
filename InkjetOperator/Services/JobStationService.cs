@@ -60,6 +60,70 @@ public static class JobStationService
     /// <summary>ชื่อที่แสดงบนจอ เช่น ST2 · ยังไม่เคยส่งคืนค่าว่าง ให้ผู้เรียกตัดสินใจเอง</summary>
     public static string Label(int? station) => station == null ? "" : $"ST{station}";
 
+    /// <summary>
+    /// สถานีที่งานนี้ถือเครื่องอยู่ตอนนี้ — คิวของงานนี้ที่ยัง active (ได้เครื่องแล้ว ยังไม่กดปล่อย)
+    /// เรียงตามลำดับสาย ไม่ซ้ำ (งาน 22 ถือ MK สองรอบก็ยังเป็น ST1 ที่เดียว)
+    /// </summary>
+    public static List<int> Holding(IEnumerable<MachineQueueRow>? queue, int jobId) =>
+        (queue ?? [])
+            .Where(r => r.PrintJobsId == jobId && r.State == "active")
+            .Select(r => StationOf(r.Machine))
+            .OfType<int>()
+            .Distinct()
+            .OrderBy(s => s)
+            .ToList();
+
+    /// <summary>
+    /// ข้อความในคอลัมน์ Station ของหน้า Order List
+    /// <para>
+    /// งานที่ส่งเข้าหลายเครื่องพร้อมกัน (11 = UV1 + UV2, 12 = MK + UV2) อยู่หลายสถานีจริง
+    /// ในเวลาเดียวกัน เดิมขึ้นแค่สถานีของเครื่องที่ส่งเสร็จ "ล่าสุด" ซึ่งต่างกันแค่เสี้ยววินาที
+    /// บางครั้งได้ ST2 บางครั้งได้ ST3 คนดูไม่รู้ว่าอีกเครื่องหายไปไหน
+    /// </para>
+    /// <para>
+    /// ตอนนี้ขึ้นทุกสถานีที่งานถือเครื่องอยู่ คั่นด้วย " + " (เช่น "ST2 + ST3")
+    /// ปล่อยเครื่องไหนแล้วสถานีนั้นหายไป ไม่ถือเครื่องไหนแล้ว (ปล่อยครบ / จบงาน / งานเก่า
+    /// ที่ไม่มีคิว) ค่อยกลับไปใช้สถานีที่ส่งสำเร็จล่าสุดแบบเดิม
+    /// </para>
+    /// </summary>
+    public static string Display(IEnumerable<MachineQueueRow>? queue, int jobId, IEnumerable<CommandResult>? commands)
+    {
+        var holding = Holding(queue, jobId);
+        return holding.Count > 0
+            ? string.Join(" + ", holding.Select(s => $"ST{s}"))
+            : Label(LastOnLine(commands));
+    }
+
+    /// <summary>ส่งห่างกันไม่เกินนี้นับว่ากดเริ่มรอบเดียวกัน (ส่งหลายเครื่องพร้อมกัน)</summary>
+    private static readonly TimeSpan SameBatch = TimeSpan.FromMinutes(1);
+
+    /// <summary>
+    /// สถานีของงานที่ไม่ได้ถือเครื่องแล้ว — สถานีท้ายสุดตามลำดับสายของการส่งรอบล่าสุด
+    /// <para>
+    /// งานที่ส่งหลายเครื่องพร้อมกัน ใบไหนเสร็จทีหลังขึ้นกับจังหวะเครือข่าย ถ้าใช้ "ส่งล่าสุด"
+    /// ตรง ๆ งาน 11 ที่ปล่อยครบแล้วจะขึ้น ST2 บ้าง ST3 บ้าง จึงเลือกสถานีท้ายสุดในชุดที่ส่ง
+    /// พร้อมกันแทน (11 → ST3) งานที่ส่งทีละเครื่องได้ผลเท่าเดิม เพราะชุดล่าสุดมีเครื่องเดียว
+    /// </para>
+    /// <para>
+    /// ไม่ใช้สถานีสูงสุดของทั้งประวัติ เพราะงานที่นำกลับมาพิมพ์ใหม่ยังมีประวัติส่งของรอบก่อน
+    /// อยู่ — ส่งรอบใหม่ไปแค่ MK ต้องขึ้น ST1 ไม่ใช่ ST3 จากรอบเก่า
+    /// </para>
+    /// </summary>
+    public static int? LastOnLine(IEnumerable<CommandResult>? commands)
+    {
+        var sent = (commands ?? [])
+            .Where(c => c.Success && StationOf(c.Command) != null)
+            .Select(c => (Station: StationOf(c.Command)!.Value, At: ParseSentAt(c.SentAt)))
+            .ToList();
+        if (sent.Count == 0) return null;
+
+        // อ่านเวลาไม่ออกสักแถว ตัดสินชุดไม่ได้ — ใช้กติกาเดิม
+        if (sent.Any(s => s.At == DateTime.MinValue)) return Current(commands);
+
+        var latest = sent.Max(s => s.At);
+        return sent.Where(s => latest - s.At <= SameBatch).Max(s => s.Station);
+    }
+
     private static DateTime ParseSentAt(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return DateTime.MinValue;

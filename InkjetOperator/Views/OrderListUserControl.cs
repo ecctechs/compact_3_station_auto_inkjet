@@ -2869,16 +2869,6 @@ public partial class OrderListUserControl : UserControl
     private static string MachineCell(MarkingMachine machine) =>
         machine == MarkingMachine.None ? Dash : MarkingMethodService.Label(machine);
 
-    /// <summary>
-    /// สถานีล่าสุดที่กดส่งสำเร็จ — ยังไม่เคยส่งเป็นขีด เข้าชุดกับคอลัมน์ End
-    /// งานที่จบแล้วยังค้างอยู่ที่สถานีสุดท้ายของมัน ไม่ได้ล้างทิ้ง
-    /// </summary>
-    private static string OrDashStation(int? station)
-    {
-        var label = JobStationService.Label(station);
-        return label.Length == 0 ? Dash : label;
-    }
-
     private OrderRow ToRow(PrintJob job, bool isHistory)
     {
         var plan = MarkingMethodService.Resolve(job.PlanRouting?.MarkingMethod);
@@ -2963,7 +2953,9 @@ public partial class OrderListUserControl : UserControl
             ProcessSequence = job.PlanRouting?.ProcessSequence ?? "",
             Plate = plan.NoCase ? Dash : MachineCell(plan.Plate),
             Shim = plan.NoCase ? Dash : MachineCell(plan.Shim),
-            Station = OrDashStation(JobStationService.Current(job.Commands)),
+            // สถานีที่งานถือเครื่องอยู่ (หลายเครื่องพร้อมกันได้ เช่น ST2 + ST3) — ดู JobStationService.Display
+            // ยังไม่เคยส่งเป็นขีด เข้าชุดกับคอลัมน์ End
+            Station = OrDash(JobStationService.Display(_queueRows, job.Id, job.Commands)),
             Status = statusText,
             MachineStatus = BuildMachineStatus(job),
             Op = buttons.ToArray(),
