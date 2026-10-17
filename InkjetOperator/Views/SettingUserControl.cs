@@ -23,6 +23,52 @@ public partial class SettingUserControl : UserControl
     {
         InitializeComponent();
         ApplyMenuLevel();
+
+        // ทุกระดับเมนูเห็นปุ่มนี้ — ตอนติดตั้งเครื่องอยู่ระดับสถานีแล้ว (เลือกตอนเปิดครั้งแรก)
+        // ไม่มีใครอยู่โหมด Dev และ IP กระจายอยู่หลายหน้าที่แต่ละสถานีเห็นไม่ครบ
+        btnSiteNetwork.Click += (_, _) => ApplySiteNetwork();
+    }
+
+    /// <summary>
+    /// ใส่ IP หน้างานทุกช่องทีเดียว — ถามยืนยันพร้อมบอกว่าช่องไหนเปลี่ยนจากอะไรเป็นอะไร
+    /// ค่าทั้งหมดอยู่ที่ <see cref="SiteNetwork"/>
+    /// </summary>
+    private void ApplySiteNetwork()
+    {
+        var changes = SiteNetwork.Pending();
+        if (changes.Count == 0)
+        {
+            Notify.Success(this, "IP ตรงกับหน้างานครบทุกช่องอยู่แล้ว");
+            return;
+        }
+
+        var lines = changes.Select(c =>
+            $"{c.Entry.Label}:  {(c.Old.Length == 0 ? "(ว่าง)" : c.Old)}  →  {c.Entry.Value}");
+        if (!Confirm.Ask(this, "ใช้ IP หน้างาน",
+                string.Join(Environment.NewLine, lines) + Environment.NewLine + Environment.NewLine
+                + "แก้เฉพาะช่องข้างบน ค่าอื่น (path, สถานี, ชื่อเครื่อง) ไม่แตะ · เก็บสำเนาไฟล์ Setting เดิมไว้ให้" + Environment.NewLine + Environment.NewLine
+                + "ยืนยันหรือไม่?"))
+            return;
+
+        var (error, backup) = SiteNetwork.Apply(changes);
+        if (error != null)
+        {
+            Notify.ErrorModal(this, "ใช้ IP หน้างานไม่สำเร็จ", error
+                + (backup == null ? "" : Environment.NewLine + Environment.NewLine + "สำเนาไฟล์เดิม: " + backup));
+            return;
+        }
+
+        // หน้าที่เปิดค้างไว้ยังแสดงค่าเก่าในช่อง กด Save ทีหลังจะเขียนค่าเก่าทับคืน — ทิ้งแล้วสร้างใหม่
+        pnlContentArea.Controls.Clear();
+        foreach (var page in _subPages.Values) page.Dispose();
+        _subPages.Clear();
+        if (_activeButton != null) ShowSubPage(_activeButton.Name);
+        HealthMonitor.CheckNow();
+
+        Notify.SuccessDetail(this, "ใช้ IP หน้างานแล้ว",
+            $"แก้ {changes.Count} ช่อง" + Environment.NewLine + Environment.NewLine
+            + "ปิดโปรแกรมแล้วเปิดใหม่ 1 ครั้ง ให้ทุกหน้าต่อ IP ใหม่" + Environment.NewLine + Environment.NewLine
+            + "สำเนาไฟล์เดิม: " + backup);
     }
 
     private void ApplyMenuLevel()
@@ -58,6 +104,12 @@ public partial class SettingUserControl : UserControl
         // ที่เปลี่ยนกฎการทำงานหน้างาน ไม่ใช่ค่าที่พนักงานควรพลิกเองระหว่างผลิต
         visible[StationOptionsTab] = level == DevMenuLevel;
 
+        // ปุ่ม "ใช้ IP หน้างาน" อยู่ล่างสุดของแถบ — โหมด Dev มีเมนูครบแปดอันซึ่งสูงเกินที่ว่าง
+        // เมนูอันล่างสุดจะโดนปุ่มทับ จึงลดความสูงแต่ละแถวลงให้พอดี (ไม่เกิน 96 เท่าเดิม)
+        int count = visible.Count(v => v);
+        int space = pnlSidebar.ClientSize.Height - tlpSiteNetwork.Height - pnlSidebar.Padding.Vertical - 4;
+        float rowHeight = count == 0 ? 96F : Math.Min(96F, space / count);
+
         int row = 0;
         for (int i = 0; i < allButtons.Length; i++)
         {
@@ -66,7 +118,7 @@ public partial class SettingUserControl : UserControl
             {
                 tlpSidebar.SetRow(allButtons[i], row);
                 tlpSidebar.RowStyles[row].SizeType = SizeType.Absolute;
-                tlpSidebar.RowStyles[row].Height = 96F;
+                tlpSidebar.RowStyles[row].Height = rowHeight;
                 row++;
             }
         }
@@ -77,7 +129,7 @@ public partial class SettingUserControl : UserControl
             tlpSidebar.RowStyles[r].Height = 0F;
         }
 
-        tlpSidebar.Height = row * 96;
+        tlpSidebar.Height = (int)(row * rowHeight);
 
         _menuButtons = allButtons.Where((_, i) => visible[i]).ToArray();
         foreach (var btn in _menuButtons)

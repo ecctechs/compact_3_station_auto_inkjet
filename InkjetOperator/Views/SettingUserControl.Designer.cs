@@ -29,6 +29,8 @@ partial class SettingUserControl
     {
         tlpSettingRoot = new TableLayoutPanel();
         pnlSidebar = new AntdUI.Panel();
+        tlpSiteNetwork = new TableLayoutPanel();
+        btnSiteNetwork = new AntdUI.Button();
         tlpSidebar = new TableLayoutPanel();
         btnDatabaseSetting = new AntdUI.Button();
         btnDbPathSetting = new AntdUI.Button();
@@ -42,6 +44,7 @@ partial class SettingUserControl
         pnlContentArea = new BufferedPanel();
         tlpSettingRoot.SuspendLayout();
         pnlSidebar.SuspendLayout();
+        tlpSiteNetwork.SuspendLayout();
         tlpSidebar.SuspendLayout();
         pnlContent.SuspendLayout();
         SuspendLayout();
@@ -70,6 +73,7 @@ partial class SettingUserControl
         pnlSidebar.BorderColor = Color.FromArgb(36, 71, 101);
         pnlSidebar.BorderWidth = 2F;
         pnlSidebar.Controls.Add(tlpSidebar);
+        pnlSidebar.Controls.Add(tlpSiteNetwork);
         pnlSidebar.Dock = DockStyle.Fill;
         pnlSidebar.Location = new Point(35, 35);
         pnlSidebar.Margin = new Padding(0, 0, 8, 0);
@@ -78,6 +82,37 @@ partial class SettingUserControl
         pnlSidebar.Size = new Size(269, 791);
         pnlSidebar.TabIndex = 0;
         // 
+        // tlpSiteNetwork — ล่างสุดของแถบเมนู แยกจากเมนูหน้า เพราะไม่ได้พาไปหน้าไหน
+        //
+        tlpSiteNetwork.BackColor = Color.Transparent;
+        tlpSiteNetwork.ColumnCount = 1;
+        tlpSiteNetwork.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        tlpSiteNetwork.Controls.Add(btnSiteNetwork, 0, 0);
+        tlpSiteNetwork.Dock = DockStyle.Bottom;
+        tlpSiteNetwork.Location = new Point(2, 709);
+        tlpSiteNetwork.Margin = new Padding(0);
+        tlpSiteNetwork.Name = "tlpSiteNetwork";
+        tlpSiteNetwork.Padding = new Padding(12);
+        tlpSiteNetwork.RowCount = 1;
+        tlpSiteNetwork.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        tlpSiteNetwork.Size = new Size(265, 80);
+        tlpSiteNetwork.TabIndex = 1;
+        //
+        // btnSiteNetwork
+        //
+        btnSiteNetwork.BorderWidth = 2F;
+        btnSiteNetwork.DefaultBorderColor = Color.FromArgb(36, 71, 101);
+        btnSiteNetwork.Dock = DockStyle.Fill;
+        btnSiteNetwork.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+        btnSiteNetwork.ForeColor = Color.FromArgb(36, 71, 101);
+        btnSiteNetwork.Location = new Point(12, 12);
+        btnSiteNetwork.Margin = new Padding(0);
+        btnSiteNetwork.Name = "btnSiteNetwork";
+        btnSiteNetwork.Radius = 8;
+        btnSiteNetwork.Size = new Size(241, 56);
+        btnSiteNetwork.TabIndex = 0;
+        btnSiteNetwork.Text = "ใช้ IP หน้างาน";
+        //
         // tlpSidebar
         // 
         tlpSidebar.BackColor = Color.Transparent;
@@ -248,6 +283,7 @@ partial class SettingUserControl
         Size = new Size(1100, 860);
         tlpSettingRoot.ResumeLayout(false);
         pnlSidebar.ResumeLayout(false);
+        tlpSiteNetwork.ResumeLayout(false);
         tlpSidebar.ResumeLayout(false);
         pnlContent.ResumeLayout(false);
         ResumeLayout(false);
@@ -266,6 +302,8 @@ partial class SettingUserControl
     private AntdUI.Button btnUvTest;
     private AntdUI.Button btnSystemHealth;
     private AntdUI.Button btnStationOptions;
+    private TableLayoutPanel tlpSiteNetwork;
+    private AntdUI.Button btnSiteNetwork;
     private AntdUI.Panel pnlContent;
     private BufferedPanel pnlContentArea;
 }

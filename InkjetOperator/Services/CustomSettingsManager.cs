@@ -14,6 +14,9 @@ public static class CustomSettingsManager
     /// <summary>ให้ตัวจัดการไฟล์ตั้งค่าตัวอื่นรายงานปัญหามาที่เดียวกัน</summary>
     internal static void ReportWriteError(string message) => LastError = message;
 
+    /// <summary>ไฟล์ที่อ่าน/เขียนอยู่จริง — ใช้ตอนต้องเก็บสำเนาทั้งไฟล์ก่อนแก้หลายช่อง</summary>
+    public static string FilePath => _store.Path;
+
     public static string Read(string key, string defaultValue = "") => _store.Read(key, defaultValue);
 
     /// <summary>คืน false เมื่อบันทึกไม่สำเร็จ ดูสาเหตุได้ที่ <see cref="LastError"/></summary>
