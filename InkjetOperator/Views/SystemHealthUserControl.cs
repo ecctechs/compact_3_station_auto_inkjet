@@ -27,6 +27,62 @@ public partial class SystemHealthUserControl : UserControl
 
         HealthMonitor.Updated += OnHealthUpdated;
         Disposed += (_, _) => HealthMonitor.Updated -= OnHealthUpdated;
+
+        btnRestartBackend.Click += async (_, _) => await RestartBackendAsync();
+
+        // สั่งปิด/เปิดโปรเซสข้ามเครื่องไม่ได้ — ปุ่มยังเห็นแต่กดไม่ได้ พร้อมบอกว่าต้องไปทำที่ไหน
+        if (!BackendLauncher.IsLocal())
+        {
+            btnRestartBackend.Enabled = false;
+            lblRestartHelp.Text = $"backend อยู่เครื่องอื่น ({CustomSettingsManager.Read("PC_IP", "")})"
+                + " — รีสตาร์ทจากโปรแกรมบนเครื่องนั้น หน้า Setting → System Health";
+        }
+    }
+
+    /// <summary>
+    /// รีสตาร์ท backend บนเครื่องนี้ — ใช้หลังอัปเดตไฟล์ backend รายละเอียดที่ <see cref="BackendLauncher.RestartAsync"/>
+    /// </summary>
+    private async Task RestartBackendAsync()
+    {
+        // สถานีนี้กำลังคุยกับเครื่องอยู่ ตัด backend กลางทางผลส่งจะบันทึกไม่ได้
+        if (MachineBusy.Active)
+        {
+            Notify.WarnModal(this, "ยังรีสตาร์ทไม่ได้", "สถานีนี้กำลังส่งงานเข้าเครื่องอยู่ รอให้เสร็จก่อนแล้วกดใหม่");
+            return;
+        }
+
+        if (!Confirm.Ask(this, "รีสตาร์ท backend",
+                "จะปิด backend ที่รันอยู่บนเครื่องนี้แล้วเปิดใหม่ ใช้เวลาไม่กี่วินาที" + Environment.NewLine + Environment.NewLine
+                + "ระหว่างนั้นทุกสถานีต่อ backend ไม่ได้ — ตรวจว่าไม่มีสถานีไหนกำลังส่งงานเข้าเครื่องอยู่" + Environment.NewLine + Environment.NewLine
+                + "ยืนยันหรือไม่?"))
+            return;
+
+        // ไม่ใช้ Loading ของปุ่ม — แอนิเมชันของ AntdUI เคยค้างเธรดไว้จนจอหน่วง เปลี่ยนข้อความแทน
+        var text = btnRestartBackend.Text;
+        btnRestartBackend.Enabled = false;
+        btnRestartBackend.Text = "กำลังรีสตาร์ท...";
+        try
+        {
+            var problem = await BackendLauncher.RestartAsync();
+            if (IsDisposed) return;
+            if (problem == null)
+            {
+                Notify.Success(this, "รีสตาร์ท backend แล้ว — แถว Backend จะอัปเดตในไม่กี่วินาที");
+                HealthMonitor.CheckNow();
+            }
+            else
+            {
+                Notify.ErrorModal(this, "รีสตาร์ท backend ไม่สำเร็จ", problem);
+            }
+        }
+        finally
+        {
+            if (!IsDisposed)
+            {
+                btnRestartBackend.Text = text;
+                btnRestartBackend.Enabled = true;
+            }
+        }
     }
 
     private void ConfigureColumns()

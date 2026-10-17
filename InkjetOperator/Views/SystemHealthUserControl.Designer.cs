@@ -20,8 +20,12 @@ partial class SystemHealthUserControl
         tlpHealthRoot = new System.Windows.Forms.TableLayoutPanel();
         lblHealthTitle = new AntdUI.Label();
         lblHealthSummary = new AntdUI.Label();
+        flpHealthActions = new System.Windows.Forms.FlowLayoutPanel();
+        btnRestartBackend = new AntdUI.Button();
+        lblRestartHelp = new AntdUI.Label();
         tblHealth = new AntdUI.Table();
         tlpHealthRoot.SuspendLayout();
+        flpHealthActions.SuspendLayout();
         SuspendLayout();
         //
         // tlpHealthRoot
@@ -30,14 +34,16 @@ partial class SystemHealthUserControl
         tlpHealthRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpHealthRoot.Controls.Add(lblHealthTitle, 0, 0);
         tlpHealthRoot.Controls.Add(lblHealthSummary, 0, 1);
-        tlpHealthRoot.Controls.Add(tblHealth, 0, 2);
+        tlpHealthRoot.Controls.Add(flpHealthActions, 0, 2);
+        tlpHealthRoot.Controls.Add(tblHealth, 0, 3);
         tlpHealthRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpHealthRoot.Location = new System.Drawing.Point(32, 32);
         tlpHealthRoot.Margin = new System.Windows.Forms.Padding(0);
         tlpHealthRoot.Name = "tlpHealthRoot";
-        tlpHealthRoot.RowCount = 3;
+        tlpHealthRoot.RowCount = 4;
         tlpHealthRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 54F));
         tlpHealthRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpHealthRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 64F));
         tlpHealthRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpHealthRoot.Size = new System.Drawing.Size(1216, 736);
         tlpHealthRoot.TabIndex = 0;
@@ -66,18 +72,55 @@ partial class SystemHealthUserControl
         lblHealthSummary.TabIndex = 1;
         lblHealthSummary.Text = "กำลังตรวจสอบ...";
         //
+        // flpHealthActions
+        //
+        flpHealthActions.Controls.Add(btnRestartBackend);
+        flpHealthActions.Controls.Add(lblRestartHelp);
+        flpHealthActions.Dock = System.Windows.Forms.DockStyle.Fill;
+        flpHealthActions.Location = new System.Drawing.Point(0, 98);
+        flpHealthActions.Margin = new System.Windows.Forms.Padding(0);
+        flpHealthActions.Name = "flpHealthActions";
+        flpHealthActions.Size = new System.Drawing.Size(1216, 64);
+        flpHealthActions.TabIndex = 2;
+        flpHealthActions.WrapContents = false;
+        //
+        // btnRestartBackend — ขอบแดง: ทุกสถานีต่อ backend ไม่ได้ช่วงรีสตาร์ท
+        //
+        btnRestartBackend.BorderWidth = 2F;
+        btnRestartBackend.DefaultBorderColor = System.Drawing.Color.FromArgb(245, 34, 45);
+        btnRestartBackend.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        btnRestartBackend.ForeColor = System.Drawing.Color.FromArgb(245, 34, 45);
+        btnRestartBackend.Location = new System.Drawing.Point(0, 0);
+        btnRestartBackend.Margin = new System.Windows.Forms.Padding(0, 0, 16, 12);
+        btnRestartBackend.Name = "btnRestartBackend";
+        btnRestartBackend.Radius = 8;
+        btnRestartBackend.Size = new System.Drawing.Size(260, 52);
+        btnRestartBackend.TabIndex = 0;
+        btnRestartBackend.Text = "รีสตาร์ท backend";
+        //
+        // lblRestartHelp
+        //
+        lblRestartHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblRestartHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
+        lblRestartHelp.Location = new System.Drawing.Point(276, 0);
+        lblRestartHelp.Margin = new System.Windows.Forms.Padding(0);
+        lblRestartHelp.Name = "lblRestartHelp";
+        lblRestartHelp.Size = new System.Drawing.Size(900, 52);
+        lblRestartHelp.TabIndex = 1;
+        lblRestartHelp.Text = "ใช้หลังอัปเดตไฟล์ backend (แถว Backend ขึ้นว่ายังไม่รีสตาร์ท) · ระหว่างรีสตาร์ทไม่กี่วินาที ทุกสถานีต่อ backend ไม่ได้\r\nอย่ากดตอนกำลังส่งงานเข้าเครื่อง · กดได้เฉพาะเครื่องที่ backend อยู่";
+        //
         // tblHealth
         //
         tblHealth.Dock = System.Windows.Forms.DockStyle.Fill;
         tblHealth.EmptyText = "กำลังตรวจสอบ...";
         tblHealth.Font = new System.Drawing.Font("Segoe UI", 14F);
-        tblHealth.Location = new System.Drawing.Point(0, 98);
+        tblHealth.Location = new System.Drawing.Point(0, 162);
         tblHealth.Margin = new System.Windows.Forms.Padding(0);
         tblHealth.Name = "tblHealth";
         tblHealth.Radius = 10;
         tblHealth.RowHeight = 46;
-        tblHealth.Size = new System.Drawing.Size(1216, 638);
-        tblHealth.TabIndex = 2;
+        tblHealth.Size = new System.Drawing.Size(1216, 574);
+        tblHealth.TabIndex = 3;
         //
         // SystemHealthUserControl
         //
@@ -89,6 +132,7 @@ partial class SystemHealthUserControl
         Padding = new System.Windows.Forms.Padding(32);
         Size = new System.Drawing.Size(1280, 800);
         tlpHealthRoot.ResumeLayout(false);
+        flpHealthActions.ResumeLayout(false);
         ResumeLayout(false);
     }
 
@@ -98,4 +142,7 @@ partial class SystemHealthUserControl
     private AntdUI.Label lblHealthTitle;
     private AntdUI.Label lblHealthSummary;
     private AntdUI.Table tblHealth;
+    private System.Windows.Forms.FlowLayoutPanel flpHealthActions;
+    private AntdUI.Button btnRestartBackend;
+    private AntdUI.Label lblRestartHelp;
 }

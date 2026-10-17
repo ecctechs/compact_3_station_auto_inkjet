@@ -1,6 +1,7 @@
 const ResponseManager = require("../middleware/ResponseManager");
 const sequelize = require("../database");
 const jobDataset = require("../services/jobDataset");
+const codeVersion = require("../services/codeVersion");
 
 /**
  * Size conversion dict — ported from rs232_connector.py lines 8-22.
@@ -127,6 +128,15 @@ class SystemController {
   static async clearJobData(req, res) {
     try {
       return ResponseManager.SuccessResponse(req, res, 200, await jobDataset.clearAll());
+    } catch (err) {
+      return ResponseManager.CatchResponse(req, res, err.message);
+    }
+  }
+
+  /** GET /system/version — ตัวที่รันอยู่ตรงกับไฟล์ในเครื่องไหม (stale = อัปเดตไฟล์แล้วแต่ยังไม่รีสตาร์ท) */
+  static version(req, res) {
+    try {
+      return ResponseManager.SuccessResponse(req, res, 200, codeVersion.status());
     } catch (err) {
       return ResponseManager.CatchResponse(req, res, err.message);
     }

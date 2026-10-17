@@ -123,7 +123,7 @@ public static class HealthMonitor
 
         // ยิงทุกปลายทางพร้อมกัน รอบหนึ่งจึงใช้เวลาเท่ากับรายที่ช้าที่สุดรายเดียว
         var network = await Task.WhenAll(
-            EndpointAsync(links, "Backend", CustomSettingsManager.Read("PC_IP", "127.0.0.1"), "3000"),
+            BackendItemAsync(links, CustomSettingsManager.Read("PC_IP", "127.0.0.1")),
             EndpointAsync(links, CustomSettingsManager.Read("MK058_NAME", "MK-058"),
                 CustomSettingsManager.Read("MK058_COM"), "9004"),
             EndpointAsync(links, CustomSettingsManager.Read("MK059_NAME", "MK-059"),
@@ -192,6 +192,52 @@ public static class HealthMonitor
         catch (Exception ex)
         {
             return new HealthItem(group, name, HealthState.Bad, $"{where} — {Short(ex)}");
+        }
+    }
+
+    /// <summary>ถาม backend ว่าตัวที่รันอยู่ตรงกับไฟล์ไหม — ใช้ตัวเดียวทั้งโปรแกรม รอไม่เกิน Timeout</summary>
+    private static readonly HttpClient VersionHttp = new() { Timeout = Timeout };
+
+    /// <summary>
+    /// ต่อพอร์ตได้ยังไม่พอ ต้องเป็นตัวที่ตรงกับไฟล์ในเครื่องด้วย
+    /// <para>
+    /// อัปเดตไฟล์ backend แล้วไม่รีสตาร์ท ตัวเก่ายังรันต่อ ต่อได้ปกติทุกอย่าง แต่คำสั่งใหม่
+    /// ตอบ 404 — เดิมแถวนี้ขึ้นปกติทั้งที่ใช้ปุ่มใหม่ไม่ได้ (เคยเจอกับปุ่มบันทึกชุดข้อมูลงาน)
+    /// backend ที่ไม่มีคำสั่งเช็ครุ่นเลยก็คือรุ่นก่อนหน้านี้ = เก่าแน่นอน
+    /// </para>
+    /// </summary>
+    private static async Task<HealthItem> BackendItemAsync(string group, string? ip)
+    {
+        var item = await EndpointAsync(group, "Backend", ip, BackendLauncher.Port.ToString());
+        if (item.State != HealthState.Ok || StatusMockup.Enabled) return item;
+
+        var restart = BackendLauncher.IsLocal()
+            ? "กด รีสตาร์ท backend ด้านบน"
+            : "ต้องรีสตาร์ท backend ที่เครื่องนั้น";
+        try
+        {
+            using var response = await VersionHttp.GetAsync($"http://{ip!.Trim()}:{BackendLauncher.Port}/system/version");
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                return item with { State = HealthState.Bad, Detail = $"{item.Detail} — รุ่นเก่า ไม่ตรงกับไฟล์ · {restart}" };
+            if (!response.IsSuccessStatusCode)
+                return item with { State = HealthState.Bad, Detail = $"{item.Detail} — ถามรุ่นไม่ได้ [{(int)response.StatusCode}]" };
+
+            using var doc = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            var data = doc.RootElement.GetProperty("data");
+            var since = data.TryGetProperty("started_at", out var s)
+                && DateTime.TryParse(s.GetString(), System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.RoundtripKind, out var at)
+                ? "เปิดเมื่อ " + at.ToLocalTime().ToString("dd/MM HH:mm", System.Globalization.CultureInfo.InvariantCulture)
+                : "";
+
+            return data.TryGetProperty("stale", out var stale) && stale.ValueKind == System.Text.Json.JsonValueKind.True
+                ? item with { State = HealthState.Bad, Detail = $"{item.Detail} — ไฟล์อัปเดตแล้วแต่ยังไม่รีสตาร์ท ({since}) · {restart}" }
+                : item with { Detail = $"{item.Detail} · ตรงกับไฟล์ · {since}" };
+        }
+        catch (Exception ex)
+        {
+            // พอร์ตตอบแต่ถามรุ่นไม่ได้ (เช่น ช้าเกิน) — ไม่ฟ้องว่าเก่า บอกตามจริง
+            return item with { Detail = $"{item.Detail} · ถามรุ่นไม่ได้: {Short(ex)}" };
         }
     }
 

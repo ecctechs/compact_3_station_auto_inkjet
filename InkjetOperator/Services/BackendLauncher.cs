@@ -75,6 +75,136 @@ public static class BackendLauncher
               + "ตรวจว่า PostgreSQL เปิดอยู่ และไฟล์ .env ของ backend ถูกต้อง";
     }
 
+    /// <summary>
+    /// ปิด backend ที่รันอยู่บนเครื่องนี้แล้วเปิดใหม่ — ปุ่มในหน้า System Health (โหมด Dev)
+    /// คืนข้อความปัญหา หรือ null เมื่อเปิดใหม่สำเร็จ
+    ///
+    /// <para>
+    /// มีไว้หลังอัปเดตไฟล์ backend — <see cref="EnsureRunningAsync"/> เปิดให้เฉพาะตอนไม่มีตัวไหน
+    /// รันอยู่ ถ้าตัวเก่ายังรันค้าง ก็ใช้ตัวเก่าต่อไปจนกว่าจะปิดเครื่อง โดยไม่มีใครรู้
+    /// </para>
+    /// <para>
+    /// ทำได้เฉพาะเครื่องที่ backend อยู่ และปิดเฉพาะ node ที่ฟังพอร์ต 3000 — ถ้าพอร์ตนี้เป็นของ
+    /// โปรแกรมอื่นจะไม่ปิดให้ · ตรวจโฟลเดอร์ backend ก่อนปิด ปิดได้แต่เปิดไม่ได้จะแย่กว่าเดิม
+    /// </para>
+    /// </summary>
+    public static async Task<string?> RestartAsync()
+    {
+        if (!BackendIsLocal())
+            return "backend อยู่เครื่องอื่น — สั่งรีสตาร์ทข้ามเครื่องไม่ได้ ต้องทำที่เครื่องนั้น";
+
+        var folder = CustomSettingsManager.Read("BACKEND_PATH", "").Trim();
+        if (folder.Length == 0)
+            return "ยังไม่ได้ตั้งโฟลเดอร์ backend ที่หน้า Backend Setting — ไม่ปิดตัวเดิม เพราะจะเปิดใหม่ไม่ได้";
+        if (!File.Exists(Path.Combine(folder, "index.js")))
+            return $"ไม่พบไฟล์ index.js ในโฟลเดอร์ที่ตั้งไว้ — ไม่ปิดตัวเดิม เพราะจะเปิดใหม่ไม่ได้\n{folder}";
+
+        // กันตัวเฝ้า (watchdog) เห็นพอร์ตว่างช่วงรอยต่อแล้วเปิดซ้อน
+        if (Interlocked.Exchange(ref _restarting, 1) == 1)
+            return "กำลังเปิด backend อยู่แล้ว รอสักครู่แล้วดูหน้านี้อีกครั้ง";
+
+        try
+        {
+            var problem = await Task.Run(StopRunning);
+            if (problem != null)
+            {
+                AppLog.Warn("Backend", "รีสตาร์ท backend ไม่สำเร็จ: " + problem);
+                return problem;
+            }
+
+            AppLog.Info("Backend", "รีสตาร์ท backend: ปิดตัวเดิมแล้ว กำลังเปิดใหม่");
+            problem = await EnsureRunningAsync();
+            if (problem == null) AppLog.Info("Backend", "รีสตาร์ท backend เสร็จ");
+            else AppLog.Warn("Backend", "รีสตาร์ท backend: " + problem);
+            return problem;
+        }
+        catch (Exception ex)
+        {
+            // เช่น เรียก netstat ไม่ได้ — บอกเป็นข้อความ ไม่ให้หลุดไปถึงปุ่ม
+            AppLog.Error("Backend.Restart", ex);
+            return $"รีสตาร์ท backend ไม่สำเร็จ: {ex.Message}";
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _restarting, 0);
+        }
+    }
+
+    /// <summary>ปิด node ทุกตัวที่ฟังพอร์ต 3000 แล้วรอจนพอร์ตว่าง — null = เรียบร้อย</summary>
+    private static string? StopRunning()
+    {
+        var running = new List<Process>();
+        try
+        {
+            foreach (var pid in ListenerPids())
+            {
+                try { running.Add(Process.GetProcessById(pid)); }
+                catch (ArgumentException) { /* ปิดไปเองแล้ว */ }
+            }
+
+            // ตรวจครบทุกตัวก่อนลงมือ ไม่ปิดไปครึ่งเดียวแล้วค่อยเจอว่าอีกตัวไม่ใช่ backend
+            var other = running.FirstOrDefault(p => !string.Equals(p.ProcessName, "node", StringComparison.OrdinalIgnoreCase));
+            if (other != null)
+                return $"พอร์ต {Port} ถูกโปรแกรม {other.ProcessName} (PID {other.Id}) ใช้อยู่ ไม่ใช่ backend — ไม่ปิดให้";
+
+            foreach (var p in running)
+            {
+                try
+                {
+                    p.Kill();
+                    p.WaitForExit(5000);
+                }
+                catch (System.ComponentModel.Win32Exception ex)
+                {
+                    return $"ปิด backend ตัวเดิมไม่ได้: {ex.Message}\n\n"
+                        + "อาจเปิดไว้ด้วยสิทธิ์ admin หรือผู้ใช้อื่น — ปิดเครื่องแล้วเปิดใหม่แทน";
+                }
+                catch (InvalidOperationException)
+                {
+                    // ปิดไปเองระหว่างทาง
+                }
+            }
+        }
+        finally
+        {
+            foreach (var p in running) p.Dispose();
+        }
+
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (IsListening() && DateTime.UtcNow < deadline) Thread.Sleep(PollMs);
+        return IsListening() ? $"ปิด backend ตัวเดิมแล้วแต่พอร์ต {Port} ยังไม่ว่าง ลองกดอีกครั้ง" : null;
+    }
+
+    /// <summary>
+    /// PID ของโปรเซสที่ฟังพอร์ต 3000 — อ่านจาก netstat -ano
+    /// <para>
+    /// ดูจากที่อยู่ปลายทางเป็น 0.0.0.0:0 / [::]:0 (ตัวที่รอรับ) ไม่ใช้คำว่า LISTENING
+    /// ซึ่งอาจเป็นภาษาอื่นตามภาษาของ Windows
+    /// </para>
+    /// </summary>
+    private static List<int> ListenerPids()
+    {
+        using var netstat = Process.Start(new ProcessStartInfo("netstat", "-ano")
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+        })!;
+        var output = netstat.StandardOutput.ReadToEnd();
+        netstat.WaitForExit(5000);
+
+        var pids = new HashSet<int>();
+        foreach (var line in output.Split('\n'))
+        {
+            var cols = line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+            if (cols.Length < 5 || !cols[0].Equals("TCP", StringComparison.OrdinalIgnoreCase)) continue;
+            if (!cols[1].EndsWith($":{Port}", StringComparison.Ordinal)) continue;
+            if (cols[2] is not ("0.0.0.0:0" or "[::]:0")) continue;
+            if (int.TryParse(cols[^1], out var pid) && pid > 0) pids.Add(pid);
+        }
+        return pids.ToList();
+    }
+
     /// <summary>ตรวจทุกกี่มิลลิวินาทีว่า backend ยังอยู่</summary>
     private const int WatchdogMs = 15000;
 
@@ -138,6 +268,9 @@ public static class BackendLauncher
             Interlocked.Exchange(ref _restarting, 0);
         }
     }
+
+    /// <summary>backend อยู่เครื่องนี้ไหม — หน้า System Health ใช้ตัดสินว่าปุ่มรีสตาร์ทกดได้ไหม</summary>
+    public static bool IsLocal() => BackendIsLocal();
 
     /// <summary>
     /// backend อยู่เครื่องนี้ไหม — ดูจากที่อยู่ที่ทุกหน้าใช้ต่อ

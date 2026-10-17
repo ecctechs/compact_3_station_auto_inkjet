@@ -5,6 +5,9 @@ const SystemController = require("../controllers/SystemController");
 
 Route.get(RouteName + "/ping", SystemController.ping);
 
+// หน้า System Health: ตัวที่รันอยู่ยังตรงกับไฟล์ไหม
+Route.get(RouteName + "/version", SystemController.version);
+
 Route.get(RouteName + "/getSizeMap", SystemController.getSizeMap);
 
 Route.get(RouteName + "/getTranslations", SystemController.getTranslations);
