@@ -1796,7 +1796,7 @@ public partial class OrderListUserControl : UserControl
             if (docFolder == null) continue;
             if (IsDisposed) return null;
 
-            var pick = await UvProgramResolver.ResolveAsync(uvRow.ProgramName, docFolder, this);
+            var pick = await UvProgramResolver.ResolveAsync(uvRow.ProgramName, docFolder, this, uvNumber);
             if (pick.Program == null || IsDisposed) return null;
 
             var uvName = UvSettingsManager.Read(

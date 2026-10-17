@@ -261,7 +261,7 @@ public partial class UvTestUserControl : UserControl
 
         // ใช้ตรรกะเดียวกับปุ่มส่งจริงในหน้า Order — เลือกรุ่นย่อย / ตกไป default
         var doc = UvSettingsManager.GetDocumentFolder(_uvNumber);
-        var pick = UvProgramResolver.Resolve(requested, doc, this);
+        var pick = UvProgramResolver.Resolve(requested, doc, this, _uvNumber);
 
         if (pick.Program == null)
         {

@@ -1287,7 +1287,7 @@ public partial class OrderDetailUserControl : UserControl
             return;
 
         var docFolder = UvSettingsManager.GetDocumentFolder(uvNumber);
-        var pick = UvProgramResolver.Resolve(uvRow.ProgramName, docFolder, this);
+        var pick = UvProgramResolver.Resolve(uvRow.ProgramName, docFolder, this, uvNumber);
 
         var programFile = pick.Program;
         if (programFile == null) return;

@@ -26,8 +26,9 @@ public static class UvProgramResolver
     /// เจอ 1 ไฟล์ → ใช้เลย · เจอหลายไฟล์ → ให้เลือก · ไม่เจอ → default
     /// ไม่รู้จักโฟลเดอร์ document → ส่งชื่อที่ได้มาตรงๆ ให้เครื่องตัดสินเอง
     /// </summary>
-    public static UvProgramPick Resolve(string? programName, string? docFolder, IWin32Window? owner = null)
-        => Choose(FindVariants(programName, docFolder), owner);
+    /// <param name="uvNumber">เครื่องที่จะส่ง (1 / 2) — ใช้บอกชื่อเครื่องบนกล่องเลือกรุ่นย่อย</param>
+    public static UvProgramPick Resolve(string? programName, string? docFolder, IWin32Window? owner = null, int? uvNumber = null)
+        => Choose(FindVariants(programName, docFolder), owner, uvNumber);
 
     /// <summary>
     /// เหมือน <see cref="Resolve"/> แต่ส่วนที่แตะแชร์ของเครื่อง UV (หาโฟลเดอร์ document,
@@ -37,18 +38,18 @@ public static class UvProgramResolver
     public static async Task<UvProgramPick> ResolveAsync(string? programName, int uvNumber, IWin32Window? owner = null)
     {
         var docFolder = await UvSettingsManager.GetDocumentFolderAsync(uvNumber);
-        return await ResolveAsync(programName, docFolder, owner);
+        return await ResolveAsync(programName, docFolder, owner, uvNumber);
     }
 
     /// <inheritdoc cref="ResolveAsync(string?, int, IWin32Window?)"/>
-    public static async Task<UvProgramPick> ResolveAsync(string? programName, string? docFolder, IWin32Window? owner = null)
+    public static async Task<UvProgramPick> ResolveAsync(string? programName, string? docFolder, IWin32Window? owner = null, int? uvNumber = null)
     {
         var found = await Task.Run(() => FindVariants(programName, docFolder));
 
         // หน้าจอเลือกรุ่นย่อยค้นรูปรุ่นละครั้ง อ่านรายชื่อรูปเตรียมไว้ก่อน หน้าจอจะเปิดทันที
         if (found.Candidates is { Count: > 1 }) await MarkingRefImageService.WarmAsync();
 
-        return Choose(found, owner);
+        return Choose(found, owner, uvNumber);
     }
 
     /// <summary>ผลการไล่ไฟล์ — Candidates = null คือไม่รู้จักโฟลเดอร์ ส่งชื่อที่ได้มาตรง ๆ</summary>
@@ -90,14 +91,14 @@ public static class UvProgramResolver
     /// เจอ 1 ไฟล์ → ใช้เลย · เจอหลายไฟล์ → ให้เลือก · ไม่เจอ → default
     /// ไม่รู้จักโฟลเดอร์ document → ส่งชื่อที่ได้มาตรงๆ ให้เครื่องตัดสินเอง
     /// </summary>
-    private static UvProgramPick Choose(Variants found, IWin32Window? owner)
+    private static UvProgramPick Choose(Variants found, IWin32Window? owner, int? uvNumber)
     {
         if (found.BaseName.Length == 0) return new UvProgramPick(null, false);
         if (found.Candidates == null) return new UvProgramPick(found.BaseName, false);
 
         var candidates = found.Candidates;
         if (candidates.Count == 1) return new UvProgramPick(candidates[0], false);
-        if (candidates.Count > 1) return new UvProgramPick(PromptVariant(candidates, owner), false);
+        if (candidates.Count > 1) return new UvProgramPick(PromptVariant(candidates, owner, uvNumber), false);
 
         return new UvProgramPick(DefaultProgram, true);
     }
@@ -125,16 +126,31 @@ public static class UvProgramResolver
     /// ฝั่งนี้เลือกแล้ว "เปลี่ยนสิ่งที่พิมพ์จริง" ข้อความจึงต้องสื่อแบบนั้น
     /// ต่างจากฝั่ง MK ที่เลือกแล้วเปลี่ยนแค่รูปที่ดู
     /// </summary>
-    private static string? PromptVariant(List<string> variants, IWin32Window? owner)
+    /// <remarks>
+    /// บอกชื่อเครื่องทั้งบนหัวกล่องและในบรรทัดคำอธิบาย — งาน 11 ต้องเลือกทั้ง UV1 และ UV2
+    /// กล่องจึงเด้งสองครั้งหน้าตาเหมือนกัน ถ้าไม่บอกเครื่อง พนักงานแยกไม่ออกว่ากำลังเลือกของด้านไหน
+    /// </remarks>
+    private static string? PromptVariant(List<string> variants, IWin32Window? owner, int? uvNumber)
     {
         var options = variants
             .Select(v => new MarkingRefOption(v, v + ".uvdx", MarkingRefImageService.FindImagesExact(v)))
             .ToList();
 
+        var machine = MachineLabel(uvNumber);
         return MarkingRefPickerDialog.Pick(
             owner,
-            "เลือกโปรแกรมที่จะพิมพ์",
-            "โปรแกรมนี้มีหลายรุ่นย่อยในเครื่อง — เลือกรุ่นที่จะโหลดเข้าเครื่องเพื่อพิมพ์จริง",
+            machine == null ? "เลือกโปรแกรมที่จะพิมพ์" : $"เลือกโปรแกรมที่จะพิมพ์ — {machine}",
+            machine == null
+                ? "โปรแกรมนี้มีหลายรุ่นย่อยในเครื่อง — เลือกรุ่นที่จะโหลดเข้าเครื่องเพื่อพิมพ์จริง"
+                : $"{machine}: โปรแกรมนี้มีหลายรุ่นย่อยในเครื่อง — เลือกรุ่นที่จะโหลดเข้าเครื่องเพื่อพิมพ์จริง",
             options);
     }
+
+    /// <summary>ชื่อเครื่องตามที่ตั้งไว้ พร้อมด้านที่พิมพ์ เช่น "UV-001 (Plate)" — ไม่รู้เครื่องคืน null</summary>
+    private static string? MachineLabel(int? uvNumber) => uvNumber switch
+    {
+        1 => $"{UvSettingsManager.Read("UV1_NAME", "UV-001")} (Plate)",
+        2 => $"{UvSettingsManager.Read("UV2_NAME", "UV-002")} (Shim)",
+        _ => null,
+    };
 }
