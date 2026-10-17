@@ -62,14 +62,13 @@ partial class AppTitleBarUserControl
         tlpTitleBarRoot.Size = new System.Drawing.Size(1920, 40);
         tlpTitleBarRoot.TabIndex = 0;
         //
-        // picAppIcon — ไอคอนโปรแกรมบนพื้นขาว: ในไอคอนมีส่วนสีน้ำเงินเข้มเดียวกับแถบหัว วางตรง ๆ จะกลืนหาย
+        // picAppIcon — ไอคอนโปรแกรม (มีพื้นสีของตัวเองอยู่แล้ว วางบนแถบหัวได้ตรง ๆ)
         //
-        picAppIcon.BackColor = System.Drawing.Color.White;
+        picAppIcon.BackColor = System.Drawing.Color.Transparent;
         picAppIcon.Image = (System.Drawing.Image)resources.GetObject("picAppIcon.Image");
         picAppIcon.Location = new System.Drawing.Point(14, 6);
         picAppIcon.Margin = new System.Windows.Forms.Padding(0, 6, 0, 6);
         picAppIcon.Name = "picAppIcon";
-        picAppIcon.Padding = new System.Windows.Forms.Padding(1);
         picAppIcon.Size = new System.Drawing.Size(28, 28);
         picAppIcon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
         picAppIcon.TabIndex = 4;
