@@ -900,10 +900,29 @@ public partial class OrderListUserControl : UserControl
     /// ส่งเข้าตาราง ถ้าผู้ใช้กดหัวคอลัมน์ การเรียงนั้นจะทับลำดับนี้ทั้งหมด
     /// (กดซ้ำจนลูกศรกลับเป็นเทาก็ได้ลำดับนี้คืน)
     /// </summary>
-    private static int StatusRank(PrintJob job) =>
+    /// <remarks>
+    /// งานที่เข้าคิวรอเครื่อง (Waiting (Q1), Waiting (Q2) ...) อยู่ถัดจากงานที่เดินอยู่ เรียงตามคิว
+    /// แล้วค่อยเป็นงานที่ยังไม่เคยกดเริ่ม — คนหน้างานเห็นทันทีว่าใบไหนจะได้เครื่องต่อ
+    /// </remarks>
+    private int StatusRank(PrintJob job) =>
         string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase) ? 0
-        : string.Equals(job.Status, "Waiting", StringComparison.OrdinalIgnoreCase) ? 1
+        : !string.Equals(job.Status, "Waiting", StringComparison.OrdinalIgnoreCase) ? 3
+        : QueueWaitLabel(job) != null ? 1
         : 2;
+
+    /// <summary>
+    /// ลำดับคิวของงานที่รอเครื่อง — "Starting" (ได้เครื่องแล้ว รอส่ง) มาก่อน Q1
+    /// งานที่ไม่ได้รอคิวคืนค่ามากสุด ให้ไปเรียงตามเวลาแทน
+    /// </summary>
+    private int QueueOrder(PrintJob job)
+    {
+        var label = QueueWaitLabel(job);
+        if (label == null) return int.MaxValue;
+        if (label.StartsWith("Starting", StringComparison.Ordinal)) return 0;
+
+        var digits = new string(label.SkipWhile(c => !char.IsDigit(c)).TakeWhile(char.IsDigit).ToArray());
+        return int.TryParse(digits, out int q) ? q : int.MaxValue - 1;
+    }
 
     private void RebindTable()
     {
@@ -923,6 +942,7 @@ public partial class OrderListUserControl : UserControl
                 || MarkingMethodService.VisibleAt(station, j.PlanRouting?.MarkingMethod))
             .Where(j => _processFilter == null || JobProcessService.Current(j) == _processFilter)
             .OrderBy(StatusRank)
+            .ThenBy(QueueOrder)
             .ThenByDescending(j => j.CreatedAt ?? DateTime.MinValue)
             .ToList();
 
@@ -1337,6 +1357,46 @@ public partial class OrderListUserControl : UserControl
         if (MarkingMethodService.Resolve(method).NoCase) return false;
 
         return !MarkingMethodService.CanStartAt(StationService.Current, method);
+    }
+
+    /// <summary>
+    /// งานที่ยังไม่เริ่ม (Waiting) แต่เข้าคิวรอเครื่องอยู่ — คืนข้อความสถานะ เช่น "Waiting (Q2)"
+    /// · null = ไม่ได้รอใคร ให้ใช้ปุ่มและสถานะตามปกติ
+    /// <para>
+    /// นับว่า "รอ" เฉพาะเครื่องที่มีงานอื่นถืออยู่จริง ถ้าแถวของงานนี้ค้างเป็นรอทั้งที่เครื่องว่าง
+    /// (ส่งรอบก่อนไม่ผ่านแล้วคิวกลับเป็นรอ ระบบไม่ส่งเองซ้ำ) จะคืน null ให้ปุ่มเริ่มงานยังอยู่
+    /// เป็นทางส่งใหม่ที่ง่ายที่สุด ไม่ต้องเดินไปกดปุ่มหน้าเครื่อง
+    /// </para>
+    /// <para>
+    /// แถวที่ได้เครื่องแล้วแต่ยังไม่ได้ส่ง (เช่น ST3 ขอเริ่มไว้ รอ ST1 หยิบไปส่งรอบ poll)
+    /// ขึ้น "Starting" และไม่มีปุ่มเริ่มเช่นกัน — กำลังจะถูกส่งอยู่แล้ว
+    /// </para>
+    /// <para>
+    /// เลขคิวมาจาก <see cref="JobStageService.Describe"/> ตัวเดียวกับหน้า Order Detail
+    /// สองหน้าจึงขึ้นเลขเดียวกันเสมอ — Q1 คือใบถัดไปที่จะได้เครื่อง ข้อความสั้นพอให้คอลัมน์
+    /// Status ที่แคบอ่านได้บรรทัดเดียว
+    /// </para>
+    /// </summary>
+    private string? QueueWaitLabel(PrintJob job)
+    {
+        if (!string.Equals(job.Status, "Waiting", StringComparison.OrdinalIgnoreCase)) return null;
+
+        var mine = _queueRows
+            .Where(r => r.PrintJobsId == job.Id && r.State is "pending" or "active")
+            .OrderBy(r => JobStationService.StationOf(r.Machine) ?? 9)
+            .ToList();
+        if (mine.Count == 0) return null;
+
+        var starting = mine.Where(r => r.State == "active" && r.SentAt == null).Select(r => r.Machine).ToList();
+        if (starting.Count > 0) return $"Starting ({string.Join(", ", starting.Distinct())})";
+
+        bool behindOtherJob = mine.Any(r => r.State == "pending" && _queueRows.Any(h =>
+            h.State == "active" && h.PrintJobsId != job.Id
+            && string.Equals(h.Machine, r.Machine, StringComparison.OrdinalIgnoreCase)));
+        if (!behindOtherJob) return null;
+
+        var stage = JobStageService.Describe(job.Id, job.PlanRouting?.MarkingMethod, _queueRows, job.Commands);
+        return stage != null && stage.StartsWith('Q') ? $"Waiting ({stage})" : "Waiting (Queued)";
     }
 
     private static bool CanStart(PrintJob job)
@@ -2994,14 +3054,24 @@ public partial class OrderListUserControl : UserControl
         // รายละเอียดว่างานรออะไรอยู่ (คิวที่เท่าไร หรือกำลังทำด้านไหน) ไปโชว์ที่หน้า
         // Order Detail ซึ่งเปิดดูทีละงานอยู่แล้ว ดู JobStageService
 
-        var statusText = new AntdUI.CellText(statusLabel) { Fore = statusColor };
+        // งานที่เข้าคิวรอเครื่องอยู่ บอกตรง ๆ ว่ารอคิวเครื่องไหน ที่เท่าไร แทนคำว่า Waiting
+        // ซึ่งดูเหมือนงานที่ยังไม่มีใครกดเริ่ม — ดู QueueWaitLabel
+        var queueLabel = QueueWaitLabel(job);
+        var statusText = queueLabel != null
+            ? new AntdUI.CellText(queueLabel) { Fore = WaitingColor }
+            : new AntdUI.CellText(statusLabel) { Fore = statusColor };
 
         var buttons = new List<AntdUI.CellButton>();
         if (!isHistory)
         {
             // คอลัมน์ปุ่มยัดปุ่มข้อความสองอันไม่ลง จึงสลับปุ่มแรกตามสถานะแทน
             // งานที่ยังไม่เริ่ม = เริ่มงาน · งานที่เดินอยู่ = จบงาน
-            if (CanStart(job))
+            if (queueLabel != null)
+            {
+                // เข้าคิวแล้ว รอเครื่องว่าง — ไม่มีปุ่มเริ่มงานให้กดซ้ำ กดไปก็ไม่ได้ทำอะไรเพิ่ม
+                // คิวเดินเองตอนคนกดปุ่มหน้าเครื่องปล่อยงานก่อนหน้า ออกจากคิวใช้ปุ่มยกเลิก
+            }
+            else if (CanStart(job))
             {
                 buttons.Add(new AntdUI.CellButton("start", StartButtonText, AntdUI.TTypeMini.Primary)
                 { Radius = 6 });
