@@ -979,6 +979,10 @@ public partial class OrderListUserControl : UserControl
     private const string StartButtonText = "เริ่มงาน";
     // สองบรรทัด กว้างพอ ๆ กับปุ่มเริ่มงาน — บรรทัดเดียวยาวจนสี่ปุ่มล้นคอลัมน์
     private const string NextRoundButtonText = "เริ่มงาน\nรอบสอง";
+    private const string PickUv2ButtonText = "เลือกรุ่น\nUV2";
+
+    /// <summary>สถานะของงานที่รอ ST3 เลือกรุ่น UV2 — สั้น ภาษาอังกฤษ แบบเดียวกับ Waiting (Qn)</summary>
+    private const string Uv2PickLabel = "Pick UV2 (ST3)";
 
     /// <summary>
     /// ให้ปุ่ม "เริ่มงาน" ของแถวที่กดหมุน จนกว่าจะส่งเสร็จ — null คือหยุดหมุน
@@ -1166,6 +1170,11 @@ public partial class OrderListUserControl : UserControl
             {
                 ShowStartLoading(null);
             }
+        }
+        else if (buttonId == "pickuv2")
+        {
+            if (_startingJobId != null) return;
+            await PickUv2AtSt3Async(row.Id);
         }
         else if (buttonId == "complete")
         {
@@ -1494,18 +1503,27 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
+        // ตัวเลือก "รุ่นย่อย UV2 ให้ ST3 เลือก" — UV2 ที่มีให้เลือกหลายไฟล์ไม่ถาม ไม่จอง ไม่ตรวจตอนนี้
+        // ส่งเครื่องอื่นตามปกติ ที่เหลือ ST3 กดปุ่ม "เลือกรุ่น UV2" ในแถวงานเอง (ดู Uv2PickAtSt3)
+        var deferred = await DeferToSt3Async(plan, resolved);
+        timing.Mark("ตรวจรุ่นย่อย UV2");
+        if (IsDisposed) return;
+        var sendPlan = deferred.Count == 0
+            ? plan
+            : plan with { Steps = plan.Steps.Where(s => !deferred.Contains(s)).ToList() };
+
         // เลือกโปรแกรม UV ให้เสร็จตรงนี้ ก่อนจะสรุปให้ดูและก่อนจองคิว
         //
         // กล่องเลือกรุ่นย่อยกับกล่องยืนยัน default ต้องเด้งที่จอของคนที่กดเริ่ม
         // ไม่ใช่ไปเด้งตอนส่งจริงซึ่งเกิดที่ ST1 เสมอ
-        var uvPicks = await PickUvProgramsAsync(plan, resolved);
+        var uvPicks = await PickUvProgramsAsync(sendPlan, resolved);
         timing.Mark("เลือกโปรแกรม UV");
         if (uvPicks == null || IsDisposed) return;
 
         // สรุปให้ดูก่อนว่าจะส่งอะไรเข้าเครื่องไหนบ้าง แล้วค่อยลงมือ
         //
         // ถามก่อนจอง ไม่ใช่หลังจอง — กดยกเลิกแล้วต้องไม่มีอะไรค้างอยู่ในคิวเลย
-        bool confirmed = await ConfirmStartAsync(jobId, resolved, plan, uvPicks);
+        bool confirmed = await ConfirmStartAsync(jobId, resolved, plan, uvPicks, deferred);
         timing.Mark("ยืนยัน (รวมเวลาคนกด)");
         if (!confirmed) return;
         if (IsDisposed) return;
@@ -1526,7 +1544,7 @@ public partial class OrderListUserControl : UserControl
         // ไม่เสียอะไรด้วย เพราะงานที่ ST3 กดเริ่มได้มีแต่รหัส 10 ซึ่งใช้เครื่องเดียว
         // (UV2) ไม่มีเคสเริ่มไปได้ครึ่งทางแบบงานหลายเครื่องที่ด่านนี้มีไว้กัน และถ้า
         // ST1 ส่งไม่ผ่านจริง มันรายงานกลับมาที่จอ ST3 ให้อยู่แล้ว
-        bool blocked = !StationService.IsSt3 && await BlockedByUnreachableAsync(jobId, plan, resolved);
+        bool blocked = !StationService.IsSt3 && await BlockedByUnreachableAsync(jobId, sendPlan, resolved);
         timing.Mark("ตรวจการเชื่อมต่อ");
         if (blocked) return;
         if (IsDisposed) return;
@@ -1541,7 +1559,7 @@ public partial class OrderListUserControl : UserControl
         // ต้องรอชิ้นงานออกไปติด shim นอกไลน์ก่อน คนจะกดเริ่มงานรอบสองเองตอนชิ้นงานพร้อม
         // ถ้าจองไว้ตั้งแต่ตอนนี้ เครื่องจะส่งรอบสองให้ทันทีที่ว่าง ทั้งที่ชิ้นงานยังไม่กลับมา
         var (queued, queueError) = await _api.EnqueueMachinesAsync(
-            jobId, QueueItemsFor(plan.Steps, uvPicks).Where(i => i.Round == 1).ToList());
+            jobId, QueueItemsFor(sendPlan.Steps, uvPicks).Where(i => i.Round == 1).ToList());
         timing.Mark("จองคิว");
         if (IsDisposed) return;
 
@@ -1713,7 +1731,7 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private async Task<bool> ConfirmStartAsync(
         int jobId, ResolvedJobResponse resolved, MarkingPlan plan,
-        Dictionary<string, string> uvPicks)
+        Dictionary<string, string> uvPicks, ISet<string> deferred)
     {
         // อ่านคิวไปพร้อมกับเช็คโฟลเดอร์ UV ที่ข้อความสรุปต้องใช้ (แตะแชร์ของเครื่อง UV)
         // พอสร้างข้อความบนเธรดหน้าจอ ผลเช็คถูกจำไว้แล้ว ไม่ต้องรอเครือข่ายอีก
@@ -1725,7 +1743,7 @@ public partial class OrderListUserControl : UserControl
         await warm;
         if (IsDisposed) return false;
 
-        return Confirm.Ask(this, BuildStartPreview(jobId, resolved, plan, rows, uvPicks));
+        return Confirm.Ask(this, BuildStartPreview(jobId, resolved, plan, rows, uvPicks, deferred));
     }
 
     /// <summary>
@@ -1737,7 +1755,7 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private ConfirmSpec BuildStartPreview(
         int jobId, ResolvedJobResponse resolved, MarkingPlan plan, List<MachineQueueRow> rows,
-        Dictionary<string, string> uvPicks)
+        Dictionary<string, string> uvPicks, ISet<string>? deferred = null)
     {
         var job = _allJobs.FirstOrDefault(j => j.Id == jobId);
         var facts = new List<(string Caption, string Value)>
@@ -1760,6 +1778,14 @@ public partial class OrderListUserControl : UserControl
             if (rounds[step] > 1)
             {
                 facts.Add(($"{step} รอบ {rounds[step]}", "ยังไม่ส่ง" + Environment.NewLine + "กด เริ่มงานรอบสอง เมื่อติด shim เสร็จ"));
+                continue;
+            }
+
+            // ฝากให้ ST3 เลือกรุ่น — ยังไม่จอง ยังไม่ส่ง
+            if (deferred?.Contains(step) == true)
+            {
+                facts.Add(($"{step} · ST{station}", "รอ ST3 เลือกรุ่น · ยังไม่ส่ง" + Environment.NewLine
+                    + "คนที่ ST3 กด เลือกรุ่น UV2 ในแถวงาน"));
                 continue;
             }
 
@@ -1868,6 +1894,141 @@ public partial class OrderListUserControl : UserControl
                 : "ยังไม่รู้รุ่นย่อย — เครื่องที่ต่อสายจะถามตอนส่ง";
 
         return (detail, note, null);
+    }
+
+    /// <summary>
+    /// ขั้นที่ฝากให้ ST3 เลือกรุ่นแทนการถามที่ ST1 — ว่าง = ทำแบบเดิมทุกขั้น
+    /// <para>
+    /// ฝากเฉพาะตอนเปิดตัวเลือก กดที่ ST1 และแผนมี UV2 ที่มีให้เลือกไม่ใช่ไฟล์เดียว:
+    /// หลายไฟล์ (มีรุ่นย่อย) · ไม่พบ (ต้องตัดสินว่าจะใช้ default ไหม) · ST1 มองไม่เห็นโฟลเดอร์ UV2
+    /// (บอกไม่ได้ว่ามีกี่รุ่น ให้คนที่อยู่หน้าเครื่องดูเองปลอดภัยกว่าเดา)
+    /// ไฟล์เดียวไม่มีอะไรให้เลือก ส่งจาก ST1 ทันทีเหมือนเดิม คน ST3 ไม่ต้องกดอะไรเพิ่ม
+    /// </para>
+    /// </summary>
+    private static async Task<HashSet<string>> DeferToSt3Async(MarkingPlan plan, ResolvedJobResponse resolved)
+    {
+        var deferred = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (!Uv2PickAtSt3.Enabled || StationService.IsSt3) return deferred;
+        if (!plan.Steps.Contains(Uv2PickAtSt3.Step, StringComparer.OrdinalIgnoreCase)) return deferred;
+
+        // ต้องเหลือเครื่องอื่นให้ ST1 ส่ง ไม่งั้นกดเริ่มแล้วไม่มีอะไรเกิดขึ้นเลย
+        if (plan.Steps.All(s => string.Equals(s, Uv2PickAtSt3.Step, StringComparison.OrdinalIgnoreCase))) return deferred;
+
+        var program = resolved.UvJobData?.FirstOrDefault(r =>
+            string.Equals(r.Machine, Uv2PickAtSt3.Step, StringComparison.OrdinalIgnoreCase))?.ProgramName;
+
+        // ไม่มีชื่อโปรแกรม = ไม่มีอะไรให้เลือก ปล่อยทางเดิมรายงานว่าข้อมูล UV2 ไม่ครบ
+        if (string.IsNullOrWhiteSpace(program)) return deferred;
+
+        if (await UvProgramResolver.VariantCountAsync(program, 2) != 1)
+            deferred.Add(Uv2PickAtSt3.Step);
+        return deferred;
+    }
+
+    /// <summary>
+    /// ST3 เลือกรุ่น UV2 ของงานที่ ST1 เริ่มไว้ แล้วจองคิวพร้อมชื่อไฟล์ให้ ST1 ส่ง
+    /// <para>
+    /// ทางเดียวกับ ST3 กดเริ่มงาน 10: จองคิว → ขอสิทธิ์ให้หัวคิวเป็น active → ST1 หยิบไปส่งในรอบ poll
+    /// เครื่องไม่ว่างก็รอคิวตามปกติ ชื่อไฟล์ที่เลือกไปกับแถวคิว ตอนส่งจึงไม่ถามซ้ำ
+    /// </para>
+    /// <para>
+    /// อ่านงานกับคิวสดก่อนทุกครั้ง — ตารางค้างได้ถึง 5 วินาที อีกจออาจเลือกไปแล้ว
+    /// backend ก็ไม่จอง UV2 รอบเดิมซ้ำอยู่แล้ว (กดซ้ำไม่กลายเป็นพ่นสองครั้ง)
+    /// </para>
+    /// </summary>
+    private async Task PickUv2AtSt3Async(int jobId)
+    {
+        if (_api == null) return;
+
+        var resolved = await LoadJobAsync(jobId, $"กำลังโหลดข้อมูล · {JobName(jobId)}");
+        if (IsDisposed) return;
+        if (resolved == null)
+        {
+            Notify.WarnModal(this, "แจ้งเตือน", $"ไม่สามารถโหลดข้อมูล {JobName(jobId)} ได้");
+            return;
+        }
+
+        var (queue, queueError) = await _api.GetMachineQueueAsync();
+        if (IsDisposed) return;
+        if (queueError != null)
+        {
+            Notify.Warn(this, $"อ่านคิว UV2 ไม่สำเร็จ — {queueError}");
+            return;
+        }
+
+        var method = resolved.PlanRouting?.MarkingMethod;
+        if (!Uv2PickAtSt3.Awaiting(jobId, resolved.Job.Status, method, resolved.Commands, queue))
+        {
+            Notify.Warn(this, $"{JobName(jobId)} เลือกรุ่น UV2 ไปแล้ว หรือ UV2 เข้าคิวแล้ว");
+            await RefreshDataAsync(force: true);
+            return;
+        }
+
+        var program = resolved.UvJobData?.FirstOrDefault(r =>
+            string.Equals(r.Machine, Uv2PickAtSt3.Step, StringComparison.OrdinalIgnoreCase))?.ProgramName;
+        if (string.IsNullOrWhiteSpace(program))
+        {
+            Notify.WarnModal(this, "เลือกรุ่นไม่ได้", $"ยังไม่มีข้อมูล UV2 ของงานนี้\n\n{JobName(jobId)}");
+            return;
+        }
+
+        // เลือกจากโฟลเดอร์ของเครื่องนี้ (ST3) — ถ้าไม่ได้ตั้งไว้ห้ามเดา ต้องบอกให้ไปตั้ง
+        var docFolder = await UvSettingsManager.GetDocumentFolderAsync(2);
+        if (IsDisposed) return;
+        if (docFolder == null)
+        {
+            Notify.WarnModal(this, "เลือกรุ่นไม่ได้",
+                "ไม่พบโฟลเดอร์โปรแกรม UV2 ที่เครื่องนี้\n\nตั้งโฟลเดอร์ UV2 (UV2_FOLDER ใน uv.config) ของเครื่อง ST3 ก่อน");
+            return;
+        }
+
+        var pick = await UvProgramResolver.ResolveAsync(program, docFolder, this, 2);
+        if (pick.Program == null || IsDisposed) return;
+
+        var uvName = UvSettingsManager.Read("UV2_NAME", "UV-002");
+        if (pick.IsDefault && !UvProgramResolver.ConfirmDefault(program, uvName, this)) return;
+
+        var holder = queue.FirstOrDefault(r => r.State == "active"
+            && string.Equals(r.Machine, Uv2PickAtSt3.Step, StringComparison.OrdinalIgnoreCase));
+        bool waits = holder != null || queue.Any(r => r.State == "pending"
+            && string.Equals(r.Machine, Uv2PickAtSt3.Step, StringComparison.OrdinalIgnoreCase));
+
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "ส่งเข้า UV2",
+                Headline = waits ? "UV2 ไม่ว่าง — เข้าคิวรอไหม?" : "ส่งเข้า UV2 เลยไหม?",
+                Facts =
+                [
+                    ("งาน", JobName(jobId)),
+                    ("ไฟล์", $"{pick.Program}.uvdx"),
+                    ($"UV2 · ST3", holder != null ? $"เครื่องไม่ว่าง · เข้าคิวต่อจาก {JobName(holder.PrintJobsId)}"
+                        : waits ? "มีงานรอก่อน · เข้าคิว" : "ส่งเลย"),
+                ],
+                Detail = "โปรแกรมที่ ST1 เป็นคนส่งเข้าเครื่อง",
+                OkText = "ส่งเข้า UV2",
+                Icon = "PlayCircleFilled",
+                OkIcon = "CaretRightFilled",
+            }))
+            return;
+
+        var (queued, enqueueError) = await _api.EnqueueMachinesAsync(jobId,
+            [new MachineQueueItem { Machine = Uv2PickAtSt3.Step, Round = 1, ProgramName = pick.Program }]);
+        if (IsDisposed) return;
+        if (!queued)
+        {
+            Notify.ErrorModal(this, "จองเครื่องไม่สำเร็จ",
+                $"UV2 ยังไม่ได้เข้าคิว\n\n{JobName(jobId)}\n{enqueueError ?? "ติดต่อ backend ไม่ได้"}");
+            return;
+        }
+
+        var errors = await ClaimRemoteQueueAsync(jobId, [Uv2PickAtSt3.Step]);
+        if (IsDisposed) return;
+        if (errors.Count == 0)
+            Notify.Success(this, $"{JobName(jobId)} · UV2 {pick.Program}.uvdx เข้าคิวแล้ว · ST1 จะส่งตามลำดับคิว");
+        else
+            Notify.Warn(this, $"{JobName(jobId)} · UV2 เข้าคิวแล้ว แต่ยืนยันการเริ่มคิวไม่ได้ · "
+                + string.Join(" · ", errors) + " · ตรวจสถานะคิวก่อนกดอีกครั้ง");
+        await RefreshDataAsync(force: true);
     }
 
     /// <summary>UV1 หรือ UV2 คืนเลขเครื่อง · ขั้นอื่น (MK) คืน null</summary>
@@ -2066,7 +2227,7 @@ public partial class OrderListUserControl : UserControl
     /// </para>
     /// </summary>
     private async Task<List<Notify.ResultLine>> RollbackJobAsync(
-        int jobId, List<string> failed, List<string> received, string? reason)
+        int jobId, List<string> failed, List<string> received, string? reason, bool startedBefore = false)
     {
         var bad = string.Join(", ", failed);
         var lines = new List<Notify.ResultLine>();
@@ -2074,7 +2235,11 @@ public partial class OrderListUserControl : UserControl
         var (queue, queueError) = await _api!.GetMachineQueueAsync();
         if (IsDisposed) return lines;
         bool releasedBefore = queue.Any(r => r.PrintJobsId == jobId && r.State == "done");
-        if (queueError != null || releasedBefore)
+
+        // งานที่เริ่มไปแล้วก่อนรอบนี้ (สถานะ Process ตอนโหลดก่อนส่ง) — เครื่องอื่นได้งานไปแล้ว
+        // ชิ้นงานเดินไปแล้วจริง เช่น UV2 ที่ ST3 เลือกรุ่นทีหลัง MK พ่นไปก่อนแล้ว หรือรอบสองของ 22
+        // คิวที่ API คืนมาไม่มีแถว done จึงต้องดูจากสถานะงานแทน
+        if (queueError != null || releasedBefore || startedBefore)
         {
             lines.Add(Notify.Bad($"{bad} ส่งไม่ผ่าน — ตรวจ {bad} แล้วกดปุ่มหน้าเครื่อง {bad} เพื่อส่งใหม่"
                 + (reason != null ? $" ({reason})" : "")));
@@ -2222,7 +2387,9 @@ public partial class OrderListUserControl : UserControl
                     var received = outcomes.Where(o => o.item.Row.PrintJobsId == jobId && o.result.Sent)
                         .Select(o => o.item.Row.Machine).ToList();
                     var reason = blocked.FirstOrDefault(b => b.Item.Row.PrintJobsId == jobId).Reason;
-                    var lines = await RollbackJobAsync(jobId, failed, received, reason);
+                    bool startedBefore = items.Any(i => i.Row.PrintJobsId == jobId
+                        && string.Equals(i.Job.Job.Status, "Process", StringComparison.OrdinalIgnoreCase));
+                    var lines = await RollbackJobAsync(jobId, failed, received, reason, startedBefore);
                     // ทางกดเริ่มงานเติมชื่องานไว้หน้าทุกบรรทัดให้อยู่แล้ว ทางคิว (includeJobNames) ต้องเติมเอง
                     results.Add(new(false, includeJobNames
                         ? lines.Select(l => l with { Text = $"{JobName(jobId)} · {l.Text}" }).ToList()
@@ -3143,13 +3310,18 @@ public partial class OrderListUserControl : UserControl
         // งานที่เข้าคิวรอเครื่องอยู่ บอกตรง ๆ ว่ารอคิวเครื่องไหน ที่เท่าไร แทนคำว่า Waiting
         // ซึ่งดูเหมือนงานที่ยังไม่มีใครกดเริ่ม — ดู QueueWaitLabel
         var queueLabel = QueueWaitLabel(job);
+
+        // งานที่ ST1 เริ่มแล้วฝาก UV2 ให้ ST3 เลือกรุ่น — บอกทุกสถานีว่าทำไม UV2 ยังไม่ส่ง
+        bool awaitingUv2 = !isHistory && Uv2PickAtSt3.Awaiting(job, _queueRows);
+
         // Waiting (Qn) ใช้สีเดียวกับ Waiting (แดง) — ยังเป็นงานที่ยังไม่เริ่ม แค่บอกคิวเพิ่ม
-        // Starting ใช้สีส้ม — ได้เครื่องแล้ว กำลังจะถูกส่ง
+        // Starting / Pick UV2 ใช้สีส้ม — กำลังรออะไรบางอย่างอยู่ ไม่ใช่งานที่ยังไม่มีใครแตะ
         var statusText = queueLabel != null
             ? new AntdUI.CellText(queueLabel)
             {
                 Fore = queueLabel.StartsWith("Waiting", StringComparison.Ordinal) ? statusColor : WaitingColor,
             }
+            : awaitingUv2 ? new AntdUI.CellText(Uv2PickLabel) { Fore = WaitingColor }
             : new AntdUI.CellText(statusLabel) { Fore = statusColor };
 
         var buttons = new List<AntdUI.CellButton>();
@@ -3179,6 +3351,13 @@ public partial class OrderListUserControl : UserControl
                 if (CanStartNextRound(job))
                 {
                     buttons.Add(new AntdUI.CellButton("round2", NextRoundButtonText, AntdUI.TTypeMini.Primary)
+                    { Radius = 6 });
+                }
+
+                // เครื่อง UV2 อยู่ที่ ST3 — คนที่ ST3 เลือกรุ่นตอนชิ้นงานมาถึงหน้าเครื่อง
+                if (awaitingUv2 && (StationService.IsSt3 || StationService.IsDevMode))
+                {
+                    buttons.Add(new AntdUI.CellButton("pickuv2", PickUv2ButtonText, AntdUI.TTypeMini.Primary)
                     { Radius = 6 });
                 }
 

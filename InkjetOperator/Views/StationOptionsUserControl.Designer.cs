@@ -42,6 +42,11 @@ partial class StationOptionsUserControl
         lblAllOrNothingHeading = new AntdUI.Label();
         chkAllOrNothing = new AntdUI.Checkbox();
         lblAllOrNothingHelp = new AntdUI.Label();
+        pnlUv2Pick = new AntdUI.Panel();
+        tlpUv2Pick = new System.Windows.Forms.TableLayoutPanel();
+        lblUv2PickHeading = new AntdUI.Label();
+        chkUv2Pick = new AntdUI.Checkbox();
+        lblUv2PickHelp = new AntdUI.Label();
         pnlReset = new AntdUI.Panel();
         pnlJobData = new AntdUI.Panel();
         tlpJobData = new System.Windows.Forms.TableLayoutPanel();
@@ -64,6 +69,8 @@ partial class StationOptionsUserControl
         tlpMockup.SuspendLayout();
         pnlAllOrNothing.SuspendLayout();
         tlpAllOrNothing.SuspendLayout();
+        pnlUv2Pick.SuspendLayout();
+        tlpUv2Pick.SuspendLayout();
         pnlReset.SuspendLayout();
         tlpReset.SuspendLayout();
         pnlJobData.SuspendLayout();
@@ -81,22 +88,24 @@ partial class StationOptionsUserControl
         tlpOptionsRoot.Controls.Add(pnlProcessTabs, 0, 2);
         tlpOptionsRoot.Controls.Add(pnlMockup, 0, 3);
         tlpOptionsRoot.Controls.Add(pnlAllOrNothing, 0, 4);
-        tlpOptionsRoot.Controls.Add(pnlReset, 0, 5);
-        tlpOptionsRoot.Controls.Add(pnlJobData, 0, 6);
+        tlpOptionsRoot.Controls.Add(pnlUv2Pick, 0, 5);
+        tlpOptionsRoot.Controls.Add(pnlReset, 0, 6);
+        tlpOptionsRoot.Controls.Add(pnlJobData, 0, 7);
         tlpOptionsRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpOptionsRoot.Location = new System.Drawing.Point(32, 32);
         tlpOptionsRoot.Margin = new System.Windows.Forms.Padding(0);
         tlpOptionsRoot.Name = "tlpOptionsRoot";
-        tlpOptionsRoot.RowCount = 8;
+        tlpOptionsRoot.RowCount = 9;
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 66F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 210F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 232F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 240F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 286F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 246F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 214F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 262F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 1524);
+        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 1770);
         tlpOptionsRoot.TabIndex = 0;
         //
         // lblOptionsTitle
@@ -367,6 +376,70 @@ partial class StationOptionsUserControl
         lblAllOrNothingHelp.TabIndex = 2;
         lblAllOrNothingHelp.Text = "ใช้กับงานที่ส่งหลายเครื่อง (MK1 + MK2, UV1 + UV2, MK + UV2) — เครื่องไหนต่อไม่ติดหรือส่งไม่ผ่าน (รวมส่งไปแล้วไม่ได้คำตอบ) ไม่ส่งเครื่องไหนต่อ ล้างคิวของงาน ตีงานกลับเป็นรอเริ่ม แล้วบอกชื่อเครื่องที่ต้องไปตรวจ\r\nไม่มีคิวค้าง \"รอตรวจผล\" อีก คิวที่ค้างอยู่แล้ว ปลดได้ด้วยปุ่มหน้าเครื่อง หรือปุ่มยกเลิก / จบงาน · เครื่องไม่ว่างยังเข้าคิวรอเหมือนเดิม\r\nข้อแลก: เครื่องที่รับงานไปก่อนอีกเครื่องจะล้ม ได้ข้อมูลไปแล้วจริง ระบบเตือนชื่อเครื่องนั้นให้ กดเริ่มงานใหม่จะส่งทับ\r\nต้องเปิดที่เครื่อง ST1 (ST1 เป็นคนส่งทุกงาน รวมงานที่กดจาก ST3) และต้องใช้ backend รุ่นที่รองรับ";
         //
+        // pnlUv2Pick — ขอบน้ำเงิน: ตัวเลือกของการส่งงาน เปิดทิ้งไว้ใช้งานจริงได้
+        //
+        pnlUv2Pick.Back = System.Drawing.Color.White;
+        pnlUv2Pick.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlUv2Pick.BorderWidth = 2F;
+        pnlUv2Pick.Controls.Add(tlpUv2Pick);
+        pnlUv2Pick.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlUv2Pick.Margin = new System.Windows.Forms.Padding(0, 16, 0, 0);
+        pnlUv2Pick.Name = "pnlUv2Pick";
+        pnlUv2Pick.Padding = new System.Windows.Forms.Padding(24);
+        pnlUv2Pick.Radius = 10;
+        pnlUv2Pick.Size = new System.Drawing.Size(1216, 230);
+        pnlUv2Pick.TabIndex = 5;
+        //
+        // tlpUv2Pick
+        //
+        tlpUv2Pick.ColumnCount = 1;
+        tlpUv2Pick.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv2Pick.Controls.Add(lblUv2PickHeading, 0, 0);
+        tlpUv2Pick.Controls.Add(chkUv2Pick, 0, 1);
+        tlpUv2Pick.Controls.Add(lblUv2PickHelp, 0, 2);
+        tlpUv2Pick.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpUv2Pick.Margin = new System.Windows.Forms.Padding(0);
+        tlpUv2Pick.Name = "tlpUv2Pick";
+        tlpUv2Pick.RowCount = 3;
+        tlpUv2Pick.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
+        tlpUv2Pick.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpUv2Pick.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv2Pick.Size = new System.Drawing.Size(1168, 182);
+        tlpUv2Pick.TabIndex = 0;
+        //
+        // lblUv2PickHeading
+        //
+        lblUv2PickHeading.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblUv2PickHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        lblUv2PickHeading.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblUv2PickHeading.Margin = new System.Windows.Forms.Padding(0);
+        lblUv2PickHeading.Name = "lblUv2PickHeading";
+        lblUv2PickHeading.Size = new System.Drawing.Size(1168, 42);
+        lblUv2PickHeading.TabIndex = 0;
+        lblUv2PickHeading.Text = "รุ่นย่อย UV2 ให้ ST3 เลือก (งาน 11 / 12)";
+        //
+        // chkUv2Pick
+        //
+        chkUv2Pick.Dock = System.Windows.Forms.DockStyle.Fill;
+        chkUv2Pick.Font = new System.Drawing.Font("Segoe UI", 15F);
+        chkUv2Pick.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        chkUv2Pick.Margin = new System.Windows.Forms.Padding(0, 0, 0, 12);
+        chkUv2Pick.Name = "chkUv2Pick";
+        chkUv2Pick.Size = new System.Drawing.Size(1168, 32);
+        chkUv2Pick.TabIndex = 1;
+        chkUv2Pick.Text = "ST1 ไม่ถามรุ่นย่อย UV2 — คนที่ ST3 กด เลือกรุ่น UV2 ในแถวงานเอง";
+        //
+        // lblUv2PickHelp
+        //
+        lblUv2PickHelp.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblUv2PickHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblUv2PickHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
+        lblUv2PickHelp.Margin = new System.Windows.Forms.Padding(0);
+        lblUv2PickHelp.Name = "lblUv2PickHelp";
+        lblUv2PickHelp.Size = new System.Drawing.Size(1168, 96);
+        lblUv2PickHelp.TabIndex = 2;
+        lblUv2PickHelp.Text = "ปิด (ค่าเริ่มต้น): ST1 เลือกรุ่นทุกเครื่องตอนกดเริ่มงาน เหมือนเดิม\r\nเปิด: โปรแกรม UV2 ที่มีให้เลือกหลายไฟล์ ST1 ส่งเครื่องอื่นตามปกติ แต่ยังไม่จอง UV2 · แถวงานขึ้น Pick UV2 (ST3)\r\nคนที่ ST3 กด เลือกรุ่น UV2 ตอนชิ้นงานมาถึง เลือกแล้ว ST1 ส่งให้ตามคิว · ไฟล์เดียวส่งจาก ST1 ทันทีเหมือนเดิม\r\nต้องเปิดที่เครื่อง ST1 (คนกดเริ่มงาน) · เครื่อง ST3 ต้องตั้งโฟลเดอร์โปรแกรม UV2 ไว้";
+        //
         // pnlReset
         //
         pnlReset.Back = System.Drawing.Color.White;
@@ -379,7 +452,7 @@ partial class StationOptionsUserControl
         pnlReset.Padding = new System.Windows.Forms.Padding(24);
         pnlReset.Radius = 10;
         pnlReset.Size = new System.Drawing.Size(1216, 198);
-        pnlReset.TabIndex = 5;
+        pnlReset.TabIndex = 6;
         //
         // tlpReset
         //
@@ -445,7 +518,7 @@ partial class StationOptionsUserControl
         pnlJobData.Padding = new System.Windows.Forms.Padding(24);
         pnlJobData.Radius = 10;
         pnlJobData.Size = new System.Drawing.Size(1216, 246);
-        pnlJobData.TabIndex = 6;
+        pnlJobData.TabIndex = 7;
         //
         // tlpJobData
         //
@@ -580,7 +653,7 @@ partial class StationOptionsUserControl
         Controls.Add(tlpOptionsRoot);
         Name = "StationOptionsUserControl";
         Padding = new System.Windows.Forms.Padding(32);
-        Size = new System.Drawing.Size(1280, 1588);
+        Size = new System.Drawing.Size(1280, 1834);
         tlpOptionsRoot.ResumeLayout(false);
         tlpReset.ResumeLayout(false);
         flpJobData.ResumeLayout(false);
@@ -595,6 +668,8 @@ partial class StationOptionsUserControl
         pnlMockup.ResumeLayout(false);
         tlpAllOrNothing.ResumeLayout(false);
         pnlAllOrNothing.ResumeLayout(false);
+        tlpUv2Pick.ResumeLayout(false);
+        pnlUv2Pick.ResumeLayout(false);
         pnlReset.ResumeLayout(false);
         pnlRemoteSend.ResumeLayout(false);
         tlpRemoteSend.ResumeLayout(false);
@@ -625,6 +700,11 @@ partial class StationOptionsUserControl
     private AntdUI.Label lblAllOrNothingHeading;
     private AntdUI.Checkbox chkAllOrNothing;
     private AntdUI.Label lblAllOrNothingHelp;
+    private AntdUI.Panel pnlUv2Pick;
+    private System.Windows.Forms.TableLayoutPanel tlpUv2Pick;
+    private AntdUI.Label lblUv2PickHeading;
+    private AntdUI.Checkbox chkUv2Pick;
+    private AntdUI.Label lblUv2PickHelp;
     private AntdUI.Panel pnlReset;
     private System.Windows.Forms.TableLayoutPanel tlpReset;
     private AntdUI.Label lblResetHeading;

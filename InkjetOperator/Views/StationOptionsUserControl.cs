@@ -35,6 +35,9 @@ public partial class StationOptionsUserControl : UserControl
         chkAllOrNothing.Checked = AllOrNothingSend.Enabled;
         chkAllOrNothing.CheckedChanged += AllOrNothing_CheckedChanged;
 
+        chkUv2Pick.Checked = Uv2PickAtSt3.Enabled;
+        chkUv2Pick.CheckedChanged += Uv2Pick_CheckedChanged;
+
         btnResetRuntime.Click += async (_, _) => await ResetRuntimeAsync();
 
         btnSaveJobData.Click += async (_, _) => await SaveJobDataAsync();
@@ -81,6 +84,28 @@ public partial class StationOptionsUserControl : UserControl
         chkAllOrNothing.CheckedChanged -= AllOrNothing_CheckedChanged;
         chkAllOrNothing.Checked = !e.Value;
         chkAllOrNothing.CheckedChanged += AllOrNothing_CheckedChanged;
+
+        Notify.WarnModal(this, "บันทึกไม่สำเร็จ",
+            CustomSettingsManager.LastError ?? "เขียนไฟล์ตั้งค่าไม่ได้");
+    }
+
+    /// <summary>
+    /// เปิด/ปิด "รุ่นย่อย UV2 ให้ ST3 เลือก" — เซฟทันทีที่ติ๊ก รายละเอียดอยู่ที่ <see cref="Uv2PickAtSt3"/>
+    /// </summary>
+    private void Uv2Pick_CheckedChanged(object? sender, AntdUI.BoolEventArgs e)
+    {
+        if (CustomSettingsManager.Write(Uv2PickAtSt3.Key, e.Value ? "1" : "0"))
+        {
+            Notify.Success(this, e.Value
+                ? "เปิดแล้ว — งานที่กดเริ่มต่อจากนี้ UV2 ที่มีรุ่นย่อยให้ ST3 เลือก (ต้องเปิดที่เครื่อง ST1)"
+                : "ปิดแล้ว — ST1 เลือกรุ่นทุกเครื่องตอนกดเริ่มงาน เหมือนเดิม");
+            return;
+        }
+
+        // เขียนไฟล์ไม่ผ่าน ติ๊กที่ค้างอยู่จะโกหกว่าเซฟแล้ว ต้องดีดกลับ
+        chkUv2Pick.CheckedChanged -= Uv2Pick_CheckedChanged;
+        chkUv2Pick.Checked = !e.Value;
+        chkUv2Pick.CheckedChanged += Uv2Pick_CheckedChanged;
 
         Notify.WarnModal(this, "บันทึกไม่สำเร็จ",
             CustomSettingsManager.LastError ?? "เขียนไฟล์ตั้งค่าไม่ได้");

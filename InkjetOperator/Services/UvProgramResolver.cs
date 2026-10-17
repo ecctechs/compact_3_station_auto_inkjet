@@ -53,6 +53,18 @@ public static class UvProgramResolver
     }
 
     /// <summary>ผลการไล่ไฟล์ — Candidates = null คือไม่รู้จักโฟลเดอร์ ส่งชื่อที่ได้มาตรง ๆ</summary>
+    /// <summary>
+    /// โปรแกรมนี้มีให้เลือกกี่ไฟล์ในเครื่อง — ไม่เปิดกล่องอะไร
+    /// · null = ไม่รู้ (เครื่องนี้ไม่ได้ตั้งโฟลเดอร์ / ชื่อโปรแกรมว่าง / อ่านโฟลเดอร์ไม่ได้)
+    /// · 0 = ไม่พบ (ตอนส่งจะถามว่าใช้ default ไหม)
+    /// </summary>
+    public static async Task<int?> VariantCountAsync(string? programName, int uvNumber)
+    {
+        var docFolder = await UvSettingsManager.GetDocumentFolderAsync(uvNumber);
+        var found = await Task.Run(() => FindVariants(programName, docFolder));
+        return found.BaseName.Length == 0 ? null : found.Candidates?.Count;
+    }
+
     private sealed record Variants(string BaseName, List<string>? Candidates);
 
     /// <summary>ส่วนที่แตะดิสก์ / แชร์ — ไม่มีหน้าจอ เรียกจากเธรดไหนก็ได้</summary>
