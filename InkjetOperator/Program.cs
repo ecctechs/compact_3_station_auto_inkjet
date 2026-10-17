@@ -45,6 +45,9 @@ static class Program
         Services.LanguageService.Init();
         ConfigureAntdUi();
 
+        // จอสัมผัส (panel PC): ลากนิ้วตรงไหนของหน้าก็เลื่อนได้ ปล่อยแล้วไหลต่อ — ดู TouchScroll
+        Views.TouchScroll.Install();
+
         // เครื่องที่เพิ่งติดตั้งยังไม่รู้ว่าเป็นสถานีไหน — ต้องรู้ก่อนขั้นอื่นทั้งหมด
         // เพราะค่าตั้งต้นของ ST1, การเปิด backend และเมนูที่เห็น ขึ้นกับคำตอบนี้
         if (!EnsureStationChosen()) return;
