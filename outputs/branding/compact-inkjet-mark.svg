@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 300 300" fill="none">
+  <title>Compact Inkjet station mark</title>
+  <desc>Connected stations, an inkjet print head and a barcode-marked product on a conveyor.</desc>
+  <g transform="translate(20 15)">
+    <path d="M45 37H219" stroke="#9DB8D0" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="45" cy="37" r="15" fill="#28B8D8"/>
+    <circle cx="132" cy="37" r="15" fill="#2586E8"/>
+    <circle cx="219" cy="37" r="15" fill="#1BAA75"/>
+    <path d="M100 78C100 70 106 64 114 64H150C158 64 164 70 164 78V112H100V78Z" fill="#244765"/>
+    <path d="M111 77H153" stroke="#80C9F2" stroke-width="6" stroke-linecap="round"/>
+    <path d="M132 118C132 118 117 137 117 147C117 156 124 163 132 163C140 163 147 156 147 147C147 137 132 118 132 118Z" fill="#28B8D8"/>
+    <path d="M83 168C83 162 88 157 94 157H170C176 157 181 162 181 168V218H83V168Z" fill="#2586E8"/>
+    <path d="M99 176V199M107 176V199M114 176V199M124 176V199M134 176V199M143 176V199M155 176V199M165 176V199" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+    <path d="M25 224H239" stroke="#244765" stroke-width="15" stroke-linecap="round"/>
+    <path d="M43 239V257M220 239V257" stroke="#244765" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="69" cy="224" r="5" fill="#80C9F2"/>
+    <circle cx="103" cy="224" r="5" fill="#80C9F2"/>
+    <circle cx="137" cy="224" r="5" fill="#80C9F2"/>
+    <circle cx="171" cy="224" r="5" fill="#80C9F2"/>
+    <circle cx="205" cy="224" r="5" fill="#80C9F2"/>
+  </g>
+</svg>

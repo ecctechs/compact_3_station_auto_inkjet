@@ -21,13 +21,13 @@ public partial class AppTitleBarUserControl : UserControl
         btnClose.Click += (_, _) => CloseRequested?.Invoke(this, EventArgs.Empty);
 
         // Dragging the bar has to move the window, the way the system title bar did.
-        foreach (Control control in new Control[] { this, tlpTitleBarRoot, lblAppTitle })
+        foreach (Control control in new Control[] { this, tlpTitleBarRoot, picAppIcon, lblAppTitle })
         {
             control.MouseDown += TitleBar_MouseDown;
         }
 
         // Double-clicking the bar toggles maximise, matching the system behaviour.
-        foreach (Control control in new Control[] { this, tlpTitleBarRoot, lblAppTitle })
+        foreach (Control control in new Control[] { this, tlpTitleBarRoot, picAppIcon, lblAppTitle })
         {
             control.DoubleClick += (_, _) => MaximizeRequested?.Invoke(this, EventArgs.Empty);
         }
