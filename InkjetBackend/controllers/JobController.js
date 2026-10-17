@@ -87,8 +87,9 @@ class JobController {
       const { status, page, limit, from, to } = req.query;
       const where = {};
 
-      if (status) {
-        where.status = status;
+      // หลายสถานะพร้อมกันได้ (schema แยกจุลภาคให้แล้ว) — แท็บรายการงานขอ Waiting + Process
+      if (status && status.length) {
+        where.status = status.length === 1 ? status[0] : { [Op.in]: status };
       }
 
       // ตัวกรองวันที่ของหน้า History — ส่งมาเป็น ISO (UTC) ที่ฝั่ง client

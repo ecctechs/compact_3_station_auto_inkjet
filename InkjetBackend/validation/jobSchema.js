@@ -24,12 +24,19 @@ const createJobSchema = z.object({
 // ตัดคีย์ที่ไม่ได้ประกาศทิ้งเป็นค่าเริ่มต้น คีย์ที่ลืมใส่จึงหายไปก่อนถึง controller
 // เงียบ ๆ ไม่มี error อะไรให้เห็น — from กับ to ของตัวกรองวันที่หน้า History
 // หายแบบนี้มาตลอด โค้ดกรองวันที่ใน controller จึงไม่เคยได้ทำงานเลย
+// สถานะที่ print_jobs ใช้จริง — ของเดิม (executing / completed / failed) ไม่มีในฐาน
+// ส่งได้หลายค่าคั่นด้วยจุลภาค เช่น "Waiting,Process" = งานที่ยังไม่จบทั้งหมด (แท็บรายการงาน)
+const JOB_STATUSES = ["Waiting", "Process", "Success", "Cancel"];
+
 const jobFilterSchema = z.object({
   status: z
-    .enum(["Waiting", "executing", "completed", "failed"])
+    .string()
+    .transform((s) => s.split(",").map((x) => x.trim()).filter(Boolean))
+    .pipe(z.array(z.enum(JOB_STATUSES)).min(1))
     .optional(),
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
+  // แท็บรายการงานขอ "งานที่ยังไม่จบทั้งหมด" ไม่ใช่หน้าละ 100 — เพดานนี้กันพลาดเท่านั้น
+  limit: z.coerce.number().int().min(1).max(1000).default(20),
 
   // ตัวกรองวันที่ของหน้า History — ฝั่ง client ส่ง ISO (UTC) ที่ขยายเป็นทั้งวัน
   // ตามเวลาไทยมาแล้ว coerce.date ตีกลับ 400 ทันทีถ้าส่งของที่อ่านเป็นวันไม่ได้

@@ -9,6 +9,9 @@ public partial class OrderListUserControl : UserControl
 {
     private static readonly string[] ActiveStatuses = ["Waiting", "Process"];
 
+    /// <summary>เพดานของแท็บรายการงาน (backend รับได้ถึง 1000) — กันพลาดเท่านั้น งานที่ยังไม่จบปกติมีแค่หลักสิบ</summary>
+    private const int ActiveJobsLimit = 1000;
+
     /// <summary>งานที่จบแล้ว — ทั้งที่ทำเสร็จจริงและที่ถูกยกเลิก ล้วนไปอยู่แท็บ History</summary>
     private static readonly string[] HistoryStatuses = ["Success", "Cancel"];
 
@@ -712,7 +715,9 @@ public partial class OrderListUserControl : UserControl
                 toUtc = ToUtcFromThai(to);
             }
 
-            var (jobs, error) = await _api.GetAllJobsAsync(100, fromUtc, toUtc);
+            var (jobs, error) = _showHistory
+                ? await _api.GetAllJobsAsync(100, fromUtc, toUtc)
+                : await GetActiveJobsAsync();
             if (IsDisposed) return;
             NotePollResult(error == null);
             if (_sending) { _refreshRequested = true; return; }
@@ -1220,6 +1225,26 @@ public partial class OrderListUserControl : UserControl
             if (text.Length > 0) return text;
         }
         return Dash;
+    }
+
+    /// <summary>
+    /// แท็บรายการงาน: งานที่ยังไม่จบทั้งหมด (รอเริ่ม + กำลังผลิต) ไม่ว่าสแกนเข้ามานานแค่ไหน
+    /// <para>
+    /// เดิมดึง 100 งานล่าสุดรวมทุกสถานะแล้วค่อยแยกแท็บ — งานที่จบแล้วกินโควตาไปด้วย
+    /// วันละ 30 งาน ผ่านไปราว 4 วัน งานที่ยังไม่จบ (รอรอบสอง / ลืมกดจบ) หลุดหายจากตาราง
+    /// และ ST1 มองไม่เห็นคำขอเริ่มงานจาก ST3 ของงานนั้น
+    /// </para>
+    /// <para>
+    /// backend รุ่นก่อนหน้ารับตัวกรองนี้ไม่ได้ (ตอบ 400) — ถอยไปใช้แบบเดิม (100 ล่าสุด) ตารางจะไม่ว่าง
+    /// ระหว่างที่ยังอัปเดต backend ไม่ครบ
+    /// </para>
+    /// </summary>
+    private async Task<(List<PrintJob> jobs, string? error)> GetActiveJobsAsync()
+    {
+        var active = await _api!.GetAllJobsAsync(ActiveJobsLimit, status: string.Join(",", ActiveStatuses));
+        if (active.error?.StartsWith("[400]", StringComparison.Ordinal) == true)
+            return await _api.GetAllJobsAsync(100);
+        return active;
     }
 
     /// <summary>งานที่ถูกยกเลิก — แยกจากงานที่จบแล้ว ทั้งที่อยู่แท็บ History เหมือนกัน</summary>

@@ -354,11 +354,12 @@ public class ApiClient
     /// งานเก่ากว่านั้นจะไม่ถูกส่งมาให้กรองตั้งแต่แรก
     /// </summary>
     public async Task<(List<PrintJob> jobs, string? error)> GetAllJobsAsync(
-        int limit = 100, DateTime? fromUtc = null, DateTime? toUtc = null)
+        int limit = 100, DateTime? fromUtc = null, DateTime? toUtc = null, string? status = null)
     {
         try
         {
             var url = $"/job/getAll?page=1&limit={limit}";
+            if (!string.IsNullOrWhiteSpace(status)) url += $"&status={Uri.EscapeDataString(status)}";
             if (fromUtc.HasValue) url += $"&from={Uri.EscapeDataString(fromUtc.Value.ToString("o"))}";
             if (toUtc.HasValue) url += $"&to={Uri.EscapeDataString(toUtc.Value.ToString("o"))}";
 
