@@ -458,6 +458,7 @@ public partial class OrderListUserControl : UserControl
     private async Task OnPushButtonPressedAsync(string machine)
     {
         if (_api == null || IsDisposed) return;
+        AppLog.Info("PushButton", $"กดปุ่มหน้าเครื่อง {machine}");
         if (!CanReleaseNow(machine)) return;
         _pushHandling.Add(machine);
         try
@@ -2832,6 +2833,9 @@ public partial class OrderListUserControl : UserControl
                 .OrderBy(r => r.Id)
                 .Where(r => !MachineBusy.IsBusy(r.Machine) && ReserveDispatch(r.Machine)).ToList();
             foreach (var row in ready) owned[row.Machine] = _dispatchingMachines[row.Machine];
+            if (ready.Count > 0)
+                AppLog.Info("Queue", "ส่งตามคิว · " + string.Join(", ", ready.Select(r =>
+                    $"{r.Machine} คิว {r.Id} {JobName(r.PrintJobsId)}{(r.ProgramName is { Length: > 0 } pn ? $" ({pn})" : "")}")));
             var prepared = new List<PreparedQueueSend>();
             var lines = new List<Notify.ResultLine>();
             foreach (var group in ready.GroupBy(r => r.PrintJobsId))
@@ -2899,6 +2903,7 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private async Task RunRemoteStartAsync(int jobId)
     {
+        AppLog.Info("RemoteStart", $"รับคำขอเริ่มงานจาก ST3 · {JobName(jobId)} (id {jobId})");
         var resolved = await _api!.GetResolvedJobAsync(jobId);
         if (resolved == null) return;   // อ่านไม่ได้ = คงธงไว้ให้รอบหน้าลองใหม่
 

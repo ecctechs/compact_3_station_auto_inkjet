@@ -29,13 +29,38 @@ public partial class SystemHealthUserControl : UserControl
         Disposed += (_, _) => HealthMonitor.Updated -= OnHealthUpdated;
 
         btnRestartBackend.Click += async (_, _) => await RestartBackendAsync();
+        btnOpenAppLog.Click += (_, _) => OpenFolder(AppLog.Folder, "log โปรแกรม");
+        btnOpenBackendLog.Click += (_, _) => OpenFolder(BackendLogFolder(), "log backend");
 
         // สั่งปิด/เปิดโปรเซสข้ามเครื่องไม่ได้ — ปุ่มยังเห็นแต่กดไม่ได้ พร้อมบอกว่าต้องไปทำที่ไหน
         if (!BackendLauncher.IsLocal())
         {
             btnRestartBackend.Enabled = false;
+            btnOpenBackendLog.Enabled = false;
             lblRestartHelp.Text = $"backend อยู่เครื่องอื่น ({CustomSettingsManager.Read("PC_IP", "")})"
-                + " — รีสตาร์ทจากโปรแกรมบนเครื่องนั้น หน้า Setting → System Health";
+                + Environment.NewLine + "รีสตาร์ท / ดู log backend ที่เครื่องนั้น (Setting → System Health)";
+        }
+    }
+
+    /// <summary>โฟลเดอร์ log ของ backend — อยู่ในโฟลเดอร์ backend ที่ตั้งไว้ (utils/logger.js)</summary>
+    private static string BackendLogFolder() =>
+        Path.Combine(CustomSettingsManager.Read("BACKEND_PATH", "").Trim(), "logs");
+
+    /// <summary>เปิดโฟลเดอร์ใน Explorer — ไฟล์ log วันละไฟล์ ชื่อมีวันที่ (YYYYMMDD) ให้เลือกตามวันที่ลูกค้าแจ้ง</summary>
+    private void OpenFolder(string folder, string name)
+    {
+        try
+        {
+            if (!Directory.Exists(folder))
+            {
+                Notify.WarnModal(this, "เปิดโฟลเดอร์ไม่ได้", $"ยังไม่มีโฟลเดอร์ {name}\n\n{folder}");
+                return;
+            }
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", $"\"{folder}\"") { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Notify.ErrorModal(this, "เปิดโฟลเดอร์ไม่ได้", $"{folder}\n\n{ex.Message}");
         }
     }
 

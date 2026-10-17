@@ -23,6 +23,8 @@ partial class SystemHealthUserControl
         flpHealthActions = new System.Windows.Forms.FlowLayoutPanel();
         btnRestartBackend = new AntdUI.Button();
         lblRestartHelp = new AntdUI.Label();
+        btnOpenAppLog = new AntdUI.Button();
+        btnOpenBackendLog = new AntdUI.Button();
         tblHealth = new AntdUI.Table();
         tlpHealthRoot.SuspendLayout();
         flpHealthActions.SuspendLayout();
@@ -76,6 +78,8 @@ partial class SystemHealthUserControl
         //
         flpHealthActions.Controls.Add(btnRestartBackend);
         flpHealthActions.Controls.Add(lblRestartHelp);
+        flpHealthActions.Controls.Add(btnOpenAppLog);
+        flpHealthActions.Controls.Add(btnOpenBackendLog);
         flpHealthActions.Dock = System.Windows.Forms.DockStyle.Fill;
         flpHealthActions.Location = new System.Drawing.Point(0, 98);
         flpHealthActions.Margin = new System.Windows.Forms.Padding(0);
@@ -105,9 +109,37 @@ partial class SystemHealthUserControl
         lblRestartHelp.Location = new System.Drawing.Point(276, 0);
         lblRestartHelp.Margin = new System.Windows.Forms.Padding(0);
         lblRestartHelp.Name = "lblRestartHelp";
-        lblRestartHelp.Size = new System.Drawing.Size(900, 52);
+        lblRestartHelp.Size = new System.Drawing.Size(540, 52);
         lblRestartHelp.TabIndex = 1;
-        lblRestartHelp.Text = "ใช้หลังอัปเดตไฟล์ backend (แถว Backend ขึ้นว่ายังไม่รีสตาร์ท) · ระหว่างรีสตาร์ทไม่กี่วินาที ทุกสถานีต่อ backend ไม่ได้\r\nอย่ากดตอนกำลังส่งงานเข้าเครื่อง · กดได้เฉพาะเครื่องที่ backend อยู่";
+        lblRestartHelp.Text = "ใช้หลังอัปเดตไฟล์ backend · ระหว่างรีสตาร์ททุกสถานีต่อ backend ไม่ได้\r\nอย่ากดตอนกำลังส่งงาน · กดได้เฉพาะเครื่องที่ backend อยู่";
+        //
+        // btnOpenAppLog — เปิดโฟลเดอร์ log ของโปรแกรมเครื่องนี้ (ทุกข้อความที่ขึ้นบนจอ ผลส่งงาน error)
+        //
+        btnOpenAppLog.BorderWidth = 2F;
+        btnOpenAppLog.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnOpenAppLog.Font = new System.Drawing.Font("Segoe UI", 13F);
+        btnOpenAppLog.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnOpenAppLog.IconSvg = "FolderOpenOutlined";
+        btnOpenAppLog.Margin = new System.Windows.Forms.Padding(16, 0, 0, 12);
+        btnOpenAppLog.Name = "btnOpenAppLog";
+        btnOpenAppLog.Radius = 8;
+        btnOpenAppLog.Size = new System.Drawing.Size(180, 52);
+        btnOpenAppLog.TabIndex = 2;
+        btnOpenAppLog.Text = "log โปรแกรม";
+        //
+        // btnOpenBackendLog — เปิดโฟลเดอร์ log ของ backend (เฉพาะเครื่องที่ backend อยู่)
+        //
+        btnOpenBackendLog.BorderWidth = 2F;
+        btnOpenBackendLog.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnOpenBackendLog.Font = new System.Drawing.Font("Segoe UI", 13F);
+        btnOpenBackendLog.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnOpenBackendLog.IconSvg = "FolderOpenOutlined";
+        btnOpenBackendLog.Margin = new System.Windows.Forms.Padding(12, 0, 0, 12);
+        btnOpenBackendLog.Name = "btnOpenBackendLog";
+        btnOpenBackendLog.Radius = 8;
+        btnOpenBackendLog.Size = new System.Drawing.Size(180, 52);
+        btnOpenBackendLog.TabIndex = 3;
+        btnOpenBackendLog.Text = "log backend";
         //
         // tblHealth
         //
@@ -145,4 +177,6 @@ partial class SystemHealthUserControl
     private System.Windows.Forms.FlowLayoutPanel flpHealthActions;
     private AntdUI.Button btnRestartBackend;
     private AntdUI.Label lblRestartHelp;
+    private AntdUI.Button btnOpenAppLog;
+    private AntdUI.Button btnOpenBackendLog;
 }

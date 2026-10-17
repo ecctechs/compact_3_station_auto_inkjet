@@ -747,12 +747,18 @@ public partial class ClampSettingUserControl : UserControl
 
         try
         {
+            // ใช้ TcpConnect ไม่ใช่ WhenAny + Delay — แบบเดิมทิ้งการต่อที่ค้างไว้ตอนหมดเวลา
+            // พอ socket ถูกปิดมันล้มทีหลังโดยไม่มีใครรับ กลายเป็น ERROR ใน log ทุกรอบตรวจ
             using var tcp = new TcpClient();
-            var connect = tcp.ConnectAsync(ip, port);
-            var completed = await Task.WhenAny(connect, Task.Delay(3000));
+            bool ok;
+            try
+            {
+                await Services.TcpConnect.ConnectAsync(tcp, ip, port, TimeSpan.FromSeconds(3));
+                ok = tcp.Connected;
+            }
+            catch (Exception ex) when (ex is TimeoutException or SocketException) { ok = false; }
             if (IsDisposed) return;
 
-            bool ok = completed == connect && !connect.IsFaulted && tcp.Connected;
             SetConnDot(ok ? Green : Red);
             Note(ok ? $"เชื่อมต่อ {ip}:{port} ได้" : $"เชื่อมต่อ {ip}:{port} ไม่ได้");
         }

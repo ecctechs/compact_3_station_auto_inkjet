@@ -68,9 +68,27 @@ internal static class Notify
     /// </summary>
     private const int ToastMaxWidth = 1000;
 
+    /// <summary>
+    /// ทุกข้อความที่ขึ้นบนจอลง log ด้วย — ลูกค้าบอกว่า "ขึ้นว่าส่งไม่ได้" จะได้ย้อนดูได้ว่าขึ้นอะไร
+    /// เครื่องไหน กี่โมง (ไฟล์ C:\ProgramData\CompactInkjet\logs\app-YYYYMMDD.log ของเครื่องนั้น)
+    /// </summary>
+    private static void LogShown(AntdUI.TType type, string text)
+    {
+        var flat = string.Join(" / ", text.Replace("\r\n", "\n").Split('\n')
+            .Select(l => l.Trim()).Where(l => l.Length > 0));
+        switch (type)
+        {
+            case AntdUI.TType.Error: Services.AppLog.Error("Screen", flat); break;
+            case AntdUI.TType.Warn: Services.AppLog.Warn("Screen", flat); break;
+            default: Services.AppLog.Info("Screen", flat); break;
+        }
+    }
+
     private static void Toast(
         Control? owner, AntdUI.TType type, string text, int seconds, MessageBoxIcon fallbackIcon)
     {
+        LogShown(type, text);
+
         if (Resolve(owner) is not { } form)
         {
             Fallback(text, fallbackIcon);
@@ -123,6 +141,8 @@ internal static class Notify
     /// </summary>
     private static void Dialog(Control? owner, string title, string text, AntdUI.TType type, bool splitHeadline = true)
     {
+        LogShown(type, $"[{title}] {text}");
+
         if (Resolve(owner) is null)
         {
             Fallback($"{title}\n\n{text}", type switch

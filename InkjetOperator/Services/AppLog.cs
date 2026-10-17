@@ -26,6 +26,9 @@ public static class AppLog
 
     public static void Warn(string where, string message) => Write("WARN", where, message);
 
+    /// <summary>ผิดพลาดที่ไม่มี exception — เช่นข้อความ error ที่ขึ้นบนจอให้คนหน้างานเห็น</summary>
+    public static void Error(string where, string message) => Write("ERROR", where, message);
+
     /// <summary>บันทึก exception ทั้งก้อน รวม stack trace — ข้อความบนจอไม่มีส่วนนี้</summary>
     public static void Error(string where, Exception ex) => Write("ERROR", where, ex.ToString());
 

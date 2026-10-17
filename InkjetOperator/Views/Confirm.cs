@@ -43,14 +43,28 @@ internal static class Confirm
 
     private static bool ShowDialog(Form? owner, ConfirmSpec spec)
     {
-        using var dim = owner == null ? null : DimOverlay.ShowOver(owner);
-        using var dialog = new ConfirmDialog(spec);
-        if (owner == null)
+        bool answer;
+        using (owner == null ? null : DimOverlay.ShowOver(owner))
+        using (var dialog = new ConfirmDialog(spec))
         {
-            dialog.StartPosition = FormStartPosition.CenterScreen;
-            return dialog.ShowDialog() == DialogResult.OK;
+            if (owner == null) dialog.StartPosition = FormStartPosition.CenterScreen;
+            answer = (owner == null ? dialog.ShowDialog() : dialog.ShowDialog(owner)) == DialogResult.OK;
         }
-        return dialog.ShowDialog(owner) == DialogResult.OK;
+
+        // คำถามลง log พร้อมคำตอบ — ย้อนดูได้ว่าใครกดยืนยันอะไร (กล่องแจ้งปุ่มเดียว Notify บันทึกเองแล้ว)
+        if (spec.ShowCancel)
+            Services.AppLog.Info("Confirm", $"[{spec.Title}] {Describe(spec)} → {(answer ? spec.OkText : spec.CancelText)}");
+        return answer;
+    }
+
+    /// <summary>เนื้อหากล่องยืนยันเป็นบรรทัดเดียวสำหรับ log</summary>
+    private static string Describe(ConfirmSpec spec)
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(spec.Headline)) parts.Add(spec.Headline!);
+        parts.AddRange(spec.Facts.Select(f => $"{f.Caption}: {f.Value}"));
+        if (!string.IsNullOrWhiteSpace(spec.Warning)) parts.Add("⚠ " + spec.Warning);
+        return string.Join(" / ", parts.Select(p => p.Replace("\r\n", " · ").Replace("\n", " · ")));
     }
 
     /// <summary>
