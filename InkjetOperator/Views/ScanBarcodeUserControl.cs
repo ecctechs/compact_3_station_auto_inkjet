@@ -494,13 +494,19 @@ public partial class ScanBarcodeUserControl : UserControl
 
         var reason = string.IsNullOrWhiteSpace(path)
             ? "ยังไม่ได้เลือกไฟล์ mydatabase.db3"
-            : $"ไม่พบไฟล์ที่ตั้งไว้:\n{path}";
+            : $"ไม่พบไฟล์ที่ตั้งไว้: {path}";
 
-        return Confirm.Ask(null, "ยังไม่ได้ตั้งค่า Clamp Database",
-            $"{reason}\n\n" +
-            "ระยะแคลมป์ (IAI) ของงานนี้จะถูกบันทึกเป็นค่าว่าง\n" +
-            "ตั้งค่าได้ที่ Setting → PLC UV Setting → Browse\n\n" +
-            "ต้องการลงทะเบียนต่อไปหรือไม่?");
+        return Confirm.Ask(null, new ConfirmSpec
+        {
+            Title = "ยังไม่ได้ตั้งค่า Clamp Database",
+            Headline = "ลงทะเบียนต่อโดยไม่มีระยะแคลมป์?",
+            Message = reason,
+            Detail = "ระยะแคลมป์ (IAI) ของงานนี้จะเป็นค่าว่าง" + Environment.NewLine
+                + "ตั้งค่าได้ที่ Setting → PLC UV Setting → Browse",
+            OkText = "ลงทะเบียนต่อ",
+            CancelText = "ไปตั้งค่าก่อน",
+            Icon = "ExclamationCircleFilled",
+        });
     }
 
     /// <summary>
@@ -582,13 +588,13 @@ public partial class ScanBarcodeUserControl : UserControl
     }
 
     private static string ReadFailedMessage(Exception ex) =>
-        "อ่านข้อมูลจาก PrintData.db3 ไม่ได้\n"
-        + $"{ex.Message}\n\n"
-        + "ตรวจว่าไดรฟ์ที่เก็บไฟล์ยังเชื่อมต่ออยู่ แล้วลองสแกนใหม่";
+        "อ่าน PrintData.db3 ไม่ได้\n\n"
+        + "ตรวจว่าไดรฟ์ที่เก็บไฟล์ยังเชื่อมต่ออยู่ แล้วลองสแกนใหม่\n"
+        + ex.Message;
 
     private static void ShowWarning(string msg) =>
         Notify.WarnModal(null, "แจ้งเตือน", msg);
 
     private static void ShowError(string msg) =>
-        Notify.ErrorModal(null, "Error", msg);
+        Notify.ErrorModal(null, "เกิดข้อผิดพลาด", msg);
 }

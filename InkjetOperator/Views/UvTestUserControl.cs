@@ -314,8 +314,16 @@ public partial class UvTestUserControl : UserControl
     {
         if (!TryGetCpi(out var cpiPath, out var table)) return;
 
-        if (!Confirm.Ask(this, "ยืนยันเขียน CPI.db3",
-                $"เขียนทับแถว id=1 ของตาราง {table}\n{cpiPath}\n\nยืนยันหรือไม่?"))
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "เขียน CPI.db3",
+                Headline = "เขียนทับข้อมูลในเครื่อง UV?",
+                Facts = [("ตาราง", table), ("แถว", "id = 1")],
+                Detail = cpiPath,
+                OkText = "เขียนทับ",
+                OkIcon = "EditOutlined",
+                Danger = true,
+            }))
             return;
 
         SetBusy(true);

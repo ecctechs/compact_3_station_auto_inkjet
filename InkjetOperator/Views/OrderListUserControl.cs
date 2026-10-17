@@ -1228,10 +1228,16 @@ public partial class OrderListUserControl : UserControl
     {
         if (_api == null) return;
 
-        if (!Confirm.Ask(this, "ยืนยันนำกลับมาพิมพ์ใหม่",
-                $"{JobName(jobId)}\n\n"
-                + "งานจะกลับไปอยู่ในรายการงาน รอกดเริ่มงานอีกครั้ง\n\n"
-                + "ยืนยันหรือไม่?"))
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "นำกลับมาพิมพ์ใหม่",
+                Headline = "นำงานนี้กลับมาพิมพ์ใหม่?",
+                Facts = [("งาน", JobName(jobId))],
+                Detail = "งานกลับไปอยู่ในรายการงาน รอกดเริ่มงานอีกครั้ง",
+                OkText = "นำกลับมาพิมพ์",
+                Icon = "RollbackOutlined",
+                OkIcon = "RedoOutlined",
+            }))
             return;
 
         var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Waiting");
@@ -1265,11 +1271,17 @@ public partial class OrderListUserControl : UserControl
     {
         if (_api == null) return;
 
-        if (!Confirm.Ask(this, "ยืนยันยกเลิกงาน",
-                $"ยกเลิก {JobName(jobId)}\n\n"
-                + "งานจะถูกย้ายออกจากรายการไปอยู่ในประวัติ\n"
-                + "ถ้าต้องการทำต่อ กดพิมพ์ใหม่ได้ที่แท็บ History\n\n"
-                + "ยืนยันหรือไม่?"))
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "ยกเลิกงาน",
+                Headline = "ยกเลิกงานนี้?",
+                Facts = [("งาน", JobName(jobId))],
+                Detail = "งานย้ายไปอยู่ในประวัติ (History) · ถ้าจะทำต่อ กดพิมพ์ใหม่ได้ที่แท็บ History",
+                OkText = "ยกเลิกงาน",
+                CancelText = "ไม่ยกเลิก",
+                OkIcon = "StopOutlined",
+                Danger = true,
+            }))
             return;
 
         // Backend ล้างคิวกับเปลี่ยนสถานะใน Transaction เดียวกัน
@@ -1459,10 +1471,10 @@ public partial class OrderListUserControl : UserControl
         if (!MarkingMethodService.CanStartAt(station, method))
         {
             Notify.WarnModal(this, "เริ่มงานที่สถานีนี้ไม่ได้",
-                $"{JobName(jobId)} — marking {Method(method)}\n\n"
-                + ((method ?? "").Trim() == "10"
+                ((method ?? "").Trim() == "10"
                     ? "งาน marking 10 เริ่มได้ที่ ST3 เท่านั้น"
-                    : "งานนี้เริ่มได้ที่ ST1 เท่านั้น"));
+                    : "งานนี้เริ่มได้ที่ ST1 เท่านั้น")
+                + $"\n\n{JobName(jobId)} — marking {Method(method)}");
             return;
         }
 
@@ -1638,12 +1650,16 @@ public partial class OrderListUserControl : UserControl
 
         // ถามก่อนจอง — ชิ้นงานต้องกลับมาจากการติด shim และวางพร้อมพิมพ์แล้วจริง
         // กดเริ่มตอนชิ้นงานยังไม่กลับมา เครื่องจะพ่นรอบสองลงอากาศหรือลงชิ้นงานใบอื่น
-        if (!Confirm.Ask(this, "เริ่มงานรอบสอง",
-                $"{JobName(jobId)} — ส่งเข้า {next.Machine} รอบ {next.Round}"
-                + Environment.NewLine + Environment.NewLine
-                + "ชิ้นงานติด shim เสร็จ และวางพร้อมพิมพ์รอบสองแล้วใช่ไหม"
-                + Environment.NewLine + Environment.NewLine
-                + "เครื่องว่างจะส่งทันที ถ้าไม่ว่างจะต่อคิวไว้"))
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "เริ่มงานรอบสอง",
+                Headline = "ชิ้นงานติด shim เสร็จ และวางพร้อมพิมพ์แล้วใช่ไหม?",
+                Facts = [("งาน", JobName(jobId)), ("ส่งเข้า", $"{next.Machine} รอบ {next.Round}")],
+                Detail = "เครื่องว่างจะส่งทันที ถ้าไม่ว่างจะต่อคิวไว้",
+                OkText = "เริ่มรอบสอง",
+                Icon = "PlayCircleFilled",
+                OkIcon = "CaretRightFilled",
+            }))
             return;
         if (IsDisposed) return;
 
@@ -1709,20 +1725,29 @@ public partial class OrderListUserControl : UserControl
         await warm;
         if (IsDisposed) return false;
 
-        return Confirm.Ask(this, "ยืนยันเริ่มงาน",
-            BuildStartPreview(jobId, resolved, plan, rows, uvPicks));
+        return Confirm.Ask(this, BuildStartPreview(jobId, resolved, plan, rows, uvPicks));
     }
 
-    /// <summary>ข้อความสรุปที่โชว์ในกล่องยืนยัน — แยกไว้ให้ทดสอบข้อความได้โดยไม่ต้องเปิดกล่อง</summary>
-    private string BuildStartPreview(
+    /// <summary>
+    /// เนื้อหากล่องยืนยันเริ่มงาน — แยกไว้ให้ทดสอบข้อความได้โดยไม่ต้องเปิดกล่อง
+    /// <para>
+    /// เครื่องละหนึ่งแถว: บรรทัดแรกบอกว่าส่งเลยหรือเข้าคิว บรรทัดถัดไปคือสิ่งที่จะส่งเข้าเครื่อง
+    /// เรื่องที่ไม่ต้องตัดสินใจตอนนี้ (หมายเหตุ) แยกไปกล่องล่าง เรื่องที่ต้องระวังเป็นตัวแดง
+    /// </para>
+    /// </summary>
+    private ConfirmSpec BuildStartPreview(
         int jobId, ResolvedJobResponse resolved, MarkingPlan plan, List<MachineQueueRow> rows,
         Dictionary<string, string> uvPicks)
     {
-        var body = new List<string>
+        var job = _allJobs.FirstOrDefault(j => j.Id == jobId);
+        var facts = new List<(string Caption, string Value)>
         {
-            $"{JobName(jobId)} — marking {Method(resolved.PlanRouting?.MarkingMethod)}",
-            "",
+            ("งาน", JobName(jobId)),
+            ("Marking", Method(resolved.PlanRouting?.MarkingMethod)),
         };
+        var notes = new List<string>();
+        var warnings = new List<string>();
+        int sendNow = 0, queued = 0;
 
         var rounds = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         foreach (var step in plan.Steps)
@@ -1731,38 +1756,72 @@ public partial class OrderListUserControl : UserControl
             rounds[step] = rounds.TryGetValue(step, out int used) ? used + 1 : 1;
 
             // รอบถัดไปของเครื่องเดิม (marking 22) ไม่ได้จองตอนกดเริ่ม — บอกให้ตรงว่าจะเกิดเมื่อไหร่
-            // ไม่งั้นกล่องจะขึ้น "ส่งเดี๋ยวนี้" สองครั้ง ทั้งที่รอบสองยังไม่ส่ง
+            // ไม่งั้นกล่องจะขึ้น "ส่งเลย" สองครั้ง ทั้งที่รอบสองยังไม่ส่ง
             if (rounds[step] > 1)
             {
-                body.Add($"[ {step} รอบ {rounds[step]} · ST{station} ]  ยังไม่ส่ง · กดเริ่มงานรอบสองเมื่อชิ้นงานติด shim เสร็จ");
-                body.Add("");
+                facts.Add(($"{step} รอบ {rounds[step]}", "ยังไม่ส่ง" + Environment.NewLine + "กด เริ่มงานรอบสอง เมื่อติด shim เสร็จ"));
                 continue;
             }
 
             var holder = rows.FirstOrDefault(r => r.Machine == step && r.State == "active");
+            string state;
+            if (holder != null)
+            {
+                state = $"เครื่องไม่ว่าง · เข้าคิวต่อจาก {JobName(holder.PrintJobsId)}";
+                queued++;
+            }
+            else if (rows.Any(r => r.Machine == step && r.State == "pending"))
+            {
+                state = "มีงานรอก่อน · เข้าคิว";
+                queued++;
+            }
+            else
+            {
+                state = "ส่งเลย";
+                sendNow++;
+            }
 
-            var state = holder == null
-                ? rows.Any(r => r.Machine == step && r.State == "pending")
-                    ? "มีงานรอ · ส่งตามลำดับคิว"
-                    : "ว่าง · ส่งเดี๋ยวนี้"
-                : $"ไม่ว่าง ({JobName(holder.PrintJobsId)} ค้างอยู่) · เข้าคิวรอปุ่มกดหน้างาน";
-
-            body.Add($"[ {step} · ST{station} ]  {state}");
-            body.AddRange(StepPreviewLines(step, resolved, uvPicks).Select(line => "      " + line));
-            body.Add("");
+            var (detail, note, warning) = StepPreview(step, resolved, uvPicks, job);
+            facts.Add(($"{step} · ST{station}", detail == null ? state : state + Environment.NewLine + detail));
+            if (note != null) notes.Add($"{step}: {note}");
+            if (warning != null) warnings.Add($"{step}: {warning}");
         }
 
-        return string.Join(Environment.NewLine, body).TrimEnd();
+        if (queued > 0)
+            notes.Add("เครื่องที่เข้าคิวจะส่งเองเมื่อกดปุ่มหน้าเครื่องปล่อยงานก่อนหน้า");
+
+        // กล่องมีหัวข้อ/ค่าได้หกแถว — เกินนั้น (ไม่ควรเกิด แผนยาวสุดสามขั้น) ย้ายไปกล่องล่าง ไม่ทิ้ง
+        if (facts.Count > 6)
+        {
+            notes.InsertRange(0, facts.Skip(6).Select(f => $"{f.Caption}: {f.Value.Replace(Environment.NewLine, " · ")}"));
+            facts = facts.Take(6).ToList();
+        }
+
+        return new ConfirmSpec
+        {
+            Title = "ยืนยันเริ่มงาน",
+            Headline = queued == 0 ? "ส่งงานนี้เข้าเครื่องเลยไหม?"
+                : sendNow == 0 ? "เครื่องไม่ว่าง — งานนี้จะเข้าคิวรอ"
+                : "เครื่องที่ว่างส่งเลย เครื่องที่ไม่ว่างเข้าคิวรอ",
+            Facts = facts,
+            Detail = notes.Count == 0 ? null : string.Join(Environment.NewLine, notes),
+            Warning = warnings.Count == 0 ? null : string.Join(Environment.NewLine, warnings),
+            OkText = "เริ่มงาน",
+            Icon = "PlayCircleFilled",
+            OkIcon = "CaretRightFilled",
+        };
     }
 
-    /// <summary>ข้อมูลที่จะถูกส่งเข้าเครื่องของขั้นตอนหนึ่ง เขียนให้อ่านจากที่ไกล ๆ ได้</summary>
-    private static List<string> StepPreviewLines(
-        string step, ResolvedJobResponse resolved, Dictionary<string, string> uvPicks)
+    /// <summary>
+    /// สิ่งที่จะถูกส่งเข้าเครื่องของขั้นตอนหนึ่ง — Detail ขึ้นใต้สถานะในแถวของเครื่อง,
+    /// Note ไปกล่องหมายเหตุ, Warning เป็นตัวแดง (null = ไม่มี)
+    /// </summary>
+    private static (string? Detail, string? Note, string? Warning) StepPreview(
+        string step, ResolvedJobResponse resolved, Dictionary<string, string> uvPicks, PrintJob? job)
     {
-        var lines = new List<string>();
-
         if (string.Equals(step, "MK", StringComparison.OrdinalIgnoreCase))
         {
+            var heads = new List<string>();
             foreach (var (nameKey, fallback, ordinal) in MkHeads)
             {
                 var head = CustomSettingsManager.Read(nameKey, fallback);
@@ -1773,42 +1832,42 @@ public partial class OrderListUserControl : UserControl
                 bool used = config != null
                     && (config.ProgramNumber is > 0 || !string.IsNullOrWhiteSpace(config.ProgramName));
 
-                lines.Add(used
-                    ? $"{head}: {OrDash(config!.ProgramName)}  (No. {OrDash(config.ProgramNumber?.ToString())})"
-                    : $"{head}: ไม่ได้ใช้ — จะสั่งหยุดเครื่อง");
+                heads.Add(used
+                    ? $"{head}: {OrDash(config!.ProgramName)} (No. {OrDash(config.ProgramNumber?.ToString())})"
+                    : $"{head}: ไม่ใช้ (สั่งหยุด)");
             }
 
-            return lines;
+            return (string.Join(Environment.NewLine, heads), null, null);
         }
 
         int uvNumber = string.Equals(step, "UV1", StringComparison.OrdinalIgnoreCase) ? 1 : 2;
-        var uvName = UvSettingsManager.Read(
-            uvNumber == 1 ? "UV1_NAME" : "UV2_NAME", $"UV-00{uvNumber}");
-
         var uv = resolved.UvJobData?.FirstOrDefault(r =>
             string.Equals(r.Machine, step, StringComparison.OrdinalIgnoreCase));
 
         if (uv == null)
-        {
-            lines.Add($"{uvName}: ยังไม่มีข้อมูลของงานนี้");
-            return lines;
-        }
-
-        lines.Add($"{uvName}: โปรแกรม {OrDash(uv.ProgramName)}");
-        lines.Add($"Lot: {OrDash(uv.Lot)}      Name: {OrDash(uv.ErpMfg)}");
+            return (null, null, "ยังไม่มีข้อมูล UV ของงานนี้");
 
         // บอกชื่อไฟล์ที่จะโหลดเข้าเครื่องจริง ซึ่งเลือกไปแล้วก่อนมาถึงกล่องนี้
-        //
-        // ขั้นที่ยังไม่รู้ต้องบอกสาเหตุให้ตรง ไม่ใช่บอกแค่ว่าจะถามทีหลัง — คนที่ ST3
-        // จะได้รู้ว่าต้องไปตั้งโฟลเดอร์ที่เครื่องตัวเอง ไม่ใช่รอให้กล่องเด้งเอง
+        var detail = $"โปรแกรม {OrDash(uv.ProgramName)}";
         if (uvPicks.TryGetValue(step, out var chosen))
-            lines.Add($"จะโหลดไฟล์ {chosen}.uvdx เข้าเครื่อง");
-        else if (UvSettingsManager.GetDocumentFolder(uvNumber) == null)
-            lines.Add($"(เครื่องนี้ยังไม่ได้ตั้งโฟลเดอร์ UV{uvNumber} — ถ้ามีรุ่นย่อย กล่องเลือกจะไปเด้งที่ ST1 ตอนส่ง)");
-        else
-            lines.Add("(ยังไม่รู้รุ่นย่อย — เครื่องที่ต่อสายจะถามตอนส่ง)");
+            detail += $" · ไฟล์ {chosen}.uvdx";
 
-        return lines;
+        // Lot / Name ที่ส่งเข้าเครื่อง UV — ปกติตรงกับงาน (บอกไว้แถว "งาน" แล้ว) ขึ้นเฉพาะตอนไม่ตรง
+        // ให้คนกดเห็นก่อนส่งว่าข้อมูล UV ไม่ใช่ของงานนี้
+        bool lotDiffers = job != null && !string.Equals((uv.Lot ?? "").Trim(), (job.LotNumber ?? "").Trim(), StringComparison.OrdinalIgnoreCase);
+        bool nameDiffers = job != null && !string.Equals((uv.ErpMfg ?? "").Trim(), (job.OrderNo ?? "").Trim(), StringComparison.OrdinalIgnoreCase);
+        if (job == null || lotDiffers || nameDiffers)
+            detail += Environment.NewLine + $"Lot {OrDash(uv.Lot)} · Name {OrDash(uv.ErpMfg)}";
+
+        // ขั้นที่ยังไม่รู้รุ่นย่อยต้องบอกสาเหตุให้ตรง — คนที่ ST3 จะได้รู้ว่าต้องไปตั้งโฟลเดอร์
+        // ที่เครื่องตัวเอง ไม่ใช่รอให้กล่องเด้งเอง
+        string? note = null;
+        if (!uvPicks.ContainsKey(step))
+            note = UvSettingsManager.GetDocumentFolder(uvNumber) == null
+                ? $"เครื่องนี้ยังไม่ได้ตั้งโฟลเดอร์ UV{uvNumber} — ถ้ามีรุ่นย่อย กล่องเลือกจะไปเด้งที่ ST1 ตอนส่ง"
+                : "ยังไม่รู้รุ่นย่อย — เครื่องที่ต่อสายจะถามตอนส่ง";
+
+        return (detail, note, null);
     }
 
     /// <summary>UV1 หรือ UV2 คืนเลขเครื่อง · ขั้นอื่น (MK) คืน null</summary>
@@ -2328,10 +2387,16 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private async Task StartWithoutSendingAsync(int jobId, string? markingMethod)
     {
-        if (!Confirm.Ask(this, "ยืนยันเริ่มงาน",
-                $"{JobName(jobId)} — marking {Method(markingMethod)}\n\n"
-                + "งานนี้ไม่มีขั้นตอนต้องส่งเข้าเครื่อง จะเปลี่ยนสถานะเป็นกำลังผลิตอย่างเดียว\n\n"
-                + "ยืนยันหรือไม่?"))
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "ยืนยันเริ่มงาน",
+                Headline = "เริ่มงานนี้?",
+                Facts = [("งาน", JobName(jobId)), ("Marking", Method(markingMethod))],
+                Detail = "งานนี้ไม่ต้องส่งเข้าเครื่อง — เปลี่ยนสถานะเป็นกำลังผลิตอย่างเดียว",
+                OkText = "เริ่มงาน",
+                Icon = "PlayCircleFilled",
+                OkIcon = "CaretRightFilled",
+            }))
             return;
 
         var (ok, err) = await _api!.UpdateJobStatusAsync(jobId, "Process");
@@ -2384,11 +2449,21 @@ public partial class OrderListUserControl : UserControl
             !UvProgramResolver.ConfirmDefault(uvRow?.ProgramName ?? "", uvName, this))
             return;
 
-        if (askFirst &&!Confirm.Ask(this, "ยืนยันเริ่มงาน",
-                $"{JobName(jobId)} — marking {Method(resolved.PlanRouting?.MarkingMethod)}\n\n"
-                + $"ส่งไป {step} ด้วยโปรแกรม {pick.Program}.uvdx\n"
-                + "คำสั่งจะถูกส่งเข้าเครื่องโดยโปรแกรมที่ ST1\n\n"
-                + "ยืนยันหรือไม่?"))
+        if (askFirst && !Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "ยืนยันเริ่มงาน",
+                Headline = "ส่งงานนี้เข้าเครื่องเลยไหม?",
+                Facts =
+                [
+                    ("งาน", JobName(jobId)),
+                    ("Marking", Method(resolved.PlanRouting?.MarkingMethod)),
+                    (step, $"โปรแกรม {pick.Program}.uvdx"),
+                ],
+                Detail = "คำสั่งจะถูกส่งเข้าเครื่องโดยโปรแกรมที่ ST1",
+                OkText = "เริ่มงาน",
+                Icon = "PlayCircleFilled",
+                OkIcon = "CaretRightFilled",
+            }))
             return;
 
         // ไม่ตั้งสถานะเป็น Working ตรงนี้โดยตั้งใจ — Working แปลว่า "ส่งเข้าเครื่องแล้ว"
@@ -2494,9 +2569,8 @@ public partial class OrderListUserControl : UserControl
         if (final?.RemoteStart == RemoteSending)
         {
             Notify.WarnModal(this, "ST1 กำลังส่งอยู่",
-                $"{JobName(jobId)}\n\n"
-                + "ST1 รับคำขอไปแล้วและกำลังส่งเข้าเครื่อง แต่ใช้เวลานานกว่าปกติ\n\n"
-                + "งานยังเดินอยู่ ไม่ต้องกดซ้ำ — รอผลอีกสักครู่");
+                "ไม่ต้องกดซ้ำ — รอผลอีกสักครู่\n\n"
+                + $"{JobName(jobId)}\nST1 รับคำขอแล้ว กำลังส่งเข้าเครื่อง แต่ช้ากว่าปกติ");
             return;
         }
 
@@ -2508,10 +2582,9 @@ public partial class OrderListUserControl : UserControl
         if (IsDisposed) return;
 
         Notify.WarnModal(this, "ST1 ไม่รับคำขอ",
-            $"{JobName(jobId)}\n\n"
-            + $"รอมา {RemoteOutcomeWait.TotalSeconds:0} วินาทีแล้วยังไม่มีใครรับไปส่ง\n"
-            + "งานถูกตีกลับเป็นรอเริ่มแล้ว ยังไม่มีอะไรถูกส่งเข้าเครื่อง\n\n"
-            + "ตรวจว่าโปรแกรมที่เครื่อง ST1 เปิดอยู่และต่อ Backend ได้ แล้วกดเริ่มงานใหม่");
+            "ยังไม่มีอะไรถูกส่ง — งานกลับเป็นรอเริ่ม\n\n"
+            + $"{JobName(jobId)} รอ {RemoteOutcomeWait.TotalSeconds:0} วินาทีแล้วไม่มีใครรับไปส่ง\n"
+            + "ตรวจว่าโปรแกรมที่ ST1 เปิดอยู่และต่อ Backend ได้ แล้วกดเริ่มงานใหม่");
     }
 
     // ── ST1 หยิบคำขอของ ST3 ไปส่ง ───────────────────────────
@@ -2783,8 +2856,7 @@ public partial class OrderListUserControl : UserControl
         try
         {
             Notify.ErrorModal(this, "ST1 ส่งงานไม่สำเร็จ",
-                $"{JobLabel(failed)}\n\n{message}\n\n"
-                + "งานถูกตีกลับเป็นรอเริ่ม กดเริ่มงานใหม่ได้");
+                $"{JobLabel(failed)} กลับเป็นรอเริ่ม — กดเริ่มงานใหม่ได้\n\n{message}");
         }
         finally
         {
@@ -2824,8 +2896,8 @@ public partial class OrderListUserControl : UserControl
         if (!MarkingMethodService.CanCompleteAt(StationService.Current, method))
         {
             Notify.WarnModal(this, "จบงานที่สถานีนี้ไม่ได้",
-                $"{JobName(jobId)} — marking {Method(method)}\n\n"
-                + "งาน marking 10 / 11 / 12 จบได้ที่ ST3 เท่านั้น");
+                "งาน marking 10 / 11 / 12 จบได้ที่ ST3 เท่านั้น"
+                + $"\n\n{JobName(jobId)} — marking {Method(method)}");
             return;
         }
 
@@ -2836,13 +2908,27 @@ public partial class OrderListUserControl : UserControl
         if (manual)
         {
             var list = string.Join(", ", steps.Missing);
-            if (!Confirm.Ask(this, "งานยังส่งไม่ครบ",
-                    $"{JobName(jobId)} ยังส่งไม่ครบ\n\nยังขาด: {list}\n\n" +
-                    "ยืนยันจบงานทั้งที่ยังส่งไม่ครบหรือไม่?"))
+            if (!Confirm.Ask(this, new ConfirmSpec
+                {
+                    Title = "งานยังส่งไม่ครบ",
+                    Headline = "จบงานทั้งที่ยังส่งไม่ครบ?",
+                    Facts = [("งาน", JobName(jobId)), ("ยังขาด", list)],
+                    Warning = "ตรวจที่เครื่องให้แน่ใจก่อน — จบแล้วงานนี้ออกจากรายการ",
+                    OkText = "จบงาน",
+                    OkIcon = "FlagFilled",
+                    Danger = true,
+                }))
                 return;
         }
-        else if (!Confirm.Ask(this, "ยืนยันจบงาน",
-                     $"จบงาน {JobName(jobId)}\n\nยืนยันหรือไม่?"))
+        else if (!Confirm.Ask(this, new ConfirmSpec
+                 {
+                     Title = "ยืนยันจบงาน",
+                     Headline = "จบงานนี้?",
+                     Facts = [("งาน", JobName(jobId))],
+                     OkText = "จบงาน",
+                     Icon = "FlagFilled",
+                     OkIcon = "FlagFilled",
+                 }))
         {
             return;
         }
@@ -3342,13 +3428,11 @@ public partial class OrderListUserControl : UserControl
         if (IsDisposed) return true;
 
         Notify.ErrorModal(this, "เริ่มงานไม่ได้ — ต่อเครื่องไม่ครบ",
-            $"{JobName(jobId)} ต้องใช้ {plan.Steps.Count} ขั้นตอน และต้องต่อได้ครบทุกเครื่อง"
+            "ยังไม่ส่งอะไรเลย งานยังไม่เข้าคิว"
             + Environment.NewLine + Environment.NewLine
             + string.Join(Environment.NewLine, bad.Select(m => $"• {m.Name} — {m.Reason}"))
             + Environment.NewLine + Environment.NewLine
-            + "ยังไม่มีอะไรถูกส่งเข้าเครื่อง และงานยังไม่เข้าคิว"
-            + Environment.NewLine
-            + "แก้แล้วกดเริ่มงานใหม่ได้เลย");
+            + $"{JobName(jobId)} ต้องต่อได้ครบ {plan.Steps.Count} เครื่อง · แก้แล้วกดเริ่มงานใหม่");
 
         return true;
     }

@@ -82,12 +82,12 @@ public partial class InkjetSettingUserControl : UserControl
         var f2 = txtUv2Folder.Text.Trim();
         if (!string.IsNullOrEmpty(f1) && !Directory.Exists(f1))
         {
-            Notify.WarnModal(this, "แจ้งเตือน", $"UV1 folder not found:\n{f1}");
+            Notify.WarnModal(this, "ไม่พบโฟลเดอร์", $"ไม่พบโฟลเดอร์โปรแกรม UV1\n\n{f1}");
             return;
         }
         if (!string.IsNullOrEmpty(f2) && !Directory.Exists(f2))
         {
-            Notify.WarnModal(this, "แจ้งเตือน", $"UV2 folder not found:\n{f2}");
+            Notify.WarnModal(this, "ไม่พบโฟลเดอร์", $"ไม่พบโฟลเดอร์โปรแกรม UV2\n\n{f2}");
             return;
         }
 

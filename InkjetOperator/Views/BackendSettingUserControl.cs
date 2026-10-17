@@ -56,7 +56,7 @@ public partial class BackendSettingUserControl : UserControl
         var backend = txtBackendPath.Text.Trim();
         if (grpDev.Visible && backend.Length > 0 && !File.Exists(Path.Combine(backend, BackendEntryFile)))
         {
-            Notify.WarnModal(this, "แจ้งเตือน",
+            Notify.WarnModal(this, "เลือกโฟลเดอร์ไม่ถูก",
                 $"ไม่พบไฟล์ {BackendEntryFile} ในโฟลเดอร์นี้\n\n{backend}");
             return;
         }

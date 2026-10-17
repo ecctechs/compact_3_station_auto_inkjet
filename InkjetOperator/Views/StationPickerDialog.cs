@@ -41,7 +41,15 @@ internal sealed partial class StationPickerDialog : AntdUI.BorderlessForm
     /// </summary>
     private void Choose(int level, string name)
     {
-        if (!Confirm.Ask(this, "ยืนยันสถานี", $"ตั้งเครื่องนี้เป็น {name} ใช่ไหม")) return;
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "ยืนยันสถานี",
+                Headline = $"ตั้งเครื่องนี้เป็น {name}?",
+                Detail = "เลือกแล้วจะไม่ถามอีก",
+                OkText = "ยืนยัน",
+                Icon = "DesktopOutlined",
+            }))
+            return;
 
         SelectedLevel = level;
         DialogResult = DialogResult.OK;

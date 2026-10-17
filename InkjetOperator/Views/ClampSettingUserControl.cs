@@ -399,7 +399,7 @@ public partial class ClampSettingUserControl : UserControl
         ResetColors();
         _ = CheckStatusAsync();
 
-        MessageBox.Show("บันทึกเรียบร้อย", "Clamp", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        Notify.Success(this, "บันทึกเรียบร้อย");
     }
 
     /// <summary>ตรวจเฉพาะช่องที่กรอกมา — ปล่อยว่างได้ แปลว่าแกนนั้นยังไม่พร้อมใช้</summary>
@@ -543,10 +543,17 @@ public partial class ClampSettingUserControl : UserControl
             return;
         }
 
-        var confirm = MessageBox.Show(
-            $"บันทึกค่า {targets.Count} แกนทับของเดิมในฐานข้อมูล\n\nยืนยันหรือไม่?",
-            "ยืนยัน Upload", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-        if (confirm != DialogResult.Yes) return;
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "Upload ระยะแคลมป์",
+                Headline = $"บันทึกทับค่าเดิม {targets.Count} แกน?",
+                Detail = string.Join(Environment.NewLine, targets.Select(r => $"{r.Axis} = {r.ValueMm} mm")),
+                Warning = "เขียนทับค่าเดิมในฐานข้อมูล",
+                OkText = "Upload",
+                Icon = "CloudUploadOutlined",
+                OkIcon = "CloudUploadOutlined",
+            }))
+            return;
 
         foreach (var row in targets) UploadRow(row);
     }
@@ -588,11 +595,17 @@ public partial class ClampSettingUserControl : UserControl
             return;
         }
 
-        var names = string.Join("\n", ready.Select(r => $"  • {r.Axis} = {r.ValueMm} mm"));
-        var confirm = MessageBox.Show(
-            $"สั่งแคลมป์ {ready.Count} แกน\n\n{names}\n\nยืนยันหรือไม่?",
-            "ยืนยันสั่งแคลมป์", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-        if (confirm != DialogResult.Yes) return;
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "สั่งแคลมป์",
+                Headline = $"สั่งแคลมป์ {ready.Count} แกน?",
+                Detail = string.Join(Environment.NewLine, ready.Select(r => $"{r.Axis} = {r.ValueMm} mm")),
+                Warning = "ตรวจแกนให้ถูกก่อนกด — สั่งผิดแกนชิ้นงานเสีย",
+                OkText = "สั่งแคลมป์",
+                Icon = "AimOutlined",
+                OkIcon = "SendOutlined",
+            }))
+            return;
 
         SetBusy(true);
         try
@@ -629,12 +642,17 @@ public partial class ClampSettingUserControl : UserControl
 
         if (confirmFirst)
         {
-            var confirm = MessageBox.Show(
-                $"สั่ง {axis.Display} ไปที่ {mm} mm\n" +
-                $"เขียน {axis.AddrTarget} = {ClampService.ToRaw(mm.Value)}\n" +
-                $"แล้วพัลส์ {axis.AddrRun}\n\nยืนยันหรือไม่?",
-                "ยืนยันสั่งแคลมป์", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (confirm != DialogResult.Yes) return;
+            if (!Confirm.Ask(this, new ConfirmSpec
+                {
+                    Title = "สั่งแคลมป์",
+                    Headline = $"สั่ง {axis.Display} ไปที่ {mm} mm?",
+                    Facts = [("แกน", axis.Display), ("ระยะ", $"{mm} mm")],
+                    Detail = $"{axis.AddrTarget} = {ClampService.ToRaw(mm.Value)}" + Environment.NewLine + $"{axis.AddrRun} (pulse)",
+                    OkText = "สั่งแคลมป์",
+                    Icon = "AimOutlined",
+                    OkIcon = "SendOutlined",
+                }))
+                return;
         }
 
         var result = await ClampService.ApplyAsync(_settings, axis, mm.Value);
@@ -650,10 +668,16 @@ public partial class ClampSettingUserControl : UserControl
         var axis = _settings.Find(row.Key);
         if (axis == null) return;
 
-        var confirm = MessageBox.Show(
-            $"ส่งพัลส์รีเซ็ต {axis.Display} ที่ {axis.AddrReset}\n\nยืนยันหรือไม่?",
-            "ยืนยันรีเซ็ต", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-        if (confirm != DialogResult.Yes) return;
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "รีเซ็ตแกนแคลมป์",
+                Headline = $"รีเซ็ต {axis.Display}?",
+                Facts = [("แกน", axis.Display), ("ส่งพัลส์ที่", axis.AddrReset)],
+                OkText = "รีเซ็ต",
+                Icon = "UndoOutlined",
+                OkIcon = "UndoOutlined",
+            }))
+            return;
 
         var (_, log) = await ClampService.ResetAsync(_settings, axis);
         if (!IsDisposed) Log(log);
@@ -849,7 +873,7 @@ public partial class ClampSettingUserControl : UserControl
     }
 
     private static void Warn(string message) =>
-        MessageBox.Show(message, "Clamp", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        Notify.WarnModal(null, "PLC UV", message);
 }
 
 /// <summary>1 แถวในตารางแกน — ผูกกับ ClampAxis ผ่าน Key</summary>

@@ -148,16 +148,20 @@ public partial class StationOptionsUserControl : UserControl
     /// </summary>
     private async Task ResetRuntimeAsync()
     {
-        if (!Confirm.Ask(this, "รีเซ็ตกลับเป็นค่าเริ่มต้น",
-                "จะล้างของพวกนี้ทิ้งทั้งหมด" + Environment.NewLine
-                + "  · คิวเครื่องทุกแถว" + Environment.NewLine
-                + "  · ประวัติคำสั่งที่ส่งเข้าเครื่องทุกแถว" + Environment.NewLine
-                + "  · ธงคำขอที่ ST3 ฝากไว้" + Environment.NewLine + Environment.NewLine
-                + "แล้วตั้งสถานะทุกงานกลับเป็นรอเริ่ม" + Environment.NewLine + Environment.NewLine
-                + "ตัวงาน ข้อมูล pattern ข้อความ UV แผนการผลิต และค่าแคลมป์ ยังอยู่ครบ"
-                + Environment.NewLine + Environment.NewLine
-                + "ย้อนกลับไม่ได้ และมีผลกับทุกเครื่องที่ต่อ backend เดียวกัน"
-                + Environment.NewLine + Environment.NewLine + "ยืนยันหรือไม่?"))
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "รีเซ็ตกลับเป็นค่าเริ่มต้น",
+                Headline = "ทุกงานกลับเป็นรอเริ่ม?",
+                Facts =
+                [
+                    ("ล้าง", "คิวเครื่อง · ประวัติคำสั่ง · คำขอที่ ST3 ฝากไว้"),
+                    ("ยังอยู่", "ตัวงาน · pattern · ข้อความ · UV" + Environment.NewLine + "แผนการผลิต · ค่าแคลมป์"),
+                ],
+                Warning = "ย้อนกลับไม่ได้ และมีผลกับทุกเครื่องที่ต่อ backend เดียวกัน",
+                OkText = "รีเซ็ต",
+                OkIcon = "UndoOutlined",
+                Danger = true,
+            }))
             return;
 
         btnResetRuntime.Enabled = false;
@@ -180,10 +184,8 @@ public partial class StationOptionsUserControl : UserControl
             }
 
             Notify.SuccessDetail(this, "รีเซ็ตเรียบร้อย",
-                $"ตั้งสถานะกลับเป็นรอเริ่ม {result.Jobs} งาน" + Environment.NewLine
-                + $"ลบคิวเครื่อง {result.QueueRemoved} แถว" + Environment.NewLine
-                + $"ลบประวัติคำสั่ง {result.CommandsRemoved} แถว" + Environment.NewLine + Environment.NewLine
-                + "กลับไปหน้า Order List แล้วตารางจะอัปเดตเองในรอบถัดไป");
+                $"{result.Jobs} งานกลับเป็นรอเริ่ม" + Environment.NewLine + Environment.NewLine
+                + $"ลบคิวเครื่อง {result.QueueRemoved} แถว · ลบประวัติคำสั่ง {result.CommandsRemoved} แถว");
         }
         finally
         {
@@ -272,9 +274,8 @@ public partial class StationOptionsUserControl : UserControl
 
             File.WriteAllText(dialog.FileName, json, new System.Text.UTF8Encoding(false));
             Notify.SuccessDetail(this, "บันทึกชุดข้อมูลงานแล้ว",
-                Summary(info.Counts) + Environment.NewLine + Environment.NewLine
-                + dialog.FileName + Environment.NewLine + Environment.NewLine
-                + "คัดลอกไฟล์นี้ไปเครื่องอื่น แล้วกด นำเข้าจากไฟล์ ที่หน้านี้");
+                "คัดลอกไฟล์ไปเครื่องอื่น แล้วกด นำเข้าจากไฟล์" + Environment.NewLine + Environment.NewLine
+                + Summary(info.Counts) + Environment.NewLine + dialog.FileName);
         }
         catch (Exception ex)
         {
@@ -319,12 +320,17 @@ public partial class StationOptionsUserControl : UserControl
             ? at.ToLocalTime().ToString("dd/MM/yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture)
             : "-";
 
-        if (!Confirm.Ask(this, "นำเข้าชุดข้อมูลงาน",
-                $"ไฟล์: {Path.GetFileName(dialog.FileName)} (บันทึกเมื่อ {when})" + Environment.NewLine
-                + Summary(info.Counts) + Environment.NewLine + Environment.NewLine
-                + "ข้อมูลงานทั้งหมดในฐานตอนนี้จะถูกลบแล้วแทนที่ด้วยชุดนี้ ทุกใบเป็นรอเริ่ม ไม่มีคิว" + Environment.NewLine
-                + "มีผลกับทุกเครื่องที่ต่อ backend เดียวกัน และย้อนกลับไม่ได้" + Environment.NewLine + Environment.NewLine
-                + "ยืนยันหรือไม่?"))
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "นำเข้าชุดข้อมูลงาน",
+                Headline = "แทนที่ข้อมูลงานทั้งหมดด้วยไฟล์นี้?",
+                Facts = [("ไฟล์", Path.GetFileName(dialog.FileName)), ("บันทึกเมื่อ", when), ("ในไฟล์", Summary(info.Counts))],
+                Detail = "นำเข้าแล้วทุกใบเป็นรอเริ่ม ไม่มีคิว",
+                Warning = "ข้อมูลงานตอนนี้จะถูกลบทั้งหมด ย้อนกลับไม่ได้ และมีผลกับทุกเครื่องที่ต่อ backend เดียวกัน",
+                OkText = "นำเข้า",
+                OkIcon = "ImportOutlined",
+                Danger = true,
+            }))
             return;
 
         SetJobDataBusy(true);
@@ -353,13 +359,21 @@ public partial class StationOptionsUserControl : UserControl
     /// <summary>ล้างข้อมูลงานทั้งหมด id เริ่มใหม่ที่ 1 — ค่าตั้งของเครื่องไม่ถูกแตะ</summary>
     private async Task ClearJobDataAsync()
     {
-        if (!Confirm.Ask(this, "ล้างข้อมูลงานทั้งหมด",
-                "จะลบข้อมูลงานทุกใบ พร้อม pattern ข้อความ MK ข้อมูล UV แผนการผลิต ค่าแคลมป์" + Environment.NewLine
-                + "คิวเครื่อง และประวัติคำสั่ง แล้วเริ่มนับ id ใหม่ที่ 1" + Environment.NewLine + Environment.NewLine
-                + "ไม่แตะ: register map ของ PLC และไฟล์ Setting" + Environment.NewLine + Environment.NewLine
-                + "มีผลกับทุกเครื่องที่ต่อ backend เดียวกัน และย้อนกลับไม่ได้" + Environment.NewLine
-                + "ถ้ายังไม่ได้บันทึกไว้ กด No แล้วกด บันทึกข้อมูลงานตอนนี้ ก่อน" + Environment.NewLine + Environment.NewLine
-                + "ยืนยันหรือไม่?"))
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "ล้างข้อมูลงานทั้งหมด",
+                Headline = "ลบข้อมูลงานทุกใบ แล้วเริ่ม id ใหม่ที่ 1?",
+                Facts =
+                [
+                    ("ลบ", "งาน · pattern · ข้อความ MK · UV" + Environment.NewLine + "แผนการผลิต · ค่าแคลมป์ · คิว · ประวัติคำสั่ง"),
+                    ("ไม่แตะ", "register map ของ PLC · ไฟล์ Setting"),
+                ],
+                Detail = "ยังไม่ได้บันทึกไว้? กด ยกเลิก แล้วกด บันทึกข้อมูลงานตอนนี้ ก่อน",
+                Warning = "ย้อนกลับไม่ได้ และมีผลกับทุกเครื่องที่ต่อ backend เดียวกัน",
+                OkText = "ล้างข้อมูล",
+                OkIcon = "DeleteOutlined",
+                Danger = true,
+            }))
             return;
 
         SetJobDataBusy(true);
@@ -375,8 +389,8 @@ public partial class StationOptionsUserControl : UserControl
             }
 
             Notify.SuccessDetail(this, "ล้างข้อมูลงานแล้ว",
-                "ลบไป: " + Summary(counts) + Environment.NewLine + Environment.NewLine
-                + "งานที่ลงทะเบียนใหม่จะเริ่ม id ที่ 1");
+                "งานที่ลงทะเบียนใหม่จะเริ่ม id ที่ 1" + Environment.NewLine + Environment.NewLine
+                + "ลบไป: " + Summary(counts));
         }
         finally
         {

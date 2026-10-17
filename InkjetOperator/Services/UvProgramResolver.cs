@@ -111,13 +111,17 @@ public static class UvProgramResolver
     /// </summary>
     public static bool ConfirmDefault(string requestedProgram, string machineName, Control? owner = null)
     {
-        var text =
-            $"ไม่พบโปรแกรม \"{requestedProgram}\" ในเครื่อง {machineName}\n\n"
-            + "ระบบจะใช้โปรแกรม default.uvdx แทนไปก่อน\n"
-            + "กรุณาแจ้งผู้ดูแลให้เพิ่มโปรแกรมนี้เข้าเครื่อง\n\n"
-            + "ต้องการทำต่อหรือไม่?";
+        var requested = string.IsNullOrWhiteSpace(requestedProgram) ? "-" : requestedProgram.Trim();
 
-        return Views.Confirm.Ask(owner, "ไม่พบโปรแกรม", text);
+        return Views.Confirm.Ask(owner, new Views.ConfirmSpec
+        {
+            Title = "ไม่พบโปรแกรม UV",
+            Headline = "ใช้โปรแกรม default แทนไปก่อนไหม?",
+            Facts = [("เครื่อง", machineName), ("ไม่พบ", requested), ("จะใช้", "default.uvdx")],
+            Detail = "แจ้งผู้ดูแลให้เพิ่มโปรแกรมนี้เข้าเครื่อง",
+            OkText = "ใช้ default",
+            Icon = "FileExclamationOutlined",
+        });
     }
 
     /// <summary>

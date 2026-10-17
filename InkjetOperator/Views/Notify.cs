@@ -105,86 +105,58 @@ internal static class Notify
 
     // ---- Centered modal dialog (blocks until OK) ----
 
-    public static void WarnModal(Control? owner, string title, string text)
+    public static void WarnModal(Control? owner, string title, string text) =>
+        Dialog(owner, title, text, AntdUI.TType.Warn);
+
+    public static void ErrorModal(Control? owner, string title, string text) =>
+        Dialog(owner, title, text, AntdUI.TType.Error);
+
+    public static void SuccessModal(Control? owner, string title, string text) =>
+        Dialog(owner, title, text, AntdUI.TType.Success);
+
+    /// <summary>
+    /// กล่องแจ้งกลางจอ ปุ่มเดียว — หน้าต่างเดียวกับกล่องยืนยัน (<see cref="ConfirmDialog"/>)
+    /// ทั้งโปรแกรมจึงมีกล่องแบบเดียว แถบหัวเป็นสีตามระดับ ให้รู้ตั้งแต่เหลือบตาว่าผ่านหรือพัง
+    /// <para>
+    /// ย่อหน้าแรกของข้อความขึ้นเป็นหัวตัวใหญ่ ที่เหลือเป็นเนื้อความ (ดู <see cref="Confirm.SplitHeadline"/>)
+    /// </para>
+    /// </summary>
+    private static void Dialog(Control? owner, string title, string text, AntdUI.TType type, bool splitHeadline = true)
     {
-        if (Resolve(owner) is { } form)
-            AntdUI.Modal.open(Sized(new AntdUI.Modal.Config(form, title, text)
-            {
-                Icon = AntdUI.TType.Warn,
-                OkText = "OK",
-                CancelText = null,
-            }));
-        else
-            Fallback($"{title}\n\n{text}", MessageBoxIcon.Warning);
-    }
-
-    public static void ErrorModal(Control? owner, string title, string text)
-    {
-        if (Resolve(owner) is { } form)
-            AntdUI.Modal.open(Sized(new AntdUI.Modal.Config(form, title, text)
-            {
-                Icon = AntdUI.TType.Error,
-                OkText = "OK",
-                CancelText = null,
-            }));
-        else
-            Fallback($"{title}\n\n{text}", MessageBoxIcon.Error);
-    }
-
-    public static void SuccessModal(Control? owner, string title, string text)
-    {
-        if (Resolve(owner) is { } form)
-            AntdUI.Modal.open(Sized(new AntdUI.Modal.Config(form, title, text)
-            {
-                Icon = AntdUI.TType.Success,
-                OkText = "OK",
-                CancelText = null,
-            }));
-        else
-            Fallback($"{title}\n\n{text}", MessageBoxIcon.Information);
-    }
-
-    // ---- Shared modal proportions ----
-
-    // AntdUI's modal defaults are drawn for a desktop app at 100% scaling: a 416px
-    // box with 38px buttons, and no font at all - so it falls back to the owning
-    // form's 9pt application default. On the 1920x1080 panel PC that left the
-    // Yes/No pair small and pinched against the edge of a box narrower than the
-    // text inside it.
-    //
-    // Every modal in the app is sized through Sized() so they stay one family. Font
-    // does most of the work: AntdUI derives the title from it (Font x 1.14, bold)
-    // and sizes the status icon from the title's line height. Width, padding and
-    // BtnHeight are design units - AntdUI multiplies each by the display DPI.
-    private const int ModalWidth = 560;
-    private const int ModalButtonHeight = 54;
-    private const int ModalButtonWidth = 120;
-    private static readonly Size ModalPadding = new(32, 28);
-    private static readonly Font ModalBodyFont = InkjetOperator.Theme.DesignTokens.Body(16.5f);
-    private static readonly Font ModalButtonFont = InkjetOperator.Theme.DesignTokens.SectionLabel(16.5f);
-
-    /// <summary>Applies the shared modal proportions. Shared with <see cref="Confirm"/>.</summary>
-    internal static AntdUI.Modal.Config Sized(AntdUI.Modal.Config config)
-    {
-        config.Width = ModalWidth;
-        config.BtnHeight = ModalButtonHeight;
-        config.Padding = ModalPadding;
-        config.Font = ModalBodyFont;
-        config.OkFont = ModalButtonFont;
-        config.CancelFont = ModalButtonFont;
-
-        // AntdUI sizes the buttons to their own caption, so a Yes/No pair came out
-        // lopsided and both far narrower than the touch target this panel needs.
-        // Fix a common width instead. AntdUI applies the font after this callback,
-        // and AutoSize is off by then, so the width set here is the one that sticks.
-        config.OnButtonStyle = (_, button) =>
+        if (Resolve(owner) is null)
         {
-            button.AutoSizeMode = AntdUI.TAutoSize.None;
-            button.Width = (int)Math.Round(ModalButtonWidth * AntdUI.Config.Dpi);
-            button.Margin = new Padding((int)Math.Round(6 * AntdUI.Config.Dpi), 0, 0, 0);
-        };
+            Fallback($"{title}\n\n{text}", type switch
+            {
+                AntdUI.TType.Error => MessageBoxIcon.Error,
+                AntdUI.TType.Warn => MessageBoxIcon.Warning,
+                _ => MessageBoxIcon.Information,
+            });
+            return;
+        }
 
-        return config;
+        var (headline, rest) = splitHeadline ? Confirm.SplitHeadline(text) : (null, text);
+        Confirm.Ask(owner, new ConfirmSpec
+        {
+            Title = title,
+            Headline = headline,
+            Message = rest,
+            OkText = "ตกลง",
+            ShowCancel = false,
+            Icon = type switch
+            {
+                AntdUI.TType.Error => "CloseCircleFilled",
+                AntdUI.TType.Warn => "ExclamationCircleFilled",
+                AntdUI.TType.Success => "CheckCircleFilled",
+                _ => "InfoCircleFilled",
+            },
+            TitleBack = type switch
+            {
+                AntdUI.TType.Error => InkjetOperator.Theme.DesignTokens.Danger,
+                AntdUI.TType.Warn => InkjetOperator.Theme.DesignTokens.Warning,
+                AntdUI.TType.Success => InkjetOperator.Theme.DesignTokens.SuccessText,
+                _ => null,
+            },
+        });
     }
 
     // ---- Titled notification, for multi-line outcomes ----
@@ -210,18 +182,7 @@ internal static class Notify
     private static void Detail(
         Control? owner, string title, string text, AntdUI.TType type, MessageBoxIcon fallbackIcon)
     {
-        if (Resolve(owner) is not { } form)
-        {
-            Fallback($"{title}\n\n{text}", fallbackIcon);
-            return;
-        }
-
-        AntdUI.Modal.open(Sized(new AntdUI.Modal.Config(form, title, text)
-        {
-            Icon = type,
-            OkText = "OK",
-            CancelText = null,
-        }));
+        Dialog(owner, title, text, type);
     }
 
     // ---- ผลหลายบรรทัดในกล่องเดียว ----
@@ -303,20 +264,8 @@ internal static class Notify
             return;
         }
 
-        if (Resolve(owner) is not { } form)
-        {
-            Fallback($"{title}\n\n{body}", worst == AntdUI.TType.Error
-                ? MessageBoxIcon.Error
-                : worst == AntdUI.TType.Warn ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
-            return;
-        }
-
-        AntdUI.Modal.open(Sized(new AntdUI.Modal.Config(form, title, body)
-        {
-            Icon = worst,
-            OkText = "OK",
-            CancelText = null,
-        }));
+        // หลายบรรทัดผล ไม่มีหัว — ทุกบรรทัดสำคัญเท่ากัน ไม่ดึงบรรทัดแรกขึ้นเป็นหัว
+        Dialog(owner, title, body, worst, splitHeadline: false);
     }
 
     /// <summary>

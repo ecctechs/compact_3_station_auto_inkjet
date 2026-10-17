@@ -51,10 +51,16 @@ public partial class SystemHealthUserControl : UserControl
             return;
         }
 
-        if (!Confirm.Ask(this, "รีสตาร์ท backend",
-                "จะปิด backend ที่รันอยู่บนเครื่องนี้แล้วเปิดใหม่ ใช้เวลาไม่กี่วินาที" + Environment.NewLine + Environment.NewLine
-                + "ระหว่างนั้นทุกสถานีต่อ backend ไม่ได้ — ตรวจว่าไม่มีสถานีไหนกำลังส่งงานเข้าเครื่องอยู่" + Environment.NewLine + Environment.NewLine
-                + "ยืนยันหรือไม่?"))
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "รีสตาร์ท backend",
+                Headline = "ปิด backend แล้วเปิดใหม่?",
+                Detail = "ใช้เวลาไม่กี่วินาที",
+                Warning = "ระหว่างนั้นทุกสถานีต่อ backend ไม่ได้ — ตรวจว่าไม่มีสถานีไหนกำลังส่งงานเข้าเครื่อง",
+                OkText = "รีสตาร์ท",
+                Icon = "PoweroffOutlined",
+                OkIcon = "ReloadOutlined",
+            }))
             return;
 
         // ไม่ใช้ Loading ของปุ่ม — แอนิเมชันของ AntdUI เคยค้างเธรดไว้จนจอหน่วง เปลี่ยนข้อความแทน

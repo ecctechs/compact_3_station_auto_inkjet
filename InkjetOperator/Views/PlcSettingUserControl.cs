@@ -275,11 +275,16 @@ public partial class PlcSettingUserControl : UserControl
     private async Task ResetPositionAsync()
     {
         int home = PlcOrderService.HomePosition;
-        if (!Confirm.Ask(this, "รีเซ็ตตำแหน่งหัวพิมพ์",
-                $"จะเขียนค่า {home} ลงช่องตำแหน่งของหัวพ่นทั้งสองตัว"
-                + Environment.NewLine + Environment.NewLine
-                + "ช่องเดียวกับที่ส่งตำแหน่งของงานเข้าไป (Servo Post Act.)"
-                + Environment.NewLine + Environment.NewLine + "ยืนยันหรือไม่?"))
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "รีเซ็ตตำแหน่งหัวพิมพ์",
+                Headline = "เลื่อนหัวพ่นทั้งสองตัวกลับตำแหน่งเริ่มต้น?",
+                Facts = [("ค่าที่เขียน", home.ToString()), ("ช่อง", "ตำแหน่งหัวพ่นทั้งสองตัว (Servo Post Act.)")],
+                Warning = "เขียนลง PLC ทันที — ตรวจว่าเครื่องไม่ได้เดินงานอยู่",
+                OkText = "รีเซ็ต",
+                Icon = "UndoOutlined",
+                OkIcon = "UndoOutlined",
+            }))
             return;
 
         btnResetPosition.Enabled = false;
@@ -620,7 +625,7 @@ public partial class PlcSettingUserControl : UserControl
         else
         {
             Log("❌ บันทึกไม่สำเร็จ — ติดต่อ Backend ไม่ได้");
-            Notify.ErrorModal(this, "Error", "บันทึกไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อ Backend");
+            Notify.ErrorModal(this, "บันทึกไม่สำเร็จ", "ตรวจการเชื่อมต่อ Backend แล้วลองใหม่");
         }
     }
 

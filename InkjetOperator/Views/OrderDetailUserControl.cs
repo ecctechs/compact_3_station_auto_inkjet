@@ -1228,7 +1228,7 @@ public partial class OrderDetailUserControl : UserControl
         }
         catch (Exception ex)
         {
-            Notify.ErrorModal(this, "Error", $"เกิดข้อผิดพลาด: {ex.Message}");
+            Notify.ErrorModal(this, "เกิดข้อผิดพลาด", $"ส่งไม่สำเร็จ\n\n{ex.Message}");
         }
         finally
         {
@@ -1475,20 +1475,22 @@ public partial class OrderDetailUserControl : UserControl
         var summary = string.Join(Environment.NewLine,
             ready.Select(f => $"D{f.Address}   {f.Label}   =  {f.Value}"));
 
-        if (missing.Count > 0)
-        {
-            summary += Environment.NewLine + Environment.NewLine
-                + "ข้ามเพราะยังไม่ได้ map: "
-                + string.Join(", ", missing.Select(f => f.ListName));
-        }
-
         var ip = CustomSettingsManager.Read("PLC_IP", "").Trim();
         var port = CustomSettingsManager.Read("PLC_PORT", "502");
         var target = ip.Length == 0 ? "(ยังไม่ได้ตั้ง IP)" : $"{ip}:{port}";
 
-        if (!Confirm.Ask(this, "ยืนยันส่งค่าเข้า PLC",
-                $"PLC {target}" + Environment.NewLine + Environment.NewLine + summary
-                + Environment.NewLine + Environment.NewLine + "ยืนยันส่งหรือไม่?"))
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "ส่งค่าเข้า PLC",
+                Headline = $"ส่ง {ready.Count} ค่านี้เข้า PLC?",
+                Facts = [("PLC", target)],
+                Detail = summary,
+                Warning = missing.Count == 0 ? null
+                    : "ข้าม (ยังไม่ได้ map): " + string.Join(", ", missing.Select(f => f.ListName)),
+                OkText = "ส่งเข้า PLC",
+                Icon = "ApiOutlined",
+                OkIcon = "SendOutlined",
+            }))
             return;
 
         btnTestPlc.Enabled = false;
@@ -1538,10 +1540,10 @@ public partial class OrderDetailUserControl : UserControl
             Notify.ErrorDetail(
                 null,
                 $"{uvName} — เชื่อมต่อไม่ได้",
-                $"ไม่สามารถเชื่อมต่อ {uvName} ({ip}:{port}) ได้\n\n"
-                + "กรุณาตรวจสอบ:\n"
-                + "• เครื่อง UV เปิดอยู่หรือไม่\n"
-                + "• ซอฟต์แวร์ UV เปิดอยู่หรือไม่\n"
+                $"ต่อ {uvName} ไม่ได้ ({ip}:{port})\n\n"
+                + "ตรวจว่า:\n"
+                + "• เครื่อง UV เปิดอยู่\n"
+                + "• โปรแกรม UV เปิดอยู่\n"
                 + "• IP และ Port ถูกต้องหรือไม่");
             return false;
         }
@@ -1932,8 +1934,8 @@ public partial class OrderDetailUserControl : UserControl
             return true;
 
         Notify.WarnModal(this, "ยังสั่งแคลมป์ไม่ได้",
-            $"{JobText()} ยังไม่ได้เริ่มงาน (สถานะ {JobStatusDisplay.Text(_jobStatus)})\n\n"
-            + "กดเริ่มงานที่หน้ารายการงานก่อน จึงจะสั่งค่า IAI ได้");
+            "กดเริ่มงานที่หน้ารายการงานก่อน\n\n"
+            + $"{JobText()} ยังไม่ได้เริ่มงาน (สถานะ {JobStatusDisplay.Text(_jobStatus)})");
         return false;
     }
 
@@ -1967,16 +1969,23 @@ public partial class OrderDetailUserControl : UserControl
                 ? (axis.AddrRun.Trim().Length == 0 ? "Target (D) และ Run (M)" : "Target (D)")
                 : "Run (M)";
 
-            Notify.WarnModal(this, "แจ้งเตือน",
-                $"แกน {axis.Display} ยังขาด {missing}\nตั้งค่าได้ที่ Setting -> Clamp Setting");
+            Notify.WarnModal(this, "ยังสั่งแคลมป์ไม่ได้",
+                $"แกน {axis.Display} ยังขาด {missing}\n\nตั้งค่าได้ที่ Setting → PLC UV Setting");
             return;
         }
 
         // บอกให้ครบว่าค่าจะไปลงที่ address ไหน สั่งผิดแกนคือชิ้นงานเสีย
-        if (!Confirm.Ask(this, "ยืนยันสั่งแคลมป์",
-                $"สั่ง {axis.Display} ไปที่ {mm} mm\n\n"
-                + $"-> {axis.AddrTarget} = {ClampService.ToRaw(mm)}\n"
-                + $"-> {axis.AddrRun} (pulse)\n\nยืนยันหรือไม่?"))
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "สั่งแคลมป์",
+                Headline = $"สั่ง {axis.Display} ไปที่ {mm} mm?",
+                Facts = [("แกน", axis.Display), ("ระยะ", $"{mm} mm")],
+                Detail = $"{axis.AddrTarget} = {ClampService.ToRaw(mm)}" + Environment.NewLine + $"{axis.AddrRun} (pulse)",
+                Warning = "ตรวจแกนให้ถูกก่อนกด — สั่งผิดแกนชิ้นงานเสีย",
+                OkText = "สั่งแคลมป์",
+                Icon = "AimOutlined",
+                OkIcon = "SendOutlined",
+            }))
             return;
 
         SetIaiAdjustBusy(true);
@@ -2027,8 +2036,16 @@ public partial class OrderDetailUserControl : UserControl
         if (axis == null) return;
         string col = axis.Column;
 
-        if (!Confirm.Ask(this, "ยืนยัน Upload",
-                $"บันทึก {col} = {mm} mm ให้ \"{program}\"\nไปยัง mydatabase และ Backend\n\nยืนยันหรือไม่?"))
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "Upload ระยะแคลมป์",
+                Headline = "บันทึกระยะนี้ให้โปรแกรม UV?",
+                Facts = [("โปรแกรม", program), ("ช่อง", col), ("ระยะ", $"{mm} mm")],
+                Detail = "บันทึกลง mydatabase.db3 และ Backend",
+                OkText = "Upload",
+                Icon = "CloudUploadOutlined",
+                OkIcon = "CloudUploadOutlined",
+            }))
             return;
 
         SetIaiAdjustBusy(true);

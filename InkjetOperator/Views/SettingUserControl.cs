@@ -44,10 +44,15 @@ public partial class SettingUserControl : UserControl
 
         var lines = changes.Select(c =>
             $"{c.Entry.Label}:  {(c.Old.Length == 0 ? "(ว่าง)" : c.Old)}  →  {c.Entry.Value}");
-        if (!Confirm.Ask(this, "ใช้ IP หน้างาน",
-                string.Join(Environment.NewLine, lines) + Environment.NewLine + Environment.NewLine
-                + "แก้เฉพาะช่องข้างบน ค่าอื่น (path, สถานี, ชื่อเครื่อง) ไม่แตะ · เก็บสำเนาไฟล์ Setting เดิมไว้ให้" + Environment.NewLine + Environment.NewLine
-                + "ยืนยันหรือไม่?"))
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "ใช้ IP หน้างาน",
+                Headline = $"เปลี่ยน {changes.Count} ช่องเป็น IP หน้างาน?",
+                Detail = string.Join(Environment.NewLine, lines),
+                Message = "ค่าอื่น (path, สถานี, ชื่อเครื่อง) ไม่แตะ · เก็บสำเนาไฟล์ Setting เดิมไว้ให้",
+                OkText = "ใช้ IP นี้",
+                Icon = "GlobalOutlined",
+            }))
             return;
 
         var (error, backup) = SiteNetwork.Apply(changes);
@@ -66,8 +71,8 @@ public partial class SettingUserControl : UserControl
         HealthMonitor.CheckNow();
 
         Notify.SuccessDetail(this, "ใช้ IP หน้างานแล้ว",
-            $"แก้ {changes.Count} ช่อง" + Environment.NewLine + Environment.NewLine
-            + "ปิดโปรแกรมแล้วเปิดใหม่ 1 ครั้ง ให้ทุกหน้าต่อ IP ใหม่" + Environment.NewLine + Environment.NewLine
+            "ปิดโปรแกรมแล้วเปิดใหม่ 1 ครั้ง" + Environment.NewLine + Environment.NewLine
+            + $"แก้ {changes.Count} ช่อง · ทุกหน้าจะต่อ IP ใหม่หลังเปิดใหม่" + Environment.NewLine
             + "สำเนาไฟล์เดิม: " + backup);
     }
 

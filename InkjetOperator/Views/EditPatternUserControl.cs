@@ -183,8 +183,16 @@ public partial class EditPatternUserControl : UserControl
     {
         if (_patterns == null || _selectedPattern == null) return;
 
-        if (!Confirm.Ask(this, "Confirm delete",
-                $"Delete pattern \"{_selectedPattern.Name}\"?"))
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "ลบ pattern",
+                Headline = "ลบ pattern นี้?",
+                Facts = [("Pattern", _selectedPattern.Name ?? "-")],
+                Warning = "ลบแล้วย้อนกลับไม่ได้",
+                OkText = "ลบ",
+                OkIcon = "DeleteOutlined",
+                Danger = true,
+            }))
             return;
 
         _patterns.Remove(_selectedPattern);
@@ -212,7 +220,7 @@ public partial class EditPatternUserControl : UserControl
         }
         catch (Exception ex)
         {
-            Notify.ErrorModal(this, "Error", "Save failed: " + ex.Message);
+            Notify.ErrorModal(this, "บันทึกไม่สำเร็จ", "บันทึก pattern ไม่สำเร็จ\n\n" + ex.Message);
         }
     }
 

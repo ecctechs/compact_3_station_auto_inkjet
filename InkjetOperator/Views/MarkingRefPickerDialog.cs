@@ -15,7 +15,7 @@ public sealed record MarkingRefOption(string Key, string Display, List<string> I
 ///   · ฝั่ง UV เลือกไฟล์ .uvdx ที่จะโหลดเข้าเครื่อง — เลือกผิดคือพิมพ์ผิดแบบ
 ///   · ฝั่ง MK เลือกแค่รูปที่จะดู — ไม่กระทบงานที่พิมพ์
 /// </summary>
-internal sealed partial class MarkingRefPickerDialog : Form
+internal sealed partial class MarkingRefPickerDialog : AntdUI.BorderlessForm
 {
     private const int ThumbHeight = 300;
     private const int ThumbMaxWidth = 420;
@@ -28,6 +28,10 @@ internal sealed partial class MarkingRefPickerDialog : Form
         Services.LanguageService.Apply(this);
 
         lstOptions.SelectedIndexChanged += (_, _) => ShowImagesForSelection();
+
+        // ไม่มีแถบหัวของระบบ — ลากหน้าต่างจากแถบหัวของเราเอง (แบบเดียวกับกล่องยืนยัน)
+        tlpTitleBar.MouseDown += TitleBar_MouseDown;
+        lblTitle.MouseDown += TitleBar_MouseDown;
 
         // ย่อ/ขยายหน้าต่างแล้วรูปต้องยังอยู่กลางกรอบเหมือนเดิม
         pnlImages.SizeChanged += (_, _) => CenterImages();
@@ -62,10 +66,11 @@ internal sealed partial class MarkingRefPickerDialog : Form
         if (options.Count == 0) return null;
 
         using var dlg = new MarkingRefPickerDialog();
-        dlg.Text = title;
+        dlg.Text = dlg.lblTitle.Text = title;
         dlg.lblPrompt.Text = prompt;
         dlg.SetOptions(options);
 
+        using var dim = OwnerForm(owner) is { } form ? DimOverlay.ShowOver(form) : null;
         var result = owner == null ? dlg.ShowDialog() : dlg.ShowDialog(owner);
         return result == DialogResult.OK ? dlg.SelectedKey : null;
     }
@@ -80,13 +85,27 @@ internal sealed partial class MarkingRefPickerDialog : Form
         IWin32Window? owner, string title, string prompt, List<string> images)
     {
         using var dlg = new MarkingRefPickerDialog();
-        dlg.Text = title;
+        dlg.Text = dlg.lblTitle.Text = title;
         dlg.lblPrompt.Text = prompt;
         dlg.SetViewOnly();
         dlg.SetOptions([new MarkingRefOption("", "", images)]);
 
+        using var dim = OwnerForm(owner) is { } form ? DimOverlay.ShowOver(form) : null;
         if (owner == null) dlg.ShowDialog();
         else dlg.ShowDialog(owner);
+    }
+
+    /// <summary>หน้าต่างที่จะทำให้มืดระหว่างเลือก — owner อาจเป็น control ในหน้า ไม่ใช่ตัวฟอร์ม</summary>
+    private static Form? OwnerForm(IWin32Window? owner) => owner switch
+    {
+        Form form => form,
+        Control control => control.FindForm(),
+        _ => null,
+    };
+
+    private void TitleBar_MouseDown(object? sender, MouseEventArgs e)
+    {
+        if (e.Button == MouseButtons.Left) DraggableMouseDown();
     }
 
     /// <summary>ยุบคอลัมน์รายการทิ้ง เหลือรูปเต็มกรอบกับปุ่มปิดปุ่มเดียว</summary>
@@ -98,7 +117,7 @@ internal sealed partial class MarkingRefPickerDialog : Form
 
         // โหมดนี้ไม่มีอะไรให้เลือก ปุ่มเดียวที่เหลือคือทางออก — แต่งให้เหมือน
         // ปุ่มปิดที่อื่นทั้งระบบ ไม่ใช่ปุ่มตกลงสีน้ำเงินที่ดูเหมือนต้องตัดสินใจอะไร
-        Theme.ButtonStyles.Close(btnOk, fontSize: 15f);
+        InkjetOperator.Theme.ButtonStyles.Close(btnOk, fontSize: 15f);
     }
 
     private void SetOptions(List<MarkingRefOption> options)
