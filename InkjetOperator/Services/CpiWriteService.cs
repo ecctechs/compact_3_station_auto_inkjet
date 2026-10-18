@@ -27,6 +27,50 @@ public static class CpiWriteService
         catch (Exception ex) { return (false, $"เขียน CPI.db3 ไม่สำเร็จ: {ex.Message}"); }
     }
 
+    /// <summary>
+    /// หาตารางที่จะเขียนจริงในไฟล์นี้ — null = หาไม่ได้ พร้อมเหตุผลที่บอกคนหน้างานได้
+    ///
+    /// <para>
+    /// ใช้ชื่อที่ส่งมาก่อนเสมอถ้ามีอยู่จริง เพื่อไม่ให้เครื่องที่ตั้งค่าถูกอยู่แล้ว
+    /// เปลี่ยนพฤติกรรม ไม่เจอค่อยมองหาตารางชื่อ MK ตามด้วยตัวเลขในไฟล์นั้น
+    /// </para>
+    /// <para>
+    /// เจอมากกว่าหนึ่งตารางไม่เดาให้ — ไฟล์ CPI หนึ่งไฟล์คู่กับเครื่องหนึ่งตัว
+    /// ถ้ามีหลายตารางแปลว่าชี้ไฟล์ผิด เดาแล้วพ่นผิดเครื่องเสียหายกว่าหยุดถาม
+    /// </para>
+    /// </summary>
+    private static (string? table, string? problem) ResolveTable(SqliteConnection conn, string expected)
+    {
+        var tables = new List<string>();
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table'";
+            using var r = cmd.ExecuteReader();
+            while (r.Read()) tables.Add(r.GetString(0));
+        }
+
+        var exact = tables.FirstOrDefault(t => string.Equals(t, expected, StringComparison.OrdinalIgnoreCase));
+        if (exact != null) return (exact, null);
+
+        var candidates = tables.Where(IsMachineTable).ToList();
+
+        if (candidates.Count == 1)
+            return (candidates[0], null);
+
+        if (candidates.Count == 0)
+            return (null, $"ไม่พบตาราง {expected} และไม่พบตารางของเครื่องในไฟล์นี้ — ตรวจว่าชี้ไฟล์ CPI.db3 ถูกเครื่องไหม");
+
+        return (null,
+            $"ไม่พบตาราง {expected} แต่ไฟล์นี้มี {string.Join(", ", candidates)} — "
+            + "ไม่เดาให้ว่าจะเขียนตัวไหน ตรวจว่าชี้ไฟล์ CPI.db3 ถูกเครื่องไหม");
+    }
+
+    /// <summary>ชื่อตารางของเครื่อง — ขึ้นต้น MK แล้วตามด้วยตัวเลขล้วน เช่น MK063</summary>
+    private static bool IsMachineTable(string name) =>
+        name.Length > 2
+        && name.StartsWith("MK", StringComparison.OrdinalIgnoreCase)
+        && name.Skip(2).All(char.IsDigit);
+
     private static async Task<(bool ok, string msg)> WriteCoreAsync(
         string dbPath, string table, string? lot, string? name,
         string? text1, string? text2, string? text3, string? text4, string? text5)
@@ -40,12 +84,24 @@ public static class CpiWriteService
             pragma.CommandText = "PRAGMA journal_mode=Off; PRAGMA busy_timeout=5000;";
             await pragma.ExecuteNonQueryAsync();
 
+            // ชื่อตารางที่โค้ดเดาจากหมายเลขเครื่อง (MK063 = UV1, MK067 = UV2) ไม่ตรงกับ
+            // ของจริงเสมอไป — ซอฟต์แวร์ UV ที่ลงใหม่อาจใช้ชื่ออื่น ถ้ายึดชื่อที่เดาไว้
+            // จะได้ error ว่า "ไม่มีคอลัมน์ที่ตรงกัน" ซึ่งอ่านแล้วไม่รู้เลยว่าที่จริง
+            // คือไม่มีตารางชื่อนั้น เพราะ PRAGMA table_info กับตารางที่ไม่มีอยู่
+            // คืนศูนย์แถวเฉย ๆ ไม่ฟ้องว่าหาไม่เจอ
+            var (actualTable, tableProblem) = ResolveTable(conn, table);
+            if (actualTable == null) return (false, tableProblem!);
+
             var existingCols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             await using var info = conn.CreateCommand();
-            info.CommandText = $"PRAGMA table_info({table})";
+            info.CommandText = $"PRAGMA table_info(\"{actualTable}\")";
             await using var reader = await info.ExecuteReaderAsync();
             while (await reader.ReadAsync())
                 existingCols.Add(reader.GetString(1));
+
+            // เขียนลงตารางที่หาเจอจริง และรายงานด้วยชื่อนั้น ไม่ใช่ชื่อที่เดามา
+            // ถ้ารายงานชื่อเดิมทั้งที่เขียนลงอีกตาราง คนอ่าน log จะหลงทาง
+            table = actualTable;
 
             var sets = new List<string>();
             await using var cmd = conn.CreateCommand();
@@ -80,7 +136,7 @@ public static class CpiWriteService
             if (sets.Count == 0)
                 return (false, $"ตาราง {table} ไม่มีคอลัมน์ที่ตรงกัน");
 
-            cmd.CommandText = $"UPDATE {table} SET {string.Join(", ", sets)} WHERE id = 1";
+            cmd.CommandText = $"UPDATE \"{table}\" SET {string.Join(", ", sets)} WHERE id = 1";
             var affected = await cmd.ExecuteNonQueryAsync();
 
             if (affected == 0) return (false, $"ไม่พบแถว id=1 ในตาราง {table}");
