@@ -23,6 +23,11 @@ public partial class BackendSettingUserControl : UserControl
         btnPcName.Click += (_, _) => EditName();
         btnBrowseBackend.Click += (_, _) => BrowseBackendFolder();
         btnCheckStatus.Click += async (_, _) => await CheckStatusAsync();
+
+        // ปุ่มเคลียร์พอร์ตเปิดเฉพาะโหมดทดสอบ — เป็นการสั่งปิดโปรเซสที่กำลังรันอยู่
+        // ไม่ใช่ของที่พนักงานหน้างานต้องแตะ เหมือนช่องโฟลเดอร์ backend ข้างบน
+        btnClearPort.Visible = StationService.IsDevMode;
+        btnClearPort.Click += async (_, _) => await ClearPortAsync();
         btnSave.Click += BtnSave_Click;
         btnCancel.Click += (_, _) => { LoadSettings(); ResetColors(); };
 
@@ -135,6 +140,46 @@ public partial class BackendSettingUserControl : UserControl
         if (dlg.ShowDialog(this) != DialogResult.OK) return;
         CustomSettingsManager.Write("PC2IP_NAME", dlg.Value);
         lblPcBadge.Text = dlg.Value;
+    }
+
+    /// <summary>
+    /// ปิดสิ่งที่ยึดพอร์ต 3000 อยู่ แล้วเช็คสถานะใหม่
+    ///
+    /// <para>
+    /// ถามยืนยันก่อนเสมอ เพราะถ้า backend กำลังทำงานอยู่จริง การกดปุ่มนี้คือตัดการ
+    /// ทำงานของทุกสถานีที่ใช้ตัวเดียวกันอยู่ ไม่ใช่แค่เครื่องนี้
+    /// </para>
+    /// </summary>
+    private async Task ClearPortAsync()
+    {
+        if (!Confirm.Ask(this, "เคลียร์พอร์ต 3000",
+            $"จะปิดโปรแกรมที่ยึดพอร์ต {BackendLauncher.Port} อยู่"
+            + Environment.NewLine + Environment.NewLine
+            + "ถ้า backend กำลังทำงานอยู่ ทุกสถานีที่ใช้ตัวนี้จะใช้งานไม่ได้จนกว่าจะเปิดใหม่"))
+            return;
+
+        btnClearPort.Loading = true;
+        btnClearPort.Enabled = false;
+        try
+        {
+            var problem = await BackendLauncher.ClearPortAsync();
+            if (IsDisposed) return;
+
+            if (problem == null)
+                Notify.Success(this, $"พอร์ต {BackendLauncher.Port} ว่างแล้ว");
+            else
+                Notify.WarnModal(this, "เคลียร์พอร์ตไม่สำเร็จ", problem);
+        }
+        finally
+        {
+            if (!IsDisposed)
+            {
+                btnClearPort.Loading = false;
+                btnClearPort.Enabled = true;
+            }
+        }
+
+        if (!IsDisposed) await CheckStatusAsync(quiet: true);
     }
 
     /// <param name="quiet">true = รอบตรวจซ้ำอัตโนมัติ ไม่ต้องหมุนปุ่ม</param>

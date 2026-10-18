@@ -37,6 +37,7 @@ partial class BackendSettingUserControl
         btnSave = new AntdUI.Button();
         btnCancel = new AntdUI.Button();
         btnCheckStatus = new AntdUI.Button();
+        btnClearPort = new AntdUI.Button();
 
         tlpRoot.SuspendLayout();
         grpBackend.SuspendLayout();
@@ -254,6 +255,7 @@ partial class BackendSettingUserControl
         flpActions.Controls.Add(btnSave);
         flpActions.Controls.Add(btnCancel);
         flpActions.Controls.Add(btnCheckStatus);
+        flpActions.Controls.Add(btnClearPort);
         flpActions.Dock = System.Windows.Forms.DockStyle.Fill;
         flpActions.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
         flpActions.Margin = new System.Windows.Forms.Padding(0);
@@ -301,6 +303,18 @@ partial class BackendSettingUserControl
         btnCheckStatus.Text = "Check Status";
         btnCheckStatus.Type = AntdUI.TTypeMini.Default;
         //
+        // btnClearPort
+        //
+        btnClearPort.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        btnClearPort.ForeColor = System.Drawing.Color.White;
+        btnClearPort.Margin = new System.Windows.Forms.Padding(16, 12, 3, 12);
+        btnClearPort.Name = "btnClearPort";
+        btnClearPort.Radius = 8;
+        btnClearPort.Size = new System.Drawing.Size(212, 55);
+        btnClearPort.TabIndex = 3;
+        btnClearPort.Text = "เคลียร์พอร์ต 3000";
+        btnClearPort.Type = AntdUI.TTypeMini.Warn;
+        //
         // BackendSettingUserControl
         //
         AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
@@ -339,6 +353,7 @@ partial class BackendSettingUserControl
     private AntdUI.Button btnBrowseBackend;
     private System.Windows.Forms.Label lblBackendPathStatus;
     private System.Windows.Forms.FlowLayoutPanel flpActions;
+    private AntdUI.Button btnClearPort;
     private AntdUI.Button btnSave;
     private AntdUI.Button btnCancel;
     private AntdUI.Button btnCheckStatus;

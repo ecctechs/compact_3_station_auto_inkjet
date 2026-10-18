@@ -130,6 +130,57 @@ public static class BackendLauncher
         }
     }
 
+    /// <summary>
+    /// เคลียร์พอร์ต 3000 อย่างเดียว ไม่เปิดตัวใหม่ให้ — null = พอร์ตว่างแล้ว
+    ///
+    /// <para>
+    /// ต่างจาก <see cref="RestartAsync"/> ตรงที่ไม่ต้องมีโฟลเดอร์ backend ที่ใช้ได้
+    /// เพราะไม่ได้จะเปิดใหม่ ใช้ตอนมี node ค้างจากรอบก่อนแล้วเปิดตัวใหม่ไม่ขึ้น
+    /// ซึ่งโฟลเดอร์อาจยังตั้งไม่เสร็จหรือชี้ผิดอยู่
+    /// </para>
+    /// <para>
+    /// ยังปิดเฉพาะ node ที่ฟังพอร์ตนี้เหมือนเดิม ถ้าเป็นโปรแกรมอื่นจะบอกชื่อกลับมา
+    /// แล้วไม่แตะ — พอร์ต 3000 เป็นพอร์ตยอดนิยม ปิดมั่วอาจไปปิดของที่ไม่เกี่ยวกัน
+    /// </para>
+    /// <para>
+    /// หยุดตัวเฝ้าไว้ระหว่างทำ ไม่งั้นมันเห็นพอร์ตว่างแล้วเปิด backend ขึ้นมาใหม่ทันที
+    /// คนกดจะงงว่าเคลียร์แล้วทำไมยังไม่ว่าง
+    /// </para>
+    /// </summary>
+    public static async Task<string?> ClearPortAsync()
+    {
+        if (!BackendIsLocal())
+            return $"backend อยู่เครื่องอื่น — เคลียร์พอร์ต {Port} ข้ามเครื่องไม่ได้ ต้องทำที่เครื่องนั้น";
+
+        if (Interlocked.Exchange(ref _restarting, 1) == 1)
+            return "กำลังเปิดหรือปิด backend อยู่แล้ว รอสักครู่แล้วลองใหม่";
+
+        try
+        {
+            if (!IsListening())
+                return null;
+
+            var problem = await Task.Run(StopRunning);
+            if (problem != null)
+            {
+                AppLog.Warn("Backend", $"เคลียร์พอร์ต {Port} ไม่สำเร็จ: " + problem);
+                return problem;
+            }
+
+            AppLog.Info("Backend", $"เคลียร์พอร์ต {Port} แล้ว");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("Backend.ClearPort", ex);
+            return $"เคลียร์พอร์ต {Port} ไม่สำเร็จ: {ex.Message}";
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _restarting, 0);
+        }
+    }
+
     /// <summary>ปิด node ทุกตัวที่ฟังพอร์ต 3000 แล้วรอจนพอร์ตว่าง — null = เรียบร้อย</summary>
     private static string? StopRunning()
     {
