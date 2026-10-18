@@ -265,7 +265,7 @@ public partial class PlcSettingUserControl : UserControl
             new PlcRow { AddressStart = "1",  AddressStop = "1",  PlcStart = "D1",  PlcStop = "D1",  ListName = $"{mk1} Delay",     DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
             new PlcRow { AddressStart = "5",  AddressStop = "5",  PlcStart = "D5",  PlcStop = "D5",  ListName = $"{mk2} PostAct",   DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
             new PlcRow { AddressStart = "6",  AddressStop = "6",  PlcStart = "D6",  PlcStop = "D6",  ListName = $"{mk2} Delay",     DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
-            new PlcRow { AddressStart = "10", AddressStop = "10", PlcStart = "D10", PlcStop = "D10", ListName = "Conveyor Speed 1", DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
+            new PlcRow { AddressStart = "10", AddressStop = "10", PlcStart = "D10", PlcStop = "D10", ListName = PlcOrderService.ConveyorListName, DataType = "Int", Bit = "16", IsFixed = true, Op = NewFixedButtons() },
         ];
     }
 
@@ -401,18 +401,41 @@ public partial class PlcSettingUserControl : UserControl
         }
         else if (e.Btn?.Id == "write")
         {
-            if (!int.TryParse(row.WriteValue?.Trim(), out int writeVal))
+            if (!int.TryParse(row.WriteValue?.Trim(), out int typed))
             {
                 Warn($"กรุณากรอกค่าที่ต้องการเขียนลง D{addr}");
                 return;
             }
+
+            // แถวสายพานกรอกเป็น Hz เหมือนหน้า Order Detail ไม่ใช่ค่าดิบของ register
+            //
+            // สองหน้าต้องพิมพ์เลขเดียวกันแล้วได้ผลเดียวกัน ไม่งั้นคนตั้งค่าต้องจำเองว่า
+            // หน้าไหนคูณให้ หน้าไหนไม่คูณ ซึ่งเคยทำให้สายพานเดิน 60 Hz ทั้งที่สั่ง 50
+            // การแปลงเรียก PlcOrderService.HzToRegister ตัวเดียวกับที่หน้านั้นใช้
+            bool isConveyor = string.Equals(
+                row.ListName?.Trim(), PlcOrderService.ConveyorListName, StringComparison.OrdinalIgnoreCase);
+
+            // กันคนพิมพ์ค่าดิบแบบเดิมลงแถวที่ตอนนี้รับเป็น Hz
+            //
+            // พิมพ์ 5000 จะกลายเป็น 500000 แล้วถูกตัดเหลือ 32767 ซึ่งคือสั่งสายพาน
+            // วิ่งสุดโดยไม่มีอะไรฟ้อง เพดานคิดจากขนาด register ไม่ได้ตั้งเลขเอง
+            int maxHz = short.MaxValue / PlcOrderService.ConveyorScale;
+            if (isConveyor && (typed < 0 || typed > maxHz))
+            {
+                Warn($"แถวนี้กรอกเป็น Hz (0-{maxHz}) ไม่ใช่ค่าดิบของ register");
+                return;
+            }
+
+            int writeVal = isConveyor ? PlcOrderService.HzToRegister(typed) : typed;
 
             // ทางเดียวกับที่ PlcOrderService.SendAsync ใช้ตอนส่งค่าของงาน — เขียน FC 6
             // แล้วอ่านกลับบนสายเดิม ผลที่ได้จากปุ่มนี้กับจากการส่งงานจริงจึงตรงกันเสมอ
             var (ok, readBack, error) = await ModbusTcpService.WriteAndVerifyAsync(ip, port, addr, writeVal);
             if (ok)
             {
-                Log($"Write D{addr} ({row.ListName}) = {writeVal}");
+                Log(isConveyor
+                    ? $"Write D{addr} ({row.ListName}) = {typed} Hz → {writeVal}"
+                    : $"Write D{addr} ({row.ListName}) = {writeVal}");
 
                 if (readBack != null)
                 {
@@ -901,7 +924,7 @@ public partial class PlcSettingUserControl : UserControl
             $"{mk1} Delay",
             $"{mk2} PostAct",
             $"{mk2} Delay",
-            "Conveyor Speed 1",
+            PlcOrderService.ConveyorListName,
         };
     }
 

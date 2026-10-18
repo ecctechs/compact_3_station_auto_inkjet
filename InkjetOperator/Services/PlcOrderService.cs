@@ -61,7 +61,7 @@ public static class PlcOrderService
         // สายพานตัวเดียว — ตาราง register map เหลือ Conveyor Speed 1 แถวเดียว
         // โปรแกรมเดิมส่งสามตัวรวดเดียว (D10-D12) แต่ของใหม่ตกลงกันว่าเหลือตัวแรก
         // Pattern เก็บเป็น Hz แต่ PLC รับเป็นสเกลของตัวเอง จึงคูณ ConveyorScale ก่อน
-        Add(fields, map, "Conveyor Speed 1", $"Conveyor 1 (Hz ×{ConveyorScale})", ScaleSpeed(speeds?.Speed1));
+        Add(fields, map, ConveyorListName, $"Conveyor 1 (Hz ×{ConveyorScale})", ScaleSpeed(speeds?.Speed1));
 
         return fields;
     }
@@ -201,9 +201,28 @@ public static class PlcOrderService
             ? value
             : DefaultConveyorScale;
 
-    /// <summary>คูณ Hz ด้วยตัวคูณ แล้วตัดไม่ให้เกินเลขมีเครื่องหมาย 16 บิตของ register</summary>
-    private static int ScaleSpeed(int? hz) =>
-        (int)Math.Min((long)Whole(hz) * ConveyorScale, short.MaxValue);
+    /// <summary>
+    /// ชื่อแถวความเร็วสายพานในตาราง register map
+    ///
+    /// <para>
+    /// การจับคู่ใช้ชื่อนี้ตรงตัว พิมพ์ไม่ตรงเมื่อไรค่าจะถูกข้ามไปเงียบ ๆ จึงเก็บไว้
+    /// ที่เดียวแล้วให้ทุกที่อ้างถึง ไม่เขียนสตริงซ้ำ
+    /// </para>
+    /// </summary>
+    public const string ConveyorListName = "Conveyor Speed 1";
+
+    /// <summary>
+    /// แปลง Hz เป็นค่าที่เขียนลง register แล้วตัดไม่ให้เกินเลขมีเครื่องหมาย 16 บิต
+    ///
+    /// <para>
+    /// ทั้งหน้า Order Detail และปุ่ม Write แถวสายพานหน้า PLC Setting เรียกตัวนี้
+    /// พิมพ์ 50 ที่หน้าไหนก็เขียนเลขเดียวกันลง PLC
+    /// </para>
+    /// </summary>
+    public static int HzToRegister(int hz) =>
+        (int)Math.Min((long)hz * ConveyorScale, short.MaxValue);
+
+    private static int ScaleSpeed(int? hz) => HzToRegister(Whole(hz));
 
     /// <summary>
     /// เลื่อนหัวพิมพ์ทั้งสองตัวกลับตำแหน่งเริ่มต้น — ใช้ตอนเครื่องว่างและไม่มีงานรอคิว

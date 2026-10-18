@@ -1403,7 +1403,7 @@ public partial class OrderDetailUserControl : UserControl
         TagAddress(lblMk1Delay, plan, $"{mk1} Delay");
         TagAddress(lblMk2PosAct, plan, $"{mk2} PostAct");
         TagAddress(lblMk2Delay, plan, $"{mk2} Delay");
-        TagAddress(lblConveyor1, plan, "Conveyor Speed 1");
+        TagAddress(lblConveyor1, plan, Services.PlcOrderService.ConveyorListName);
     }
 
     private void TagAddress(AntdUI.Label label, List<PlcOrderService.PlcField> plan, string listName)
