@@ -452,7 +452,19 @@ public partial class ClampSettingUserControl : UserControl
         UpdateDbStatus();
     }
 
-    /// <summary>บอกว่าไฟล์นี้มีคอลัมน์ครบ 6 แกนไหม — ฐานข้อมูลรุ่นเก่าไม่มีคอลัมน์ Z</summary>
+    /// <summary>
+    /// บอกว่าชี้ไฟล์ mydatabase.db3 ไว้แล้วหรือยัง — ดูแค่ตัวไฟล์ ไม่เปิดเข้าไปข้างใน
+    ///
+    /// <para>
+    /// เดิมเปิดไฟล์เข้าไปนับคอลัมน์ของ MainTable แล้วฟ้องว่าแกนไหนขาด แต่โครงสร้าง
+    /// ตารางขึ้นกับซอฟต์แวร์แคลมป์ที่ลงไว้ในเครื่องแต่ละตัว ไม่ได้เหมือนกันทุกที่
+    /// ไฟล์ที่ใช้งานได้จริงจึงถูกตีว่าใช้ไม่ได้ ทั้งที่โหลดและสั่งงานได้ปกติ
+    /// </para>
+    /// <para>
+    /// แกนไหนอ่านหรือเขียนไม่ได้จริง จะฟ้องตอนกด Load / Upload ซึ่งเป็นจังหวะที่
+    /// รู้ผลจากของจริงแทนการเดาจากชื่อคอลัมน์ล่วงหน้า
+    /// </para>
+    /// </summary>
     private void UpdateDbStatus()
     {
         var path = txtDbPath.Text.Trim();
@@ -463,29 +475,15 @@ public partial class ClampSettingUserControl : UserControl
             return;
         }
 
-        var columns = ClampService.ReadColumns(path);
-        if (columns.Count == 0)
+        if (!File.Exists(path))
         {
-            lblStatus.Text = "✗ เปิดไฟล์ไม่ได้ หรือไม่มีตาราง MainTable";
+            lblStatus.Text = "✗ ไม่พบไฟล์ที่เลือกไว้";
             lblStatus.ForeColor = Red;
             return;
         }
 
-        var missing = _settings.Axes
-            .Where(a => !columns.Contains(a.Column))
-            .Select(a => a.Column)
-            .ToList();
-
-        if (missing.Count == 0)
-        {
-            lblStatus.Text = "✓ MainTable มีคอลัมน์ครบทั้ง 6 แกน";
-            lblStatus.ForeColor = Green;
-        }
-        else
-        {
-            lblStatus.Text = $"⚠ ไม่มีคอลัมน์: {string.Join(", ", missing)} — แกนนั้นจะโหลด/บันทึกไม่ได้";
-            lblStatus.ForeColor = Red;
-        }
+        lblStatus.Text = "✓ เลือกไฟล์แล้ว";
+        lblStatus.ForeColor = Green;
     }
 
     /// <summary>โหลดค่าทั้ง 6 แกนจาก MainTable ตามชื่อโปรแกรมของแต่ละฝั่ง</summary>
