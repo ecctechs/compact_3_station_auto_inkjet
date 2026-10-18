@@ -1585,6 +1585,17 @@ public partial class OrderListUserControl : UserControl
         if (blocked) return;
         if (IsDisposed) return;
 
+        // ค่าของหัวพ่นผิด = ไม่ให้เข้าคิวตั้งแต่ต้น
+        //
+        // ตรวจตอนส่งอย่างเดียวไม่พอ เพราะกว่าจะถึงตอนนั้นงานได้แถวคิวไปแล้วและ
+        // ถืองานค้างอยู่ที่เครื่อง คนต้องมาไล่ปล่อยเองทีหลัง ตรวจตรงนี้งานยังเป็น
+        // Waiting เหมือนไม่เคยกด แก้ค่าที่หน้า Order Detail แล้วกดเริ่มใหม่ได้เลย
+        if (JobSendService.InvalidMkConfig(resolved.Pattern, sendPlan.Steps) is string badConfig)
+        {
+            Notify.WarnModal(this, "ยังเริ่มงานไม่ได้", badConfig);
+            return;
+        }
+
         // จองทุกเครื่องที่แผนของงานนี้ต้องใช้ ในคราวเดียว
         //
         // จองก่อนส่งเสมอ เพราะการจองคือสิ่งที่บอกว่างานนี้มีสิทธิ์ในเครื่องไหนบ้าง

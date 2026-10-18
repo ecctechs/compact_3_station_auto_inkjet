@@ -299,8 +299,24 @@ public static class PlcOrderService
     public const int ServoScale = 100;
 
     /// <summary>คูณแล้วตัดไม่ให้เกินเลขมีเครื่องหมาย 16 บิตของ register</summary>
+    /// <summary>
+    /// คูณก่อนแล้วค่อยปัด ไม่ใช่ปัดก่อนคูณ
+    ///
+    /// <para>
+    /// ค่าบนหน้าจอเป็นมิลลิเมตรที่มีทศนิยมได้ เช่น 12.34 ถ้าปัดก่อนจะเหลือ 12 แล้ว
+    /// คูณเป็น 1200 ทศนิยมหายไปทั้งที่ปลายทางเก็บเป็นหน่วย 0.01 มม. ซึ่งรับได้อยู่แล้ว
+    /// คูณก่อนจะได้ 1234 ตรงกับที่คนกรอก
+    /// </para>
+    /// <para>
+    /// ยังต้องปัดอยู่ดีในขั้นสุดท้าย เพราะ register เก็บได้แต่จำนวนเต็ม — ทศนิยม
+    /// ที่ละเอียดกว่า 0.01 มม. จึงยังถูกปัด แต่เป็นความละเอียดที่เครื่องไม่รับอยู่แล้ว
+    /// </para>
+    /// </summary>
     private static int ScaleServo(double? mm) =>
-        (int)Math.Min((long)Whole(mm) * ServoScale, short.MaxValue);
+        mm == null ? 0
+        : (int)Math.Min(
+            (long)Math.Round(mm.Value * ServoScale, MidpointRounding.AwayFromZero),
+            short.MaxValue);
 
     private static void AddServo(
         List<PlcField> fields, List<PlcRegisterMap> map, string machine, ServoConfigDto? servo)
@@ -371,9 +387,14 @@ public static class PlcOrderService
     private static InkjetConfigDto? Inkjet(PatternDetail? pattern, int ordinal) =>
         pattern?.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
 
-    /// <summary>register ของ Modbus เก็บจำนวนเต็ม 16 บิต ค่าทศนิยมจึงต้องปัดก่อนส่ง</summary>
-    private static int Whole(double? value) =>
-        value == null ? 0 : (int)Math.Round(value.Value, MidpointRounding.AwayFromZero);
-
+    /// <summary>
+    /// ค่าจำนวนเต็มตรง ๆ — ไม่มีอะไรให้ปัด
+    ///
+    /// <para>
+    /// เดิมมีตัวรับ <c>double?</c> คู่กันที่ปัดเศษทิ้งก่อนคูณสเกล ทำให้ทศนิยมของ
+    /// PostAct / Delay หายไปทั้งที่ปลายทางรับได้ ตอนนี้ <see cref="ScaleServo"/>
+    /// คูณก่อนแล้วค่อยปัด จึงไม่มีใครใช้ตัวนั้นอีกและถูกเอาออกไป
+    /// </para>
+    /// </summary>
     private static int Whole(int? value) => value ?? 0;
 }

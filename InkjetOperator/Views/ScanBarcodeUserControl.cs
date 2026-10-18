@@ -362,6 +362,40 @@ public partial class ScanBarcodeUserControl : UserControl
         return true;
     }
 
+    /// <summary>สถานะที่ถือว่างานยังไม่จบ — ยิงบาร์โค้ดเดิมซ้ำไม่ได้</summary>
+    private static readonly string[] UnfinishedStatuses = ["Waiting", "Process"];
+
+    /// <summary>
+    /// งานของบาร์โค้ดนี้ที่ยังไม่จบ — null ทั้งคู่ = ยิงซ้ำได้
+    ///
+    /// <para>
+    /// เทียบทั้ง lot_number และ barcode_raw เพราะงานเก่าบางใบเก็บไว้คนละช่อง
+    /// งานที่ Success หรือ Cancel ไปแล้วไม่นับ ถือเป็นการสั่งผลิตรอบใหม่ของล็อตเดิม
+    /// </para>
+    /// </summary>
+    private static async Task<(PrintJob? job, string? error)> ActiveJobForBarcodeAsync(
+        Services.ApiClient api, string barcode)
+    {
+        foreach (var status in UnfinishedStatuses)
+        {
+            var (jobs, error) = await api.GetAllJobsAsync(limit: 200, status: status);
+            if (error != null) return (null, error);
+
+            var hit = jobs.FirstOrDefault(j =>
+                SameCode(j.LotNumber, barcode) || SameCode(j.BarcodeRaw, barcode));
+            if (hit != null) return (hit, null);
+        }
+
+        return (null, null);
+    }
+
+    private static bool SameCode(string? a, string b) =>
+        !string.IsNullOrWhiteSpace(a) && string.Equals(a.Trim(), b.Trim(), StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>คำที่พนักงานเห็นบนหน้า Order List — ในฐานข้อมูลเก็บว่า Process</summary>
+    private static string StatusWord(string? status) =>
+        string.Equals(status, "Process", StringComparison.OrdinalIgnoreCase) ? "Working" : status ?? "-";
+
     private async Task ProcessBarcodeAsync(string barcode)
     {
         var (api, sqlite) = GetServices();
@@ -376,6 +410,31 @@ public partial class ScanBarcodeUserControl : UserControl
         if (!await api.PingAsync())
         {
             ShowError("ไม่สามารถเชื่อมต่อ Backend ได้\nกรุณาตรวจสอบ Backend Setting");
+            return;
+        }
+
+        // บาร์โค้ดเดิมที่งานยังไม่จบ ห้ามลงทะเบียนซ้ำ
+        //
+        // ยิงซ้ำจะได้งานสองใบของล็อตเดียวกัน ซึ่งจองเครื่องคนละแถวแล้วพ่นซ้ำ
+        // งานที่จบแล้วยิงซ้ำได้ตามปกติ เพราะเป็นการสั่งผลิตรอบใหม่ของล็อตเดิม
+        //
+        // เช็คก่อนไปอ่าน SQLite เพราะไม่มีเหตุให้ต้องอ่านอะไรเลยถ้ายังไงก็ลงทะเบียนไม่ได้
+        var (active, activeError) = await ActiveJobForBarcodeAsync(api, barcode);
+        if (activeError != null)
+        {
+            // ตรวจไม่ได้ก็ไม่ลงทะเบียน — ปล่อยผ่านแล้วได้งานซ้ำแก้ยากกว่ารอแล้วยิงใหม่
+            ShowError($"ตรวจงานซ้ำไม่ได้ — {activeError}\nลองยิงใหม่อีกครั้ง");
+            return;
+        }
+
+        if (active != null)
+        {
+            ShowWarning(
+                $"บาร์โค้ดนี้มีงานอยู่แล้ว สถานะ {StatusWord(active.Status)}"
+                + Environment.NewLine
+                + Services.JobDisplay.Label(active.OrderNo, active.LotNumber ?? active.BarcodeRaw, active.Id)
+                + Environment.NewLine + Environment.NewLine
+                + "จบงานใบเดิมก่อน ถึงจะยิงบาร์โค้ดนี้ซ้ำได้");
             return;
         }
 
@@ -479,7 +538,18 @@ public partial class ScanBarcodeUserControl : UserControl
             $"สร้างงาน {Services.JobDisplay.Label(job.OrderNo, job.LotNumber ?? job.BarcodeRaw, job.Id)} สำเร็จ");
 
         ClearForm();
+        JobRegistered?.Invoke(this, EventArgs.Empty);
     }
+
+    /// <summary>
+    /// ลงทะเบียนงานสำเร็จแล้ว — หน้าหลักเอาไปใช้พาไปหน้าถัดไป
+    ///
+    /// <para>
+    /// หน้านี้ไม่รู้ว่าสถานีนี้มีหน้าอะไรให้ไปบ้าง และไม่ควรรู้ด้วย จึงแค่บอกว่า
+    /// เกิดอะไรขึ้นแล้วให้ MainShellForm ตัดสินใจเอง
+    /// </para>
+    /// </summary>
+    public event EventHandler? JobRegistered;
 
     /// <summary>
     /// เตือนเมื่อยังไม่ได้เลือก mydatabase.db3 — ระยะแคลมป์จะถูกเก็บเป็นค่าว่าง

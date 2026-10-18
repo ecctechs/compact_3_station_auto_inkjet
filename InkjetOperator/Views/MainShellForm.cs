@@ -51,6 +51,18 @@ public partial class MainShellForm : AntdUI.Window
         // ดึงจากไอคอนของ .exe เองแทนการฝังไฟล์ซ้ำอีกชุด
         try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
+        // ยิงบาร์โค้ดแล้วกด OK เสร็จ → ไปหน้า Order List ให้เลย
+        //
+        // สถานีที่มีทั้งสองหน้า (ST1) คนยิงเสร็จแล้วต้องไปดูงานที่เพิ่งลงทะเบียนต่อทันที
+        // อยู่แล้ว การให้กดแท็บเองเป็นขั้นตอนที่ไม่ได้ช่วยอะไร
+        //
+        // เช็คจากหน้าที่สถานีนี้เข้าได้จริง ไม่ได้ผูกกับเลข MENU_LEVEL — สถานีสแกน
+        // (level 0) ไม่มีหน้า Order List ก็อยู่หน้าเดิมเหมือนเดิม
+        scanBarcodePage.JobRegistered += (_, _) =>
+        {
+            if (_visiblePages.Contains(orderListPage)) ShowPage(orderListPage, btnOrderList);
+        };
+
         btnLang.Click += (_, _) => ToggleLanguage();
         ApplyLanguage();
     }

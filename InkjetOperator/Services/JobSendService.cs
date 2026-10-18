@@ -372,6 +372,43 @@ public static class JobSendService
     /// งานที่เคยส่งได้กลับส่งไม่ได้
     /// </para>
     /// </summary>
+    /// <summary>
+    /// ตรวจค่าของหัวพ่น MK ทุกตัวที่แผนนี้จะใช้ — null = ผ่าน
+    ///
+    /// <para>
+    /// มีไว้เรียก <b>ก่อนจองคิว</b> ไม่ใช่ตอนส่ง ค่าที่ผิดต้องไม่ทำให้งานได้แถวคิวไป
+    /// ถือเครื่องไว้ แล้วไปตายตอนส่ง ซึ่งคนต้องมาไล่ปล่อยเครื่องเองทีหลัง
+    /// </para>
+    /// <para>
+    /// ตรวจชุดเดียวกับที่ <see cref="SendToOneMkAsync"/> ตรวจก่อนแตะเครื่อง จึงไม่มี
+    /// ทางที่ด่านสองชั้นจะตอบไม่ตรงกัน
+    /// </para>
+    /// </summary>
+    public static string? InvalidMkConfig(PatternDetail? pattern, IEnumerable<string> steps)
+    {
+        if (pattern == null) return null;
+
+        foreach (var ordinal in new[] { 1, 2 })
+        {
+            // ขั้นของ MK ในแผนคือ "MK" เฉย ๆ ไม่ได้แยกหัว — ตรวจหัวที่มีโปรแกรมจริง
+            if (!steps.Contains("MK", StringComparer.OrdinalIgnoreCase)) break;
+
+            var config = pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
+            if (config == null || !HasProgramName(config)) continue;
+
+            var label = CustomSettingsManager.Read(
+                ordinal == 1 ? "MK058_NAME" : "MK059_NAME", ordinal == 1 ? "MK-058" : "MK-059");
+
+            if (InvalidConfig(config, label) is string bad) return bad;
+        }
+
+        return null;
+    }
+
+    /// <summary>หัวนี้มีโปรแกรมให้พ่นจริงไหม — ไม่มีก็ไม่ต้องตรวจค่าของมัน</summary>
+    private static bool HasProgramName(InkjetConfigDto config) =>
+        !string.IsNullOrWhiteSpace(config.ProgramName);
+
     private static string? InvalidConfig(InkjetConfigDto config, string label)
     {
         // ช่องว่างไม่ส่ง — กฎเดียวกับโปรแกรมเดิมที่ฟ้อง "Width, Height & Delay not complete"
