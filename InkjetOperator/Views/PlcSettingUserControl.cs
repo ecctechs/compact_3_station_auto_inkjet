@@ -407,17 +407,28 @@ public partial class PlcSettingUserControl : UserControl
                 return;
             }
 
-            var (ok, error) = await ModbusTcpService.WriteSingleRegisterAsync(ip, port, addr, writeVal);
+            // ทางเดียวกับที่ PlcOrderService.SendAsync ใช้ตอนส่งค่าของงาน — เขียน FC 6
+            // แล้วอ่านกลับบนสายเดิม ผลที่ได้จากปุ่มนี้กับจากการส่งงานจริงจึงตรงกันเสมอ
+            var (ok, readBack, error) = await ModbusTcpService.WriteAndVerifyAsync(ip, port, addr, writeVal);
             if (ok)
             {
                 Log($"Write D{addr} ({row.ListName}) = {writeVal}");
 
-                var (rOk, rVal, _) = await ModbusTcpService.ReadHoldingRegistersAsync(ip, port, addr, 1);
-                if (rOk && rVal.Length > 0)
+                if (readBack != null)
                 {
-                    row.Value = rVal[0].ToString();
-                    Log($"อ่านกลับ D{addr} → {rVal[0]}");
+                    row.Value = readBack.Value.ToString();
+                    Log($"อ่านกลับ D{addr} → {readBack.Value}");
+
+                    // เขียนผ่านแต่ค่าไม่อยู่ = PLC รับคำสั่งแล้วมีอย่างอื่นเขียนทับ
+                    // ไม่บอกตรงนี้จะเข้าใจว่าเขียนสำเร็จแล้วทั้งที่ค่าไม่เข้า
+                    if (readBack.Value != writeVal)
+                        Warn($"D{addr} เขียน {writeVal} แต่อ่านกลับได้ {readBack.Value} — ค่าไม่อยู่");
                 }
+                else
+                {
+                    Log($"อ่านกลับ D{addr} ไม่ได้");
+                }
+
                 RebindTable();
             }
             else
@@ -532,8 +543,8 @@ public partial class PlcSettingUserControl : UserControl
     /// <summary>address สุดท้ายของช่วงที่สแกน — Modbus อ่านได้ครั้งละไม่เกิน 125</summary>
     private const int ScanLast = 100;
 
-    /// <summary>ค่าที่อ่านได้จากการสแกนครั้งก่อน ไว้เทียบว่าตัวไหนขยับ</summary>
-    private int[]? _scanBefore;
+    /// <summary>ค่าที่อ่านได้จากการสแกนครั้งก่อน — null ในช่องไหนคือ address นั้นอ่านไม่ได้</summary>
+    private int?[]? _scanBefore;
 
     /// <summary>
     /// อ่าน D1-D100 รวดเดียวแล้วเทียบกับรอบก่อน
@@ -564,17 +575,32 @@ public partial class PlcSettingUserControl : UserControl
         btnScanRange.Enabled = false;
 
         Log($"สแกน D{ScanFirst}-D{ScanLast} ({qty} registers) — อ่านอย่างเดียว ไม่เขียนอะไรลง PLC");
-        var (ok, values, error) = await ModbusTcpService.ReadHoldingRegistersAsync(ip, port, ScanFirst, qty);
+
+        var (values, error) = await ReadRangeAsync(ip, port, qty);
 
         if (IsDisposed) return;
         btnScanRange.Loading = false;
         btnScanRange.Enabled = true;
 
-        if (!ok || values.Length < qty)
+        if (values == null)
         {
             Log($"❌ สแกนล้มเหลว — {error}");
             Warn($"สแกนไม่สำเร็จ: {error}");
             return;
+        }
+
+        int readable = values.Count(v => v != null);
+        if (readable == 0)
+        {
+            Log("❌ อ่านไม่ได้สักตัวเดียวในช่วงนี้");
+            Warn("อ่านไม่ได้สักตัวเดียวในช่วงนี้");
+            return;
+        }
+
+        if (readable < qty)
+        {
+            var exist = Enumerable.Range(0, qty).Where(i => values[i] != null).ToList();
+            Log($"PLC เปิดให้อ่านได้ {readable} จาก {qty} ตัว — ต่ำสุด D{ScanFirst + exist[0]} สูงสุด D{ScanFirst + exist[^1]}");
         }
 
         if (_scanBefore == null)
@@ -588,6 +614,8 @@ public partial class PlcSettingUserControl : UserControl
         var changed = new List<string>();
         for (int i = 0; i < qty; i++)
         {
+            // ตัวที่อ่านไม่ได้ในรอบใดรอบหนึ่งเทียบไม่ได้ ข้ามไป ไม่นับว่าเปลี่ยน
+            if (_scanBefore[i] == null || values[i] == null) continue;
             if (_scanBefore[i] != values[i])
                 changed.Add($"  D{ScanFirst + i}: {_scanBefore[i]} → {values[i]}");
         }
@@ -605,12 +633,57 @@ public partial class PlcSettingUserControl : UserControl
         _scanBefore = values;
     }
 
+    /// <summary>
+    /// อ่านทั้งช่วง คืน null ในช่องที่อ่านไม่ได้
+    ///
+    /// <para>
+    /// ลองขอทีเดียวทั้งก้อนก่อนเพราะเร็วกว่ามาก แต่ Modbus ปฏิเสธทั้งคำขอถ้ามี
+    /// address ไหนอยู่นอกช่วงที่ PLC เปิดไว้ แม้ตัวอื่นจะอ่านได้จริง (ตอบกลับเป็น
+    /// FC=0x83 code=0x02) เจอแบบนั้นค่อยไล่ทีละตัวบนสายเดิม จะได้รู้ว่ามีถึงไหน
+    /// </para>
+    /// </summary>
+    private static async Task<(int?[]? values, string error)> ReadRangeAsync(string ip, int port, int qty)
+    {
+        var (session, connectError) = await ModbusTcpService.OpenAsync(ip, port);
+        if (session == null) return (null, connectError);
+
+        using (session)
+        {
+            var (ok, block, _) = await session.ReadHoldingRegistersAsync(ScanFirst, qty);
+            if (ok && block.Length >= qty)
+                return (block.Take(qty).Select(v => (int?)v).ToArray(), "");
+
+            // ไล่ทีละตัวบนสายเดิม ไม่เปิดปิดใหม่ทุกครั้ง ไม่งั้นร้อยรอบคือร้อยการเชื่อมต่อ
+            var values = new int?[qty];
+            string lastError = "";
+            int failures = 0;
+
+            for (int i = 0; i < qty; i++)
+            {
+                var (one, v, err) = await session.ReadHoldingRegistersAsync(ScanFirst + i, 1);
+                if (one && v.Length > 0)
+                {
+                    values[i] = v[0];
+                }
+                else
+                {
+                    lastError = err;
+                    failures++;
+                }
+            }
+
+            // พังหมดทุกตัวแปลว่าสายหลุดหรือ PLC ไม่รับเลย ไม่ใช่แค่ช่วงแคบ
+            return failures == qty ? (null, lastError) : (values, "");
+        }
+    }
+
     /// <summary>พิมพ์ค่าทั้งช่วงลง log แถวละ 10 ตัว ไม่งั้นร้อยตัวเรียงกันอ่านไม่ออก</summary>
-    private void LogScanDump(int[] values)
+    private void LogScanDump(int?[] values)
     {
         for (int i = 0; i < values.Length; i += 10)
         {
-            var cells = values.Skip(i).Take(10).Select(v => v.ToString().PadLeft(6));
+            var cells = values.Skip(i).Take(10)
+                .Select(v => (v?.ToString() ?? "-").PadLeft(7));
             Log($"  D{ScanFirst + i,-3}|{string.Concat(cells)}");
         }
     }

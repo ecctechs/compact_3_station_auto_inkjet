@@ -97,6 +97,25 @@ public static class ModbusTcpService
                 ? Task.FromResult((false, "จำนวน register ต้องอยู่ระหว่าง 1-123"))
                 : WriteAsync(BuildWriteMultipleRequest(++_transactionId, startAddress, values));
 
+        /// <summary>
+        /// เขียนหนึ่ง register แล้วอ่านกลับมายืนยันบนสายเดิม
+        ///
+        /// <para>
+        /// <c>readBack</c> เป็น null เมื่อเขียนผ่านแต่อ่านกลับไม่ได้ ซึ่งไม่ใช่ความล้มเหลว
+        /// ของการเขียน จึงแยกจาก <c>ok</c> ส่วนค่าที่อ่านได้ไม่ตรงกับที่เขียนแปลว่า
+        /// PLC รับคำสั่งแล้วแต่ค่าไม่อยู่ — ผู้เรียกเป็นคนตัดสินว่าจะรายงานยังไง
+        /// </para>
+        /// </summary>
+        public async Task<(bool ok, int? readBack, string error)> WriteAndVerifyAsync(
+            int address, int value)
+        {
+            var (ok, error) = await WriteSingleRegisterAsync(address, value);
+            if (!ok) return (false, null, error);
+
+            var (readOk, values, _) = await ReadHoldingRegistersAsync(address, 1);
+            return (true, readOk && values.Length > 0 ? values[0] : null, "");
+        }
+
         private async Task<(bool ok, string error)> WriteAsync(byte[] request)
         {
             try
@@ -149,6 +168,24 @@ public static class ModbusTcpService
         if (session == null) return (false, error);
 
         using (session) return await session.WriteSingleRegisterAsync(address, value);
+    }
+
+    /// <summary>
+    /// เขียนหนึ่ง register แล้วอ่านกลับมายืนยัน — เปิดสายให้เอง
+    ///
+    /// <para>
+    /// ทางเดียวกับที่ <c>PlcOrderService.SendAsync</c> ใช้ตอนส่งค่าของงาน ต่างกันแค่
+    /// ตรงนั้นเปิดสายไว้ครั้งเดียวแล้วยิงหลายค่าบนสายเดิม ผลที่ได้จากปุ่ม Write
+    /// ในตาราง register map กับจากการส่งงานจริงจึงเป็นอย่างเดียวกันเสมอ
+    /// </para>
+    /// </summary>
+    public static async Task<(bool ok, int? readBack, string error)> WriteAndVerifyAsync(
+        string ip, int port, int address, int value)
+    {
+        var (session, error) = await Session.OpenAsync(ip, port);
+        if (session == null) return (false, null, error);
+
+        using (session) return await session.WriteAndVerifyAsync(address, value);
     }
 
     /// <summary>

@@ -243,7 +243,7 @@ partial class PlcSettingUserControl
         txtConveyorScale.Font = new System.Drawing.Font("Segoe UI", 12.5F);
         txtConveyorScale.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
         txtConveyorScale.Name = "txtConveyorScale";
-        txtConveyorScale.PlaceholderText = "120";
+        txtConveyorScale.PlaceholderText = "100";
         txtConveyorScale.Radius = 4;
         txtConveyorScale.TabIndex = 10;
         //

@@ -123,19 +123,17 @@ public static class PlcOrderService
                 int address = field.Address!.Value;
                 var name = $"D{address}  {field.Label}";
 
-                var (ok, error) = await session.WriteSingleRegisterAsync(address, field.Value);
+                // เขียนแล้วอ่านกลับทันที — เมธอดตัวเดียวกับที่ปุ่ม Write ในตาราง
+                // register map หน้า PLC Setting เรียกใช้ ผลจากสองหน้าจึงตรงกันเสมอ
+                // เขียนผ่านแต่ค่าไม่เข้าจะได้เห็นตั้งแต่ตรงนี้ ไม่ใช่ไปรู้ตอนเครื่องเดินผิด
+                var (ok, readBack, error) = await session.WriteAndVerifyAsync(address, field.Value);
                 if (!ok)
                 {
                     results.Add(new BlockResult(name, field.Value, null, error));
                     continue;
                 }
 
-                // อ่านกลับทันทีเหมือนที่หน้า PLC Setting ทำ — เขียนผ่านแต่ค่าไม่เข้า
-                // จะได้เห็นตั้งแต่ตรงนี้ ไม่ใช่ไปรู้เอาตอนเครื่องเดินผิด
-                var (readOk, values, _) = await session.ReadHoldingRegistersAsync(address, 1);
-
-                results.Add(new BlockResult(
-                    name, field.Value, readOk && values.Length > 0 ? values[0] : null, null));
+                results.Add(new BlockResult(name, field.Value, readBack, null));
             }
         }
 
@@ -181,11 +179,17 @@ public static class PlcOrderService
     ///
     /// <para>
     /// ladder เอา DATA_WORD_RD[10] เข้า LINEAR_SCALING ช่วง 0–6000 ออกเป็น analog
-    /// เต็มช่วงไปที่อินเวอร์เตอร์ซึ่งรับ 0–50 Hz ส่ง Hz ตรง ๆ จึงได้ไฟไม่ถึง 0.1V
-    /// สายพานไม่วิ่งทั้งที่เขียนผ่านและอ่านกลับตรง 6000 ÷ 50 = 120
+    /// เต็มช่วงไปที่อินเวอร์เตอร์ ส่ง Hz ตรง ๆ จึงได้ไฟไม่ถึง 0.1V สายพานไม่วิ่ง
+    /// ทั้งที่เขียนผ่านและอ่านกลับตรง ต้องคูณขึ้นก่อน
+    /// </para>
+    /// <para>
+    /// เดิมใช้ 120 เพราะคิดว่าปลายทางเต็มช่วงที่ 50 Hz (6000 ÷ 50) แต่วัดที่หน้างาน
+    /// แล้วไม่ใช่ — สั่ง 50 Hz ได้ 6000 แล้วสายพานเดินจริง 59.97–59.98 Hz แปลว่า
+    /// 6000 คือ 60 Hz ไม่ใช่ 50 Hz ทั้งเส้นทางจึงเป็นหน่วย 0.01 Hz พอดี
+    /// ตัวคูณที่ถูกคือ 100 — สั่ง 50 Hz เขียน 5000 แล้วได้ 50.00 Hz
     /// </para>
     /// </summary>
-    public const int DefaultConveyorScale = 120;
+    public const int DefaultConveyorScale = 100;
 
     /// <summary>ตัวคูณสูงสุดที่ใส่ได้</summary>
     public const int MaxConveyorScale = 1000;
