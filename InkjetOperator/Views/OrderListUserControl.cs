@@ -756,8 +756,18 @@ public partial class OrderListUserControl : UserControl
             if (IsDisposed) return;
             if (_sending) { _refreshRequested = true; return; }
 
+            // อ่านรายชื่อรุ่นย่อย UV ก่อนวาด — แตะโฟลเดอร์บนเครื่อง UV จึงทำตรงนี้
+            // ที่เดียว ไม่ใช่ตอนวาดแต่ละแถว และอ่านเฉพาะงานที่ยังไม่เคยอ่าน
+            bool variantsAdded = await EnsureUvVariantsAsync(jobs);
+            if (IsDisposed) return;
+            if (_sending) { _refreshRequested = true; return; }
+
             // ผูก DataSource ใหม่ทีไร ตารางจะรีเซ็ตทั้งลำดับที่เรียงไว้และตำแหน่ง scroll
             // รอบ poll ที่ข้อมูลไม่เปลี่ยนจึงไม่ต้องผูกใหม่ ไม่งั้นทุก 5 วิจะกระตุกทีนึง
+            //
+            // เพิ่งรู้จักรุ่นย่อยของงานใหม่ = ปุ่มเลือกรุ่นต้องโผล่ ถึงข้อมูลงานจะไม่เปลี่ยน
+            if (variantsAdded) force = true;
+
             var signature = BuildSignature(jobs) + QueueSignature();
             if (!force && signature == _lastSignature) return;
 
@@ -1177,10 +1187,10 @@ public partial class OrderListUserControl : UserControl
                 ShowStartLoading(null);
             }
         }
-        else if (buttonId == "pickuv2")
+        else if (buttonId is "pickuv1" or "pickuv2")
         {
             if (_startingJobId != null) return;
-            await PickUv2AtSt3Async(row.Id);
+            await PickUvVariantAsync(row.Id, buttonId == "pickuv1" ? "UV1" : "UV2");
         }
         else if (buttonId == "complete")
         {
@@ -1962,9 +1972,25 @@ public partial class OrderListUserControl : UserControl
     /// backend ก็ไม่จอง UV2 รอบเดิมซ้ำอยู่แล้ว (กดซ้ำไม่กลายเป็นพ่นสองครั้ง)
     /// </para>
     /// </summary>
-    private async Task PickUv2AtSt3Async(int jobId)
+    /// <summary>
+    /// เลือกรุ่นย่อยของเครื่อง UV แล้วจองคิวให้งานใบนี้
+    ///
+    /// <para>
+    /// กดได้ซ้ำจนกว่าจะพิมพ์ครบทุกรุ่น รุ่นที่ส่งสำเร็จไปแล้วถูกตัดออกจากรายการ
+    /// ไม่ให้เลือกซ้ำ จบงานตอนไหนก็ได้ ไม่ต้องพิมพ์ครบ
+    /// </para>
+    /// <para>
+    /// ปุ่มโผล่เฉพาะตอนเครื่องว่างจากงานใบนี้แล้ว (กติกาเดียวกับปุ่มเริ่มรอบสองของงาน 22)
+    /// จึงไม่ไปสั่งรุ่นใหม่ทับระหว่างที่เครื่องยังพิมพ์ใบเดิมค้างอยู่
+    /// </para>
+    /// </summary>
+    private async Task PickUvVariantAsync(int jobId, string step)
     {
         if (_api == null) return;
+
+        int uvNumber = UvVariantService.UvNumber(step);
+        var uvName = UvSettingsManager.Read(
+            uvNumber == 1 ? "UV1_NAME" : "UV2_NAME", uvNumber == 1 ? "UV-001" : "UV-002");
 
         var resolved = await LoadJobAsync(jobId, $"กำลังโหลดข้อมูล · {JobName(jobId)}");
         if (IsDisposed) return;
@@ -1978,82 +2004,102 @@ public partial class OrderListUserControl : UserControl
         if (IsDisposed) return;
         if (queueError != null)
         {
-            Notify.Warn(this, $"อ่านคิว UV2 ไม่สำเร็จ — {queueError}");
+            Notify.Warn(this, $"อ่านคิว {step} ไม่สำเร็จ — {queueError}");
             return;
         }
 
-        var method = resolved.PlanRouting?.MarkingMethod;
-        if (!Uv2PickAtSt3.Awaiting(jobId, resolved.Job.Status, method, resolved.Commands, queue))
+        // เช็คซ้ำกับของสดจาก backend — ระหว่างที่คนยังไม่กด อาจมีคนอื่นจองไปแล้ว
+        if (!UvVariantService.MachineFree(jobId, step, queue))
         {
-            Notify.Warn(this, $"{JobName(jobId)} เลือกรุ่น UV2 ไปแล้ว หรือ UV2 เข้าคิวแล้ว");
+            Notify.Warn(this, $"{JobName(jobId)} · {step} เข้าคิวหรือกำลังพิมพ์อยู่แล้ว");
             await RefreshDataAsync(force: true);
             return;
         }
 
         var program = resolved.UvJobData?.FirstOrDefault(r =>
-            string.Equals(r.Machine, Uv2PickAtSt3.Step, StringComparison.OrdinalIgnoreCase))?.ProgramName;
+            string.Equals(r.Machine, step, StringComparison.OrdinalIgnoreCase))?.ProgramName;
         if (string.IsNullOrWhiteSpace(program))
         {
-            Notify.WarnModal(this, "เลือกรุ่นไม่ได้", $"ยังไม่มีข้อมูล UV2 ของงานนี้\n\n{JobName(jobId)}");
+            Notify.WarnModal(this, "เลือกรุ่นไม่ได้",
+                $"ยังไม่มีข้อมูล {step} ของงานนี้" + Environment.NewLine + Environment.NewLine + JobName(jobId));
             return;
         }
 
-        // เลือกจากโฟลเดอร์ของเครื่องนี้ (ST3) — ถ้าไม่ได้ตั้งไว้ห้ามเดา ต้องบอกให้ไปตั้ง
-        var docFolder = await UvSettingsManager.GetDocumentFolderAsync(2);
+        // เลือกจากโฟลเดอร์ของเครื่องนี้ — ถ้าไม่ได้ตั้งไว้ห้ามเดา ต้องบอกให้ไปตั้ง
+        var docFolder = await UvSettingsManager.GetDocumentFolderAsync(uvNumber);
         if (IsDisposed) return;
         if (docFolder == null)
         {
             Notify.WarnModal(this, "เลือกรุ่นไม่ได้",
-                "ไม่พบโฟลเดอร์โปรแกรม UV2 ที่เครื่องนี้\n\nตั้งโฟลเดอร์ UV2 (UV2_FOLDER ใน uv.config) ของเครื่อง ST3 ก่อน");
+                $"ไม่พบโฟลเดอร์โปรแกรม {step} ที่เครื่องนี้"
+                + Environment.NewLine + Environment.NewLine
+                + $"ตั้งโฟลเดอร์ {step} ใน uv.config ของเครื่องนี้ก่อน");
             return;
         }
 
-        var pick = await UvProgramResolver.ResolveAsync(program, docFolder, this, 2);
-        if (pick.Program == null || IsDisposed) return;
+        var all = await UvProgramResolver.VariantsAsync(program, docFolder);
+        if (IsDisposed) return;
 
-        var uvName = UvSettingsManager.Read("UV2_NAME", "UV-002");
-        if (pick.IsDefault && !UvProgramResolver.ConfirmDefault(program, uvName, this)) return;
+        // อ่านรุ่นที่พิมพ์แล้วจากของสด ไม่ใช่จากแคชที่ใช้วาดปุ่ม
+        var remaining = UvVariantService.Remaining(all, resolved.Commands, step);
+        _uvVariants[(jobId, step)] = all;
+
+        if (remaining.Count == 0)
+        {
+            Notify.Info(this, $"{JobName(jobId)} · {step} พิมพ์ครบทุกรุ่นแล้ว");
+            await RefreshDataAsync(force: true);
+            return;
+        }
+
+        var chosen = UvProgramResolver.PickFrom(remaining, this, uvNumber);
+        if (chosen == null || IsDisposed) return;
 
         var holder = queue.FirstOrDefault(r => r.State == "active"
-            && string.Equals(r.Machine, Uv2PickAtSt3.Step, StringComparison.OrdinalIgnoreCase));
+            && string.Equals(r.Machine, step, StringComparison.OrdinalIgnoreCase));
         bool waits = holder != null || queue.Any(r => r.State == "pending"
-            && string.Equals(r.Machine, Uv2PickAtSt3.Step, StringComparison.OrdinalIgnoreCase));
+            && string.Equals(r.Machine, step, StringComparison.OrdinalIgnoreCase));
+
+        int done = all.Count - remaining.Count;
 
         if (!Confirm.Ask(this, new ConfirmSpec
             {
-                Title = "ส่งเข้า UV2",
-                Headline = waits ? "UV2 ไม่ว่าง — เข้าคิวรอไหม?" : "ส่งเข้า UV2 เลยไหม?",
+                Title = $"ส่งเข้า {step}",
+                Headline = waits ? $"{step} ไม่ว่าง — เข้าคิวรอไหม?" : $"ส่งเข้า {step} เลยไหม?",
                 Facts =
                 [
                     ("งาน", JobName(jobId)),
-                    ("ไฟล์", $"{pick.Program}.uvdx"),
-                    ($"UV2 · ST3", holder != null ? $"เครื่องไม่ว่าง · เข้าคิวต่อจาก {JobName(holder.PrintJobsId)}"
+                    ("ไฟล์", $"{chosen}.uvdx"),
+                    ("รุ่น", $"พิมพ์แล้ว {done} จาก {all.Count}"),
+                    ($"{step} · {uvName}", holder != null
+                        ? $"เครื่องไม่ว่าง · เข้าคิวต่อจาก {JobName(holder.PrintJobsId)}"
                         : waits ? "มีงานรอก่อน · เข้าคิว" : "ส่งเลย"),
                 ],
-                Detail = "โปรแกรมที่ ST1 เป็นคนส่งเข้าเครื่อง",
-                OkText = "ส่งเข้า UV2",
+                OkText = $"ส่งเข้า {step}",
                 Icon = "PlayCircleFilled",
                 OkIcon = "CaretRightFilled",
             }))
             return;
 
         var (queued, enqueueError) = await _api.EnqueueMachinesAsync(jobId,
-            [new MachineQueueItem { Machine = Uv2PickAtSt3.Step, Round = 1, ProgramName = pick.Program }]);
+            [new MachineQueueItem { Machine = step, Round = 1, ProgramName = chosen }]);
         if (IsDisposed) return;
         if (!queued)
         {
             Notify.ErrorModal(this, "จองเครื่องไม่สำเร็จ",
-                $"UV2 ยังไม่ได้เข้าคิว\n\n{JobName(jobId)}\n{enqueueError ?? "ติดต่อ backend ไม่ได้"}");
+                $"{step} ยังไม่ได้เข้าคิว"
+                + Environment.NewLine + Environment.NewLine + JobName(jobId)
+                + Environment.NewLine + (enqueueError ?? "ติดต่อ backend ไม่ได้"));
             return;
         }
 
-        var errors = await ClaimRemoteQueueAsync(jobId, [Uv2PickAtSt3.Step]);
+        var errors = await ClaimRemoteQueueAsync(jobId, [step]);
         if (IsDisposed) return;
         if (errors.Count == 0)
-            Notify.Success(this, $"{JobName(jobId)} · UV2 {pick.Program}.uvdx เข้าคิวแล้ว · ST1 จะส่งตามลำดับคิว");
+            Notify.Success(this, $"{JobName(jobId)} · {step} {chosen}.uvdx เข้าคิวแล้ว");
         else
-            Notify.Warn(this, $"{JobName(jobId)} · UV2 เข้าคิวแล้ว แต่ยืนยันการเริ่มคิวไม่ได้ · "
+            Notify.Warn(this, $"{JobName(jobId)} · {step} เข้าคิวแล้ว แต่ยืนยันการเริ่มคิวไม่ได้ · "
                 + string.Join(" · ", errors) + " · ตรวจสถานะคิวก่อนกดอีกครั้ง");
+
         await RefreshDataAsync(force: true);
     }
 
@@ -3166,6 +3212,117 @@ public partial class OrderListUserControl : UserControl
     }
 
     /// <summary>
+    /// ส่งครบหรือยัง — นับรุ่นย่อย UV ที่ยังไม่ได้พิมพ์เป็น "ยังไม่ครบ" ด้วย
+    ///
+    /// <para>
+    /// ปุ่มจบงานเขียวแปลว่าจบได้เลย ถ้าดูแค่ขั้นในแผน งานที่พิมพ์รุ่นแรกเสร็จจะเขียว
+    /// ทันทีทั้งที่ยังเหลืออีกหลายรุ่น คนหน้างานจะเข้าใจว่าทำครบแล้ว
+    /// </para>
+    /// <para>
+    /// ไม่ไปแก้ <c>MarkingMethodService.MissingSteps</c> ซึ่งเป็นกฎที่ตกลงกับหน้างานไว้ว่า
+    /// นับจำนวนครั้งที่ส่งสำเร็จ (งาน 22 ต้องได้ MK สองครั้ง) — เพิ่มเงื่อนไขที่หน้าจอแทน
+    /// </para>
+    /// </summary>
+    private StepStatus CheckSteps(PrintJob job)
+    {
+        var basic = CheckSteps(job.PlanRouting?.MarkingMethod, job.Commands);
+
+        var missing = new List<string>(basic.Missing);
+        foreach (var step in UvSteps)
+        {
+            int left = RemainingVariants(job, step).Count;
+            if (left > 0) missing.Add($"{step} เหลืออีก {left} รุ่น");
+        }
+
+        return new StepStatus(missing.Count == 0, missing);
+    }
+
+    // ── รุ่นย่อย UV ที่ยังไม่ได้พิมพ์ ────────────────────────
+
+    /// <summary>ขั้นที่มีรุ่นย่อยให้เลือก</summary>
+    private static readonly string[] UvSteps = ["UV1", "UV2"];
+
+    private static string PickButtonId(string step) =>
+        string.Equals(step, "UV1", StringComparison.OrdinalIgnoreCase) ? "pickuv1" : "pickuv2";
+
+    private static string PickVariantButtonText(string step) =>
+        string.Equals(step, "UV1", StringComparison.OrdinalIgnoreCase) ? "เลือกรุ่น\nUV1" : PickUv2ButtonText;
+
+    /// <summary>
+    /// รุ่นย่อยทั้งหมดของแต่ละงาน+ขั้น — อ่านโฟลเดอร์ครั้งเดียวแล้วจำไว้
+    ///
+    /// <para>
+    /// โฟลเดอร์ .uvdx อยู่บนเครื่อง UV ผ่านเครือข่าย ตารางวาดใหม่ทุก 5 วินาที
+    /// ถ้าไล่อ่านทุกแถวทุกรอบหน้าจอจะหน่วงทั้งหน้า จึงอ่านรอบเดียวตอนโหลดงาน
+    /// แล้วใช้ค่าที่จำไว้ตอนวาด
+    /// </para>
+    /// </summary>
+    private readonly Dictionary<(int JobId, string Step), List<string>> _uvVariants = new();
+
+    /// <summary>
+    /// รุ่นที่ยังไม่ได้พิมพ์ของขั้นนี้ — ว่างเมื่อไม่เข้าเงื่อนไข หรือยังไม่ได้อ่านโฟลเดอร์
+    ///
+    /// <para>
+    /// ไม่แตะดิสก์เลย ใช้ได้จากเส้นทางที่วาดตาราง ค่าที่ยังไม่มีในแคชถือว่า "ไม่เหลือ"
+    /// ไว้ก่อน ปุ่มจะโผล่ในรอบถัดไปหลังอ่านโฟลเดอร์เสร็จ ดีกว่าโผล่แล้วกดไม่ได้
+    /// </para>
+    /// </summary>
+    private List<string> RemainingVariants(PrintJob job, string step)
+    {
+        if (!UvVariantService.Enabled) return [];
+        if (!UvVariantService.StationOwns(step)) return [];
+        if (!UvVariantService.InPlan(job.Status, job.PlanRouting?.MarkingMethod, step)) return [];
+        if (!UvVariantService.MachineFree(job.Id, step, _queueRows)) return [];
+
+        return _uvVariants.TryGetValue((job.Id, step), out var all)
+            ? UvVariantService.Remaining(all, job.Commands, step)
+            : [];
+    }
+
+    /// <summary>
+    /// อ่านรายชื่อรุ่นย่อยของงานที่เข้าเงื่อนไข แล้วเก็บลงแคช — คืน true เมื่อมีของใหม่
+    ///
+    /// <para>
+    /// อ่านเฉพาะงานที่กำลังผลิต ขั้นที่สถานีนี้ดูแล และเครื่องว่างแล้ว ซึ่งปกติมีไม่กี่ใบ
+    /// งานที่เคยอ่านแล้วไม่อ่านซ้ำ รายชื่อไฟล์ในเครื่องไม่เปลี่ยนระหว่างกะ
+    /// </para>
+    /// </summary>
+    private async Task<bool> EnsureUvVariantsAsync(List<PrintJob> jobs)
+    {
+        if (!UvVariantService.Enabled) return false;
+
+        bool added = false;
+
+        foreach (var job in jobs)
+        {
+            foreach (var step in UvSteps)
+            {
+                if (!UvVariantService.StationOwns(step)) continue;
+                if (!UvVariantService.InPlan(job.Status, job.PlanRouting?.MarkingMethod, step)) continue;
+                if (!UvVariantService.MachineFree(job.Id, step, _queueRows)) continue;
+                if (_uvVariants.ContainsKey((job.Id, step))) continue;
+
+                // ชื่อโปรแกรม UV ไม่ได้มากับ /job/getAll ต้องดึงรายละเอียดงานเพิ่ม
+                // ทำครั้งเดียวต่องาน เพราะผลถูกเก็บลงแคชแล้วไม่อ่านซ้ำ
+                var resolved = await _api!.GetResolvedJobAsync(job.Id);
+                if (IsDisposed) return false;
+                if (resolved == null) continue;
+
+                var program = resolved.UvJobData?.FirstOrDefault(r =>
+                    string.Equals(r.Machine, step, StringComparison.OrdinalIgnoreCase))?.ProgramName;
+
+                var all = await UvVariantService.AllVariantsAsync(program, step);
+                if (IsDisposed) return false;
+
+                _uvVariants[(job.Id, step)] = all;
+                added = true;
+            }
+        }
+
+        return added;
+    }
+
+    /// <summary>
     /// พื้นหลังของแถว — งานที่กำลังเดินอยู่ (Working) ระบายเขียวอ่อนให้สะดุดตา
     /// จากระยะไกล
     ///
@@ -3384,16 +3541,25 @@ public partial class OrderListUserControl : UserControl
                     { Radius = 6 });
                 }
 
-                // เครื่อง UV2 อยู่ที่ ST3 — คนที่ ST3 เลือกรุ่นตอนชิ้นงานมาถึงหน้าเครื่อง
-                if (awaitingUv2 && (StationService.IsSt3 || StationService.IsDevMode))
+                // เลือกรุ่นย่อย UV ของงานใบนี้ — ปุ่มขึ้นที่สถานีที่เครื่องนั้นตั้งอยู่
+                //
+                // UV1 อยู่ที่ ST1 · UV2 อยู่ที่ ST3 คนที่ยืนหน้าเครื่องเห็นทั้งชิ้นงาน
+                // และจอเครื่อง จึงเลือกได้ถูกกว่าคนอีกสถานี
+                //
+                // กดได้ซ้ำจนกว่าจะพิมพ์ครบทุกรุ่น รุ่นที่พิมพ์ไปแล้วไม่โผล่ให้เลือกอีก
+                // และปุ่มหายเองเมื่อไม่เหลือรุ่น — ดู UvVariantService
+                foreach (var uvStep in UvSteps)
                 {
-                    buttons.Add(new AntdUI.CellButton("pickuv2", PickUv2ButtonText, AntdUI.TTypeMini.Primary)
+                    if (RemainingVariants(job, uvStep).Count == 0) continue;
+
+                    buttons.Add(new AntdUI.CellButton(
+                        PickButtonId(uvStep), PickVariantButtonText(uvStep), AntdUI.TTypeMini.Primary)
                     { Radius = 6 });
                 }
 
                 // เขียว = ส่งครบแล้วจบได้เลย · ส้ม = ยังไม่ครบ กดได้แต่จะเตือนก่อน
                 // commands / plan_routing มาจาก /job/getAll ที่ include ไว้ให้แล้ว
-                var steps = CheckSteps(job.PlanRouting?.MarkingMethod, job.Commands);
+                var steps = CheckSteps(job);
                 buttons.Add(new AntdUI.CellButton("complete", "จบงาน",
                     steps.Complete ? AntdUI.TTypeMini.Success : AntdUI.TTypeMini.Warn)
                 { Radius = 6 });

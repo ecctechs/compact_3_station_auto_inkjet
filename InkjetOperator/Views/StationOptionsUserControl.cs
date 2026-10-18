@@ -38,6 +38,12 @@ public partial class StationOptionsUserControl : UserControl
         chkUv2Pick.Checked = Uv2PickAtSt3.Enabled;
         chkUv2Pick.CheckedChanged += Uv2Pick_CheckedChanged;
 
+        chkUvRepeat.Checked = UvVariantService.Enabled;
+        chkUvRepeat.CheckedChanged += UvRepeat_CheckedChanged;
+
+        chkScanTab.Checked = ScanTabAtSt1.Enabled;
+        chkScanTab.CheckedChanged += ScanTab_CheckedChanged;
+
         btnResetRuntime.Click += async (_, _) => await ResetRuntimeAsync();
 
         btnSaveJobData.Click += async (_, _) => await SaveJobDataAsync();
@@ -106,6 +112,44 @@ public partial class StationOptionsUserControl : UserControl
         chkUv2Pick.CheckedChanged -= Uv2Pick_CheckedChanged;
         chkUv2Pick.Checked = !e.Value;
         chkUv2Pick.CheckedChanged += Uv2Pick_CheckedChanged;
+
+        Notify.WarnModal(this, "บันทึกไม่สำเร็จ",
+            CustomSettingsManager.LastError ?? "เขียนไฟล์ตั้งค่าไม่ได้");
+    }
+
+    /// <summary>เปิด/ปิดการพิมพ์รุ่นย่อย UV เพิ่มให้งานใบเดิม — ดู <see cref="UvVariantService"/></summary>
+    private void UvRepeat_CheckedChanged(object? sender, AntdUI.BoolEventArgs e)
+    {
+        if (CustomSettingsManager.Write(UvVariantService.Key, e.Value ? "1" : "0"))
+        {
+            Notify.Success(this, e.Value
+                ? "เปิดแล้ว — พิมพ์เสร็จแล้วกด เลือกรุ่น UV ในแถวงานเพื่อพิมพ์รุ่นถัดไปได้"
+                : "ปิดแล้ว — เลือกรุ่นครั้งเดียวตอนกดเริ่มงาน เหมือนเดิม");
+            return;
+        }
+
+        chkUvRepeat.CheckedChanged -= UvRepeat_CheckedChanged;
+        chkUvRepeat.Checked = !e.Value;
+        chkUvRepeat.CheckedChanged += UvRepeat_CheckedChanged;
+
+        Notify.WarnModal(this, "บันทึกไม่สำเร็จ",
+            CustomSettingsManager.LastError ?? "เขียนไฟล์ตั้งค่าไม่ได้");
+    }
+
+    /// <summary>เปิด/ปิดแท็บ Scan Barcode ที่ ST1 — ดู <see cref="ScanTabAtSt1"/></summary>
+    private void ScanTab_CheckedChanged(object? sender, AntdUI.BoolEventArgs e)
+    {
+        if (CustomSettingsManager.Write(ScanTabAtSt1.Key, e.Value ? "1" : "0"))
+        {
+            Notify.Success(this, e.Value
+                ? "เปิดแล้ว — ST1 จะมีแท็บ Scan Barcode หลังเปิดโปรแกรมใหม่"
+                : "ปิดแล้ว — ST1 ไม่มีแท็บ Scan Barcode หลังเปิดโปรแกรมใหม่");
+            return;
+        }
+
+        chkScanTab.CheckedChanged -= ScanTab_CheckedChanged;
+        chkScanTab.Checked = !e.Value;
+        chkScanTab.CheckedChanged += ScanTab_CheckedChanged;
 
         Notify.WarnModal(this, "บันทึกไม่สำเร็จ",
             CustomSettingsManager.LastError ?? "เขียนไฟล์ตั้งค่าไม่ได้");

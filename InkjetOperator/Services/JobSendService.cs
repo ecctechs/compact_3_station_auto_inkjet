@@ -414,6 +414,19 @@ public static class JobSendService
 
         foreach (var block in config.TextBlocks.OrderBy(b => b.BlockNumber))
         {
+            // X กับ Scale เป็น 0 พร้อมกัน = บล็อกนี้ยังไม่ได้ตั้งค่า
+            //
+            // ส่งไปแล้วเครื่องรับคำสั่งตามปกติ แต่พ่นออกมาผิดตำแหน่งและผิดขนาด
+            // ซึ่งรู้ตัวตอนเห็นชิ้นงานแล้ว ย้อนไม่ได้ จึงกันไว้ก่อนส่ง
+            //
+            // เช็คก่อนกฎช่วงข้างล่าง เพราะ Scale = 0 ติดกฎช่วง 1-10 อยู่แล้วแต่ได้
+            // ข้อความว่า "อยู่นอกช่วง" ซึ่งไม่ได้บอกว่าที่จริงคือยังไม่ได้ตั้งค่าทั้งบล็อก
+            if (block.X == 0 && block.Scale == 0)
+            {
+                return $"{label}: Block {block.BlockNumber} ยังไม่ได้ตั้งค่า (X = 0 และ Scale = 0) "
+                     + "— แก้ที่หน้า Order Detail ก่อนส่ง";
+            }
+
             foreach (var (name, min, max) in BlockRanges)
             {
                 int? value = name switch

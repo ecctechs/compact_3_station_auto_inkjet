@@ -1,4 +1,4 @@
-using InkjetOperator.Views;
+﻿using InkjetOperator.Views;
 
 namespace InkjetOperator.Services;
 
@@ -63,6 +63,17 @@ public static class UvProgramResolver
         var docFolder = await UvSettingsManager.GetDocumentFolderAsync(uvNumber);
         var found = await Task.Run(() => FindVariants(programName, docFolder));
         return found.BaseName.Length == 0 ? null : found.Candidates?.Count;
+    }
+
+    /// <summary>
+    /// รายชื่อรุ่นย่อยทั้งหมดของโปรแกรมนี้ในโฟลเดอร์ที่ให้มา — ว่าง = ไม่มีหรืออ่านไม่ได้
+    ///
+    /// <para>แตะดิสก์ / แชร์ จึงทำบนเธรดพื้นหลัง เหมือน <see cref="VariantCountAsync"/></para>
+    /// </summary>
+    public static async Task<List<string>> VariantsAsync(string? programName, string? docFolder)
+    {
+        var found = await Task.Run(() => FindVariants(programName, docFolder));
+        return found.Candidates ?? [];
     }
 
     private sealed record Variants(string BaseName, List<string>? Candidates);
@@ -146,6 +157,22 @@ public static class UvProgramResolver
     /// บอกชื่อเครื่องทั้งบนหัวกล่องและในบรรทัดคำอธิบาย — งาน 11 ต้องเลือกทั้ง UV1 และ UV2
     /// กล่องจึงเด้งสองครั้งหน้าตาเหมือนกัน ถ้าไม่บอกเครื่อง พนักงานแยกไม่ออกว่ากำลังเลือกของด้านไหน
     /// </remarks>
+    /// <summary>
+    /// เปิดกล่องเลือกรุ่นจากรายการที่ผู้เรียกกรองมาแล้ว — null = ไม่มีให้เลือกหรือคนกดยกเลิก
+    ///
+    /// <para>
+    /// ใช้ตอนพิมพ์รุ่นย่อยเพิ่มให้งานใบเดิม ซึ่งต้องตัดรุ่นที่พิมพ์ไปแล้วออกก่อน
+    /// เหลือรุ่นเดียวไม่ต้องถามให้เสียเวลา กล่องยืนยันก่อนส่งยังถามอยู่ดี
+    /// </para>
+    /// </summary>
+    public static string? PickFrom(List<string> variants, IWin32Window? owner, int? uvNumber) =>
+        variants.Count switch
+        {
+            0 => null,
+            1 => variants[0],
+            _ => PromptVariant(variants, owner, uvNumber),
+        };
+
     private static string? PromptVariant(List<string> variants, IWin32Window? owner, int? uvNumber)
     {
         var options = variants

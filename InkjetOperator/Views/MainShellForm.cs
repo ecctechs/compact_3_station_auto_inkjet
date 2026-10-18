@@ -170,7 +170,9 @@ public partial class MainShellForm : AntdUI.Window
         bool[] visible = level switch
         {
             0 => [true, false, false, true],
-            1 => [false, true, true, true],
+            // ST1 — เปิดแท็บ Scan Barcode เพิ่มได้ที่ Setting > ตัวเลือกหน้างาน (โหมด Dev)
+            // ค่าเริ่มต้นปิด หน้าจอคนหน้างานจึงเหมือนเดิมจนกว่าจะมีคนตั้งใจเปิด
+            1 => [Services.ScanTabAtSt1.Enabled, true, true, true],
             // ST3 ใช้หน้า Order List หน้าเดียวกับ ST1 แต่กรองงานคนละชุด
             // (กฎอยู่ที่ MarkingMethodService — ST3 เห็นเฉพาะ marking 10 / 11 / 12
             //  รวมถึงรหัสที่ลงท้ายด้วย 3 ซึ่งเดินเส้นทางเดียวกับ 1 เช่น 32 เท่ากับ 12)

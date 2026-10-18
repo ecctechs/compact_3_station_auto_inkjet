@@ -43,6 +43,16 @@ partial class StationOptionsUserControl
         chkAllOrNothing = new AntdUI.Checkbox();
         lblAllOrNothingHelp = new AntdUI.Label();
         pnlUv2Pick = new AntdUI.Panel();
+        pnlUvRepeat = new AntdUI.Panel();
+        tlpUvRepeat = new System.Windows.Forms.TableLayoutPanel();
+        lblUvRepeatHeading = new AntdUI.Label();
+        chkUvRepeat = new AntdUI.Checkbox();
+        lblUvRepeatHelp = new AntdUI.Label();
+        pnlScanTab = new AntdUI.Panel();
+        tlpScanTab = new System.Windows.Forms.TableLayoutPanel();
+        lblScanTabHeading = new AntdUI.Label();
+        chkScanTab = new AntdUI.Checkbox();
+        lblScanTabHelp = new AntdUI.Label();
         tlpUv2Pick = new System.Windows.Forms.TableLayoutPanel();
         lblUv2PickHeading = new AntdUI.Label();
         chkUv2Pick = new AntdUI.Checkbox();
@@ -70,6 +80,10 @@ partial class StationOptionsUserControl
         pnlAllOrNothing.SuspendLayout();
         tlpAllOrNothing.SuspendLayout();
         pnlUv2Pick.SuspendLayout();
+        pnlUvRepeat.SuspendLayout();
+        tlpUvRepeat.SuspendLayout();
+        pnlScanTab.SuspendLayout();
+        tlpScanTab.SuspendLayout();
         tlpUv2Pick.SuspendLayout();
         pnlReset.SuspendLayout();
         tlpReset.SuspendLayout();
@@ -89,13 +103,15 @@ partial class StationOptionsUserControl
         tlpOptionsRoot.Controls.Add(pnlMockup, 0, 3);
         tlpOptionsRoot.Controls.Add(pnlAllOrNothing, 0, 4);
         tlpOptionsRoot.Controls.Add(pnlUv2Pick, 0, 5);
-        tlpOptionsRoot.Controls.Add(pnlReset, 0, 6);
-        tlpOptionsRoot.Controls.Add(pnlJobData, 0, 7);
+        tlpOptionsRoot.Controls.Add(pnlUvRepeat, 0, 6);
+        tlpOptionsRoot.Controls.Add(pnlScanTab, 0, 7);
+        tlpOptionsRoot.Controls.Add(pnlReset, 0, 8);
+        tlpOptionsRoot.Controls.Add(pnlJobData, 0, 9);
         tlpOptionsRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpOptionsRoot.Location = new System.Drawing.Point(32, 32);
         tlpOptionsRoot.Margin = new System.Windows.Forms.Padding(0);
         tlpOptionsRoot.Name = "tlpOptionsRoot";
-        tlpOptionsRoot.RowCount = 9;
+        tlpOptionsRoot.RowCount = 11;
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 66F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 210F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 232F));
@@ -440,6 +456,132 @@ partial class StationOptionsUserControl
         lblUv2PickHelp.TabIndex = 2;
         lblUv2PickHelp.Text = "ปิด (ค่าเริ่มต้น): ST1 เลือกรุ่นทุกเครื่องตอนกดเริ่มงาน เหมือนเดิม\r\nเปิด: โปรแกรม UV2 ที่มีให้เลือกหลายไฟล์ ST1 ส่งเครื่องอื่นตามปกติ แต่ยังไม่จอง UV2 · แถวงานขึ้น Pick UV2 (ST3)\r\nคนที่ ST3 กด เลือกรุ่น UV2 ตอนชิ้นงานมาถึง เลือกแล้ว ST1 ส่งให้ตามคิว · ไฟล์เดียวส่งจาก ST1 ทันทีเหมือนเดิม\r\nต้องเปิดที่เครื่อง ST1 (คนกดเริ่มงาน) · เครื่อง ST3 ต้องตั้งโฟลเดอร์โปรแกรม UV2 ไว้";
         //
+        // pnlUvRepeat
+        //
+        pnlUvRepeat.Back = System.Drawing.Color.White;
+        pnlUvRepeat.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlUvRepeat.BorderWidth = 2F;
+        pnlUvRepeat.Controls.Add(tlpUvRepeat);
+        pnlUvRepeat.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlUvRepeat.Margin = new System.Windows.Forms.Padding(0, 0, 0, 16);
+        pnlUvRepeat.Name = "pnlUvRepeat";
+        pnlUvRepeat.Padding = new System.Windows.Forms.Padding(24, 18, 24, 18);
+        pnlUvRepeat.Radius = 10;
+        pnlUvRepeat.TabIndex = 5;
+        //
+        // tlpUvRepeat
+        //
+        tlpUvRepeat.ColumnCount = 1;
+        tlpUvRepeat.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUvRepeat.Controls.Add(lblUvRepeatHeading, 0, 0);
+        tlpUvRepeat.Controls.Add(chkUvRepeat, 0, 1);
+        tlpUvRepeat.Controls.Add(lblUvRepeatHelp, 0, 2);
+        tlpUvRepeat.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpUvRepeat.Margin = new System.Windows.Forms.Padding(0);
+        tlpUvRepeat.Name = "tlpUvRepeat";
+        tlpUvRepeat.RowCount = 3;
+        tlpUvRepeat.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
+        tlpUvRepeat.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpUvRepeat.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUvRepeat.Size = new System.Drawing.Size(1168, 150);
+        tlpUvRepeat.TabIndex = 0;
+        //
+        // lblUvRepeatHeading
+        //
+        lblUvRepeatHeading.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblUvRepeatHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        lblUvRepeatHeading.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblUvRepeatHeading.Margin = new System.Windows.Forms.Padding(0);
+        lblUvRepeatHeading.Name = "lblUvRepeatHeading";
+        lblUvRepeatHeading.Size = new System.Drawing.Size(1168, 42);
+        lblUvRepeatHeading.TabIndex = 0;
+        lblUvRepeatHeading.Text = "พิมพ์รุ่นย่อย UV เพิ่มให้งานใบเดิม";
+        //
+        // chkUvRepeat
+        //
+        chkUvRepeat.Dock = System.Windows.Forms.DockStyle.Fill;
+        chkUvRepeat.Font = new System.Drawing.Font("Segoe UI", 15F);
+        chkUvRepeat.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        chkUvRepeat.Margin = new System.Windows.Forms.Padding(0, 0, 0, 12);
+        chkUvRepeat.Name = "chkUvRepeat";
+        chkUvRepeat.Size = new System.Drawing.Size(1168, 32);
+        chkUvRepeat.TabIndex = 1;
+        chkUvRepeat.Text = "เปิดปุ่ม เลือกรุ่น UV1 / UV2 ในแถวงาน หลังพิมพ์รุ่นก่อนหน้าเสร็จ";
+        //
+        // lblUvRepeatHelp
+        //
+        lblUvRepeatHelp.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblUvRepeatHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblUvRepeatHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
+        lblUvRepeatHelp.Margin = new System.Windows.Forms.Padding(0);
+        lblUvRepeatHelp.Name = "lblUvRepeatHelp";
+        lblUvRepeatHelp.Size = new System.Drawing.Size(1168, 64);
+        lblUvRepeatHelp.TabIndex = 2;
+        lblUvRepeatHelp.Text = "เปิด (ค่าเริ่มต้น): พิมพ์เสร็จและปล่อยเครื่องแล้ว ปุ่มเลือกรุ่นโผล่ในแถว เลือกได้เฉพาะรุ่นที่ยังไม่ได้พิมพ์ ครบทุกรุ่นแล้วปุ่มหาย\r\n\r\nปุ่ม UV1 ขึ้นที่ ST1 · ปุ่ม UV2 ขึ้นที่ ST3 · ปุ่มจบงานยังเป็นสีส้มตราบที่ยังเหลือรุ่น และกดจบได้ตลอดไม่ต้องพิมพ์ครบ\r\n\r\nปิด: กลับไปเหมือนเดิม เลือกรุ่นครั้งเดียวตอนกดเริ่มงาน";
+        //
+        // pnlScanTab
+        //
+        pnlScanTab.Back = System.Drawing.Color.White;
+        pnlScanTab.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        pnlScanTab.BorderWidth = 2F;
+        pnlScanTab.Controls.Add(tlpScanTab);
+        pnlScanTab.Dock = System.Windows.Forms.DockStyle.Fill;
+        pnlScanTab.Margin = new System.Windows.Forms.Padding(0, 0, 0, 16);
+        pnlScanTab.Name = "pnlScanTab";
+        pnlScanTab.Padding = new System.Windows.Forms.Padding(24, 18, 24, 18);
+        pnlScanTab.Radius = 10;
+        pnlScanTab.TabIndex = 6;
+        //
+        // tlpScanTab
+        //
+        tlpScanTab.ColumnCount = 1;
+        tlpScanTab.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpScanTab.Controls.Add(lblScanTabHeading, 0, 0);
+        tlpScanTab.Controls.Add(chkScanTab, 0, 1);
+        tlpScanTab.Controls.Add(lblScanTabHelp, 0, 2);
+        tlpScanTab.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpScanTab.Margin = new System.Windows.Forms.Padding(0);
+        tlpScanTab.Name = "tlpScanTab";
+        tlpScanTab.RowCount = 3;
+        tlpScanTab.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
+        tlpScanTab.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpScanTab.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpScanTab.Size = new System.Drawing.Size(1168, 150);
+        tlpScanTab.TabIndex = 0;
+        //
+        // lblScanTabHeading
+        //
+        lblScanTabHeading.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblScanTabHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        lblScanTabHeading.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblScanTabHeading.Margin = new System.Windows.Forms.Padding(0);
+        lblScanTabHeading.Name = "lblScanTabHeading";
+        lblScanTabHeading.Size = new System.Drawing.Size(1168, 42);
+        lblScanTabHeading.TabIndex = 0;
+        lblScanTabHeading.Text = "หน้า Scan Barcode ที่ ST1";
+        //
+        // chkScanTab
+        //
+        chkScanTab.Dock = System.Windows.Forms.DockStyle.Fill;
+        chkScanTab.Font = new System.Drawing.Font("Segoe UI", 15F);
+        chkScanTab.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        chkScanTab.Margin = new System.Windows.Forms.Padding(0, 0, 0, 12);
+        chkScanTab.Name = "chkScanTab";
+        chkScanTab.Size = new System.Drawing.Size(1168, 32);
+        chkScanTab.TabIndex = 1;
+        chkScanTab.Text = "เพิ่มแท็บ Scan Barcode ให้เครื่อง ST1";
+        //
+        // lblScanTabHelp
+        //
+        lblScanTabHelp.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblScanTabHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblScanTabHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
+        lblScanTabHelp.Margin = new System.Windows.Forms.Padding(0);
+        lblScanTabHelp.Name = "lblScanTabHelp";
+        lblScanTabHelp.Size = new System.Drawing.Size(1168, 64);
+        lblScanTabHelp.TabIndex = 2;
+        lblScanTabHelp.Text = "ปิด (ค่าเริ่มต้น): ST1 เห็นแท็บ Order List / Setting เหมือนเดิม หน้า Scan Barcode มีเฉพาะสถานีสแกน\r\n\r\nเปิด: ST1 มีแท็บ Scan Barcode เพิ่มมาด้วย · ตั้งที่เครื่อง ST1 เอง เห็นผลหลังเปิดโปรแกรมใหม่";
+        //
         // pnlReset
         //
         pnlReset.Back = System.Drawing.Color.White;
@@ -669,6 +811,10 @@ partial class StationOptionsUserControl
         tlpAllOrNothing.ResumeLayout(false);
         pnlAllOrNothing.ResumeLayout(false);
         tlpUv2Pick.ResumeLayout(false);
+        pnlUvRepeat.ResumeLayout(false);
+        tlpUvRepeat.ResumeLayout(false);
+        pnlScanTab.ResumeLayout(false);
+        tlpScanTab.ResumeLayout(false);
         pnlUv2Pick.ResumeLayout(false);
         pnlReset.ResumeLayout(false);
         pnlRemoteSend.ResumeLayout(false);
@@ -705,6 +851,16 @@ partial class StationOptionsUserControl
     private AntdUI.Label lblUv2PickHeading;
     private AntdUI.Checkbox chkUv2Pick;
     private AntdUI.Label lblUv2PickHelp;
+    private AntdUI.Panel pnlUvRepeat;
+    private System.Windows.Forms.TableLayoutPanel tlpUvRepeat;
+    private AntdUI.Label lblUvRepeatHeading;
+    private AntdUI.Checkbox chkUvRepeat;
+    private AntdUI.Label lblUvRepeatHelp;
+    private AntdUI.Panel pnlScanTab;
+    private System.Windows.Forms.TableLayoutPanel tlpScanTab;
+    private AntdUI.Label lblScanTabHeading;
+    private AntdUI.Checkbox chkScanTab;
+    private AntdUI.Label lblScanTabHelp;
     private AntdUI.Panel pnlReset;
     private System.Windows.Forms.TableLayoutPanel tlpReset;
     private AntdUI.Label lblResetHeading;

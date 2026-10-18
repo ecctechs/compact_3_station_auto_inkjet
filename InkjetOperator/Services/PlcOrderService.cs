@@ -274,6 +274,11 @@ public static class PlcOrderService
         // ของโปรแกรมเดิมก็ปิดช่องนั้นทิ้งไว้ เหลือให้กรอกแต่ Post Act.
         int home = HomePosition;
         var fields = new List<PlcField>();
+        // ไม่คูณ ServoScale ตรงนี้ ต่างจากค่าของงาน
+        //
+        // ตำแหน่งเริ่มต้นเป็นค่าดิบของ register ที่จูนกับ ladder ไว้แล้ว (ค่าเริ่มต้น 1
+        // คือค่าต่ำสุดที่ PLC ยอมขยับ ไม่ใช่ 1 มม.) คูณเพิ่มจะกลายเป็นคนละตำแหน่ง
+        // คนตั้งค่ากรอกตัวเลขนี้ที่หน้า PLC Setting แล้วเห็นผลตรง ๆ
         Add(fields, map, $"{mk1} PostAct", $"{mk1} ตำแหน่งเริ่มต้น", home);
         Add(fields, map, $"{mk2} PostAct", $"{mk2} ตำแหน่งเริ่มต้น", home);
 
@@ -283,11 +288,27 @@ public static class PlcOrderService
         return await SendAsync(fields);
     }
 
+    /// <summary>
+    /// ตัวคูณของค่า servo ก่อนเขียนลง PLC (PostAct / Delay ของทั้งสองหัว)
+    ///
+    /// <para>
+    /// ค่าบนหน้าจอเป็นมิลลิเมตร แต่ PLC รับเป็นหน่วย 0.01 มม. ส่งเลขดิบไปจะได้
+    /// ระยะน้อยกว่าที่ตั้งไว้ร้อยเท่า — เรื่องเดียวกับความเร็วสายพานที่ต้องคูณก่อนส่ง
+    /// </para>
+    /// </summary>
+    public const int ServoScale = 100;
+
+    /// <summary>คูณแล้วตัดไม่ให้เกินเลขมีเครื่องหมาย 16 บิตของ register</summary>
+    private static int ScaleServo(double? mm) =>
+        (int)Math.Min((long)Whole(mm) * ServoScale, short.MaxValue);
+
     private static void AddServo(
         List<PlcField> fields, List<PlcRegisterMap> map, string machine, ServoConfigDto? servo)
     {
-        Add(fields, map, $"{machine} PostAct", $"{machine} Servo Post Act.", Whole(servo?.PostAct));
-        Add(fields, map, $"{machine} Delay", $"{machine} Delay (mm.)", Whole(servo?.Delay));
+        Add(fields, map, $"{machine} PostAct", $"{machine} Servo Post Act. (×{ServoScale})",
+            ScaleServo(servo?.PostAct));
+        Add(fields, map, $"{machine} Delay", $"{machine} Delay (mm. ×{ServoScale})",
+            ScaleServo(servo?.Delay));
     }
 
     private static void Add(
