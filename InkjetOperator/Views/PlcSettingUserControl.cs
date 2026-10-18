@@ -81,8 +81,13 @@ public partial class PlcSettingUserControl : UserControl
             tlpRoot.RowStyles[0].Height -= tlpConn.RowStyles[4].Height;
             tlpConn.RowStyles[4].Height = 0;
         }
+        // ปุ่มสแกนช่วง address เป็นเครื่องมือไล่หาว่า register ไหนคือค่าอะไร
+        // ไม่ใช่ของที่พนักงานหน้างานต้องใช้ จึงเปิดเฉพาะโหมดทดสอบเหมือน + Add Row
+        btnScanRange.Visible = StationService.IsDevMode;
+
         btnResetPosition.Click += async (_, _) => await ResetPositionAsync();
         btnReadAll.Click += async (_, _) => await ReadAllAsync();
+        btnScanRange.Click += async (_, _) => await ScanRangeAsync();
         btnUnlock.Click += (_, _) => ToggleLock();
         btnCheckStatus.Click += async (_, _) => await CheckStatusAsync();
         btnPlcName.Click += (_, _) => EditName();
@@ -517,6 +522,97 @@ public partial class PlcSettingUserControl : UserControl
         }
 
         RebindTable();
+    }
+
+    // ── สแกนช่วง address เพื่อหาว่า register ไหนคือค่าอะไร ────
+
+    /// <summary>address แรกของช่วงที่สแกน</summary>
+    private const int ScanFirst = 1;
+
+    /// <summary>address สุดท้ายของช่วงที่สแกน — Modbus อ่านได้ครั้งละไม่เกิน 125</summary>
+    private const int ScanLast = 100;
+
+    /// <summary>ค่าที่อ่านได้จากการสแกนครั้งก่อน ไว้เทียบว่าตัวไหนขยับ</summary>
+    private int[]? _scanBefore;
+
+    /// <summary>
+    /// อ่าน D1-D100 รวดเดียวแล้วเทียบกับรอบก่อน
+    ///
+    /// <para>
+    /// มีไว้หาว่า register ไหนคือค่าอะไร โดยไม่ต้องเดาและไม่ต้องเขียนอะไรลง PLC —
+    /// กดครั้งแรกเก็บค่าไว้ ไปปรับค่านั้นที่หน้าเครื่อง (เช่นหมุนความเร็วสายพาน)
+    /// แล้วกดอีกครั้ง ตัวที่ค่าเปลี่ยนคือ register ของค่านั้น
+    /// </para>
+    /// <para>
+    /// อ่านอย่างเดียวล้วน ๆ จึงกดตอนไลน์เดินอยู่ได้ ไม่กระทบงานที่กำลังพิมพ์
+    /// การไล่เขียนทีละตัวเพื่อเดาว่าตัวไหนคืออะไรทำแบบนั้นไม่ได้ เพราะ D0/D1/D5/D6
+    /// เป็น PostAct กับ Delay ที่สั่งหัวพ่นเลื่อนจริง
+    /// </para>
+    /// </summary>
+    private async Task ScanRangeAsync()
+    {
+        var ip = txtPlc001Ip.Text.Trim();
+        if (!int.TryParse(txtPlc001Port.Text.Trim(), out int port) || string.IsNullOrEmpty(ip))
+        {
+            Warn("กรุณาตั้งค่า IP / Port ก่อน");
+            return;
+        }
+
+        const int qty = ScanLast - ScanFirst + 1;
+
+        btnScanRange.Loading = true;
+        btnScanRange.Enabled = false;
+
+        Log($"สแกน D{ScanFirst}-D{ScanLast} ({qty} registers) — อ่านอย่างเดียว ไม่เขียนอะไรลง PLC");
+        var (ok, values, error) = await ModbusTcpService.ReadHoldingRegistersAsync(ip, port, ScanFirst, qty);
+
+        if (IsDisposed) return;
+        btnScanRange.Loading = false;
+        btnScanRange.Enabled = true;
+
+        if (!ok || values.Length < qty)
+        {
+            Log($"❌ สแกนล้มเหลว — {error}");
+            Warn($"สแกนไม่สำเร็จ: {error}");
+            return;
+        }
+
+        if (_scanBefore == null)
+        {
+            _scanBefore = values;
+            LogScanDump(values);
+            Log("เก็บค่าชุดแรกไว้แล้ว — ไปเปลี่ยนค่าที่หน้าเครื่อง (เช่นปรับความเร็วสายพาน) แล้วกดสแกนอีกครั้ง");
+            return;
+        }
+
+        var changed = new List<string>();
+        for (int i = 0; i < qty; i++)
+        {
+            if (_scanBefore[i] != values[i])
+                changed.Add($"  D{ScanFirst + i}: {_scanBefore[i]} → {values[i]}");
+        }
+
+        if (changed.Count == 0)
+        {
+            Log("เทียบกับรอบก่อนแล้ว ไม่มี register ไหนเปลี่ยนเลย");
+        }
+        else
+        {
+            Log($"register ที่ค่าเปลี่ยนไป {changed.Count} ตัว:");
+            foreach (var line in changed) Log(line);
+        }
+
+        _scanBefore = values;
+    }
+
+    /// <summary>พิมพ์ค่าทั้งช่วงลง log แถวละ 10 ตัว ไม่งั้นร้อยตัวเรียงกันอ่านไม่ออก</summary>
+    private void LogScanDump(int[] values)
+    {
+        for (int i = 0; i < values.Length; i += 10)
+        {
+            var cells = values.Skip(i).Take(10).Select(v => v.ToString().PadLeft(6));
+            Log($"  D{ScanFirst + i,-3}|{string.Concat(cells)}");
+        }
     }
 
     // ── Validation ─────────────────────────────────────────

@@ -37,6 +37,7 @@ partial class PlcSettingUserControl
         btnUnlock = new AntdUI.Button();
         btnReadAll = new AntdUI.Button();
         btnAddRow = new AntdUI.Button();
+        btnScanRange = new AntdUI.Button();
         btnResetPosition = new AntdUI.Button();
         tblPlcMap = new AntdUI.Table();
         grpLog = new System.Windows.Forms.GroupBox();
@@ -275,15 +276,17 @@ partial class PlcSettingUserControl
         // tlpMapHeader
         //
         tlpMapHeader.BackColor = System.Drawing.Color.White;
-        tlpMapHeader.ColumnCount = 4;
+        tlpMapHeader.ColumnCount = 5;
         tlpMapHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpMapHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 175F));
         tlpMapHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 175F));
         tlpMapHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 175F));
+        tlpMapHeader.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 175F));
         tlpMapHeader.Controls.Add(lblMapHint, 0, 0);
-        tlpMapHeader.Controls.Add(btnUnlock, 1, 0);
-        tlpMapHeader.Controls.Add(btnReadAll, 2, 0);
-        tlpMapHeader.Controls.Add(btnAddRow, 3, 0);
+        tlpMapHeader.Controls.Add(btnScanRange, 1, 0);
+        tlpMapHeader.Controls.Add(btnUnlock, 2, 0);
+        tlpMapHeader.Controls.Add(btnReadAll, 3, 0);
+        tlpMapHeader.Controls.Add(btnAddRow, 4, 0);
         tlpMapHeader.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpMapHeader.Margin = new System.Windows.Forms.Padding(0);
         tlpMapHeader.Name = "tlpMapHeader";
@@ -328,6 +331,20 @@ partial class PlcSettingUserControl
         btnReadAll.TabIndex = 2;
         btnReadAll.Text = "Read All";
         btnReadAll.Type = AntdUI.TTypeMini.Default;
+        //
+        // btnScanRange
+        //
+        btnScanRange.Anchor = System.Windows.Forms.AnchorStyles.Right;
+        btnScanRange.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
+        btnScanRange.BorderWidth = 2F;
+        btnScanRange.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        btnScanRange.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        btnScanRange.Name = "btnScanRange";
+        btnScanRange.Radius = 8;
+        btnScanRange.Size = new System.Drawing.Size(168, 52);
+        btnScanRange.TabIndex = 2;
+        btnScanRange.Text = "สแกน D1-100";
+        btnScanRange.Type = AntdUI.TTypeMini.Default;
         //
         // btnAddRow
         //
@@ -502,6 +519,7 @@ partial class PlcSettingUserControl
     private AntdUI.Button btnUnlock;
     private AntdUI.Button btnReadAll;
     private AntdUI.Button btnAddRow;
+    private AntdUI.Button btnScanRange;
     private AntdUI.Button btnResetPosition;
     private AntdUI.Table tblPlcMap;
     private System.Windows.Forms.GroupBox grpLog;
