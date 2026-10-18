@@ -1,5 +1,4 @@
 ﻿using System.Net.Sockets;
-using Microsoft.Data.Sqlite;
 using InkjetOperator.Services;
 
 using InkjetOperator.Theme;
@@ -12,19 +11,6 @@ public partial class InkjetSettingUserControl : UserControl
     private const string REL_CPI = @"database\sys\CPI.db3";
     private const string REL_DEFAULT_UVDX = @"document\default.uvdx";
 
-    /// <summary>ชื่อตารางใน CPI.db3 ที่ถือว่าใช้ได้สำหรับ UV1</summary>
-    private static readonly string[] Uv1Tables = ["MK063"];
-
-    /// <summary>
-    /// ชื่อตารางใน CPI.db3 ที่ถือว่าใช้ได้สำหรับ UV2
-    ///
-    /// <para>
-    /// เดิมบังคับ MK067 อย่างเดียว แต่เครื่อง UV2 ที่หน้างานบางตัวลงซอฟต์แวร์ที่
-    /// ตารางชื่อ MK063 โฟลเดอร์ที่ถูกต้องจึงถูกตีว่าใช้ไม่ได้ ทั้งที่เปิดใช้งานได้จริง
-    /// รับทั้งสองชื่อ เจอชื่อใดชื่อหนึ่งก็ผ่าน
-    /// </para>
-    /// </summary>
-    private static readonly string[] Uv2Tables = ["MK067", "MK063"];
 
     public InkjetSettingUserControl()
     {
@@ -43,8 +29,8 @@ public partial class InkjetSettingUserControl : UserControl
         btnUv1Edit.Click += (_, _) => EditUvName("UV1_NAME", lblUv1Badge);
         btnUv2Edit.Click += (_, _) => EditUvName("UV2_NAME", lblUv2Badge);
 
-        btnUv1Browse.Click += (_, _) => BrowseFolder(txtUv1Folder, lblUv1Status, Uv1Tables);
-        btnUv2Browse.Click += (_, _) => BrowseFolder(txtUv2Folder, lblUv2Status, Uv2Tables);
+        btnUv1Browse.Click += (_, _) => BrowseFolder(txtUv1Folder, lblUv1Status);
+        btnUv2Browse.Click += (_, _) => BrowseFolder(txtUv2Folder, lblUv2Status);
 
         btnMarkingRefBrowse.Click += (_, _) => BrowseMarkingRefFolder();
         txtMarkingRefFolder.TextChanged += (_, _) => MarkDirty(txtMarkingRefFolder);
@@ -78,8 +64,8 @@ public partial class InkjetSettingUserControl : UserControl
 
         txtMarkingRefFolder.Text = CustomSettingsManager.Read("MARKING_REF_FOLDER", "");
 
-        ShowFolderStatus(txtUv1Folder.Text, lblUv1Status, Uv1Tables);
-        ShowFolderStatus(txtUv2Folder.Text, lblUv2Status, Uv2Tables);
+        ShowFolderStatus(txtUv1Folder.Text, lblUv1Status);
+        ShowFolderStatus(txtUv2Folder.Text, lblUv2Status);
         ResetColors();
     }
 
@@ -144,9 +130,9 @@ public partial class InkjetSettingUserControl : UserControl
                 CheckMkPrinterAsync(txtMk058Ip.Text.Trim(), lblMk058Status),
                 CheckMkPrinterAsync(txtMk059Ip.Text.Trim(), lblMk059Status),
                 CheckUvPrinterAsync(txtUv1Ip.Text.Trim(), txtUv1Port.Text.Trim(),
-                    txtUv1Folder.Text.Trim(), Uv1Tables, lblUv1Dot, lblUv1Status),
+                    txtUv1Folder.Text.Trim(), lblUv1Dot, lblUv1Status),
                 CheckUvPrinterAsync(txtUv2Ip.Text.Trim(), txtUv2Port.Text.Trim(),
-                    txtUv2Folder.Text.Trim(), Uv2Tables, lblUv2Dot, lblUv2Status));
+                    txtUv2Folder.Text.Trim(), lblUv2Dot, lblUv2Status));
         }
         finally
         {
@@ -175,10 +161,10 @@ public partial class InkjetSettingUserControl : UserControl
     }
 
     private static async Task CheckUvPrinterAsync(
-        string ip, string portText, string folder, string[] tables,
+        string ip, string portText, string folder,
         Label dot, Label statusLabel)
     {
-        var folderOk = ValidateFolder(folder, tables).Count == 0
+        var folderOk = ValidateFolder(folder).Count == 0
                        && !string.IsNullOrWhiteSpace(folder);
 
         var ipOk = false;
@@ -227,7 +213,7 @@ public partial class InkjetSettingUserControl : UserControl
 
     // ── Folder browsing & validation ────────────────────────────────
 
-    private void BrowseFolder(AntdUI.Input target, Label statusLabel, string[] acceptedTables)
+    private void BrowseFolder(AntdUI.Input target, Label statusLabel)
     {
         using var dlg = new FolderBrowserDialog { ShowNewFolderButton = false };
         if (!string.IsNullOrEmpty(target.Text) && Directory.Exists(target.Text))
@@ -237,22 +223,27 @@ public partial class InkjetSettingUserControl : UserControl
         target.Text = dlg.SelectedPath;
         MarkDirty(target);
 
-        var problems = ValidateFolder(dlg.SelectedPath, acceptedTables);
-        ShowFolderStatus(dlg.SelectedPath, statusLabel, acceptedTables);
+        var problems = ValidateFolder(dlg.SelectedPath);
+        ShowFolderStatus(dlg.SelectedPath, statusLabel);
         if (problems.Count > 0)
             Notify.WarnModal(this, "แจ้งเตือน", string.Join("\n\n", problems));
     }
 
-    private static List<string> ValidateFolder(string folder, string[] acceptedTables)
+    private static List<string> ValidateFolder(string folder)
     {
         var problems = new List<string>();
         if (string.IsNullOrWhiteSpace(folder)) return problems;
 
+        // ตรวจแค่ว่ามีไฟล์ไหม ไม่เปิดเข้าไปดูชื่อตารางข้างใน
+        //
+        // เดิมบังคับว่าต้องมีตารางชื่อ MK063 (UV1) หรือ MK067 (UV2) แต่ชื่อตารางขึ้นกับ
+        // ซอฟต์แวร์ที่ลงในเครื่อง UV แต่ละตัว ไม่ได้ตายตัวตามหมายเลขเครื่อง โฟลเดอร์ที่
+        // ใช้งานได้จริงจึงถูกตีว่าใช้ไม่ได้ ทั้งที่ส่งงานเข้าเครื่องได้ปกติ
+        //
+        // ชื่อตารางที่ใช้ตอนเขียนจริงอยู่ที่ JobSendService ไม่ได้อ่านจากหน้านี้
         var cpiPath = Path.Combine(folder, REL_CPI);
         if (!File.Exists(cpiPath))
             problems.Add($"ไม่พบ {REL_CPI}");
-        else if (!acceptedTables.Any(t => HasTable(cpiPath, t)))
-            problems.Add($"พบ CPI.db3 แต่ไม่มีตาราง {string.Join(" หรือ ", acceptedTables)}");
 
         if (!File.Exists(Path.Combine(folder, REL_DEFAULT_UVDX)))
             problems.Add($"ไม่พบ {REL_DEFAULT_UVDX}");
@@ -260,10 +251,10 @@ public partial class InkjetSettingUserControl : UserControl
         return problems;
     }
 
-    private static void ShowFolderStatus(string folder, Label lbl, string[] tables)
+    private static void ShowFolderStatus(string folder, Label lbl)
     {
         if (string.IsNullOrWhiteSpace(folder)) { lbl.Text = ""; lbl.ForeColor = Color.Gray; return; }
-        var problems = ValidateFolder(folder, tables);
+        var problems = ValidateFolder(folder);
         if (problems.Count == 0)
         {
             lbl.Text = "✓ CPI.db3 + default.uvdx พร้อมใช้งาน";
@@ -274,20 +265,6 @@ public partial class InkjetSettingUserControl : UserControl
             lbl.Text = $"⚠ พบ {problems.Count} ปัญหา";
             lbl.ForeColor = DesignTokens.Danger;
         }
-    }
-
-    private static bool HasTable(string dbPath, string tableName)
-    {
-        try
-        {
-            using var conn = new SqliteConnection(SqlitePath.ReadOnly(dbPath));
-            conn.Open();
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=@t";
-            cmd.Parameters.AddWithValue("@t", tableName);
-            return Convert.ToInt64(cmd.ExecuteScalar()) > 0;
-        }
-        catch { return false; }
     }
 
     // ── Edit name helpers ───────────────────────────────────────────
