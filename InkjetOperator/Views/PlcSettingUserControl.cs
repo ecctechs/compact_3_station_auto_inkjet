@@ -851,8 +851,20 @@ public partial class PlcSettingUserControl : UserControl
             return true;
         }
 
-        if (int.TryParse(txtConveyorScale.Text.Trim(), out scale)
-            && scale is >= 1 and <= PlcOrderService.MaxConveyorScale)
+        bool parsed = int.TryParse(txtConveyorScale.Text.Trim(), out scale);
+
+        // 120 เป็นค่าที่วัดแล้วว่าผิดกับเครื่องชุดนี้ บอกให้ชัดตรงนี้ ไม่ใช่ปล่อยให้
+        // บันทึกผ่านแล้วโปรแกรมเงียบ ๆ ใช้ 100 แทน ซึ่งคนกรอกจะงงว่าทำไมไม่เป็นไปตามที่ใส่
+        if (parsed && scale == 120)
+        {
+            Notify.WarnModal(this, "ตัวคูณความเร็วสายพาน",
+                "ตั้ง 120 ไม่ได้ — วัดที่หน้างานแล้วค่านี้ทำให้สั่ง 50 Hz แต่สายพานเดิน 60 Hz"
+                + Environment.NewLine + Environment.NewLine
+                + $"ค่าที่ถูกคือ {PlcOrderService.DefaultConveyorScale}");
+            return false;
+        }
+
+        if (parsed && scale is >= 1 and <= PlcOrderService.MaxConveyorScale)
             return true;
 
         Notify.WarnModal(this, "ตัวคูณความเร็วสายพาน",

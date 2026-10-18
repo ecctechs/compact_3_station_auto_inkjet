@@ -194,10 +194,31 @@ public static class PlcOrderService
     /// <summary>ตัวคูณสูงสุดที่ใส่ได้</summary>
     public const int MaxConveyorScale = 1000;
 
-    /// <summary>ตัวคูณที่ใช้แปลง Hz ใน Pattern เป็นค่าที่เขียนลง Conveyor Speed 1</summary>
+    /// <summary>
+    /// ค่าเริ่มต้นเก่าที่พิสูจน์แล้วว่าผิด — เจอเมื่อไรให้ถือว่าเป็นค่าตกค้าง
+    ///
+    /// <para>
+    /// เครื่องที่เคยกด Save หน้า PLC Setting ก่อนหน้านี้จะมี 120 เขียนค้างไว้ใน
+    /// Setting.config และค่าที่บันทึกไว้ชนะค่าเริ่มต้นในโค้ดเสมอ แก้ค่าเริ่มต้น
+    /// อย่างเดียวจึงไม่พอ เครื่องเหล่านั้นจะยังคูณ 120 ต่อไปจนกว่าจะมีคนไปแก้ทีละเครื่อง
+    /// ซึ่งพลาดง่ายและไม่มีใครรู้ว่าเครื่องไหนแก้แล้ว
+    /// </para>
+    /// </summary>
+    private const int LegacyWrongScale = 120;
+
+    /// <summary>
+    /// ตัวคูณที่ใช้แปลง Hz ใน Pattern เป็นค่าที่เขียนลง Conveyor Speed 1
+    ///
+    /// <para>
+    /// ยังตั้งเองได้ที่หน้า PLC Setting เผื่อเครื่องรุ่นอื่นใช้สเกลไม่เท่ากัน แต่ตั้งเป็น
+    /// 120 ไม่ได้แล้ว — วัดที่หน้างานแล้วค่านั้นทำให้สั่ง 50 Hz ได้ 60 Hz จริง
+    /// ไม่ใช่ความชอบ แต่เป็นค่าที่ผิดกับเครื่องชุดนี้
+    /// </para>
+    /// </summary>
     public static int ConveyorScale =>
         int.TryParse(CustomSettingsManager.Read(ConveyorScaleKey, ""), out var value)
         && value is >= 1 and <= MaxConveyorScale
+        && value != LegacyWrongScale
             ? value
             : DefaultConveyorScale;
 
