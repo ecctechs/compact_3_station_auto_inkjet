@@ -109,10 +109,19 @@ public partial class SettingUserControl : UserControl
         // ที่เปลี่ยนกฎการทำงานหน้างาน ไม่ใช่ค่าที่พนักงานควรพลิกเองระหว่างผลิต
         visible[StationOptionsTab] = level == DevMenuLevel;
 
-        // ปุ่ม "ใช้ IP หน้างาน" อยู่ล่างสุดของแถบ — โหมด Dev มีเมนูครบแปดอันซึ่งสูงเกินที่ว่าง
-        // เมนูอันล่างสุดจะโดนปุ่มทับ จึงลดความสูงแต่ละแถวลงให้พอดี (ไม่เกิน 96 เท่าเดิม)
+        // ปุ่ม "ใช้ IP หน้างาน" เปิดเฉพาะโหมดทดสอบ
+        //
+        // กดทีเดียวเขียนทับ IP ของทุกเครื่องพร้อมกัน ไม่ใช่ค่าที่พนักงานหน้างานต้องแตะ
+        // ด้วยเหตุผลเดียวกับหน้าสถานะระบบและตัวเลือกหน้างานที่ปิดไว้ข้างบน
+        bool showSiteNetwork = level == DevMenuLevel;
+        tlpSiteNetwork.Visible = showSiteNetwork;
+
+        // ปุ่มอยู่ล่างสุดของแถบ — โหมด Dev มีเมนูครบแปดอันซึ่งสูงเกินที่ว่าง เมนูอัน
+        // ล่างสุดจะโดนปุ่มทับ จึงลดความสูงแต่ละแถวลงให้พอดี (ไม่เกิน 96 เท่าเดิม)
+        // ซ่อนปุ่มแล้วไม่ต้องกันที่ให้ เมนูจะได้ใช้ความสูงเต็มแถบ
         int count = visible.Count(v => v);
-        int space = pnlSidebar.ClientSize.Height - tlpSiteNetwork.Height - pnlSidebar.Padding.Vertical - 4;
+        int reserved = showSiteNetwork ? tlpSiteNetwork.Height : 0;
+        int space = pnlSidebar.ClientSize.Height - reserved - pnlSidebar.Padding.Vertical - 4;
         float rowHeight = count == 0 ? 96F : Math.Min(96F, space / count);
 
         int row = 0;
