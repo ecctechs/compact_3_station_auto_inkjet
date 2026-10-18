@@ -123,7 +123,7 @@ partial class StationOptionsUserControl
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 214F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 262F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 1770);
+        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 2174);
         tlpOptionsRoot.TabIndex = 0;
         //
         // lblOptionsTitle
@@ -797,7 +797,7 @@ partial class StationOptionsUserControl
         Controls.Add(tlpOptionsRoot);
         Name = "StationOptionsUserControl";
         Padding = new System.Windows.Forms.Padding(32);
-        Size = new System.Drawing.Size(1280, 1834);
+        Size = new System.Drawing.Size(1280, 2238);
         tlpOptionsRoot.ResumeLayout(false);
         tlpReset.ResumeLayout(false);
         flpJobData.ResumeLayout(false);
