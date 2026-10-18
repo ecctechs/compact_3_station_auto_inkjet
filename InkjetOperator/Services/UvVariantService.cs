@@ -17,18 +17,22 @@ namespace InkjetOperator.Services;
 /// </summary>
 public static class UvVariantService
 {
-    /// <summary>คีย์ใน Setting.config — "1" = เปิด (ค่าเริ่มต้นเปิด)</summary>
+    /// <summary>คีย์ใน Setting.config — "1" = เปิด</summary>
     public const string Key = "UV_VARIANT_REPEAT";
 
     /// <summary>
-    /// เปิดใช้การพิมพ์รุ่นย่อยเพิ่มให้งานใบเดิมไหม — ปิดแล้วกลับไปเหมือนก่อนมีฟีเจอร์นี้
+    /// เปิดใช้การพิมพ์รุ่นย่อยเพิ่มให้งานใบเดิมไหม
     ///
     /// <para>
-    /// ปิดแล้วปุ่มเลือกรุ่นหายทั้งหมด และปุ่มจบงานกลับไปดูแค่ขั้นในแผนเหมือนเดิม
-    /// ตั้งที่ Setting → ตัวเลือกหน้างาน (โหมด Dev)
+    /// <b>ค่าเริ่มต้นปิด</b> — เลือกรุ่นย่อยครั้งเดียวตอนกดเริ่มงาน เหมือนที่หน้างาน
+    /// ใช้อยู่เดิม ปิดแล้วปุ่มเลือกรุ่นในแถวงานหายทั้งหมด และปุ่มจบงานกลับไปดูแค่
+    /// ขั้นในแผนเหมือนเดิม
+    /// </para>
+    /// <para>
+    /// เปิดได้ที่ Setting → ตัวเลือกหน้างาน (โหมด Dev) เมื่อพร้อมลองที่หน้างานจริง
     /// </para>
     /// </summary>
-    public static bool Enabled => CustomSettingsManager.Read(Key, "1").Trim() == "1";
+    public static bool Enabled => CustomSettingsManager.Read(Key, "0").Trim() == "1";
 
     /// <summary>คีย์ใน payload ของ command ที่เก็บชื่อรุ่นย่อยที่ส่งจริง</summary>
     private const string ProgramKey = "program";
