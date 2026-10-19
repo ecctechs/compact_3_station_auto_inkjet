@@ -92,6 +92,7 @@ class MachineQueueController {
             machine: item.machine,
             round,
             program_name: item.program_name ?? null,
+            awaiting_pick: item.awaiting_pick === true && !item.program_name,
             state: PENDING,
           });
         }
@@ -360,6 +361,8 @@ class MachineQueueController {
 
         if (state === PENDING) patch.state = PENDING;
         if (program_name !== undefined) patch.program_name = program_name || null;
+        // ST3 เลือกรุ่นให้แถวที่จองไว้แล้ว — ลำดับคิวเดิม ส่งได้ตั้งแต่นี้
+        if (program_name) patch.awaiting_pick = false;
 
         // omitNull ถูกเปิดไว้ทั้งโปรเจค การล้าง program_name เป็นค่าว่างจึงต้องปิดตรงนี้
         await row.update(patch, { omitNull: false, transaction: t });
@@ -408,6 +411,7 @@ class MachineQueueController {
       const result = await withQueueLock(async (t) => {
           const row = await MachineQueue.findByPk(req.params.id, { transaction: t });
           if (!row || row.state !== ACTIVE || row.sent_at) conflict("คิวนี้ยังไม่พร้อมส่งหรือส่งแล้ว");
+          if (row.awaiting_pick) conflict(`${row.machine}: รอ ST3 เลือกรุ่นก่อน ยังส่งไม่ได้`);
           if (await PrintJobCommand.findOne({ where: { command: DISPATCH, payload: { token: req.body.token } }, transaction: t }))
             conflict("คำขอส่งนี้ถูกใช้แล้ว ให้ตรวจผลก่อนส่งใหม่");
           await assertNoUnresolved([row], t);

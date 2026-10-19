@@ -603,6 +603,17 @@ public partial class OrderListUserControl : UserControl
         if (!string.Equals(resolved.Job.Status, "Process", StringComparison.OrdinalIgnoreCase)) return;
         if (!CheckSteps(resolved.PlanRouting?.MarkingMethod, resolved.Commands).Complete) return;
 
+        // ยังเหลือรุ่นย่อยที่ไม่ได้พิมพ์ — ไม่จบเงียบ ๆ ให้คนกดจบที่จอซึ่งมีกล่องเตือนว่าเหลืออะไร
+        var unprinted = await UnprintedVariantNotesAsync(resolved);
+        if (IsDisposed) return;
+        if (unprinted.Count > 0)
+        {
+            var left = string.Join(" · ", unprinted.Select(u => $"{u.Step} {string.Join(", ", u.Variants)}"));
+            AppLog.Info("PushButton", $"ไม่จบงานอัตโนมัติ {JobName(jobId)} · ยังไม่พิมพ์ {left}");
+            Notify.Warn(this, $"{JobName(jobId)} ยังไม่พิมพ์รุ่น {left} — งานยังไม่จบ ถ้าพอแล้วกดจบงานที่จอ");
+            return;
+        }
+
         // อ่านคิวใหม่หลังปล่อย — ชุดที่อ่านก่อนปล่อยยังเห็นแถวที่เพิ่งปล่อยไป
         var (queue, queueError) = await _api.GetMachineQueueAsync();
         if (IsDisposed || queueError != null) return;
@@ -671,6 +682,7 @@ public partial class OrderListUserControl : UserControl
             {
                 // ถึงคิวแล้วแต่ยังไม่ได้ส่ง กับส่งเข้าเครื่องไปแล้ว เป็นคนละสภาพกัน
                 var what = holder.NeedsSendReview ? "กำลังส่ง / รอตรวจสอบผล"
+                    : holder.AwaitingPick ? "รอ ST3 เลือกรุ่น"
                     : holder.SentAt == null ? "รอ ST1 ส่ง" : machine == "MK" ? "กำลังพิมพ์" : "ส่งข้อมูลแล้ว";
 
                 label.Text = $"● {machine} — {JobName(holder.PrintJobsId)} · {what}";
@@ -1590,7 +1602,7 @@ public partial class OrderListUserControl : UserControl
             .ToList();
         if (mine.Count == 0) return null;
 
-        var starting = mine.Where(r => r.State == "active" && r.SentAt == null).Select(r => r.Machine).ToList();
+        var starting = mine.Where(r => r.State == "active" && r.SentAt == null && !r.AwaitingPick).Select(r => r.Machine).ToList();
         if (starting.Count > 0) return $"Starting ({string.Join(", ", starting.Distinct())})";
 
         bool behindOtherJob = mine.Any(r => r.State == "pending" && _queueRows.Any(h =>
@@ -1752,7 +1764,12 @@ public partial class OrderListUserControl : UserControl
         // ต้องรอชิ้นงานออกไปติด shim นอกไลน์ก่อน คนจะกดเริ่มงานรอบสองเองตอนชิ้นงานพร้อม
         // ถ้าจองไว้ตั้งแต่ตอนนี้ เครื่องจะส่งรอบสองให้ทันทีที่ว่าง ทั้งที่ชิ้นงานยังไม่กลับมา
         var (queued, queueError) = await _api.EnqueueMachinesAsync(
-            jobId, QueueItemsFor(sendPlan.Steps, uvPicks).Where(i => i.Round == 1).ToList());
+            jobId, QueueItemsFor(sendPlan.Steps, uvPicks).Where(i => i.Round == 1)
+                // UV2 ที่ฝาก ST3 เลือกรุ่น จองคิวตอนกดเริ่มเลย — ลำดับเดียวกับชิ้นงานบนสายพาน
+                // ไม่งั้นงานที่กดเริ่มทีหลังแซงได้ เครื่องโหลดโปรแกรมผิดชิ้น (ตกลง 19/10/2026)
+                // ถึงคิวแล้วยังไม่เลือก เครื่องรอ ST3 · backend ไม่ให้ส่งจนกว่าจะเลือก
+                .Concat(deferred.Select(step => new MachineQueueItem { Machine = step, Round = 1, AwaitingPick = true }))
+                .ToList());
         timing.Mark("จองคิว");
         if (IsDisposed) return;
 
@@ -1974,10 +1991,10 @@ public partial class OrderListUserControl : UserControl
                 continue;
             }
 
-            // ฝากให้ ST3 เลือกรุ่น — ยังไม่จอง ยังไม่ส่ง
+            // ฝากให้ ST3 เลือกรุ่น — จองคิวไว้ตามลำดับ แต่ยังไม่ส่งจนกว่าจะเลือก
             if (deferred?.Contains(step) == true)
             {
-                facts.Add(($"{step} · ST{station}", "รอ ST3 เลือกรุ่น · ยังไม่ส่ง" + Environment.NewLine
+                facts.Add(($"{step} · ST{station}", "จองคิวไว้แล้ว · รอ ST3 เลือกรุ่นก่อนส่ง" + Environment.NewLine
                     + "คนที่ ST3 กด เลือกรุ่น UV2 ในแถวงาน"));
                 continue;
             }
@@ -2210,6 +2227,17 @@ public partial class OrderListUserControl : UserControl
         var chosen = UvProgramResolver.PickFrom(all, this, uvNumber);
         if (chosen == null || IsDisposed) return;
 
+        // งานที่เริ่มจากโปรแกรมรุ่นนี้จองคิว UV2 ไว้แล้วตอนกดเริ่ม — ใส่รุ่นลงแถวเดิม ลำดับไม่เปลี่ยน
+        var booked = queue.FirstOrDefault(r => r.PrintJobsId == jobId && r.AwaitingPick
+            && string.Equals(r.Machine, step, StringComparison.OrdinalIgnoreCase)
+            && r.State is "pending" or "active");
+        if (booked != null)
+        {
+            await PickIntoBookedRowAsync(jobId, step, uvName, chosen, booked);
+            return;
+        }
+
+        // ไม่มีแถวจองไว้ — งานที่เริ่มจากโปรแกรมรุ่นก่อน จองคิวตอนนี้แบบเดิม
         var holder = queue.FirstOrDefault(r => r.State == "active"
             && string.Equals(r.Machine, step, StringComparison.OrdinalIgnoreCase));
         bool waits = holder != null || queue.Any(r => r.State == "pending"
@@ -2252,6 +2280,55 @@ public partial class OrderListUserControl : UserControl
         else
             Notify.Warn(this, $"{JobName(jobId)} · {step} เข้าคิวแล้ว แต่ยืนยันการเริ่มคิวไม่ได้ · "
                 + string.Join(" · ", errors) + " · ตรวจสถานะคิวก่อนกดอีกครั้ง");
+
+        await RefreshDataAsync(force: true);
+    }
+
+    /// <summary>
+    /// ใส่รุ่นที่ ST3 เลือกลงแถวคิว UV2 ที่จองไว้ตอนกดเริ่มงาน — ลำดับคิวเดิม
+    ///
+    /// <para>
+    /// ถึงคิวแล้ว (active) = เครื่องรออยู่ ส่งเลย (ST1 ส่งทันที / ST3 ให้ ST1 ส่งรอบ poll)
+    /// ยังไม่ถึงคิว = รอตามลำดับเดิม พอถึงตาก็ส่งได้ทันทีไม่ต้องรอเลือกอีก
+    /// </para>
+    /// </summary>
+    private async Task PickIntoBookedRowAsync(int jobId, string step, string uvName, string chosen, MachineQueueRow booked)
+    {
+        bool atHead = booked.State == "active";
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = $"ส่งเข้า {step}",
+                Headline = atHead ? $"ส่งเข้า {step} เลยไหม?" : $"ใช้รุ่นนี้ — ส่งเมื่อถึงคิวไหม?",
+                Facts =
+                [
+                    ("งาน", JobName(jobId)),
+                    ("ไฟล์", $"{chosen}.uvdx"),
+                    ($"{step} · {uvName}", atHead ? "ถึงคิวแล้ว · เครื่องรออยู่ ส่งเลย" : "จองคิวไว้แล้ว · ส่งเมื่อถึงคิว (ลำดับเดิม)"),
+                ],
+                OkText = atHead ? $"ส่งเข้า {step}" : "ใช้รุ่นนี้",
+                Icon = "PlayCircleFilled",
+                OkIcon = "CaretRightFilled",
+            }))
+            return;
+
+        var (ok, error) = await _api!.UpdateMachineQueueAsync(booked.Id, programName: chosen);
+        if (IsDisposed) return;
+        if (!ok)
+        {
+            Notify.ErrorModal(this, "เลือกรุ่นไม่สำเร็จ",
+                $"{step} ยังไม่ได้เลือกรุ่น" + Environment.NewLine + Environment.NewLine + JobName(jobId)
+                + Environment.NewLine + (error ?? "ติดต่อ backend ไม่ได้"));
+            await RefreshDataAsync(force: true);
+            return;
+        }
+
+        AppLog.Info("OrderList.Uv2Pick", $"ST3 เลือก {chosen} ให้ {JobName(jobId)} · คิว {booked.Id} {(atHead ? "ถึงคิวแล้ว" : "รอคิว")}");
+        if (!atHead)
+            Notify.Success(this, $"{JobName(jobId)} · {step} ใช้ {chosen}.uvdx · ส่งเมื่อถึงคิว");
+        else if (StationService.IsSt3)
+            Notify.Success(this, $"{JobName(jobId)} · {step} {chosen}.uvdx · ST1 จะส่งให้");
+        else
+            await ProcessMachineQueueAsync(machineFilter: step);
 
         await RefreshDataAsync(force: true);
     }
@@ -2496,6 +2573,12 @@ public partial class OrderListUserControl : UserControl
                     // คำตอบหายอาจจองสำเร็จแล้ว ห้ามล้างคิวจากการคาดเดา
                     anyQueued = true;
                     lines.Add(Notify.Bad($"{machine}: {claimError}"));
+                }
+                else if (claim?.Claimed is { AwaitingPick: true })
+                {
+                    // ได้เครื่องแล้ว แต่ยังไม่ได้เลือกรุ่น — ถือเครื่องรอ ST3 ไม่ถามรุ่นที่ ST1
+                    anyQueued = true;
+                    lines.Add(Notify.Note($"{machine}: ถึงคิวแล้ว · รอ ST3 เลือกรุ่นก่อนส่ง"));
                 }
                 else if (claim?.Claimed is { } row) ready.Add(new(row, resolved));
                 else
@@ -3154,7 +3237,7 @@ public partial class OrderListUserControl : UserControl
                     + ": กำลังส่งหรือรอตรวจสอบผล ระบบจะไม่ส่งซ้ำเอง");
 
             // ส่งเฉพาะคิวที่คนสั่งเริ่มหรือปล่อยเครื่องแล้ว ไม่หยิบ pending มาส่งเอง
-            var ready = rows.Where(r => r.State == "active" && r.SentAt == null && !r.NeedsSendReview
+            var ready = rows.Where(r => r.State == "active" && r.SentAt == null && !r.NeedsSendReview && !r.AwaitingPick
                     && (machineFilter == null || string.Equals(r.Machine, machineFilter, StringComparison.OrdinalIgnoreCase)))
                 .OrderBy(r => r.Id)
                 .Where(r => !MachineBusy.IsBusy(r.Machine) && ReserveDispatch(r.Machine)).ToList();
@@ -3400,17 +3483,22 @@ public partial class OrderListUserControl : UserControl
         }
 
         var steps = CheckSteps(method, resolved.Commands);
+        var unprinted = await UnprintedVariantNotesAsync(resolved);
+        if (IsDisposed) return;
 
         // งานยังไม่ครบก็จบได้ ถ้าผู้ใช้ยืนยันเอง — บันทึกไว้ว่าเป็นการจบด้วยมือ
-        bool manual = !steps.Complete;
+        // รุ่นย่อย UV ที่ยังไม่ได้พิมพ์นับว่ายังไม่ครบด้วย บอกให้เห็นว่าเหลือรุ่นไหน
+        bool manual = !steps.Complete || unprinted.Count > 0;
         if (manual)
         {
-            var list = string.Join(", ", steps.Missing);
+            var facts = new List<(string, string)> { ("งาน", JobName(jobId)) };
+            if (!steps.Complete) facts.Add(("ยังไม่ส่ง", string.Join(", ", steps.Missing)));
+            facts.AddRange(unprinted.Take(4).Select(u => ($"{u.Step} ยังไม่พิมพ์", string.Join(", ", u.Variants))));
             if (!Confirm.Ask(this, new ConfirmSpec
                 {
-                    Title = "งานยังส่งไม่ครบ",
-                    Headline = "จบงานทั้งที่ยังส่งไม่ครบ?",
-                    Facts = [("งาน", JobName(jobId)), ("ยังขาด", list)],
+                    Title = steps.Complete ? "ยังพิมพ์รุ่นย่อยไม่ครบ" : "งานยังส่งไม่ครบ",
+                    Headline = steps.Complete ? "จบงานทั้งที่ยังเหลือรุ่นย่อย?" : "จบงานทั้งที่ยังส่งไม่ครบ?",
+                    Facts = facts,
                     Warning = "ตรวจที่เครื่องให้แน่ใจก่อน — จบแล้วงานนี้ออกจากรายการ",
                     OkText = "จบงาน",
                     OkIcon = "FlagFilled",
@@ -3550,11 +3638,66 @@ public partial class OrderListUserControl : UserControl
         }
     }
 
+    /// <summary>รุ่นย่อยที่ยังไม่ได้พิมพ์ของขั้นหนึ่ง</summary>
+    private sealed record UnprintedVariants(string Step, List<string> Variants);
+
+    /// <summary>
+    /// รุ่นย่อย UV ที่ยังไม่ได้พิมพ์ของงานนี้ — ใช้ระบายสีปุ่มจบงาน (ไม่แตะดิสก์ อ่านจากแคช)
+    ///
+    /// <para>
+    /// นับเฉพาะตอนเปิดตัวเลือกพิมพ์หลายรุ่น และขั้นนั้นเริ่มพิมพ์ไปแล้ว — ตกลงกับผู้ใช้ 19/10/2026:
+    /// ยังพิมพ์ไม่ครบทุกรุ่น ปุ่มจบงานเป็นสีส้ม กดจบกลางคันต้องเตือนว่าเหลือรุ่นไหน
+    /// (ยังจบได้ ไม่บังคับให้พิมพ์ครบ) · สถานีที่มองไม่เห็นโฟลเดอร์ UV นั้นไม่รู้รายชื่อ ไม่นับ
+    /// </para>
+    /// </summary>
+    private List<UnprintedVariants> UnprintedVariantNotes(PrintJob job)
+    {
+        var notes = new List<UnprintedVariants>();
+        if (!UvVariantService.Enabled) return notes;
+
+        foreach (var step in UvSteps)
+        {
+            if (!UvVariantService.InPlan(job.Status, job.PlanRouting?.MarkingMethod, step)) continue;
+            if (!UvVariantService.Started(job.Commands, step)) continue;
+            if (!_uvVariants.TryGetValue((job.Id, step), out var all)) continue;
+
+            var left = UvVariantService.Remaining(all, job.Commands, step);
+            if (left.Count > 0) notes.Add(new(step, left));
+        }
+        return notes;
+    }
+
+    /// <summary>เหมือน <see cref="UnprintedVariantNotes"/> แต่อ่านโฟลเดอร์สด — ใช้ตอนตัดสินจบงาน</summary>
+    private async Task<List<UnprintedVariants>> UnprintedVariantNotesAsync(ResolvedJobResponse resolved)
+    {
+        var notes = new List<UnprintedVariants>();
+        if (!UvVariantService.Enabled) return notes;
+
+        var job = resolved.Job;
+        var method = resolved.PlanRouting?.MarkingMethod;
+        foreach (var step in UvSteps)
+        {
+            if (!UvVariantService.InPlan(job.Status, method, step)) continue;
+            if (!UvVariantService.Started(resolved.Commands, step)) continue;
+
+            var program = resolved.UvJobData?.FirstOrDefault(r =>
+                string.Equals(r.Machine, step, StringComparison.OrdinalIgnoreCase))?.ProgramName;
+            var all = await UvVariantService.AllVariantsAsync(program, step);
+            if (IsDisposed) return notes;
+            _uvVariants[(job.Id, step)] = all;
+
+            var left = UvVariantService.Remaining(all, resolved.Commands, step);
+            if (left.Count > 0) notes.Add(new(step, left));
+        }
+        return notes;
+    }
+
     /// <summary>
     /// อ่านรายชื่อรุ่นย่อยของงานที่เข้าเงื่อนไข แล้วเก็บลงแคช — คืน true เมื่อมีของใหม่
     ///
     /// <para>
-    /// อ่านเฉพาะงานที่กำลังผลิต ขั้นที่สถานีนี้ดูแล และถือเครื่องนั้นอยู่ ซึ่งปกติมีไม่กี่ใบ
+    /// อ่านเฉพาะงานที่กำลังผลิต และ (ถือเครื่องนั้นที่สถานีที่ดูแล หรือเริ่มพิมพ์ขั้นนั้นไปแล้ว)
+    /// ซึ่งปกติมีไม่กี่ใบ — อย่างหลังใช้ระบายสีปุ่มจบงานว่ายังเหลือรุ่นไหม
     /// งานที่เคยอ่านแล้วไม่อ่านซ้ำ รายชื่อไฟล์ในเครื่องไม่เปลี่ยนระหว่างกะ
     /// </para>
     /// </summary>
@@ -3568,9 +3711,9 @@ public partial class OrderListUserControl : UserControl
         {
             foreach (var step in UvSteps)
             {
-                if (!UvVariantService.StationOwns(step)) continue;
                 if (!UvVariantService.InPlan(job.Status, job.PlanRouting?.MarkingMethod, step)) continue;
-                if (UvVariantService.HeldRow(job.Id, step, _queueRows) == null) continue;
+                bool held = UvVariantService.StationOwns(step) && UvVariantService.HeldRow(job.Id, step, _queueRows) != null;
+                if (!held && !UvVariantService.Started(job.Commands, step)) continue;
                 if (_uvVariants.ContainsKey((job.Id, step))) continue;
 
                 // ชื่อโปรแกรม UV ไม่ได้มากับ /job/getAll ต้องดึงรายละเอียดงานเพิ่ม
@@ -3817,9 +3960,11 @@ public partial class OrderListUserControl : UserControl
                 // เขียว = ส่งครบแล้วจบได้เลย · ส้ม = ยังไม่ครบ กดได้แต่จะเตือนก่อน
                 // commands / plan_routing มาจาก /job/getAll ที่ include ไว้ให้แล้ว
                 // รุ่นย่อย UV ที่ยังไม่พิมพ์ไม่นับ — ไม่ต้องพิมพ์ครบทุกรุ่น
+                // รุ่นย่อย UV ที่ยังไม่ได้พิมพ์ (เปิดตัวเลือกพิมพ์หลายรุ่น) ก็นับว่ายังไม่ครบ
                 var steps = CheckSteps(job.PlanRouting?.MarkingMethod, job.Commands);
+                bool complete = steps.Complete && UnprintedVariantNotes(job).Count == 0;
                 buttons.Add(new AntdUI.CellButton("complete", "จบงาน",
-                    steps.Complete ? AntdUI.TTypeMini.Success : AntdUI.TTypeMini.Warn)
+                    complete ? AntdUI.TTypeMini.Success : AntdUI.TTypeMini.Warn)
                 { Radius = 6 });
             }
             else

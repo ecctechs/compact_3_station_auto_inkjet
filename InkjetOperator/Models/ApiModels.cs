@@ -589,6 +589,13 @@ public class MachineQueueRow
     [JsonIgnore]
     public bool NeedsSendReview => DispatchState is "sending" or "unknown";
 
+    /// <summary>
+    /// จองคิวไว้แล้ว รอคนที่ ST3 เลือกรุ่นย่อย UV2 — ST1 ห้ามส่ง / ห้ามถามรุ่นเอง backend ก็ไม่ให้เริ่มส่ง
+    /// เลือกแล้ว (ใส่ program_name) กลับเป็น false · ลำดับคิวเท่ากับตอนกดเริ่มงาน
+    /// </summary>
+    [JsonPropertyName("awaiting_pick")]
+    public bool AwaitingPick { get; set; }
+
     [JsonPropertyName("id")]
     public int Id { get; set; }
 
@@ -632,6 +639,10 @@ public class MachineQueueItem
 
     [JsonPropertyName("program_name")]
     public string? ProgramName { get; set; }
+
+    /// <summary>จองไว้รอ ST3 เลือกรุ่น — ดู <see cref="MachineQueueRow.AwaitingPick"/></summary>
+    [JsonPropertyName("awaiting_pick")]
+    public bool AwaitingPick { get; set; }
 }
 
 /// <summary>จำนวนแถวที่ถูกล้างตอนรีเซ็ตกลับเป็นค่าเริ่มต้น</summary>

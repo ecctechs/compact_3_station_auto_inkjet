@@ -508,7 +508,7 @@ partial class StationOptionsUserControl
         lblUvRepeatHelp.Name = "lblUvRepeatHelp";
         lblUvRepeatHelp.Size = new System.Drawing.Size(1076, 52);
         lblUvRepeatHelp.TabIndex = 25;
-        lblUvRepeatHelp.Text = "ระหว่างงานถือเครื่อง UV แถวงานมีปุ่ม เปลี่ยนรุ่น เลือกรุ่นที่ยังไม่พิมพ์แล้วส่งเข้าเครื่องทันที\r\nปุ่ม UV1 ขึ้นที่ ST1 · UV2 ขึ้นที่ ST3 · ไม่ต้องพิมพ์ครบ · กดปุ่มหน้าเครื่อง = จบงาน";
+        lblUvRepeatHelp.Text = "ระหว่างงานถือเครื่อง UV แถวงานมีปุ่ม เปลี่ยนรุ่น เลือกรุ่นที่ยังไม่พิมพ์แล้วส่งเข้าเครื่องทันที\r\nปุ่ม UV1 ขึ้นที่ ST1 · UV2 ขึ้นที่ ST3 · ยังเหลือรุ่น = ปุ่มจบงานสีส้ม กดจบได้แต่เตือนก่อน";
         lblUvRepeatHelp.TextAlign = System.Drawing.ContentAlignment.TopLeft;
         //
         // chkUvRepeat

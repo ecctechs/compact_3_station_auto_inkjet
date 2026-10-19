@@ -109,6 +109,13 @@ public static class UvVariantService
         return await UvProgramResolver.VariantsAsync(programName, docFolder);
     }
 
+    /// <summary>
+    /// ขั้น UV นี้เริ่มพิมพ์ไปแล้วอย่างน้อยหนึ่งรุ่นไหม — ยังไม่เริ่มไม่นับว่า "เหลือรุ่น"
+    /// (รุ่นแรกเลือกตอนกดเริ่มงาน / ฝากให้ ST3 เลือก ซึ่งนับเป็นขั้นที่ยังไม่ส่งอยู่แล้ว)
+    /// </summary>
+    public static bool Started(IEnumerable<CommandResult>? commands, string step) =>
+        commands?.Any(c => c.Success && string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true;
+
     /// <summary>รุ่นที่ยังไม่ได้พิมพ์ — ทั้งหมดลบที่ส่งไปแล้ว</summary>
     public static List<string> Remaining(List<string> all, IEnumerable<CommandResult>? commands, string step)
     {

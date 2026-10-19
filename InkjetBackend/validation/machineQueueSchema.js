@@ -7,6 +7,8 @@ const enqueueItemSchema = z.object({
   machine: machineName,
   round: z.number().int().min(1).max(9).optional(),
   program_name: z.string().nullable().optional(),
+  // จองไว้รอ ST3 เลือกรุ่น — ส่งไม่ได้จนกว่าจะใส่ program_name
+  awaiting_pick: z.boolean().optional(),
 });
 
 const enqueueSchema = z.object({

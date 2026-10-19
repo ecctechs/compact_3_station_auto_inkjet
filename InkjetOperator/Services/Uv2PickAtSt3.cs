@@ -48,8 +48,10 @@ public static class Uv2PickAtSt3
         if (commands?.Any(c => c.Success && string.Equals(c.Command, Step, StringComparison.OrdinalIgnoreCase)) == true)
             return false;
 
-        return !queue.Any(r => r.PrintJobsId == jobId
+        // ไม่มีแถว UV2 (งานที่เริ่มจากโปรแกรมรุ่นก่อน) หรือแถวที่จองไว้ยังรอเลือกรุ่น
+        var rows = queue.Where(r => r.PrintJobsId == jobId
             && string.Equals(r.Machine, Step, StringComparison.OrdinalIgnoreCase)
-            && r.State is "pending" or "active");
+            && r.State is "pending" or "active").ToList();
+        return rows.Count == 0 || rows.All(r => r.AwaitingPick);
     }
 }
