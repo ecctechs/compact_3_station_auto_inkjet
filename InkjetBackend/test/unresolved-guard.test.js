@@ -1,5 +1,8 @@
-// โหมด "ส่งไม่ครบ ไม่ส่งเลย" — ปลดคิวที่ค้างเพราะไม่รู้ผลส่ง ด้วยธง resolve ที่โปรแกรมส่งมาเอง
-// ไม่ส่งธง = กฎเดิมทุกอย่าง (ดู queue-reliability.test.js)
+// คิวที่ส่งแล้วไม่รู้ผล ปล่อย / ล้าง / ยกเลิก / จบ ไม่ได้ — ทางออกเดียวคือคนยืนยันข้ามเครื่อง
+// (POST /machine-queue/skip ดู machine-skip.test.js)
+//
+// เดิมโหมด "ส่งไม่ครบ ไม่ส่งเลย" ส่งธง resolve_unresolved / ?resolve=true มาปลดได้
+// เลิกโหมดนั้นแล้ว 19/10/2026 — โปรแกรมรุ่นเก่าที่ยังส่งธงมา ต้องไม่มีผลอะไร
 //
 // รันแบบเดียวกับ queue-reliability.test.js:
 //   QUEUE_TEST_DATABASE_URL=postgres://.../queue_reliability_test node --test test/
@@ -76,52 +79,28 @@ test("ไม่ส่งธง: คิวที่ไม่รู้ผลยั
   assert.equal((await lastDispatch(row.id)).payload.outcome, "unknown");
 });
 
-test("ปุ่มหน้าเครื่อง + ธง: ปล่อยคิวที่ไม่รู้ผลได้ เครื่องว่างให้คิวถัดไป และเก็บร่องรอย", async () => {
-  const { row } = await stuckUv1();
-  const other = await job();
-  await enqueue(other.id, [{ machine: "UV1" }]);
-
-  const r = await request("/machine-queue/release",
-    { machine: "UV1", expected_holder_id: row.id, resolve_unresolved: true });
-  assert.equal(r.status, 200);
-  assert.equal(r.data.released.id, row.id);
-  assert.equal(r.data.next.print_jobs_id, other.id);
-
-  assert.equal((await MachineQueue.findByPk(row.id)).state, "done");
-  const attempt = await lastDispatch(row.id);
-  assert.equal(attempt.payload.outcome, "not_sent");
-  assert.equal(attempt.payload.resolved_from, "unknown");
-  assert.equal(attempt.payload.resolved_by, "operator");
-});
-
-test("ธงไม่ได้เปิดให้ปล่อยคิวที่ถึงคิวแล้วแต่ยังไม่ได้เริ่มส่ง", async () => {
-  const j = await job();
-  await enqueue(j.id, [{ machine: "UV1" }]);
-  const row = (await claim(j.id, "UV1")).data.claimed;
-  const r = await request("/machine-queue/release",
-    { machine: "UV1", expected_holder_id: row.id, resolve_unresolved: true });
-  assert.equal(r.status, 409);
-  assert.equal((await MachineQueue.findByPk(row.id)).state, "active");
-});
-
-test("ยกเลิกงาน + ธง: ปลดผลค้าง ล้างคิว และเปลี่ยนสถานะได้", async () => {
+test("ธงเก่าของโหมดส่งไม่ครบไม่มีผลแล้ว: ปล่อย / ล้าง / ยกเลิก / จบ ยังไม่ได้ ผลยังเป็น unknown", async () => {
   const { job: j, row } = await stuckUv1();
-  const r = await request(`/job/${j.id}/status`, { status: "Cancel", resolve_unresolved: true }, "PATCH");
-  assert.equal(r.status, 200);
-  assert.equal((await PrintJob.findByPk(j.id)).status, "Cancel");
-  assert.equal(await MachineQueue.count({ where: { print_jobs_id: j.id } }), 0);
+  assert.equal((await request("/machine-queue/release",
+    { machine: "UV1", expected_holder_id: row.id, resolve_unresolved: true })).status, 409);
+  assert.equal((await request(`/machine-queue/job/${j.id}?resolve=true`, undefined, "DELETE")).status, 409);
+  assert.equal((await request(`/job/${j.id}/status`, { status: "Cancel", resolve_unresolved: true }, "PATCH")).status, 409);
+  assert.equal((await request(`/job/${j.id}/status`, { status: "Success", resolve_unresolved: true }, "PATCH")).status, 409);
+
+  assert.equal((await MachineQueue.findByPk(row.id)).state, "active");
+  assert.equal((await lastDispatch(row.id)).payload.outcome, "unknown");
+  assert.ok(!["Cancel", "Success"].includes((await PrintJob.findByPk(j.id)).status));
+});
+
+test("ข้ามเครื่องแล้ว ยกเลิกงานได้ตามปกติ", async () => {
+  const { job: j, row } = await stuckUv1();
+  assert.equal((await request("/machine-queue/skip", { print_jobs_id: j.id, machine: "UV1" })).status, 200);
   assert.equal((await lastDispatch(row.id)).payload.outcome, "not_sent");
-});
-
-test("ล้างคิวทั้งงาน + ธง: ลบได้แม้มีผลค้าง", async () => {
-  const { job: j } = await stuckUv1();
-  const r = await request(`/machine-queue/job/${j.id}?resolve=true`, undefined, "DELETE");
-  assert.equal(r.status, 200);
+  assert.equal((await request(`/job/${j.id}/status`, { status: "Cancel" }, "PATCH")).status, 200);
   assert.equal(await MachineQueue.count({ where: { print_jobs_id: j.id } }), 0);
 });
 
-test("งาน 11 ส่ง UV1 ผ่าน UV2 ไม่ผ่าน (not_sent) → ตีกลับได้โดยไม่ต้องใช้ธง", async () => {
-  // ลำดับเดียวกับที่โปรแกรมทำในโหมดนี้: บันทึกผลทั้งสองเครื่อง แล้วล้างคิว + ตั้งรอเริ่ม
+test("งาน 11 ส่ง UV1 ผ่าน UV2 ไม่ผ่าน (not_sent) → ล้างคิวและตีกลับได้ (ส่งไม่ผ่านแน่นอนไม่ใช่ผลค้าง)", async () => {
   const j = await job();
   await enqueue(j.id, [{ machine: "UV1" }, { machine: "UV2" }]);
   const uv1 = (await claim(j.id, "UV1")).data.claimed;

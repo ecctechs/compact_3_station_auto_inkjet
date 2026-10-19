@@ -116,6 +116,19 @@ public static class UvVariantService
     public static bool Started(IEnumerable<CommandResult>? commands, string step) =>
         commands?.Any(c => c.Success && string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true;
 
+    /// <summary>
+    /// ต้องนับรุ่นที่ยังไม่ได้พิมพ์ของขั้นนี้ไหม — เริ่มพิมพ์แล้ว และคนไม่ได้ยืนยันข้ามเครื่องนี้
+    ///
+    /// <para>
+    /// ข้ามเครื่องกลางคัน (เครื่องเสียหลังพิมพ์ไปบางรุ่น) แปลว่าตั้งใจไม่พิมพ์ที่เครื่องนี้อีก
+    /// รุ่นที่เหลือจึงไม่ใช่ "ยังไม่ครบ" — ไม่งั้นปุ่มจบงานค้างสีส้ม เตือนตอนจบ และงานไม่จบเอง
+    /// </para>
+    /// </summary>
+    public static bool CountsRemaining(IEnumerable<CommandResult>? commands, string step) =>
+        Started(commands, step)
+        && commands?.Any(c => c.Success
+            && string.Equals(MarkingMethodService.SkippedStep(c.Command), step, StringComparison.OrdinalIgnoreCase)) != true;
+
     /// <summary>รุ่นที่ยังไม่ได้พิมพ์ — ทั้งหมดลบที่ส่งไปแล้ว</summary>
     public static List<string> Remaining(List<string> all, IEnumerable<CommandResult>? commands, string step)
     {
