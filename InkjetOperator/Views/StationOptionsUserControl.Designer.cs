@@ -19,46 +19,54 @@ partial class StationOptionsUserControl
     {
         tlpOptionsRoot = new System.Windows.Forms.TableLayoutPanel();
         lblOptionsTitle = new AntdUI.Label();
-        pnlRemoteSend = new AntdUI.Panel();
-        lblRemoteSendHeading = new AntdUI.Label();
+        lblSectionOptions = new AntdUI.Label();
+        lblSectionTools = new AntdUI.Label();
+        divRow1 = new AntdUI.Divider();
+        divRow2 = new AntdUI.Divider();
+        divRow3 = new AntdUI.Divider();
+        divRow4 = new AntdUI.Divider();
+        divRow5 = new AntdUI.Divider();
+        divRow6 = new AntdUI.Divider();
+        divRow7 = new AntdUI.Divider();
+        divRow8 = new AntdUI.Divider();
+        divRow9 = new AntdUI.Divider();
+        divRow10 = new AntdUI.Divider();
+        divRow11 = new AntdUI.Divider();
         tlpRemoteSend = new System.Windows.Forms.TableLayoutPanel();
-        chkManualRemoteSend = new AntdUI.Checkbox();
+        lblRemoteSendHeading = new AntdUI.Label();
         lblRemoteSendHelp = new AntdUI.Label();
-        pnlProcessTabs = new AntdUI.Panel();
+        chkManualRemoteSend = new AntdUI.Switch();
         tlpProcessTabs = new System.Windows.Forms.TableLayoutPanel();
         lblProcessTabsHeading = new AntdUI.Label();
+        lblProcessTabsHelp = new AntdUI.Label();
         flpProcessTabs = new System.Windows.Forms.FlowLayoutPanel();
         rdoProcessTabsStations = new AntdUI.Radio();
         rdoProcessTabsDev = new AntdUI.Radio();
         rdoProcessTabsOff = new AntdUI.Radio();
-        lblProcessTabsHelp = new AntdUI.Label();
-        pnlMockup = new AntdUI.Panel();
         tlpMockup = new System.Windows.Forms.TableLayoutPanel();
         lblMockupHeading = new AntdUI.Label();
-        chkMockupStatus = new AntdUI.Checkbox();
         lblMockupHelp = new AntdUI.Label();
-        pnlAllOrNothing = new AntdUI.Panel();
+        chkMockupStatus = new AntdUI.Switch();
         tlpAllOrNothing = new System.Windows.Forms.TableLayoutPanel();
         lblAllOrNothingHeading = new AntdUI.Label();
-        chkAllOrNothing = new AntdUI.Checkbox();
         lblAllOrNothingHelp = new AntdUI.Label();
-        pnlUv2Pick = new AntdUI.Panel();
-        pnlUvRepeat = new AntdUI.Panel();
-        tlpUvRepeat = new System.Windows.Forms.TableLayoutPanel();
-        lblUvRepeatHeading = new AntdUI.Label();
-        chkUvRepeat = new AntdUI.Checkbox();
-        lblUvRepeatHelp = new AntdUI.Label();
-        pnlScanTab = new AntdUI.Panel();
-        tlpScanTab = new System.Windows.Forms.TableLayoutPanel();
-        lblScanTabHeading = new AntdUI.Label();
-        chkScanTab = new AntdUI.Checkbox();
-        lblScanTabHelp = new AntdUI.Label();
+        chkAllOrNothing = new AntdUI.Switch();
         tlpUv2Pick = new System.Windows.Forms.TableLayoutPanel();
         lblUv2PickHeading = new AntdUI.Label();
-        chkUv2Pick = new AntdUI.Checkbox();
         lblUv2PickHelp = new AntdUI.Label();
-        pnlReset = new AntdUI.Panel();
-        pnlJobData = new AntdUI.Panel();
+        chkUv2Pick = new AntdUI.Switch();
+        tlpUvRepeat = new System.Windows.Forms.TableLayoutPanel();
+        lblUvRepeatHeading = new AntdUI.Label();
+        lblUvRepeatHelp = new AntdUI.Label();
+        chkUvRepeat = new AntdUI.Switch();
+        tlpScanTab = new System.Windows.Forms.TableLayoutPanel();
+        lblScanTabHeading = new AntdUI.Label();
+        lblScanTabHelp = new AntdUI.Label();
+        chkScanTab = new AntdUI.Switch();
+        tlpReset = new System.Windows.Forms.TableLayoutPanel();
+        lblResetHeading = new AntdUI.Label();
+        lblResetHelp = new AntdUI.Label();
+        btnResetRuntime = new AntdUI.Button();
         tlpJobData = new System.Windows.Forms.TableLayoutPanel();
         lblJobDataHeading = new AntdUI.Label();
         lblJobDataHelp = new AntdUI.Label();
@@ -66,31 +74,18 @@ partial class StationOptionsUserControl
         btnSaveJobData = new AntdUI.Button();
         btnImportJobData = new AntdUI.Button();
         btnClearJobData = new AntdUI.Button();
-        tlpReset = new System.Windows.Forms.TableLayoutPanel();
-        lblResetHeading = new AntdUI.Label();
-        btnResetRuntime = new AntdUI.Button();
-        lblResetHelp = new AntdUI.Label();
         tlpOptionsRoot.SuspendLayout();
-        pnlRemoteSend.SuspendLayout();
-        pnlProcessTabs.SuspendLayout();
+        tlpRemoteSend.SuspendLayout();
         tlpProcessTabs.SuspendLayout();
         flpProcessTabs.SuspendLayout();
-        pnlMockup.SuspendLayout();
         tlpMockup.SuspendLayout();
-        pnlAllOrNothing.SuspendLayout();
         tlpAllOrNothing.SuspendLayout();
-        pnlUv2Pick.SuspendLayout();
-        pnlUvRepeat.SuspendLayout();
-        tlpUvRepeat.SuspendLayout();
-        pnlScanTab.SuspendLayout();
-        tlpScanTab.SuspendLayout();
         tlpUv2Pick.SuspendLayout();
-        pnlReset.SuspendLayout();
+        tlpUvRepeat.SuspendLayout();
+        tlpScanTab.SuspendLayout();
         tlpReset.SuspendLayout();
-        pnlJobData.SuspendLayout();
         tlpJobData.SuspendLayout();
         flpJobData.SuspendLayout();
-        tlpRemoteSend.SuspendLayout();
         SuspendLayout();
         //
         // tlpOptionsRoot
@@ -98,32 +93,58 @@ partial class StationOptionsUserControl
         tlpOptionsRoot.ColumnCount = 1;
         tlpOptionsRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpOptionsRoot.Controls.Add(lblOptionsTitle, 0, 0);
-        tlpOptionsRoot.Controls.Add(pnlRemoteSend, 0, 1);
-        tlpOptionsRoot.Controls.Add(pnlProcessTabs, 0, 2);
-        tlpOptionsRoot.Controls.Add(pnlMockup, 0, 3);
-        tlpOptionsRoot.Controls.Add(pnlAllOrNothing, 0, 4);
-        tlpOptionsRoot.Controls.Add(pnlUv2Pick, 0, 5);
-        tlpOptionsRoot.Controls.Add(pnlUvRepeat, 0, 6);
-        tlpOptionsRoot.Controls.Add(pnlScanTab, 0, 7);
-        tlpOptionsRoot.Controls.Add(pnlReset, 0, 8);
-        tlpOptionsRoot.Controls.Add(pnlJobData, 0, 9);
+        tlpOptionsRoot.Controls.Add(lblSectionOptions, 0, 1);
+        tlpOptionsRoot.Controls.Add(divRow1, 0, 2);
+        tlpOptionsRoot.Controls.Add(tlpRemoteSend, 0, 3);
+        tlpOptionsRoot.Controls.Add(divRow2, 0, 4);
+        tlpOptionsRoot.Controls.Add(tlpProcessTabs, 0, 5);
+        tlpOptionsRoot.Controls.Add(divRow3, 0, 6);
+        tlpOptionsRoot.Controls.Add(tlpMockup, 0, 7);
+        tlpOptionsRoot.Controls.Add(divRow4, 0, 8);
+        tlpOptionsRoot.Controls.Add(tlpAllOrNothing, 0, 9);
+        tlpOptionsRoot.Controls.Add(divRow5, 0, 10);
+        tlpOptionsRoot.Controls.Add(tlpUv2Pick, 0, 11);
+        tlpOptionsRoot.Controls.Add(divRow6, 0, 12);
+        tlpOptionsRoot.Controls.Add(tlpUvRepeat, 0, 13);
+        tlpOptionsRoot.Controls.Add(divRow7, 0, 14);
+        tlpOptionsRoot.Controls.Add(tlpScanTab, 0, 15);
+        tlpOptionsRoot.Controls.Add(divRow8, 0, 16);
+        tlpOptionsRoot.Controls.Add(lblSectionTools, 0, 17);
+        tlpOptionsRoot.Controls.Add(divRow9, 0, 18);
+        tlpOptionsRoot.Controls.Add(tlpReset, 0, 19);
+        tlpOptionsRoot.Controls.Add(divRow10, 0, 20);
+        tlpOptionsRoot.Controls.Add(tlpJobData, 0, 21);
+        tlpOptionsRoot.Controls.Add(divRow11, 0, 22);
         tlpOptionsRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpOptionsRoot.Location = new System.Drawing.Point(32, 32);
         tlpOptionsRoot.Margin = new System.Windows.Forms.Padding(0);
         tlpOptionsRoot.Name = "tlpOptionsRoot";
-        tlpOptionsRoot.RowCount = 11;
+        tlpOptionsRoot.RowCount = 24;
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 66F));
-        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 210F));
-        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 232F));
-        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 240F));
-        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 286F));
-        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 246F));
-        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 202F));
-        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 202F));
-        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 214F));
-        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 262F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 116F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 116F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 116F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 116F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 116F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 116F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 116F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 72F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 184F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 184F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 2174);
+        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 1465);
         tlpOptionsRoot.TabIndex = 0;
         //
         // lblOptionsTitle
@@ -131,472 +152,441 @@ partial class StationOptionsUserControl
         lblOptionsTitle.Dock = System.Windows.Forms.DockStyle.Fill;
         lblOptionsTitle.Font = new System.Drawing.Font("Segoe UI", 25F, System.Drawing.FontStyle.Bold);
         lblOptionsTitle.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        lblOptionsTitle.Location = new System.Drawing.Point(0, 0);
         lblOptionsTitle.Margin = new System.Windows.Forms.Padding(0);
         lblOptionsTitle.Name = "lblOptionsTitle";
         lblOptionsTitle.Size = new System.Drawing.Size(1216, 66);
-        lblOptionsTitle.TabIndex = 0;
+        lblOptionsTitle.TabIndex = 1;
         lblOptionsTitle.Text = "ตัวเลือกหน้างาน";
         //
-        // pnlRemoteSend
+        // lblSectionOptions
         //
-        pnlRemoteSend.Back = System.Drawing.Color.White;
-        pnlRemoteSend.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        pnlRemoteSend.BorderWidth = 2F;
-        pnlRemoteSend.Controls.Add(tlpRemoteSend);
-        pnlRemoteSend.Dock = System.Windows.Forms.DockStyle.Fill;
-        pnlRemoteSend.Location = new System.Drawing.Point(0, 66);
-        pnlRemoteSend.Margin = new System.Windows.Forms.Padding(0);
-        pnlRemoteSend.Name = "pnlRemoteSend";
-        pnlRemoteSend.Padding = new System.Windows.Forms.Padding(24);
-        pnlRemoteSend.Radius = 10;
-        pnlRemoteSend.Size = new System.Drawing.Size(1216, 210);
-        pnlRemoteSend.TabIndex = 1;
+        lblSectionOptions.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblSectionOptions.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        lblSectionOptions.ForeColor = System.Drawing.Color.FromArgb(140, 140, 140);
+        lblSectionOptions.Margin = new System.Windows.Forms.Padding(0);
+        lblSectionOptions.Name = "lblSectionOptions";
+        lblSectionOptions.Padding = new System.Windows.Forms.Padding(0, 0, 0, 6);
+        lblSectionOptions.Size = new System.Drawing.Size(1216, 48);
+        lblSectionOptions.TabIndex = 2;
+        lblSectionOptions.Text = "ตั้งค่าการทำงาน · เซฟทันทีที่กด";
+        lblSectionOptions.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
         //
         // tlpRemoteSend
         //
-        tlpRemoteSend.ColumnCount = 1;
+        tlpRemoteSend.ColumnCount = 2;
         tlpRemoteSend.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpRemoteSend.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
         tlpRemoteSend.Controls.Add(lblRemoteSendHeading, 0, 0);
-        tlpRemoteSend.Controls.Add(chkManualRemoteSend, 0, 1);
-        tlpRemoteSend.Controls.Add(lblRemoteSendHelp, 0, 2);
+        tlpRemoteSend.Controls.Add(lblRemoteSendHelp, 0, 1);
+        tlpRemoteSend.Controls.Add(chkManualRemoteSend, 1, 0);
         tlpRemoteSend.Dock = System.Windows.Forms.DockStyle.Fill;
-        tlpRemoteSend.Location = new System.Drawing.Point(24, 24);
         tlpRemoteSend.Margin = new System.Windows.Forms.Padding(0);
         tlpRemoteSend.Name = "tlpRemoteSend";
-        tlpRemoteSend.RowCount = 3;
-        tlpRemoteSend.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
-        tlpRemoteSend.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpRemoteSend.Padding = new System.Windows.Forms.Padding(0, 14, 0, 14);
+        tlpRemoteSend.RowCount = 2;
+        tlpRemoteSend.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
         tlpRemoteSend.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpRemoteSend.Size = new System.Drawing.Size(1168, 162);
-        tlpRemoteSend.TabIndex = 0;
+        tlpRemoteSend.SetRowSpan(chkManualRemoteSend, 2);
+        tlpRemoteSend.Size = new System.Drawing.Size(1216, 116);
+        tlpRemoteSend.TabIndex = 3;
         //
-        // pnlProcessTabs
+        // lblRemoteSendHeading
         //
-        pnlProcessTabs.Back = System.Drawing.Color.White;
-        pnlProcessTabs.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        pnlProcessTabs.BorderWidth = 2F;
-        pnlProcessTabs.Controls.Add(tlpProcessTabs);
-        pnlProcessTabs.Dock = System.Windows.Forms.DockStyle.Fill;
-        pnlProcessTabs.Margin = new System.Windows.Forms.Padding(0, 16, 0, 0);
-        pnlProcessTabs.Name = "pnlProcessTabs";
-        pnlProcessTabs.Padding = new System.Windows.Forms.Padding(24);
-        pnlProcessTabs.Radius = 10;
-        pnlProcessTabs.Size = new System.Drawing.Size(1216, 216);
-        pnlProcessTabs.TabIndex = 2;
+        lblRemoteSendHeading.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblRemoteSendHeading.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        lblRemoteSendHeading.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblRemoteSendHeading.Margin = new System.Windows.Forms.Padding(0);
+        lblRemoteSendHeading.Name = "lblRemoteSendHeading";
+        lblRemoteSendHeading.Size = new System.Drawing.Size(1076, 36);
+        lblRemoteSendHeading.TabIndex = 4;
+        lblRemoteSendHeading.Text = "ปุ่ม \"ขอให้ ST1 ส่ง\" ในหน้า Order Detail (ST3)";
+        //
+        // lblRemoteSendHelp
+        //
+        lblRemoteSendHelp.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblRemoteSendHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblRemoteSendHelp.ForeColor = System.Drawing.Color.FromArgb(102, 102, 102);
+        lblRemoteSendHelp.Margin = new System.Windows.Forms.Padding(0);
+        lblRemoteSendHelp.Name = "lblRemoteSendHelp";
+        lblRemoteSendHelp.Size = new System.Drawing.Size(1076, 52);
+        lblRemoteSendHelp.TabIndex = 5;
+        lblRemoteSendHelp.Text = "ปุ่มสำรองตอนปุ่มกดหน้างานหรือ PLC ใช้ไม่ได้ ขึ้นเฉพาะงานที่ส่งขั้นแรกไปแล้วและยังเหลือขั้นถัดไป\r\nกดเมื่อชิ้นงานอยู่ในเครื่องพร้อมพิมพ์แล้วเท่านั้น";
+        lblRemoteSendHelp.TextAlign = System.Drawing.ContentAlignment.TopLeft;
+        //
+        // chkManualRemoteSend
+        //
+        chkManualRemoteSend.Anchor = System.Windows.Forms.AnchorStyles.Right;
+        chkManualRemoteSend.CheckedText = "เปิด";
+        chkManualRemoteSend.Font = new System.Drawing.Font("Segoe UI", 11F);
+        chkManualRemoteSend.Margin = new System.Windows.Forms.Padding(0);
+        chkManualRemoteSend.Name = "chkManualRemoteSend";
+        chkManualRemoteSend.Size = new System.Drawing.Size(84, 36);
+        chkManualRemoteSend.TabIndex = 6;
+        chkManualRemoteSend.UnCheckedText = "ปิด";
         //
         // tlpProcessTabs
         //
-        tlpProcessTabs.ColumnCount = 1;
+        tlpProcessTabs.ColumnCount = 2;
         tlpProcessTabs.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpProcessTabs.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 340F));
         tlpProcessTabs.Controls.Add(lblProcessTabsHeading, 0, 0);
-        tlpProcessTabs.Controls.Add(flpProcessTabs, 0, 1);
-        tlpProcessTabs.Controls.Add(lblProcessTabsHelp, 0, 2);
+        tlpProcessTabs.Controls.Add(lblProcessTabsHelp, 0, 1);
+        tlpProcessTabs.Controls.Add(flpProcessTabs, 1, 0);
         tlpProcessTabs.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpProcessTabs.Margin = new System.Windows.Forms.Padding(0);
         tlpProcessTabs.Name = "tlpProcessTabs";
-        tlpProcessTabs.RowCount = 3;
-        tlpProcessTabs.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
-        tlpProcessTabs.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpProcessTabs.Padding = new System.Windows.Forms.Padding(0, 14, 0, 14);
+        tlpProcessTabs.RowCount = 2;
+        tlpProcessTabs.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
         tlpProcessTabs.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpProcessTabs.Size = new System.Drawing.Size(1168, 168);
-        tlpProcessTabs.TabIndex = 0;
+        tlpProcessTabs.SetRowSpan(flpProcessTabs, 2);
+        tlpProcessTabs.Size = new System.Drawing.Size(1216, 116);
+        tlpProcessTabs.TabIndex = 7;
         //
         // lblProcessTabsHeading
         //
         lblProcessTabsHeading.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblProcessTabsHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        lblProcessTabsHeading.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         lblProcessTabsHeading.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         lblProcessTabsHeading.Margin = new System.Windows.Forms.Padding(0);
         lblProcessTabsHeading.Name = "lblProcessTabsHeading";
-        lblProcessTabsHeading.Size = new System.Drawing.Size(1168, 42);
-        lblProcessTabsHeading.TabIndex = 0;
-        lblProcessTabsHeading.Text = "ตัวกรอง In-line / Off-line ในหน้า Order List";
-        //
-        // flpProcessTabs - สามตัวเลือกอยู่ใน parent เดียวกัน Radio จึงเลือกได้ทีละข้อเอง
-        //
-        flpProcessTabs.Controls.Add(rdoProcessTabsStations);
-        flpProcessTabs.Controls.Add(rdoProcessTabsDev);
-        flpProcessTabs.Controls.Add(rdoProcessTabsOff);
-        flpProcessTabs.Dock = System.Windows.Forms.DockStyle.Fill;
-        flpProcessTabs.Margin = new System.Windows.Forms.Padding(0, 0, 0, 12);
-        flpProcessTabs.Name = "flpProcessTabs";
-        flpProcessTabs.Size = new System.Drawing.Size(1168, 32);
-        flpProcessTabs.TabIndex = 1;
-        flpProcessTabs.WrapContents = false;
-        //
-        // rdoProcessTabsStations
-        //
-        rdoProcessTabsStations.Font = new System.Drawing.Font("Segoe UI", 15F);
-        rdoProcessTabsStations.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
-        rdoProcessTabsStations.Margin = new System.Windows.Forms.Padding(0, 0, 32, 0);
-        rdoProcessTabsStations.Name = "rdoProcessTabsStations";
-        rdoProcessTabsStations.Size = new System.Drawing.Size(300, 32);
-        rdoProcessTabsStations.TabIndex = 0;
-        rdoProcessTabsStations.Text = "โชว์ที่ ST1 และ ST3";
-        //
-        // rdoProcessTabsDev
-        //
-        rdoProcessTabsDev.Font = new System.Drawing.Font("Segoe UI", 15F);
-        rdoProcessTabsDev.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
-        rdoProcessTabsDev.Margin = new System.Windows.Forms.Padding(0, 0, 32, 0);
-        rdoProcessTabsDev.Name = "rdoProcessTabsDev";
-        rdoProcessTabsDev.Size = new System.Drawing.Size(300, 32);
-        rdoProcessTabsDev.TabIndex = 1;
-        rdoProcessTabsDev.Text = "เฉพาะโหมด Dev";
-        //
-        // rdoProcessTabsOff
-        //
-        rdoProcessTabsOff.Font = new System.Drawing.Font("Segoe UI", 15F);
-        rdoProcessTabsOff.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
-        rdoProcessTabsOff.Margin = new System.Windows.Forms.Padding(0);
-        rdoProcessTabsOff.Name = "rdoProcessTabsOff";
-        rdoProcessTabsOff.Size = new System.Drawing.Size(300, 32);
-        rdoProcessTabsOff.TabIndex = 2;
-        rdoProcessTabsOff.Text = "ปิดทั้งหมด";
+        lblProcessTabsHeading.Size = new System.Drawing.Size(876, 36);
+        lblProcessTabsHeading.TabIndex = 8;
+        lblProcessTabsHeading.Text = "ตัวกรอง In-line / Off-line";
         //
         // lblProcessTabsHelp
         //
         lblProcessTabsHelp.Dock = System.Windows.Forms.DockStyle.Fill;
         lblProcessTabsHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
-        lblProcessTabsHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
+        lblProcessTabsHelp.ForeColor = System.Drawing.Color.FromArgb(102, 102, 102);
         lblProcessTabsHelp.Margin = new System.Windows.Forms.Padding(0);
         lblProcessTabsHelp.Name = "lblProcessTabsHelp";
-        lblProcessTabsHelp.Size = new System.Drawing.Size(1168, 82);
-        lblProcessTabsHelp.TabIndex = 2;
-        lblProcessTabsHelp.Text = "เพิ่ม dropdown กรองงานเป็น In-line หรือ Off-line ในหน้า Order List ใช้ได้ทั้งแท็บ List และ History\r\nอ่านจากช่อง Process seq ของงานตรง ๆ โปรแกรมไม่ได้เปลี่ยนค่านี้เอง งานที่ช่องนี้ไม่ใช่ In-line หรือ Off-line เห็นเมื่อเลือก \"ทั้งหมด\"\r\nเปลี่ยนแล้วหน้า Order List เห็นผลภายในไม่กี่วินาที ไม่ต้องปิดเปิดโปรแกรม";
+        lblProcessTabsHelp.Size = new System.Drawing.Size(876, 52);
+        lblProcessTabsHelp.TabIndex = 9;
+        lblProcessTabsHelp.Text = "dropdown กรองงานตาม Process seq ในหน้า Order List\r\nเห็นผลภายในไม่กี่วินาที ไม่ต้องเปิดโปรแกรมใหม่";
+        lblProcessTabsHelp.TextAlign = System.Drawing.ContentAlignment.TopLeft;
         //
-        // pnlMockup — ขอบส้ม: เป็นของที่ต้องกลับมาปิด ไม่ใช่ตั้งทิ้งไว้
+        // flpProcessTabs
         //
-        pnlMockup.Back = System.Drawing.Color.White;
-        pnlMockup.BorderColor = System.Drawing.Color.FromArgb(217, 119, 6);
-        pnlMockup.BorderWidth = 2F;
-        pnlMockup.Controls.Add(tlpMockup);
-        pnlMockup.Dock = System.Windows.Forms.DockStyle.Fill;
-        pnlMockup.Margin = new System.Windows.Forms.Padding(0, 16, 0, 0);
-        pnlMockup.Name = "pnlMockup";
-        pnlMockup.Padding = new System.Windows.Forms.Padding(24);
-        pnlMockup.Radius = 10;
-        pnlMockup.Size = new System.Drawing.Size(1216, 224);
-        pnlMockup.TabIndex = 3;
+        flpProcessTabs.Anchor = System.Windows.Forms.AnchorStyles.Right;
+        flpProcessTabs.AutoSize = true;
+        flpProcessTabs.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+        flpProcessTabs.Controls.Add(rdoProcessTabsStations);
+        flpProcessTabs.Controls.Add(rdoProcessTabsDev);
+        flpProcessTabs.Controls.Add(rdoProcessTabsOff);
+        flpProcessTabs.Margin = new System.Windows.Forms.Padding(0);
+        flpProcessTabs.Name = "flpProcessTabs";
+        flpProcessTabs.Size = new System.Drawing.Size(330, 36);
+        flpProcessTabs.TabIndex = 10;
+        flpProcessTabs.WrapContents = false;
+        //
+        // rdoProcessTabsStations
+        //
+        rdoProcessTabsStations.Font = new System.Drawing.Font("Segoe UI", 13F);
+        rdoProcessTabsStations.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        rdoProcessTabsStations.Margin = new System.Windows.Forms.Padding(0);
+        rdoProcessTabsStations.Name = "rdoProcessTabsStations";
+        rdoProcessTabsStations.Size = new System.Drawing.Size(130, 36);
+        rdoProcessTabsStations.TabIndex = 0;
+        rdoProcessTabsStations.Text = "ST1 + ST3";
+        //
+        // rdoProcessTabsDev
+        //
+        rdoProcessTabsDev.Font = new System.Drawing.Font("Segoe UI", 13F);
+        rdoProcessTabsDev.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        rdoProcessTabsDev.Margin = new System.Windows.Forms.Padding(0);
+        rdoProcessTabsDev.Name = "rdoProcessTabsDev";
+        rdoProcessTabsDev.Size = new System.Drawing.Size(130, 36);
+        rdoProcessTabsDev.TabIndex = 1;
+        rdoProcessTabsDev.Text = "เฉพาะ Dev";
+        //
+        // rdoProcessTabsOff
+        //
+        rdoProcessTabsOff.Font = new System.Drawing.Font("Segoe UI", 13F);
+        rdoProcessTabsOff.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        rdoProcessTabsOff.Margin = new System.Windows.Forms.Padding(0);
+        rdoProcessTabsOff.Name = "rdoProcessTabsOff";
+        rdoProcessTabsOff.Size = new System.Drawing.Size(70, 36);
+        rdoProcessTabsOff.TabIndex = 2;
+        rdoProcessTabsOff.Text = "ปิด";
         //
         // tlpMockup
         //
-        tlpMockup.ColumnCount = 1;
+        tlpMockup.ColumnCount = 2;
         tlpMockup.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpMockup.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
         tlpMockup.Controls.Add(lblMockupHeading, 0, 0);
-        tlpMockup.Controls.Add(chkMockupStatus, 0, 1);
-        tlpMockup.Controls.Add(lblMockupHelp, 0, 2);
+        tlpMockup.Controls.Add(lblMockupHelp, 0, 1);
+        tlpMockup.Controls.Add(chkMockupStatus, 1, 0);
         tlpMockup.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpMockup.Margin = new System.Windows.Forms.Padding(0);
         tlpMockup.Name = "tlpMockup";
-        tlpMockup.RowCount = 3;
-        tlpMockup.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
-        tlpMockup.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpMockup.Padding = new System.Windows.Forms.Padding(0, 14, 0, 14);
+        tlpMockup.RowCount = 2;
+        tlpMockup.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
         tlpMockup.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpMockup.Size = new System.Drawing.Size(1168, 176);
-        tlpMockup.TabIndex = 0;
+        tlpMockup.SetRowSpan(chkMockupStatus, 2);
+        tlpMockup.Size = new System.Drawing.Size(1216, 116);
+        tlpMockup.TabIndex = 11;
         //
         // lblMockupHeading
         //
         lblMockupHeading.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblMockupHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        lblMockupHeading.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         lblMockupHeading.ForeColor = System.Drawing.Color.FromArgb(217, 119, 6);
         lblMockupHeading.Margin = new System.Windows.Forms.Padding(0);
         lblMockupHeading.Name = "lblMockupHeading";
-        lblMockupHeading.Size = new System.Drawing.Size(1168, 42);
-        lblMockupHeading.TabIndex = 0;
-        lblMockupHeading.Text = "Mockup สถานะการเชื่อมต่อ (สำหรับถ่ายรูปคู่มือ)";
-        //
-        // chkMockupStatus
-        //
-        chkMockupStatus.Dock = System.Windows.Forms.DockStyle.Fill;
-        chkMockupStatus.Font = new System.Drawing.Font("Segoe UI", 15F);
-        chkMockupStatus.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
-        chkMockupStatus.Margin = new System.Windows.Forms.Padding(0, 0, 0, 12);
-        chkMockupStatus.Name = "chkMockupStatus";
-        chkMockupStatus.Size = new System.Drawing.Size(1168, 32);
-        chkMockupStatus.TabIndex = 1;
-        chkMockupStatus.Text = "ให้ทุกหน้าแสดงสถานะเชื่อมต่อสำเร็จทั้งหมด";
+        lblMockupHeading.Size = new System.Drawing.Size(1076, 36);
+        lblMockupHeading.TabIndex = 12;
+        lblMockupHeading.Text = "Mockup สถานะเชื่อมต่อ (ถ่ายรูปคู่มือ)";
         //
         // lblMockupHelp
         //
         lblMockupHelp.Dock = System.Windows.Forms.DockStyle.Fill;
         lblMockupHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
-        lblMockupHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
+        lblMockupHelp.ForeColor = System.Drawing.Color.FromArgb(102, 102, 102);
         lblMockupHelp.Margin = new System.Windows.Forms.Padding(0);
         lblMockupHelp.Name = "lblMockupHelp";
-        lblMockupHelp.Size = new System.Drawing.Size(1168, 90);
-        lblMockupHelp.TabIndex = 2;
-        lblMockupHelp.Text = "ไฟสถานะ ป้ายผลตรวจ และบรรทัดในกล่องผลการทำงานของทุกหน้า ขึ้นว่าเชื่อมต่อได้ทั้งหมด โดยไม่ได้ต่อเครื่องจริง ใช้ถ่ายรูปทำคู่มือ\r\nมีผลทุกสถานีบนเครื่องนี้ (Scan Barcode · ST1 · ST3) เปลี่ยน MENU_LEVEL ไปถ่ายหน้าของสถานีอื่นได้ ค่ายังค้างอยู่\r\nไม่แตะการส่งงาน การเขียนค่าเข้า PLC หรือการสั่งเครื่องจริง — ของพวกนั้นยังรายงานผลจริงเสมอ\r\nถ่ายเสร็จต้องกลับมาปิดที่หน้านี้ (MENU_LEVEL 99) ห้ามเปิดค้างไว้ที่เครื่องหน้างาน";
+        lblMockupHelp.Size = new System.Drawing.Size(1076, 52);
+        lblMockupHelp.TabIndex = 13;
+        lblMockupHelp.Text = "ทุกหน้าขึ้นว่าเชื่อมต่อได้หมดโดยไม่ต่อเครื่องจริง · ไม่แตะการส่งงาน PLC หรือเครื่องจริง\r\nถ่ายเสร็จต้องกลับมาปิด ห้ามเปิดค้างไว้ที่เครื่องหน้างาน";
+        lblMockupHelp.TextAlign = System.Drawing.ContentAlignment.TopLeft;
         //
-        // pnlAllOrNothing — ขอบน้ำเงิน: ตัวเลือกของการส่งงาน เปิดทิ้งไว้ใช้งานจริงได้
+        // chkMockupStatus
         //
-        pnlAllOrNothing.Back = System.Drawing.Color.White;
-        pnlAllOrNothing.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        pnlAllOrNothing.BorderWidth = 2F;
-        pnlAllOrNothing.Controls.Add(tlpAllOrNothing);
-        pnlAllOrNothing.Dock = System.Windows.Forms.DockStyle.Fill;
-        pnlAllOrNothing.Margin = new System.Windows.Forms.Padding(0, 16, 0, 0);
-        pnlAllOrNothing.Name = "pnlAllOrNothing";
-        pnlAllOrNothing.Padding = new System.Windows.Forms.Padding(24);
-        pnlAllOrNothing.Radius = 10;
-        pnlAllOrNothing.Size = new System.Drawing.Size(1216, 270);
-        pnlAllOrNothing.TabIndex = 4;
+        chkMockupStatus.Anchor = System.Windows.Forms.AnchorStyles.Right;
+        chkMockupStatus.CheckedText = "เปิด";
+        chkMockupStatus.Font = new System.Drawing.Font("Segoe UI", 11F);
+        chkMockupStatus.Margin = new System.Windows.Forms.Padding(0);
+        chkMockupStatus.Name = "chkMockupStatus";
+        chkMockupStatus.Size = new System.Drawing.Size(84, 36);
+        chkMockupStatus.TabIndex = 14;
+        chkMockupStatus.UnCheckedText = "ปิด";
         //
         // tlpAllOrNothing
         //
-        tlpAllOrNothing.ColumnCount = 1;
+        tlpAllOrNothing.ColumnCount = 2;
         tlpAllOrNothing.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpAllOrNothing.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
         tlpAllOrNothing.Controls.Add(lblAllOrNothingHeading, 0, 0);
-        tlpAllOrNothing.Controls.Add(chkAllOrNothing, 0, 1);
-        tlpAllOrNothing.Controls.Add(lblAllOrNothingHelp, 0, 2);
+        tlpAllOrNothing.Controls.Add(lblAllOrNothingHelp, 0, 1);
+        tlpAllOrNothing.Controls.Add(chkAllOrNothing, 1, 0);
         tlpAllOrNothing.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpAllOrNothing.Margin = new System.Windows.Forms.Padding(0);
         tlpAllOrNothing.Name = "tlpAllOrNothing";
-        tlpAllOrNothing.RowCount = 3;
-        tlpAllOrNothing.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
-        tlpAllOrNothing.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpAllOrNothing.Padding = new System.Windows.Forms.Padding(0, 14, 0, 14);
+        tlpAllOrNothing.RowCount = 2;
+        tlpAllOrNothing.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
         tlpAllOrNothing.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpAllOrNothing.Size = new System.Drawing.Size(1168, 222);
-        tlpAllOrNothing.TabIndex = 0;
+        tlpAllOrNothing.SetRowSpan(chkAllOrNothing, 2);
+        tlpAllOrNothing.Size = new System.Drawing.Size(1216, 116);
+        tlpAllOrNothing.TabIndex = 15;
         //
         // lblAllOrNothingHeading
         //
         lblAllOrNothingHeading.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblAllOrNothingHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        lblAllOrNothingHeading.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         lblAllOrNothingHeading.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         lblAllOrNothingHeading.Margin = new System.Windows.Forms.Padding(0);
         lblAllOrNothingHeading.Name = "lblAllOrNothingHeading";
-        lblAllOrNothingHeading.Size = new System.Drawing.Size(1168, 42);
-        lblAllOrNothingHeading.TabIndex = 0;
+        lblAllOrNothingHeading.Size = new System.Drawing.Size(1076, 36);
+        lblAllOrNothingHeading.TabIndex = 16;
         lblAllOrNothingHeading.Text = "ส่งไม่ครบ ไม่ส่งเลย (งานที่ใช้หลายเครื่อง)";
-        //
-        // chkAllOrNothing
-        //
-        chkAllOrNothing.Dock = System.Windows.Forms.DockStyle.Fill;
-        chkAllOrNothing.Font = new System.Drawing.Font("Segoe UI", 15F);
-        chkAllOrNothing.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
-        chkAllOrNothing.Margin = new System.Windows.Forms.Padding(0, 0, 0, 12);
-        chkAllOrNothing.Name = "chkAllOrNothing";
-        chkAllOrNothing.Size = new System.Drawing.Size(1168, 32);
-        chkAllOrNothing.TabIndex = 1;
-        chkAllOrNothing.Text = "เครื่องไหนส่งไม่ผ่าน ตีทั้งงานกลับเป็นรอเริ่ม ไม่ค้างคิว";
         //
         // lblAllOrNothingHelp
         //
         lblAllOrNothingHelp.Dock = System.Windows.Forms.DockStyle.Fill;
         lblAllOrNothingHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
-        lblAllOrNothingHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
+        lblAllOrNothingHelp.ForeColor = System.Drawing.Color.FromArgb(102, 102, 102);
         lblAllOrNothingHelp.Margin = new System.Windows.Forms.Padding(0);
         lblAllOrNothingHelp.Name = "lblAllOrNothingHelp";
-        lblAllOrNothingHelp.Size = new System.Drawing.Size(1168, 136);
-        lblAllOrNothingHelp.TabIndex = 2;
-        lblAllOrNothingHelp.Text = "ใช้กับงานที่ส่งหลายเครื่อง (MK1 + MK2, UV1 + UV2, MK + UV2) — เครื่องไหนต่อไม่ติดหรือส่งไม่ผ่าน (รวมส่งไปแล้วไม่ได้คำตอบ) ไม่ส่งเครื่องไหนต่อ ล้างคิวของงาน ตีงานกลับเป็นรอเริ่ม แล้วบอกชื่อเครื่องที่ต้องไปตรวจ\r\nไม่มีคิวค้าง \"รอตรวจผล\" อีก คิวที่ค้างอยู่แล้ว ปลดได้ด้วยปุ่มหน้าเครื่อง หรือปุ่มยกเลิก / จบงาน · เครื่องไม่ว่างยังเข้าคิวรอเหมือนเดิม\r\nข้อแลก: เครื่องที่รับงานไปก่อนอีกเครื่องจะล้ม ได้ข้อมูลไปแล้วจริง ระบบเตือนชื่อเครื่องนั้นให้ กดเริ่มงานใหม่จะส่งทับ\r\nต้องเปิดที่เครื่อง ST1 (ST1 เป็นคนส่งทุกงาน รวมงานที่กดจาก ST3) และต้องใช้ backend รุ่นที่รองรับ";
+        lblAllOrNothingHelp.Size = new System.Drawing.Size(1076, 52);
+        lblAllOrNothingHelp.TabIndex = 17;
+        lblAllOrNothingHelp.Text = "เครื่องไหนส่งไม่ผ่าน ไม่ส่งเครื่องอื่นต่อ ล้างคิว ตีงานกลับเป็นรอเริ่ม แล้วบอกชื่อเครื่องที่ต้องตรวจ\r\nต้องเปิดที่เครื่อง ST1 · เครื่องที่รับงานไปก่อนแล้ว ระบบจะเตือนชื่อให้";
+        lblAllOrNothingHelp.TextAlign = System.Drawing.ContentAlignment.TopLeft;
         //
-        // pnlUv2Pick — ขอบน้ำเงิน: ตัวเลือกของการส่งงาน เปิดทิ้งไว้ใช้งานจริงได้
+        // chkAllOrNothing
         //
-        pnlUv2Pick.Back = System.Drawing.Color.White;
-        pnlUv2Pick.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        pnlUv2Pick.BorderWidth = 2F;
-        pnlUv2Pick.Controls.Add(tlpUv2Pick);
-        pnlUv2Pick.Dock = System.Windows.Forms.DockStyle.Fill;
-        pnlUv2Pick.Margin = new System.Windows.Forms.Padding(0, 16, 0, 0);
-        pnlUv2Pick.Name = "pnlUv2Pick";
-        pnlUv2Pick.Padding = new System.Windows.Forms.Padding(24);
-        pnlUv2Pick.Radius = 10;
-        pnlUv2Pick.Size = new System.Drawing.Size(1216, 230);
-        pnlUv2Pick.TabIndex = 5;
+        chkAllOrNothing.Anchor = System.Windows.Forms.AnchorStyles.Right;
+        chkAllOrNothing.CheckedText = "เปิด";
+        chkAllOrNothing.Font = new System.Drawing.Font("Segoe UI", 11F);
+        chkAllOrNothing.Margin = new System.Windows.Forms.Padding(0);
+        chkAllOrNothing.Name = "chkAllOrNothing";
+        chkAllOrNothing.Size = new System.Drawing.Size(84, 36);
+        chkAllOrNothing.TabIndex = 18;
+        chkAllOrNothing.UnCheckedText = "ปิด";
         //
         // tlpUv2Pick
         //
-        tlpUv2Pick.ColumnCount = 1;
+        tlpUv2Pick.ColumnCount = 2;
         tlpUv2Pick.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUv2Pick.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
         tlpUv2Pick.Controls.Add(lblUv2PickHeading, 0, 0);
-        tlpUv2Pick.Controls.Add(chkUv2Pick, 0, 1);
-        tlpUv2Pick.Controls.Add(lblUv2PickHelp, 0, 2);
+        tlpUv2Pick.Controls.Add(lblUv2PickHelp, 0, 1);
+        tlpUv2Pick.Controls.Add(chkUv2Pick, 1, 0);
         tlpUv2Pick.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpUv2Pick.Margin = new System.Windows.Forms.Padding(0);
         tlpUv2Pick.Name = "tlpUv2Pick";
-        tlpUv2Pick.RowCount = 3;
-        tlpUv2Pick.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
-        tlpUv2Pick.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpUv2Pick.Padding = new System.Windows.Forms.Padding(0, 14, 0, 14);
+        tlpUv2Pick.RowCount = 2;
+        tlpUv2Pick.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
         tlpUv2Pick.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpUv2Pick.Size = new System.Drawing.Size(1168, 182);
-        tlpUv2Pick.TabIndex = 0;
+        tlpUv2Pick.SetRowSpan(chkUv2Pick, 2);
+        tlpUv2Pick.Size = new System.Drawing.Size(1216, 116);
+        tlpUv2Pick.TabIndex = 19;
         //
         // lblUv2PickHeading
         //
         lblUv2PickHeading.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblUv2PickHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        lblUv2PickHeading.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         lblUv2PickHeading.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         lblUv2PickHeading.Margin = new System.Windows.Forms.Padding(0);
         lblUv2PickHeading.Name = "lblUv2PickHeading";
-        lblUv2PickHeading.Size = new System.Drawing.Size(1168, 42);
-        lblUv2PickHeading.TabIndex = 0;
+        lblUv2PickHeading.Size = new System.Drawing.Size(1076, 36);
+        lblUv2PickHeading.TabIndex = 20;
         lblUv2PickHeading.Text = "รุ่นย่อย UV2 ให้ ST3 เลือก (งาน 11 / 12)";
-        //
-        // chkUv2Pick
-        //
-        chkUv2Pick.Dock = System.Windows.Forms.DockStyle.Fill;
-        chkUv2Pick.Font = new System.Drawing.Font("Segoe UI", 15F);
-        chkUv2Pick.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
-        chkUv2Pick.Margin = new System.Windows.Forms.Padding(0, 0, 0, 12);
-        chkUv2Pick.Name = "chkUv2Pick";
-        chkUv2Pick.Size = new System.Drawing.Size(1168, 32);
-        chkUv2Pick.TabIndex = 1;
-        chkUv2Pick.Text = "ST1 ไม่ถามรุ่นย่อย UV2 — คนที่ ST3 กด เลือกรุ่น UV2 ในแถวงานเอง";
         //
         // lblUv2PickHelp
         //
         lblUv2PickHelp.Dock = System.Windows.Forms.DockStyle.Fill;
         lblUv2PickHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
-        lblUv2PickHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
+        lblUv2PickHelp.ForeColor = System.Drawing.Color.FromArgb(102, 102, 102);
         lblUv2PickHelp.Margin = new System.Windows.Forms.Padding(0);
         lblUv2PickHelp.Name = "lblUv2PickHelp";
-        lblUv2PickHelp.Size = new System.Drawing.Size(1168, 96);
-        lblUv2PickHelp.TabIndex = 2;
-        lblUv2PickHelp.Text = "ปิด (ค่าเริ่มต้น): ST1 เลือกรุ่นทุกเครื่องตอนกดเริ่มงาน เหมือนเดิม\r\nเปิด: โปรแกรม UV2 ที่มีให้เลือกหลายไฟล์ ST1 ส่งเครื่องอื่นตามปกติ แต่ยังไม่จอง UV2 · แถวงานขึ้น Pick UV2 (ST3)\r\nคนที่ ST3 กด เลือกรุ่น UV2 ตอนชิ้นงานมาถึง เลือกแล้ว ST1 ส่งให้ตามคิว · ไฟล์เดียวส่งจาก ST1 ทันทีเหมือนเดิม\r\nต้องเปิดที่เครื่อง ST1 (คนกดเริ่มงาน) · เครื่อง ST3 ต้องตั้งโฟลเดอร์โปรแกรม UV2 ไว้";
+        lblUv2PickHelp.Size = new System.Drawing.Size(1076, 52);
+        lblUv2PickHelp.TabIndex = 21;
+        lblUv2PickHelp.Text = "ST1 ไม่ถามรุ่นย่อย UV2 · คนที่ ST3 กด เลือกรุ่น UV2 ในแถวงานตอนชิ้นงานมาถึง\r\nต้องเปิดที่เครื่อง ST1 · เครื่อง ST3 ต้องตั้งโฟลเดอร์โปรแกรม UV2 ไว้";
+        lblUv2PickHelp.TextAlign = System.Drawing.ContentAlignment.TopLeft;
         //
-        // pnlUvRepeat
+        // chkUv2Pick
         //
-        pnlUvRepeat.Back = System.Drawing.Color.White;
-        pnlUvRepeat.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        pnlUvRepeat.BorderWidth = 2F;
-        pnlUvRepeat.Controls.Add(tlpUvRepeat);
-        pnlUvRepeat.Dock = System.Windows.Forms.DockStyle.Fill;
-        pnlUvRepeat.Margin = new System.Windows.Forms.Padding(0, 0, 0, 16);
-        pnlUvRepeat.Name = "pnlUvRepeat";
-        pnlUvRepeat.Padding = new System.Windows.Forms.Padding(24, 18, 24, 18);
-        pnlUvRepeat.Radius = 10;
-        pnlUvRepeat.TabIndex = 5;
+        chkUv2Pick.Anchor = System.Windows.Forms.AnchorStyles.Right;
+        chkUv2Pick.CheckedText = "เปิด";
+        chkUv2Pick.Font = new System.Drawing.Font("Segoe UI", 11F);
+        chkUv2Pick.Margin = new System.Windows.Forms.Padding(0);
+        chkUv2Pick.Name = "chkUv2Pick";
+        chkUv2Pick.Size = new System.Drawing.Size(84, 36);
+        chkUv2Pick.TabIndex = 22;
+        chkUv2Pick.UnCheckedText = "ปิด";
         //
         // tlpUvRepeat
         //
-        tlpUvRepeat.ColumnCount = 1;
+        tlpUvRepeat.ColumnCount = 2;
         tlpUvRepeat.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpUvRepeat.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
         tlpUvRepeat.Controls.Add(lblUvRepeatHeading, 0, 0);
-        tlpUvRepeat.Controls.Add(chkUvRepeat, 0, 1);
-        tlpUvRepeat.Controls.Add(lblUvRepeatHelp, 0, 2);
+        tlpUvRepeat.Controls.Add(lblUvRepeatHelp, 0, 1);
+        tlpUvRepeat.Controls.Add(chkUvRepeat, 1, 0);
         tlpUvRepeat.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpUvRepeat.Margin = new System.Windows.Forms.Padding(0);
         tlpUvRepeat.Name = "tlpUvRepeat";
-        tlpUvRepeat.RowCount = 3;
-        tlpUvRepeat.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
-        tlpUvRepeat.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpUvRepeat.Padding = new System.Windows.Forms.Padding(0, 14, 0, 14);
+        tlpUvRepeat.RowCount = 2;
+        tlpUvRepeat.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
         tlpUvRepeat.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpUvRepeat.Size = new System.Drawing.Size(1168, 150);
-        tlpUvRepeat.TabIndex = 0;
+        tlpUvRepeat.SetRowSpan(chkUvRepeat, 2);
+        tlpUvRepeat.Size = new System.Drawing.Size(1216, 116);
+        tlpUvRepeat.TabIndex = 23;
         //
         // lblUvRepeatHeading
         //
         lblUvRepeatHeading.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblUvRepeatHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        lblUvRepeatHeading.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         lblUvRepeatHeading.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         lblUvRepeatHeading.Margin = new System.Windows.Forms.Padding(0);
         lblUvRepeatHeading.Name = "lblUvRepeatHeading";
-        lblUvRepeatHeading.Size = new System.Drawing.Size(1168, 42);
-        lblUvRepeatHeading.TabIndex = 0;
+        lblUvRepeatHeading.Size = new System.Drawing.Size(1076, 36);
+        lblUvRepeatHeading.TabIndex = 24;
         lblUvRepeatHeading.Text = "พิมพ์รุ่นย่อย UV เพิ่มให้งานใบเดิม";
-        //
-        // chkUvRepeat
-        //
-        chkUvRepeat.Dock = System.Windows.Forms.DockStyle.Fill;
-        chkUvRepeat.Font = new System.Drawing.Font("Segoe UI", 15F);
-        chkUvRepeat.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
-        chkUvRepeat.Margin = new System.Windows.Forms.Padding(0, 0, 0, 12);
-        chkUvRepeat.Name = "chkUvRepeat";
-        chkUvRepeat.Size = new System.Drawing.Size(1168, 32);
-        chkUvRepeat.TabIndex = 1;
-        chkUvRepeat.Text = "เปิดปุ่ม เลือกรุ่น UV1 / UV2 ในแถวงาน หลังพิมพ์รุ่นก่อนหน้าเสร็จ";
         //
         // lblUvRepeatHelp
         //
         lblUvRepeatHelp.Dock = System.Windows.Forms.DockStyle.Fill;
         lblUvRepeatHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
-        lblUvRepeatHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
+        lblUvRepeatHelp.ForeColor = System.Drawing.Color.FromArgb(102, 102, 102);
         lblUvRepeatHelp.Margin = new System.Windows.Forms.Padding(0);
         lblUvRepeatHelp.Name = "lblUvRepeatHelp";
-        lblUvRepeatHelp.Size = new System.Drawing.Size(1168, 64);
-        lblUvRepeatHelp.TabIndex = 2;
-        lblUvRepeatHelp.Text = "ปิด (ค่าเริ่มต้น): เลือกรุ่นย่อยครั้งเดียวตอนกดเริ่มงาน เหมือนเดิม\r\nเปิด: พิมพ์เสร็จและปล่อยเครื่องแล้ว ปุ่มเลือกรุ่นโผล่ในแถว เลือกได้เฉพาะรุ่นที่ยังไม่ได้พิมพ์ ครบทุกรุ่นแล้วปุ่มหาย\r\n\r\nปุ่ม UV1 ขึ้นที่ ST1 · ปุ่ม UV2 ขึ้นที่ ST3 · ปุ่มจบงานยังเป็นสีส้มตราบที่ยังเหลือรุ่น และกดจบได้ตลอดไม่ต้องพิมพ์ครบ\r\n";
+        lblUvRepeatHelp.Size = new System.Drawing.Size(1076, 52);
+        lblUvRepeatHelp.TabIndex = 25;
+        lblUvRepeatHelp.Text = "พิมพ์เสร็จและปล่อยเครื่องแล้ว แถวงานมีปุ่มเลือกรุ่นถัดไป เลือกได้เฉพาะรุ่นที่ยังไม่ได้พิมพ์\r\nปุ่ม UV1 ขึ้นที่ ST1 · UV2 ขึ้นที่ ST3 · กดจบงานได้ตลอด ไม่ต้องพิมพ์ครบทุกรุ่น";
+        lblUvRepeatHelp.TextAlign = System.Drawing.ContentAlignment.TopLeft;
         //
-        // pnlScanTab
+        // chkUvRepeat
         //
-        pnlScanTab.Back = System.Drawing.Color.White;
-        pnlScanTab.BorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        pnlScanTab.BorderWidth = 2F;
-        pnlScanTab.Controls.Add(tlpScanTab);
-        pnlScanTab.Dock = System.Windows.Forms.DockStyle.Fill;
-        pnlScanTab.Margin = new System.Windows.Forms.Padding(0, 0, 0, 16);
-        pnlScanTab.Name = "pnlScanTab";
-        pnlScanTab.Padding = new System.Windows.Forms.Padding(24, 18, 24, 18);
-        pnlScanTab.Radius = 10;
-        pnlScanTab.TabIndex = 6;
+        chkUvRepeat.Anchor = System.Windows.Forms.AnchorStyles.Right;
+        chkUvRepeat.CheckedText = "เปิด";
+        chkUvRepeat.Font = new System.Drawing.Font("Segoe UI", 11F);
+        chkUvRepeat.Margin = new System.Windows.Forms.Padding(0);
+        chkUvRepeat.Name = "chkUvRepeat";
+        chkUvRepeat.Size = new System.Drawing.Size(84, 36);
+        chkUvRepeat.TabIndex = 26;
+        chkUvRepeat.UnCheckedText = "ปิด";
         //
         // tlpScanTab
         //
-        tlpScanTab.ColumnCount = 1;
+        tlpScanTab.ColumnCount = 2;
         tlpScanTab.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpScanTab.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
         tlpScanTab.Controls.Add(lblScanTabHeading, 0, 0);
-        tlpScanTab.Controls.Add(chkScanTab, 0, 1);
-        tlpScanTab.Controls.Add(lblScanTabHelp, 0, 2);
+        tlpScanTab.Controls.Add(lblScanTabHelp, 0, 1);
+        tlpScanTab.Controls.Add(chkScanTab, 1, 0);
         tlpScanTab.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpScanTab.Margin = new System.Windows.Forms.Padding(0);
         tlpScanTab.Name = "tlpScanTab";
-        tlpScanTab.RowCount = 3;
-        tlpScanTab.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
-        tlpScanTab.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44F));
+        tlpScanTab.Padding = new System.Windows.Forms.Padding(0, 14, 0, 14);
+        tlpScanTab.RowCount = 2;
+        tlpScanTab.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
         tlpScanTab.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpScanTab.Size = new System.Drawing.Size(1168, 150);
-        tlpScanTab.TabIndex = 0;
+        tlpScanTab.SetRowSpan(chkScanTab, 2);
+        tlpScanTab.Size = new System.Drawing.Size(1216, 116);
+        tlpScanTab.TabIndex = 27;
         //
         // lblScanTabHeading
         //
         lblScanTabHeading.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblScanTabHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        lblScanTabHeading.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         lblScanTabHeading.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
         lblScanTabHeading.Margin = new System.Windows.Forms.Padding(0);
         lblScanTabHeading.Name = "lblScanTabHeading";
-        lblScanTabHeading.Size = new System.Drawing.Size(1168, 42);
-        lblScanTabHeading.TabIndex = 0;
-        lblScanTabHeading.Text = "หน้า Scan Barcode ที่ ST1";
-        //
-        // chkScanTab
-        //
-        chkScanTab.Dock = System.Windows.Forms.DockStyle.Fill;
-        chkScanTab.Font = new System.Drawing.Font("Segoe UI", 15F);
-        chkScanTab.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
-        chkScanTab.Margin = new System.Windows.Forms.Padding(0, 0, 0, 12);
-        chkScanTab.Name = "chkScanTab";
-        chkScanTab.Size = new System.Drawing.Size(1168, 32);
-        chkScanTab.TabIndex = 1;
-        chkScanTab.Text = "เพิ่มแท็บ Scan Barcode ให้เครื่อง ST1";
+        lblScanTabHeading.Size = new System.Drawing.Size(1076, 36);
+        lblScanTabHeading.TabIndex = 28;
+        lblScanTabHeading.Text = "แท็บ Scan Barcode ที่ ST1";
         //
         // lblScanTabHelp
         //
         lblScanTabHelp.Dock = System.Windows.Forms.DockStyle.Fill;
         lblScanTabHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
-        lblScanTabHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
+        lblScanTabHelp.ForeColor = System.Drawing.Color.FromArgb(102, 102, 102);
         lblScanTabHelp.Margin = new System.Windows.Forms.Padding(0);
         lblScanTabHelp.Name = "lblScanTabHelp";
-        lblScanTabHelp.Size = new System.Drawing.Size(1168, 64);
-        lblScanTabHelp.TabIndex = 2;
-        lblScanTabHelp.Text = "ปิด (ค่าเริ่มต้น): ST1 เห็นแท็บ Order List / Setting เหมือนเดิม หน้า Scan Barcode มีเฉพาะสถานีสแกน\r\n\r\nเปิด: ST1 มีแท็บ Scan Barcode เพิ่มมาด้วย · ตั้งที่เครื่อง ST1 เอง เห็นผลหลังเปิดโปรแกรมใหม่";
+        lblScanTabHelp.Size = new System.Drawing.Size(1076, 52);
+        lblScanTabHelp.TabIndex = 29;
+        lblScanTabHelp.Text = "เพิ่มแท็บ Scan Barcode ให้เครื่อง ST1\r\nตั้งที่เครื่อง ST1 เอง · เห็นผลหลังเปิดโปรแกรมใหม่";
+        lblScanTabHelp.TextAlign = System.Drawing.ContentAlignment.TopLeft;
         //
-        // pnlReset
+        // chkScanTab
         //
-        pnlReset.Back = System.Drawing.Color.White;
-        pnlReset.BorderColor = System.Drawing.Color.FromArgb(245, 34, 45);
-        pnlReset.BorderWidth = 2F;
-        pnlReset.Controls.Add(tlpReset);
-        pnlReset.Dock = System.Windows.Forms.DockStyle.Fill;
-        pnlReset.Margin = new System.Windows.Forms.Padding(0, 16, 0, 0);
-        pnlReset.Name = "pnlReset";
-        pnlReset.Padding = new System.Windows.Forms.Padding(24);
-        pnlReset.Radius = 10;
-        pnlReset.Size = new System.Drawing.Size(1216, 198);
-        pnlReset.TabIndex = 6;
+        chkScanTab.Anchor = System.Windows.Forms.AnchorStyles.Right;
+        chkScanTab.CheckedText = "เปิด";
+        chkScanTab.Font = new System.Drawing.Font("Segoe UI", 11F);
+        chkScanTab.Margin = new System.Windows.Forms.Padding(0);
+        chkScanTab.Name = "chkScanTab";
+        chkScanTab.Size = new System.Drawing.Size(84, 36);
+        chkScanTab.TabIndex = 30;
+        chkScanTab.UnCheckedText = "ปิด";
+        //
+        // lblSectionTools
+        //
+        lblSectionTools.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblSectionTools.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        lblSectionTools.ForeColor = System.Drawing.Color.FromArgb(245, 34, 45);
+        lblSectionTools.Margin = new System.Windows.Forms.Padding(0);
+        lblSectionTools.Name = "lblSectionTools";
+        lblSectionTools.Padding = new System.Windows.Forms.Padding(0, 0, 0, 6);
+        lblSectionTools.Size = new System.Drawing.Size(1216, 72);
+        lblSectionTools.TabIndex = 31;
+        lblSectionTools.Text = "เครื่องมือทดสอบ · ย้อนกลับไม่ได้ และมีผลกับทุกเครื่องที่ต่อ backend เดียวกัน";
+        lblSectionTools.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
         //
         // tlpReset
         //
@@ -608,61 +598,49 @@ partial class StationOptionsUserControl
         tlpReset.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpReset.Margin = new System.Windows.Forms.Padding(0);
         tlpReset.Name = "tlpReset";
+        tlpReset.Padding = new System.Windows.Forms.Padding(0, 14, 0, 16);
         tlpReset.RowCount = 3;
-        tlpReset.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
+        tlpReset.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
         tlpReset.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpReset.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
-        tlpReset.Size = new System.Drawing.Size(1168, 150);
-        tlpReset.TabIndex = 0;
+        tlpReset.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F));
+        tlpReset.Size = new System.Drawing.Size(1216, 184);
+        tlpReset.TabIndex = 32;
         //
         // lblResetHeading
         //
         lblResetHeading.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblResetHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        lblResetHeading.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         lblResetHeading.ForeColor = System.Drawing.Color.FromArgb(245, 34, 45);
         lblResetHeading.Margin = new System.Windows.Forms.Padding(0);
         lblResetHeading.Name = "lblResetHeading";
-        lblResetHeading.Size = new System.Drawing.Size(1168, 42);
-        lblResetHeading.TabIndex = 0;
-        lblResetHeading.Text = "รีเซ็ตกลับเป็นค่าเริ่มต้น";
+        lblResetHeading.Size = new System.Drawing.Size(1216, 36);
+        lblResetHeading.TabIndex = 33;
+        lblResetHeading.Text = "รีเซ็ตสถานะงานทั้งหมด";
         //
         // lblResetHelp
         //
         lblResetHelp.Dock = System.Windows.Forms.DockStyle.Fill;
         lblResetHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
-        lblResetHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
-        lblResetHelp.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
+        lblResetHelp.ForeColor = System.Drawing.Color.FromArgb(102, 102, 102);
+        lblResetHelp.Margin = new System.Windows.Forms.Padding(0);
         lblResetHelp.Name = "lblResetHelp";
-        lblResetHelp.Size = new System.Drawing.Size(1168, 44);
-        lblResetHelp.TabIndex = 1;
-        lblResetHelp.Text = "ล้างทุกอย่างที่บอกว่างานเดินไปถึงไหนแล้ว แล้วให้ทุกใบกลับไปเป็นรอเริ่ม ใช้ตอนทดสอบเมื่ออยากเริ่มนับหนึ่งใหม่ทั้งกระดาน\r\nลบ: คิวเครื่องทุกแถว · ประวัติคำสั่งที่ส่งเข้าเครื่องทุกแถว · ธงคำขอที่ ST3 ฝากไว้\r\nไม่แตะ: ตัวงาน ข้อมูล pattern ข้อความ UV แผนการผลิต และค่าแคลมป์ ยังอยู่ครบเหมือนเดิม\r\nย้อนกลับไม่ได้ และมีผลกับทุกเครื่องที่ต่ออยู่กับ backend เดียวกัน ไม่ใช่แค่เครื่องนี้";
+        lblResetHelp.Size = new System.Drawing.Size(1216, 70);
+        lblResetHelp.TabIndex = 34;
+        lblResetHelp.Text = "ลบคิวเครื่อง ประวัติคำสั่งที่ส่งเข้าเครื่อง และคำขอที่ ST3 ฝากไว้ · ทุกงานกลับเป็นรอเริ่ม\r\nไม่แตะตัวงาน pattern ข้อความ UV แผนการผลิต และค่าแคลมป์";
+        lblResetHelp.TextAlign = System.Drawing.ContentAlignment.TopLeft;
         //
         // btnResetRuntime
         //
         btnResetRuntime.Anchor = System.Windows.Forms.AnchorStyles.Left;
-        btnResetRuntime.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        btnResetRuntime.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
         btnResetRuntime.ForeColor = System.Drawing.Color.White;
-        btnResetRuntime.Margin = new System.Windows.Forms.Padding(0);
+        btnResetRuntime.Margin = new System.Windows.Forms.Padding(0, 0, 0, 0);
         btnResetRuntime.Name = "btnResetRuntime";
         btnResetRuntime.Radius = 8;
-        btnResetRuntime.Size = new System.Drawing.Size(300, 52);
-        btnResetRuntime.TabIndex = 2;
+        btnResetRuntime.Size = new System.Drawing.Size(260, 48);
+        btnResetRuntime.TabIndex = 35;
         btnResetRuntime.Text = "รีเซ็ตกลับเป็นค่าเริ่มต้น";
         btnResetRuntime.Type = AntdUI.TTypeMini.Error;
-        //
-        // pnlJobData — ขอบแดง: ล้าง / นำเข้า แทนที่ข้อมูลงานทั้งระบบ ย้อนกลับไม่ได้
-        //
-        pnlJobData.Back = System.Drawing.Color.White;
-        pnlJobData.BorderColor = System.Drawing.Color.FromArgb(245, 34, 45);
-        pnlJobData.BorderWidth = 2F;
-        pnlJobData.Controls.Add(tlpJobData);
-        pnlJobData.Dock = System.Windows.Forms.DockStyle.Fill;
-        pnlJobData.Margin = new System.Windows.Forms.Padding(0, 16, 0, 0);
-        pnlJobData.Name = "pnlJobData";
-        pnlJobData.Padding = new System.Windows.Forms.Padding(24);
-        pnlJobData.Radius = 10;
-        pnlJobData.Size = new System.Drawing.Size(1216, 246);
-        pnlJobData.TabIndex = 7;
         //
         // tlpJobData
         //
@@ -674,120 +652,194 @@ partial class StationOptionsUserControl
         tlpJobData.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpJobData.Margin = new System.Windows.Forms.Padding(0);
         tlpJobData.Name = "tlpJobData";
+        tlpJobData.Padding = new System.Windows.Forms.Padding(0, 14, 0, 16);
         tlpJobData.RowCount = 3;
-        tlpJobData.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
+        tlpJobData.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
         tlpJobData.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpJobData.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
-        tlpJobData.Size = new System.Drawing.Size(1168, 198);
-        tlpJobData.TabIndex = 0;
+        tlpJobData.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F));
+        tlpJobData.Size = new System.Drawing.Size(1216, 184);
+        tlpJobData.TabIndex = 36;
         //
         // lblJobDataHeading
         //
         lblJobDataHeading.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblJobDataHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+        lblJobDataHeading.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
         lblJobDataHeading.ForeColor = System.Drawing.Color.FromArgb(245, 34, 45);
         lblJobDataHeading.Margin = new System.Windows.Forms.Padding(0);
         lblJobDataHeading.Name = "lblJobDataHeading";
-        lblJobDataHeading.Size = new System.Drawing.Size(1168, 42);
-        lblJobDataHeading.TabIndex = 0;
-        lblJobDataHeading.Text = "ชุดข้อมูลงานทดสอบ (บันทึก / นำเข้า / ล้าง)";
+        lblJobDataHeading.Size = new System.Drawing.Size(1216, 36);
+        lblJobDataHeading.TabIndex = 37;
+        lblJobDataHeading.Text = "ชุดข้อมูลงานทดสอบ";
         //
         // lblJobDataHelp
         //
         lblJobDataHelp.Dock = System.Windows.Forms.DockStyle.Fill;
         lblJobDataHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
-        lblJobDataHelp.ForeColor = System.Drawing.Color.FromArgb(85, 85, 85);
-        lblJobDataHelp.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
+        lblJobDataHelp.ForeColor = System.Drawing.Color.FromArgb(102, 102, 102);
+        lblJobDataHelp.Margin = new System.Windows.Forms.Padding(0);
         lblJobDataHelp.Name = "lblJobDataHelp";
-        lblJobDataHelp.Size = new System.Drawing.Size(1168, 88);
-        lblJobDataHelp.TabIndex = 1;
-        lblJobDataHelp.Text = "บันทึก: เก็บข้อมูลงานทั้งหมดตอนนี้ (ตัวงาน pattern ข้อความ MK ข้อมูล UV แผนการผลิต ค่าแคลมป์) เป็นไฟล์ .json ใน C:\\ProgramData\\CompactInkjet\\test-data — คัดลอกไฟล์ไปเครื่องอื่นได้\r\nนำเข้า: เลือกไฟล์ แทนที่ข้อมูลงานทั้งหมดในฐาน · ทุกใบกลับเป็นรอเริ่ม ไม่มีคิว · id ตามไฟล์\r\nล้าง: ลบข้อมูลงานทั้งหมด id เริ่มใหม่ที่ 1 · ค่าตั้ง (register map PLC, Setting) ไม่ถูกแตะ\r\nมีผลกับทุกเครื่องที่ต่อ backend เดียวกัน และย้อนกลับไม่ได้ — กดบันทึกไว้ก่อนล้างหรือนำเข้าเสมอ";
+        lblJobDataHelp.Size = new System.Drawing.Size(1216, 70);
+        lblJobDataHelp.TabIndex = 38;
+        lblJobDataHelp.Text = "บันทึก: เก็บงานทั้งหมดเป็นไฟล์ .json ใน C:\\ProgramData\\CompactInkjet\\test-data · นำเข้า: แทนที่งานทั้งหมดด้วยไฟล์ · ล้าง: ลบงานทั้งหมด\r\nค่าตั้ง (register map PLC, Setting) ไม่ถูกแตะ · กดบันทึกไว้ก่อนล้างหรือนำเข้าเสมอ";
+        lblJobDataHelp.TextAlign = System.Drawing.ContentAlignment.TopLeft;
         //
         // flpJobData
         //
-        flpJobData.AutoSize = true;
         flpJobData.Controls.Add(btnSaveJobData);
         flpJobData.Controls.Add(btnImportJobData);
         flpJobData.Controls.Add(btnClearJobData);
         flpJobData.Dock = System.Windows.Forms.DockStyle.Fill;
         flpJobData.Margin = new System.Windows.Forms.Padding(0);
         flpJobData.Name = "flpJobData";
-        flpJobData.Size = new System.Drawing.Size(1168, 52);
-        flpJobData.TabIndex = 2;
+        flpJobData.Size = new System.Drawing.Size(1216, 48);
+        flpJobData.TabIndex = 39;
         flpJobData.WrapContents = false;
         //
         // btnSaveJobData
         //
-        btnSaveJobData.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
-        btnSaveJobData.Margin = new System.Windows.Forms.Padding(0, 0, 16, 0);
+        btnSaveJobData.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
+        btnSaveJobData.Margin = new System.Windows.Forms.Padding(0, 0, 12, 0);
         btnSaveJobData.Name = "btnSaveJobData";
         btnSaveJobData.Radius = 8;
-        btnSaveJobData.Size = new System.Drawing.Size(300, 52);
+        btnSaveJobData.Size = new System.Drawing.Size(260, 48);
         btnSaveJobData.TabIndex = 0;
         btnSaveJobData.Text = "บันทึกข้อมูลงานตอนนี้";
         btnSaveJobData.Type = AntdUI.TTypeMini.Primary;
         //
         // btnImportJobData
         //
-        btnImportJobData.DefaultBorderColor = System.Drawing.Color.FromArgb(245, 34, 45);
         btnImportJobData.BorderWidth = 2F;
-        btnImportJobData.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        btnImportJobData.DefaultBorderColor = System.Drawing.Color.FromArgb(245, 34, 45);
+        btnImportJobData.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
         btnImportJobData.ForeColor = System.Drawing.Color.FromArgb(245, 34, 45);
-        btnImportJobData.Margin = new System.Windows.Forms.Padding(0, 0, 16, 0);
+        btnImportJobData.Margin = new System.Windows.Forms.Padding(0, 0, 12, 0);
         btnImportJobData.Name = "btnImportJobData";
         btnImportJobData.Radius = 8;
-        btnImportJobData.Size = new System.Drawing.Size(300, 52);
+        btnImportJobData.Size = new System.Drawing.Size(260, 48);
         btnImportJobData.TabIndex = 1;
         btnImportJobData.Text = "นำเข้าจากไฟล์...";
         //
         // btnClearJobData
         //
-        btnClearJobData.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        btnClearJobData.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
         btnClearJobData.ForeColor = System.Drawing.Color.White;
-        btnClearJobData.Margin = new System.Windows.Forms.Padding(0);
+        btnClearJobData.Margin = new System.Windows.Forms.Padding(0, 0, 0, 0);
         btnClearJobData.Name = "btnClearJobData";
         btnClearJobData.Radius = 8;
-        btnClearJobData.Size = new System.Drawing.Size(300, 52);
+        btnClearJobData.Size = new System.Drawing.Size(260, 48);
         btnClearJobData.TabIndex = 2;
         btnClearJobData.Text = "ล้างข้อมูลงานทั้งหมด";
         btnClearJobData.Type = AntdUI.TTypeMini.Error;
         //
-        // lblRemoteSendHeading
+        // divRow1
         //
-        lblRemoteSendHeading.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblRemoteSendHeading.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
-        lblRemoteSendHeading.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        lblRemoteSendHeading.Location = new System.Drawing.Point(0, 0);
-        lblRemoteSendHeading.Margin = new System.Windows.Forms.Padding(0);
-        lblRemoteSendHeading.Name = "lblRemoteSendHeading";
-        lblRemoteSendHeading.Size = new System.Drawing.Size(1168, 42);
-        lblRemoteSendHeading.TabIndex = 0;
-        lblRemoteSendHeading.Text = "ปุ่มสำรองของปุ่มกดหน้างาน (ST3)";
+        divRow1.ColorSplit = System.Drawing.Color.FromArgb(229, 229, 229);
+        divRow1.Dock = System.Windows.Forms.DockStyle.Fill;
+        divRow1.Margin = new System.Windows.Forms.Padding(0);
+        divRow1.Name = "divRow1";
+        divRow1.Size = new System.Drawing.Size(1216, 9);
+        divRow1.TabIndex = 40;
+        divRow1.Thickness = 1F;
         //
-        // chkManualRemoteSend
+        // divRow2
         //
-        chkManualRemoteSend.Dock = System.Windows.Forms.DockStyle.Fill;
-        chkManualRemoteSend.Font = new System.Drawing.Font("Segoe UI", 15F);
-        chkManualRemoteSend.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
-        chkManualRemoteSend.Location = new System.Drawing.Point(0, 42);
-        chkManualRemoteSend.Margin = new System.Windows.Forms.Padding(0, 0, 0, 12);
-        chkManualRemoteSend.Name = "chkManualRemoteSend";
-        chkManualRemoteSend.Size = new System.Drawing.Size(1168, 32);
-        chkManualRemoteSend.TabIndex = 1;
-        chkManualRemoteSend.Text = "โชว์ปุ่ม \"ขอให้ ST1 ส่ง\" ในหน้า Order Detail";
+        divRow2.ColorSplit = System.Drawing.Color.FromArgb(229, 229, 229);
+        divRow2.Dock = System.Windows.Forms.DockStyle.Fill;
+        divRow2.Margin = new System.Windows.Forms.Padding(0);
+        divRow2.Name = "divRow2";
+        divRow2.Size = new System.Drawing.Size(1216, 9);
+        divRow2.TabIndex = 41;
+        divRow2.Thickness = 1F;
         //
-        // lblRemoteSendHelp
+        // divRow3
         //
-        lblRemoteSendHelp.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblRemoteSendHelp.Font = new System.Drawing.Font("Segoe UI", 13F);
-        lblRemoteSendHelp.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-        lblRemoteSendHelp.Location = new System.Drawing.Point(0, 86);
-        lblRemoteSendHelp.Margin = new System.Windows.Forms.Padding(0);
-        lblRemoteSendHelp.Name = "lblRemoteSendHelp";
-        lblRemoteSendHelp.Size = new System.Drawing.Size(1168, 76);
-        lblRemoteSendHelp.TabIndex = 2;
-        lblRemoteSendHelp.Text = "ใช้แทนปุ่มกดหน้างานตอนปุ่มกดหรือ PLC ใช้ไม่ได้ ขึ้นเฉพาะเครื่องของ ST3 และเฉพาะงานที่ส่งขั้นแรกไปแล้วและยังเหลือขั้นถัดไป\r\nก่อนกด ต้องแน่ใจว่าชิ้นงานอยู่ในเครื่องพร้อมพิมพ์แล้ว เพราะการกดที่จอไม่ได้ยืนยันเรื่องนี้เหมือนการเดินไปกดปุ่มหน้าเครื่อง";
-        lblRemoteSendHelp.TextAlign = System.Drawing.ContentAlignment.TopLeft;
+        divRow3.ColorSplit = System.Drawing.Color.FromArgb(229, 229, 229);
+        divRow3.Dock = System.Windows.Forms.DockStyle.Fill;
+        divRow3.Margin = new System.Windows.Forms.Padding(0);
+        divRow3.Name = "divRow3";
+        divRow3.Size = new System.Drawing.Size(1216, 9);
+        divRow3.TabIndex = 42;
+        divRow3.Thickness = 1F;
+        //
+        // divRow4
+        //
+        divRow4.ColorSplit = System.Drawing.Color.FromArgb(229, 229, 229);
+        divRow4.Dock = System.Windows.Forms.DockStyle.Fill;
+        divRow4.Margin = new System.Windows.Forms.Padding(0);
+        divRow4.Name = "divRow4";
+        divRow4.Size = new System.Drawing.Size(1216, 9);
+        divRow4.TabIndex = 43;
+        divRow4.Thickness = 1F;
+        //
+        // divRow5
+        //
+        divRow5.ColorSplit = System.Drawing.Color.FromArgb(229, 229, 229);
+        divRow5.Dock = System.Windows.Forms.DockStyle.Fill;
+        divRow5.Margin = new System.Windows.Forms.Padding(0);
+        divRow5.Name = "divRow5";
+        divRow5.Size = new System.Drawing.Size(1216, 9);
+        divRow5.TabIndex = 44;
+        divRow5.Thickness = 1F;
+        //
+        // divRow6
+        //
+        divRow6.ColorSplit = System.Drawing.Color.FromArgb(229, 229, 229);
+        divRow6.Dock = System.Windows.Forms.DockStyle.Fill;
+        divRow6.Margin = new System.Windows.Forms.Padding(0);
+        divRow6.Name = "divRow6";
+        divRow6.Size = new System.Drawing.Size(1216, 9);
+        divRow6.TabIndex = 45;
+        divRow6.Thickness = 1F;
+        //
+        // divRow7
+        //
+        divRow7.ColorSplit = System.Drawing.Color.FromArgb(229, 229, 229);
+        divRow7.Dock = System.Windows.Forms.DockStyle.Fill;
+        divRow7.Margin = new System.Windows.Forms.Padding(0);
+        divRow7.Name = "divRow7";
+        divRow7.Size = new System.Drawing.Size(1216, 9);
+        divRow7.TabIndex = 46;
+        divRow7.Thickness = 1F;
+        //
+        // divRow8
+        //
+        divRow8.ColorSplit = System.Drawing.Color.FromArgb(229, 229, 229);
+        divRow8.Dock = System.Windows.Forms.DockStyle.Fill;
+        divRow8.Margin = new System.Windows.Forms.Padding(0);
+        divRow8.Name = "divRow8";
+        divRow8.Size = new System.Drawing.Size(1216, 9);
+        divRow8.TabIndex = 47;
+        divRow8.Thickness = 1F;
+        //
+        // divRow9
+        //
+        divRow9.ColorSplit = System.Drawing.Color.FromArgb(229, 229, 229);
+        divRow9.Dock = System.Windows.Forms.DockStyle.Fill;
+        divRow9.Margin = new System.Windows.Forms.Padding(0);
+        divRow9.Name = "divRow9";
+        divRow9.Size = new System.Drawing.Size(1216, 9);
+        divRow9.TabIndex = 48;
+        divRow9.Thickness = 1F;
+        //
+        // divRow10
+        //
+        divRow10.ColorSplit = System.Drawing.Color.FromArgb(229, 229, 229);
+        divRow10.Dock = System.Windows.Forms.DockStyle.Fill;
+        divRow10.Margin = new System.Windows.Forms.Padding(0);
+        divRow10.Name = "divRow10";
+        divRow10.Size = new System.Drawing.Size(1216, 9);
+        divRow10.TabIndex = 49;
+        divRow10.Thickness = 1F;
+        //
+        // divRow11
+        //
+        divRow11.ColorSplit = System.Drawing.Color.FromArgb(229, 229, 229);
+        divRow11.Dock = System.Windows.Forms.DockStyle.Fill;
+        divRow11.Margin = new System.Windows.Forms.Padding(0);
+        divRow11.Name = "divRow11";
+        divRow11.Size = new System.Drawing.Size(1216, 9);
+        divRow11.TabIndex = 50;
+        divRow11.Thickness = 1F;
         //
         // StationOptionsUserControl
         //
@@ -797,30 +849,23 @@ partial class StationOptionsUserControl
         Controls.Add(tlpOptionsRoot);
         Name = "StationOptionsUserControl";
         Padding = new System.Windows.Forms.Padding(32);
-        Size = new System.Drawing.Size(1280, 2238);
-        tlpOptionsRoot.ResumeLayout(false);
-        tlpReset.ResumeLayout(false);
+        Size = new System.Drawing.Size(1280, 1529);
         flpJobData.ResumeLayout(false);
         tlpJobData.ResumeLayout(false);
-        tlpJobData.PerformLayout();
-        pnlJobData.ResumeLayout(false);
-        pnlJobData.PerformLayout();
+        tlpReset.ResumeLayout(false);
+        tlpScanTab.ResumeLayout(false);
+        tlpUvRepeat.ResumeLayout(false);
+        tlpUv2Pick.ResumeLayout(false);
+        tlpAllOrNothing.ResumeLayout(false);
+        tlpMockup.ResumeLayout(false);
         flpProcessTabs.ResumeLayout(false);
         tlpProcessTabs.ResumeLayout(false);
-        pnlProcessTabs.ResumeLayout(false);
-        tlpMockup.ResumeLayout(false);
-        pnlMockup.ResumeLayout(false);
-        tlpAllOrNothing.ResumeLayout(false);
-        pnlAllOrNothing.ResumeLayout(false);
-        tlpUv2Pick.ResumeLayout(false);
-        pnlUvRepeat.ResumeLayout(false);
-        tlpUvRepeat.ResumeLayout(false);
-        pnlScanTab.ResumeLayout(false);
-        tlpScanTab.ResumeLayout(false);
-        pnlUv2Pick.ResumeLayout(false);
-        pnlReset.ResumeLayout(false);
-        pnlRemoteSend.ResumeLayout(false);
         tlpRemoteSend.ResumeLayout(false);
+        tlpOptionsRoot.ResumeLayout(false);
+        tlpProcessTabs.PerformLayout();
+        flpProcessTabs.PerformLayout();
+        tlpJobData.PerformLayout();
+        flpJobData.PerformLayout();
         ResumeLayout(false);
     }
 
@@ -828,47 +873,54 @@ partial class StationOptionsUserControl
 
     private System.Windows.Forms.TableLayoutPanel tlpOptionsRoot;
     private AntdUI.Label lblOptionsTitle;
-    private AntdUI.Panel pnlRemoteSend;
+    private AntdUI.Label lblSectionOptions;
+    private AntdUI.Label lblSectionTools;
+    private AntdUI.Divider divRow1;
+    private AntdUI.Divider divRow2;
+    private AntdUI.Divider divRow3;
+    private AntdUI.Divider divRow4;
+    private AntdUI.Divider divRow5;
+    private AntdUI.Divider divRow6;
+    private AntdUI.Divider divRow7;
+    private AntdUI.Divider divRow8;
+    private AntdUI.Divider divRow9;
+    private AntdUI.Divider divRow10;
+    private AntdUI.Divider divRow11;
+    private System.Windows.Forms.TableLayoutPanel tlpRemoteSend;
     private AntdUI.Label lblRemoteSendHeading;
-    private AntdUI.Panel pnlProcessTabs;
+    private AntdUI.Label lblRemoteSendHelp;
+    private AntdUI.Switch chkManualRemoteSend;
     private System.Windows.Forms.TableLayoutPanel tlpProcessTabs;
     private AntdUI.Label lblProcessTabsHeading;
+    private AntdUI.Label lblProcessTabsHelp;
     private System.Windows.Forms.FlowLayoutPanel flpProcessTabs;
     private AntdUI.Radio rdoProcessTabsStations;
     private AntdUI.Radio rdoProcessTabsDev;
     private AntdUI.Radio rdoProcessTabsOff;
-    private AntdUI.Label lblProcessTabsHelp;
-    private AntdUI.Panel pnlMockup;
     private System.Windows.Forms.TableLayoutPanel tlpMockup;
     private AntdUI.Label lblMockupHeading;
-    private AntdUI.Checkbox chkMockupStatus;
     private AntdUI.Label lblMockupHelp;
-    private AntdUI.Panel pnlAllOrNothing;
+    private AntdUI.Switch chkMockupStatus;
     private System.Windows.Forms.TableLayoutPanel tlpAllOrNothing;
     private AntdUI.Label lblAllOrNothingHeading;
-    private AntdUI.Checkbox chkAllOrNothing;
     private AntdUI.Label lblAllOrNothingHelp;
-    private AntdUI.Panel pnlUv2Pick;
+    private AntdUI.Switch chkAllOrNothing;
     private System.Windows.Forms.TableLayoutPanel tlpUv2Pick;
     private AntdUI.Label lblUv2PickHeading;
-    private AntdUI.Checkbox chkUv2Pick;
     private AntdUI.Label lblUv2PickHelp;
-    private AntdUI.Panel pnlUvRepeat;
+    private AntdUI.Switch chkUv2Pick;
     private System.Windows.Forms.TableLayoutPanel tlpUvRepeat;
     private AntdUI.Label lblUvRepeatHeading;
-    private AntdUI.Checkbox chkUvRepeat;
     private AntdUI.Label lblUvRepeatHelp;
-    private AntdUI.Panel pnlScanTab;
+    private AntdUI.Switch chkUvRepeat;
     private System.Windows.Forms.TableLayoutPanel tlpScanTab;
     private AntdUI.Label lblScanTabHeading;
-    private AntdUI.Checkbox chkScanTab;
     private AntdUI.Label lblScanTabHelp;
-    private AntdUI.Panel pnlReset;
+    private AntdUI.Switch chkScanTab;
     private System.Windows.Forms.TableLayoutPanel tlpReset;
     private AntdUI.Label lblResetHeading;
-    private AntdUI.Button btnResetRuntime;
     private AntdUI.Label lblResetHelp;
-    private AntdUI.Panel pnlJobData;
+    private AntdUI.Button btnResetRuntime;
     private System.Windows.Forms.TableLayoutPanel tlpJobData;
     private AntdUI.Label lblJobDataHeading;
     private AntdUI.Label lblJobDataHelp;
@@ -876,7 +928,4 @@ partial class StationOptionsUserControl
     private AntdUI.Button btnSaveJobData;
     private AntdUI.Button btnImportJobData;
     private AntdUI.Button btnClearJobData;
-    private System.Windows.Forms.TableLayoutPanel tlpRemoteSend;
-    private AntdUI.Checkbox chkManualRemoteSend;
-    private AntdUI.Label lblRemoteSendHelp;
 }
