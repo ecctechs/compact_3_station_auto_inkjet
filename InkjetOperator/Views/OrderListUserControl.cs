@@ -508,12 +508,61 @@ public partial class OrderListUserControl : UserControl
                 await ResetHeadPositionAsync(machine);
             }
 
+            // ทำหลังส่งงานถัดไปแล้ว คนที่รอเครื่องอยู่ไม่ต้องรอการตรวจงานใบเก่า
+            if (holder != null && !IsDisposed)
+                await AutoCompleteAfterReleaseAsync(holder.PrintJobsId, machine);
         }
         finally
         {
             _pushHandling.Remove(machine);
         }
         if (!IsDisposed) await RefreshDataAsync(force: true);
+    }
+
+    /// <summary>
+    /// จบงานให้เองหลังกดปุ่มหน้าเครื่อง เมื่องานนั้นส่งครบทุกเครื่องแล้ว — งานย้ายไป History
+    ///
+    /// <para>
+    /// ข้อตกลงหน้างาน 18/10/2026 (ข้อ 2.3): ปุ่มหน้าเครื่องแปลว่าชิ้นนี้เสร็จแล้ว กดปุ่มของ
+    /// เครื่องสุดท้ายแล้วไม่ต้องเดินมากดจบงานที่จออีก นับความครบด้วย <c>MissingSteps</c>
+    /// ตัวเดียวกับปุ่มจบงาน — งาน 12 กดปุ่ม MK ยังไม่จบเพราะ UV2 ยังไม่ได้ส่ง
+    /// งาน 22 กดรอบแรกยังไม่จบเพราะต้องได้ MK สองครั้ง
+    /// </para>
+    /// <para>
+    /// ต้องไม่เหลือคิวของงานนี้ที่เครื่องไหนเลย งาน 11 ส่ง UV1 กับ UV2 พร้อมกัน กดปุ่ม UV1
+    /// ก่อนยังไม่จบ เพราะ UV2 ยังถือเครื่องอยู่ งานจึงจบที่สถานีของปุ่มสุดท้าย ไม่ผ่านกฎ
+    /// "10 / 11 / 12 จบที่ ST3" — กฎนั้นกันคนที่ ST1 กดจบก่อน UV2 ทำ ซึ่งตรงนี้ตรวจแล้ว
+    /// ว่าทุกเครื่องเสร็จจริง
+    /// </para>
+    /// <para>
+    /// ไม่ถามยืนยัน คนกดยืนอยู่หน้าเครื่องและงานครบจริง อ่านข้อมูลไม่ได้หรือไม่เข้าเงื่อนไข
+    /// ไม่ทำอะไร งานค้างให้กดจบงานที่จอเหมือนเดิม
+    /// </para>
+    /// </summary>
+    private async Task AutoCompleteAfterReleaseAsync(int jobId, string machine)
+    {
+        var resolved = await _api!.GetResolvedJobAsync(jobId);
+        if (IsDisposed || resolved == null) return;
+        if (!string.Equals(resolved.Job.Status, "Process", StringComparison.OrdinalIgnoreCase)) return;
+        if (!CheckSteps(resolved.PlanRouting?.MarkingMethod, resolved.Commands).Complete) return;
+
+        // อ่านคิวใหม่หลังปล่อย — ชุดที่อ่านก่อนปล่อยยังเห็นแถวที่เพิ่งปล่อยไป
+        var (queue, queueError) = await _api.GetMachineQueueAsync();
+        if (IsDisposed || queueError != null) return;
+        if (queue.Any(r => r.PrintJobsId == jobId && r.State is "pending" or "active")) return;
+
+        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Success");
+        if (IsDisposed) return;
+        if (ok)
+        {
+            AppLog.Info("PushButton", $"จบงานอัตโนมัติ {JobName(jobId)} · ส่งครบแล้ว กดปุ่ม {machine} เป็นเครื่องสุดท้าย");
+            Notify.Success(this, $"{JobName(jobId)} ครบทุกเครื่อง · จบงานแล้ว ย้ายไป History");
+        }
+        else
+        {
+            AppLog.Warn("PushButton", $"จบงานอัตโนมัติ {JobName(jobId)} ไม่สำเร็จ — {err}");
+            Notify.Warn(this, $"{JobName(jobId)} ครบแล้ว แต่จบงานอัตโนมัติไม่สำเร็จ — กดจบงานที่จอ ({err})");
+        }
     }
 
     /// <summary>
