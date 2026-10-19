@@ -645,6 +645,31 @@ public class ApiClient
         }
     }
 
+    /// <summary>
+    /// เปลี่ยนรุ่นย่อย UV ของงานที่ถือเครื่องอยู่ — ปิดแถวเดิมแล้วได้แถวรอบถัดไปของงานเดิมเป็น
+    /// active ในจังหวะเดียว งานอื่นแทรกไม่ได้ · Next คือแถวใหม่ที่ ST1 ต้องหยิบไปส่ง
+    /// </summary>
+    public async Task<(ReleaseResult? result, string? error)> SwitchMachineProgramAsync(
+        string machine, int expectedHolderId, string programName)
+    {
+        try
+        {
+            var payload = new { machine, expected_holder_id = expectedHolderId, program_name = programName };
+            var response = await _http.PostAsJsonAsync("/machine-queue/switch-program", payload, JsonOptions);
+            var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode) return (null, $"[{(int)response.StatusCode}] {body}");
+
+            var wrapper = System.Text.Json.JsonSerializer
+                .Deserialize<ApiResponse<ReleaseResult>>(body, JsonOptions);
+
+            return (wrapper?.Data ?? new ReleaseResult(), null);
+        }
+        catch (Exception ex)
+        {
+            return (null, ex.Message);
+        }
+    }
+
     // ไม่ retry begin-send: ถ้าคำตอบหาย ต้องตรวจผลก่อนแตะเครื่อง
     public Task<(bool ok, string? error)> BeginQueueSendAsync(int rowId, string token) =>
         QueueSendRequestAsync(rowId, "begin-send", new { token });

@@ -281,6 +281,63 @@ class MachineQueueController {
   }
 
   /**
+   * POST /machine-queue/switch-program
+   * body: { machine, expected_holder_id, program_name }
+   *
+   * เปลี่ยนรุ่นย่อย UV ของงานที่ถือเครื่องอยู่ — พิมพ์รุ่นเดิมเสร็จแล้ว พิมพ์รุ่นถัดไปต่อเลย
+   *
+   * ปิดแถวที่ถือเครื่อง แล้วสร้างแถวรอบถัดไปของงานเดิมเป็น active ทันทีในทรานแซกชันเดียว
+   * เครื่องไม่ว่างเลยสักจังหวะ งานใบอื่นที่รอคิวจึงแทรกเข้ามาไม่ได้ ST1 หยิบแถวใหม่ไปส่ง
+   * เหมือนแถวที่ถึงคิวตามปกติ (active ที่ยังไม่มี sent_at)
+   *
+   * ไม่ใช้ enqueue + release(hold_for_next_round) — ถ้าปล่อยไม่ผ่านหลังจองไปแล้ว แถวที่จอง
+   * จะค้างรอคิวแล้วถูกส่งทีหลังตอนชิ้นงานไปแล้ว ทางนี้ไม่ผ่านก็ไม่มีอะไรเปลี่ยน
+   */
+  static async switchProgram(req, res) {
+    try {
+      const result = await withQueueLock(async (t) => {
+        const { machine, expected_holder_id, program_name } = req.body;
+
+        const holder = await MachineQueue.findOne({
+          where: { machine, state: ACTIVE },
+          transaction: t,
+          lock: t.LOCK.UPDATE,
+        });
+
+        // จอค้าง / กดซ้ำ ต้องไม่ไปเปลี่ยนรุ่นของงานใบอื่นที่เพิ่งได้เครื่อง
+        if (!holder || holder.id !== expected_holder_id)
+          conflict("คิวเปลี่ยนแล้ว กรุณาตรวจงานที่ถือเครื่องก่อนกดอีกครั้ง");
+        await assertNoUnresolved([holder], t);
+        if (!holder.sent_at) conflict("รุ่นเดิมยังไม่ได้ส่งเข้าเครื่อง เปลี่ยนรุ่นไม่ได้");
+
+        const job = await PrintJob.findByPk(holder.print_jobs_id, { transaction: t });
+        if (!job || job.status !== "Process") conflict("งานถูกยกเลิกหรือจบแล้ว เปลี่ยนรุ่นไม่ได้");
+
+        // รอบถัดจากรอบที่มากที่สุดของงานนี้ที่เครื่องนี้ รวมแถว done — enqueue ถือว่า
+        // เครื่อง+รอบเดิมคือจองแล้ว ใช้เลขซ้ำจะชนกับกฎกันพ่นซ้ำ
+        const maxRound = await MachineQueue.max("round", {
+          where: { print_jobs_id: holder.print_jobs_id, machine },
+          transaction: t,
+        });
+
+        await holder.update({ state: DONE, released_at: new Date() }, { transaction: t });
+        const next = await MachineQueue.create({
+          print_jobs_id: holder.print_jobs_id,
+          machine,
+          round: (Number(maxRound) || holder.round) + 1,
+          program_name,
+          state: ACTIVE,
+        }, { transaction: t });
+
+        return { released: holder, next };
+      });
+      return ResponseManager.SuccessResponse(req, res, 200, result);
+    } catch (err) {
+      return reportError(req, res, err);
+    }
+  }
+
+  /**
    * PATCH /machine-queue/:id
    * body: { state?, program_name? }
    *

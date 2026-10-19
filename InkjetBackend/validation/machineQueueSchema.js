@@ -39,6 +39,13 @@ const updateQueueSchema = z.object({
   sent: z.boolean().optional(),
 });
 
+// เปลี่ยนรุ่นย่อย UV ของงานที่ถือเครื่องอยู่ — เฉพาะ UV เพราะ MK ไม่มีรุ่นย่อย
+const switchProgramSchema = z.object({
+  machine: z.enum(["UV1", "UV2"]),
+  expected_holder_id: z.number().int().positive(),
+  program_name: z.string().trim().min(1).max(255),
+});
+
 const beginSendSchema = z.object({ token: z.string().uuid() });
 const finishSendSchema = z.object({
   token: z.string().uuid(),
@@ -53,6 +60,7 @@ module.exports = {
   releaseSchema,
   claimSchema,
   updateQueueSchema,
+  switchProgramSchema,
   beginSendSchema,
   finishSendSchema,
 };

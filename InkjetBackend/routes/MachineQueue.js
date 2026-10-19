@@ -9,6 +9,7 @@ const {
   releaseSchema,
   claimSchema,
   updateQueueSchema,
+  switchProgramSchema,
   beginSendSchema,
   finishSendSchema,
 } = require("../validation/machineQueueSchema");
@@ -31,6 +32,12 @@ Route.post(
   RouteName + "/release",
   validate(releaseSchema),
   MachineQueueController.release
+);
+
+Route.post(
+  RouteName + "/switch-program",
+  validate(switchProgramSchema),
+  MachineQueueController.switchProgram
 );
 
 Route.patch(

@@ -123,7 +123,7 @@ public partial class StationOptionsUserControl : UserControl
         if (CustomSettingsManager.Write(UvVariantService.Key, e.Value ? "1" : "0"))
         {
             Notify.Success(this, e.Value
-                ? "เปิดแล้ว — พิมพ์เสร็จแล้วกด เลือกรุ่น UV ในแถวงานเพื่อพิมพ์รุ่นถัดไปได้"
+                ? "เปิดแล้ว — พิมพ์รุ่นเดิมเสร็จแล้วกด เปลี่ยนรุ่น ในแถวงานเพื่อพิมพ์รุ่นถัดไป"
                 : "ปิดแล้ว — เลือกรุ่นครั้งเดียวตอนกดเริ่มงาน เหมือนเดิม");
             return;
         }
