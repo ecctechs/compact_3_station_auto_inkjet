@@ -50,7 +50,10 @@ public static class JobStageService
         var plan = MarkingMethodService.Resolve(markingMethod);
 
         // ถือเครื่องอยู่ = ไม่มีใครขวาง บอกด้านที่กำลังทำ
-        if (FirstInPlanOrder(plan, mine.Where(IsActive)) is { } holding)
+        //
+        // แถว UV2 ที่จองไว้รอ ST3 เลือกรุ่นยังไม่ได้รับงาน ไม่นับเป็นการทำด้านนั้น — ไม่งั้นงานที่รอ
+        // คิว MK อยู่จะขึ้น "Mark Shim" แทนเลขคิว
+        if (FirstInPlanOrder(plan, mine.Where(r => IsActive(r) && !r.AwaitingPick)) is { } holding)
             return SideOf(plan, holding);
 
         // ยังไม่ถึงคิว บอกว่าอีกกี่คิวถึงตัวเอง

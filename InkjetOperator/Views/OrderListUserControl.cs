@@ -482,6 +482,14 @@ public partial class OrderListUserControl : UserControl
             }
             var holder = queue.FirstOrDefault(r => r.Machine == machine && r.State == "active");
 
+            // งานที่ถือเครื่องยังไม่ได้ส่งอะไรเข้าเครื่อง — backend ไม่ให้ปล่อยอยู่แล้ว (กันงานหลุดคิว
+            // ไปเงียบ ๆ โดยไม่ได้พิมพ์) บอกตรง ๆ ว่ารออะไร แทนข้อความ error ดิบจาก backend
+            if (BlockedPushReason(machine, holder) is { } blocked)
+            {
+                Notify.Warn(this, blocked);
+                return;
+            }
+
             // ไม่ถือเครื่องไว้ให้รอบถัดไปของงานเดิม — งานที่เข้าเครื่องเดิมสองรอบ
             // (marking 22) ไม่ได้จองรอบสองไว้ล่วงหน้าแล้ว ปุ่มหน้างานรอบแรกจึงปล่อย
             // เครื่องเหมือนจบงาน งานอื่นเข้าต่อได้ทันที รอบสองค่อยจองตอนคนกดเริ่มงานรอบสอง
@@ -491,7 +499,7 @@ public partial class OrderListUserControl : UserControl
 
             if (release == null)
             {
-                Notify.Warn(this, $"ปล่อยเครื่อง {machine} ไม่สำเร็จ — {error}");
+                Notify.Warn(this, $"ปล่อยเครื่อง {machine} ไม่สำเร็จ — {ApiErrorText(error)}");
                 return;
             }
 
@@ -509,6 +517,49 @@ public partial class OrderListUserControl : UserControl
             _pushHandling.Remove(machine);
         }
         if (!IsDisposed) await RefreshDataAsync(force: true);
+    }
+
+    /// <summary>
+    /// กดปุ่มหน้าเครื่องแล้วปล่อยไม่ได้เพราะอะไร — null = ปล่อยได้ ให้ backend ตัดสินต่อ
+    ///
+    /// <para>
+    /// กติกาเดิมทุกข้อ (ห้ามปล่อยคิวที่ยังไม่ได้ส่ง / ยังไม่รู้ผล) แค่บอกก่อนด้วยภาษาคน
+    /// ว่างานไหนถือเครื่องอยู่และต้องทำอะไรต่อ เดิมขึ้น error ดิบเป็น JSON จาก backend
+    /// </para>
+    /// </summary>
+    private string? BlockedPushReason(string machine, MachineQueueRow? holder)
+    {
+        if (holder == null || holder.SentAt != null) return null;
+        var job = JobName(holder.PrintJobsId);
+
+        // ส่งออกไปแล้วไม่รู้ผล — โหมด "ส่งไม่ครบ ไม่ส่งเลย" ปล่อยได้ (คนยืนหน้าเครื่อง = ตรวจแล้ว)
+        if (holder.NeedsSendReview)
+            return AllOrNothingSend.Enabled ? null
+                : $"{machine} ยังปล่อยไม่ได้ — ส่ง {job} ออกไปแล้วแต่ยังไม่รู้ผล · ตรวจที่เครื่องก่อน";
+
+        if (holder.AwaitingPick)
+            return $"{machine} ยังไม่ได้รับงาน — {job} รอ ST3 เลือกรุ่น · กด เลือกรุ่น {machine} ในแถวงานก่อน";
+
+        return $"{machine} ยังไม่ได้รับงาน — {job} ถึงคิวแล้ว รอ ST1 ส่งเข้าเครื่อง · รอสักครู่แล้วกดใหม่";
+    }
+
+    /// <summary>
+    /// ข้อความ error จาก backend ให้อ่านได้ — ตัด "[409] {"statusCode":..,"data":"..."}" เหลือแค่ข้อความ
+    /// </summary>
+    private static string ApiErrorText(string? error)
+    {
+        if (string.IsNullOrWhiteSpace(error)) return "ติดต่อ backend ไม่ได้";
+        int brace = error.IndexOf('{');
+        if (brace < 0) return error;
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(error[brace..]);
+            foreach (var key in new[] { "data", "message", "error" })
+                if (doc.RootElement.TryGetProperty(key, out var v) && v.ValueKind == System.Text.Json.JsonValueKind.String)
+                    return v.GetString()!;
+        }
+        catch (System.Text.Json.JsonException) { }
+        return error;
     }
 
     /// <summary>
@@ -1672,8 +1723,9 @@ public partial class OrderListUserControl : UserControl
             && string.Equals(h.Machine, r.Machine, StringComparison.OrdinalIgnoreCase)));
         if (!behindOtherJob) return null;
 
-        var stage = JobStageService.Describe(job.Id, job.PlanRouting?.MarkingMethod, _queueRows, job.Commands);
-        return stage != null && stage.StartsWith('Q') ? $"Waiting ({stage})" : "Waiting (Queued)";
+        // นับเฉพาะแถวที่รอคิว — แถว UV2 ที่จองรอ ST3 เลือกรุ่นไม่ได้แปลว่างานกำลังถือเครื่องทำอยู่
+        var position = JobStageService.QueuePosition(job.Id, job.PlanRouting?.MarkingMethod, _queueRows);
+        return position != null ? $"Waiting ({position})" : "Waiting (Queued)";
     }
 
     private static bool CanStart(PrintJob job)
@@ -4004,6 +4056,10 @@ public partial class OrderListUserControl : UserControl
             {
                 // เข้าคิวแล้ว รอเครื่องว่าง — ไม่มีปุ่มเริ่มงานให้กดซ้ำ กดไปก็ไม่ได้ทำอะไรเพิ่ม
                 // คิวเดินเองตอนคนกดปุ่มหน้าเครื่องปล่อยงานก่อนหน้า ออกจากคิวใช้ปุ่มยกเลิก
+                //
+                // แต่ปุ่มเลือกรุ่น UV2 ยังต้องมี — งานที่รอคิว MK อาจจองคิว UV2 ไว้รอ ST3 เลือกรุ่นอยู่
+                // (UV2 จองตอนกดเริ่มงาน) ไม่มีปุ่ม = เครื่อง UV2 ถูกถือค้าง
+                AddUvButtons(buttons, job);
             }
             else if (CanStart(job))
             {
@@ -4088,9 +4144,11 @@ public partial class OrderListUserControl : UserControl
             ProcessSequence = job.PlanRouting?.ProcessSequence ?? "",
             Plate = plan.NoCase ? Dash : MachineCell(plan.Plate),
             Shim = plan.NoCase ? Dash : MachineCell(plan.Shim),
-            // สถานีที่งานถือเครื่องอยู่ (หลายเครื่องพร้อมกันได้ เช่น ST2 + ST3) — ดู JobStationService.Display
-            // ยังไม่เคยส่งเป็นขีด เข้าชุดกับคอลัมน์ End
-            Station = OrDash(JobStationService.Display(_queueRows, job.Id, job.Commands)),
+            // แท็บ List: สถานีที่งานถือเครื่องอยู่ตอนนี้เท่านั้น (สถานีละใบ) — ดู JobStationService.DisplayCurrent
+            // แท็บ History: สถานีที่จบงาน — ดู JobStationService.Display · ไม่มีเป็นขีด เข้าชุดกับคอลัมน์ End
+            Station = OrDash(isHistory
+                ? JobStationService.Display(_queueRows, job.Id, job.Commands)
+                : JobStationService.DisplayCurrent(_queueRows, job.Id, job.PlanRouting?.MarkingMethod, job.Commands)),
             Status = statusText,
             MachineStatus = BuildMachineStatus(job),
             Op = buttons.ToArray(),

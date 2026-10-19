@@ -63,10 +63,14 @@ public static class JobStationService
     /// <summary>
     /// สถานีที่งานนี้ถือเครื่องอยู่ตอนนี้ — คิวของงานนี้ที่ยัง active (ได้เครื่องแล้ว ยังไม่กดปล่อย)
     /// เรียงตามลำดับสาย ไม่ซ้ำ (งาน 22 ถือ MK สองรอบก็ยังเป็น ST1 ที่เดียว)
+    /// <para>
+    /// ไม่นับแถว UV2 ที่จองไว้รอ ST3 เลือกรุ่น — ยังไม่ได้ส่งอะไรเข้าเครื่อง ชิ้นงานยังไม่ได้อยู่ที่ ST3
+    /// เดิมนับรวม งานที่ยังรอคิว MK อยู่จึงขึ้น ST3 ทั้งที่ยังไม่ได้เริ่มพิมพ์เลย
+    /// </para>
     /// </summary>
     public static List<int> Holding(IEnumerable<MachineQueueRow>? queue, int jobId) =>
         (queue ?? [])
-            .Where(r => r.PrintJobsId == jobId && r.State == "active")
+            .Where(r => r.PrintJobsId == jobId && r.State == "active" && !r.AwaitingPick)
             .Select(r => StationOf(r.Machine))
             .OfType<int>()
             .Distinct()
@@ -92,6 +96,33 @@ public static class JobStationService
         return holding.Count > 0
             ? string.Join(" + ", holding.Select(s => $"ST{s}"))
             : Label(LastOnLine(commands));
+    }
+
+    /// <summary>
+    /// คอลัมน์ Station ของแท็บ List — สถานีที่งานถือเครื่องอยู่ตอนนี้เท่านั้น
+    /// <para>
+    /// แต่ละสถานีมีงานได้ใบเดียว ตรงกับแถบสถานะเครื่อง เดิมงานที่ไม่ได้ถือเครื่องแล้วขึ้น
+    /// "สถานีที่ส่งล่าสุด" หน้าตาเหมือนกัน ตารางจึงมี ST1 สองแถว (ใบหนึ่งถือ MK อยู่ อีกใบ
+    /// แค่เคยอยู่ ST1) ดูเหมือนสถานีเดียวมีสองงาน (ตกลงกับผู้ใช้ 19/10/2026)
+    /// </para>
+    /// <list type="bullet">
+    /// <item>ถือเครื่องอยู่ → "ST1" / "ST1 + ST3"</item>
+    /// <item>ไม่มีคิวค้างและยังเหลือรอบของเครื่องเดิม (งาน 22 ติด shim อยู่) → "รอรอบสอง"</item>
+    /// <item>นอกนั้น (รอคิว / ยังไม่เริ่ม / ปล่อยแล้วรอขั้นถัดไป) → ว่าง ให้ผู้เรียกแสดงเป็นขีด</item>
+    /// </list>
+    /// <para>แท็บ History ใช้ <see cref="Display"/> เดิม — งานจบแล้วบอกว่าจบที่สถานีไหน</para>
+    /// </summary>
+    public static string DisplayCurrent(
+        IEnumerable<MachineQueueRow>? queue, int jobId, string? markingMethod, IEnumerable<CommandResult>? commands)
+    {
+        var rows = (queue ?? []).ToList();
+        var holding = Holding(rows, jobId);
+        if (holding.Count > 0) return string.Join(" + ", holding.Select(s => $"ST{s}"));
+
+        bool queued = rows.Any(r => r.PrintJobsId == jobId && r.State is "pending" or "active");
+        return !queued && JobStageService.NextRound(markingMethod, commands) is not null
+            ? JobStageService.AwaitingRoundTwo
+            : "";
     }
 
     /// <summary>ส่งห่างกันไม่เกินนี้นับว่ากดเริ่มรอบเดียวกัน (ส่งหลายเครื่องพร้อมกัน)</summary>
