@@ -1379,6 +1379,12 @@ public partial class OrderListUserControl : UserControl
     /// ไม่ได้สร้าง job ใหม่โดยตั้งใจ — เลข job, pattern, ข้อมูล UV และระยะแคลมป์
     /// ยังเป็นชุดเดิมทั้งหมด ไม่ต้องสแกนบาร์โค้ดซ้ำ และประวัติการส่งของรอบก่อน
     /// ยังอยู่ครบใน print_job_commands ให้ย้อนดูได้ว่าเคยพิมพ์อะไรไปแล้วบ้าง
+    ///
+    /// <para>
+    /// แต่ต้องเหมือนเริ่มพิมพ์ใหม่จริง — บันทึกหมุด REPRINT ก่อนเปลี่ยนสถานะ โปรแกรมทุกจุดจึงเห็น
+    /// เฉพาะประวัติหลังหมุด (<see cref="JobAttempt"/>): เลือกรุ่นย่อยใหม่ ไม่ถือว่าเครื่องไหนส่งไปแล้ว
+    /// คิวของรอบก่อนถูกล้างไปแล้วตอนยกเลิก
+    /// </para>
     /// </summary>
     private async Task RestoreJobAsync(int jobId)
     {
@@ -1396,6 +1402,15 @@ public partial class OrderListUserControl : UserControl
             }))
             return;
 
+        // หมุดก่อนสถานะ — ถ้าเปลี่ยนสถานะได้แต่หมุดไม่ลง งานจะกลับมาพร้อมประวัติรอบเก่า
+        // (ดูเหมือนส่งครบแล้ว / ST3 ไม่ส่ง) กลับกันหมุดลงแต่สถานะไม่เปลี่ยน งานยังยกเลิกอยู่ กดใหม่ได้
+        if (!await _api.SaveSendStepAsync(jobId, JobAttempt.ReprintCommand))
+        {
+            Notify.ErrorModal(this, "นำกลับมาไม่สำเร็จ", "บันทึกการเริ่มพิมพ์ใหม่ไม่ได้ — ลองกดใหม่อีกครั้ง");
+            return;
+        }
+        if (IsDisposed) return;
+
         var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Waiting");
         if (IsDisposed) return;
 
@@ -1404,6 +1419,7 @@ public partial class OrderListUserControl : UserControl
             Notify.ErrorModal(this, "นำกลับมาไม่สำเร็จ", err ?? "ไม่สามารถเปลี่ยนสถานะได้");
             return;
         }
+        AppLog.Info("OrderList.Reprint", $"พิมพ์ใหม่ {JobName(jobId)} · เริ่มนับประวัติรอบใหม่");
 
         // ล้างคำขอ/ข้อความผิดพลาดที่ค้างจากรอบก่อน ไม่งั้น ST1 อาจหยิบธงเก่าไปส่งทันที
         // ที่งานกลับมาเป็น Waiting ทั้งที่ยังไม่มีใครกดเริ่มงานรอบใหม่

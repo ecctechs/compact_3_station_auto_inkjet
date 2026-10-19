@@ -115,8 +115,14 @@ public class PrintJob
     // สองตัวล่างมาเฉพาะจาก /job/getAll — endpoint อื่นส่งเป็น null
     // หน้า Order List ใช้ตรวจว่างานส่งครบยัง โดยไม่ต้องยิง getResolved ทีละแถว
 
+    /// <summary>ประวัติการส่งของรอบพิมพ์ปัจจุบันเท่านั้น — ดู <see cref="JobAttempt"/></summary>
     [JsonPropertyName("commands")]
-    public List<CommandResult>? Commands { get; set; }
+    public List<CommandResult>? Commands
+    {
+        get => _commands;
+        set => _commands = value == null ? null : JobAttempt.Current(value);
+    }
+    private List<CommandResult>? _commands;
 
     [JsonPropertyName("plan_routing")]
     public PlanRoutingDto? PlanRouting { get; set; }
@@ -316,8 +322,14 @@ public class ResolvedJobResponse
     [JsonPropertyName("uv_job_data")]
     public List<UvJobDataDto> UvJobData { get; set; } = new();
 
+    /// <summary>ประวัติการส่งของรอบพิมพ์ปัจจุบันเท่านั้น — ดู <see cref="JobAttempt"/></summary>
     [JsonPropertyName("commands")]
-    public List<CommandResult> Commands { get; set; } = new();
+    public List<CommandResult> Commands
+    {
+        get => _commands;
+        set => _commands = JobAttempt.Current(value ?? []);
+    }
+    private List<CommandResult> _commands = new();
 }
 
 public class UvJobDataDto
@@ -510,6 +522,10 @@ public class JobResultsPayload
 
 public class CommandResult
 {
+    /// <summary>ลำดับในฐานข้อมูล — ใช้หาว่าคำสั่งไหนมาหลังหมุดพิมพ์ใหม่</summary>
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
     [JsonPropertyName("ordinal")]
     public int? Ordinal { get; set; }
 
@@ -527,6 +543,35 @@ public class CommandResult
 
     [JsonPropertyName("sent_at")]
     public string? SentAt { get; set; }
+}
+
+/// <summary>
+/// แยกประวัติการส่งของรอบพิมพ์ปัจจุบันออกจากรอบก่อน ๆ
+///
+/// <para>
+/// งานที่ยกเลิกแล้วกด "พิมพ์ใหม่" ต้องเหมือนเริ่มพิมพ์ใหม่จริง (ตกลงกับผู้ใช้ 19/10/2026):
+/// เลือกรุ่นย่อยใหม่ นับว่าส่งครบใหม่ ไม่ถือว่าเครื่องไหนส่งไปแล้ว เดิมประวัติรอบก่อนยังถูกนับ
+/// งานเพิ่งกลับมาก็ดูเหมือนส่งครบแล้ว ST3 คิดว่าส่ง UV2 ไปแล้วจึงไม่ส่ง รุ่นที่เคยพิมพ์ถูกตัดทิ้ง
+/// </para>
+/// <para>
+/// ตอนพิมพ์ใหม่บันทึกหมุด <see cref="ReprintCommand"/> ลงประวัติ — ทุกที่ในโปรแกรมเห็นเฉพาะคำสั่ง
+/// ที่มาหลังหมุดล่าสุด ตัดที่ตัวรับข้อมูล (PrintJob / ResolvedJobResponse) ที่เดียว ไม่ต้องไล่แก้
+/// ทุกจุดที่อ่านประวัติ · ประวัติเก่ายังอยู่ครบในฐานข้อมูล ย้อนดูได้
+/// </para>
+/// </summary>
+public static class JobAttempt
+{
+    public const string ReprintCommand = "REPRINT";
+
+    public static List<CommandResult> Current(List<CommandResult> commands)
+    {
+        int marker = commands
+            .Where(c => string.Equals(c.Command, ReprintCommand, StringComparison.OrdinalIgnoreCase))
+            .Select(c => c.Id)
+            .DefaultIfEmpty(-1)
+            .Max();
+        return marker < 0 ? commands : commands.Where(c => c.Id > marker).ToList();
+    }
 }
 
 /// <summary>

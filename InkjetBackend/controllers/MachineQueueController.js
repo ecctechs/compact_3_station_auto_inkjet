@@ -447,8 +447,18 @@ class MachineQueueController {
             await row.update({ sent_at: new Date() }, { transaction: t });
           } else if (outcome === "not_sent") {
             await row.update({ state: PENDING }, { transaction: t });
+            // นับเฉพาะรอบพิมพ์ปัจจุบัน — งานที่ยกเลิกแล้วกดพิมพ์ใหม่ มีหมุด REPRINT คั่นประวัติรอบก่อน
+            // (ฝั่งโปรแกรมตัดแบบเดียวกัน ดู JobAttempt) ไม่งั้นงานพิมพ์ใหม่ที่ส่งเครื่องแรกไม่ผ่าน
+            // ค้างเป็น Process เพราะไปนับคำสั่งสำเร็จของรอบก่อน
+            const reprint = await PrintJobCommand.max("id", {
+              where: { job_id: row.print_jobs_id, command: "REPRINT" }, transaction: t,
+            });
             const successful = await PrintJobCommand.count({
-              where: { job_id: row.print_jobs_id, success: true }, transaction: t,
+              where: {
+                job_id: row.print_jobs_id, success: true,
+                ...(reprint ? { id: { [Op.gt]: reprint } } : {}),
+              },
+              transaction: t,
             });
             const stillSending = await PrintJobCommand.count({
               where: {
