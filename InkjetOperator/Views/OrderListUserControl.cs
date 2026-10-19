@@ -4009,6 +4009,10 @@ public partial class OrderListUserControl : UserControl
             {
                 buttons.Add(new AntdUI.CellButton("start", StartButtonText, AntdUI.TTypeMini.Primary)
                 { Radius = 6 });
+
+                // งานที่ถูกตีกลับเป็น Waiting แต่ยังจองคิว UV2 รอเลือกรุ่น — สถานีที่ดูแล UV2
+                // (โหมด Dev ซึ่งเริ่มงานได้ด้วย) ยังต้องเลือกรุ่นได้ ที่ ST1 จริงปุ่มไม่ขึ้นเอง
+                AddUvButtons(buttons, job);
             }
             else if (NotMyTurnYet(job))
             {

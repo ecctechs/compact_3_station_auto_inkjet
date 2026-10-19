@@ -40,18 +40,24 @@ public static class Uv2PickAtSt3
         int jobId, string? status, string? markingMethod,
         IEnumerable<CommandResult>? commands, IEnumerable<MachineQueueRow> queue)
     {
-        if (!string.Equals(status, "Process", StringComparison.OrdinalIgnoreCase)) return false;
-
         var steps = MarkingMethodService.Resolve(markingMethod).Steps;
         if (!steps.Contains(Step, StringComparer.OrdinalIgnoreCase)) return false;
 
         if (commands?.Any(c => c.Success && string.Equals(c.Command, Step, StringComparison.OrdinalIgnoreCase)) == true)
             return false;
 
-        // ไม่มีแถว UV2 (งานที่เริ่มจากโปรแกรมรุ่นก่อน) หรือแถวที่จองไว้ยังรอเลือกรุ่น
         var rows = queue.Where(r => r.PrintJobsId == jobId
             && string.Equals(r.Machine, Step, StringComparison.OrdinalIgnoreCase)
             && r.State is "pending" or "active").ToList();
-        return rows.Count == 0 || rows.All(r => r.AwaitingPick);
+        bool booked = rows.Count > 0 && rows.All(r => r.AwaitingPick);
+
+        // กำลังผลิต: ไม่มีแถว UV2 (งานที่เริ่มจากโปรแกรมรุ่นก่อน) หรือแถวที่จองไว้ยังรอเลือกรุ่น
+        if (string.Equals(status, "Process", StringComparison.OrdinalIgnoreCase))
+            return rows.Count == 0 || booked;
+
+        // Waiting แต่จองคิว UV2 ไว้รอเลือก — เครื่องแรกส่งไม่ผ่านแน่นอน backend ตีงานกลับเป็น Waiting
+        // แต่แถว UV2 ยังถือคิว / เครื่องอยู่ ต้องให้ ST3 เลือกได้ ไม่งั้นเครื่อง UV2 ถูกถือค้าง
+        // (UV2 ส่งแยกจากเครื่องอื่นได้ เหมือนงานที่ไม่ได้ฝาก ST3 ซึ่งส่งพร้อมกันตอนกดเริ่ม)
+        return string.Equals(status, "Waiting", StringComparison.OrdinalIgnoreCase) && booked;
     }
 }
