@@ -341,6 +341,13 @@ public partial class OrderListUserControl : UserControl
         btnSimPushUv1.Visible = dev;
         btnSimPushUv2.Visible = dev;
 
+        // แตะบรรทัดคิวของเครื่อง = ดูคิวทั้งหมดเรียงลำดับ (บรรทัดในแถบโชว์แค่ 3 ใบแรก)
+        foreach (var (machine, _, queue, _) in StationSlots())
+        {
+            queue.Cursor = Cursors.Hand;
+            queue.Click += (_, _) => ShowQueueList(machine);
+        }
+
         btnSimPushMk.Click += async (_, _) => await OnPushButtonPressedAsync("MK");
         btnSimPushUv1.Click += async (_, _) => await OnPushButtonPressedAsync("UV1");
         btnSimPushUv2.Click += async (_, _) => await OnPushButtonPressedAsync("UV2");
@@ -661,10 +668,13 @@ public partial class OrderListUserControl : UserControl
             var holder = rows.FirstOrDefault(r => r.Machine == machine && r.State == "active");
 
             // เรียงตามลำดับที่จะได้เครื่อง — ตัวแรกในรายการคือคิวที่ 1
+            //
+            // ใช้ลำดับที่ backend คืนมา (เรียงชุดเดียวกับที่ release ใช้เลือกคิวถัดไป) ไม่เรียงใหม่
+            // ด้วย id — งาน 22 ที่ดันรอบสองไปต่อท้ายคิวมี id เก่ากว่า เรียงด้วย id จะขึ้นผิดที่
             var waiting = rows
                 .Where(r => r.Machine == machine && r.State == "pending")
-                .OrderBy(r => r.Id)
                 .ToList();
+            _waitingByMachine[machine] = waiting;
 
             // ปุ่มกดได้ตราบใดที่ยังมีอะไรให้ขยับ — ถืออยู่ก็ปล่อย ว่างแต่มีคนรอก็ยกให้คิว
             //
@@ -694,17 +704,69 @@ public partial class OrderListUserControl : UserControl
     }
 
     /// <summary>
-    /// บรรทัดบอกคิวของเครื่องหนึ่ง — ใบถัดไปคือใบไหน และมีทั้งหมดกี่ใบ
+    /// บรรทัดบอกคิวของเครื่องหนึ่ง — 3 ใบแรกตามลำดับ ที่เหลือบอกเป็นจำนวน แตะดูทั้งหมดได้
     ///
-    /// บอกชื่องานของใบถัดไปด้วย ไม่ใช่แค่จำนวน เพราะคนหน้างานต้องรู้ว่าเดี๋ยวจะได้
-    /// ชิ้นงานของล็อตไหนมาเข้าเครื่องต่อ จะได้เตรียมของถูกใบ
+    /// <para>
+    /// บอกชื่องานเรียงลำดับ ไม่ใช่แค่ใบถัดไป — คนหน้างานต้องรู้ว่าเดี๋ยวจะได้ชิ้นงานล็อตไหน
+    /// ต่อ ๆ ไป และป้าย Qn ในตารางขึ้นเฉพาะงาน Waiting จึงดูลำดับจากตารางอย่างเดียวไม่ครบ
+    /// (งาน Working ที่รอเครื่องถัดไปไม่มีเลข Q) แถบนี้รวมทุกงานที่รอเครื่องนั้นไว้ครบ
+    /// </para>
+    /// <para>
+    /// ใช้ชื่อสั้น (ERP) บรรทัดสูงพอแค่บรรทัดเดียว ชื่อเต็มพร้อมล็อตอยู่ในกล่องที่แตะเปิด
+    /// </para>
     /// </summary>
     private string QueueLine(List<MachineQueueRow> waiting)
     {
         if (waiting.Count == 0) return "ไม่มีคิวรอ";
 
-        var next = $"คิวถัดไป: {JobName(waiting[0].PrintJobsId)}";
-        return waiting.Count == 1 ? next : $"{next}   (รอทั้งหมด {waiting.Count} ใบ)";
+        var first = waiting.Take(QueueLineMax).Select((r, i) =>
+            $"{i + 1}. {ShortJobName(r.PrintJobsId)}{(r.AwaitingPick ? " (รอ ST3)" : "")}");
+        var line = "คิว: " + string.Join(" · ", first);
+        return waiting.Count > QueueLineMax
+            ? $"{line} · +{waiting.Count - QueueLineMax} ใบ — แตะดูทั้งหมด"
+            : line;
+    }
+
+    /// <summary>จำนวนงานที่ขึ้นในบรรทัดคิวของแถบเครื่อง — เกินนี้บอกเป็น "+N ใบ"</summary>
+    private const int QueueLineMax = 3;
+
+    /// <summary>คิวรอของแต่ละเครื่องจากรอบล่าสุด เรียงตามลำดับที่จะได้เครื่อง — ใช้ตอนแตะดูทั้งหมด</summary>
+    private readonly Dictionary<string, List<MachineQueueRow>> _waitingByMachine = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>ชื่อสั้นของงาน (ERP / ล็อต) สำหรับที่แคบ — ไม่รู้จักงานคืน #id</summary>
+    private string ShortJobName(int jobId)
+    {
+        var job = _allJobs.FirstOrDefault(j => j.Id == jobId);
+        return job == null ? $"#{jobId}" : FirstFilled(job.OrderNo, job.LotNumber, $"#{jobId}");
+    }
+
+    /// <summary>
+    /// แตะบรรทัดคิวในแถบเครื่อง — เปิดกล่องรายการคิวทั้งหมดของเครื่องนั้นเรียงตามลำดับ
+    /// ใช้แตะได้ (panel PC ไม่มีเมาส์ให้ชี้ดู tooltip)
+    /// </summary>
+    private void ShowQueueList(string machine)
+    {
+        var waiting = _waitingByMachine.GetValueOrDefault(machine) ?? [];
+        var holder = _queueRows.FirstOrDefault(r => r.Machine == machine && r.State == "active");
+
+        var lines = new List<string>
+        {
+            holder == null ? "ตอนนี้: เครื่องว่าง" : $"ตอนนี้: {JobName(holder.PrintJobsId)}",
+            "",
+        };
+        if (waiting.Count == 0) lines.Add("ไม่มีคิวรอ");
+        for (int i = 0; i < waiting.Count; i++)
+        {
+            var r = waiting[i];
+            var note = r.AwaitingPick ? "   · รอ ST3 เลือกรุ่น"
+                : r.NeedsSendReview ? "   · กำลังส่ง / รอตรวจสอบผล"
+                : r.DispatchState == "not_sent" ? "   · ส่งไม่ผ่าน รอสั่งใหม่"
+                : "";
+            lines.Add($"{i + 1}. {JobName(r.PrintJobsId)}{note}");
+        }
+
+        Notify.InfoModal(this, waiting.Count == 0 ? $"คิว {machine}" : $"คิว {machine} ({waiting.Count} ใบ)",
+            string.Join(Environment.NewLine, lines));
     }
 
     /// <summary>คิวของทุกเครื่องจากรอบล่าสุด — ว่างแปลว่ายังไม่เคยอ่านสำเร็จ</summary>
@@ -3917,12 +3979,20 @@ public partial class OrderListUserControl : UserControl
 
         // Waiting (Qn) ใช้สีเดียวกับ Waiting (แดง) — ยังเป็นงานที่ยังไม่เริ่ม แค่บอกคิวเพิ่ม
         // Starting / Pick UV2 ใช้สีส้ม — กำลังรออะไรบางอย่างอยู่ ไม่ใช่งานที่ยังไม่มีใครแตะ
+        // งาน Working ที่ยังรอคิวอีกเครื่อง — ต่อเลข Q ให้ด้วย (เช่นงาน 12 ได้ UV2 ก่อน แต่ยังรอ MK)
+        // ไม่งั้นงานหลังขึ้น Waiting (Q2) โดยไม่มี Q1 ให้เห็นในตาราง ดูเหมือนคิวหาย
+        var workingQueue = !isHistory && queueLabel == null && !awaitingUv2
+            && string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase)
+            ? JobStageService.QueuePosition(job.Id, job.PlanRouting?.MarkingMethod, _queueRows)
+            : null;
+
         var statusText = queueLabel != null
             ? new AntdUI.CellText(queueLabel)
             {
                 Fore = queueLabel.StartsWith("Waiting", StringComparison.Ordinal) ? statusColor : WaitingColor,
             }
             : awaitingUv2 ? new AntdUI.CellText(Uv2PickLabel) { Fore = WaitingColor }
+            : workingQueue != null ? new AntdUI.CellText($"{statusLabel} ({workingQueue})") { Fore = statusColor }
             : new AntdUI.CellText(statusLabel) { Fore = statusColor };
 
         var buttons = new List<AntdUI.CellButton>();

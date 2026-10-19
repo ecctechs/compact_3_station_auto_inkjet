@@ -132,6 +132,10 @@ internal static class Notify
     public static void SuccessModal(Control? owner, string title, string text) =>
         Dialog(owner, title, text, AntdUI.TType.Success);
 
+    /// <summary>กล่องข้อมูลกลางจอ ปุ่มเดียว ไม่ดึงบรรทัดแรกเป็นหัว — ใช้แสดงรายการ เช่นคิวทั้งหมดของเครื่อง</summary>
+    public static void InfoModal(Control? owner, string title, string text) =>
+        Dialog(owner, title, text, AntdUI.TType.Info, splitHeadline: false);
+
     /// <summary>
     /// กล่องแจ้งกลางจอ ปุ่มเดียว — หน้าต่างเดียวกับกล่องยืนยัน (<see cref="ConfirmDialog"/>)
     /// ทั้งโปรแกรมจึงมีกล่องแบบเดียว แถบหัวเป็นสีตามระดับ ให้รู้ตั้งแต่เหลือบตาว่าผ่านหรือพัง

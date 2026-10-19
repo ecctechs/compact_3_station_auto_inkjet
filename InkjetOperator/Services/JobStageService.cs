@@ -54,7 +54,24 @@ public static class JobStageService
             return SideOf(plan, holding);
 
         // ยังไม่ถึงคิว บอกว่าอีกกี่คิวถึงตัวเอง
-        if (FirstInPlanOrder(plan, mine.Where(IsPending)) is not { } waiting) return null;
+        return QueuePosition(jobId, markingMethod, all);
+    }
+
+    /// <summary>
+    /// คิวที่เท่าไรของงานนี้ ("Q1") ที่เครื่องแรกตามแผนที่ยังรอคิวอยู่ — null = ไม่ได้รอคิวเครื่องไหน
+    ///
+    /// <para>
+    /// ดูเฉพาะแถวที่รอคิว ไม่สนว่างานถือเครื่องอื่นอยู่หรือเปล่า — หน้า Order List ใช้กับงาน
+    /// Working ที่ส่งเครื่องหนึ่งไปแล้วแต่ยังรอคิวอีกเครื่อง (เช่นงาน 12 ได้ UV2 ก่อน แต่ยังรอ MK)
+    /// ไม่งั้นตารางขึ้น Waiting (Q2) โดยไม่มี Q1 ให้เห็น เพราะ Q1 เป็นงาน Working
+    /// </para>
+    /// </summary>
+    public static string? QueuePosition(int jobId, string? markingMethod, IEnumerable<MachineQueueRow> rows)
+    {
+        var all = rows as IList<MachineQueueRow> ?? rows.ToList();
+        var plan = MarkingMethodService.Resolve(markingMethod);
+        if (FirstInPlanOrder(plan, all.Where(r => r.PrintJobsId == jobId && IsPending(r))) is not { } waiting)
+            return null;
 
         int position = all
             .Where(r => IsPending(r) && SameMachine(r.Machine, waiting.Machine))
