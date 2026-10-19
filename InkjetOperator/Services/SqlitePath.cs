@@ -19,6 +19,13 @@ namespace InkjetOperator.Services;
 /// ใช้ <see cref="SqliteConnectionStringBuilder"/> ประกอบสตริง ไม่ต่อเอง เพราะ
 /// path จริงมีทั้งเว้นวรรค วงเล็บ และภาษาไทย ซึ่งถ้าต่อเองมีโอกาสหลุด
 /// </para>
+/// <para>
+/// ปิด connection pool — ปิด connection แล้วต้องปล่อยไฟล์จริง ๆ ค่าตั้งต้นของ
+/// Microsoft.Data.Sqlite เก็บ connection ที่ปิดแล้วไว้ใช้ซ้ำ ไฟล์บนแชร์จึงถูกถือค้าง
+/// ตลอดเวลาที่โปรแกรมเปิด เครื่องที่แปลง Excel เป็น PrintData.db3
+/// (<see cref="PrintDataExcelImport"/>) สลับไฟล์ใหม่เข้าไปแทนไม่ได้
+/// แลกกับเปิดไฟล์ใหม่ทุกครั้งที่อ่าน ซึ่งช้าลงไม่กี่มิลลิวินาที
+/// </para>
 /// </summary>
 public static class SqlitePath
 {
@@ -36,6 +43,7 @@ public static class SqlitePath
         {
             DataSource = Normalize(path),
             Mode = mode,
+            Pooling = false,
         }.ToString();
 
     /// <summary>UNC path ต้องใช้ forward slash ส่วน path บนเครื่องตัวเองปล่อยไว้ตามเดิม</summary>
