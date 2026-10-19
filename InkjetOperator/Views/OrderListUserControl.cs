@@ -491,22 +491,7 @@ public partial class OrderListUserControl : UserControl
             // ห้ามออกจากเมธอดตรงนี้ — บรรทัดท้ายเมธอดคือตัวที่ไปหยิบงานรอบถัดไป
             // มาส่งเข้าเครื่องทันที ถ้าข้ามไป การส่งจะไปรอนาฬิกา poll รอบหน้า
             // คนกดปุ่มจะเห็นเป็นค้างไปหลายวินาทีก่อนอะไรจะเกิดขึ้น
-            if (release.Next != null)
-            {
-                if (StationService.IsSt3)
-                    Notify.Success(this, $"{machine} เข้าคิวแล้ว · ST1 จะส่งงานถัดไปให้");
-                else
-                    await ProcessMachineQueueAsync(machineFilter: machine);
-            }
-            else
-            {
-                // ไม่มีใครรอคิว — เลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้น
-                //
-                // มีคิวรออยู่ไม่ต้องเลื่อน เพราะงานถัดไปเขียนตำแหน่งของมันทับอยู่แล้ว
-                // การเลื่อนกลับก่อนแล้วเลื่อนไปใหม่คือขยับหัวสองรอบโดยไม่ได้อะไร
-                Notify.Success(this, $"{machine} ว่างแล้ว · ไม่มีงานรอคิว");
-                await ResetHeadPositionAsync(machine);
-            }
+            await ContinueAfterReleaseAsync(machine, release.Next);
 
             // ทำหลังส่งงานถัดไปแล้ว คนที่รอเครื่องอยู่ไม่ต้องรอการตรวจงานใบเก่า
             if (holder != null && !IsDisposed)
@@ -517,6 +502,78 @@ public partial class OrderListUserControl : UserControl
             _pushHandling.Remove(machine);
         }
         if (!IsDisposed) await RefreshDataAsync(force: true);
+    }
+
+    /// <summary>
+    /// หลังเครื่องว่างแล้ว — ส่งงานที่เพิ่งได้เครื่อง หรือเลื่อนหัวกลับถ้าไม่มีใครรอ
+    ///
+    /// <para>
+    /// ใช้ร่วมกันระหว่างปุ่มหน้าเครื่องกับปุ่มจบงานบนจอ สองทางจึงเดินคิวต่อแบบเดียวกัน
+    /// </para>
+    /// </summary>
+    private async Task ContinueAfterReleaseAsync(string machine, MachineQueueRow? next)
+    {
+        if (next != null)
+        {
+            if (StationService.IsSt3)
+                Notify.Success(this, $"{machine} เข้าคิวแล้ว · ST1 จะส่งงานถัดไปให้");
+            else
+                await ProcessMachineQueueAsync(machineFilter: machine);
+            return;
+        }
+
+        // ไม่มีใครรอคิว — เลื่อนหัวพิมพ์กลับตำแหน่งเริ่มต้น
+        //
+        // มีคิวรออยู่ไม่ต้องเลื่อน เพราะงานถัดไปเขียนตำแหน่งของมันทับอยู่แล้ว
+        // การเลื่อนกลับก่อนแล้วเลื่อนไปใหม่คือขยับหัวสองรอบโดยไม่ได้อะไร
+        Notify.Success(this, $"{machine} ว่างแล้ว · ไม่มีงานรอคิว");
+        await ResetHeadPositionAsync(machine);
+    }
+
+    /// <summary>
+    /// เดินคิวของเครื่องที่งานเพิ่งจบ / ยกเลิกไป — ทำเหมือนกดปุ่มหน้าเครื่อง (ข้อ 2.4)
+    ///
+    /// <para>
+    /// จบหรือยกเลิกงานบนจอ backend ลบคิวของงานนั้นทิ้ง เครื่องว่างแต่ไม่มีใครยกเครื่องให้คิวถัดไป
+    /// งานที่รอคิวจึงค้าง และหน้าจอขึ้นเป็น Waiting เฉย ๆ เหมือนคิวหาย จนกว่าจะมีคน
+    /// เดินไปกดปุ่มหน้าเครื่อง — คนกดจบงานยืนยันแล้วว่าชิ้นนั้นเสร็จ จึงเดินคิวต่อให้เลย
+    /// </para>
+    /// <para>
+    /// ปล่อยด้วย <c>expected_holder_id = null</c> — ถ้าระหว่างนั้นมีใครได้เครื่องไปแล้ว
+    /// backend ปฏิเสธ แปลว่าคิวเดินไปแล้ว ไม่ต้องทำอะไรต่อ
+    /// </para>
+    /// </summary>
+    private async Task AdvanceFreedMachinesAsync(IEnumerable<string> machines)
+    {
+        foreach (var machine in machines.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            if (IsDisposed) return;
+            if (!CanReleaseNow(machine))
+            {
+                Notify.Warn(this, $"{machine} กำลังทำงานอื่นอยู่ — คิวถัดไปยังไม่เดิน กดปุ่มหน้าเครื่องเพื่อส่งต่อ");
+                continue;
+            }
+
+            _pushHandling.Add(machine);
+            try
+            {
+                var (release, error) = await _api!.ReleaseMachineAsync(machine, null);
+                if (IsDisposed) return;
+                if (release == null)
+                {
+                    AppLog.Info("OrderList.Queue", $"ไม่ได้เดินคิว {machine} ต่อ — {error}");
+                    continue;
+                }
+                AppLog.Info("OrderList.Queue", release.Next == null
+                    ? $"งานจบ / ยกเลิกแล้ว {machine} ว่าง ไม่มีคิวรอ"
+                    : $"งานจบ / ยกเลิกแล้ว ยก {machine} ให้คิว {release.Next.Id} {JobName(release.Next.PrintJobsId)}");
+                await ContinueAfterReleaseAsync(machine, release.Next);
+            }
+            finally
+            {
+                _pushHandling.Remove(machine);
+            }
+        }
     }
 
     /// <summary>
@@ -1378,6 +1435,10 @@ public partial class OrderListUserControl : UserControl
             }))
             return;
 
+        // เครื่องที่งานนี้ถืออยู่ — ยกเลิกแล้วต้องเดินคิวต่อ เหมือนกดจบงาน (ดู AdvanceFreedMachinesAsync)
+        var held = await HeldMachinesAsync(jobId);
+        if (IsDisposed) return;
+
         // Backend ล้างคิวกับเปลี่ยนสถานะใน Transaction เดียวกัน
         var (ok, err) = await _api.UpdateJobStatusAsync(
             jobId, "Cancel", resolveUnresolved: AllOrNothingSend.Enabled);
@@ -1395,7 +1456,22 @@ public partial class OrderListUserControl : UserControl
         if (IsDisposed) return;
 
         Notify.Success(this, $"ยกเลิก {JobName(jobId)} แล้ว");
+        await AdvanceFreedMachinesAsync(held);
+        if (IsDisposed) return;
         await RefreshDataAsync(force: true);
+    }
+
+    /// <summary>
+    /// เครื่องที่งานนี้ถืออยู่ตอนนี้ (แถว active) — อ่านก่อนจบ / ยกเลิก เพราะหลังจากนั้นแถวถูกลบ
+    /// อ่านคิวไม่ได้คืนว่าง งานยังจบ / ยกเลิกได้ เหลือแค่คิวไม่เดินเอง (เหมือนพฤติกรรมเดิม)
+    /// </summary>
+    private async Task<List<string>> HeldMachinesAsync(int jobId)
+    {
+        var (rows, _) = await _api!.GetMachineQueueAsync();
+        return rows
+            .Where(r => r.PrintJobsId == jobId && r.State == "active")
+            .Select(r => r.Machine)
+            .ToList();
     }
 
     // ── เริ่มงาน ────────────────────────────────────────────
@@ -3236,6 +3312,10 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
+        // จำเครื่องที่งานนี้ถืออยู่ก่อนจบ — จบแล้วแถวถูกลบ จะไม่รู้ว่าต้องเดินคิวเครื่องไหน
+        var held = await HeldMachinesAsync(jobId);
+        if (IsDisposed) return;
+
         // เปลี่ยนสถานะและล้างคิวพร้อมกัน ฝั่ง Backend จะกันงานที่ยังไม่รู้ผลส่ง
         var (ok, err) = await _api.UpdateJobStatusAsync(
             jobId, "Success", resolveUnresolved: AllOrNothingSend.Enabled);
@@ -3246,6 +3326,8 @@ public partial class OrderListUserControl : UserControl
             Notify.Success(this, manual
                 ? $"{JobName(jobId)} จบงานแล้ว (ยืนยันด้วยมือ)"
                 : $"{JobName(jobId)} จบงานแล้ว");
+            await AdvanceFreedMachinesAsync(held);
+            if (IsDisposed) return;
             await RefreshDataAsync();
         }
         else
