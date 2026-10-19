@@ -6,7 +6,11 @@ namespace InkjetOperator.Views;
 /// <param name="Key">ค่าที่คืนกลับเมื่อผู้ใช้เลือกรายการนี้</param>
 /// <param name="Display">ข้อความที่แสดงในรายการ</param>
 /// <param name="ImagePaths">รูปของรายการนี้ อาจว่างได้</param>
-public sealed record MarkingRefOption(string Key, string Display, List<string> ImagePaths);
+/// <param name="Disabled">
+/// ให้เห็นแต่เลือกไม่ได้ — เช่นรุ่นย่อยที่พิมพ์ไปแล้วตอนเปลี่ยนรุ่น เลือกรายการนี้แล้วปุ่มตกลงกดไม่ได้
+/// (บอกเหตุผลในข้อความ Display เอง รายการไม่ได้วาดสีเทาให้ เพราะต้องวาดเองซึ่งไม่ทำในหน้าจอนี้)
+/// </param>
+public sealed record MarkingRefOption(string Key, string Display, List<string> ImagePaths, bool Disabled = false);
 
 /// <summary>
 /// ให้เลือก 1 รายการ พร้อมดูรูปอ้างอิงของรายการที่กำลังไฮไลต์
@@ -27,7 +31,11 @@ internal sealed partial class MarkingRefPickerDialog : AntdUI.BorderlessForm
         InitializeComponent();
         Services.LanguageService.Apply(this);
 
-        lstOptions.SelectedIndexChanged += (_, _) => ShowImagesForSelection();
+        lstOptions.SelectedIndexChanged += (_, _) =>
+        {
+            ShowImagesForSelection();
+            btnOk.Enabled = SelectedOption is { Disabled: false };
+        };
 
         // ไม่มีแถบหัวของระบบ — ลากหน้าต่างจากแถบหัวของเราเอง (แบบเดียวกับกล่องยืนยัน)
         tlpTitleBar.MouseDown += TitleBar_MouseDown;
@@ -60,14 +68,17 @@ internal sealed partial class MarkingRefPickerDialog : AntdUI.BorderlessForm
     /// <summary>
     /// เปิด dialog แล้วคืน Key ของรายการที่เลือก · null = ยกเลิก
     /// </summary>
+    /// <param name="okText">ข้อความปุ่มตกลง — ว่าง = "ตกลง" ตามเดิม</param>
     public static string? Pick(
-        IWin32Window? owner, string title, string prompt, List<MarkingRefOption> options)
+        IWin32Window? owner, string title, string prompt, List<MarkingRefOption> options,
+        string? okText = null)
     {
         if (options.Count == 0) return null;
 
         using var dlg = new MarkingRefPickerDialog();
         dlg.Text = dlg.lblTitle.Text = title;
         dlg.lblPrompt.Text = prompt;
+        if (!string.IsNullOrWhiteSpace(okText)) dlg.btnOk.Text = okText;
         dlg.SetOptions(options);
 
         using var dim = OwnerForm(owner) is { } form ? DimOverlay.ShowOver(form) : null;
@@ -129,15 +140,21 @@ internal sealed partial class MarkingRefPickerDialog : AntdUI.BorderlessForm
         foreach (var option in options) lstOptions.Items.Add(option.Display);
         lstOptions.EndUpdate();
 
-        lstOptions.SelectedIndex = 0;
+        // เริ่มที่รายการแรกที่เลือกได้ — ไม่ให้ปุ่มตกลงเทาตั้งแต่เปิด
+        int first = options.FindIndex(o => !o.Disabled);
+        lstOptions.SelectedIndex = first < 0 ? 0 : first;
+        btnOk.Enabled = SelectedOption is { Disabled: false };
     }
+
+    private MarkingRefOption? SelectedOption =>
+        lstOptions.SelectedIndex is int i && i >= 0 && i < _options.Count ? _options[i] : null;
 
     private void AcceptIfSelected()
     {
-        int index = lstOptions.SelectedIndex;
-        if (index < 0 || index >= _options.Count) return;
+        // ดับเบิลคลิก / Enter บนรายการที่เลือกไม่ได้ ต้องไม่ผ่านเหมือนกดปุ่มตกลงที่เทาอยู่
+        if (SelectedOption is not { Disabled: false } option) return;
 
-        SelectedKey = _options[index].Key;
+        SelectedKey = option.Key;
         DialogResult = DialogResult.OK;
         Close();
     }

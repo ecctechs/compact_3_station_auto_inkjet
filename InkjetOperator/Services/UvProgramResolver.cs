@@ -173,6 +173,37 @@ public static class UvProgramResolver
             _ => PromptVariant(variants, owner, uvNumber),
         };
 
+    /// <summary>
+    /// เลือกรุ่นถัดไปตอนกด "เปลี่ยนรุ่น" — กล่องเดียวกับตอนเลือกรุ่นแรก แต่คำบอกว่ากำลังเปลี่ยนรุ่น
+    /// · null = ยกเลิก
+    ///
+    /// <para>
+    /// แสดงทุกรุ่นให้เห็นภาพรวม รุ่นที่อยู่ในเครื่องตอนนี้กับรุ่นที่พิมพ์ไปแล้วมีป้ายกำกับ
+    /// และเลือกไม่ได้ (ปุ่มกดไม่ได้) · ขึ้นกล่องเสมอแม้เหลือรุ่นเดียว คนกดต้องเห็นว่าจะได้รุ่นไหน
+    /// กล่องนี้คือการยืนยันในตัว ปุ่มบอกการกระทำตรง ๆ
+    /// </para>
+    /// </summary>
+    public static string? PickNextVariant(
+        List<string> variants, string? current, IReadOnlySet<string> printed,
+        IWin32Window? owner, int? uvNumber)
+    {
+        var options = variants.Select(v =>
+        {
+            bool isCurrent = string.Equals(v, current, StringComparison.OrdinalIgnoreCase);
+            bool isPrinted = printed.Contains(v);
+            var label = v + ".uvdx" + (isCurrent ? "   · อยู่ในเครื่องตอนนี้" : isPrinted ? "   · พิมพ์แล้ว" : "");
+            return new MarkingRefOption(v, label, MarkingRefImageService.FindImagesExact(v), isCurrent || isPrinted);
+        }).ToList();
+
+        var machine = MachineLabel(uvNumber);
+        return MarkingRefPickerDialog.Pick(
+            owner,
+            machine == null ? "เปลี่ยนรุ่น" : $"เปลี่ยนรุ่น — {machine}",
+            "รุ่นเดิมพิมพ์เสร็จแล้ว? เลือกรุ่นถัดไป — กดแล้วเครื่องโหลดรุ่นใหม่ทันที · รุ่นที่พิมพ์แล้วเลือกซ้ำไม่ได้",
+            options,
+            okText: "พิมพ์รุ่นนี้");
+    }
+
     private static string? PromptVariant(List<string> variants, IWin32Window? owner, int? uvNumber)
     {
         var options = variants

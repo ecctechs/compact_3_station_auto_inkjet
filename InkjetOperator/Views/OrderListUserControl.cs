@@ -2076,11 +2076,18 @@ public partial class OrderListUserControl : UserControl
     /// <summary>
     /// ขั้นที่ฝากให้ ST3 เลือกรุ่นแทนการถามที่ ST1 — ว่าง = ทำแบบเดิมทุกขั้น
     /// <para>
-    /// ฝากเฉพาะตอนเปิดตัวเลือก กดที่ ST1 และแผนมี UV2 ที่มีให้เลือกไม่ใช่ไฟล์เดียว:
-    /// หลายไฟล์ (มีรุ่นย่อย) · ไม่พบ (ต้องตัดสินว่าจะใช้ default ไหม) · ST1 มองไม่เห็นโฟลเดอร์ UV2
-    /// (บอกไม่ได้ว่ามีกี่รุ่น ให้คนที่อยู่หน้าเครื่องดูเองปลอดภัยกว่าเดา)
-    /// ไฟล์เดียวไม่มีอะไรให้เลือก ส่งจาก ST1 ทันทีเหมือนเดิม คน ST3 ไม่ต้องกดอะไรเพิ่ม
+    /// ฝากเฉพาะตอนเปิดตัวเลือก กดที่ ST1 และโปรแกรม UV2 มีรุ่นย่อยจริง (เจอหลายไฟล์)
     /// </para>
+    /// <para>
+    /// ตกลงกับผู้ใช้ 19/10/2026: ถามใช้ default.uvdx ที่ ST1 เท่านั้น · เลือกรุ่น UV2 ที่ ST3 · UV1 ที่ ST1
+    /// เดิมฝากทุกกรณีที่ไม่ใช่ไฟล์เดียว รวมไม่พบไฟล์ — จอขึ้น "รอ ST3 เลือกรุ่น" ทั้งที่ไม่มีรุ่นย่อย
+    /// แล้ว ST3 กดเลือกก็ไม่มีอะไรให้เลือก งานค้าง
+    /// </para>
+    /// <list type="bullet">
+    /// <item>ไฟล์เดียว — ไม่มีอะไรให้เลือก ส่งจาก ST1 ทันที</item>
+    /// <item>ไม่พบ — ST1 ถามใช้ default ตอนกดเริ่มเหมือนตอนปิดตัวเลือก</item>
+    /// <item>ST1 มองไม่เห็นโฟลเดอร์ UV2 — ทำแบบเดิม ส่งชื่อโปรแกรมให้เครื่องตัดสินเอง (หน้ายืนยันบอกให้ไปตั้งโฟลเดอร์)</item>
+    /// </list>
     /// </summary>
     private static async Task<HashSet<string>> DeferToSt3Async(MarkingPlan plan, ResolvedJobResponse resolved)
     {
@@ -2097,7 +2104,7 @@ public partial class OrderListUserControl : UserControl
         // ไม่มีชื่อโปรแกรม = ไม่มีอะไรให้เลือก ปล่อยทางเดิมรายงานว่าข้อมูล UV2 ไม่ครบ
         if (string.IsNullOrWhiteSpace(program)) return deferred;
 
-        if (await UvProgramResolver.VariantCountAsync(program, 2) != 1)
+        if (await UvProgramResolver.VariantCountAsync(program, 2) is > 1)
             deferred.Add(Uv2PickAtSt3.Step);
         return deferred;
     }
@@ -2175,9 +2182,12 @@ public partial class OrderListUserControl : UserControl
         if (IsDisposed) return;
         if (all.Count == 0)
         {
+            // ST1 เห็นหลายรุ่นตอนฝากมา แต่โฟลเดอร์ของเครื่องนี้ไม่มี — ไม่ถาม default ที่นี่
+            // (ตกลงให้ถาม default ที่ ST1 เท่านั้น) บอกให้ตรวจโฟลเดอร์ที่ตั้งไว้แทน
             Notify.WarnModal(this, "เลือกรุ่นไม่ได้",
                 $"ไม่พบไฟล์ {program}.uvdx ในโฟลเดอร์ {step} ของเครื่องนี้"
-                + Environment.NewLine + Environment.NewLine + JobName(jobId));
+                + Environment.NewLine + Environment.NewLine + JobName(jobId)
+                + Environment.NewLine + $"ตรวจโฟลเดอร์ {step} ใน uv.config ของเครื่องนี้ ให้ตรงกับเครื่อง UV2");
             return;
         }
 
@@ -2303,26 +2313,11 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        var chosen = UvProgramResolver.PickFrom(remaining, this, uvNumber);
+        // กล่องเลือกรุ่นตัวเดิม แต่คำบอกว่ากำลังเปลี่ยนรุ่น — เห็นทุกรุ่น รุ่นที่อยู่ในเครื่อง / พิมพ์แล้วเลือกไม่ได้
+        // ขึ้นเสมอแม้เหลือรุ่นเดียว และเป็นการยืนยันในตัว (ปุ่ม "พิมพ์รุ่นนี้")
+        var printed = UvVariantService.SentVariants(resolved.Commands, step);
+        var chosen = UvProgramResolver.PickNextVariant(all, held.ProgramName, printed, this, uvNumber);
         if (chosen == null || IsDisposed) return;
-
-        if (!Confirm.Ask(this, new ConfirmSpec
-            {
-                Title = $"เปลี่ยนรุ่น {step}",
-                Headline = "รุ่นเดิมพิมพ์เสร็จแล้ว เปลี่ยนรุ่นเลยไหม?",
-                Facts =
-                [
-                    ("งาน", JobName(jobId)),
-                    ("ตอนนี้", string.IsNullOrWhiteSpace(held.ProgramName) ? "-" : $"{held.ProgramName}.uvdx"),
-                    ("เปลี่ยนเป็น", $"{chosen}.uvdx"),
-                    ("รุ่น", $"พิมพ์แล้ว {all.Count - remaining.Count} จาก {all.Count}"),
-                ],
-                Warning = "เครื่องโหลดรุ่นใหม่ทับทันที — กดเมื่อรุ่นเดิมพิมพ์เสร็จแล้วเท่านั้น",
-                OkText = "เปลี่ยนรุ่น",
-                Icon = "SwapOutlined",
-                OkIcon = "SwapOutlined",
-            }))
-            return;
 
         var (switched, error) = await _api.SwitchMachineProgramAsync(step, held.Id, chosen);
         if (IsDisposed) return;
