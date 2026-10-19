@@ -4013,6 +4013,11 @@ public partial class OrderListUserControl : UserControl
             else if (NotMyTurnYet(job))
             {
                 // ยังไม่ถึงตาสถานีนี้ — ไม่ใส่ปุ่มข้อความ เหลือแค่ยกเลิกกับดูรายละเอียด
+                //
+                // ยกเว้นปุ่มรุ่นย่อย UV — "ยังไม่ถึงตา" ดูจากว่ามีคำสั่งส่งสำเร็จหรือยัง งานที่กดเริ่มแล้ว
+                // แต่เครื่องแรกส่งไม่ผ่าน (เช่นงาน 11 ที่ UV1 ถูกเครื่องปฏิเสธ) จึงตกด่านนี้ ทั้งที่จองคิว
+                // UV2 ไว้รอ ST3 เลือกแล้ว ปุ่มเลือกรุ่น UV2 หายไปด้วย งานค้าง ปุ่มพวกนี้มีเงื่อนไขของมันเอง
+                AddUvButtons(buttons, job);
             }
             else if (MarkingMethodService.CanCompleteAt(
                          StationService.Current, job.PlanRouting?.MarkingMethod))
