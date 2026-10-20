@@ -64,6 +64,27 @@ public partial class OrderDetailUserControl : UserControl
     /// </summary>
     public event EventHandler<string>? RemoteStartRequested;
 
+    /// <summary>
+    /// ขอให้ส่งงานใบนี้เข้า MK เดี๋ยวนี้ — หน้า Order List เป็นคนส่งจริง
+    ///
+    /// <para>
+    /// เหตุผลเดียวกับ <see cref="RemoteStartRequested"/> คือทางส่งจริงที่ผ่านคิว
+    /// (จดหลักฐานก่อนแตะเครื่อง · กันส่งซ้ำ · ปล่อยเครื่องตามลำดับ) อยู่ที่หน้านั้น
+    /// ที่เดียว ถ้าหน้านี้ส่งเองจะกลายเป็นการส่งที่ข้ามด่านคิวทั้งหมด
+    /// </para>
+    /// </summary>
+    public event EventHandler? QueueSendMkRequested;
+
+    /// <summary>
+    /// ให้โชว์ปุ่ม "ส่งเข้า MK" ไหม — หน้า Order List เป็นคนตัดสินแล้วบอกมา
+    ///
+    /// <para>
+    /// เงื่อนไข (ถึงคิวแล้วจริง · Plate เข้า MK · ไม่ใช่งาน 22 · อยู่ที่ ST1) ต้องดู
+    /// คิวของจริงซึ่งหน้านี้ไม่มี และด่านตรวจทั้งหมดก็อยู่ที่หน้านั้นอยู่แล้ว
+    /// </para>
+    /// </summary>
+    public bool ShowQueueSendMk { get; set; }
+
     public OrderDetailUserControl()
     {
         InitializeComponent();
@@ -82,6 +103,14 @@ public partial class OrderDetailUserControl : UserControl
         btnSendMk.Click += async (_, _) => await SendToMkAsync();
         btnSavePattern.Click += async (_, _) => await SaveEditedValuesAsync();
         btnRemoteSend.Click += (_, _) => RequestRemoteStart();
+
+        // ปิดกล่องแล้วค่อยส่ง — ผลการส่งกับกล่องยืนยันจะได้โผล่บนหน้า Order List
+        // ที่ไม่มีอะไรบัง ไม่ใช่โผล่อยู่หลังกล่อง Order Detail (เหมือนปุ่มสำรอง)
+        btnQueueSendMk.Click += (_, _) =>
+        {
+            QueueSendMkRequested?.Invoke(this, EventArgs.Empty);
+            CloseRequested?.Invoke(this, EventArgs.Empty);
+        };
         tmrConnCheck.Tick += ConnCheck_Tick;
         btnSendUv1.Click += async (_, _) => await SendToUvAsync(1);
         btnSendUv2.Click += async (_, _) => await SendToUvAsync(2);
@@ -1092,6 +1121,11 @@ public partial class OrderDetailUserControl : UserControl
         btnRemoteSend.Visible = showRemote;
         btnRemoteSend.Enabled = showRemote;
         if (remoteStep != null) btnRemoteSend.Text = $"ขอให้ ST1 ส่ง {remoteStep}";
+
+        // ปุ่มส่งเข้า MK ตอนถึงคิวแล้ว — ตั้งทั้ง Visible และ Enabled จากตัวแปรเดียวกัน
+        // ด้วยเหตุผลเดียวกับปุ่มข้างบน (ห้ามอ่าน .Visible กลับมาใช้ต่อ)
+        btnQueueSendMk.Visible = ShowQueueSendMk;
+        btnQueueSendMk.Enabled = ShowQueueSendMk;
 
         // ปุ่มส่งมือเหลือไว้เฉพาะโหมดทดสอบ
         //

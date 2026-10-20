@@ -45,6 +45,29 @@ internal sealed class ConfirmSpec
 
     /// <summary>สีแถบหัว — ว่าง = น้ำเงินเข้ม · กล่องแจ้งผิดพลาด/เตือน/สำเร็จ ใช้สีตามระดับ ให้รู้ตั้งแต่เหลือบตา</summary>
     public Color? TitleBack { get; init; }
+
+    /// <summary>
+    /// ช่องติ๊กให้เลือกข้ามบางอย่าง — ว่าง = ไม่มีให้เลือก (สูงสุด 3 ช่อง)
+    ///
+    /// <para>
+    /// กล่องเขียนผลกลับลงใน <see cref="ConfirmSkipOption.Skip"/> ของแต่ละตัว
+    /// ผู้เรียกอ่านต่อได้หลังกล่องปิด — ค่าที่คืนจาก <c>Ask</c> ยังเป็นแค่ กด/ไม่กด เหมือนเดิม
+    /// </para>
+    /// </summary>
+    public List<ConfirmSkipOption> SkipOptions { get; init; } = [];
+}
+
+/// <summary>หนึ่งช่องติ๊ก "ข้ามอันนี้" ในกล่องยืนยัน</summary>
+internal sealed class ConfirmSkipOption
+{
+    /// <summary>ตัวระบุที่ผู้เรียกใช้แยกแยะ เช่นชื่อเครื่อง</summary>
+    public required string Key { get; init; }
+
+    /// <summary>ข้อความข้างช่องติ๊ก</summary>
+    public required string Text { get; init; }
+
+    /// <summary>true = คนติ๊กว่าให้ข้าม — กล่องเขียนค่านี้ตอนกดยืนยัน</summary>
+    public bool Skip { get; set; }
 }
 
 /// <summary>
@@ -71,7 +94,22 @@ internal sealed partial class ConfirmDialog : AntdUI.BorderlessForm
 
         // โฟกัสเริ่มที่ปุ่มยกเลิก — กด Enter / Space โดยไม่ตั้งใจจะไม่ทำอะไรที่ย้อนไม่ได้
         Shown += (_, _) => (btnCancel.Visible ? btnCancel : btnOk).Focus();
+
+        // เขียนผลช่องติ๊กกลับให้ผู้เรียกเฉพาะตอนกดยืนยัน
+        //
+        // กดยกเลิกแล้วไม่เขียน เพราะค่าที่ติ๊กไว้ระหว่างลังเลไม่ควรมีผลกับอะไรทั้งนั้น
+        FormClosing += (_, _) =>
+        {
+            if (DialogResult != DialogResult.OK) return;
+
+            var boxes = new[] { chkSkip0, chkSkip1, chkSkip2 };
+            for (int i = 0; i < _skipOptions.Count && i < boxes.Length; i++)
+                _skipOptions[i].Skip = boxes[i].Checked;
+        };
     }
+
+    /// <summary>ช่องติ๊กของกล่องนี้ — เก็บไว้เขียนผลกลับตอนปิด</summary>
+    private List<ConfirmSkipOption> _skipOptions = [];
 
     public ConfirmDialog(ConfirmSpec spec)
         : this()
@@ -102,6 +140,19 @@ internal sealed partial class ConfirmDialog : AntdUI.BorderlessForm
             values[i].Text = spec.Facts[i].Value;
         }
         tlpFacts.Visible = spec.Facts.Count > 0;
+
+        // ช่องติ๊กข้ามเครื่อง — สร้างไว้ครบใน Designer แล้วโชว์เท่าที่ใช้ แบบเดียวกับแถว Facts
+        _skipOptions = spec.SkipOptions;
+        var boxes = new[] { chkSkip0, chkSkip1, chkSkip2 };
+        for (int i = 0; i < boxes.Length; i++)
+        {
+            bool used = i < _skipOptions.Count;
+            boxes[i].Visible = used;
+            if (!used) continue;
+            boxes[i].Text = _skipOptions[i].Text;
+            boxes[i].Checked = _skipOptions[i].Skip;
+        }
+        tlpSkip.Visible = _skipOptions.Count > 0;
 
         lblTitle.PrefixSvg = spec.Icon ?? (spec.Danger ? "WarningFilled" : "QuestionCircleFilled");
         btnOk.IconSvg = spec.OkIcon ?? "CheckOutlined";

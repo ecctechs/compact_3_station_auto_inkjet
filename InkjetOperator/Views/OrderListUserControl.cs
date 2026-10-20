@@ -1142,7 +1142,7 @@ public partial class OrderListUserControl : UserControl
     }
 
     /// <summary>
-    /// ลำดับตั้งต้นของตาราง 2 ชั้น — ชั้นแรกสถานะ ชั้นสองเวลารับงานใหม่สุดขึ้นก่อน
+    /// ลำดับตั้งต้นของตาราง 3 ชั้น — สถานะ · ลำดับคิว · เวลาที่ยิงบาร์โค้ดเก่าสุดขึ้นก่อน
     ///
     /// งานที่เดินอยู่ต้องอยู่บนสุดเสมอ เพราะเป็นงานที่ผู้ใช้ต้องแตะ ส่วนงานที่รอ
     /// อยู่ล่าง — ตารางยาวแค่ไหนก็ไม่ต้องเลื่อนหา
@@ -1194,7 +1194,9 @@ public partial class OrderListUserControl : UserControl
             .Where(j => _processFilter == null || JobProcessService.Current(j) == _processFilter)
             .OrderBy(StatusRank)
             .ThenBy(QueueOrder)
-            .ThenByDescending(j => j.CreatedAt ?? DateTime.MinValue)
+            // ยิงบาร์โค้ดก่อนขึ้นก่อน — ใบที่ลงทะเบียนไว้นานแล้วไม่ควรจมอยู่ล่างสุด
+            // ทุกครั้งที่มีคนยิงใบใหม่ งานจึงไหลจากบนลงล่างตามลำดับที่รับเข้ามาจริง
+            .ThenBy(j => j.CreatedAt ?? DateTime.MaxValue)
             .ToList();
 
         bool dateFiltered = _showHistory && TryGetDateRange(out _, out _);
@@ -1840,10 +1842,36 @@ public partial class OrderListUserControl : UserControl
         // สรุปให้ดูก่อนว่าจะส่งอะไรเข้าเครื่องไหนบ้าง แล้วค่อยลงมือ
         //
         // ถามก่อนจอง ไม่ใช่หลังจอง — กดยกเลิกแล้วต้องไม่มีอะไรค้างอยู่ในคิวเลย
-        bool confirmed = await ConfirmStartAsync(jobId, resolved, plan, uvPicks, deferred);
+        var skipOptions = BuildSkipOptions(sendPlan);
+        bool confirmed = await ConfirmStartAsync(jobId, resolved, plan, uvPicks, deferred, skipOptions);
         timing.Mark("ยืนยัน (รวมเวลาคนกด)");
         if (!confirmed) return;
         if (IsDisposed) return;
+
+        // เครื่องที่คนติ๊กข้าม — ตัดออกตั้งแต่ก่อนจองคิว ไม่ใช่ไปข้ามตอนส่ง
+        //
+        // ถ้าจองแล้วค่อยข้าม งานจะถือแถวคิวของเครื่องนั้นไว้โดยไม่มีใครมาส่ง
+        // เครื่องก็ไม่ว่างให้งานอื่น ต้องมีคนมาไล่ปล่อยเองทีหลัง
+        var skipped = skipOptions.Where(o => o.Skip).Select(o => o.Key).ToList();
+        if (skipped.Count > 0)
+        {
+            sendPlan = sendPlan with
+            {
+                Steps = sendPlan.Steps.Where(s => !skipped.Contains(s, StringComparer.OrdinalIgnoreCase)).ToList(),
+            };
+            deferred.ExceptWith(skipped);
+
+            AppLog.Info("OrderList.Start",
+                $"{JobName(jobId)} · ข้ามเครื่องตามที่เลือก: {string.Join(", ", skipped)}");
+        }
+
+        // ข้ามครบทุกเครื่องก็ไม่เหลืออะไรให้ทำ — บอกตรง ๆ ดีกว่าเริ่มงานเปล่า ๆ
+        if (sendPlan.Steps.Count == 0)
+        {
+            Notify.WarnModal(this, "ไม่ได้เริ่มงาน",
+                $"{JobName(jobId)} ถูกติ๊กข้ามทุกเครื่อง จึงไม่มีอะไรให้ส่ง");
+            return;
+        }
 
         // ต่อให้ครบทุกเครื่องก่อน ถึงจะจองคิวและเริ่มส่ง
         //
@@ -2090,9 +2118,36 @@ public partial class OrderListUserControl : UserControl
     /// อ่านคิวก่อนจอง แถวที่เห็นตอนนี้จึงเป็นของงานใบอื่นล้วน ๆ ไม่ใช่ของใบที่กำลังกด
     /// </para>
     /// </summary>
+    /// <summary>
+    /// ช่องติ๊ก "ข้ามเครื่องนี้" ของงานใบนี้ — เฉพาะเครื่องที่อยู่ในแผนจริง
+    ///
+    /// <para>
+    /// งาน 11 จะได้ UV1 กับ UV2 ไม่มี MK ให้ติ๊ก เพราะงานนั้นไม่ได้เข้า MK อยู่แล้ว
+    /// การโชว์เครื่องที่ไม่เกี่ยวทำให้คนเข้าใจว่ากดแล้วมีผล
+    /// </para>
+    /// <para>
+    /// เครื่องเดียวกันหลายรอบ (งาน 22 เข้า MK สองรอบ) นับเป็นช่องเดียว ติ๊กแล้ว
+    /// ข้ามทั้งเครื่อง ไม่ใช่ข้ามทีละรอบ — ครึ่ง ๆ กลาง ๆ ไม่มีใครต้องการ
+    /// </para>
+    /// </summary>
+    private static List<ConfirmSkipOption> BuildSkipOptions(MarkingPlan plan) =>
+        plan.Steps
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Select(step => new ConfirmSkipOption { Key = step, Text = $"ข้าม {MachineLabel(step)}" })
+            .ToList();
+
+    /// <summary>ชื่อเครื่องตามที่ตั้งไว้ — ให้ตรงกับที่เห็นบนแถบสถานะและหน้า Setting</summary>
+    private static string MachineLabel(string step) => step.ToUpperInvariant() switch
+    {
+        "UV1" => $"UV1 ({UvSettingsManager.Read("UV1_NAME", "UV-001")})",
+        "UV2" => $"UV2 ({UvSettingsManager.Read("UV2_NAME", "UV-002")})",
+        _ => step,
+    };
+
     private async Task<bool> ConfirmStartAsync(
         int jobId, ResolvedJobResponse resolved, MarkingPlan plan,
-        Dictionary<string, string> uvPicks, ISet<string> deferred)
+        Dictionary<string, string> uvPicks, ISet<string> deferred,
+        List<ConfirmSkipOption> skipOptions)
     {
         // อ่านคิวไปพร้อมกับเช็คโฟลเดอร์ UV ที่ข้อความสรุปต้องใช้ (แตะแชร์ของเครื่อง UV)
         // พอสร้างข้อความบนเธรดหน้าจอ ผลเช็คถูกจำไว้แล้ว ไม่ต้องรอเครือข่ายอีก
@@ -2104,7 +2159,7 @@ public partial class OrderListUserControl : UserControl
         await warm;
         if (IsDisposed) return false;
 
-        return Confirm.Ask(this, BuildStartPreview(jobId, resolved, plan, rows, uvPicks, deferred));
+        return Confirm.Ask(this, BuildStartPreview(jobId, resolved, plan, rows, uvPicks, deferred, skipOptions));
     }
 
     /// <summary>
@@ -2116,7 +2171,8 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private ConfirmSpec BuildStartPreview(
         int jobId, ResolvedJobResponse resolved, MarkingPlan plan, List<MachineQueueRow> rows,
-        Dictionary<string, string> uvPicks, ISet<string>? deferred = null)
+        Dictionary<string, string> uvPicks, ISet<string>? deferred = null,
+        List<ConfirmSkipOption>? skipOptions = null)
     {
         var job = _allJobs.FirstOrDefault(j => j.Id == jobId);
         var facts = new List<(string Caption, string Value)>
@@ -2196,6 +2252,7 @@ public partial class OrderListUserControl : UserControl
             OkText = "เริ่มงาน",
             Icon = "PlayCircleFilled",
             OkIcon = "CaretRightFilled",
+            SkipOptions = skipOptions ?? [],
         };
     }
 
@@ -3818,21 +3875,100 @@ public partial class OrderListUserControl : UserControl
     /// ตอนนี้มีอย่างเดียวคือปุ่มสำรอง "ขอให้ ST1 ส่ง" ซึ่งเป็นทางออกตอนปุ่มกดหน้างาน
     /// ใช้ไม่ได้ ตัวคำขอยิงจากที่นี่ ไม่ใช่จากในกล่อง เพราะด่านตรวจทั้งหมดอยู่ที่นี่
     /// </summary>
+    /// <summary>
+    /// โชว์ปุ่ม "ส่งเข้า MK" ในหน้า Order Detail ไหม
+    ///
+    /// <para>
+    /// อยู่ตลอดที่งานยังเดินอยู่ ไม่หายหลังกดครั้งแรก และกดซ้ำได้ — งานที่เข้า MK
+    /// สองรอบ (22) จึงใช้ปุ่มนี้ได้ทั้งสองรอบ
+    /// </para>
+    /// <para>
+    /// ยังไม่ถึงคิวก็ไม่โชว์ — ปุ่มที่กดแล้วไม่เกิดอะไรทำให้คนเข้าใจว่าโปรแกรมค้าง
+    /// ถึงตาแล้วคือถือเครื่องอยู่จริง (คิวสถานะ active) ไม่ใช่แค่รอคิว เพราะกดตอน
+    /// ยังรออยู่เท่ากับแทรกคิวคนอื่น ซึ่งผิดกฎ FIFO ต่อเครื่อง
+    /// </para>
+    /// <para>
+    /// ยังต้องเช็คซ้ำตอนกดด้วย (<see cref="MkQueueBlockedReason"/>) เพราะกล่องเปิด
+    /// ค้างได้นาน ระหว่างนั้นเครื่องอาจถูกปล่อยไปแล้ว
+    /// </para>
+    /// </summary>
+    private bool CanQueueSendMk(PrintJob job)
+    {
+        // เครื่อง MK ต่อสายอยู่ที่ ST1 ที่เดียว สถานีอื่นกดแล้วส่งไม่ได้จริง
+        if (!StationService.IsSt1Menu && !StationService.IsDevMode) return false;
+
+        if (!string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase)) return false;
+
+        var plan = MarkingMethodService.Resolve(job.PlanRouting?.MarkingMethod);
+        if (plan.NoCase || plan.Plate != MarkingMachine.Mk) return false;
+
+        return MkQueueBlockedReason(job.Id) == null;
+    }
+
+    /// <summary>
+    /// เหตุผลที่ยังส่งเข้า MK ไม่ได้ — null = ถึงตาแล้ว ส่งได้
+    ///
+    /// <para>
+    /// ต้องถือเครื่องอยู่จริง (คิวสถานะ active) ไม่ใช่แค่รอคิว กดตอนยังรออยู่เท่ากับ
+    /// แทรกคิวคนอื่น ซึ่งผิดกฎ FIFO ต่อเครื่อง — ตัวกันคิวฝั่ง backend บล็อกให้อยู่แล้ว
+    /// แต่ถ้าไม่บอกอะไรเลย คนกดจะเห็นว่ากดแล้วเงียบ จึงบอกเหตุผลตรงนี้
+    /// </para>
+    /// </summary>
+    private string? MkQueueBlockedReason(int jobId)
+    {
+        var mine = _queueRows.Where(r => r.PrintJobsId == jobId
+            && string.Equals(r.Machine, "MK", StringComparison.OrdinalIgnoreCase)).ToList();
+
+        if (mine.Any(r => r.State == "active")) return null;
+
+        if (mine.Any(r => r.State == "pending"))
+            return "ยังไม่ถึงคิว MK ของงานนี้ — รอเครื่องว่างก่อน";
+
+        return "งานนี้ยังไม่ได้จองคิว MK — กดเริ่มงานที่หน้า Order List ก่อน";
+    }
+
     private async Task ShowDetailDialogAsync(ResolvedJobResponse resolved)
     {
         string? requestedStep;
+        bool sendMk;
 
         using (var dlg = new OrderDetailDialog())
         {
+            dlg.ShowQueueSendMk = CanQueueSendMk(resolved.Job);
             // ชื่อเดียวกับหัวที่อยู่ในหน้า ไม่ประกอบเอง ไม่งั้นสองที่จะขึ้นคนละเลข
             dlg.TitleText = $"{OrderDetailUserControl.JobTitle(resolved.Job)} — Order Detail";
             dlg.Text = dlg.TitleText;
             dlg.LoadDetail(resolved, _api);
             dlg.ShowDialog(this);
             requestedStep = dlg.RemoteStartStep;
+            sendMk = dlg.QueueSendMkRequested;
         }
 
-        if (requestedStep == null || _api == null || IsDisposed) return;
+        if (_api == null || IsDisposed) return;
+
+        // ส่งเข้า MK ผ่านทางเดียวกับที่ปุ่มกดหน้างานใช้ ไม่ได้ยิงเข้าเครื่องเอง
+        //
+        // ProcessMachineQueueAsync เป็นที่เดียวที่จดหลักฐานก่อนแตะเครื่อง กันส่งซ้ำ
+        // และจัดการผลที่ไม่แน่นอน การเขียนทางส่งใหม่ที่นี่คือเปิดทางให้สองทางทำงาน
+        // ไม่เหมือนกันในวันข้างหน้า
+        if (sendMk)
+        {
+            // อ่านคิวใหม่ก่อนตัดสิน ไม่ใช้ค่าที่ค้างอยู่ตั้งแต่ตอนเปิดกล่อง
+            // กล่องเปิดค้างได้นาน ระหว่างนั้นเครื่องอาจถูกปล่อยหรือถูกจองไปแล้ว
+            await RefreshDataAsync(force: true);
+            if (IsDisposed) return;
+
+            if (MkQueueBlockedReason(resolved.Job.Id) is string why)
+            {
+                Notify.Warn(this, $"{JobName(resolved.Job.Id)} · {why}");
+                return;
+            }
+
+            await ProcessMachineQueueAsync(machineFilter: "MK");
+            return;
+        }
+
+        if (requestedStep == null) return;
 
         await RequestRemoteStartFromDetailAsync(resolved.Job.Id);
     }

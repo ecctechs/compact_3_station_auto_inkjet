@@ -1,4 +1,4 @@
-namespace InkjetOperator.Views;
+﻿namespace InkjetOperator.Views;
 
 partial class ConfirmDialog
 {
@@ -34,6 +34,11 @@ partial class ConfirmDialog
         tlpBody = new System.Windows.Forms.TableLayoutPanel();
         lblHeadline = new System.Windows.Forms.Label();
         tlpFacts = new System.Windows.Forms.TableLayoutPanel();
+        tlpSkip = new System.Windows.Forms.TableLayoutPanel();
+        lblSkipHeading = new AntdUI.Label();
+        chkSkip0 = new AntdUI.Checkbox();
+        chkSkip1 = new AntdUI.Checkbox();
+        chkSkip2 = new AntdUI.Checkbox();
         lblFactCaption1 = new System.Windows.Forms.Label();
         lblFactValue1 = new System.Windows.Forms.Label();
         lblFactCaption2 = new System.Windows.Forms.Label();
@@ -57,6 +62,7 @@ partial class ConfirmDialog
         tlpTitleBar.SuspendLayout();
         tlpBody.SuspendLayout();
         tlpFacts.SuspendLayout();
+        tlpSkip.SuspendLayout();
         pnlDetail.SuspendLayout();
         flpActions.SuspendLayout();
         SuspendLayout();
@@ -143,16 +149,18 @@ partial class ConfirmDialog
         tlpBody.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpBody.Controls.Add(lblHeadline, 0, 0);
         tlpBody.Controls.Add(tlpFacts, 0, 1);
-        tlpBody.Controls.Add(lblMessage, 0, 2);
-        tlpBody.Controls.Add(pnlDetail, 0, 3);
-        tlpBody.Controls.Add(lblWarning, 0, 4);
-        tlpBody.Controls.Add(flpActions, 0, 5);
+        tlpBody.Controls.Add(tlpSkip, 0, 2);
+        tlpBody.Controls.Add(lblMessage, 0, 3);
+        tlpBody.Controls.Add(pnlDetail, 0, 4);
+        tlpBody.Controls.Add(lblWarning, 0, 5);
+        tlpBody.Controls.Add(flpActions, 0, 6);
         tlpBody.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpBody.Location = new System.Drawing.Point(0, 64);
         tlpBody.Margin = new System.Windows.Forms.Padding(0);
         tlpBody.Name = "tlpBody";
         tlpBody.Padding = new System.Windows.Forms.Padding(28, 22, 28, 24);
-        tlpBody.RowCount = 6;
+        tlpBody.RowCount = 7;
+        tlpBody.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
         tlpBody.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
         tlpBody.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
         tlpBody.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
@@ -340,6 +348,76 @@ partial class ConfirmDialog
         lblFactValue6.TabIndex = 11;
         lblFactValue6.Text = "Value";
         //
+        //
+        // tlpSkip
+        //
+        tlpSkip.AutoSize = true;
+        tlpSkip.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+        tlpSkip.ColumnCount = 1;
+        tlpSkip.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpSkip.Controls.Add(lblSkipHeading, 0, 0);
+        tlpSkip.Controls.Add(chkSkip0, 0, 1);
+        tlpSkip.Controls.Add(chkSkip1, 0, 2);
+        tlpSkip.Controls.Add(chkSkip2, 0, 3);
+        tlpSkip.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpSkip.Margin = new System.Windows.Forms.Padding(0, 0, 0, 10);
+        tlpSkip.Name = "tlpSkip";
+        tlpSkip.RowCount = 4;
+        tlpSkip.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
+        tlpSkip.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
+        tlpSkip.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
+        tlpSkip.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
+        tlpSkip.Size = new System.Drawing.Size(680, 130);
+        tlpSkip.TabIndex = 2;
+        tlpSkip.Visible = false;
+        //
+        // lblSkipHeading
+        //
+        lblSkipHeading.AutoSizeMode = AntdUI.TAutoSize.Height;
+        lblSkipHeading.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblSkipHeading.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+        lblSkipHeading.ForeColor = System.Drawing.Color.FromArgb(120, 120, 120);
+        lblSkipHeading.Margin = new System.Windows.Forms.Padding(0, 0, 0, 4);
+        lblSkipHeading.Name = "lblSkipHeading";
+        lblSkipHeading.Size = new System.Drawing.Size(680, 26);
+        lblSkipHeading.TabIndex = 0;
+        lblSkipHeading.Text = "ติ้กเครื่องที่ไม่ต้องส่งรอบนี้";
+        //
+        // chkSkip0
+        //
+        chkSkip0.AutoSizeMode = AntdUI.TAutoSize.Height;
+        chkSkip0.Dock = System.Windows.Forms.DockStyle.Fill;
+        chkSkip0.Font = new System.Drawing.Font("Segoe UI", 13F);
+        chkSkip0.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        chkSkip0.Margin = new System.Windows.Forms.Padding(4, 2, 0, 2);
+        chkSkip0.Name = "chkSkip0";
+        chkSkip0.Size = new System.Drawing.Size(676, 30);
+        chkSkip0.TabIndex = 1;
+        chkSkip0.Visible = false;
+        //
+        // chkSkip1
+        //
+        chkSkip1.AutoSizeMode = AntdUI.TAutoSize.Height;
+        chkSkip1.Dock = System.Windows.Forms.DockStyle.Fill;
+        chkSkip1.Font = new System.Drawing.Font("Segoe UI", 13F);
+        chkSkip1.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        chkSkip1.Margin = new System.Windows.Forms.Padding(4, 2, 0, 2);
+        chkSkip1.Name = "chkSkip1";
+        chkSkip1.Size = new System.Drawing.Size(676, 30);
+        chkSkip1.TabIndex = 2;
+        chkSkip1.Visible = false;
+        //
+        // chkSkip2
+        //
+        chkSkip2.AutoSizeMode = AntdUI.TAutoSize.Height;
+        chkSkip2.Dock = System.Windows.Forms.DockStyle.Fill;
+        chkSkip2.Font = new System.Drawing.Font("Segoe UI", 13F);
+        chkSkip2.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        chkSkip2.Margin = new System.Windows.Forms.Padding(4, 2, 0, 2);
+        chkSkip2.Name = "chkSkip2";
+        chkSkip2.Size = new System.Drawing.Size(676, 30);
+        chkSkip2.TabIndex = 3;
+        chkSkip2.Visible = false;
         // lblMessage — ข้อความทั่วไป (กล่องที่ยังไม่ได้แยกเป็นหัวข้อ/ค่า)
         //
         lblMessage.AutoSize = true;
@@ -454,6 +532,8 @@ partial class ConfirmDialog
         tlpBody.ResumeLayout(false);
         tlpBody.PerformLayout();
         tlpFacts.ResumeLayout(false);
+        tlpSkip.ResumeLayout(false);
+        tlpSkip.PerformLayout();
         tlpFacts.PerformLayout();
         pnlDetail.ResumeLayout(false);
         pnlDetail.PerformLayout();
@@ -471,6 +551,11 @@ partial class ConfirmDialog
     private System.Windows.Forms.TableLayoutPanel tlpBody;
     private System.Windows.Forms.Label lblHeadline;
     private System.Windows.Forms.TableLayoutPanel tlpFacts;
+    private System.Windows.Forms.TableLayoutPanel tlpSkip;
+    private AntdUI.Label lblSkipHeading;
+    private AntdUI.Checkbox chkSkip0;
+    private AntdUI.Checkbox chkSkip1;
+    private AntdUI.Checkbox chkSkip2;
     private System.Windows.Forms.Label lblFactCaption1;
     private System.Windows.Forms.Label lblFactValue1;
     private System.Windows.Forms.Label lblFactCaption2;
