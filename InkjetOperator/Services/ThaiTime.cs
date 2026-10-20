@@ -12,7 +12,7 @@ public static class ThaiTime
     /// วันที่พร้อมเวลา — สั้นพอให้อยู่ในคอลัมน์เดียว และใช้แกะกลับตอนเรียงตาราง
     /// ปีเป็น ค.ศ. 2 หลัก ตรงกับปฏิทินของตัวกรองวันที่ ไม่ใช่ปี พ.ศ.
     /// </summary>
-    public const string Format = "dd/MM/yy HH:mm";
+    public const string Format = "dd/MM/yy HH:mm:ss";
 
     /// <summary>เฉพาะวันที่ ไม่มีเวลา — ใช้ตอนที่ต้องการแค่บอกว่างานของวันไหน</summary>
     public const string DateFormat = "dd/MM/yy";
