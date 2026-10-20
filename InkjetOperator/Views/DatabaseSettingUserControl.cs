@@ -92,7 +92,7 @@ public partial class DatabaseSettingUserControl : UserControl
     {
         using var dlg = new OpenFileDialog
         {
-            Filter = "Excel Workbook (*.xlsx;*.xlsm)|*.xlsx;*.xlsm|Excel Workbook (*.xlsx)|*.xlsx|Macro-Enabled Excel Workbook (*.xlsm)|*.xlsm",
+            Filter = "Excel Workbook (*.xlsx)|*.xlsx",
             Title = "Select the PrintData Excel file"
         };
 
