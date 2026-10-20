@@ -185,7 +185,8 @@ public class MkCompactAdapter : IInkjetAdapter
     /// <summary>
     /// Send FM (program/message configuration).
     /// From rs232_connector.py send_config() lines 74-83:
-    ///   FM,{prog},0,{name},0,{dir},0,0,01,20,500,{delay},300,1000,{height},{width},15,0,0,6\r
+    ///   FM,{prog},0,{name},0,{dir},0,0,01,20,-1,{delay},300,1000,{height},{width},15,0,0,6\r
+    /// Line speed -1 tells the MK-U to use its common setting.
     /// Program name is Unicode-normalized (NFKD) like Python unicodedata.normalize.
     /// </summary>
     public async Task<CommandResult> SendConfigAsync(InkjetConfigDto config)
@@ -203,7 +204,7 @@ public class MkCompactAdapter : IInkjetAdapter
         string height = (config.Height ?? 100).ToString();
         string width = (config.Width ?? 200).ToString();
 
-        string fmCmd = $"FM,{_programNumber},0,{normalizedName},0,{direction},0,0,01,20,500,{delay},300,1000,{height},{width},15,0,0,6\r";
+        string fmCmd = $"FM,{_programNumber},0,{normalizedName},0,{direction},0,0,01,20,-1,{delay},300,1000,{height},{width},15,0,0,6\r";
         string response = await SendAsync(fmCmd);
 
         return MakeResult("config", response);
