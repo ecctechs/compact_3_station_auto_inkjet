@@ -184,8 +184,7 @@ public class MkCompactAdapter : IInkjetAdapter
 
     /// <summary>
     /// Send FM (program/message configuration).
-    /// From rs232_connector.py send_config() lines 74-83:
-    ///   FM,{prog},0,{name},0,{dir},0,0,01,20,500,{delay},300,1000,{height},{width},15,0,0,6\r
+    /// Try line speed -1 first; retry with 500 only when the MK rejects it with ER,FM,22.
     /// Program name is Unicode-normalized (NFKD) like Python unicodedata.normalize.
     /// </summary>
     public async Task<CommandResult> SendConfigAsync(InkjetConfigDto config)
@@ -203,9 +202,31 @@ public class MkCompactAdapter : IInkjetAdapter
         string height = (config.Height ?? 100).ToString();
         string width = (config.Width ?? 200).ToString();
 
-        string fmCmd = $"FM,{_programNumber},0,{normalizedName},0,{direction},0,0,01,20,500,{delay},300,1000,{height},{width},15,0,0,6\r";
+        string fmCmd = BuildConfigCommand(normalizedName, direction, delay, height, width, "-1");
         string response = await SendAsync(fmCmd);
 
+        // Firmware บางเครื่องไม่รับ -1 ในช่อง Line Speed (j) และตอบ ER,FM,22
+        // ลองส่ง Config เดิมซ้ำด้วยค่าเดิม 500; ถ้ารอบสำเร็จไม่ส่ง error รอบแรกให้ UI
+        if (IsInvalidFmParameter(response))
+        {
+            string fallbackCmd = BuildConfigCommand(normalizedName, direction, delay, height, width, "500");
+            response = await SendAsync(fallbackCmd);
+        }
+
         return MakeResult("config", response);
+    }
+
+    private string BuildConfigCommand(
+        string normalizedName, string direction, string delay,
+        string height, string width, string lineSpeed) =>
+        $"FM,{_programNumber},0,{normalizedName},0,{direction},0,0,01,20,{lineSpeed},{delay},300,1000,{height},{width},15,0,0,6\r";
+
+    private static bool IsInvalidFmParameter(string response)
+    {
+        string[] fields = response.TrimEnd('\r', '\n').Split(',');
+        return fields.Length >= 3
+            && fields[0].Equals("ER", StringComparison.OrdinalIgnoreCase)
+            && fields[1].Equals("FM", StringComparison.OrdinalIgnoreCase)
+            && fields[2].Equals("22", StringComparison.Ordinal);
     }
 }
