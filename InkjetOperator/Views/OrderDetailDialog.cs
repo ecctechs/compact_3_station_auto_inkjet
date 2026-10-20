@@ -38,7 +38,6 @@ internal sealed partial class OrderDetailDialog : AntdUI.BorderlessForm
         // ปุ่มสำรอง "ขอให้ ST1 ส่ง" ในหน้าไม่ได้ยิงคำขอเอง มันฝากชื่อขั้นไว้ตรงนี้
         // แล้วปิดกล่อง คนเปิดกล่องเป็นคนอ่านค่าไปทำต่อ
         detailPage.RemoteStartRequested += (_, step) => RemoteStartStep = step;
-        detailPage.QueueSendMkRequested += (_, _) => QueueSendMkRequested = true;
 
         // Neither MaximizeRequested (double-click on the bar) nor DragRequested is
         // handled. Both restore a maximised BorderlessForm to its Normal size, which
@@ -51,16 +50,6 @@ internal sealed partial class OrderDetailDialog : AntdUI.BorderlessForm
     /// อ่านหลัง <c>ShowDialog</c> คืนค่า
     /// </summary>
     public string? RemoteStartStep { get; private set; }
-
-    /// <summary>คนกดปุ่ม "ส่งเข้า MK" ในกล่อง — หน้า Order List เป็นคนส่งจริงหลังกล่องปิด</summary>
-    public bool QueueSendMkRequested { get; private set; }
-
-    /// <summary>ให้โชว์ปุ่ม "ส่งเข้า MK" ไหม — ต้องตั้งก่อน <c>ShowDialog</c></summary>
-    public bool ShowQueueSendMk
-    {
-        get => detailPage.ShowQueueSendMk;
-        set => detailPage.ShowQueueSendMk = value;
-    }
 
     /// <summary>Heading shown in the title bar.</summary>
     public string TitleText
