@@ -3,7 +3,7 @@
 namespace InkjetOperator.Services;
 
 /// <summary>
-/// ส่งค่าของงานหนึ่งเข้า PLC — servo ของ MK ทั้งสองตัวและความเร็วสายพาน
+/// ส่งค่าตำแหน่ง servo ของหัว MK ที่งานนี้ใช้เข้า PLC
 /// <para>
 /// ชุดค่าและลำดับยกมาจากโปรแกรมเดิม (PySocketClient/plc_interface.py) แต่ address
 /// ไม่ได้ฝังไว้ในโค้ด — อ่านจากตาราง register map ในหน้า PLC Setting จับคู่ด้วย
@@ -50,18 +50,11 @@ public static class PlcOrderService
         var mk1 = CustomSettingsManager.Read("MK058_NAME", "MK-058");
         var mk2 = CustomSettingsManager.Read("MK059_NAME", "MK-059");
 
-        var speeds = pattern?.ConveyorSpeeds;
-
         var fields = new List<PlcField>();
         if (!usedHeadsOnly || HasProgram(Inkjet(pattern, 1)))
             AddServo(fields, map, mk1, Servo(pattern, 1));
         if (!usedHeadsOnly || HasProgram(Inkjet(pattern, 2)))
             AddServo(fields, map, mk2, Servo(pattern, 2));
-
-        // สายพานตัวเดียว — ตาราง register map เหลือ Conveyor Speed 1 แถวเดียว
-        // โปรแกรมเดิมส่งสามตัวรวดเดียว (D10-D12) แต่ของใหม่ตกลงกันว่าเหลือตัวแรก
-        // Pattern เก็บเป็น Hz แต่ PLC รับเป็นสเกลของตัวเอง จึงคูณ ConveyorScale ก่อน
-        Add(fields, map, ConveyorListName, $"Conveyor 1 (Hz ×{ConveyorScale})", ScaleSpeed(speeds?.Speed1));
 
         return fields;
     }
@@ -71,8 +64,7 @@ public static class PlcOrderService
     /// <para>
     /// เขียนทีละ register ด้วย FC 6 แล้วอ่านกลับมายืนยัน — วิธีเดียวกับปุ่ม Write
     /// ในตาราง register map หน้า PLC Setting ทุกประการ ค่าที่ส่งคือตัวเลขที่เห็น
-    /// บนหน้าจอตรง ๆ ไม่มีการคูณหรือแปลงหน่วยใด ๆ ระหว่างทาง — ยกเว้นความเร็วสายพาน
-    /// ที่ <see cref="BuildPlanAsync"/> คูณ <see cref="ConveyorScale"/> ไว้ให้แล้วในแผน
+    /// บนหน้าจอตรง ๆ ไม่มีการคูณหรือแปลงหน่วยใด ๆ ระหว่างทาง
     /// </para>
     /// <para>
     /// เดิมรวม address ที่ติดกันแล้วยิงเป็นชุดเดียวด้วย FC 16 ซึ่งต่างจากที่หน้า
@@ -207,7 +199,7 @@ public static class PlcOrderService
     private const int LegacyWrongScale = 120;
 
     /// <summary>
-    /// ตัวคูณที่ใช้แปลง Hz ใน Pattern เป็นค่าที่เขียนลง Conveyor Speed 1
+    /// ตัวคูณสำหรับแปลง Hz เป็น register value ในปุ่ม Write ของหน้า PLC Setting
     ///
     /// <para>
     /// ยังตั้งเองได้ที่หน้า PLC Setting เผื่อเครื่องรุ่นอื่นใช้สเกลไม่เท่ากัน แต่ตั้งเป็น
@@ -233,17 +225,14 @@ public static class PlcOrderService
     public const string ConveyorListName = "Conveyor Speed 1";
 
     /// <summary>
-    /// แปลง Hz เป็นค่าที่เขียนลง register แล้วตัดไม่ให้เกินเลขมีเครื่องหมาย 16 บิต
+    /// แปลง Hz เป็นค่าที่เขียนลง register จากปุ่ม Write ในหน้า PLC Setting
     ///
     /// <para>
-    /// ทั้งหน้า Order Detail และปุ่ม Write แถวสายพานหน้า PLC Setting เรียกตัวนี้
-    /// พิมพ์ 50 ที่หน้าไหนก็เขียนเลขเดียวกันลง PLC
+    /// ไม่ใช้ในแผนส่งงาน MK
     /// </para>
     /// </summary>
     public static int HzToRegister(int hz) =>
         (int)Math.Min((long)hz * ConveyorScale, short.MaxValue);
-
-    private static int ScaleSpeed(int? hz) => HzToRegister(Whole(hz));
 
     /// <summary>
     /// เลื่อนหัวพิมพ์ทั้งสองตัวกลับตำแหน่งเริ่มต้น — ใช้ตอนเครื่องว่างและไม่มีงานรอคิว
@@ -372,12 +361,6 @@ public static class PlcOrderService
                 return $"{name}: ยังไม่ได้กรอก Delay (mm.)";
         }
 
-        // สายพานส่งทุกงานไม่ว่าจะใช้หัวไหน ช่องว่างจึงกลายเป็น 0 ได้เสมอ
-        // และ 0 Hz คือสั่งสายพานหยุด ไม่ใช่ค่ากลาง ๆ ถ้าตั้งใจให้หยุดจริงก็พิมพ์ 0 เอง
-        // ระบบจะได้แยกออกว่าเป็นความตั้งใจ ไม่ใช่ลืมกรอก
-        if (pattern?.ConveyorSpeeds?.Speed1 == null)
-            return "Conveyor 1 (Hz): ยังไม่ได้กรอก";
-
         return null;
     }
 
@@ -387,14 +370,4 @@ public static class PlcOrderService
     private static InkjetConfigDto? Inkjet(PatternDetail? pattern, int ordinal) =>
         pattern?.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
 
-    /// <summary>
-    /// ค่าจำนวนเต็มตรง ๆ — ไม่มีอะไรให้ปัด
-    ///
-    /// <para>
-    /// เดิมมีตัวรับ <c>double?</c> คู่กันที่ปัดเศษทิ้งก่อนคูณสเกล ทำให้ทศนิยมของ
-    /// PostAct / Delay หายไปทั้งที่ปลายทางรับได้ ตอนนี้ <see cref="ScaleServo"/>
-    /// คูณก่อนแล้วค่อยปัด จึงไม่มีใครใช้ตัวนั้นอีกและถูกเอาออกไป
-    /// </para>
-    /// </summary>
-    private static int Whole(int? value) => value ?? 0;
 }

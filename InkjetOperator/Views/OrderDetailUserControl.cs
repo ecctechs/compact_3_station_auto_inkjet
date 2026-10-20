@@ -1397,13 +1397,11 @@ public partial class OrderDetailUserControl : UserControl
         var mk1 = CustomSettingsManager.Read("MK058_NAME", "MK-058");
         var mk2 = CustomSettingsManager.Read("MK059_NAME", "MK-059");
 
-        // Trigger Delay กับสายพาน 2/3 ไม่ได้ส่งเข้า PLC แล้ว จึงไม่ติดป้าย address ให้
-        // ไม่งั้นจะขึ้นว่า "ยังไม่ได้ map" ค้างอยู่ ทั้งที่ตั้งใจให้ไม่มี map
+        // Trigger Delay และความเร็วสายพานไม่ได้อยู่ในแผนส่งงาน จึงไม่ติดป้าย address
         TagAddress(lblMk1PosAct, plan, $"{mk1} PostAct");
         TagAddress(lblMk1Delay, plan, $"{mk1} Delay");
         TagAddress(lblMk2PosAct, plan, $"{mk2} PostAct");
         TagAddress(lblMk2Delay, plan, $"{mk2} Delay");
-        TagAddress(lblConveyor1, plan, Services.PlcOrderService.ConveyorListName);
     }
 
     private void TagAddress(AntdUI.Label label, List<PlcOrderService.PlcField> plan, string listName)
