@@ -107,33 +107,6 @@ public static class MarkingMethodService
     }
 
     /// <summary>
-    /// คำสั่งในประวัติงานที่บอกว่าคนหน้างานยืนยันข้ามเครื่องนี้ เช่น "SKIP_UV2"
-    ///
-    /// <para>
-    /// รายงานหน้างาน 18/10/2026 ข้อ 2.2: เครื่องไหนต่อไม่ได้ / ส่งไม่ผ่าน ให้ไปตรวจแล้วข้ามได้
-    /// งานจบได้ปกติ backend เป็นคนบันทึก (<c>POST /machine-queue/skip</c>) ระบบไม่ข้ามเอง
-    /// </para>
-    /// </summary>
-    public static string SkipCommand(string step) => SkipPrefix + step.Trim().ToUpperInvariant();
-
-    private const string SkipPrefix = "SKIP_";
-
-    /// <summary>ขั้นที่ถูกข้ามจากชื่อคำสั่ง — null = ไม่ใช่คำสั่งข้าม</summary>
-    public static string? SkippedStep(string? command) =>
-        command != null && command.StartsWith(SkipPrefix, StringComparison.OrdinalIgnoreCase)
-            ? command[SkipPrefix.Length..]
-            : null;
-
-    /// <summary>
-    /// คำสั่งนี้ทำให้ขั้นนี้ "เสร็จ" แล้วไหม — ส่งสำเร็จ หรือคนยืนยันข้ามเครื่องนี้
-    /// ใช้ทุกที่ที่ถามว่าขั้นนี้ยังต้องส่งอีกไหม (กันส่งซ้ำ / นับว่าครบ)
-    /// </summary>
-    public static bool Covers(Models.CommandResult command, string step) =>
-        command.Success
-        && (string.Equals(command.Command, step, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(SkippedStep(command.Command), step, StringComparison.OrdinalIgnoreCase));
-
-    /// <summary>
     /// ขั้นที่แผนกำหนดไว้แต่ยังไม่มีคำสั่งส่งสำเร็จ — รายการว่างคือส่งครบแล้ว
     ///
     /// <para>
@@ -152,14 +125,11 @@ public static class MarkingMethodService
         //
         // งาน 22 ต้องเข้าเครื่อง MK สองรอบ ถ้าดูแค่ "เคยส่ง MK ไหม" พอจบรอบแรก
         // ก็จะถือว่าครบแล้ว ทั้งที่ยังเหลืออีกรอบ
-        //
-        // เครื่องที่คนหน้างานยืนยันข้าม (SKIP_UV2 ฯลฯ) นับเป็นขั้นที่ทำแล้ว — ดู SkipCommand
         var sent = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         foreach (var command in commands ?? [])
         {
             if (!command.Success || command.Command == null) continue;
-            var step = SkippedStep(command.Command) ?? command.Command;
-            sent[step] = sent.TryGetValue(step, out int n) ? n + 1 : 1;
+            sent[command.Command] = sent.TryGetValue(command.Command, out int n) ? n + 1 : 1;
         }
 
         var missing = new List<string>();

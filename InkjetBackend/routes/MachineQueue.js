@@ -10,7 +10,6 @@ const {
   claimSchema,
   updateQueueSchema,
   switchProgramSchema,
-  skipSchema,
   beginSendSchema,
   finishSendSchema,
 } = require("../validation/machineQueueSchema");
@@ -33,12 +32,6 @@ Route.post(
   RouteName + "/release",
   validate(releaseSchema),
   MachineQueueController.release
-);
-
-Route.post(
-  RouteName + "/skip",
-  validate(skipSchema),
-  MachineQueueController.skip
 );
 
 Route.post(

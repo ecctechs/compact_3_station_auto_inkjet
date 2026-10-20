@@ -145,7 +145,7 @@ public static class JobStageService
             int rounds = steps.Count(s => SameMachine(s, machine));
             if (rounds < 2) continue;
 
-            int sent = commands?.Count(c => MarkingMethodService.Covers(c, machine)) ?? 0;
+            int sent = commands?.Count(c => c.Success && SameMachine(c.Command, machine)) ?? 0;
             if (sent > 0 && sent < rounds) return (machine, sent + 1);
         }
 

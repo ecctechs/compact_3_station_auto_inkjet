@@ -3,7 +3,7 @@ const sequelize = require("../database");
 const ResponseManager = require("../middleware/ResponseManager");
 const { MachineQueue } = require("../model/machineQueueModel");
 const { PrintJob, PrintJobCommand } = require("../model/jobModel");
-const { DISPATCH, withQueueLock, conflict, latestDispatch, assertNoUnresolved, resolveUnresolved } = require("../services/queueGuard");
+const { DISPATCH, withQueueLock, conflict, latestDispatch, unresolved, assertNoUnresolved, resolveUnresolved } = require("../services/queueGuard");
 
 const reportError = (req, res, error) =>
   ResponseManager.ErrorResponse(req, res, error.statusCode || 500, error.message);
@@ -43,12 +43,9 @@ class MachineQueueController {
         where: { command: DISPATCH, payload: { queue_id: { [Op.in]: rows.map(r => r.id) } } },
         order: [["id", "ASC"]],
       }) : [];
-      const latest = new Map(attempts.map(a => [a.payload.queue_id, a.payload]));
-      // dispatch_error — สาเหตุที่ส่งไม่ผ่านรอบล่าสุด ให้จอบอกคนหน้างานได้ว่าต้องไปดูอะไร
+      const latest = new Map(attempts.map(a => [a.payload.queue_id, a.payload.outcome]));
       return ResponseManager.SuccessResponse(req, res, 200, rows.map(row => ({
-        ...row.toJSON(),
-        dispatch_state: latest.get(row.id)?.outcome || null,
-        dispatch_error: latest.get(row.id)?.error || null,
+        ...row.toJSON(), dispatch_state: latest.get(row.id) || null,
       })));
     } catch (err) {
       return ResponseManager.CatchResponse(req, res, err.message);
@@ -188,7 +185,7 @@ class MachineQueueController {
   static async release(req, res) {
     try {
       const result = await withQueueLock(async (t) => {
-        const { machine, hold_for_next_round, expected_holder_id } = req.body;
+        const { machine, hold_for_next_round, expected_holder_id, resolve_unresolved } = req.body;
 
         const holder = await MachineQueue.findOne({
           where: { machine, state: ACTIVE },
@@ -200,10 +197,13 @@ class MachineQueueController {
         if ((holder?.id ?? null) !== expected_holder_id)
           conflict("คิวเปลี่ยนแล้ว กรุณาตรวจงานที่ถือเครื่องก่อนกดอีกครั้ง");
         if (holder) {
-          // ผลไม่รู้ปล่อยด้วยปุ่มหน้าเครื่องไม่ได้ — ทางออกคือ POST /machine-queue/skip
-          // ที่คนยืนยันพร้อมเห็นสาเหตุ (เลิกโหมด "ส่งไม่ครบ ไม่ส่งเลย" 19/10/2026)
+          // โหมด "ส่งไม่ครบ ไม่ส่งเลย": คนกดปุ่มยืนอยู่หน้าเครื่องแล้ว = ตรวจเครื่องแล้ว
+          // ปลดผลที่ค้างได้ และปล่อยแถวที่ค้างเพราะไม่รู้ผลได้ (ไม่งั้นเครื่องถูกถือไว้ตลอดไป)
+          const wasUnresolved = resolve_unresolved === true
+            && unresolved(await latestDispatch(holder.id, t));
+          if (wasUnresolved) await resolveUnresolved([holder], t);
           await assertNoUnresolved([holder], t);
-          if (!holder.sent_at) conflict("งานนี้ยังไม่ได้ส่งเข้าเครื่อง ปล่อยคิวไม่ได้");
+          if (!holder.sent_at && !wasUnresolved) conflict("งานนี้ยังไม่ได้ส่งเข้าเครื่อง ปล่อยคิวไม่ได้");
         }
 
         if (holder) {
@@ -274,79 +274,6 @@ class MachineQueueController {
           released: holder,
           next,
         };
-      });
-      return ResponseManager.SuccessResponse(req, res, 200, result);
-    } catch (err) {
-      return reportError(req, res, err);
-    }
-  }
-
-  /**
-   * POST /machine-queue/skip
-   * body: { print_jobs_id, machine, reason? }
-   *
-   * ข้ามเครื่องนี้ของงานนี้ — คนหน้างานตรวจเครื่องแล้วยืนยันเอง (รายงานหน้างาน 18/10/2026 ข้อ 2.2)
-   *
-   * ใช้ตอนเครื่องต่อไม่ได้ ส่งไม่ผ่าน หรือส่งแล้วไม่รู้ผล แทนที่งานจะค้างรอเครื่องนั้นไปเรื่อย ๆ
-   * - แถวของงานนี้ที่เครื่องนี้ (รอคิว / ถือเครื่อง) ปิดเป็น done · ผลที่ไม่รู้ถูกปลดแบบมีร่องรอย
-   *   (ทางเดียวกับ resolveUnresolved) ไม่ลบประวัติการส่ง
-   * - ยังไม่มีแถว (ข้ามตั้งแต่กดเริ่มงาน) สร้างแถว done ไว้ กันไม่ให้จองเครื่องนี้ซ้ำทีหลัง
-   * - บันทึก SKIP_<เครื่อง> ลงประวัติงาน ฝั่งโปรแกรมนับเป็นขั้นที่ทำแล้ว งานจึงจบได้ปกติ
-   * - แถวที่ข้ามเคยถือเครื่องอยู่ = เครื่องว่าง ยกให้คิวถัดไปตามลำดับเหมือนปล่อยเครื่อง
-   *
-   * ระบบไม่ข้ามเองเด็ดขาด — ทางนี้มีแต่คนกดยืนยัน
-   */
-  static async skip(req, res) {
-    try {
-      const result = await withQueueLock(async (t) => {
-        const { print_jobs_id, machine, reason } = req.body;
-
-        const job = await PrintJob.findByPk(print_jobs_id, { transaction: t });
-        if (!job || !["Waiting", "Process"].includes(job.status))
-          conflict("งานถูกยกเลิกหรือจบแล้ว ข้ามเครื่องไม่ได้");
-
-        const rows = await MachineQueue.findAll({
-          where: { print_jobs_id, machine, state: { [Op.in]: [PENDING, ACTIVE] } },
-          transaction: t,
-          lock: t.LOCK.UPDATE,
-        });
-
-        let created = null;
-        const freed = rows.some(r => r.state === ACTIVE);
-        if (rows.length) {
-          await resolveUnresolved(rows, t);
-          for (const row of rows)
-            await row.update({ state: DONE, released_at: new Date() }, { transaction: t });
-        } else {
-          const maxRound = await MachineQueue.max("round", { where: { print_jobs_id, machine }, transaction: t });
-          created = await MachineQueue.create({
-            print_jobs_id, machine, round: (Number(maxRound) || 0) + 1,
-            state: DONE, released_at: new Date(),
-          }, { transaction: t });
-        }
-
-        const skipped = created ? [created] : rows;
-        await PrintJobCommand.create({
-          job_id: print_jobs_id, command: `SKIP_${machine}`, success: true,
-          payload: { machine, reason: reason || null, queue_ids: skipped.map(r => r.id), skipped_by: "operator" },
-          sent_at: new Date(),
-        }, { transaction: t });
-
-        // ถือเครื่องอยู่ = เครื่องว่างแล้ว ยกให้หัวคิวเหมือนปล่อยเครื่อง (ลำดับเดียวกับ release)
-        let next = null;
-        if (freed) {
-          next = await MachineQueue.findOne({
-            where: { machine, state: PENDING },
-            order: [
-              [sequelize.literal('COALESCE("queued_at", "created_at")'), "ASC"],
-              ["id", "ASC"],
-            ],
-            transaction: t,
-            lock: t.LOCK.UPDATE,
-          });
-          if (next) await next.update({ state: ACTIVE }, { transaction: t });
-        }
-        return { skipped, freed, next };
       });
       return ResponseManager.SuccessResponse(req, res, 200, result);
     } catch (err) {
@@ -461,6 +388,8 @@ class MachineQueueController {
     try {
       const removed = await withQueueLock(async (t) => {
         const rows = await MachineQueue.findAll({ where: { print_jobs_id: req.params.jobId }, transaction: t });
+        // โหมด "ส่งไม่ครบ ไม่ส่งเลย" — ดู resolveUnresolved
+        if (req.query.resolve === "true") await resolveUnresolved(rows, t);
         await assertNoUnresolved(rows, t);
         if (req.query.only_unsent === "true" && rows.some(r => r.state !== PENDING || r.sent_at))
           conflict("มีคิวที่ถูกหยิบหรือส่งแล้ว ห้ามล้างทั้งงาน");

@@ -618,12 +618,18 @@ public class ApiClient
     }
 
     /// <summary>ปล่อยเครื่อง — คนกดปุ่มหน้างานแล้ว แปลว่าพิมพ์ชิ้นเดิมเสร็จ</summary>
+    /// <param name="resolveUnresolved">
+    /// โหมด "ส่งไม่ครบ ไม่ส่งเลย" เท่านั้น — ปลดคิวที่ค้างเพราะไม่รู้ผลส่งได้ (คนกดยืนอยู่หน้าเครื่องแล้ว)
+    /// ไม่ส่งค่านี้ไปเลยเมื่อปิดโหมด คำขอจึงเหมือนเดิมทุกตัวอักษร
+    /// </param>
     public async Task<(ReleaseResult? result, string? error)> ReleaseMachineAsync(
-        string machine, int? expectedHolderId, bool holdForNextRound = false)
+        string machine, int? expectedHolderId, bool holdForNextRound = false, bool resolveUnresolved = false)
     {
         try
         {
-            var payload = new { machine, expected_holder_id = expectedHolderId, hold_for_next_round = holdForNextRound };
+            object payload = resolveUnresolved
+                ? new { machine, expected_holder_id = expectedHolderId, hold_for_next_round = holdForNextRound, resolve_unresolved = true }
+                : new { machine, expected_holder_id = expectedHolderId, hold_for_next_round = holdForNextRound };
             var response = await _http.PostAsJsonAsync("/machine-queue/release", payload, JsonOptions);
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode) return (null, $"[{(int)response.StatusCode}] {body}");
@@ -632,32 +638,6 @@ public class ApiClient
                 .Deserialize<ApiResponse<ReleaseResult>>(body, JsonOptions);
 
             return (wrapper?.Data ?? new ReleaseResult(), null);
-        }
-        catch (Exception ex)
-        {
-            return (null, ex.Message);
-        }
-    }
-
-    /// <summary>
-    /// ข้ามเครื่องนี้ของงานนี้ — คนหน้างานตรวจเครื่องแล้วยืนยัน backend บันทึก SKIP_&lt;เครื่อง&gt;
-    /// และถ้างานนี้ถือเครื่องอยู่ ยกเครื่องให้คิวถัดไป
-    /// </summary>
-    public async Task<(MachineSkipResult? result, string? error)> SkipMachineAsync(
-        int jobId, string machine, string? reason)
-    {
-        try
-        {
-            object payload = string.IsNullOrWhiteSpace(reason)
-                ? new { print_jobs_id = jobId, machine }
-                : new { print_jobs_id = jobId, machine, reason = reason.Length > 500 ? reason[..500] : reason };
-            var response = await _http.PostAsJsonAsync("/machine-queue/skip", payload, JsonOptions);
-            var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode) return (null, $"[{(int)response.StatusCode}] {body}");
-
-            var wrapper = System.Text.Json.JsonSerializer
-                .Deserialize<ApiResponse<MachineSkipResult>>(body, JsonOptions);
-            return (wrapper?.Data ?? new MachineSkipResult(), null);
         }
         catch (Exception ex)
         {
@@ -747,12 +727,16 @@ public class ApiClient
     }
 
     /// <summary>ล้างคิวของงานหนึ่งทิ้ง — ยกเลิกงาน จบงาน หรือสั่งพิมพ์ใหม่</summary>
-    public async Task<(bool ok, string? error)> ClearMachineQueueAsync(int jobId, bool onlyUnsent = false)
+    /// <param name="resolveUnresolved">โหมด "ส่งไม่ครบ ไม่ส่งเลย" เท่านั้น — ดู <see cref="ReleaseMachineAsync"/></param>
+    public async Task<(bool ok, string? error)> ClearMachineQueueAsync(int jobId, bool onlyUnsent = false, bool resolveUnresolved = false)
     {
         try
         {
+            var query = new List<string>();
+            if (onlyUnsent) query.Add("only_unsent=true");
+            if (resolveUnresolved) query.Add("resolve=true");
             var response = await _http.DeleteAsync($"/machine-queue/job/{jobId}"
-                + (onlyUnsent ? "?only_unsent=true" : ""));
+                + (query.Count > 0 ? "?" + string.Join("&", query) : ""));
             var body = await response.Content.ReadAsStringAsync();
 
             return response.IsSuccessStatusCode
@@ -794,11 +778,12 @@ public class ApiClient
         }
     }
 
-    public async Task<(bool ok, string? error)> UpdateJobStatusAsync(int jobId, string status)
+    /// <param name="resolveUnresolved">โหมด "ส่งไม่ครบ ไม่ส่งเลย" เท่านั้น — ดู <see cref="ReleaseMachineAsync"/></param>
+    public async Task<(bool ok, string? error)> UpdateJobStatusAsync(int jobId, string status, bool resolveUnresolved = false)
     {
         try
         {
-            var payload = new { status };
+            object payload = resolveUnresolved ? new { status, resolve_unresolved = true } : new { status };
             var response = await _http.PatchAsync($"/job/{jobId}/status",
                 JsonContent.Create(payload, options: JsonOptions));
             var body = await response.Content.ReadAsStringAsync();

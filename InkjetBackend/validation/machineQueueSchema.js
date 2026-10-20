@@ -25,6 +25,8 @@ const releaseSchema = z.object({
   machine: machineName,
   expected_holder_id: z.number().int().positive().nullable(),
   hold_for_next_round: z.boolean().optional(),
+  // โหมด "ส่งไม่ครบ ไม่ส่งเลย" — ไม่ส่งมา = กฎเดิม
+  resolve_unresolved: z.boolean().optional(),
 });
 
 // ระบุงานได้ แต่ต้องเป็นหัวคิวของเครื่องนั้นด้วย ห้ามข้ามใบที่รอก่อน
@@ -37,13 +39,6 @@ const updateQueueSchema = z.object({
   state: z.enum(["pending", "active", "done"]).optional(),
   program_name: z.string().nullable().optional(),
   sent: z.boolean().optional(),
-});
-
-// ข้ามเครื่องนี้ของงานนี้ — คนหน้างานตรวจเครื่องแล้วยืนยัน
-const skipSchema = z.object({
-  print_jobs_id: z.number().int().min(1),
-  machine: machineName,
-  reason: z.string().max(500).optional(),
 });
 
 // เปลี่ยนรุ่นย่อย UV ของงานที่ถือเครื่องอยู่ — เฉพาะ UV เพราะ MK ไม่มีรุ่นย่อย
@@ -68,7 +63,6 @@ module.exports = {
   claimSchema,
   updateQueueSchema,
   switchProgramSchema,
-  skipSchema,
   beginSendSchema,
   finishSendSchema,
 };
