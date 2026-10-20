@@ -1194,7 +1194,6 @@ public partial class OrderListUserControl : UserControl
             .Where(j => _processFilter == null || JobProcessService.Current(j) == _processFilter)
             .OrderBy(StatusRank)
             .ThenBy(QueueOrder)
-            .ThenByDescending(j => ThaiTime.ToThai(j.CreatedAt)?.Date == DateTime.Today.Date)
             .ThenByDescending(j => j.CreatedAt ?? DateTime.MinValue)
             .ToList();
 
