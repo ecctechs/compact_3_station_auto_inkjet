@@ -4889,7 +4889,24 @@ internal class OrderRow : AntdUI.NotifyProperty
     public AntdUI.CellTag[] MachineStatus
     {
         get => _machineStatus;
-        set { _machineStatus = value; OnPropertyChanged(); }
+        set
+        {
+            if (_machineStatus.Length == value.Length)
+            {
+                bool unchanged = true;
+                for (int i = 0; i < value.Length; i++)
+                {
+                    if (_machineStatus[i].Text == value[i].Text && _machineStatus[i].Type == value[i].Type)
+                        continue;
+                    unchanged = false;
+                    break;
+                }
+                if (unchanged) return;
+            }
+
+            _machineStatus = value;
+            OnPropertyChanged();
+        }
     }
     public AntdUI.CellButton[] Op { get; set; } = [];
     public Color? Back { get; set; }

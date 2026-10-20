@@ -25,10 +25,15 @@ public partial class OrderListUserControl
     private void UpdateMachineStatusCells()
     {
         if (IsDisposed) return;
+
+        var jobsById = new Dictionary<int, PrintJob>(_allJobs.Count);
+        foreach (var job in _allJobs)
+            jobsById[job.Id] = job;
+
         foreach (var row in _displayRows)
         {
-            var job = _allJobs.FirstOrDefault(j => j.Id == row.Id);
-            if (job != null) row.MachineStatus = BuildMachineStatus(job);
+            if (jobsById.TryGetValue(row.Id, out var job))
+                row.MachineStatus = BuildMachineStatus(job);
         }
     }
 
