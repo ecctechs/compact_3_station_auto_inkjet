@@ -392,7 +392,6 @@ public partial class DatabaseSettingUserControl : UserControl
     {
         try
         {
-            using var readLock = PrintDataDbLock.Read();
             using var conn = new SqliteConnection(SqlitePath.ReadOnly(dbPath));
             conn.Open();
             using var cmd = conn.CreateCommand();

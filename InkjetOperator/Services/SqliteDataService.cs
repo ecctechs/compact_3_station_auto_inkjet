@@ -17,7 +17,6 @@ public class SqliteDataService
         if (!File.Exists(_dbPath)) return false;
         try
         {
-            using var readLock = PrintDataDbLock.Read();
             using var conn = Open();
             return true;
         }
@@ -26,7 +25,6 @@ public class SqliteDataService
 
     public CreatePatternRequest? GetPatternDetail(string barcode, int jobId)
     {
-        using var readLock = PrintDataDbLock.Read();
         using var conn = Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT * FROM inkjet_data WHERE lot_no = @barcode LIMIT 1";
@@ -125,7 +123,6 @@ public class SqliteDataService
     /// </summary>
     public LotSummary? GetLotSummary(string barcode)
     {
-        using var readLock = PrintDataDbLock.Read();
         using var conn = Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT erp_mfg, qty FROM print_data WHERE lot_no = @barcode LIMIT 1";
@@ -172,7 +169,6 @@ public class SqliteDataService
     /// </summary>
     public List<UvJobItem> GetUvDetail(string barcode)
     {
-        using var readLock = PrintDataDbLock.Read();
         var items = new List<UvJobItem>();
         using var conn = Open();
         using var cmd = conn.CreateCommand();
@@ -233,7 +229,6 @@ public class SqliteDataService
     /// </summary>
     public CreatePlanRoutingRequest? GetPlanRouting(string barcode, int jobId)
     {
-        using var readLock = PrintDataDbLock.Read();
         try
         {
             using var conn = Open();

@@ -165,7 +165,6 @@ public static class PrintDataExcelImport
     /// </summary>
     public static void ExportTemplate(string dbPath, string excelPath)
     {
-        using var readLock = PrintDataDbLock.Read();
         var current = ReadCurrent(dbPath);
         using var book = new XLWorkbook();
 
@@ -612,9 +611,6 @@ public static class PrintDataExcelImport
 
             if (File.Exists(dbPath)) File.Copy(dbPath, BackupPath(dbPath), overwrite: true);
 
-            // รอให้การอ่านของโปรแกรมนี้จบก่อนสลับไฟล์ ลดการชนกับหน้าสแกน/ส่งออก
-            // การล็อกนี้ครอบคลุมเฉพาะโปรเซสนี้; เครื่องอื่นยังอาจกำลังเปิดไฟล์อยู่
-            using var writeLock = PrintDataDbLock.Write();
             SqliteConnection.ClearAllPools();
             const int attempts = 5;
             for (int attempt = 1; ; attempt++)
