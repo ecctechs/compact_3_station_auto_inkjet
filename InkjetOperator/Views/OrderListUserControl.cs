@@ -1867,7 +1867,7 @@ public partial class OrderListUserControl : UserControl
         var skipSteps = new List<string>();
         if (!StationService.IsSt3)
         {
-            var check = await UnreachableOrSkipAsync(jobId, sendPlan, resolved);
+            var check = await UnreachableOrSkipAsync(jobId, sendPlan, resolved, plan.Steps);
             timing.Mark("ตรวจการเชื่อมต่อ");
             if (check == null || IsDisposed) return;
             skipSteps = check;
@@ -4326,9 +4326,14 @@ public partial class OrderListUserControl : UserControl
     /// <para>
     /// MK สองหัวเป็นขั้นเดียวกัน หัวใดหัวหนึ่งต่อไม่ได้ = ข้ามขั้น MK ทั้งขั้น
     /// </para>
+    /// <para>
+    /// "ทุกเครื่อง" นับจากแผนเต็มของงาน (<paramref name="allSteps"/>) ไม่ใช่เฉพาะที่ส่งรอบนี้
+    /// งาน 12 ที่ UV2 ฝาก ST3 เลือกรุ่น รอบนี้ส่งแค่ MK — MK เสียแล้วนับว่าเสียทุกเครื่อง
+    /// ข้ามไม่ได้ ทั้งที่ยังเหลือ UV2 ให้พิมพ์ (พบที่ DPX-730 · แก้ 20/10/2026)
+    /// </para>
     /// </summary>
     private async Task<List<string>?> UnreachableOrSkipAsync(
-        int jobId, MarkingPlan plan, ResolvedJobResponse resolved)
+        int jobId, MarkingPlan plan, ResolvedJobResponse resolved, IReadOnlyCollection<string> allSteps)
     {
         ShowSending($"กำลังตรวจการเชื่อมต่อ · {JobName(jobId)}");
         List<JobSendService.UnreachableMachine> bad;
@@ -4347,7 +4352,7 @@ public partial class OrderListUserControl : UserControl
 
         var steps = bad.Select(b => b.Step).Where(s => s.Length > 0)
             .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        int planSteps = plan.Steps.Distinct(StringComparer.OrdinalIgnoreCase).Count();
+        int planSteps = allSteps.Distinct(StringComparer.OrdinalIgnoreCase).Count();
         var lines = string.Join(Environment.NewLine, bad.Select(m => $"• {m.Name} — {m.Reason}"));
 
         if (steps.Count >= planSteps || bad.Any(b => b.Step.Length == 0))
@@ -4360,8 +4365,9 @@ public partial class OrderListUserControl : UserControl
             return null;
         }
 
-        var keep = plan.Steps.Distinct(StringComparer.OrdinalIgnoreCase)
-            .Where(s => !steps.Contains(s, StringComparer.OrdinalIgnoreCase));
+        var keep = allSteps.Distinct(StringComparer.OrdinalIgnoreCase)
+            .Where(s => !steps.Contains(s, StringComparer.OrdinalIgnoreCase))
+            .Select(s => plan.Steps.Contains(s, StringComparer.OrdinalIgnoreCase) ? s : $"{s} (ST3 เลือกรุ่น)");
         var facts = new List<(string, string)> { ("งาน", JobName(jobId)) };
         facts.AddRange(bad.Take(4).Select(m => (m.Name, m.Reason)));
         facts.Add(("ส่งต่อ", string.Join(" · ", keep)));
