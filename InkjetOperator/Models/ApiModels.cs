@@ -596,6 +596,17 @@ public class MachineQueueRow
     [JsonPropertyName("awaiting_pick")]
     public bool AwaitingPick { get; set; }
 
+    /// <summary>สาเหตุที่ส่งไม่ผ่านรอบล่าสุด (ข้อความเดียวกับที่ ST1 รายงาน) — ว่าง = ไม่มี / backend รุ่นเก่า</summary>
+    [JsonPropertyName("dispatch_error")]
+    public string? DispatchError { get; set; }
+
+    /// <summary>
+    /// ส่งไม่ผ่านหรือไม่รู้ผล ค้างรอคนตรวจเครื่อง — ขึ้นปุ่ม "ข้ามเครื่อง" ในแถวงาน
+    /// ส่งไม่ผ่านแน่นอน (not_sent) ระบบไม่ส่งซ้ำเอง แถวจึงค้างจนกว่าคนจะสั่งต่อหรือข้าม
+    /// </summary>
+    [JsonIgnore]
+    public bool NeedsAttention => NeedsSendReview || DispatchState == "not_sent";
+
     [JsonPropertyName("id")]
     public int Id { get; set; }
 
@@ -626,6 +637,16 @@ public class MachineQueueRow
     /// <summary>pending รอคิว · active ถือเครื่องอยู่ · done ปล่อยแล้ว</summary>
     [JsonPropertyName("state")]
     public string State { get; set; } = "";
+}
+
+/// <summary>ผลของการข้ามเครื่อง — Freed = แถวที่ข้ามเคยถือเครื่องอยู่ · Next = งานที่ได้เครื่องต่อ</summary>
+public class MachineSkipResult
+{
+    [JsonPropertyName("freed")]
+    public bool Freed { get; set; }
+
+    [JsonPropertyName("next")]
+    public MachineQueueRow? Next { get; set; }
 }
 
 /// <summary>หนึ่งเครื่องที่งานหนึ่งจะจอง</summary>

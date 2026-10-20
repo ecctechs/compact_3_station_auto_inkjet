@@ -163,8 +163,11 @@ public static class JobSendService
             machines);
     }
 
-    /// <summary>เครื่องที่ต่อไม่ติด พร้อมเหตุผล — ชื่อที่คนหน้างานเรียกกัน ไม่ใช่ชื่อขั้นตอน</summary>
-    public sealed record UnreachableMachine(string Name, string Reason);
+    /// <summary>
+    /// เครื่องที่ต่อไม่ติด พร้อมเหตุผล — Name คือชื่อที่คนหน้างานเรียกกัน · Step คือขั้นในแผน (MK / UV1 / UV2)
+    /// ที่จะถูกข้ามถ้าคนยืนยันข้ามเครื่องนี้ (หัว MK สองหัวเป็นขั้น MK เดียวกัน)
+    /// </summary>
+    public sealed record UnreachableMachine(string Name, string Reason, string Step = "");
 
     /// <summary>
     /// ลองต่อทุกเครื่องที่แผนของงานนี้ต้องใช้ ก่อนจะลงมือส่งอะไรจริง
@@ -183,7 +186,7 @@ public static class JobSendService
         IEnumerable<string> steps, PatternDetail? pattern, List<UvJobDataDto>? uvData)
     {
         var bad = new List<UnreachableMachine>();
-        var targets = new List<(string Name, string Host, int Port)>();
+        var targets = new List<(string Name, string Host, int Port, string Step)>();
 
         foreach (var step in steps.Distinct(StringComparer.OrdinalIgnoreCase))
         {
@@ -198,8 +201,8 @@ public static class JobSendService
                     var ip = CustomSettingsManager.Read(ipKey);
 
                     if (string.IsNullOrWhiteSpace(ip))
-                        bad.Add(new UnreachableMachine(name, "ยังไม่ได้ตั้ง IP"));
-                    else targets.Add((name, ip, MkPort));
+                        bad.Add(new UnreachableMachine(name, "ยังไม่ได้ตั้ง IP", "MK"));
+                    else targets.Add((name, ip, MkPort, "MK"));
                 }
 
                 continue;
@@ -212,21 +215,21 @@ public static class JobSendService
             // ไม่มีข้อมูลของเครื่องนี้ = ส่งไม่ได้อยู่แล้ว ไม่ต้องรอไปเจอตอนส่ง
             if (uvData?.Any(r => string.Equals(r.Machine, step, StringComparison.OrdinalIgnoreCase)) != true)
             {
-                bad.Add(new UnreachableMachine(uvName, $"ยังไม่มีข้อมูล {step} ของงานนี้"));
+                bad.Add(new UnreachableMachine(uvName, $"ยังไม่มีข้อมูล {step} ของงานนี้", step.ToUpperInvariant()));
                 continue;
             }
 
             // เช็คไฟล์บนเครื่อง UV ผ่านเครือข่าย — ทำเบื้องหลัง ไม่ให้หน้าจอรอ
             if (await UvSettingsManager.GetCpiPathAsync(uvNumber) == null)
             {
-                bad.Add(new UnreachableMachine(uvName, $"ยังไม่ได้ตั้งโฟลเดอร์ UV{uvNumber} หรือไม่พบ CPI.db3"));
+                bad.Add(new UnreachableMachine(uvName, $"ยังไม่ได้ตั้งโฟลเดอร์ UV{uvNumber} หรือไม่พบ CPI.db3", step.ToUpperInvariant()));
                 continue;
             }
 
             var uvIp = CustomSettingsManager.Read($"UV00{uvNumber}_IP");
             if (string.IsNullOrWhiteSpace(uvIp))
             {
-                bad.Add(new UnreachableMachine(uvName, $"ยังไม่ได้ตั้ง IP ของ UV{uvNumber}"));
+                bad.Add(new UnreachableMachine(uvName, $"ยังไม่ได้ตั้ง IP ของ UV{uvNumber}", step.ToUpperInvariant()));
                 continue;
             }
 
@@ -234,14 +237,14 @@ public static class JobSendService
                 ? p
                 : UvDefaultPort;
 
-            targets.Add((uvName, uvIp, uvPort));
+            targets.Add((uvName, uvIp, uvPort, step.ToUpperInvariant()));
         }
 
         var connected = await ConnectionPreflight.CheckAsync(
             targets.Select(t => (t.Host, t.Port)).ToList(), CanConnectAsync);
         for (int i = 0; i < targets.Count; i++)
             if (!connected[i])
-                bad.Add(new UnreachableMachine(targets[i].Name, $"ต่อไม่ติด ({targets[i].Host}:{targets[i].Port})"));
+                bad.Add(new UnreachableMachine(targets[i].Name, $"ต่อไม่ติด ({targets[i].Host}:{targets[i].Port})", targets[i].Step));
         return bad;
     }
 

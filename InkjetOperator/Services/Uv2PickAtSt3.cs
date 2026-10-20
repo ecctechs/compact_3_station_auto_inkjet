@@ -43,7 +43,7 @@ public static class Uv2PickAtSt3
         var steps = MarkingMethodService.Resolve(markingMethod).Steps;
         if (!steps.Contains(Step, StringComparer.OrdinalIgnoreCase)) return false;
 
-        if (commands?.Any(c => c.Success && string.Equals(c.Command, Step, StringComparison.OrdinalIgnoreCase)) == true)
+        if (commands?.Any(c => MarkingMethodService.Covers(c, Step)) == true)
             return false;
 
         var rows = queue.Where(r => r.PrintJobsId == jobId

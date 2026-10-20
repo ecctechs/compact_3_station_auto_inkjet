@@ -25,7 +25,6 @@ partial class StationOptionsUserControl
         divRow2 = new AntdUI.Divider();
         divRow3 = new AntdUI.Divider();
         divRow4 = new AntdUI.Divider();
-        divRow5 = new AntdUI.Divider();
         divRow6 = new AntdUI.Divider();
         divRow7 = new AntdUI.Divider();
         divRow8 = new AntdUI.Divider();
@@ -47,10 +46,6 @@ partial class StationOptionsUserControl
         lblMockupHeading = new AntdUI.Label();
         lblMockupHelp = new AntdUI.Label();
         chkMockupStatus = new AntdUI.Switch();
-        tlpAllOrNothing = new System.Windows.Forms.TableLayoutPanel();
-        lblAllOrNothingHeading = new AntdUI.Label();
-        lblAllOrNothingHelp = new AntdUI.Label();
-        chkAllOrNothing = new AntdUI.Switch();
         tlpUv2Pick = new System.Windows.Forms.TableLayoutPanel();
         lblUv2PickHeading = new AntdUI.Label();
         lblUv2PickHelp = new AntdUI.Label();
@@ -79,7 +74,6 @@ partial class StationOptionsUserControl
         tlpProcessTabs.SuspendLayout();
         flpProcessTabs.SuspendLayout();
         tlpMockup.SuspendLayout();
-        tlpAllOrNothing.SuspendLayout();
         tlpUv2Pick.SuspendLayout();
         tlpUvRepeat.SuspendLayout();
         tlpScanTab.SuspendLayout();
@@ -101,29 +95,25 @@ partial class StationOptionsUserControl
         tlpOptionsRoot.Controls.Add(divRow3, 0, 6);
         tlpOptionsRoot.Controls.Add(tlpMockup, 0, 7);
         tlpOptionsRoot.Controls.Add(divRow4, 0, 8);
-        tlpOptionsRoot.Controls.Add(tlpAllOrNothing, 0, 9);
-        tlpOptionsRoot.Controls.Add(divRow5, 0, 10);
-        tlpOptionsRoot.Controls.Add(tlpUv2Pick, 0, 11);
-        tlpOptionsRoot.Controls.Add(divRow6, 0, 12);
-        tlpOptionsRoot.Controls.Add(tlpUvRepeat, 0, 13);
-        tlpOptionsRoot.Controls.Add(divRow7, 0, 14);
-        tlpOptionsRoot.Controls.Add(tlpScanTab, 0, 15);
-        tlpOptionsRoot.Controls.Add(divRow8, 0, 16);
-        tlpOptionsRoot.Controls.Add(lblSectionTools, 0, 17);
-        tlpOptionsRoot.Controls.Add(divRow9, 0, 18);
-        tlpOptionsRoot.Controls.Add(tlpReset, 0, 19);
-        tlpOptionsRoot.Controls.Add(divRow10, 0, 20);
-        tlpOptionsRoot.Controls.Add(tlpJobData, 0, 21);
-        tlpOptionsRoot.Controls.Add(divRow11, 0, 22);
+        tlpOptionsRoot.Controls.Add(tlpUv2Pick, 0, 9);
+        tlpOptionsRoot.Controls.Add(divRow6, 0, 10);
+        tlpOptionsRoot.Controls.Add(tlpUvRepeat, 0, 11);
+        tlpOptionsRoot.Controls.Add(divRow7, 0, 12);
+        tlpOptionsRoot.Controls.Add(tlpScanTab, 0, 13);
+        tlpOptionsRoot.Controls.Add(divRow8, 0, 14);
+        tlpOptionsRoot.Controls.Add(lblSectionTools, 0, 15);
+        tlpOptionsRoot.Controls.Add(divRow9, 0, 16);
+        tlpOptionsRoot.Controls.Add(tlpReset, 0, 17);
+        tlpOptionsRoot.Controls.Add(divRow10, 0, 18);
+        tlpOptionsRoot.Controls.Add(tlpJobData, 0, 19);
+        tlpOptionsRoot.Controls.Add(divRow11, 0, 20);
         tlpOptionsRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpOptionsRoot.Location = new System.Drawing.Point(32, 32);
         tlpOptionsRoot.Margin = new System.Windows.Forms.Padding(0);
         tlpOptionsRoot.Name = "tlpOptionsRoot";
-        tlpOptionsRoot.RowCount = 24;
+        tlpOptionsRoot.RowCount = 22;
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 66F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F));
-        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
-        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 116F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 116F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
@@ -144,7 +134,7 @@ partial class StationOptionsUserControl
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 184F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 1465);
+        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 1340);
         tlpOptionsRoot.TabIndex = 0;
         //
         // lblOptionsTitle
@@ -362,59 +352,6 @@ partial class StationOptionsUserControl
         chkMockupStatus.Size = new System.Drawing.Size(84, 36);
         chkMockupStatus.TabIndex = 14;
         chkMockupStatus.UnCheckedText = "ปิด";
-        //
-        // tlpAllOrNothing
-        //
-        tlpAllOrNothing.ColumnCount = 2;
-        tlpAllOrNothing.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpAllOrNothing.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
-        tlpAllOrNothing.Controls.Add(lblAllOrNothingHeading, 0, 0);
-        tlpAllOrNothing.Controls.Add(lblAllOrNothingHelp, 0, 1);
-        tlpAllOrNothing.Controls.Add(chkAllOrNothing, 1, 0);
-        tlpAllOrNothing.Dock = System.Windows.Forms.DockStyle.Fill;
-        tlpAllOrNothing.Margin = new System.Windows.Forms.Padding(0);
-        tlpAllOrNothing.Name = "tlpAllOrNothing";
-        tlpAllOrNothing.Padding = new System.Windows.Forms.Padding(0, 14, 0, 14);
-        tlpAllOrNothing.RowCount = 2;
-        tlpAllOrNothing.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
-        tlpAllOrNothing.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpAllOrNothing.SetRowSpan(chkAllOrNothing, 2);
-        tlpAllOrNothing.Size = new System.Drawing.Size(1216, 116);
-        tlpAllOrNothing.TabIndex = 15;
-        //
-        // lblAllOrNothingHeading
-        //
-        lblAllOrNothingHeading.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblAllOrNothingHeading.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
-        lblAllOrNothingHeading.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        lblAllOrNothingHeading.Margin = new System.Windows.Forms.Padding(0);
-        lblAllOrNothingHeading.Name = "lblAllOrNothingHeading";
-        lblAllOrNothingHeading.Size = new System.Drawing.Size(1076, 36);
-        lblAllOrNothingHeading.TabIndex = 16;
-        lblAllOrNothingHeading.Text = "ส่งไม่ครบ ไม่ส่งเลย (งานที่ใช้หลายเครื่อง)";
-        //
-        // lblAllOrNothingHelp
-        //
-        lblAllOrNothingHelp.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblAllOrNothingHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
-        lblAllOrNothingHelp.ForeColor = System.Drawing.Color.FromArgb(102, 102, 102);
-        lblAllOrNothingHelp.Margin = new System.Windows.Forms.Padding(0);
-        lblAllOrNothingHelp.Name = "lblAllOrNothingHelp";
-        lblAllOrNothingHelp.Size = new System.Drawing.Size(1076, 52);
-        lblAllOrNothingHelp.TabIndex = 17;
-        lblAllOrNothingHelp.Text = "เครื่องไหนส่งไม่ผ่าน ไม่ส่งเครื่องอื่นต่อ ล้างคิว ตีงานกลับเป็นรอเริ่ม แล้วบอกชื่อเครื่องที่ต้องตรวจ\r\nต้องเปิดที่เครื่อง ST1 · เครื่องที่รับงานไปก่อนแล้ว ระบบจะเตือนชื่อให้";
-        lblAllOrNothingHelp.TextAlign = System.Drawing.ContentAlignment.TopLeft;
-        //
-        // chkAllOrNothing
-        //
-        chkAllOrNothing.Anchor = System.Windows.Forms.AnchorStyles.Right;
-        chkAllOrNothing.CheckedText = "เปิด";
-        chkAllOrNothing.Font = new System.Drawing.Font("Segoe UI", 11F);
-        chkAllOrNothing.Margin = new System.Windows.Forms.Padding(0);
-        chkAllOrNothing.Name = "chkAllOrNothing";
-        chkAllOrNothing.Size = new System.Drawing.Size(84, 36);
-        chkAllOrNothing.TabIndex = 18;
-        chkAllOrNothing.UnCheckedText = "ปิด";
         //
         // tlpUv2Pick
         //
@@ -771,16 +708,6 @@ partial class StationOptionsUserControl
         divRow4.TabIndex = 43;
         divRow4.Thickness = 1F;
         //
-        // divRow5
-        //
-        divRow5.ColorSplit = System.Drawing.Color.FromArgb(229, 229, 229);
-        divRow5.Dock = System.Windows.Forms.DockStyle.Fill;
-        divRow5.Margin = new System.Windows.Forms.Padding(0);
-        divRow5.Name = "divRow5";
-        divRow5.Size = new System.Drawing.Size(1216, 9);
-        divRow5.TabIndex = 44;
-        divRow5.Thickness = 1F;
-        //
         // divRow6
         //
         divRow6.ColorSplit = System.Drawing.Color.FromArgb(229, 229, 229);
@@ -849,14 +776,13 @@ partial class StationOptionsUserControl
         Controls.Add(tlpOptionsRoot);
         Name = "StationOptionsUserControl";
         Padding = new System.Windows.Forms.Padding(32);
-        Size = new System.Drawing.Size(1280, 1529);
+        Size = new System.Drawing.Size(1280, 1404);
         flpJobData.ResumeLayout(false);
         tlpJobData.ResumeLayout(false);
         tlpReset.ResumeLayout(false);
         tlpScanTab.ResumeLayout(false);
         tlpUvRepeat.ResumeLayout(false);
         tlpUv2Pick.ResumeLayout(false);
-        tlpAllOrNothing.ResumeLayout(false);
         tlpMockup.ResumeLayout(false);
         flpProcessTabs.ResumeLayout(false);
         tlpProcessTabs.ResumeLayout(false);
@@ -879,7 +805,6 @@ partial class StationOptionsUserControl
     private AntdUI.Divider divRow2;
     private AntdUI.Divider divRow3;
     private AntdUI.Divider divRow4;
-    private AntdUI.Divider divRow5;
     private AntdUI.Divider divRow6;
     private AntdUI.Divider divRow7;
     private AntdUI.Divider divRow8;
@@ -901,10 +826,6 @@ partial class StationOptionsUserControl
     private AntdUI.Label lblMockupHeading;
     private AntdUI.Label lblMockupHelp;
     private AntdUI.Switch chkMockupStatus;
-    private System.Windows.Forms.TableLayoutPanel tlpAllOrNothing;
-    private AntdUI.Label lblAllOrNothingHeading;
-    private AntdUI.Label lblAllOrNothingHelp;
-    private AntdUI.Switch chkAllOrNothing;
     private System.Windows.Forms.TableLayoutPanel tlpUv2Pick;
     private AntdUI.Label lblUv2PickHeading;
     private AntdUI.Label lblUv2PickHelp;

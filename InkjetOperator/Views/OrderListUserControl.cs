@@ -364,9 +364,9 @@ public partial class OrderListUserControl : UserControl
     }
 
 
+    // ข้ามเครื่องแล้ว (SKIP_) นับเหมือนส่งแล้ว — ห้ามส่งเครื่องที่คนยืนยันข้ามไปแล้วซ้ำ
     private static bool AlreadySent(PrintJob job, string step) =>
-        job.Commands?.Any(c => c.Success &&
-            string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true;
+        job.Commands?.Any(c => MarkingMethodService.Covers(c, step)) == true;
 
     /// <summary>
     /// มีคนกดปุ่มหน้างาน — ส่งขั้นตอนถัดไปให้ทันที
@@ -493,8 +493,7 @@ public partial class OrderListUserControl : UserControl
             // ไม่ถือเครื่องไว้ให้รอบถัดไปของงานเดิม — งานที่เข้าเครื่องเดิมสองรอบ
             // (marking 22) ไม่ได้จองรอบสองไว้ล่วงหน้าแล้ว ปุ่มหน้างานรอบแรกจึงปล่อย
             // เครื่องเหมือนจบงาน งานอื่นเข้าต่อได้ทันที รอบสองค่อยจองตอนคนกดเริ่มงานรอบสอง
-            var (release, error) = await _api.ReleaseMachineAsync(
-                machine, holder?.Id, resolveUnresolved: AllOrNothingSend.Enabled);
+            var (release, error) = await _api.ReleaseMachineAsync(machine, holder?.Id);
             if (IsDisposed) return;
 
             if (release == null)
@@ -510,7 +509,7 @@ public partial class OrderListUserControl : UserControl
 
             // ทำหลังส่งงานถัดไปแล้ว คนที่รอเครื่องอยู่ไม่ต้องรอการตรวจงานใบเก่า
             if (holder != null && !IsDisposed)
-                await AutoCompleteAfterReleaseAsync(holder.PrintJobsId, machine);
+                await AutoCompleteAfterReleaseAsync(holder.PrintJobsId, $"กดปุ่ม {machine} เป็นเครื่องสุดท้าย");
         }
         finally
         {
@@ -532,10 +531,10 @@ public partial class OrderListUserControl : UserControl
         if (holder == null || holder.SentAt != null) return null;
         var job = JobName(holder.PrintJobsId);
 
-        // ส่งออกไปแล้วไม่รู้ผล — โหมด "ส่งไม่ครบ ไม่ส่งเลย" ปล่อยได้ (คนยืนหน้าเครื่อง = ตรวจแล้ว)
+        // ส่งออกไปแล้วไม่รู้ผล — ปุ่มหน้าเครื่องปล่อยไม่ได้ ทางออกคือปุ่ม "ข้ามเครื่อง" ในแถวงาน
+        // ซึ่งให้คนยืนยันพร้อมเห็นสาเหตุ และบันทึกร่องรอยไว้
         if (holder.NeedsSendReview)
-            return AllOrNothingSend.Enabled ? null
-                : $"{machine} ยังปล่อยไม่ได้ — ส่ง {job} ออกไปแล้วแต่ยังไม่รู้ผล · ตรวจที่เครื่องก่อน";
+            return $"{machine} ยังปล่อยไม่ได้ — ส่ง {job} ออกไปแล้วแต่ยังไม่รู้ผล · ตรวจที่เครื่องก่อน แล้วกด ข้ามเครื่อง ในแถวงาน";
 
         if (holder.AwaitingPick)
             return $"{machine} ยังไม่ได้รับงาน — {job} รอ ST3 เลือกรุ่น · กด เลือกรุ่น {machine} ในแถวงานก่อน";
@@ -654,11 +653,17 @@ public partial class OrderListUserControl : UserControl
     /// ไม่ทำอะไร งานค้างให้กดจบงานที่จอเหมือนเดิม
     /// </para>
     /// </summary>
-    private async Task AutoCompleteAfterReleaseAsync(int jobId, string machine)
+    /// <param name="trigger">อะไรทำให้ตรวจ — ลง log</param>
+    /// <param name="allowWaiting">
+    /// หลังข้ามเครื่อง งานที่ยังเป็น Waiting (ส่งไม่ผ่านตั้งแต่เครื่องแรก) ก็จบได้ เมื่อทุกขั้นเสร็จหรือถูกข้าม
+    /// </param>
+    private async Task AutoCompleteAfterReleaseAsync(int jobId, string trigger, bool allowWaiting = false)
     {
         var resolved = await _api!.GetResolvedJobAsync(jobId);
         if (IsDisposed || resolved == null) return;
-        if (!string.Equals(resolved.Job.Status, "Process", StringComparison.OrdinalIgnoreCase)) return;
+        bool active = string.Equals(resolved.Job.Status, "Process", StringComparison.OrdinalIgnoreCase)
+            || (allowWaiting && string.Equals(resolved.Job.Status, "Waiting", StringComparison.OrdinalIgnoreCase));
+        if (!active) return;
         if (!CheckSteps(resolved.PlanRouting?.MarkingMethod, resolved.Commands).Complete) return;
 
         // ยังเหลือรุ่นย่อยที่ไม่ได้พิมพ์ — ไม่จบเงียบ ๆ ให้คนกดจบที่จอซึ่งมีกล่องเตือนว่าเหลืออะไร
@@ -681,7 +686,7 @@ public partial class OrderListUserControl : UserControl
         if (IsDisposed) return;
         if (ok)
         {
-            AppLog.Info("PushButton", $"จบงานอัตโนมัติ {JobName(jobId)} · ส่งครบแล้ว กดปุ่ม {machine} เป็นเครื่องสุดท้าย");
+            AppLog.Info("PushButton", $"จบงานอัตโนมัติ {JobName(jobId)} · ส่งครบแล้ว · {trigger}");
             Notify.Success(this, $"{JobName(jobId)} ครบทุกเครื่อง · จบงานแล้ว ย้ายไป History");
         }
         else
@@ -867,8 +872,7 @@ public partial class OrderListUserControl : UserControl
     }
 
     private static bool SentAlready(ResolvedJobResponse resolved, string step) =>
-        resolved.Commands?.Any(c => c.Success &&
-            string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true;
+        resolved.Commands?.Any(c => MarkingMethodService.Covers(c, step)) == true;
 
     /// <summary>จังหวะปกติของการอ่านงานใหม่จาก backend</summary>
     private const int PollNormalMs = 5000;
@@ -1227,6 +1231,7 @@ public partial class OrderListUserControl : UserControl
     // สองบรรทัด กว้างพอ ๆ กับปุ่มเริ่มงาน — บรรทัดเดียวยาวจนสี่ปุ่มล้นคอลัมน์
     private const string NextRoundButtonText = "เริ่มงาน\nรอบสอง";
     private const string PickUv2ButtonText = "เลือกรุ่น\nUV2";
+    private const string SkipMachineButtonText = "ข้าม\nเครื่อง";
 
     /// <summary>สถานะของงานที่รอ ST3 เลือกรุ่น UV2 — สั้น ภาษาอังกฤษ แบบเดียวกับ Waiting (Qn)</summary>
     private const string Uv2PickLabel = "Pick UV2 (ST3)";
@@ -1423,6 +1428,11 @@ public partial class OrderListUserControl : UserControl
             if (_startingJobId != null) return;
             await PickUv2AtSt3Async(row.Id);
         }
+        else if (buttonId == "skipmachine")
+        {
+            if (_startingJobId != null) return;
+            await SkipStuckMachineAsync(row.Id);
+        }
         else if (buttonId is "switchuv1" or "switchuv2")
         {
             if (_startingJobId != null) return;
@@ -1586,8 +1596,7 @@ public partial class OrderListUserControl : UserControl
         if (IsDisposed) return;
 
         // Backend ล้างคิวกับเปลี่ยนสถานะใน Transaction เดียวกัน
-        var (ok, err) = await _api.UpdateJobStatusAsync(
-            jobId, "Cancel", resolveUnresolved: AllOrNothingSend.Enabled);
+        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Cancel");
         if (IsDisposed) return;
 
         if (!ok)
@@ -1852,10 +1861,22 @@ public partial class OrderListUserControl : UserControl
         // ไม่เสียอะไรด้วย เพราะงานที่ ST3 กดเริ่มได้มีแต่รหัส 10 ซึ่งใช้เครื่องเดียว
         // (UV2) ไม่มีเคสเริ่มไปได้ครึ่งทางแบบงานหลายเครื่องที่ด่านนี้มีไว้กัน และถ้า
         // ST1 ส่งไม่ผ่านจริง มันรายงานกลับมาที่จอ ST3 ให้อยู่แล้ว
-        bool blocked = !StationService.IsSt3 && await BlockedByUnreachableAsync(jobId, sendPlan, resolved);
-        timing.Mark("ตรวจการเชื่อมต่อ");
-        if (blocked) return;
-        if (IsDisposed) return;
+        //
+        // ต่อไม่ได้บางเครื่อง คนหน้างานเลือกข้ามเครื่องนั้นได้ (รายงานหน้างาน 18/10/2026 ข้อ 2.2)
+        // แทนที่งานจะเริ่มไม่ได้ทั้งใบ — ต้องยืนยันเอง และบันทึกการข้ามลงประวัติงานก่อนจองคิว
+        var skipSteps = new List<string>();
+        if (!StationService.IsSt3)
+        {
+            var check = await UnreachableOrSkipAsync(jobId, sendPlan, resolved);
+            timing.Mark("ตรวจการเชื่อมต่อ");
+            if (check == null || IsDisposed) return;
+            skipSteps = check;
+        }
+        if (skipSteps.Count > 0)
+            sendPlan = sendPlan with
+            {
+                Steps = sendPlan.Steps.Where(s => !skipSteps.Contains(s, StringComparer.OrdinalIgnoreCase)).ToList(),
+            };
 
         // ค่าของหัวพ่นผิด = ไม่ให้เข้าคิวตั้งแต่ต้น
         //
@@ -1867,6 +1888,22 @@ public partial class OrderListUserControl : UserControl
             Notify.WarnModal(this, "ยังเริ่มงานไม่ได้", badConfig);
             return;
         }
+
+        // บันทึกการข้ามก่อนจอง — backend ปิดเครื่องนั้นของงานนี้ไว้ (แถว done) จองซ้ำทีหลังไม่ได้
+        foreach (var step in skipSteps)
+        {
+            var (skipped, skipError) = await _api.SkipMachineAsync(jobId, step, "ต่อไม่ได้ตอนกดเริ่มงาน");
+            if (IsDisposed) return;
+            if (skipped == null)
+            {
+                Notify.ErrorModal(this, "ข้ามเครื่องไม่สำเร็จ",
+                    $"{JobName(jobId)} ยังไม่ได้เริ่ม · {step}" + Environment.NewLine + Environment.NewLine
+                    + (skipError ?? "ติดต่อ backend ไม่ได้"));
+                return;
+            }
+            AppLog.Info("OrderList.Skip", $"ข้าม {step} ตอนเริ่มงาน {JobName(jobId)} · ต่อไม่ได้");
+        }
+        timing.Mark("ข้ามเครื่อง");
 
         // จองทุกเครื่องที่แผนของงานนี้ต้องใช้ ในคราวเดียว
         //
@@ -2737,67 +2774,6 @@ public partial class OrderListUserControl : UserControl
 
     private sealed record PreparedQueueSend(MachineQueueRow Row, ResolvedJobResponse Job);
 
-    /// <summary>
-    /// โหมด "ส่งไม่ครบ ไม่ส่งเลย" — งานนี้มีเครื่องส่งไม่ผ่าน ล้างคิวทั้งงานแล้วตีกลับเป็นรอเริ่ม
-    /// <para>
-    /// ไม่ส่ง resolve ไปกับคำขอ — ผลของทุกเครื่องในรอบนี้บันทึกไปแล้วด้วยมือเราเอง
-    /// ถ้า backend ยังเห็นว่ามีคิวไม่รู้ผล แปลว่ามีอย่างอื่นเกิดขึ้น (เช่นบันทึกผลไม่ได้)
-    /// ปล่อยให้คนกดยกเลิกงานเองซึ่งปลดให้ได้ ดีกว่าเดาแทน
-    /// </para>
-    /// <para>
-    /// งานที่ปล่อยเครื่องไปแล้วบางเครื่อง (ส่งครบไปรอบหนึ่งแล้ว เช่นรอบสองของงาน 22
-    /// หรือเครื่องที่รอคิวอยู่นาน) ไม่ตีทั้งงานกลับ เพราะชิ้นงานเดินไปแล้วจริง
-    /// คิวของเครื่องที่ล้มกลับเป็นรอไว้ แก้เครื่องแล้วกดปุ่มหน้าเครื่องนั้นเพื่อส่งใหม่
-    /// </para>
-    /// </summary>
-    private async Task<List<Notify.ResultLine>> RollbackJobAsync(
-        int jobId, List<string> failed, List<string> received, string? reason, bool startedBefore = false)
-    {
-        var bad = string.Join(", ", failed);
-        var lines = new List<Notify.ResultLine>();
-
-        var (queue, queueError) = await _api!.GetMachineQueueAsync();
-        if (IsDisposed) return lines;
-        bool releasedBefore = queue.Any(r => r.PrintJobsId == jobId && r.State == "done");
-
-        // งานที่เริ่มไปแล้วก่อนรอบนี้ (สถานะ Process ตอนโหลดก่อนส่ง) — เครื่องอื่นได้งานไปแล้ว
-        // ชิ้นงานเดินไปแล้วจริง เช่น UV2 ที่ ST3 เลือกรุ่นทีหลัง MK พ่นไปก่อนแล้ว หรือรอบสองของ 22
-        // คิวที่ API คืนมาไม่มีแถว done จึงต้องดูจากสถานะงานแทน
-        if (queueError != null || releasedBefore || startedBefore)
-        {
-            lines.Add(Notify.Bad($"{bad} ส่งไม่ผ่าน — ตรวจ {bad} แล้วกดปุ่มหน้าเครื่อง {bad} เพื่อส่งใหม่"
-                + (reason != null ? $" ({reason})" : "")));
-            return lines;
-        }
-
-        var (cleared, clearError) = await _api.ClearMachineQueueAsync(jobId);
-        var (reset, resetError) = cleared
-            ? await _api.UpdateJobStatusAsync(jobId, "Waiting")
-            : (false, clearError);
-        if (IsDisposed) return lines;
-
-        if (!reset)
-        {
-            lines.Add(Notify.Bad($"{bad} ส่งไม่ผ่าน และตีงานกลับเป็นรอเริ่มไม่ได้ — {resetError}"
-                + " · ตรวจเครื่องแล้วกดยกเลิกงานนี้"));
-            return lines;
-        }
-
-        var message = $"{bad} ส่งไม่ผ่าน — ตรวจ {bad} (เปิดเครื่อง / สาย / โปรแกรม) แล้วกดเริ่มงานใหม่"
-            + (reason != null ? $" · {reason}" : "");
-        lines.Add(Notify.Bad($"ยังไม่เริ่ม · {message}"));
-        if (received.Count > 0)
-            lines.Add(Notify.Careful($"{string.Join(", ", received)} รับข้อมูลงานนี้ไปแล้ว — กดเริ่มงานใหม่ระบบจะส่งทับให้"));
-        lines.Add(Notify.Note("ล้างคิวของงานนี้แล้ว งานกลับเป็นรอเริ่ม"));
-
-        // งานที่ ST3 เห็น (10 / 11 / 12) — ฝากข้อความไว้ให้จอ ST3 เด้งบอกคนที่กดเริ่ม
-        var method = _allJobs.FirstOrDefault(j => j.Id == jobId)?.PlanRouting?.MarkingMethod;
-        if (MarkingMethodService.VisibleAt(StationService.St3, method))
-            await _api.SetRemoteStartAsync(jobId, requested: false, failure: message);
-
-        return lines;
-    }
-
     private async Task<StepSendResult[]> SendPreparedBatchAsync(List<PreparedQueueSend> items, bool includeJobNames = false, bool machinesReserved = false)
     {
         if (_preparingPrograms) return [new(false, [], HeldForReview: true)];
@@ -2851,26 +2827,6 @@ public partial class OrderListUserControl : UserControl
             }
             if (IsDisposed) return results.ToArray();
 
-            // โหมด "ส่งไม่ครบ ไม่ส่งเลย": ต่อเครื่องของงานไหนไม่ติดแม้แต่เครื่องเดียว
-            // ไม่แตะเครื่องไหนของงานนั้นเลย — งานที่กดจาก ST3 ไม่ได้ผ่านด่านตรวจตอนกดเริ่ม
-            // ด่านนี้จึงเป็นด่านเดียวของมัน
-            var blocked = new List<(PreparedQueueSend Item, string Reason)>();
-            if (AllOrNothingSend.Enabled)
-            {
-                foreach (var job in ready.GroupBy(i => i.Row.PrintJobsId).ToList())
-                {
-                    var first = job.First().Job;
-                    var bad = await JobSendService.UnreachableAsync(
-                        job.Select(i => i.Row.Machine), first.Pattern, first.UvJobData);
-                    if (IsDisposed) return results.ToArray();
-                    if (bad.Count == 0) continue;
-
-                    var reason = string.Join(" · ", bad.Select(b => $"{b.Name} — {b.Reason}"));
-                    foreach (var item in job) blocked.Add((item, reason));
-                }
-                ready.RemoveAll(i => blocked.Any(b => ReferenceEquals(b.Item, i)));
-            }
-
             foreach (var (machine, token) in owned)
                 if (!ready.Any(i => i.Row.Machine == machine)) ReleaseDispatch(machine, token);
             if (ready.Count > 0) ShowSending($"กำลังส่งไปที่ {string.Join(" / ", _dispatchingMachines.Keys)}");
@@ -2894,33 +2850,6 @@ public partial class OrderListUserControl : UserControl
                 (i, ex) => new StepSendResult(false,
                     [Notify.Bad($"{i.Row.Machine} คิว {i.Row.Id}: ตรวจสอบผลก่อนส่งซ้ำ — {ex.Message}")], HeldForReview: true));
             results.AddRange(sent);
-
-            if (AllOrNothingSend.Enabled && !IsDisposed)
-            {
-                var outcomes = ready.Zip(sent, (item, result) => (item, result)).ToList();
-                var jobs = outcomes.Select(o => o.item.Row.PrintJobsId)
-                    .Concat(blocked.Select(b => b.Item.Row.PrintJobsId)).Distinct().ToList();
-                foreach (int jobId in jobs)
-                {
-                    var failed = outcomes.Where(o => o.item.Row.PrintJobsId == jobId && !o.result.Sent)
-                        .Select(o => o.item.Row.Machine)
-                        .Concat(blocked.Where(b => b.Item.Row.PrintJobsId == jobId).Select(b => b.Item.Row.Machine))
-                        .Distinct().ToList();
-                    if (failed.Count == 0) continue;
-
-                    var received = outcomes.Where(o => o.item.Row.PrintJobsId == jobId && o.result.Sent)
-                        .Select(o => o.item.Row.Machine).ToList();
-                    var reason = blocked.FirstOrDefault(b => b.Item.Row.PrintJobsId == jobId).Reason;
-                    bool startedBefore = items.Any(i => i.Row.PrintJobsId == jobId
-                        && string.Equals(i.Job.Job.Status, "Process", StringComparison.OrdinalIgnoreCase));
-                    var lines = await RollbackJobAsync(jobId, failed, received, reason, startedBefore);
-                    // ทางกดเริ่มงานเติมชื่องานไว้หน้าทุกบรรทัดให้อยู่แล้ว ทางคิว (includeJobNames) ต้องเติมเอง
-                    results.Add(new(false, includeJobNames
-                        ? lines.Select(l => l with { Text = $"{JobName(jobId)} · {l.Text}" }).ToList()
-                        : lines));
-                    if (IsDisposed) break;
-                }
-            }
 
             return results.ToArray();
         }
@@ -2972,10 +2901,10 @@ public partial class OrderListUserControl : UserControl
         }
         timing.Mark("คุยกับเครื่อง");
 
-        // โหมด "ส่งไม่ครบ ไม่ส่งเลย": ไม่มีผล "ไม่แน่นอน" ที่ทำให้คิวค้าง ไม่ผ่านก็คือไม่ผ่าน
-        // แล้ว SendPreparedBatchAsync ตีทั้งงานกลับเป็นรอเริ่ม — ดู AllOrNothingSend
+        // ไม่ถึงเครื่องแน่นอน = not_sent (แถวกลับไปรอ) · ไม่แน่ใจ = unknown (ถือเครื่องไว้ตรวจ)
+        // ทั้งสองแบบขึ้นปุ่ม "ข้ามเครื่อง" ในแถวงานให้คนตัดสิน
         var outcome = result.Sent ? "sent"
-            : result.SafeToRetry || AllOrNothingSend.Enabled ? "not_sent"
+            : result.SafeToRetry ? "not_sent"
             : "unknown";
         var error = string.Join(" · ", result.Lines.Where(l => l.Kind == Notify.ResultKind.Error).Select(l => l.Text));
         if (error.Length > 4000) error = error[..4000];
@@ -3002,6 +2931,20 @@ public partial class OrderListUserControl : UserControl
     {
         if (step == "MK")
         {
+            // MK สองหัวคือเครื่องเดียว — หัวไหนที่งานใช้ต่อไม่ได้ ไม่ส่งทั้งคู่ (ตกลง 19/10/2026)
+            //
+            // ส่งหัวเดียวแล้วอีกหัวล้ม ชิ้นงานได้แค่ครึ่งเดียวแล้วผล "ไม่แน่นอน" ถือเครื่องค้างรอตรวจ
+            // ตรวจก่อนแตะเครื่องหรือ PLC จึงบันทึกได้ว่ายังไม่ได้ส่งแน่นอน (not_sent) แถวกลับไปรอ
+            // ไม่ส่งซ้ำเอง คนไปตรวจเครื่องแล้วสั่งส่งใหม่ หรือกด "ข้ามเครื่อง" ข้ามขั้น MK ทั้งขั้น
+            // ด่านตอนกดเริ่มงานตรวจแบบเดียวกันอยู่แล้ว ที่นี่กันทางคิว / ST3 / ปุ่มหน้าเครื่อง
+            var down = await JobSendService.UnreachableAsync(["MK"], resolved.Pattern, null);
+            if (down.Count > 0)
+            {
+                var downLines = down.Select(d => Notify.Bad($"{d.Name} — {d.Reason}")).ToList();
+                downLines.Add(Notify.Careful("ยังไม่ส่ง MK ทั้งสองหัว · ตรวจเครื่องแล้วส่งใหม่ หรือกด \"ข้ามเครื่อง\""));
+                return new StepSendResult(false, downLines, SafeToRetry: true);
+            }
+
             // ตั้งค่าที่ PLC ตรงนี้ ไม่ใช่ตอนกดเริ่มงาน
             //
             // ตำแหน่งหัวพ่นกับความเร็วสายพานต้องพร้อมตอนชิ้นงานวิ่งผ่าน เครื่องที่ยัง
@@ -3472,8 +3415,7 @@ public partial class OrderListUserControl : UserControl
 
         // อ่านสดจาก backend แล้วเช็คว่าขั้นตอนนี้ส่งสำเร็จไปแล้วหรือยัง —
         // ด่านสุดท้ายที่กันการส่งซ้ำ ถ้าธงค้างเพราะเหตุอื่น เช่นโปรแกรมถูกปิดกลางคัน
-        if (resolved.Commands?.Any(c => c.Success &&
-                string.Equals(c.Command, step, StringComparison.OrdinalIgnoreCase)) == true)
+        if (resolved.Commands?.Any(c => MarkingMethodService.Covers(c, step)) == true)
         {
             await _api.SetRemoteStartAsync(jobId, requested: false);
             return;
@@ -3638,8 +3580,7 @@ public partial class OrderListUserControl : UserControl
         if (IsDisposed) return;
 
         // เปลี่ยนสถานะและล้างคิวพร้อมกัน ฝั่ง Backend จะกันงานที่ยังไม่รู้ผลส่ง
-        var (ok, err) = await _api.UpdateJobStatusAsync(
-            jobId, "Success", resolveUnresolved: AllOrNothingSend.Enabled);
+        var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Success");
         if (ok)
         {
             if (manual && !await _api.SaveSendStepAsync(jobId, "MANUAL_COMPLETE"))
@@ -3772,7 +3713,7 @@ public partial class OrderListUserControl : UserControl
         foreach (var step in UvSteps)
         {
             if (!UvVariantService.InPlan(job.Status, job.PlanRouting?.MarkingMethod, step)) continue;
-            if (!UvVariantService.Started(job.Commands, step)) continue;
+            if (!UvVariantService.CountsRemaining(job.Commands, step)) continue;
             if (!_uvVariants.TryGetValue((job.Id, step), out var all)) continue;
 
             var left = UvVariantService.Remaining(all, job.Commands, step);
@@ -3792,7 +3733,7 @@ public partial class OrderListUserControl : UserControl
         foreach (var step in UvSteps)
         {
             if (!UvVariantService.InPlan(job.Status, method, step)) continue;
-            if (!UvVariantService.Started(resolved.Commands, step)) continue;
+            if (!UvVariantService.CountsRemaining(resolved.Commands, step)) continue;
 
             var program = resolved.UvJobData?.FirstOrDefault(r =>
                 string.Equals(r.Machine, step, StringComparison.OrdinalIgnoreCase))?.ProgramName;
@@ -3827,7 +3768,7 @@ public partial class OrderListUserControl : UserControl
             {
                 if (!UvVariantService.InPlan(job.Status, job.PlanRouting?.MarkingMethod, step)) continue;
                 bool held = UvVariantService.StationOwns(step) && UvVariantService.HeldRow(job.Id, step, _queueRows) != null;
-                if (!held && !UvVariantService.Started(job.Commands, step)) continue;
+                if (!held && !UvVariantService.CountsRemaining(job.Commands, step)) continue;
                 if (_uvVariants.ContainsKey((job.Id, step))) continue;
 
                 // ชื่อโปรแกรม UV ไม่ได้มากับ /job/getAll ต้องดึงรายละเอียดงานเพิ่ม
@@ -4118,6 +4059,11 @@ public partial class OrderListUserControl : UserControl
                 AddUvButtons(buttons, job);
             }
 
+            // เครื่องที่ส่งไม่ผ่าน / ไม่รู้ผล — ให้คนไปตรวจแล้วยืนยันข้าม งานจะได้ไม่ค้าง (ข้อ 2.2)
+            if (StuckRows(job.Id, _queueRows).Count > 0)
+                buttons.Add(new AntdUI.CellButton("skipmachine", SkipMachineButtonText, AntdUI.TTypeMini.Warn)
+                { Radius = 6 });
+
             // ยกเลิกได้ทุกงานที่ยังไม่จบ ไม่ว่าเริ่มไปแล้วหรือยัง — เป็นทางออกเดียว
             // ของงานที่ยกเลิกหน้างานแล้วไม่ควรค้างอยู่ในตารางให้คนอื่นสับสน
             buttons.Add(new AntdUI.CellButton("cancel", "", AntdUI.TTypeMini.Error)
@@ -4365,6 +4311,201 @@ public partial class OrderListUserControl : UserControl
             + $"{JobName(jobId)} ต้องต่อได้ครบ {plan.Steps.Count} เครื่อง · แก้แล้วกดเริ่มงานใหม่");
 
         return true;
+    }
+
+    /// <summary>
+    /// ต่อทุกเครื่องของแผน — ต่อไม่ได้บางเครื่องให้คนเลือกข้ามเครื่องนั้นแล้วเริ่มงานต่อ
+    ///
+    /// <para>
+    /// คืนรายการขั้นที่คนยืนยันข้าม (ว่าง = ต่อได้ครบ) · null = ไม่เริ่มงานนี้ (คนไม่ข้าม หรือต่อไม่ได้เลยสักเครื่อง)
+    /// </para>
+    /// <para>
+    /// ต่อไม่ได้ทุกเครื่องไม่ให้ข้าม — มักเป็นที่ PC ของ ST1 เอง (สายหลุด IP เปลี่ยน) ไม่ใช่เครื่องพิมพ์
+    /// ข้ามหมดคือจบงานที่ไม่ได้พิมพ์อะไรเลย ให้แก้การเชื่อมต่อก่อน
+    /// </para>
+    /// <para>
+    /// MK สองหัวเป็นขั้นเดียวกัน หัวใดหัวหนึ่งต่อไม่ได้ = ข้ามขั้น MK ทั้งขั้น
+    /// </para>
+    /// </summary>
+    private async Task<List<string>?> UnreachableOrSkipAsync(
+        int jobId, MarkingPlan plan, ResolvedJobResponse resolved)
+    {
+        ShowSending($"กำลังตรวจการเชื่อมต่อ · {JobName(jobId)}");
+        List<JobSendService.UnreachableMachine> bad;
+        try
+        {
+            bad = await JobSendService.UnreachableAsync(
+                plan.Steps, resolved.Pattern, resolved.UvJobData);
+        }
+        finally
+        {
+            if (!IsDisposed && !_sending) ShowSending(null);
+        }
+
+        if (bad.Count == 0) return [];
+        if (IsDisposed) return null;
+
+        var steps = bad.Select(b => b.Step).Where(s => s.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        int planSteps = plan.Steps.Distinct(StringComparer.OrdinalIgnoreCase).Count();
+        var lines = string.Join(Environment.NewLine, bad.Select(m => $"• {m.Name} — {m.Reason}"));
+
+        if (steps.Count >= planSteps || bad.Any(b => b.Step.Length == 0))
+        {
+            Notify.ErrorModal(this, "เริ่มงานไม่ได้ — ต่อเครื่องไม่ได้",
+                "ยังไม่ส่งอะไรเลย งานยังไม่เข้าคิว"
+                + Environment.NewLine + Environment.NewLine + lines
+                + Environment.NewLine + Environment.NewLine
+                + $"{JobName(jobId)} ต่อไม่ได้ทุกเครื่อง · ตรวจสายและเครื่องแล้วกดเริ่มงานใหม่");
+            return null;
+        }
+
+        var keep = plan.Steps.Distinct(StringComparer.OrdinalIgnoreCase)
+            .Where(s => !steps.Contains(s, StringComparer.OrdinalIgnoreCase));
+        var facts = new List<(string, string)> { ("งาน", JobName(jobId)) };
+        facts.AddRange(bad.Take(4).Select(m => (m.Name, m.Reason)));
+        facts.Add(("ส่งต่อ", string.Join(" · ", keep)));
+
+        if (!Confirm.Ask(this, new ConfirmSpec
+            {
+                Title = "ต่อเครื่องไม่ได้",
+                Headline = $"ข้าม {string.Join(" · ", steps)} แล้วเริ่มงานไหม?",
+                Facts = facts,
+                Warning = $"ไปดูที่เครื่องก่อน · ข้ามแล้วงานนี้จะไม่พิมพ์ที่ {string.Join(" · ", steps)} และนับว่าทำขั้นนั้นแล้ว",
+                OkText = "ข้ามแล้วเริ่มงาน",
+                CancelText = "ยังไม่เริ่ม",
+                Danger = true,
+                Icon = "DisconnectOutlined",
+                OkIcon = "ForwardOutlined",
+            }))
+            return null;
+
+        return steps;
+    }
+
+    // ── ข้ามเครื่องที่ส่งไม่ผ่าน ─────────────────────────────
+
+    /// <summary>
+    /// แถวคิวของงานนี้ที่ค้างรอคนตรวจเครื่อง — มี = ขึ้นปุ่ม "ข้ามเครื่อง"
+    ///
+    /// <list type="bullet">
+    /// <item>ส่งไม่ผ่าน หรือส่งแล้วไม่รู้ผล</item>
+    /// <item>UV2 ถึงคิวแล้ว (ถือเครื่อง) แต่ยังรอ ST3 เลือกรุ่น — เครื่อง UV2 เสียระหว่างรอ
+    /// งานต้องข้ามได้ ไม่งั้นถือเครื่องค้าง คิว UV2 ทั้งหมดหยุด · แถวที่ยังรอคิวไม่ขวางใคร
+    /// ถึงคิวเมื่อไรปุ่มค่อยขึ้น (ตกลง 19/10/2026)</item>
+    /// </list>
+    /// </summary>
+    private List<MachineQueueRow> StuckRows(int jobId, IEnumerable<MachineQueueRow> queue) =>
+        queue.Where(r => r.PrintJobsId == jobId
+            && (r.State is "pending" or "active" && r.NeedsAttention
+                || r.State == "active" && r.AwaitingPick)).ToList();
+
+    /// <summary>ชื่อเครื่องที่คนหน้างานเรียก — MK สองหัวเป็นเครื่องเดียวในคิว</summary>
+    private static string MachineDisplayName(string machine) => machine.ToUpperInvariant() switch
+    {
+        "UV1" => UvSettingsManager.Read("UV1_NAME", "UV-001"),
+        "UV2" => UvSettingsManager.Read("UV2_NAME", "UV-002"),
+        _ => machine,
+    };
+
+    /// <summary>
+    /// ข้ามเครื่องที่ส่งไม่ผ่าน / ไม่รู้ผลของงานนี้ — บอกว่าเครื่องไหน เพราะอะไร ให้ไปตรวจแล้วยืนยัน
+    ///
+    /// <para>
+    /// รายงานหน้างาน 18/10/2026 ข้อ 2.2: เครื่องเสีย / ซ่อมบำรุง งานต้องไม่ค้างรอเครื่องนั้น
+    /// เดิมคิวที่ไม่รู้ผลปลดไม่ได้เลย (ยกเว้นโหมดส่งไม่ครบ ไม่ส่งเลย) และคิวที่ส่งไม่ผ่านค้างรอคนสั่งส่งใหม่
+    /// </para>
+    /// <para>
+    /// ข้ามแล้ว backend บันทึก SKIP_&lt;เครื่อง&gt; (นับเป็นขั้นที่ทำแล้ว) ปลดผลที่ไม่รู้แบบมีร่องรอย
+    /// และถ้างานนี้ถือเครื่องอยู่ ยกให้คิวถัดไป — เดินต่อแบบเดียวกับกดปุ่มหน้าเครื่อง
+    /// ทุกขั้นเสร็จแล้วงานจบเอง
+    /// </para>
+    /// </summary>
+    private async Task SkipStuckMachineAsync(int jobId)
+    {
+        if (_api == null) return;
+
+        var (queue, queueError) = await _api.GetMachineQueueAsync();
+        if (IsDisposed) return;
+        if (queueError != null)
+        {
+            Notify.Warn(this, $"อ่านคิวไม่สำเร็จ — {queueError}");
+            return;
+        }
+
+        var stuck = StuckRows(jobId, queue)
+            .GroupBy(r => r.Machine, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .ToList();
+        if (stuck.Count == 0)
+        {
+            Notify.Info(this, $"{JobName(jobId)} ไม่มีเครื่องที่ค้างแล้ว");
+            await RefreshDataAsync(force: true);
+            return;
+        }
+
+        bool skippedAny = false;
+        foreach (var row in stuck)
+        {
+            var machine = row.Machine;
+            if (!CanReleaseNow(machine))
+            {
+                Notify.Warn(this, $"{machine} กำลังส่งอยู่ — รอให้เสร็จก่อนแล้วกดข้ามอีกครั้ง");
+                continue;
+            }
+
+            var name = MachineDisplayName(machine);
+            var state = row.NeedsSendReview ? "ส่งออกไปแล้ว ไม่รู้ผล"
+                : row.NeedsAttention ? "ส่งไม่ผ่าน"
+                : "ถึงคิวแล้ว รอ ST3 เลือกรุ่น";
+            var cause = string.IsNullOrWhiteSpace(row.DispatchError) ? "-"
+                : row.DispatchError.Length > 160 ? row.DispatchError[..160] + "…" : row.DispatchError;
+
+            if (!Confirm.Ask(this, new ConfirmSpec
+                {
+                    Title = $"ข้ามเครื่อง {machine}",
+                    Headline = $"ตรวจเครื่องแล้ว ข้าม {name} ไหม?",
+                    Facts = [("งาน", JobName(jobId)), ("เครื่อง", name), ("สถานะ", state), ("สาเหตุ", cause)],
+                    Warning = row.NeedsSendReview
+                        ? "เครื่องอาจได้รับงานไปแล้ว — ดูที่จอเครื่องก่อน ถ้ากำลังพิมพ์งานนี้ให้หยุดที่เครื่อง"
+                        : "งานนี้จะไม่พิมพ์ที่เครื่องนี้ และนับว่าทำขั้นนี้แล้ว",
+                    OkText = "ข้ามเครื่องนี้",
+                    CancelText = "ยังไม่ข้าม",
+                    Danger = true,
+                    Icon = "DisconnectOutlined",
+                    OkIcon = "ForwardOutlined",
+                }))
+                continue;
+
+            _pushHandling.Add(machine);
+            try
+            {
+                var (result, error) = await _api.SkipMachineAsync(jobId, machine, $"{state}: {cause}");
+                if (IsDisposed) return;
+                if (result == null)
+                {
+                    Notify.ErrorModal(this, "ข้ามเครื่องไม่สำเร็จ",
+                        $"{JobName(jobId)} · {name}" + Environment.NewLine + Environment.NewLine
+                        + (error ?? "ติดต่อ backend ไม่ได้"));
+                    continue;
+                }
+
+                skippedAny = true;
+                AppLog.Info("OrderList.Skip", $"ข้าม {machine} {JobName(jobId)} · {state} · {cause}");
+                Notify.Success(this, $"ข้าม {name} แล้ว · {JobName(jobId)}");
+
+                // งานนี้ถือเครื่องอยู่ = เครื่องว่างแล้ว เดินคิวต่อเหมือนกดปุ่มหน้าเครื่อง
+                if (result.Freed) await ContinueAfterReleaseAsync(machine, result.Next);
+            }
+            finally
+            {
+                _pushHandling.Remove(machine);
+            }
+        }
+
+        if (skippedAny && !IsDisposed)
+            await AutoCompleteAfterReleaseAsync(jobId, "ข้ามเครื่องที่ค้าง", allowWaiting: true);
+        if (!IsDisposed) await RefreshDataAsync(force: true);
     }
 
     /// <summary>
