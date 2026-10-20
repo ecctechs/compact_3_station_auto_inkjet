@@ -88,14 +88,14 @@ public partial class OrderListUserControl : UserControl
         // ตัวเลข % เกลี่ยจากระยะห่างระหว่างข้อความหัวตารางกับลูกศร sort ที่ชิดขวา
         // ให้ทุกคอลัมน์ห่างพอ ๆ กัน ไม่ใช่บีบจนลูกศรติดตัวหนังสือบางคอลัมน์
         // ทุกคอลัมน์ยังกว้างกว่าข้อมูลที่ยาวที่สุดของตัวเอง — Start/End ถูกล็อกด้วย
-        // ความยาวของวันเวลา ("27/08/26 12:04" = 123px + ขอบ 24px) ต่ำกว่า 9% ไม่ได้
+        // Start แสดงวินาที ("27/08/26 12:04:05" ≈ 149px + ขอบ 24px) จึงใช้ 11%; End ใช้ 9%
         // เกลี่ยใหม่เมื่อไหร่ต้องเช็คสองอย่างนี้พร้อมกัน ทั้งข้อมูลล้นและระยะลูกศร
         tblOrders.Columns = new AntdUI.ColumnCollection
         {
-            new AntdUI.Column("Start", "Start", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("Start", "Start", AntdUI.ColumnAlign.Center) { Width = "11%", SortOrder = true, SortMode = AntdUI.SortMode.ASC, ColBreak = true },
             new AntdUI.Column("End", "End", AntdUI.ColumnAlign.Center) { Width = "9%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("ErpMfg", "ERP MFG", AntdUI.ColumnAlign.Center) { Width = "12%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("LotNo", "Lot Number", AntdUI.ColumnAlign.Center) { Width = "12%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("ErpMfg", "ERP MFG", AntdUI.ColumnAlign.Center) { Width = "11%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("LotNo", "Lot Number", AntdUI.ColumnAlign.Center) { Width = "11%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("ProcessSequence", "Process Sequence", AntdUI.ColumnAlign.Center) { Width = "10%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Plate", "Plate", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
@@ -148,8 +148,8 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private static readonly (string Key, string ListWidth, string HistoryWidth)[] TabColumnWidths =
     [
-        ("ErpMfg", "14%", "12%"),
-        ("LotNo", "14%", "12%"),
+        ("ErpMfg", "13%", "11%"),
+        ("LotNo", "13%", "11%"),
         ("Qty", "7%", "6%"),
         ("ProcessSequence", "12%", "10%"),
         ("Plate", "7%", "6%"),
@@ -3931,6 +3931,7 @@ public partial class OrderListUserControl : UserControl
     // การแปลงเวลาไทยทั้งหมดอยู่ที่ ThaiTime — หน้านี้กับหัวหน้า Order Detail
     // ต้องบอกวันเดียวกันของงานเดียวกัน จึงต้องใช้ตัวแปลงตัวเดียวกัน
     private const string TimeFormat = ThaiTime.Format;
+    private const string StartTimeFormat = "dd/MM/yy HH:mm:ss";
 
     private const string Dash = "-";
 
@@ -3938,6 +3939,7 @@ public partial class OrderListUserControl : UserControl
     private static DateTime ToUtcFromThai(DateTime thai) => ThaiTime.ToUtc(thai);
 
     private static string FormatThaiTime(DateTime? utc) => ThaiTime.Text(utc, TimeFormat, Dash);
+    private static string FormatThaiStartTime(DateTime? utc) => ThaiTime.Text(utc, StartTimeFormat, Dash);
 
     /// <summary>
     /// ตัวเทียบของ AntdUI ได้มาแค่ข้อความในเซลล์ ถ้าทั้งคู่เป็นเวลาก็เทียบเป็นเวลา
@@ -3951,11 +3953,18 @@ public partial class OrderListUserControl : UserControl
         return CompareNatural(x, y);
     }
 
-    private static bool TryParseCellTime(string? text, out DateTime value) =>
-        DateTime.TryParseExact(
-            (text ?? "").Trim(), TimeFormat,
-            System.Globalization.CultureInfo.InvariantCulture,
-            System.Globalization.DateTimeStyles.None, out value);
+    private static bool TryParseCellTime(string? text, out DateTime value)
+    {
+        string cell = (text ?? "").Trim();
+        return DateTime.TryParseExact(
+                   cell, StartTimeFormat,
+                   System.Globalization.CultureInfo.InvariantCulture,
+                   System.Globalization.DateTimeStyles.None, out value)
+               || DateTime.TryParseExact(
+                   cell, TimeFormat,
+                   System.Globalization.CultureInfo.InvariantCulture,
+                   System.Globalization.DateTimeStyles.None, out value);
+    }
 
     /// <summary>เทียบข้อความโดยอ่านกลุ่มตัวเลขเป็นจำนวน ไม่ใช่ทีละตัวอักษร</summary>
     private static int CompareNatural(string? a, string? b)
@@ -4132,7 +4141,7 @@ public partial class OrderListUserControl : UserControl
         return new OrderRow
         {
             Id = job.Id,
-            Start = FormatThaiTime(job.CreatedAt),
+            Start = FormatThaiStartTime(job.CreatedAt),
             End = finished ? FormatThaiTime(job.UpdatedAt) : Dash,
             ErpMfg = job.OrderNo ?? "",
             // barcode ที่สแกนเข้ามา = เลขล็อต — backend เก็บซ้ำไว้ใน lot_number ด้วย
