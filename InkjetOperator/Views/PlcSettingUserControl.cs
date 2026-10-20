@@ -242,7 +242,7 @@ public partial class PlcSettingUserControl : UserControl
     }
 
     /// <summary>
-    /// แถวตั้งต้นในหน้า PLC Setting — รวมแถวสายพานสำหรับปุ่ม Read/Write แบบกดเอง
+    /// แถวตั้งต้นตอนตารางยังว่าง — ต้องตรงกับค่าที่ส่งจริงใน PlcOrderService
     ///
     /// <para>
     /// เดิมมี 11 แถวตามผังของโปรแกรมเก่า คือหัวละ 4 ช่อง (Position, PostAct, Delay,
@@ -250,7 +250,8 @@ public partial class PlcSettingUserControl : UserControl
     /// และหน้างานมีสายพานเดียว ตอนนี้จึงเหลือ 5 แถวที่ใช้จริง
     /// </para>
     /// <para>
-    /// Conveyor Speed 1 คงไว้สำหรับการเขียนแบบกดเอง และไม่ได้อยู่ในแผนส่งงาน MK
+    /// ถ้าเพิ่มแถวที่นี่ ต้องไปเพิ่มใน PlcOrderService.BuildPlanAsync ด้วย ไม่งั้นแถวนั้น
+    /// จะโผล่บนหน้าจอแต่ไม่มีใครส่งค่าให้เลย
     /// </para>
     /// </summary>
     private static List<PlcRow> DefaultRows()
@@ -406,7 +407,10 @@ public partial class PlcSettingUserControl : UserControl
                 return;
             }
 
-            // แถวสายพานหน้านี้รับเป็น Hz ไม่ใช่ค่าดิบของ register
+            // แถวสายพานกรอกเป็น Hz เหมือนหน้า Order Detail ไม่ใช่ค่าดิบของ register
+            //
+            // สองหน้าต้องพิมพ์เลขเดียวกันแล้วได้ผลเดียวกัน ไม่งั้นคนตั้งค่าต้องจำเองว่า
+            // หน้าไหนคูณให้ หน้าไหนไม่คูณ ซึ่งเคยทำให้สายพานเดิน 60 Hz ทั้งที่สั่ง 50
             // การแปลงเรียก PlcOrderService.HzToRegister ตัวเดียวกับที่หน้านั้นใช้
             bool isConveyor = string.Equals(
                 row.ListName?.Trim(), PlcOrderService.ConveyorListName, StringComparison.OrdinalIgnoreCase);

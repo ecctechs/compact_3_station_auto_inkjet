@@ -25,12 +25,9 @@ public enum SendStatus
 }
 
 /// <summary>ผลของเครื่อง MK หนึ่งตัว</summary>
-/// <param name="Suspended">
-/// งานนี้ไม่มีโปรแกรมให้เครื่องนี้ จึงสั่งหยุดพิมพ์แทนการส่งข้อมูล — ไม่ใช่ความล้มเหลว
-/// แต่ก็ไม่ใช่การส่งงาน ผู้เรียกต้องแยกข้อความให้คนอ่านรู้ว่าเครื่องนี้ไม่ได้รับงาน
-/// </param>
+/// <param name="Suspended">เก็บไว้รองรับผลลัพธ์เดิมของ UI</param>
 /// <param name="Note">
-/// คำเตือนที่ไม่ได้ทำให้การส่งล้มเหลว เช่นเครื่องไม่ยอมรับคำสั่งหยุด/เริ่มพิมพ์
+/// คำเตือนที่ไม่ได้ทำให้การส่งล้มเหลว เช่นเครื่องไม่ยอมรับคำสั่งเริ่มพิมพ์
 /// ข้อมูลของงานยังเข้าเครื่องครบ แต่ต้องให้คนหน้างานเห็นว่ามีอะไรผิดปกติ
 /// </param>
 public sealed record MkMachineResult(
@@ -125,9 +122,8 @@ public static class JobSendService
 
         // สองหัวส่งพร้อมกัน ไม่ต้องรอหัวแรกเสร็จก่อน
         //
-        // หัวหนึ่งคือ 13 คำสั่ง (SQ · FW · FS+F1 ห้าบล็อก · FM) ที่ต้องรอคำตอบทีละคำสั่ง
-        // พร้อมช่วงเว้นตามโปรแกรมเดิม วัดกับเครื่องจำลองที่ตอบช้า 60 ms ได้ราว 1.8 วินาที
-        // ต่อหัว สองหัวต่อกันจึงเกือบ 4 วินาที ตรงกับที่หน้างานกดส่ง MK แล้วรอ 3-4 วินาที
+        // หัวหนึ่งคือ 12 คำสั่ง (SQ · FW · FS+F1 ห้าบล็อก) ที่ต้องรอคำตอบทีละคำสั่ง
+        // พร้อมช่วงเว้นตามโปรแกรมเดิม
         // สองหัวเป็นเครื่องคนละตัว สายคนละเส้น ไม่มีเหตุให้ต้องรอกัน
         //
         // ยกเว้นตั้ง IP ซ้ำกัน = เครื่องเดียวกัน ห้ามเปิดสองสายเข้าไปพร้อมกัน เครื่องจะ
@@ -151,13 +147,7 @@ public static class JobSendService
 
         // ตัดสินสำเร็จ/ล้มเหลวจากเฉพาะเครื่องที่ "มีงาน" เท่านั้น
         //
-        // การสั่งหยุดเครื่องที่ไม่มีงานเป็นการกันพลาด ไม่ใช่ตัวงาน เครื่องที่ปิดอยู่
-        // หรือถอดสายไว้จะสั่งหยุดไม่ได้เป็นธรรมดา ถ้านับรวมเป็นล้มเหลวด้วย งานที่ใช้
-        // เครื่องเดียวจะเดินไม่ได้เลยตลอดกะที่อีกเครื่องไม่ได้เปิด ทั้งที่เครื่องที่
-        // ต้องทำงานรับข้อมูลครบและกำลังพิมพ์อยู่แล้ว
-        //
-        // ยังฟ้องเป็นคำเตือนอยู่ ผู้เรียกต้องแสดงให้เห็น เพราะกรณีสายหลุดขณะเครื่อง
-        // ยังเปิดอยู่ เครื่องนั้นจะค้างพิมพ์ของงานก่อนหน้าต่อโดยเราสั่งหยุดไม่ได้
+        // เครื่องที่งานไม่ได้ใช้จะไม่ได้รับคำสั่งจาก flow นี้
         return new MkSendResult(
             workFailed ? SendStatus.Failed : SendStatus.Ok,
             machines);
@@ -178,7 +168,7 @@ public static class JobSendService
     /// และงานจะค้างครึ่งทาง — กดเริ่มใหม่ก็ไม่ได้เพราะสถานะเป็นกำลังผลิตไปแล้ว
     /// </para>
     /// <para>
-    /// ตรวจเฉพาะหัวพ่นที่งานนี้ใช้จริง หัวที่ไม่มีโปรแกรมจะได้แค่คำสั่งหยุดตอนส่ง
+    /// ตรวจเฉพาะหัวพ่นที่งานนี้ใช้จริง หัวที่ไม่มีโปรแกรมจะไม่ถูกส่งคำสั่ง
     /// ต่อไม่ติดก็เป็นแค่คำเตือน ไม่ใช่เหตุให้ทั้งงานเริ่มไม่ได้
     /// </para>
     /// </summary>
@@ -253,41 +243,6 @@ public static class JobSendService
         config != null
         && (config.ProgramNumber is > 0 || !string.IsNullOrWhiteSpace(config.ProgramName));
 
-    /// <summary>
-    /// สั่งเครื่องที่ไม่มีงานให้หยุดพิมพ์ — กฎเดียวกับโปรแกรมเดิม (PySocketClient)
-    ///
-    /// <para>
-    /// ข้อมูลจาก PrintData.db3 สร้างแถวไว้ให้ทั้งสองเครื่องเสมอ ถึงงานจะใช้เครื่องเดียว
-    /// อีกแถวจึงเป็นแถวเปล่า เดิมแถวเปล่านั้นถูกส่งเข้าเครื่องเหมือนงานจริง กลายเป็น
-    /// สั่ง <c>FW,1</c> แล้วปิดท้ายด้วย <c>SQ</c> คือสั่งให้เครื่องเริ่มพิมพ์โปรแกรม
-    /// เบอร์ 1 ลงชิ้นงานที่วิ่งผ่านมา
-    /// </para>
-    /// <para>
-    /// การไม่ส่งอะไรเลยก็ไม่ปลอดภัย เพราะเครื่องยังค้างโปรแกรมของงานก่อนหน้าแล้ว
-    /// พิมพ์ของงานเก่าทับ ต้องสั่งหยุดให้ชัดเจนเท่านั้น
-    /// </para>
-    /// </summary>
-    private static async Task<string?> StopOneMkAsync(string ip, string label)
-    {
-        var tcp = new TcpManager();
-        try
-        {
-            await tcp.ConnectAsync(ip, MkPort)
-                .WaitAsync(TimeSpan.FromSeconds(ConnectTimeoutSeconds));
-
-            var sr = await new MkCompactAdapter(tcp).SuspendAsync();
-            return sr.Success ? null : $"{label}: สั่งหยุดพิมพ์ไม่สำเร็จ";
-        }
-        catch (Exception ex)
-        {
-            return $"{label}: {ex.Message}";
-        }
-        finally
-        {
-            tcp.Disconnect();
-        }
-    }
-
     private static readonly (string IpKey, string NameKey, string Fallback, int Ordinal, string Label)[]
         MkMachines =
         [
@@ -304,17 +259,11 @@ public static class JobSendService
     /// </summary>
     private readonly record struct MkHeadOutcome(MkMachineResult? Result, bool Sent, bool Failed);
 
-    /// <summary>ส่งหรือสั่งหยุดหัวเดียว — กฎเดียวกับตอนที่ยังวนทีละหัว ไม่ได้เปลี่ยน</summary>
+    /// <summary>ส่งหัวที่มีงาน ส่วนหัวที่งานไม่ได้ใช้จะไม่ได้รับคำสั่ง</summary>
     private static async Task<MkHeadOutcome> SendHeadAsync(MkHead head)
     {
         if (!HasProgram(head.Config))
-        {
-            // ไม่ได้ตั้ง IP ก็สั่งอะไรไม่ได้ และงานนี้ก็ไม่ได้ใช้เครื่องนี้อยู่แล้ว
-            if (string.IsNullOrWhiteSpace(head.Ip)) return new(null, false, false);
-
-            return new(new MkMachineResult(
-                head.Name, await StopOneMkAsync(head.Ip, head.Label), Suspended: true), false, false);
-        }
+            return new(null, false, false);
 
         if (string.IsNullOrWhiteSpace(head.Ip))
         {
@@ -351,13 +300,6 @@ public static class JobSendService
     /// แล้วได้รหัสกลับมาแบบเดาไม่ออก เช่น ER,F1,22 ตอนที่ Scale เป็น 0
     /// </para>
     /// </summary>
-    private static readonly (string Name, int Min, int Max)[] MachineRanges =
-    [
-        ("Width", 10, 500),
-        ("Height", 50, 200),
-        ("Trigger Delay", 1, 9999),
-    ];
-
     private static readonly (string Name, int Min, int Max)[] BlockRanges =
     [
         ("X", 0, 4095),
@@ -414,44 +356,6 @@ public static class JobSendService
 
     private static string? InvalidConfig(InkjetConfigDto config, string label)
     {
-        // ช่องว่างไม่ส่ง — กฎเดียวกับโปรแกรมเดิมที่ฟ้อง "Width, Height & Delay not complete"
-        //
-        // เดิมตรงนี้เว้นค่าว่างไว้ให้ผ่าน แล้วตัวส่งใส่ค่าแทนให้เอง (Width 200 ·
-        // Height 100 · Trigger Delay 0) เครื่องจึงได้ค่าที่ไม่ใช่ของงานไปพ่นลงชิ้นงาน
-        // จริงโดยไม่มีใครรู้ ผิดแบบเงียบซึ่งย้อนคืนไม่ได้ ต่างจากการฟ้องแล้วให้ไปกรอก
-        // ซึ่งเสียเวลาไม่กี่นาทีและแก้ได้
-        //
-        // Trigger Delay ที่ว่างแล้วกลายเป็น 0 ยิ่งไม่ควรหลุดไป เพราะโปรแกรมเดิมบังคับ
-        // ให้ค่าหลังคูณสิบอยู่ในช่วง 10-99999 เลข 0 จึงเป็นค่าที่ระบบเดิมไม่มีวันส่ง
-        //
-        // ตรวจเฉพาะหัวที่งานนี้ใช้จริง — ผู้เรียกกรองด้วย HasProgram มาแล้ว หัวที่ไม่มี
-        // โปรแกรมได้แค่คำสั่งสั่งหยุด ไม่เคยได้รับ FM จึงไม่ต้องมีค่าพวกนี้
-        foreach (var (name, _, _) in MachineRanges)
-        {
-            bool filled = name switch
-            {
-                "Width" => config.Width.HasValue,
-                "Height" => config.Height.HasValue,
-                _ => config.TriggerDelay.HasValue,
-            };
-
-            if (!filled)
-                return $"{label}: ยังไม่ได้กรอก {name} — กรอกที่หน้า Order Detail ก่อนส่ง";
-        }
-
-        foreach (var (name, min, max) in MachineRanges)
-        {
-            int? value = name switch
-            {
-                "Width" => config.Width,
-                "Height" => config.Height,
-                _ => config.TriggerDelay,
-            };
-
-            if (value is int v && (v < min || v > max))
-                return $"{label}: {name} = {v} อยู่นอกช่วง {min}-{max} ที่เครื่องรับได้";
-        }
-
         foreach (var block in config.TextBlocks.OrderBy(b => b.BlockNumber))
         {
             // X กับ Scale เป็น 0 พร้อมกัน = บล็อกนี้ยังไม่ได้ตั้งค่า
@@ -523,17 +427,9 @@ public static class JobSendService
                 .WaitAsync(TimeSpan.FromSeconds(ConnectTimeoutSeconds));
             var adapter = new MkCompactAdapter(tcp);
 
-            // ลำดับคำสั่งยกมาจากโปรแกรมเดิมทั้งชุด — SQ ก่อน แล้วค่อย FW / FS+F1 / FM
+            // ส่งเฉพาะ SQ ก่อน แล้ว FW และ FS/F1 ของแต่ละ Block — ไม่ส่ง SR หรือ FM
             //
-            // เครื่องที่มีงานจะถูกสั่ง "เริ่มพิมพ์" ก่อนเปลี่ยนโปรแกรม ไม่ใช่สั่งหยุด
-            // ส่วนการสั่งหยุดเป็นของเครื่องที่งานนี้ไม่ได้ใช้เท่านั้น (ดู StopOneMkAsync)
-            // และไม่มีการสั่งเริ่มพิมพ์ปิดท้ายอีกครั้ง
-            //
-            // ของเดิมสั่งหยุดก่อนแล้วปิดท้ายด้วยสั่งเริ่ม ซึ่งเครื่องหน้างานปฏิเสธทั้งคู่
-            // (ER,SR,01 · ER,SQ,01) เพราะสั่งผิดจังหวะกับสภาพของเครื่อง
-            //
-            // คำสั่งคุมการพิมพ์ไม่ผ่านไม่ล้มทั้งการส่ง ตัวที่ตัดสินว่างานเข้าเครื่องหรือไม่
-            // คือ FW / FS / F1 / FM
+            // SQ เป็นคำสั่งคุมการพิมพ์ ตัวที่ตัดสินว่างานเข้าเครื่องคือ FW / FS / F1
             var notes = new List<string>();
 
             // ไม่รายงานผลของคำสั่งนี้
@@ -564,12 +460,6 @@ public static class JobSendService
                 var fb = await adapter.SendTextBlockAsync(block, deviceBlock);
                 if (!fb.Success) return (Reject(label, $"ส่ง Block {slot}", fb), Note(notes));
             }
-
-            // FM ต้องมาหลัง FS/F1 ตามสเปกของเครื่อง (FW -> FS/F1 -> FM)
-            // ถ้าส่ง FM ก่อน Block ทิศทางที่ตั้งไว้จะถูก Block ที่ตามมาเขียนทับ
-            // ปุ่ม ABC จะกดแล้วเครื่องพิมพ์หัวตั้งเหมือนเดิม
-            var fm = await adapter.SendConfigAsync(config);
-            if (!fm.Success) return (Reject(label, "ส่ง Config", fm), Note(notes));
 
             return (null, Note(notes));
         }
