@@ -27,14 +27,6 @@ partial class DatabaseSettingUserControl
         txtClampPath = new AntdUI.Input();
         btnBrowseClamp = new AntdUI.Button();
         lblClampStatus = new System.Windows.Forms.Label();
-        lblExcelPathLabel = new System.Windows.Forms.Label();
-        txtExcelPath = new AntdUI.Input();
-        btnBrowseExcel = new AntdUI.Button();
-        lblExcelStatus = new System.Windows.Forms.Label();
-        chkImportAtStart = new AntdUI.Checkbox();
-        flpExcelActions = new System.Windows.Forms.FlowLayoutPanel();
-        btnImportNow = new AntdUI.Button();
-        btnExportTemplate = new AntdUI.Button();
         flpActions = new System.Windows.Forms.FlowLayoutPanel();
         btnSave = new AntdUI.Button();
         btnCancel = new AntdUI.Button();
@@ -42,7 +34,6 @@ partial class DatabaseSettingUserControl
         tlpRoot.SuspendLayout();
         grpDatabase.SuspendLayout();
         tlpForm.SuspendLayout();
-        flpExcelActions.SuspendLayout();
         flpActions.SuspendLayout();
         SuspendLayout();
         //
@@ -58,10 +49,10 @@ partial class DatabaseSettingUserControl
         tlpRoot.Name = "tlpRoot";
         tlpRoot.Padding = new System.Windows.Forms.Padding(16);
         tlpRoot.RowCount = 3;
-        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 515F));
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 285F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 85F));
-        tlpRoot.Size = new System.Drawing.Size(975, 650);
+        tlpRoot.Size = new System.Drawing.Size(975, 585);
         tlpRoot.TabIndex = 0;
         //
         // grpDatabase
@@ -92,23 +83,13 @@ partial class DatabaseSettingUserControl
         tlpForm.Controls.Add(txtClampPath, 1, 2);
         tlpForm.Controls.Add(btnBrowseClamp, 3, 2);
         tlpForm.Controls.Add(lblClampStatus, 1, 3);
-        tlpForm.Controls.Add(lblExcelPathLabel, 0, 4);
-        tlpForm.Controls.Add(txtExcelPath, 1, 4);
-        tlpForm.Controls.Add(btnBrowseExcel, 3, 4);
-        tlpForm.Controls.Add(lblExcelStatus, 1, 5);
-        tlpForm.Controls.Add(chkImportAtStart, 1, 6);
-        tlpForm.Controls.Add(flpExcelActions, 1, 7);
         tlpForm.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpForm.Name = "tlpForm";
-        tlpForm.RowCount = 9;
+        tlpForm.RowCount = 5;
         tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
         tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
         tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
-        tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
-        tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
-        tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F));
-        tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 64F));
         tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
         tlpForm.TabIndex = 0;
         //
@@ -210,106 +191,6 @@ partial class DatabaseSettingUserControl
         lblClampStatus.TabIndex = 7;
         lblClampStatus.Text = "";
         //
-        // lblExcelPathLabel
-        //
-        lblExcelPathLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblExcelPathLabel.Font = new System.Drawing.Font("Segoe UI", 14F);
-        lblExcelPathLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-        lblExcelPathLabel.Name = "lblExcelPathLabel";
-        lblExcelPathLabel.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
-        lblExcelPathLabel.TabIndex = 8;
-        lblExcelPathLabel.Text = "Printing Data Excel:";
-        lblExcelPathLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-        //
-        // txtExcelPath
-        //
-        txtExcelPath.Dock = System.Windows.Forms.DockStyle.Fill;
-        txtExcelPath.BorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        txtExcelPath.Font = new System.Drawing.Font("Segoe UI", 12.5F);
-        txtExcelPath.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
-        txtExcelPath.Name = "txtExcelPath";
-        txtExcelPath.PlaceholderText = "Select the customer's Excel file (.xlsx)...";
-        txtExcelPath.Radius = 4;
-        txtExcelPath.ReadOnly = true;
-        txtExcelPath.TabIndex = 9;
-        //
-        // btnBrowseExcel
-        //
-        btnBrowseExcel.Anchor = System.Windows.Forms.AnchorStyles.Left;
-        btnBrowseExcel.DefaultBorderColor = System.Drawing.Color.FromArgb(91, 155, 213);
-        btnBrowseExcel.BorderWidth = 2F;
-        btnBrowseExcel.Font = new System.Drawing.Font("Segoe UI", 11F);
-        btnBrowseExcel.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnBrowseExcel.IconSvg = "FolderOpenFilled";
-        btnBrowseExcel.IconRatio = 1.2F;
-        btnBrowseExcel.Name = "btnBrowseExcel";
-        btnBrowseExcel.Radius = 6;
-        btnBrowseExcel.Size = new System.Drawing.Size(52, 42);
-        btnBrowseExcel.TabIndex = 10;
-        btnBrowseExcel.Type = AntdUI.TTypeMini.Default;
-        //
-        // lblExcelStatus — แปลงล่าสุดเมื่อไร จากไฟล์ไหน
-        //
-        lblExcelStatus.AutoEllipsis = true;
-        lblExcelStatus.Dock = System.Windows.Forms.DockStyle.Fill;
-        lblExcelStatus.Font = new System.Drawing.Font("Segoe UI", 12.5F);
-        lblExcelStatus.ForeColor = System.Drawing.Color.Gray;
-        lblExcelStatus.Name = "lblExcelStatus";
-        tlpForm.SetColumnSpan(lblExcelStatus, 3);
-        lblExcelStatus.Padding = new System.Windows.Forms.Padding(4, 4, 0, 0);
-        lblExcelStatus.TabIndex = 11;
-        lblExcelStatus.Text = "";
-        //
-        // chkImportAtStart — เปิดที่เครื่องเดียว (เครื่อง Scan Barcode)
-        //
-        chkImportAtStart.Dock = System.Windows.Forms.DockStyle.Fill;
-        chkImportAtStart.Font = new System.Drawing.Font("Segoe UI", 14F);
-        chkImportAtStart.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-        chkImportAtStart.Name = "chkImportAtStart";
-        tlpForm.SetColumnSpan(chkImportAtStart, 3);
-        chkImportAtStart.TabIndex = 12;
-        chkImportAtStart.Text = "Convert Excel to PrintData.db3 every time the program opens";
-        //
-        // flpExcelActions
-        //
-        flpExcelActions.BackColor = System.Drawing.Color.White;
-        flpExcelActions.Controls.Add(btnImportNow);
-        flpExcelActions.Controls.Add(btnExportTemplate);
-        flpExcelActions.Dock = System.Windows.Forms.DockStyle.Fill;
-        flpExcelActions.Margin = new System.Windows.Forms.Padding(0);
-        flpExcelActions.Name = "flpExcelActions";
-        tlpForm.SetColumnSpan(flpExcelActions, 3);
-        flpExcelActions.TabIndex = 13;
-        flpExcelActions.WrapContents = false;
-        //
-        // btnImportNow
-        //
-        btnImportNow.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnImportNow.BorderWidth = 2F;
-        btnImportNow.Font = new System.Drawing.Font("Segoe UI", 12.5F);
-        btnImportNow.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnImportNow.Margin = new System.Windows.Forms.Padding(3, 8, 12, 8);
-        btnImportNow.Name = "btnImportNow";
-        btnImportNow.Radius = 8;
-        btnImportNow.Size = new System.Drawing.Size(220, 46);
-        btnImportNow.TabIndex = 0;
-        btnImportNow.Text = "Convert Now";
-        btnImportNow.Type = AntdUI.TTypeMini.Default;
-        //
-        // btnExportTemplate
-        //
-        btnExportTemplate.DefaultBorderColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnExportTemplate.BorderWidth = 2F;
-        btnExportTemplate.Font = new System.Drawing.Font("Segoe UI", 12.5F);
-        btnExportTemplate.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
-        btnExportTemplate.Margin = new System.Windows.Forms.Padding(3, 8, 3, 8);
-        btnExportTemplate.Name = "btnExportTemplate";
-        btnExportTemplate.Radius = 8;
-        btnExportTemplate.Size = new System.Drawing.Size(260, 46);
-        btnExportTemplate.TabIndex = 1;
-        btnExportTemplate.Text = "Create Excel Template";
-        btnExportTemplate.Type = AntdUI.TTypeMini.Default;
-        //
         // flpActions
         //
         flpActions.BackColor = System.Drawing.Color.White;
@@ -355,11 +236,10 @@ partial class DatabaseSettingUserControl
         BackColor = System.Drawing.Color.White;
         Controls.Add(tlpRoot);
         Name = "DatabaseSettingUserControl";
-        Size = new System.Drawing.Size(975, 650);
+        Size = new System.Drawing.Size(975, 585);
         tlpRoot.ResumeLayout(false);
         grpDatabase.ResumeLayout(false);
         tlpForm.ResumeLayout(false);
-        flpExcelActions.ResumeLayout(false);
         flpActions.ResumeLayout(false);
         //
         // tmrAutoCheck - ตรวจสถานะซ้ำเองระหว่างที่เปิดหน้านี้ค้างอยู่
@@ -381,14 +261,6 @@ partial class DatabaseSettingUserControl
     private AntdUI.Input txtClampPath;
     private AntdUI.Button btnBrowseClamp;
     private System.Windows.Forms.Label lblClampStatus;
-    private System.Windows.Forms.Label lblExcelPathLabel;
-    private AntdUI.Input txtExcelPath;
-    private AntdUI.Button btnBrowseExcel;
-    private System.Windows.Forms.Label lblExcelStatus;
-    private AntdUI.Checkbox chkImportAtStart;
-    private System.Windows.Forms.FlowLayoutPanel flpExcelActions;
-    private AntdUI.Button btnImportNow;
-    private AntdUI.Button btnExportTemplate;
     private System.Windows.Forms.FlowLayoutPanel flpActions;
     private AntdUI.Button btnSave;
     private AntdUI.Button btnCancel;

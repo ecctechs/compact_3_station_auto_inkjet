@@ -70,7 +70,6 @@ static class Program
         BackendLauncher.StartWatchdog();
 
         StartHealthMonitorIfDevMode();
-        ImportPrintDataExcel();
 
         Application.Run(new Views.MainShellForm());
         BackendLauncher.StopWatchdog();
@@ -247,31 +246,6 @@ static class Program
             $"{problem}\n\n"
             + "โปรแกรมยังเปิดใช้งานได้ แต่จะดึงข้อมูลไม่ได้จนกว่า backend จะทำงาน",
             "เปิด backend ไม่สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-    }
-
-    /// <summary>
-    /// แปลง Excel ของลูกค้าเป็น PrintData.db3 ก่อนเปิดหน้าจอ — เฉพาะเครื่องที่ติ๊กไว้
-    /// และเฉพาะเมื่อ Excel เปลี่ยน (รายละเอียดที่ <see cref="PrintDataExcelImport"/>)
-    /// <para>
-    /// ทำก่อนหน้าจอขึ้นเพื่อให้สแกนครั้งแรกของวันได้ข้อมูลใหม่แล้ว ปกติไม่กี่วินาที
-    /// แปลงไม่ได้ก็ยังเปิดโปรแกรมต่อด้วยข้อมูลเดิม แค่บอกให้รู้ว่าทำไม
-    /// สำเร็จไม่ขึ้นกล่อง — เกิดทุกวัน ดูได้ที่หน้า Database Setting กับ log
-    /// </para>
-    /// </summary>
-    private static void ImportPrintDataExcel()
-    {
-        var result = PrintDataExcelImport.RunAtStartup();
-        if (result is null
-            || result.Outcome is PrintDataExcelImport.Outcome.Imported or PrintDataExcelImport.Outcome.Unchanged)
-            return;
-
-        var next = result.Outcome == PrintDataExcelImport.Outcome.NeedsConfirm
-            ? "ถ้าตั้งใจให้ข้อมูลน้อยลง ไปที่ Setting > ตั้งค่าฐานข้อมูล แล้วกด \"แปลงตอนนี้\" เพื่อยืนยัน"
-            : "แก้ตามที่แจ้งแล้วเปิดโปรแกรมใหม่ หรือกด \"แปลงตอนนี้\" ที่ Setting > ตั้งค่าฐานข้อมูล";
-
-        MessageBox.Show(
-            $"{result.Message}\n\nโปรแกรมใช้ข้อมูล PrintData.db3 เดิมต่อ\n{next}",
-            "แปลงไฟล์ Excel ไม่สำเร็จ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
     }
 
     /// <summary>
