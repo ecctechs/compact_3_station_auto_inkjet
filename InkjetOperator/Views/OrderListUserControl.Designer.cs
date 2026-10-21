@@ -52,10 +52,6 @@ partial class OrderListUserControl
         btnSimPushUv1 = new AntdUI.Button();
         btnSimPushUv2 = new AntdUI.Button();
         tblOrders = new AntdUI.Table();
-        machineStatusColumn = new AntdUI.Column("MachineStatus", "สถานะรายเครื่อง", AntdUI.ColumnAlign.Left);
-        machineStatusColumn.Width = "460";
-        machineStatusColumn.LineBreak = true;
-        machineStatusColumn.ColBreak = true;
         tlpBottom = new System.Windows.Forms.TableLayoutPanel();
         pnlPreview = new AntdUI.Panel();
         tlpPreview = new System.Windows.Forms.TableLayoutPanel();
@@ -797,7 +793,6 @@ partial class OrderListUserControl
     private AntdUI.Button btnSimPushUv1;
     private AntdUI.Button btnSimPushUv2;
     private AntdUI.Table tblOrders;
-    private AntdUI.Column machineStatusColumn;
     private System.Windows.Forms.TableLayoutPanel tlpBottom;
     private AntdUI.Panel pnlPreview;
     private System.Windows.Forms.TableLayoutPanel tlpPreview;

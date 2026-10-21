@@ -110,7 +110,6 @@ public partial class OrderListUserControl : UserControl
             // โดยเอามาจาก Process Sequence ซึ่งเหลือแค่คำสั้น ๆ In-line / Off-line — วัดแล้ว
             // ที่ 12% สี่ปุ่มล้นบนจอ FHD (ตารางกว้าง ~1660px) ปุ่มแรกโดนตัด ปุ่มท้ายตกขอบ
             new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "15%" },
-            machineStatusColumn,
         };
 
         // ColBreak above is what centres the titles, and it is not obvious why.
