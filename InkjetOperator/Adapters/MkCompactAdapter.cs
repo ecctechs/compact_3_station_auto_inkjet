@@ -184,7 +184,7 @@ public class MkCompactAdapter : IInkjetAdapter
 
     /// <summary>
     /// Send FM (program/message configuration).
-    /// Try line speed -1 first; retry with 500 only when the MK rejects it with ER,FM,22.
+    /// Read the program's current line speed with FL first, then preserve it in FM.
     /// Program name is Unicode-normalized (NFKD) like Python unicodedata.normalize.
     /// </summary>
     public async Task<CommandResult> SendConfigAsync(InkjetConfigDto config)
@@ -202,18 +202,41 @@ public class MkCompactAdapter : IInkjetAdapter
         string height = (config.Height ?? 100).ToString();
         string width = (config.Width ?? 200).ToString();
 
-        string fmCmd = BuildConfigCommand(normalizedName, direction, delay, height, width, "-1");
-        string response = await SendAsync(fmCmd);
-
-        // Firmware บางเครื่องไม่รับ -1 ในช่อง Line Speed (j) และตอบ ER,FM,22
-        // ลองส่ง Config เดิมซ้ำด้วยค่าเดิม 500; ถ้ารอบสำเร็จไม่ส่ง error รอบแรกให้ UI
-        if (IsInvalidFmParameter(response))
+        // FL,<program>,0 ส่งค่าที่บันทึกอยู่ของโปรแกรมนี้กลับมา โดย Line Speed คือช่อง j
+        // อ่านก่อน FM เพื่อคงค่าเดิมของโปรแกรม และไม่เขียน -1/500 ทับลงไป
+        string flResponse = await SendAsync($"FL,{_programNumber},0\r");
+        if (!TryReadProgramLineSpeed(flResponse, _programNumber, out string lineSpeed))
         {
-            string fallbackCmd = BuildConfigCommand(normalizedName, direction, delay, height, width, "500");
-            response = await SendAsync(fallbackCmd);
+            string error = string.IsNullOrWhiteSpace(flResponse)
+                ? "ER,FL,NO_RESPONSE"
+                : IsRejected(flResponse) ? flResponse : "ER,FL,INVALID_RESPONSE";
+            return MakeResult("config", error);
         }
 
+        string fmCmd = BuildConfigCommand(normalizedName, direction, delay, height, width, lineSpeed);
+        string response = await SendAsync(fmCmd);
         return MakeResult("config", response);
+    }
+
+    private static bool TryReadProgramLineSpeed(string response, int expectedProgram, out string lineSpeed)
+    {
+        lineSpeed = "";
+        string[] fields = response.TrimEnd('\r', '\n').Split(',');
+
+        // FL response: FL,program,selector,name,...,i,j,k,... ; j (Line Speed) is field 10.
+        if (fields.Length <= 10
+            || !fields[0].Equals("FL", StringComparison.OrdinalIgnoreCase)
+            || !int.TryParse(fields[1], NumberStyles.None, CultureInfo.InvariantCulture, out int returnedProgram)
+            || returnedProgram != expectedProgram
+            || fields[2] != "0"
+            || !int.TryParse(fields[10].Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out _))
+        {
+            return false;
+        }
+
+        // Keep the device's original zero-padded representation, e.g. 03000.
+        lineSpeed = fields[10].Trim();
+        return true;
     }
 
     private string BuildConfigCommand(
@@ -221,12 +244,4 @@ public class MkCompactAdapter : IInkjetAdapter
         string height, string width, string lineSpeed) =>
         $"FM,{_programNumber},0,{normalizedName},0,{direction},0,0,01,20,{lineSpeed},{delay},300,1000,{height},{width},15,0,0,6\r";
 
-    private static bool IsInvalidFmParameter(string response)
-    {
-        string[] fields = response.TrimEnd('\r', '\n').Split(',');
-        return fields.Length >= 3
-            && fields[0].Equals("ER", StringComparison.OrdinalIgnoreCase)
-            && fields[1].Equals("FM", StringComparison.OrdinalIgnoreCase)
-            && fields[2].Equals("22", StringComparison.Ordinal);
-    }
 }

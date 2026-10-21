@@ -1,5 +1,6 @@
 using System.Net.Sockets;
 using System.Text;
+using System.IO;
 
 namespace InkjetOperator.Managers;
 
@@ -79,10 +80,24 @@ public class TcpManager
             await stream.WriteAsync(cmd.AsMemory(), timeout.Token);
             await stream.FlushAsync(timeout.Token);
 
-            byte[] buffer = new byte[16];
-            int bytesRead = await stream.ReadAsync(buffer.AsMemory(), timeout.Token);
-            if (bytesRead == 0) throw new IOException("MK ปิดการเชื่อมต่อโดยไม่ตอบกลับ");
-            string response = Encoding.ASCII.GetString(buffer, 0, bytesRead).TrimEnd('\r', '\n');
+            // FL คำตอบข้อมูลโปรแกรมยาวกว่า 16 bytes จึงต้องอ่านต่อจนจบเฟรม CR
+            // อ่านทีละ byte เพื่อไม่ดึงข้อมูลของคำสั่งถัดไปเกิน terminator
+            using var responseBytes = new MemoryStream();
+            byte[] oneByte = new byte[1];
+            while (responseBytes.Length < 4096)
+            {
+                int bytesRead = await stream.ReadAsync(oneByte.AsMemory(), timeout.Token);
+                if (bytesRead == 0)
+                    throw new IOException("MK ปิดการเชื่อมต่อโดยไม่ตอบกลับ");
+
+                if (oneByte[0] == (byte)'\r') break;
+                responseBytes.WriteByte(oneByte[0]);
+            }
+
+            if (responseBytes.Length >= 4096)
+                throw new IOException("คำตอบจาก MK ยาวเกินขนาดที่รองรับ");
+
+            string response = Encoding.ASCII.GetString(responseBytes.ToArray()).TrimEnd('\n');
             OnDataReceived(response);
             await Task.Delay(50); // เว้นช่วงคำสั่งตามเดิม
             return response;
