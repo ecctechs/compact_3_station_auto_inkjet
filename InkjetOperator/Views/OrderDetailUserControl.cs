@@ -53,17 +53,6 @@ public partial class OrderDetailUserControl : UserControl
 
     public event EventHandler? CloseRequested;
 
-    /// <summary>
-    /// ขอให้หน้า Order List สั่ง ST1 ส่งขั้นถัดไปให้ — ค่าที่แนบมาคือชื่อขั้น เช่น "UV2"
-    ///
-    /// <para>
-    /// หน้านี้ไม่ยิงคำขอเอง เพราะการขอให้ ST1 ส่งมีด่านตรวจอยู่ที่หน้า Order List ครบแล้ว
-    /// (สถานีปลายทางว่างไหม · เลือกรุ่นย่อยของโปรแกรม UV · รอผลจริงจาก ST1 ไม่เกิน 40 วิ)
-    /// ทำอีกชุดที่นี่คือเปิดทางให้สองที่ตรวจไม่เหมือนกันในวันข้างหน้า
-    /// </para>
-    /// </summary>
-    public event EventHandler<string>? RemoteStartRequested;
-
     /// <summary>ผลการส่งซ้ำหนึ่งเครื่อง — Sent = ข้อมูลชุดล่าสุดเข้าเครื่องแล้ว · Lines = บรรทัดที่แสดงให้คนอ่าน</summary>
     internal sealed record ResendOutcome(bool Sent, IReadOnlyList<Notify.ResultLine> Lines);
 
@@ -108,7 +97,6 @@ public partial class OrderDetailUserControl : UserControl
         // โหมด Dev = ปุ่มทดสอบ ยิงตรงเข้าเครื่อง · โหมดใช้งาน = ส่งซ้ำผ่านคิว (ดู ApplyStepButtons)
         btnSendMk.Click += async (_, _) => { if (_isDevMode) await SendToMkAsync(); else await ResendHereAsync("MK"); };
         btnSavePattern.Click += async (_, _) => await SaveEditedValuesAsync();
-        btnRemoteSend.Click += (_, _) => RequestRemoteStart();
         tmrConnCheck.Tick += ConnCheck_Tick;
         btnSendUv1.Click += async (_, _) => { if (_isDevMode) await SendToUvAsync(1); else await ResendHereAsync("UV1"); };
         btnSendUv2.Click += async (_, _) => { if (_isDevMode) await SendToUvAsync(2); else await ResendHereAsync("UV2"); };
@@ -1075,58 +1063,11 @@ public partial class OrderDetailUserControl : UserControl
     private bool HasStep(string step) =>
         _sendSteps.Any(s => string.Equals(s, step, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>
-    /// ขั้นถัดไปที่ต้องให้ ST1 เป็นคนส่งเข้าเครื่อง — null เมื่องานนี้ไม่เข้าเงื่อนไข
-    ///
-    /// เงื่อนไขเดียวกับที่ปุ่มกดหน้างานใช้เลือกงาน: งานเดินอยู่ · ขั้นแรกส่งไปแล้ว ·
-    /// ยังมีขั้นเหลือ ขั้นแรกของงานเป็นหน้าที่ของปุ่มเริ่มงานหน้า Order List ไม่ใช่ปุ่มนี้
-    /// </summary>
-    private string? NextRemoteStep()
-    {
-        if (_currentStep <= 0 || _currentStep >= _sendSteps.Count) return null;
-        if (!string.Equals(_jobStatus, "Process", StringComparison.OrdinalIgnoreCase)) return null;
-
-        return _sendSteps[_currentStep];
-    }
-
-    /// <summary>
-    /// ทางสำรองของปุ่มกดหน้างาน สำหรับตอนปุ่มกดหรือ PLC ใช้ไม่ได้
-    ///
-    /// ปิดหน้านี้ก่อนแล้วให้หน้า Order List เป็นคนยิงคำขอ วงกลมหมุนกับกล่องยืนยัน
-    /// จะได้อยู่บนหน้าที่ไม่มีอะไรบัง ไม่ใช่โผล่อยู่หลังกล่อง Order Detail
-    /// </summary>
-    private void RequestRemoteStart()
-    {
-        if (NextRemoteStep() is not string step) return;
-
-        RemoteStartRequested?.Invoke(this, step);
-        CloseRequested?.Invoke(this, EventArgs.Empty);
-    }
-
     private void ApplyStepButtons()
     {
-        // ปุ่มสำรองของปุ่มกดหน้างาน — ปิดไว้เป็นค่าเริ่มต้น เปิดที่ Setting → ตัวเลือกหน้างาน
-        // ซึ่งเห็นเฉพาะโหมดทดสอบ คนคุมเครื่องจึงเปิดเองไม่ได้
+        // ตั้ง Visible / Enabled จากตัวแปรที่คำนวณเอง ห้ามอ่าน .Visible กลับมาใช้ — ตัวอ่านคืน false
+        // ถ้าพ่อแม่ชั้นไหนยังไม่ได้แสดง และหน้านี้ถูกเติมข้อมูลก่อนกล่องจะ ShowDialog เสมอ
         //
-        // โชว์เฉพาะเครื่องของ ST3 เพราะขั้นที่สองของงานสองสถานีเป็นของ ST3 ที่เดียว
-        // (เปิดให้โหมดทดสอบเห็นด้วย ไว้ลองก่อนเอาไปเปิดใช้จริงที่หน้างาน)
-        var remoteStep = NextRemoteStep();
-
-        // เก็บเป็นตัวแปรแล้วใช้ค่านั้นทั้งสองที่ ห้ามอ่าน .Visible กลับมาใช้ต่อ
-        //
-        // ตัวอ่านของ Control.Visible คืน false ถ้าพ่อแม่ชั้นไหนยังไม่ได้ถูกแสดง
-        // ไม่ใช่ค่าที่เพิ่งเซ็ตลงไป และหน้านี้ถูกเติมข้อมูลตั้งแต่ก่อนกล่องจะ ShowDialog
-        // (OrderDetailDialog.LoadDetail มาก่อน dlg.ShowDialog เสมอ) ผลคือ Enabled
-        // ถูกตั้งเป็น false ค้างไว้ พอกล่องเปิดขึ้นมาปุ่มจึงโผล่มาแบบกดไม่ได้
-        bool showRemote = !_finished
-            && remoteStep != null
-            && StationService.ManualRemoteSendEnabled
-            && (StationService.IsSt3 || _isDevMode);
-
-        btnRemoteSend.Visible = showRemote;
-        btnRemoteSend.Enabled = showRemote;
-        if (remoteStep != null) btnRemoteSend.Text = $"ขอให้ ST1 ส่ง {remoteStep}";
-
         // โหมดทดสอบ: ปุ่มทดสอบยิงตรงเข้าเครื่อง ไม่ผ่านคิว ไม่บันทึกประวัติ (SendToMkAsync / SendToUvAsync)
         //
         // โชว์ครบทุกเครื่อง ไม่ดูว่างานนี้มีขั้นนั้นอยู่ในแผนไหม — จุดประสงค์คือยิงข้อความไปหาเครื่อง

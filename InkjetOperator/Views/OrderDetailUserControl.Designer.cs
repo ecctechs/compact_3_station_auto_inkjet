@@ -213,7 +213,6 @@ partial class OrderDetailUserControl
         tlpDetailActions = new System.Windows.Forms.TableLayoutPanel();
         components = new System.ComponentModel.Container();
         flpDetailActions = new System.Windows.Forms.FlowLayoutPanel();
-        btnRemoteSend = new AntdUI.Button();
         btnSavePattern = new AntdUI.Button();
         tmrConnCheck = new System.Windows.Forms.Timer(components);
         btnSendMk = new AntdUI.Button();
@@ -3095,7 +3094,6 @@ partial class OrderDetailUserControl
         flpDetailActions.Controls.Add(btnSendUv1);
         flpDetailActions.Controls.Add(btnSendUv2);
         flpDetailActions.Controls.Add(btnSavePattern);
-        flpDetailActions.Controls.Add(btnRemoteSend);
         flpDetailActions.Dock = System.Windows.Forms.DockStyle.Fill;
         flpDetailActions.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
         flpDetailActions.Location = new System.Drawing.Point(0, 0);
@@ -3160,19 +3158,6 @@ partial class OrderDetailUserControl
         btnSavePattern.TabIndex = 4;
         btnSavePattern.Text = "บันทึกค่า";
         btnSavePattern.Type = AntdUI.TTypeMini.Success;
-        //
-        // btnRemoteSend - ปุ่มสำรองของปุ่มกดหน้างาน ขอให้ ST1 ส่งขั้นถัดไปแทน
-        //
-        btnRemoteSend.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
-        btnRemoteSend.ForeColor = System.Drawing.Color.White;
-        btnRemoteSend.Margin = new System.Windows.Forms.Padding(0, 0, 12, 0);
-        btnRemoteSend.Name = "btnRemoteSend";
-        btnRemoteSend.Radius = 10;
-        btnRemoteSend.Size = new System.Drawing.Size(360, 70);
-        btnRemoteSend.TabIndex = 3;
-        btnRemoteSend.Text = "ขอให้ ST1 ส่งขั้นถัดไป";
-        btnRemoteSend.Type = AntdUI.TTypeMini.Warn;
-        btnRemoteSend.Visible = false;
         //
         // tmrConnCheck - รีเฟรชไฟสถานะการเชื่อมต่อสี่ดวงระหว่างที่หน้านี้เปิดอยู่
         //
@@ -3410,7 +3395,6 @@ partial class OrderDetailUserControl
     private AntdUI.Table tblUv2Texts;
     private System.Windows.Forms.TableLayoutPanel tlpDetailActions;
     private System.Windows.Forms.FlowLayoutPanel flpDetailActions;
-    private AntdUI.Button btnRemoteSend;
     private AntdUI.Button btnSavePattern;
     private System.Windows.Forms.Timer tmrConnCheck;
     private AntdUI.Button btnSendMk;
