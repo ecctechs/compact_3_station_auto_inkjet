@@ -1175,27 +1175,34 @@ public partial class OrderListUserControl : UserControl
     /// (กดซ้ำจนลูกศรกลับเป็นเทาก็ได้ลำดับนี้คืน)
     /// </summary>
     /// <remarks>
-    /// งานที่เข้าคิวรอเครื่อง (Waiting (Q1), Waiting (Q2) ...) อยู่ถัดจากงานที่เดินอยู่ เรียงตามคิว
+    /// งานที่เข้าคิวรอเครื่อง (Waiting (Q1), Working (Q2) ...) อยู่ถัดจากงานที่เดินอยู่ เรียงตามเลขคิว
     /// แล้วค่อยเป็นงานที่ยังไม่เคยกดเริ่ม — คนหน้างานเห็นทันทีว่าใบไหนจะได้เครื่องต่อ
+    /// · Working (Qn) คืองานที่ถือเครื่องหนึ่งแล้วรอคิวอีกเครื่อง อยู่กลุ่มเดียวกับ Waiting (Qn)
+    /// เดิมอยู่กลุ่ม Working บนสุด เลขคิวจึงขาดตอน Q1 Q3 Q4 (แก้ 22/10/2026)
+    /// เรียงจากข้อความที่ขึ้นในคอลัมน์ Status ตัวเดียวกับตอนกดหัวคอลัมน์ — ดู StatusTextKey
     /// </remarks>
-    private int StatusRank(PrintJob job) =>
-        string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase) ? 0
-        : !string.Equals(job.Status, "Waiting", StringComparison.OrdinalIgnoreCase) ? 3
-        : QueueWaitLabel(job) != null ? 1
-        : 2;
+    private (int Group, int Queue) StatusRank(PrintJob job) =>
+        StatusTextKey(StatusText(job, isHistory: false)) ?? (3, 0);
 
     /// <summary>
-    /// ลำดับคิวของงานที่รอเครื่อง — "Starting" (ได้เครื่องแล้ว รอส่ง) มาก่อน Q1
-    /// งานที่ไม่ได้รอคิวคืนค่ามากสุด ให้ไปเรียงตามเวลาแทน
+    /// ลำดับของข้อความในคอลัมน์ Status — null = ไม่ใช่สถานะของงานที่ยังไม่จบ (ให้เทียบแบบข้อความ)
+    /// <list type="bullet">
+    /// <item>0 — Working / Pick UV2 (ST3): งานที่เดินอยู่</item>
+    /// <item>1 — Starting (ได้เครื่องแล้ว รอส่ง) แล้ว Q1, Q2 ... ไม่ว่าจะ Waiting หรือ Working</item>
+    /// <item>2 — Waiting: ยังไม่เคยกดเริ่ม</item>
+    /// </list>
+    /// เลขคิวเป็นของเครื่องที่งานนั้นรอ (MK / UV2 นับแยกกัน) ใบไหนเลขน้อยได้เครื่องก่อน
     /// </summary>
-    private int QueueOrder(PrintJob job)
+    private static (int Group, int Queue)? StatusTextKey(string? text)
     {
-        var label = QueueWaitLabel(job);
-        if (label == null) return int.MaxValue;
-        if (label.StartsWith("Starting", StringComparison.Ordinal)) return 0;
+        var s = (text ?? "").Trim();
+        if (s == "Working" || s == Uv2PickLabel) return (0, 0);
+        if (s == "Waiting") return (2, 0);
+        if (s.StartsWith("Starting", StringComparison.Ordinal)) return (1, 0);
 
-        var digits = new string(label.SkipWhile(c => !char.IsDigit(c)).TakeWhile(char.IsDigit).ToArray());
-        return int.TryParse(digits, out int q) ? q : int.MaxValue - 1;
+        var m = System.Text.RegularExpressions.Regex.Match(s, @"^(Waiting|Working) \((?:Q(\d+)|Queued)\)$");
+        if (!m.Success) return null;
+        return (1, m.Groups[2].Success && int.TryParse(m.Groups[2].Value, out int q) ? q : int.MaxValue);
     }
 
     private void RebindTable()
@@ -1216,7 +1223,6 @@ public partial class OrderListUserControl : UserControl
                 || MarkingMethodService.VisibleAt(station, j.PlanRouting?.MarkingMethod))
             .Where(j => _processFilter == null || JobProcessService.Current(j) == _processFilter)
             .OrderBy(StatusRank)
-            .ThenBy(QueueOrder)
             .ThenByDescending(j => j.CreatedAt ?? DateTime.MinValue)
             .ToList();
 
@@ -4141,6 +4147,11 @@ public partial class OrderListUserControl : UserControl
         if (TryParseCellTime(x, out var tx) && TryParseCellTime(y, out var ty))
             return tx.CompareTo(ty);
 
+        // คอลัมน์ Status เรียงตามความหมาย ไม่ใช่ตัวอักษร — เดิม Working (Q2) ไปต่อท้าย Working
+        // แยกจาก Waiting (Q1) (Q3) คิวดูขาดตอน (หน้างานแจ้ง 22/10/2026)
+        if (StatusTextKey(x) is { } kx && StatusTextKey(y) is { } ky)
+            return kx.CompareTo(ky);
+
         return CompareNatural(x, y);
     }
 
@@ -4208,15 +4219,20 @@ public partial class OrderListUserControl : UserControl
     private static string MachineCell(MarkingMachine machine) =>
         machine == MarkingMachine.None ? Dash : MarkingMethodService.Label(machine);
 
-    private OrderRow ToRow(PrintJob job, bool isHistory)
-    {
-        var plan = MarkingMethodService.Resolve(job.PlanRouting?.MarkingMethod);
-
-        // งานที่กดจบทั้งที่ยังส่งไม่ครบต้องดูออกจากในตาราง ไม่ต้องเปิดเข้าไปดูทีละงาน
-        var (statusLabel, statusColor) = JobStatusDisplay.Resolve(
+    // งานที่กดจบทั้งที่ยังส่งไม่ครบต้องดูออกจากในตาราง ไม่ต้องเปิดเข้าไปดูทีละงาน
+    private static (string Text, Color Color) StatusLabel(PrintJob job) =>
+        JobStatusDisplay.Resolve(
             job.Status,
             MarkingMethodService.FinishedIncomplete(
                 job.Status, job.PlanRouting?.MarkingMethod, job.Commands));
+
+    /// <summary>
+    /// ข้อความในคอลัมน์ Status — ใช้ทั้งตอนวาดแถวและตอนเรียงลำดับตั้งต้น (StatusRank)
+    /// สองที่จึงเห็นตรงกันเสมอ
+    /// </summary>
+    private string StatusText(PrintJob job, bool isHistory)
+    {
+        var (statusLabel, _) = StatusLabel(job);
         // ไม่ต่อท้ายอะไรตรงนี้ — ตารางต้องอ่านจากที่ไกล ๆ จึงเหลือคำสถานะคำเดียวล้วน ๆ
         //
         // รายละเอียดว่างานรออะไรอยู่ (คิวที่เท่าไร หรือกำลังทำด้านไหน) ไปโชว์ที่หน้า
@@ -4224,28 +4240,37 @@ public partial class OrderListUserControl : UserControl
 
         // งานที่เข้าคิวรอเครื่องอยู่ บอกตรง ๆ ว่ารอคิวเครื่องไหน ที่เท่าไร แทนคำว่า Waiting
         // ซึ่งดูเหมือนงานที่ยังไม่มีใครกดเริ่ม — ดู QueueWaitLabel
-        var queueLabel = QueueWaitLabel(job);
+        if (QueueWaitLabel(job) is { } queueLabel) return queueLabel;
 
         // งานที่ ST1 เริ่มแล้วฝาก UV2 ให้ ST3 เลือกรุ่น — บอกทุกสถานีว่าทำไม UV2 ยังไม่ส่ง
-        bool awaitingUv2 = !isHistory && Uv2PickAtSt3.Awaiting(job, _queueRows);
+        if (!isHistory && Uv2PickAtSt3.Awaiting(job, _queueRows)) return Uv2PickLabel;
 
-        // Waiting (Qn) ใช้สีเดียวกับ Waiting (แดง) — ยังเป็นงานที่ยังไม่เริ่ม แค่บอกคิวเพิ่ม
-        // Starting / Pick UV2 ใช้สีส้ม — กำลังรออะไรบางอย่างอยู่ ไม่ใช่งานที่ยังไม่มีใครแตะ
         // งาน Working ที่ยังรอคิวอีกเครื่อง — ต่อเลข Q ให้ด้วย (เช่นงาน 12 ได้ UV2 ก่อน แต่ยังรอ MK)
         // ไม่งั้นงานหลังขึ้น Waiting (Q2) โดยไม่มี Q1 ให้เห็นในตาราง ดูเหมือนคิวหาย
-        var workingQueue = !isHistory && queueLabel == null && !awaitingUv2
+        var workingQueue = !isHistory
             && string.Equals(job.Status, "Process", StringComparison.OrdinalIgnoreCase)
             ? JobStageService.QueuePosition(job.Id, job.PlanRouting?.MarkingMethod, _queueRows)
             : null;
 
-        var statusText = queueLabel != null
-            ? new AntdUI.CellText(queueLabel)
-            {
-                Fore = queueLabel.StartsWith("Waiting", StringComparison.Ordinal) ? statusColor : WaitingColor,
-            }
-            : awaitingUv2 ? new AntdUI.CellText(Uv2PickLabel) { Fore = WaitingColor }
-            : workingQueue != null ? new AntdUI.CellText($"{statusLabel} ({workingQueue})") { Fore = statusColor }
-            : new AntdUI.CellText(statusLabel) { Fore = statusColor };
+        return workingQueue != null ? $"{statusLabel} ({workingQueue})" : statusLabel;
+    }
+
+    private OrderRow ToRow(PrintJob job, bool isHistory)
+    {
+        var plan = MarkingMethodService.Resolve(job.PlanRouting?.MarkingMethod);
+
+        var (_, statusColor) = StatusLabel(job);
+        var queueLabel = QueueWaitLabel(job);
+        bool awaitingUv2 = !isHistory && Uv2PickAtSt3.Awaiting(job, _queueRows);
+
+        // Waiting (Qn) ใช้สีเดียวกับ Waiting (แดง) — ยังเป็นงานที่ยังไม่เริ่ม แค่บอกคิวเพิ่ม
+        // Starting / Pick UV2 ใช้สีส้ม — กำลังรออะไรบางอย่างอยู่ ไม่ใช่งานที่ยังไม่มีใครแตะ
+        var statusText = new AntdUI.CellText(StatusText(job, isHistory))
+        {
+            Fore = queueLabel != null && !queueLabel.StartsWith("Waiting", StringComparison.Ordinal) || awaitingUv2
+                ? WaitingColor
+                : statusColor,
+        };
 
         var buttons = new List<AntdUI.CellButton>();
         if (!isHistory)
