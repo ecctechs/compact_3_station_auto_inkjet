@@ -106,7 +106,7 @@ public partial class OrderListUserControl : UserControl
             // เริ่มงานรอบสอง + จบงาน + ยกเลิก + รายละเอียด
             //
             // AntdUI วางปุ่มในเซลล์เป็นแถวเดียวเสมอ (ตั้ง LineBreak ก็ไม่ตัดขึ้นบรรทัดใหม่)
-            // ปุ่มรอบสองจึงเขียนข้อความสองบรรทัดให้แคบลง แล้วขยายคอลัมน์นี้จาก 12% เป็น 15%
+            // ปุ่มจึงเป็นคำสั้นบรรทัดเดียว แล้วขยายคอลัมน์นี้จาก 12% เป็น 15% (แท็บ List 16% ดู TabColumnWidths)
             // โดยเอามาจาก Process Sequence ซึ่งเหลือแค่คำสั้น ๆ In-line / Off-line — วัดแล้ว
             // ที่ 12% สี่ปุ่มล้นบนจอ FHD (ตารางกว้าง ~1660px) ปุ่มแรกโดนตัด ปุ่มท้ายตกขอบ
             new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "15%" },
@@ -145,14 +145,28 @@ public partial class OrderListUserControl : UserControl
     /// คอลัมน์ที่ความกว้างไม่เท่ากันระหว่างสองแท็บ — (key, กว้างตอน List, กว้างตอน History)
     /// ส่วนที่เหลือกว้างเท่ากันทั้งสองแท็บ จึงไม่ต้องมีในนี้
     /// </summary>
+    /// <para>
+    /// แท็บ List (จอหน้างาน FHD สเกล 100%) — ปุ่ม (Op) 16% พอสำหรับแถวที่ปุ่มมากสุด (ST3: เลือกรุ่น · จบงาน ·
+    /// ข้าม · ยกเลิก · รายละเอียด) ปุ่มเป็นคำสั้นบรรทัดเดียว · Status 10% ให้ "Pick UV2 (ST3)" / "Working (Q1)"
+    /// ไม่โดนตัด · Station 8% ให้ "รอรอบสอง" ไม่ชิดขอบ · Plate / Shim เหลือ 6% (ค่าแค่ MK / UV2)
+    /// วัดจากภาพที่ความกว้าง 1920 (22/10/2026)
+    /// </para>
+    /// <para>
+    /// ปุ่มเป็น 15.7% / 14.7% ทั้งสองชุดจึงรวม 99.7% ไม่ใช่ 100 — AntdUI ปัดพิกเซลของแต่ละคอลัมน์ขึ้น
+    /// รวม 100% พอดีแล้วเกินตารางไป 2-3 px แถบเลื่อนแนวนอนโผล่ใต้ตาราง (วัดได้ 1883 จาก 1880)
+    /// เหลือที่ว่าง ~5 px ไว้รับเศษ
+    /// </para>
     private static readonly (string Key, string ListWidth, string HistoryWidth)[] TabColumnWidths =
     [
         ("ErpMfg", "13%", "11%"),
         ("LotNo", "13%", "11%"),
         ("Qty", "7%", "6%"),
-        ("ProcessSequence", "12%", "10%"),
-        ("Plate", "7%", "6%"),
-        ("Shim", "7%", "6%"),
+        ("ProcessSequence", "10%", "10%"),
+        ("Plate", "6%", "6%"),
+        ("Shim", "6%", "6%"),
+        ("Station", "8%", "7%"),
+        ("Status", "10%", "8%"),
+        ("Op", "15.7%", "14.7%"),
     ];
 
     /// <summary>
@@ -163,7 +177,7 @@ public partial class OrderListUserControl : UserControl
     /// (Table.Layout: width = rect.Width × ratio) ไม่ได้เกลี่ยใหม่ให้เมื่อซ่อนคอลัมน์
     /// ซ่อน End เฉย ๆ จะเหลือที่ว่าง 9% ค้างท้ายตาราง จึงแจก 9% นั้นคืนเอง
     ///
-    /// ทั้งสองชุดต้องรวมได้ 100 พอดี — แก้ตัวเลขเมื่อไหร่ต้องบวกใหม่ทั้งสองชุด
+    /// ทั้งสองชุดต้องรวมได้ 99.7% (ไม่ใช่ 100 — ดู TabColumnWidths) แก้ตัวเลขเมื่อไหร่ต้องบวกใหม่ทั้งสองชุด
     /// </summary>
     private void ApplyTabColumns(bool showHistory)
     {
@@ -1234,11 +1248,12 @@ public partial class OrderListUserControl : UserControl
     /// <summary>งานที่กดเริ่มไปแล้วและยังส่งไม่เสร็จ — ปุ่มเริ่มงานของแถวนี้หมุนอยู่</summary>
     private int? _startingJobId;
 
+    // คำสั้นบรรทัดเดียว คำเดียวกันทุกสถานี (ตกลง 22/10/2026) — ปุ่มสองบรรทัดปนกับบรรทัดเดียวทำให้แถวสูง
+    // ไม่เท่ากัน ดูเกะกะ · ปุ่มข้ามเป็นคำเดียว เครื่องไหน เพราะอะไร กล่องยืนยันบอกก่อนข้ามทุกครั้ง
     private const string StartButtonText = "เริ่มงาน";
-    // สองบรรทัด กว้างพอ ๆ กับปุ่มเริ่มงาน — บรรทัดเดียวยาวจนสี่ปุ่มล้นคอลัมน์
-    private const string NextRoundButtonText = "เริ่มงาน\nรอบสอง";
-    private const string PickUv2ButtonText = "เลือกรุ่น\nUV2";
-    private const string SkipMachineButtonText = "ข้าม\nเครื่อง";
+    private const string NextRoundButtonText = "เริ่มรอบ 2";
+    private const string PickUv2ButtonText = "เลือกรุ่น";
+    private const string SkipMachineButtonText = "ข้าม";
 
     /// <summary>สถานะของงานที่รอ ST3 เลือกรุ่น UV2 — สั้น ภาษาอังกฤษ แบบเดียวกับ Waiting (Qn)</summary>
     private const string Uv2PickLabel = "Pick UV2 (ST3)";
@@ -3661,9 +3676,8 @@ public partial class OrderListUserControl : UserControl
     private static string SwitchButtonId(string step) =>
         string.Equals(step, "UV1", StringComparison.OrdinalIgnoreCase) ? "switchuv1" : "switchuv2";
 
-    // สองบรรทัดแบบเดียวกับปุ่มเริ่มรอบสอง — สี่ปุ่มใส่คอลัมน์ได้
-    private static string SwitchButtonText(string step) =>
-        string.Equals(step, "UV1", StringComparison.OrdinalIgnoreCase) ? "เปลี่ยนรุ่น\nUV1" : "เปลี่ยนรุ่น\nUV2";
+    // คำสั้นบรรทัดเดียวแบบเดียวกับปุ่มอื่น — สถานีหนึ่งดูแล UV เครื่องเดียว แถวหนึ่งจึงมีปุ่มนี้ปุ่มเดียว
+    private static string SwitchButtonText(string step) => "เปลี่ยนรุ่น";
 
     /// <summary>
     /// รุ่นย่อยทั้งหมดของแต่ละงาน+ขั้น — อ่านโฟลเดอร์ครั้งเดียวแล้วจำไว้
@@ -4285,7 +4299,6 @@ public partial class OrderListUserControl : UserControl
                          StationService.Current, job.PlanRouting?.MarkingMethod))
             {
                 // งาน 22 ที่กดปุ่มหน้างานรอบแรกแล้ว — เพิ่มปุ่มเริ่มรอบสอง ปุ่มจบงานยังอยู่
-                // ข้อความสองบรรทัด (ดู NextRoundButtonText) ให้สี่ปุ่มใส่คอลัมน์นี้ได้
                 if (CanStartNextRound(job))
                 {
                     buttons.Add(new AntdUI.CellButton("round2", NextRoundButtonText, AntdUI.TTypeMini.Primary)
@@ -4312,8 +4325,9 @@ public partial class OrderListUserControl : UserControl
             }
 
             // เครื่องที่ส่งไม่ผ่าน / ไม่รู้ผล — ให้คนไปตรวจแล้วยืนยันข้าม งานจะได้ไม่ค้าง (ข้อ 2.2)
+            // ปุ่มขาวขอบ ไม่ใช่สีส้ม — สีส้มคือปุ่มจบงานที่ยังส่งไม่ครบ สองปุ่มสีเดียวกันดูเป็นปุ่มเดียวกัน
             if (StuckRows(job.Id, _queueRows).Count > 0)
-                buttons.Add(new AntdUI.CellButton("skipmachine", SkipMachineButtonText, AntdUI.TTypeMini.Warn)
+                buttons.Add(new AntdUI.CellButton("skipmachine", SkipMachineButtonText, AntdUI.TTypeMini.Default)
                 { Radius = 6 });
 
             // ยกเลิกได้ทุกงานที่ยังไม่จบ ไม่ว่าเริ่มไปแล้วหรือยัง — เป็นทางออกเดียว
