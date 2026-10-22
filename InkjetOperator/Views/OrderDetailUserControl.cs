@@ -64,6 +64,32 @@ public partial class OrderDetailUserControl : UserControl
     /// </summary>
     public event EventHandler<string>? RemoteStartRequested;
 
+    /// <summary>ผลการส่งซ้ำหนึ่งเครื่อง — Sent = ข้อมูลชุดล่าสุดเข้าเครื่องแล้ว · Lines = บรรทัดที่แสดงให้คนอ่าน</summary>
+    internal sealed record ResendOutcome(bool Sent, IReadOnlyList<Notify.ResultLine> Lines);
+
+    /// <summary>
+    /// ตัวส่งซ้ำของหน้า Order List — (id งาน, เครื่อง) → ผล ตั้งก่อนเปิดกล่อง ไม่ตั้ง = ส่งซ้ำไม่ได้
+    ///
+    /// <para>
+    /// หน้านี้กดแล้วส่งเลยในหน้า ไม่ปิดกล่อง ไม่ถามยืนยัน — เหมือนปุ่มส่งในโหมด Dev (ตกลง 22/10/2026)
+    /// แต่ตัวส่งจริงอยู่ที่หน้า Order List: ตรวจกับข้อมูลสด ส่งผ่านคิว (begin-resend) กันส่งซ้อน
+    /// และ ST3 ฝากให้ ST1 ส่ง ตัวส่งไม่เด้งกล่องเอง ผลกลับมาแสดงที่หน้านี้ — ดู <see cref="MachineResend"/>
+    /// </para>
+    /// </summary>
+    internal Func<int, string, Task<ResendOutcome>>? ResendRunner { get; set; }
+
+    /// <summary>เครื่องที่กำลังส่งซ้ำจากหน้านี้ — ปุ่มนั้นค้างที่ "กำลังส่ง..." ไม่ให้รอบอ่านคิวมาทับ</summary>
+    private string? _resendingStep;
+
+    /// <summary>งานจบหรือยกเลิกแล้ว (อยู่ใน History) — ซ่อนปุ่มบันทึกและปุ่มส่งทั้งหมด แก้ค่าไม่ได้</summary>
+    private bool _finished;
+
+    /// <summary>เครื่องที่ส่งซ้ำได้ตอนนี้ (ถือเครื่องและส่งแล้ว) — อ่านจากคิวสดตอนเปิดหน้าและทุก 15 วิ</summary>
+    private readonly HashSet<string> _resendReady = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>รอบอ่านคิวล่าสุด — ผลของรอบเก่าที่กลับมาช้าไม่ทับรอบใหม่</summary>
+    private int _resendVersion;
+
     public OrderDetailUserControl()
     {
         InitializeComponent();
@@ -79,12 +105,13 @@ public partial class OrderDetailUserControl : UserControl
         btnMkSwap.Click += async (_, _) => await SwapMkDataAsync();
         picMk1Abc.Click += async (_, _) => await ToggleAbcAsync(1, picMk1Abc);
         picMk2Abc.Click += async (_, _) => await ToggleAbcAsync(2, picMk2Abc);
-        btnSendMk.Click += async (_, _) => await SendToMkAsync();
+        // โหมด Dev = ปุ่มทดสอบ ยิงตรงเข้าเครื่อง · โหมดใช้งาน = ส่งซ้ำผ่านคิว (ดู ApplyStepButtons)
+        btnSendMk.Click += async (_, _) => { if (_isDevMode) await SendToMkAsync(); else await ResendHereAsync("MK"); };
         btnSavePattern.Click += async (_, _) => await SaveEditedValuesAsync();
         btnRemoteSend.Click += (_, _) => RequestRemoteStart();
         tmrConnCheck.Tick += ConnCheck_Tick;
-        btnSendUv1.Click += async (_, _) => await SendToUvAsync(1);
-        btnSendUv2.Click += async (_, _) => await SendToUvAsync(2);
+        btnSendUv1.Click += async (_, _) => { if (_isDevMode) await SendToUvAsync(1); else await ResendHereAsync("UV1"); };
+        btnSendUv2.Click += async (_, _) => { if (_isDevMode) await SendToUvAsync(2); else await ResendHereAsync("UV2"); };
         btnTestPlc.Click += async (_, _) => await TestPlcAsync();
 
         btnFlowPlate.Click += (_, _) => OpenFlowRefImages(btnFlowPlate);
@@ -232,6 +259,9 @@ public partial class OrderDetailUserControl : UserControl
         _api = api;
         _uvData = resolved.UvJobData;
         _jobStatus = resolved.Job.Status;
+        _finished = string.Equals(_jobStatus, "Success", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(_jobStatus, "Cancel", StringComparison.OrdinalIgnoreCase);
+        _resendReady.Clear();
         _markingMethod = resolved.PlanRouting?.MarkingMethod;
         _erpMfg = resolved.PlanRouting?.ErpMfg;
 
@@ -260,6 +290,8 @@ public partial class OrderDetailUserControl : UserControl
         FillConveyor(_pattern);
         FillUvSection(resolved);
         ClearIaiFields();
+        ApplyHistoryLock();
+        _ = RefreshResendStateAsync();
         _ = LoadIaiAsync(resolved.Job.Id);
         // รอบแรกโชว์ "กำลังตรวจสอบ..." ได้ เพราะยังไม่มีอะไรให้ดูอยู่ก่อน
         // รอบถัด ๆ ไปห้ามล้างเป็นสีเทา ไม่งั้นไฟจะกะพริบเทา-เขียวทุก 15 วิ
@@ -288,6 +320,8 @@ public partial class OrderDetailUserControl : UserControl
     {
         if (IsDisposed) return;
         await CheckConnectionsAsync(showChecking: false);
+        if (IsDisposed) return;
+        await RefreshResendStateAsync();
     }
 
     /// <summary>
@@ -432,11 +466,12 @@ public partial class OrderDetailUserControl : UserControl
     /// </summary>
     private async Task SwapMkDataAsync()
     {
-        if (_pattern == null || _savingPattern) return;
+        if (_pattern == null || _savingPattern || _finished) return;
 
         FlipMkOrdinals();
 
         var error = await SavePatternAsync();
+        if (IsDisposed) return;
         if (error == null) return;
 
         FlipMkOrdinals();
@@ -500,7 +535,7 @@ public partial class OrderDetailUserControl : UserControl
     /// </summary>
     private async Task SaveEditedValuesAsync()
     {
-        if (_savingPattern) return;
+        if (_savingPattern || _finished) return;
 
         if (CollectEditedValues() is string problem)
         {
@@ -530,18 +565,15 @@ public partial class OrderDetailUserControl : UserControl
             FillConveyor(_pattern!);
 
             if (uvError != null)
-            {
                 Notify.ErrorModal(this, "บันทึกข้อความ UV ไม่สำเร็จ",
                     "ค่าฝั่ง MK บันทึกแล้ว แต่ข้อความ UV ยังไม่ได้ลงฐานข้อมูล"
                     + Environment.NewLine + Environment.NewLine + uvError);
-                return;
-            }
-
-            Notify.Success(this, "บันทึกค่าเรียบร้อย");
+            else
+                Notify.Success(this, "บันทึกค่าเรียบร้อย");
         }
         finally
         {
-            if (!IsDisposed) btnSavePattern.Enabled = true;
+            if (!IsDisposed) btnSavePattern.Enabled = !_finished;
         }
     }
 
@@ -854,7 +886,7 @@ public partial class OrderDetailUserControl : UserControl
     /// </summary>
     private async Task ToggleAbcAsync(int ordinal, PictureBox box)
     {
-        if (_pattern == null || _savingPattern) return;
+        if (_pattern == null || _savingPattern || _finished) return;
 
         var config = _pattern.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
         if (config == null)
@@ -866,6 +898,7 @@ public partial class OrderDetailUserControl : UserControl
         FlipDirection(config, box);
 
         var error = await SavePatternAsync();
+        if (IsDisposed) return;
         if (error == null) return;
 
         FlipDirection(config, box);
@@ -1085,7 +1118,8 @@ public partial class OrderDetailUserControl : UserControl
         // ไม่ใช่ค่าที่เพิ่งเซ็ตลงไป และหน้านี้ถูกเติมข้อมูลตั้งแต่ก่อนกล่องจะ ShowDialog
         // (OrderDetailDialog.LoadDetail มาก่อน dlg.ShowDialog เสมอ) ผลคือ Enabled
         // ถูกตั้งเป็น false ค้างไว้ พอกล่องเปิดขึ้นมาปุ่มจึงโผล่มาแบบกดไม่ได้
-        bool showRemote = remoteStep != null
+        bool showRemote = !_finished
+            && remoteStep != null
             && StationService.ManualRemoteSendEnabled
             && (StationService.IsSt3 || _isDevMode);
 
@@ -1093,47 +1127,147 @@ public partial class OrderDetailUserControl : UserControl
         btnRemoteSend.Enabled = showRemote;
         if (remoteStep != null) btnRemoteSend.Text = $"ขอให้ ST1 ส่ง {remoteStep}";
 
-        // ปุ่มส่งมือเหลือไว้เฉพาะโหมดทดสอบ
+        // โหมดทดสอบ: ปุ่มทดสอบยิงตรงเข้าเครื่อง ไม่ผ่านคิว ไม่บันทึกประวัติ (SendToMkAsync / SendToUvAsync)
         //
-        // การส่งงานจริงเป็นหน้าที่ของปุ่มเริ่มงานหน้า Order List กับปุ่มกดหน้างาน
-        // ซึ่งเดินตามลำดับขั้นของ marking method ให้เอง ปุ่มพวกนี้กดข้ามลำดับได้
-        // เปิดไว้ในโหมดใช้งานปกติจึงเสี่ยงที่จะส่งซ้ำหรือส่งข้ามขั้น แล้วพ่นซ้ำ
-        // ลงชิ้นงานจริง
+        // โชว์ครบทุกเครื่อง ไม่ดูว่างานนี้มีขั้นนั้นอยู่ในแผนไหม — จุดประสงค์คือยิงข้อความไปหาเครื่อง
+        // เพื่อดูว่าเครื่องรับไหม ไม่ใช่การเดินงานตามแผน ปุ่มทดสอบส่ง PLC อยู่ในชุดเดียวกัน
+        // (designer ซ่อนไว้เป็นค่าตั้งต้น ที่นี่คือที่เดียวที่เปิดให้เห็น)
         //
-        // โหมดทดสอบโชว์ครบทุกเครื่อง ไม่ดูว่างานนี้มีขั้นนั้นอยู่ในแผนไหม
-        //
-        // เพราะจุดประสงค์ของปุ่มชุดนี้คือยิงข้อความไปหาเครื่องเพื่อดูว่าเครื่องรับไหม
-        // ไม่ใช่การเดินงานตามแผน คนทดสอบจึงต้องเลือกเครื่องไหนก็ได้จากงานใบเดียว
-        // ปุ่มทดสอบส่ง PLC ก็อยู่ในชุดเดียวกัน — designer ซ่อนไว้เป็นค่าตั้งต้น
-        // ที่นี่คือที่เดียวที่เปิดให้เห็น
-        btnTestPlc.Visible = _isDevMode;
-        btnSendMk.Visible = _isDevMode;
-        btnSendUv1.Visible = _isDevMode;
-        btnSendUv2.Visible = _isDevMode;
-
+        // งานใน History ไม่มีปุ่มส่งเลยทุกโหมด (ตกลง 22/10/2026)
         if (_isDevMode)
         {
-            btnTestPlc.Enabled = true;
-            btnSendMk.Enabled = true;
-            btnSendUv1.Enabled = true;
-            btnSendUv2.Enabled = true;
+            btnTestPlc.Visible = btnTestPlc.Enabled = !_finished;
+            foreach (var (button, _) in SendButtons)
+                button.Visible = button.Enabled = !_finished;
             return;
         }
 
-        btnTestPlc.Enabled = false;
-        btnSendMk.Enabled = false;
-        btnSendUv1.Enabled = false;
-        btnSendUv2.Enabled = false;
+        btnTestPlc.Visible = btnTestPlc.Enabled = false;
 
-        if (_currentStep < _sendSteps.Count)
+        // โหมดใช้งาน: ปุ่มเดียวกันเป็น "ส่งใหม่" — ส่งข้อมูลชุดล่าสุดซ้ำเข้าเครื่องที่งานถืออยู่
+        // หลัง SWAP / แก้ข้อมูล (หน้างานแจ้ง 22/10/2026) ส่งผ่านคิวที่หน้า Order List ดู MachineResend
+        //
+        // โชว์เฉพาะเครื่องในแผนของ marking method ที่สถานีนี้ขอได้ · กดได้เฉพาะตอนงานถือเครื่อง
+        // และส่งไปแล้ว — ทำไมยังกดไม่ได้ (รอคิว / กำลังทำด้านไหน) ดูที่สถานะบนหัวหน้านี้
+        // กดแล้วส่งเลยในหน้านี้ ไม่ถามยืนยัน (ResendHereAsync) · ไม่มีตัวส่ง = กดไม่ได้
+        foreach (var (button, step) in SendButtons)
         {
-            var step = _sendSteps[_currentStep];
-            GetSendButton(step).Enabled = true;
+            // ปุ่มที่กำลังส่งอยู่ ปล่อยค้างที่ "กำลังส่ง..." ไว้ — ResendHereAsync คืนสภาพเองตอนเสร็จ
+            if (string.Equals(step, _resendingStep, StringComparison.OrdinalIgnoreCase)) continue;
+
+            bool show = !_finished && HasStep(step) && MachineResend.StationCanRequest(step);
+            button.Visible = show;
+            button.Enabled = show && ResendRunner != null && _resendReady.Contains(step);
+            button.Text = StationService.IsSt3 ? $"ขอ ST1 ส่ง {step} ใหม่" : $"ส่ง {step} ใหม่";
+        }
+    }
+
+    private (AntdUI.Button Button, string Step)[] SendButtons =>
+        [(btnSendMk, "MK"), (btnSendUv1, "UV1"), (btnSendUv2, "UV2")];
+
+    /// <summary>
+    /// อ่านคิวสดแล้วเปิดปุ่มส่งใหม่ของเครื่องที่งานถืออยู่และส่งแล้ว — เงียบเสมอ อ่านไม่ได้ก็ปิดปุ่มไว้
+    /// </summary>
+    private async Task RefreshResendStateAsync()
+    {
+        if (_isDevMode || _finished || _api == null || _jobId <= 0)
+        {
+            if (_resendReady.Count > 0) { _resendReady.Clear(); ApplyStepButtons(); }
+            return;
         }
 
-        for (int i = 0; i < _currentStep && i < _sendSteps.Count; i++)
-            MarkButtonSent(GetSendButton(_sendSteps[i]));
+        int version = ++_resendVersion;
+        List<MachineQueueRow> queue;
+        string? error;
+        try
+        {
+            (queue, error) = await _api.GetMachineQueueAsync();
+        }
+        catch (Exception ex)
+        {
+            (queue, error) = ([], ex.Message);
+        }
+        if (IsDisposed || version != _resendVersion) return;
+
+        _resendReady.Clear();
+        if (error == null)
+            foreach (var step in _sendSteps.Distinct(StringComparer.OrdinalIgnoreCase))
+                if (MachineResend.Check(_jobId, null, step, queue).Row != null)
+                    _resendReady.Add(step);
+
+        ApplyStepButtons();
     }
+
+    /// <summary>
+    /// กดปุ่มส่งใหม่ — ส่งเลยในหน้านี้ ไม่ปิดกล่อง ไม่ถามยืนยัน (เหมือนโหมด Dev) ผลขึ้นที่หน้านี้
+    /// ปุ่มค้างที่ "กำลังส่ง..." จนเสร็จ · ST3 รอ ST1 ส่งได้นานสุด 40 วิ
+    /// </summary>
+    private async Task ResendHereAsync(string step)
+    {
+        if (_finished || _resendingStep != null || ResendRunner == null || !_resendReady.Contains(step)) return;
+
+        var button = SendButtons.First(b => b.Step == step).Button;
+        var originalText = button.Text;
+        _resendingStep = step;
+        button.Enabled = false;
+        button.Text = "กำลังส่ง...";
+        try
+        {
+            var outcome = await ResendRunner(_jobId, step);
+            if (IsDisposed) return;
+
+            var name = step == "MK" ? "MK" : UvSettingsManager.Read(step == "UV1" ? "UV1_NAME" : "UV2_NAME", step);
+            Notify.Result(this, outcome.Sent ? $"{name} — ส่งข้อมูลชุดล่าสุดแล้ว" : $"{name} — ยังไม่ได้ส่งใหม่",
+                outcome.Lines.ToList());
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("OrderDetail.Resend", ex);
+            if (!IsDisposed) Notify.ErrorModal(this, "ส่งใหม่ไม่สำเร็จ", ex.Message);
+        }
+        finally
+        {
+            _resendingStep = null;
+            if (!IsDisposed) button.Text = originalText;
+        }
+
+        if (!IsDisposed) await RefreshResendStateAsync();
+    }
+
+    /// <summary>
+    /// งานใน History (จบ / ยกเลิก) — ไม่มีปุ่มบันทึก ปุ่มส่ง และแก้ค่าไม่ได้ (ตกลง 22/10/2026)
+    ///
+    /// <para>
+    /// งานที่จบแล้วแก้ค่าแล้วบันทึกได้ = ประวัติของงานที่พิมพ์ไปแล้วเปลี่ยนตาม ย้อนดูทีหลังไม่ตรงกับ
+    /// ที่พิมพ์จริง · ปุ่มส่ง / สั่งแคลมป์ของงานที่จบแล้วคือสั่งเครื่องโดยไม่มีงานรองรับ
+    /// ตั้งทุกครั้งที่โหลดงาน — หน้านี้ใช้ซ้ำกับงานอื่นได้
+    /// </para>
+    /// </summary>
+    private void ApplyHistoryLock()
+    {
+        bool editable = !_finished;
+
+        btnSavePattern.Visible = btnSavePattern.Enabled = editable;
+        btnMkSwap.Visible = btnMkSwap.Enabled = editable;
+        picMk1Abc.Cursor = picMk2Abc.Cursor = editable ? Cursors.Hand : Cursors.Default;
+
+        var mode = editable ? AntdUI.TEditMode.Click : AntdUI.TEditMode.None;
+        tblMk1Blocks.EditMode = tblMk2Blocks.EditMode = mode;
+        tblUv1Texts.EditMode = tblUv2Texts.EditMode = mode;
+
+        foreach (var button in IaiCommandButtons)
+            button.Visible = editable;
+
+        ApplyStepButtons();
+    }
+
+    /// <summary>ปุ่มที่สั่งแคลมป์ (ส่งเข้า PLC) หรือบันทึกค่าแคลมป์ — ไม่มีในงานที่จบแล้ว</summary>
+    private AntdUI.Button[] IaiCommandButtons =>
+    [
+        btnIaiAdj1Send, btnIaiAdj1Upload, btnIaiAdj2Send, btnIaiAdj2Upload,
+        btnIaiAdj1Z1Send, btnIaiAdj1Z1Upload, btnIaiAdj1Z2Send, btnIaiAdj1Z2Upload,
+        btnIaiAdj2Z1Send, btnIaiAdj2Z1Upload, btnIaiAdj2Z2Send, btnIaiAdj2Z2Upload,
+    ];
 
     /// <summary>
     /// <paramref name="detail"/> เก็บลง payload ของ command — ฝั่ง UV ใช้บันทึกว่า

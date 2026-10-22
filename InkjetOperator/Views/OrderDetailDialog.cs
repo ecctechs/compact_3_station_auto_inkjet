@@ -51,6 +51,16 @@ internal sealed partial class OrderDetailDialog : AntdUI.BorderlessForm
     /// </summary>
     public string? RemoteStartStep { get; private set; }
 
+    /// <summary>
+    /// ตัวส่งซ้ำของหน้า Order List ให้ปุ่มส่งใหม่ในหน้า — ตั้งก่อน <see cref="LoadDetail"/>
+    /// ดู <see cref="OrderDetailUserControl.ResendRunner"/>
+    /// </summary>
+    internal Func<int, string, Task<OrderDetailUserControl.ResendOutcome>>? ResendRunner
+    {
+        get => detailPage.ResendRunner;
+        set => detailPage.ResendRunner = value;
+    }
+
     /// <summary>Heading shown in the title bar.</summary>
     public string TitleText
     {

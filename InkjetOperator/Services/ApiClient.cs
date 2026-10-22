@@ -694,6 +694,13 @@ public class ApiClient
     public Task<(bool ok, string? error)> BeginQueueSendAsync(int rowId, string token) =>
         QueueSendRequestAsync(rowId, "begin-send", new { token });
 
+    /// <summary>
+    /// ขอสิทธิ์ส่งซ้ำเข้าเครื่องที่งานนี้ถืออยู่และส่งไปแล้ว (หลัง SWAP / แก้ข้อมูล) — ปิดผลด้วย
+    /// <see cref="FinishQueueSendAsync"/> ตัวเดิม backend บันทึกผลสำเร็จเป็น RESEND_&lt;เครื่อง&gt;
+    /// </summary>
+    public Task<(bool ok, string? error)> BeginQueueResendAsync(int rowId, string token) =>
+        QueueSendRequestAsync(rowId, "begin-resend", new { token });
+
     public Task<(bool ok, string? error)> FinishQueueSendAsync(
         int rowId, string token, string outcome, object? detail = null, string? error = null) =>
         QueueSendRequestAsync(rowId, "finish-send", new { token, outcome, detail, error = error ?? "" });

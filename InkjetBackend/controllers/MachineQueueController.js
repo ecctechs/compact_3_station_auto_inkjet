@@ -500,6 +500,45 @@ class MachineQueueController {
     } catch (err) { return reportError(req, res, err); }
   }
 
+  /**
+   * POST /machine-queue/:id/begin-resend
+   * body: { token }
+   *
+   * ส่งข้อมูลซ้ำเข้าเครื่องที่งานนี้ถืออยู่และส่งไปแล้ว — คนหน้างานกดเอง (ตกลง 22/10/2026)
+   *
+   * ใช้หลังกด SWAP หัว MK / แก้ข้อความ / ทิศทาง ในหน้า Order Detail หลังเริ่มงาน เดิมค่าใหม่
+   * ถูกบันทึกแต่ไม่มีทางเข้าเครื่อง เพราะคิวหนึ่งเริ่มส่งได้ครั้งเดียว
+   *
+   * - ต้องเป็นแถวที่ถือเครื่องอยู่ (active) และส่งรอบแรกไปแล้ว — งานอื่นแซงไม่ได้ ลำดับคิวไม่เปลี่ยน
+   * - ส่งอยู่ (sending) ห้ามซ้อน · ส่งซ้ำรอบก่อนไม่รู้ผล (unknown) ส่งใหม่ได้ เพราะคนกดเองหลังตรวจเครื่อง
+   * - บันทึก QUEUE_DISPATCH แบบ resend เป็นหลักฐานก่อนแตะเครื่อง เหมือน begin-send
+   * - ไม่แตะ sent_at / state / สถานะงาน — ผลสำเร็จบันทึกเป็น RESEND_<เครื่อง> (ดู finishSend)
+   *   ไม่ใช่ <เครื่อง> จึงไม่นับเป็นรอบใหม่ (งาน 22) หรือรุ่นย่อยที่พิมพ์เพิ่ม
+   */
+  static async beginResend(req, res) {
+    try {
+      const result = await withQueueLock(async (t) => {
+        const row = await MachineQueue.findByPk(req.params.id, { transaction: t, lock: t.LOCK.UPDATE });
+        if (!row || row.state !== ACTIVE) conflict("งานนี้ไม่ได้ถือเครื่องแล้ว ส่งซ้ำไม่ได้");
+        if (!row.sent_at) conflict(`${row.machine}: ยังไม่ได้ส่งรอบแรก ระบบจะส่งตามคิวให้เอง`);
+        if (await PrintJobCommand.findOne({ where: { command: DISPATCH, payload: { token: req.body.token } }, transaction: t }))
+          conflict("คำขอส่งนี้ถูกใช้แล้ว ให้ตรวจผลก่อนส่งใหม่");
+        const last = await latestDispatch(row.id, t);
+        if (last?.payload?.outcome === "sending")
+          conflict(`${row.machine}: กำลังส่งอยู่ รอให้เสร็จก่อน`);
+        const job = await PrintJob.findByPk(row.print_jobs_id, { transaction: t });
+        if (!job || job.status !== "Process") conflict("งานถูกยกเลิกหรือจบแล้ว ส่งซ้ำไม่ได้");
+        await PrintJobCommand.create({
+          job_id: row.print_jobs_id, command: DISPATCH, success: false,
+          payload: { queue_id: row.id, token: req.body.token, outcome: "sending", resend: true },
+          sent_at: new Date(),
+        }, { transaction: t });
+        return { token: req.body.token };
+      });
+      return ResponseManager.SuccessResponse(req, res, 200, result);
+    } catch (err) { return reportError(req, res, err); }
+  }
+
   // เก็บประวัติกับผลคิวพร้อมกัน เรียกซ้ำด้วย token เดิมไม่เพิ่มประวัติซ้ำ
   static async finishSend(req, res) {
     try {
@@ -511,6 +550,24 @@ class MachineQueueController {
           if (!attempt || attempt.payload.token !== token) conflict("คำขอนี้ไม่ใช่รอบส่งปัจจุบัน");
           if (attempt.payload.outcome === outcome) return { recorded: true };
           if (["sent", "not_sent"].includes(attempt.payload.outcome)) conflict("รอบส่งนี้จบแล้ว");
+
+          // ส่งซ้ำของแถวที่ส่งไปแล้ว (begin-resend) — ไม่แตะ sent_at / state / สถานะงาน
+          // ไม่ถึงเครื่อง = เครื่องยังมีข้อมูลเดิม แถวยังถือเครื่องตามเดิม · ไม่รู้ผล = ค้างไว้ให้ตรวจ
+          // (assertNoUnresolved กันปล่อย / จบ / ยกเลิก จนกว่าจะส่งซ้ำผ่าน หรือคนกดข้ามเครื่อง)
+          if (attempt.payload.resend) {
+            if (row.state !== ACTIVE) conflict("คิวเปลี่ยนระหว่างส่ง");
+            if (outcome === "not_sent" && attempt.payload.outcome !== "sending")
+              conflict("ผลไม่แน่นอน ต้องตรวจเครื่องก่อน");
+            if (outcome === "sent") {
+              await PrintJobCommand.create({
+                job_id: row.print_jobs_id, command: `RESEND_${row.machine}`, success: true,
+                payload: detail ?? null, sent_at: new Date(),
+              }, { transaction: t });
+            }
+            await attempt.update({ payload: { ...attempt.payload, outcome, error: error || null } }, { transaction: t });
+            return { recorded: true };
+          }
+
           if (row.state !== ACTIVE || row.sent_at) conflict("คิวเปลี่ยนระหว่างส่ง");
           if (outcome === "not_sent" && attempt.payload.outcome !== "sending")
             conflict("ผลไม่แน่นอน ต้องตรวจเครื่องก่อนคืนคิว");

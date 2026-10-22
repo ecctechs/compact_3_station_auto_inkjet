@@ -527,8 +527,16 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private string? BlockedPushReason(string machine, MachineQueueRow? holder)
     {
-        if (holder == null || holder.SentAt != null) return null;
+        if (holder == null) return null;
         var job = JobName(holder.PrintJobsId);
+
+        // ส่งไปแล้ว แต่ส่งซ้ำรอบล่าสุด (ปุ่มส่งใหม่ในหน้า Order Detail) ยังไม่จบ / ไม่รู้ผล
+        if (holder.SentAt != null)
+            return holder.DispatchState == "sending"
+                ? $"{machine} กำลังส่งซ้ำ {job} อยู่ · รอสักครู่แล้วกดใหม่"
+                : holder.NeedsSendReview
+                    ? $"{machine} ยังปล่อยไม่ได้ — ส่ง {job} ซ้ำแล้วยังไม่รู้ผล · ตรวจเครื่องแล้วกดส่งใหม่อีกครั้ง หรือกด ข้ามเครื่อง ในแถวงาน"
+                    : null;
 
         // ส่งออกไปแล้วไม่รู้ผล — ปุ่มหน้าเครื่องปล่อยไม่ได้ ทางออกคือปุ่ม "ข้ามเครื่อง" ในแถวงาน
         // ซึ่งให้คนยืนยันพร้อมเห็นสาเหตุ และบันทึกร่องรอยไว้
@@ -2870,21 +2878,27 @@ public partial class OrderListUserControl : UserControl
     private sealed record StepSendResult(bool Sent, List<Notify.ResultLine> Lines,
         bool SafeToRetry = false, object? Detail = null, bool HeldForReview = false);
 
-    private async Task<StepSendResult> SendQueueStepAsync(MachineQueueRow row, ResolvedJobResponse resolved)
+    /// <param name="resend">
+    /// ส่งซ้ำเข้าเครื่องที่งานถืออยู่และส่งไปแล้ว (หลัง SWAP / แก้ข้อมูลในหน้า Order Detail) — ขอสิทธิ์ด้วย
+    /// begin-resend แทน begin-send ที่เหลือทางเดียวกันทุกอย่าง (MK สองหัว · PLC · กันส่งซ้อน · บันทึกผล)
+    /// </param>
+    private async Task<StepSendResult> SendQueueStepAsync(MachineQueueRow row, ResolvedJobResponse resolved, bool resend = false)
     {
         using var lease = MachineBusy.TryHoldExclusive(row.Machine);
         if (lease == null)
             return new(false, [Notify.Note($"{row.Machine}: รอการส่งรอบปัจจุบันจบก่อน")], HeldForReview: true);
         SetMachineStatus(row, "กำลังเตรียมส่ง", AntdUI.TTypeMini.Primary);
-        var timing = new StepTiming("OrderList.Send", $"ส่ง {row.Machine} คิว {row.Id} งาน {row.PrintJobsId}");
+        var timing = new StepTiming("OrderList.Send", $"{(resend ? "ส่งซ้ำ" : "ส่ง")} {row.Machine} คิว {row.Id} งาน {row.PrintJobsId}");
         var token = Guid.NewGuid().ToString();
-        var (began, beginError) = await _api!.BeginQueueSendAsync(row.Id, token);
+        var (began, beginError) = resend
+            ? await _api!.BeginQueueResendAsync(row.Id, token)
+            : await _api!.BeginQueueSendAsync(row.Id, token);
         timing.Mark("จองการส่ง");
         if (!began)
         {
             timing.Write("ยังไม่ส่ง");
             SetMachineStatus(row, "ตรวจสอบคิวก่อนส่งซ้ำ", AntdUI.TTypeMini.Warn);
-            return new(false, [Notify.Bad($"{row.Machine}: ยังไม่ส่ง — {beginError}")], HeldForReview: true);
+            return new(false, [Notify.Bad($"{row.Machine}: ยังไม่ส่ง — {ApiErrorText(beginError)}")], HeldForReview: true);
         }
         SetMachineStatus(row, "กำลังส่ง", AntdUI.TTypeMini.Primary);
 
@@ -2917,9 +2931,17 @@ public partial class OrderListUserControl : UserControl
 
         bool held = !recorded.ok || outcome == "unknown";
         if (held)
-            result.Lines.Add(Notify.Bad($"{row.Machine}: ถือคิว {row.Id} ไว้ตรวจผล ห้ามส่งซ้ำหรือปล่อยเครื่อง"
-                + (recorded.ok ? "" : $" · บันทึกผลไม่ได้: {recorded.error}")));
-        SetMachineStatus(row, held ? "ต้องตรวจสอบก่อนส่งซ้ำ" : result.Sent ? SentStatus(row.Machine) : "ยังไม่ส่ง / ส่งไม่สำเร็จ",
+            result.Lines.Add(Notify.Bad(resend
+                ? $"{row.Machine}: ส่งซ้ำแล้วไม่รู้ผล · ถือเครื่องไว้ตรวจ ตรวจเครื่องแล้วกดส่งใหม่อีกครั้ง หรือกด ข้ามเครื่อง"
+                    + (recorded.ok ? "" : $" · บันทึกผลไม่ได้: {recorded.error}")
+                : $"{row.Machine}: ถือคิว {row.Id} ไว้ตรวจผล ห้ามส่งซ้ำหรือปล่อยเครื่อง"
+                    + (recorded.ok ? "" : $" · บันทึกผลไม่ได้: {recorded.error}")));
+        else if (resend && !result.Sent)
+            result.Lines.Add(Notify.Careful($"{row.Machine}: ยังไม่ได้ส่งซ้ำ เครื่องยังมีข้อมูลชุดเดิม · แก้แล้วกดส่งใหม่อีกครั้ง"));
+        SetMachineStatus(row, held ? "ต้องตรวจสอบก่อนส่งซ้ำ"
+                : result.Sent ? SentStatus(row.Machine)
+                : resend ? "ส่งซ้ำไม่สำเร็จ · ข้อมูลเดิมยังอยู่"
+                : "ยังไม่ส่ง / ส่งไม่สำเร็จ",
             held ? AntdUI.TTypeMini.Warn : result.Sent ? AntdUI.TTypeMini.Success : AntdUI.TTypeMini.Error);
         return result with { HeldForReview = held };
     }
@@ -3247,11 +3269,21 @@ public partial class OrderListUserControl : UserControl
 
         var abandoned = _allJobs
             .Where(j => j.RemoteStart == RemoteSending && !_remoteInFlight.Contains(j.Id))
-            .Select(j => j.Id)
+            .Select(j => (j.Id, Resend: MachineResend.MachineOfRemote(j.RemoteStep)))
             .ToList();
 
-        foreach (var jobId in abandoned)
+        foreach (var (jobId, resend) in abandoned)
         {
+            // คำขอส่งซ้ำ — งานกำลังผลิตและถือเครื่องอยู่ ห้ามคืนเป็นรอเริ่ม ถอนแค่คำขอ
+            // (ผลการส่งที่ค้างอยู่ backend ถือเครื่องไว้ตรวจเอง)
+            if (resend != null)
+            {
+                await _api.SetRemoteStartAsync(jobId, requested: false,
+                    failure: $"ST1 ปิดกลางคันระหว่างส่ง {resend} ใหม่ — ตรวจเครื่องแล้วกดส่งใหม่อีกครั้ง");
+                if (IsDisposed) return;
+                continue;
+            }
+
             await _api.SetRemoteStartAsync(jobId, requested: false,
                 failure: "ST1 ปิดกลางคันระหว่างส่ง — งานถูกคืนเป็นรอเริ่ม");
             await _api.UpdateJobStatusAsync(jobId, "Waiting");
@@ -3397,6 +3429,13 @@ public partial class OrderListUserControl : UserControl
         // คำขอที่ไม่ได้ระบุขั้นถือว่าเป็นขั้นแรก — ใบที่ค้างอยู่ตอนอัปเดตโปรแกรม
         // จึงยังทำงานถูกเหมือนเดิม
         var requested = _allJobs.FirstOrDefault(j => j.Id == jobId)?.RemoteStep;
+
+        // คำขอส่งซ้ำ (RESEND_UV2) — ไม่ใช่การเริ่มขั้นใหม่ ทางแยกของมันเอง
+        if (MachineResend.MachineOfRemote(requested) is { } resendMachine)
+        {
+            await RunRemoteResendAsync(jobId, resendMachine, resolved);
+            return;
+        }
         var step = string.IsNullOrWhiteSpace(requested)
             ? plan.Steps.FirstOrDefault()
             : plan.Steps.FirstOrDefault(x =>
@@ -3826,6 +3865,8 @@ public partial class OrderListUserControl : UserControl
             // ชื่อเดียวกับหัวที่อยู่ในหน้า ไม่ประกอบเอง ไม่งั้นสองที่จะขึ้นคนละเลข
             dlg.TitleText = $"{OrderDetailUserControl.JobTitle(resolved.Job)} — Order Detail";
             dlg.Text = dlg.TitleText;
+            // ปุ่มส่งใหม่ในหน้าส่งผ่านตัวส่งของหน้านี้ — ส่งเลยในกล่อง ไม่ต้องปิด (ดู ResendCoreAsync)
+            dlg.ResendRunner = ResendCoreAsync;
             dlg.LoadDetail(resolved, _api);
             dlg.ShowDialog(this);
             requestedStep = dlg.RemoteStartStep;
@@ -3834,6 +3875,218 @@ public partial class OrderListUserControl : UserControl
         if (requestedStep == null || _api == null || IsDisposed) return;
 
         await RequestRemoteStartFromDetailAsync(resolved.Job.Id);
+    }
+
+    // ── ส่งซ้ำจากหน้า Order Detail ──────────────────────────
+
+    /// <summary>
+    /// ตัวส่งซ้ำที่หน้า Order Detail เรียก — ส่งข้อมูลชุดล่าสุดเข้าเครื่องที่งานถืออยู่ (หลัง SWAP / แก้ข้อมูล)
+    ///
+    /// <para>
+    /// กดแล้วส่งเลย ไม่ถามยืนยัน ไม่ปิดกล่อง เหมือนปุ่มส่งในโหมด Dev (ตกลง 22/10/2026) แต่ไม่ได้ยิงตรง:
+    /// ตรวจกฎกับข้อมูลสด (<see cref="MachineResend.Check"/>) เพราะกล่องเปิดค้างได้นาน แล้วส่งผ่านคิว
+    /// (begin-resend) ทางเดียวกับการส่งปกติ · ST3 ไม่คุยกับเครื่อง ฝากให้ ST1 ส่งแล้วรอผล
+    /// </para>
+    /// <para>
+    /// ไม่เด้งกล่องเองเลย — กล่อง Order Detail เปิดทับหน้านี้อยู่ กล่องที่เด้งจากหน้านี้จะไปซ่อนอยู่ข้างหลัง
+    /// คืนผลเป็นบรรทัดให้หน้า Order Detail แสดงเอง
+    /// </para>
+    /// </summary>
+    private async Task<OrderDetailUserControl.ResendOutcome> ResendCoreAsync(int jobId, string machine)
+    {
+        if (_api == null || IsDisposed) return ResendRefused("ยังไม่ได้เชื่อมต่อ backend");
+        if (!MachineResend.StationCanRequest(machine)) return ResendRefused($"สถานีนี้ส่ง {machine} ใหม่ไม่ได้");
+
+        var resolved = await _api.GetResolvedJobAsync(jobId);
+        if (IsDisposed) return ResendRefused("ปิดหน้าไปแล้ว");
+        if (resolved == null) return ResendRefused($"โหลดข้อมูลงานไม่สำเร็จ · ยังไม่ได้ส่ง {machine} ใหม่");
+
+        var (queue, queueError) = await _api.GetMachineQueueAsync();
+        if (IsDisposed) return ResendRefused("ปิดหน้าไปแล้ว");
+        if (queueError != null) return ResendRefused($"อ่านคิวไม่สำเร็จ · ยังไม่ได้ส่ง {machine} ใหม่ — {queueError}");
+
+        var (row, reason) = MachineResend.Check(jobId, resolved.Job.Status, machine, queue);
+        if (row == null) return ResendRefused(reason!);
+
+        var program = MachineResend.UvProgram(row, resolved.Commands);
+        if (!string.Equals(machine, "MK", StringComparison.OrdinalIgnoreCase) && program == null)
+            return ResendRefused("ไม่รู้ว่าเครื่องโหลดรุ่นไหนอยู่ · ส่งจากหน้าเครื่องแทน");
+
+        if (StationService.IsSt3) return await RemoteResendCoreAsync(jobId, machine, program!);
+
+        var result = await ResendRowAsync(row, resolved, program);
+        if (result == null) return ResendRefused($"{machine} กำลังส่งงานอื่นอยู่ · รอให้เสร็จแล้วกดใหม่");
+
+        SchedulePendingRefresh();
+        return new(result.Sent, result.Lines);
+    }
+
+    private static OrderDetailUserControl.ResendOutcome ResendRefused(string reason) =>
+        new(false, [Notify.Bad(reason)]);
+
+    /// <summary>
+    /// ส่งซ้ำหนึ่งแถว — จองสิทธิ์ส่งของเครื่องไว้ก่อน (กันคิวส่งงานอื่นแทรกเครื่องเดียวกัน)
+    /// คืน null เมื่อเครื่องนั้นกำลังส่งอยู่ ยังไม่ได้แตะอะไร
+    /// </summary>
+    private async Task<StepSendResult?> ResendRowAsync(MachineQueueRow row, ResolvedJobResponse resolved, string? program)
+    {
+        if (!ReserveDispatch(row.Machine)) return null;
+
+        var dispatchToken = _dispatchingMachines[row.Machine];
+        _sendOperations++;
+        _activeStatusQueues.Add(row.Id);
+        try
+        {
+            if (program != null) row.ProgramName = program;
+            ShowSending($"กำลังส่ง {row.Machine} ใหม่ · {JobName(row.PrintJobsId)}");
+            AppLog.Info("OrderList.Resend",
+                $"ส่งซ้ำ {row.Machine} คิว {row.Id} {JobName(row.PrintJobsId)}{(program != null ? $" ({program})" : "")}");
+
+            var result = await SendQueueStepAsync(row, resolved, resend: true);
+            AppLog.Info("OrderList.Resend",
+                $"ผลส่งซ้ำ {row.Machine} {JobName(row.PrintJobsId)}: "
+                + string.Join(" · ", result.Lines.Select(l => l.Text)));
+            return result;
+        }
+        finally
+        {
+            _activeStatusQueues.Remove(row.Id);
+            ReleaseDispatch(row.Machine, dispatchToken);
+            EndSending();
+            SchedulePendingRefresh();
+            if (!IsDisposed && !_sending) ShowSending(null);
+        }
+    }
+
+    /// <summary>
+    /// ST3 — ฝาก ST1 ส่งซ้ำ แล้วรอผลจริงไม่เกิน <see cref="RemoteOutcomeWait"/>
+    ///
+    /// <para>
+    /// ช่องทางเดียวกับ "ขอให้ ST1 ส่ง" (remote_step = RESEND_UV2) แต่ไม่ถอยสถานะงานเมื่อหมดเวลา —
+    /// งานกำลังผลิตและถือเครื่องอยู่ ข้อมูลเดิมยังอยู่ในเครื่อง · ST1 รุ่นเก่าที่ไม่รู้จักคำขอนี้
+    /// ตอบกลับเป็น "ไม่มีขั้นตอนนี้" ไม่ส่งอะไรผิด
+    /// </para>
+    /// </summary>
+    private async Task<OrderDetailUserControl.ResendOutcome> RemoteResendCoreAsync(int jobId, string machine, string program)
+    {
+        if (_sending) return ResendRefused("กำลังรอผลการส่งอื่นอยู่ · รอสักครู่แล้วกดใหม่");
+
+        // นับผลสำเร็จเดิมไว้ก่อน — คำขอนี้สำเร็จเมื่อมี RESEND_<เครื่อง> เพิ่มขึ้นจากตอนนี้
+        var resendCommand = MachineResend.RemoteStep(machine);
+        int before = CountSuccess((await _api!.GetJobByIdAsync(jobId))?.Commands, resendCommand);
+        if (IsDisposed) return ResendRefused("ปิดหน้าไปแล้ว");
+
+        var (ok, err) = await _api.SetRemoteStartAsync(jobId, requested: true, program, step: resendCommand);
+        if (!ok) return ResendRefused($"ฝากคำขอให้ ST1 ไม่สำเร็จ — {err ?? "ติดต่อ backend ไม่ได้"}");
+        AppLog.Info("OrderList.Resend", $"ขอให้ ST1 ส่งซ้ำ {machine} {JobName(jobId)} ({program})");
+
+        // ระหว่างรอ ตั้ง _sending ไว้ให้รอบ poll หยุด กล่องแจ้งผลเบื้องหลังจะได้ไม่เด้งซ้อนเรื่องเดียวกัน
+        _sendOperations++;
+        try
+        {
+            return await WaitRemoteResendAsync(jobId, machine, resendCommand, before);
+        }
+        finally
+        {
+            EndSending();
+            SchedulePendingRefresh();
+        }
+    }
+
+    /// <summary>รอ ST1 ส่งซ้ำเสร็จ — แบบเดียวกับ <see cref="ShowRemoteOutcomeAsync"/> แต่ไม่ถอยสถานะงาน ไม่เด้งกล่อง</summary>
+    private async Task<OrderDetailUserControl.ResendOutcome> WaitRemoteResendAsync(
+        int jobId, string machine, string resendCommand, int before)
+    {
+        var deadline = DateTime.UtcNow + RemoteOutcomeWait;
+        while (DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(700);
+            if (IsDisposed) return ResendRefused("ปิดหน้าไปแล้ว");
+
+            var job = await _api!.GetJobByIdAsync(jobId);
+            if (IsDisposed) return ResendRefused("ปิดหน้าไปแล้ว");
+            if (job == null) continue;
+
+            var failure = job.RemoteError?.Trim();
+            if (!string.IsNullOrEmpty(failure))
+            {
+                await _api.SetRemoteStartAsync(jobId, requested: false);
+                return ResendRefused(failure);
+            }
+
+            if (CountSuccess(job.Commands, resendCommand) > before)
+                return new(true, [Notify.Ok($"{MachineDisplayName(machine)} — ส่งข้อมูลชุดล่าสุดแล้ว (ส่งโดย ST1)")]);
+        }
+
+        var final = await _api!.GetJobByIdAsync(jobId);
+        if (final?.RemoteStart == RemoteSending)
+            return new(false, [Notify.Careful($"ST1 รับคำขอแล้ว กำลังส่ง {machine} ใหม่ แต่ช้ากว่าปกติ · ไม่ต้องกดซ้ำ รอผลสักครู่")]);
+
+        // ไม่มีใครหยิบ — ถอนคำขอ ไม่แตะสถานะงาน (งานยังถือเครื่อง ข้อมูลเดิมยังอยู่ในเครื่อง)
+        await _api.SetRemoteStartAsync(jobId, requested: false);
+        return ResendRefused($"ST1 ไม่รับคำขอใน {RemoteOutcomeWait.TotalSeconds:0} วินาที — ยังไม่ได้ส่ง เครื่องยังมีข้อมูลชุดเดิม · "
+            + "ตรวจว่าโปรแกรมที่ ST1 เปิดอยู่และต่อ Backend ได้ แล้วกดใหม่");
+    }
+
+    private static int CountSuccess(IEnumerable<CommandResult>? commands, string command) =>
+        commands?.Count(c => c.Success && string.Equals(c.Command, command, StringComparison.OrdinalIgnoreCase)) ?? 0;
+
+    /// <summary>
+    /// ST1 รับคำขอส่งซ้ำจาก ST3 — ตรวจกฎกับข้อมูลสด แล้วส่งผ่านคิวแบบเดียวกับกดที่ ST1
+    /// เครื่องกำลังส่งอยู่ = คงคำขอไว้ให้รอบ poll ถัดไป · ส่งไม่ได้ = ฝากสาเหตุกลับให้ ST3
+    /// </summary>
+    private async Task RunRemoteResendAsync(int jobId, string machine, ResolvedJobResponse resolved)
+    {
+        var plan = MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod);
+        if (!plan.Steps.Contains(machine, StringComparer.OrdinalIgnoreCase))
+        {
+            await _api!.SetRemoteStartAsync(jobId, requested: false, failure: $"งานนี้ไม่มี {machine} ให้ส่งซ้ำ");
+            return;
+        }
+
+        var (queue, queueError) = await _api!.GetMachineQueueAsync();
+        if (IsDisposed || queueError != null) return;   // อ่านคิวไม่ได้ = คงคำขอไว้ลองรอบหน้า
+
+        var (row, reason) = MachineResend.Check(jobId, resolved.Job.Status, machine, queue);
+        if (row == null)
+        {
+            await _api.SetRemoteStartAsync(jobId, requested: false, failure: $"ส่ง {machine} ใหม่ไม่ได้ — {reason}");
+            return;
+        }
+
+        var program = MachineResend.UvProgram(row, resolved.Commands);
+        if (!string.Equals(machine, "MK", StringComparison.OrdinalIgnoreCase) && program == null)
+        {
+            await _api.SetRemoteStartAsync(jobId, requested: false,
+                failure: $"ส่ง {machine} ใหม่ไม่ได้ — ไม่รู้ว่าเครื่องโหลดรุ่นไหนอยู่");
+            return;
+        }
+
+        // เครื่องกำลังส่งงานอื่น — คงคำขอไว้ รอบ poll ถัดไปลองใหม่
+        if (_dispatchingMachines.ContainsKey(machine) || MachineBusy.IsBusy(machine)) return;
+
+        await _api.ClaimRemoteStartAsync(jobId, program, MachineResend.RemoteStep(machine));
+        if (IsDisposed) return;
+
+        var result = await ResendRowAsync(row, resolved, program);
+        if (IsDisposed) return;
+        if (result == null)
+        {
+            // มีการส่งแทรกเข้าเครื่องเดียวกันพอดี — คืนคำขอเป็น "รอ" ให้รอบ poll ถัดไปหยิบใหม่
+            // ไม่งั้นค้างเป็น "กำลังส่ง" ไม่มีใครหยิบอีก
+            await _api.SetRemoteStartAsync(jobId, requested: true, program, step: MachineResend.RemoteStep(machine));
+            return;
+        }
+
+        var failure = result.Sent
+            ? null
+            : string.Join(" · ", result.Lines.Where(l => l.Kind is Notify.ResultKind.Error or Notify.ResultKind.Warn)
+                .Select(l => l.Text)) is { Length: > 0 } text ? text : $"ส่ง {machine} ใหม่ไม่สำเร็จ";
+        await _api.SetRemoteStartAsync(jobId, requested: false, failure: failure);
+
+        if (IsDisposed) return;
+        var message = $"{JobName(jobId)} — {(result.Sent ? $"ส่ง {machine} ใหม่แล้ว" : failure)} (คำขอจาก ST3)";
+        if (result.Sent) Notify.Success(this, message); else Notify.Warn(this, message);
     }
 
     /// <summary>

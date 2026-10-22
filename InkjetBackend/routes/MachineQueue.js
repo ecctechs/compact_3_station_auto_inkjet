@@ -54,6 +54,8 @@ Route.patch(
 );
 
 Route.post(RouteName + "/:id/begin-send", validate(beginSendSchema), MachineQueueController.beginSend);
+// ส่งซ้ำเข้าเครื่องที่งานถืออยู่ (หลัง SWAP / แก้ข้อมูล) — ใช้ finish-send ตัวเดิมปิดผล
+Route.post(RouteName + "/:id/begin-resend", validate(beginSendSchema), MachineQueueController.beginResend);
 Route.post(RouteName + "/:id/finish-send", validate(finishSendSchema), MachineQueueController.finishSend);
 
 Route.delete(RouteName + "/job/:jobId", MachineQueueController.clearJob);

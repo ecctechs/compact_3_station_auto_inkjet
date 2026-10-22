@@ -603,9 +603,13 @@ public class MachineQueueRow
     /// <summary>
     /// ส่งไม่ผ่านหรือไม่รู้ผล ค้างรอคนตรวจเครื่อง — ขึ้นปุ่ม "ข้ามเครื่อง" ในแถวงาน
     /// ส่งไม่ผ่านแน่นอน (not_sent) ระบบไม่ส่งซ้ำเอง แถวจึงค้างจนกว่าคนจะสั่งต่อหรือข้าม
+    /// <para>
+    /// ไม่นับแถวที่ส่งรอบแรกผ่านแล้วแต่ส่งซ้ำ (ปุ่มส่งใหม่) ไม่ถึงเครื่อง — เครื่องยังมีข้อมูลชุดเดิม
+    /// ไม่ได้ค้าง ปล่อยด้วยปุ่มหน้าเครื่องได้ตามปกติ ขึ้นปุ่มข้ามจะชวนให้ข้ามเครื่องที่ใช้งานได้
+    /// </para>
     /// </summary>
     [JsonIgnore]
-    public bool NeedsAttention => NeedsSendReview || DispatchState == "not_sent";
+    public bool NeedsAttention => NeedsSendReview || (DispatchState == "not_sent" && SentAt == null);
 
     [JsonPropertyName("id")]
     public int Id { get; set; }
