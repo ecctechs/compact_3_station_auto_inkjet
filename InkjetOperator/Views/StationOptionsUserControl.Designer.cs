@@ -31,10 +31,15 @@ partial class StationOptionsUserControl
         divRow9 = new AntdUI.Divider();
         divRow10 = new AntdUI.Divider();
         divRow11 = new AntdUI.Divider();
+        divRowManualSend = new AntdUI.Divider();
         tlpRemoteSend = new System.Windows.Forms.TableLayoutPanel();
         lblRemoteSendHeading = new AntdUI.Label();
         lblRemoteSendHelp = new AntdUI.Label();
         chkManualRemoteSend = new AntdUI.Switch();
+        tlpManualSend = new System.Windows.Forms.TableLayoutPanel();
+        lblManualSendHeading = new AntdUI.Label();
+        lblManualSendHelp = new AntdUI.Label();
+        chkManualOrderDetailSend = new AntdUI.Switch();
         tlpProcessTabs = new System.Windows.Forms.TableLayoutPanel();
         lblProcessTabsHeading = new AntdUI.Label();
         lblProcessTabsHelp = new AntdUI.Label();
@@ -71,6 +76,7 @@ partial class StationOptionsUserControl
         btnClearJobData = new AntdUI.Button();
         tlpOptionsRoot.SuspendLayout();
         tlpRemoteSend.SuspendLayout();
+        tlpManualSend.SuspendLayout();
         tlpProcessTabs.SuspendLayout();
         flpProcessTabs.SuspendLayout();
         tlpMockup.SuspendLayout();
@@ -91,29 +97,33 @@ partial class StationOptionsUserControl
         tlpOptionsRoot.Controls.Add(divRow1, 0, 2);
         tlpOptionsRoot.Controls.Add(tlpRemoteSend, 0, 3);
         tlpOptionsRoot.Controls.Add(divRow2, 0, 4);
-        tlpOptionsRoot.Controls.Add(tlpProcessTabs, 0, 5);
-        tlpOptionsRoot.Controls.Add(divRow3, 0, 6);
-        tlpOptionsRoot.Controls.Add(tlpMockup, 0, 7);
-        tlpOptionsRoot.Controls.Add(divRow4, 0, 8);
-        tlpOptionsRoot.Controls.Add(tlpUv2Pick, 0, 9);
-        tlpOptionsRoot.Controls.Add(divRow6, 0, 10);
-        tlpOptionsRoot.Controls.Add(tlpUvRepeat, 0, 11);
-        tlpOptionsRoot.Controls.Add(divRow7, 0, 12);
-        tlpOptionsRoot.Controls.Add(tlpScanTab, 0, 13);
-        tlpOptionsRoot.Controls.Add(divRow8, 0, 14);
-        tlpOptionsRoot.Controls.Add(lblSectionTools, 0, 15);
-        tlpOptionsRoot.Controls.Add(divRow9, 0, 16);
-        tlpOptionsRoot.Controls.Add(tlpReset, 0, 17);
-        tlpOptionsRoot.Controls.Add(divRow10, 0, 18);
-        tlpOptionsRoot.Controls.Add(tlpJobData, 0, 19);
-        tlpOptionsRoot.Controls.Add(divRow11, 0, 20);
+        tlpOptionsRoot.Controls.Add(tlpManualSend, 0, 5);
+        tlpOptionsRoot.Controls.Add(divRowManualSend, 0, 6);
+        tlpOptionsRoot.Controls.Add(tlpProcessTabs, 0, 7);
+        tlpOptionsRoot.Controls.Add(divRow3, 0, 8);
+        tlpOptionsRoot.Controls.Add(tlpMockup, 0, 9);
+        tlpOptionsRoot.Controls.Add(divRow4, 0, 10);
+        tlpOptionsRoot.Controls.Add(tlpUv2Pick, 0, 11);
+        tlpOptionsRoot.Controls.Add(divRow6, 0, 12);
+        tlpOptionsRoot.Controls.Add(tlpUvRepeat, 0, 13);
+        tlpOptionsRoot.Controls.Add(divRow7, 0, 14);
+        tlpOptionsRoot.Controls.Add(tlpScanTab, 0, 15);
+        tlpOptionsRoot.Controls.Add(divRow8, 0, 16);
+        tlpOptionsRoot.Controls.Add(lblSectionTools, 0, 17);
+        tlpOptionsRoot.Controls.Add(divRow9, 0, 18);
+        tlpOptionsRoot.Controls.Add(tlpReset, 0, 19);
+        tlpOptionsRoot.Controls.Add(divRow10, 0, 20);
+        tlpOptionsRoot.Controls.Add(tlpJobData, 0, 21);
+        tlpOptionsRoot.Controls.Add(divRow11, 0, 22);
         tlpOptionsRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpOptionsRoot.Location = new System.Drawing.Point(32, 32);
         tlpOptionsRoot.Margin = new System.Windows.Forms.Padding(0);
         tlpOptionsRoot.Name = "tlpOptionsRoot";
-        tlpOptionsRoot.RowCount = 22;
+        tlpOptionsRoot.RowCount = 24;
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 66F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 116F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 116F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
@@ -213,6 +223,59 @@ partial class StationOptionsUserControl
         chkManualRemoteSend.Size = new System.Drawing.Size(84, 36);
         chkManualRemoteSend.TabIndex = 6;
         chkManualRemoteSend.UnCheckedText = "ปิด";
+        //
+        // tlpManualSend
+        //
+        tlpManualSend.ColumnCount = 2;
+        tlpManualSend.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpManualSend.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
+        tlpManualSend.Controls.Add(lblManualSendHeading, 0, 0);
+        tlpManualSend.Controls.Add(lblManualSendHelp, 0, 1);
+        tlpManualSend.Controls.Add(chkManualOrderDetailSend, 1, 0);
+        tlpManualSend.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpManualSend.Margin = new System.Windows.Forms.Padding(0);
+        tlpManualSend.Name = "tlpManualSend";
+        tlpManualSend.Padding = new System.Windows.Forms.Padding(0, 14, 0, 14);
+        tlpManualSend.RowCount = 2;
+        tlpManualSend.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
+        tlpManualSend.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpManualSend.SetRowSpan(chkManualOrderDetailSend, 2);
+        tlpManualSend.Size = new System.Drawing.Size(1216, 116);
+        tlpManualSend.TabIndex = 7;
+        //
+        // lblManualSendHeading
+        //
+        lblManualSendHeading.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblManualSendHeading.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        lblManualSendHeading.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblManualSendHeading.Margin = new System.Windows.Forms.Padding(0);
+        lblManualSendHeading.Name = "lblManualSendHeading";
+        lblManualSendHeading.Size = new System.Drawing.Size(1076, 36);
+        lblManualSendHeading.TabIndex = 8;
+        lblManualSendHeading.Text = "ปุ่มส่ง Manual ในหน้า Order Detail";
+        //
+        // lblManualSendHelp
+        //
+        lblManualSendHelp.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblManualSendHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblManualSendHelp.ForeColor = System.Drawing.Color.FromArgb(102, 102, 102);
+        lblManualSendHelp.Margin = new System.Windows.Forms.Padding(0);
+        lblManualSendHelp.Name = "lblManualSendHelp";
+        lblManualSendHelp.Size = new System.Drawing.Size(1076, 52);
+        lblManualSendHelp.TabIndex = 9;
+        lblManualSendHelp.Text = "แสดงเฉพาะเครื่องที่กำลังถืองานตามคิว · MK ส่ง PLC พร้อม MK · UV1 / UV2 ไม่ส่ง PLC\r\nส่งซ้ำได้ขณะงานยังถือเครื่องอยู่";
+        lblManualSendHelp.TextAlign = System.Drawing.ContentAlignment.TopLeft;
+        //
+        // chkManualOrderDetailSend
+        //
+        chkManualOrderDetailSend.Anchor = System.Windows.Forms.AnchorStyles.Right;
+        chkManualOrderDetailSend.CheckedText = "เปิด";
+        chkManualOrderDetailSend.Font = new System.Drawing.Font("Segoe UI", 11F);
+        chkManualOrderDetailSend.Margin = new System.Windows.Forms.Padding(0);
+        chkManualOrderDetailSend.Name = "chkManualOrderDetailSend";
+        chkManualOrderDetailSend.Size = new System.Drawing.Size(84, 36);
+        chkManualOrderDetailSend.TabIndex = 10;
+        chkManualOrderDetailSend.UnCheckedText = "ปิด";
         //
         // tlpProcessTabs
         //
@@ -787,6 +850,7 @@ partial class StationOptionsUserControl
         flpProcessTabs.ResumeLayout(false);
         tlpProcessTabs.ResumeLayout(false);
         tlpRemoteSend.ResumeLayout(false);
+        tlpManualSend.ResumeLayout(false);
         tlpOptionsRoot.ResumeLayout(false);
         tlpProcessTabs.PerformLayout();
         flpProcessTabs.PerformLayout();
@@ -811,10 +875,15 @@ partial class StationOptionsUserControl
     private AntdUI.Divider divRow9;
     private AntdUI.Divider divRow10;
     private AntdUI.Divider divRow11;
+    private AntdUI.Divider divRowManualSend;
     private System.Windows.Forms.TableLayoutPanel tlpRemoteSend;
     private AntdUI.Label lblRemoteSendHeading;
     private AntdUI.Label lblRemoteSendHelp;
     private AntdUI.Switch chkManualRemoteSend;
+    private System.Windows.Forms.TableLayoutPanel tlpManualSend;
+    private AntdUI.Label lblManualSendHeading;
+    private AntdUI.Label lblManualSendHelp;
+    private AntdUI.Switch chkManualOrderDetailSend;
     private System.Windows.Forms.TableLayoutPanel tlpProcessTabs;
     private AntdUI.Label lblProcessTabsHeading;
     private AntdUI.Label lblProcessTabsHelp;

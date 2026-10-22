@@ -55,6 +55,10 @@ Route.patch(
 
 Route.post(RouteName + "/:id/begin-send", validate(beginSendSchema), MachineQueueController.beginSend);
 Route.post(RouteName + "/:id/finish-send", validate(finishSendSchema), MachineQueueController.finishSend);
+Route.post(RouteName + "/:id/manual-resend/begin", validate(beginSendSchema), MachineQueueController.beginManualResend);
+Route.post(RouteName + "/:id/manual-resend/request", validate(beginSendSchema), MachineQueueController.requestManualResend);
+Route.post(RouteName + "/:id/manual-resend/claim", validate(beginSendSchema), MachineQueueController.claimManualResend);
+Route.post(RouteName + "/:id/manual-resend/finish", validate(finishSendSchema), MachineQueueController.finishManualResend);
 
 Route.delete(RouteName + "/job/:jobId", MachineQueueController.clearJob);
 

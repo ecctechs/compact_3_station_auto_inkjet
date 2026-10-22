@@ -58,6 +58,13 @@ public static class StationService
     public static bool ManualRemoteSendEnabled =>
         CustomSettingsManager.Read(ManualRemoteSendKey, "0") == "1";
 
+    /// <summary>คีย์เปิดปุ่มส่งซ้ำจากหน้า Order Detail เฉพาะเครื่องที่กำลังถือคิวงาน</summary>
+    public const string ManualOrderDetailSendKey = "ORDER_DETAIL_MANUAL_SEND";
+
+    /// <summary>ปุ่ม Manual ใน Order Detail เปิดอยู่ไหม — ค่าเริ่มต้นคือปิด</summary>
+    public static bool ManualOrderDetailSendEnabled =>
+        CustomSettingsManager.Read(ManualOrderDetailSendKey, "0") == "1";
+
     /// <summary>คีย์ใน Setting.config ที่คุมตัวกรอง In-line / Off-line ในหน้า Order List</summary>
     public const string ProcessTabsKey = "ORDER_PROCESS_TABS";
 

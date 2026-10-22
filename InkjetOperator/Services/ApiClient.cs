@@ -698,6 +698,24 @@ public class ApiClient
         int rowId, string token, string outcome, object? detail = null, string? error = null) =>
         QueueSendRequestAsync(rowId, "finish-send", new { token, outcome, detail, error = error ?? "" });
 
+    /// <summary>จองสิทธิ์ส่งซ้ำให้แถวที่เครื่องยัง active และเคยส่งสำเร็จแล้ว</summary>
+    public Task<(bool ok, string? error)> BeginManualQueueResendAsync(int rowId, string token) =>
+        QueueSendRequestAsync(rowId, "manual-resend/begin", new { token });
+
+    /// <summary>ST3 ฝากคำขอให้ ST1 ส่ง UV2 ซ้ำ</summary>
+    public Task<(bool ok, string? error)> RequestManualQueueResendAsync(int rowId, string token) =>
+        QueueSendRequestAsync(rowId, "manual-resend/request", new { token });
+
+    /// <summary>ST1 รับคำขอส่ง UV2 ซ้ำจาก ST3 ได้ครั้งเดียว</summary>
+    public Task<(bool ok, string? error)> ClaimManualQueueResendAsync(int rowId, string token) =>
+        QueueSendRequestAsync(rowId, "manual-resend/claim", new { token });
+
+    /// <summary>บันทึกผลส่งซ้ำโดยไม่เปลี่ยนเจ้าของเครื่อง</summary>
+    public Task<(bool ok, string? error)> FinishManualQueueResendAsync(
+        int rowId, string token, string outcome, object? detail = null, string? error = null) =>
+        QueueSendRequestAsync(rowId, "manual-resend/finish",
+            new { token, outcome, detail, error = error ?? "" });
+
     private async Task<(bool ok, string? error)> QueueSendRequestAsync(int rowId, string action, object payload)
     {
         try

@@ -980,6 +980,9 @@ public partial class OrderListUserControl : UserControl
                 bool changed = await ProcessMachineQueueAsync(queue);
                 if (IsDisposed) return;
                 if (_sending) { _refreshRequested = true; return; }
+                changed |= await ProcessManualQueueResendsAsync(queue);
+                if (IsDisposed) return;
+                if (_sending) { _refreshRequested = true; return; }
                 // รอบที่ไม่มีการส่ง ใช้คิวชุดเดิมวาดแถบสถานีได้ ไม่ต้องอ่านซ้ำ
                 await RefreshStationBarAsync(changed ? null : queue);
             }
@@ -2924,6 +2927,191 @@ public partial class OrderListUserControl : UserControl
         return result with { HeldForReview = held };
     }
 
+    /// <summary>
+    /// ส่งซ้ำจาก Order Detail โดยใช้ flow ส่งชุดเดียวกับปุ่มเริ่มงาน
+    /// ต้องยืนยันสิทธิ์กับ backend ว่างานยังถือเครื่องและเคยส่งสำเร็จก่อนแตะเครื่องจริง
+    /// </summary>
+    private async Task SendManualQueueResendAsync(int jobId, string machine)
+    {
+        if (_api == null || IsDisposed) return;
+        if (!StationService.ManualOrderDetailSendEnabled)
+        {
+            Notify.Warn(this, "ปุ่มส่ง Manual ถูกปิดจากตัวเลือกหน้างานแล้ว");
+            return;
+        }
+
+        bool localMachine = StationService.IsSt3
+            ? string.Equals(machine, "UV2", StringComparison.OrdinalIgnoreCase)
+            : machine is "MK" or "UV1";
+        if (!localMachine)
+        {
+            Notify.Warn(this, $"สถานีนี้ไม่มีสิทธิ์ส่ง {machine}");
+            return;
+        }
+
+        using var lease = StationService.IsSt3 ? null : MachineBusy.TryHoldExclusive(machine);
+        if (!StationService.IsSt3 && lease == null)
+        {
+            Notify.Warn(this, $"{machine} กำลังส่งงานอยู่ กรุณารอให้เสร็จก่อน");
+            return;
+        }
+
+        var (rows, queueError) = await _api.GetMachineQueueAsync(machine);
+        if (IsDisposed) return;
+        if (queueError != null)
+        {
+            Notify.ErrorModal(this, "ตรวจคิวไม่สำเร็จ", queueError);
+            return;
+        }
+
+        var row = rows
+            .Where(candidate => candidate.PrintJobsId == jobId
+                && candidate.State == "active"
+                && string.Equals(candidate.Machine, machine, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(candidate => candidate.Round)
+            .ThenByDescending(candidate => candidate.Id)
+            .FirstOrDefault();
+
+        if (row == null || row.AwaitingPick || row.SentAt == null || row.NeedsSendReview)
+        {
+            Notify.Warn(this, $"{machine}: งานไม่ได้ถือเครื่องอยู่ ส่งไม่สำเร็จ หรือกำลังรอตรวจสอบผล");
+            return;
+        }
+
+        var resolved = await _api.GetResolvedJobAsync(jobId);
+        if (IsDisposed) return;
+        if (resolved == null)
+        {
+            Notify.ErrorModal(this, "โหลดงานไม่สำเร็จ", $"ไม่สามารถโหลดข้อมูลงาน #{jobId} ได้");
+            return;
+        }
+
+        if (!string.Equals(resolved.Job.Status, "Process", StringComparison.OrdinalIgnoreCase)
+            || !MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod).Steps
+                .Contains(machine, StringComparer.OrdinalIgnoreCase))
+        {
+            Notify.Warn(this, $"{machine}: งานจบแล้วหรือไม่ได้ใช้เครื่องนี้ตาม marking");
+            return;
+        }
+
+        var token = Guid.NewGuid().ToString();
+        if (StationService.IsSt3)
+        {
+            var (requested, requestError) = await _api.RequestManualQueueResendAsync(row.Id, token);
+            if (!requested)
+            {
+                Notify.Warn(this, $"UV2: คิวเปลี่ยนแล้ว จึงไม่ส่งซ้ำ · {requestError}");
+                return;
+            }
+
+            // UV2 ต่ออยู่กับ ST1 — ฝากคำขอให้ ST1 ส่ง แล้วรอผลจากคิว ห้ามส่งตรงจาก ST3
+            await WaitForManualQueueResendAsync(row.Id, token, machine);
+            if (!IsDisposed) await RefreshDataAsync(force: true);
+            return;
+        }
+
+        var (began, beginError) = await _api.BeginManualQueueResendAsync(row.Id, token);
+        if (!began)
+        {
+            Notify.Warn(this, $"{machine}: คิวเปลี่ยนแล้ว จึงไม่ส่งซ้ำ · {beginError}");
+            return;
+        }
+
+        var timing = new StepTiming("OrderDetail.ManualSend", $"ส่งซ้ำ {machine} คิว {row.Id} งาน {jobId}");
+        StepSendResult result;
+        try
+        {
+            // SendStepAsync คือ flow เดียวกับปุ่มเริ่มงาน: MK เรียก PLC พร้อม MK,
+            // ส่วน UV1 / UV2 ส่งผ่าน UV อย่างเดียว
+            result = await SendStepAsync(jobId, machine, resolved, row.ProgramName);
+        }
+        catch (Exception ex)
+        {
+            // เมื่อไม่รู้ว่าเครื่องรับคำสั่งไปแล้วหรือยัง ต้องค้างผลไว้ตรวจ ไม่เปิดให้ส่งซ้ำทันที
+            result = new(false, [Notify.Bad($"{machine}: {ex.Message}")]);
+        }
+        timing.Mark("ส่งคำสั่งเครื่อง");
+
+        var outcome = result.Sent ? "sent"
+            : result.SafeToRetry ? "not_sent"
+            : "unknown";
+        var error = string.Join(" · ", result.Lines
+            .Where(line => line.Kind == Notify.ResultKind.Error)
+            .Select(line => line.Text));
+        if (error.Length > 4000) error = error[..4000];
+
+        // ลองบันทึกผลซ้ำได้ แต่ห้ามส่งคำสั่งเข้าเครื่องซ้ำเมื่อบันทึก API มีปัญหา
+        var finished = await _api.FinishManualQueueResendAsync(row.Id, token, outcome, result.Detail, error);
+        if (!finished.ok)
+            finished = await _api.FinishManualQueueResendAsync(row.Id, token, outcome, result.Detail, error);
+        timing.Mark("บันทึกผลส่งซ้ำ");
+        timing.Write(outcome);
+
+        if (!finished.ok)
+            result.Lines.Add(Notify.Bad($"{machine}: บันทึกผลส่งซ้ำไม่ได้ — คิวถูกกันไว้ตรวจสอบ ห้ามกดส่งซ้ำ"));
+        else if (outcome == "unknown")
+            result.Lines.Add(Notify.Bad($"{machine}: ยังไม่ทราบผล ต้องตรวจเครื่องก่อนปล่อยคิวหรือส่งซ้ำ"));
+        else if (outcome == "not_sent")
+            result.Lines.Add(Notify.Careful($"{machine}: รอบส่งซ้ำนี้ไม่ได้ส่ง · งานเดิมที่ส่งสำเร็จยังถือเครื่องอยู่"));
+
+        Notify.Result(this, $"ผลส่ง Manual {machine}", result.Lines);
+        AppLog.Info("OrderDetail.ManualSend", $"ส่งซ้ำ {machine} คิว {row.Id} งาน {jobId} · {outcome}");
+        if (!IsDisposed) await RefreshDataAsync(force: true);
+    }
+
+    private async Task WaitForManualQueueResendAsync(int rowId, string token, string machine)
+    {
+        var deadline = DateTime.UtcNow + RemoteOutcomeWait;
+        while (DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(700);
+            if (IsDisposed) return;
+
+            var (rows, error) = await _api!.GetMachineQueueAsync(machine);
+            if (IsDisposed) return;
+            if (error != null) continue;
+
+            var row = rows.FirstOrDefault(candidate => candidate.Id == rowId);
+            if (row == null)
+            {
+                Notify.WarnModal(this, "ตรวจผลส่งซ้ำไม่ได้",
+                    "แถวคิวไม่อยู่แล้ว กรุณาตรวจสถานะ UV2 และงานก่อนกดส่งอีกครั้ง");
+                return;
+            }
+            if (!string.Equals(row.DispatchToken, token, StringComparison.Ordinal))
+            {
+                Notify.WarnModal(this, "คำขอส่งซ้ำเปลี่ยนแล้ว",
+                    "คิวมีคำขอรอบใหม่ กรุณาตรวจสถานะ UV2 ก่อนกดส่งอีกครั้ง");
+                return;
+            }
+
+            switch (row.ManualResendOutcome)
+            {
+                case "sent":
+                    Notify.SuccessDetail(this, "ส่ง UV2 ซ้ำสำเร็จ",
+                        "ST1 ส่งโปรแกรม UV2 ให้แล้ว · งานยังถือเครื่องอยู่ · ส่งซ้ำได้อีก");
+                    AppLog.Info("OrderDetail.ManualSend", $"ST3 รับผลส่งซ้ำ UV2 คิว {rowId} · sent");
+                    return;
+                case "not_sent":
+                    Notify.WarnDetail(this, "ส่ง UV2 ซ้ำไม่สำเร็จ",
+                        (row.DispatchError ?? "ST1 ยืนยันว่าไม่ได้ส่งรอบนี้")
+                        + Environment.NewLine + Environment.NewLine
+                        + "งานเดิมที่ส่งสำเร็จยังถือเครื่องอยู่ จึงกดส่งซ้ำได้อีก");
+                    return;
+                case "unknown":
+                    Notify.WarnModal(this, "ยังไม่ทราบผลส่ง UV2",
+                        (row.DispatchError ?? "ST1 ไม่สามารถยืนยันผลได้")
+                        + Environment.NewLine + Environment.NewLine
+                        + "ตรวจเครื่องก่อน ห้ามกดส่งซ้ำหรือปล่อยคิว");
+                    return;
+            }
+        }
+
+        Notify.WarnModal(this, "ST1 ยังไม่ส่งผลกลับ",
+            "คำขอส่งซ้ำยังอยู่ระหว่างดำเนินการหรือ ST1 ยังไม่รับคำขอ\n\n"
+            + "อย่ากดส่งซ้ำอีกครั้งจนกว่าจะตรวจสถานะ UV2 และคิวให้แน่ใจก่อน");
+    }
+
     private async Task<StepSendResult> SendStepAsync(
         int jobId, string step, ResolvedJobResponse resolved,
         string? forcedProgram = null)
@@ -3326,6 +3514,120 @@ public partial class OrderListUserControl : UserControl
         finally
         {
             foreach (var (machine, token) in owned) ReleaseDispatch(machine, token);
+            EndSending();
+            SchedulePendingRefresh();
+            if (!IsDisposed && !_sending) ShowSending(null);
+        }
+    }
+
+    /// <summary>
+    /// ST1 รับคำขอ Manual UV2 ที่ ST3 ฝากไว้ แล้วส่งผ่าน flow เดียวกับงานปกติ
+    /// กดรับคำขอแบบ atomic ก่อนส่ง เพื่อกัน ST1 สอง process ส่งซ้ำพร้อมกัน
+    /// </summary>
+    private async Task<bool> ProcessManualQueueResendsAsync(List<MachineQueueRow> snapshot)
+    {
+        if (_api == null || StationService.IsSt3 || IsDisposed || _sending || _preparingPrograms)
+            return false;
+
+        var requests = snapshot
+            .Where(row => row.ManualResend
+                && row.ManualResendOutcome == "requested"
+                && row.State == "active"
+                && row.SentAt != null
+                && !row.AwaitingPick)
+            .OrderBy(row => row.Id)
+            .ToList();
+        if (requests.Count == 0) return false;
+
+        bool processed = false;
+        _sendOperations++;
+        try
+        {
+            foreach (var request in requests)
+            {
+                if (IsDisposed || _preparingPrograms) break;
+                string machine = request.Machine;
+                if (!ReserveDispatch(machine)) continue;
+                var dispatchLease = _dispatchingMachines[machine];
+                try
+                {
+                    using var busy = MachineBusy.TryHoldExclusive(machine);
+                    if (busy == null) continue;
+
+                    // อ่านสดก่อนรับคำขอ — ถ้าคิวถูกปล่อยหรือมีผลใหม่แล้วให้ไม่แตะเครื่อง
+                    var (freshRows, queueError) = await _api.GetMachineQueueAsync(machine);
+                    if (queueError != null || IsDisposed) continue;
+                    var row = freshRows.FirstOrDefault(candidate => candidate.Id == request.Id);
+                    if (row == null || row.State != "active" || row.SentAt == null
+                        || !row.ManualResend || row.ManualResendOutcome != "requested"
+                        || string.IsNullOrWhiteSpace(row.DispatchToken))
+                        continue;
+
+                    var (claimed, claimError) = await _api.ClaimManualQueueResendAsync(row.Id, row.DispatchToken);
+                    if (!claimed)
+                    {
+                        AppLog.Warn("ManualResend", $"ST1 รับคำขอ UV2 ไม่ได้ · คิว {row.Id} · {claimError}");
+                        continue;
+                    }
+
+                    processed = true;
+                    ShowSending($"กำลังส่งซ้ำ {machine} · {JobName(row.PrintJobsId)}");
+                    var resolved = await _api.GetResolvedJobAsync(row.PrintJobsId);
+                    StepSendResult result;
+                    if (resolved == null
+                        || !string.Equals(resolved.Job.Status, "Process", StringComparison.OrdinalIgnoreCase)
+                        || !MarkingMethodService.Resolve(resolved.PlanRouting?.MarkingMethod).Steps
+                            .Contains(machine, StringComparer.OrdinalIgnoreCase))
+                    {
+                        result = new(false,
+                            [Notify.Bad($"{machine}: โหลดงานไม่ได้ หรือขั้นนี้ไม่อยู่ใน marking")],
+                            SafeToRetry: true);
+                    }
+                    else
+                    {
+                        try
+                        {
+                            result = await SendStepAsync(row.PrintJobsId, machine, resolved, row.ProgramName);
+                        }
+                        catch (Exception ex)
+                        {
+                            result = new(false, [Notify.Bad($"{machine}: {ex.Message}")]);
+                        }
+                    }
+
+                    var outcome = result.Sent ? "sent"
+                        : result.SafeToRetry ? "not_sent"
+                        : "unknown";
+                    var error = string.Join(" · ", result.Lines
+                        .Where(line => line.Kind == Notify.ResultKind.Error)
+                        .Select(line => line.Text));
+                    if (error.Length > 4000) error = error[..4000];
+
+                    var finished = await _api.FinishManualQueueResendAsync(
+                        row.Id, row.DispatchToken, outcome, result.Detail, error);
+                    if (!finished.ok)
+                        finished = await _api.FinishManualQueueResendAsync(
+                            row.Id, row.DispatchToken, outcome, result.Detail, error);
+
+                    if (!finished.ok)
+                        result.Lines.Add(Notify.Bad($"{machine}: บันทึกผลส่งซ้ำไม่ได้ — คิวถูกกันไว้ตรวจสอบ"));
+                    else if (outcome == "unknown")
+                        result.Lines.Add(Notify.Bad($"{machine}: ยังไม่ทราบผล ตรวจเครื่องก่อนปล่อยคิวหรือส่งซ้ำ"));
+                    else if (outcome == "not_sent")
+                        result.Lines.Add(Notify.Careful($"{machine}: รอบส่งซ้ำนี้ไม่สำเร็จ งานเดิมที่ส่งแล้วคงอยู่ในเครื่อง"));
+
+                    Notify.Result(this, $"ผลส่ง Manual {machine}", result.Lines);
+                    AppLog.Info("ManualResend", $"ST1 ส่งซ้ำ {machine} คิว {row.Id} งาน {row.PrintJobsId} · {outcome}");
+                }
+                finally
+                {
+                    ReleaseDispatch(machine, dispatchLease);
+                }
+            }
+            return processed;
+        }
+        finally
+        {
             EndSending();
             SchedulePendingRefresh();
             if (!IsDisposed && !_sending) ShowSending(null);
@@ -3826,7 +4128,7 @@ public partial class OrderListUserControl : UserControl
             // ชื่อเดียวกับหัวที่อยู่ในหน้า ไม่ประกอบเอง ไม่งั้นสองที่จะขึ้นคนละเลข
             dlg.TitleText = $"{OrderDetailUserControl.JobTitle(resolved.Job)} — Order Detail";
             dlg.Text = dlg.TitleText;
-            dlg.LoadDetail(resolved, _api);
+            dlg.LoadDetail(resolved, _api, SendManualQueueResendAsync);
             dlg.ShowDialog(this);
             requestedStep = dlg.RemoteStartStep;
         }

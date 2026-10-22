@@ -26,7 +26,7 @@ async function latestDispatch(queueId, transaction) {
 }
 
 function unresolved(attempt) {
-  return attempt && ["sending", "unknown"].includes(attempt.payload?.outcome);
+  return attempt && ["requested", "sending", "unknown"].includes(attempt.payload?.outcome);
 }
 
 async function assertNoUnresolved(rows, transaction) {
@@ -36,7 +36,7 @@ async function assertNoUnresolved(rows, transaction) {
   }
 }
 
-// ปลดผลส่งที่ยังไม่รู้ (sending / unknown) ให้เป็น "ไม่ได้ส่ง"
+// ปลดผลส่งที่ยังไม่รู้ (requested / sending / unknown) ให้เป็น "ไม่ได้ส่ง"
 //
 // ทางเดียวที่เรียกได้คือคนหน้างานยืนยัน "ข้ามเครื่อง" (POST /machine-queue/skip) หลังตรวจเครื่องแล้ว
 // ทางอื่นทั้งหมด (ปุ่มหน้าเครื่อง ยกเลิก จบงาน ล้างคิว) ยังห้ามด้วย assertNoUnresolved

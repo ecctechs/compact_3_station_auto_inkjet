@@ -600,6 +600,15 @@ public class MachineQueueRow
     [JsonPropertyName("dispatch_error")]
     public string? DispatchError { get; set; }
 
+    [JsonPropertyName("manual_resend")]
+    public bool ManualResend { get; set; }
+
+    [JsonPropertyName("manual_resend_outcome")]
+    public string? ManualResendOutcome { get; set; }
+
+    [JsonPropertyName("dispatch_token")]
+    public string? DispatchToken { get; set; }
+
     /// <summary>
     /// ส่งไม่ผ่านหรือไม่รู้ผล ค้างรอคนตรวจเครื่อง — ขึ้นปุ่ม "ข้ามเครื่อง" ในแถวงาน
     /// ส่งไม่ผ่านแน่นอน (not_sent) ระบบไม่ส่งซ้ำเอง แถวจึงค้างจนกว่าคนจะสั่งต่อหรือข้าม

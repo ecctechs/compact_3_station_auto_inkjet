@@ -216,6 +216,7 @@ partial class OrderDetailUserControl
         btnRemoteSend = new AntdUI.Button();
         btnSavePattern = new AntdUI.Button();
         tmrConnCheck = new System.Windows.Forms.Timer(components);
+        tmrManualQueueCheck = new System.Windows.Forms.Timer(components);
         btnSendMk = new AntdUI.Button();
         btnSendUv1 = new AntdUI.Button();
         btnSendUv2 = new AntdUI.Button();
@@ -3159,7 +3160,7 @@ partial class OrderDetailUserControl
         btnSavePattern.Size = new System.Drawing.Size(230, 70);
         btnSavePattern.TabIndex = 4;
         btnSavePattern.Text = "บันทึกค่า";
-        btnSavePattern.Type = AntdUI.TTypeMini.Success;
+        btnSavePattern.Type = AntdUI.TTypeMini.Primary;
         //
         // btnRemoteSend - ปุ่มสำรองของปุ่มกดหน้างาน ขอให้ ST1 ส่งขั้นถัดไปแทน
         //
@@ -3177,6 +3178,10 @@ partial class OrderDetailUserControl
         // tmrConnCheck - รีเฟรชไฟสถานะการเชื่อมต่อสี่ดวงระหว่างที่หน้านี้เปิดอยู่
         //
         tmrConnCheck.Interval = 15000;
+        //
+        // tmrManualQueueCheck - ซ่อนปุ่มเมื่อเครื่องปล่อยคิวหรือจบงาน
+        //
+        tmrManualQueueCheck.Interval = 5000;
         //
         // btnTestPlc - ปุ่มแยกสำหรับทดสอบส่งค่าเข้า PLC ยังไม่รวมกับปุ่มส่ง MK
         //
@@ -3413,6 +3418,7 @@ partial class OrderDetailUserControl
     private AntdUI.Button btnRemoteSend;
     private AntdUI.Button btnSavePattern;
     private System.Windows.Forms.Timer tmrConnCheck;
+    private System.Windows.Forms.Timer tmrManualQueueCheck;
     private AntdUI.Button btnSendMk;
     private AntdUI.Button btnSendUv1;
     private AntdUI.Button btnSendUv2;

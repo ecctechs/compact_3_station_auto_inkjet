@@ -21,6 +21,10 @@ public partial class OrderDetailUserControl : UserControl
     private int _currentStep;
     private int _jobId;
     private ApiClient? _api;
+    private Func<int, string, Task>? _manualSendHandler;
+    private HashSet<string> _manualReadySteps = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _manualSendingSteps = new(StringComparer.OrdinalIgnoreCase);
+    private bool _manualQueueRefreshBusy;
     private ImageHoverPopup? _refPopup;
     private List<UvJobDataDto> _uvData = [];
 
@@ -79,13 +83,14 @@ public partial class OrderDetailUserControl : UserControl
         btnMkSwap.Click += async (_, _) => await SwapMkDataAsync();
         picMk1Abc.Click += async (_, _) => await ToggleAbcAsync(1, picMk1Abc);
         picMk2Abc.Click += async (_, _) => await ToggleAbcAsync(2, picMk2Abc);
-        btnSendMk.Click += async (_, _) => await SendToMkAsync();
+        btnSendMk.Click += async (_, _) => await SendStepButtonAsync("MK", SendToMkAsync);
         btnSavePattern.Click += async (_, _) => await SaveEditedValuesAsync();
         btnRemoteSend.Click += (_, _) => RequestRemoteStart();
         tmrConnCheck.Tick += ConnCheck_Tick;
-        btnSendUv1.Click += async (_, _) => await SendToUvAsync(1);
-        btnSendUv2.Click += async (_, _) => await SendToUvAsync(2);
+        btnSendUv1.Click += async (_, _) => await SendStepButtonAsync("UV1", () => SendToUvAsync(1));
+        btnSendUv2.Click += async (_, _) => await SendStepButtonAsync("UV2", () => SendToUvAsync(2));
         btnTestPlc.Click += async (_, _) => await TestPlcAsync();
+        tmrManualQueueCheck.Tick += async (_, _) => await RefreshManualStepButtonsAsync();
 
         btnFlowPlate.Click += (_, _) => OpenFlowRefImages(btnFlowPlate);
         btnFlowShim.Click += (_, _) => OpenFlowRefImages(btnFlowShim);
@@ -223,13 +228,18 @@ public partial class OrderDetailUserControl : UserControl
         return date.Length == 0 ? $"Job #{no}" : $"Job #{no}  ·  {date}";
     }
 
-    public void LoadDetail(ResolvedJobResponse resolved, ApiClient? api = null)
+    public void LoadDetail(
+        ResolvedJobResponse resolved,
+        ApiClient? api = null,
+        Func<int, string, Task>? manualSendHandler = null)
     {
         _pattern = resolved.Pattern;
         _barcode = resolved.Job.BarcodeRaw ?? "";
         _isSwapped = false;
         _jobId = resolved.Job.Id;
         _api = api;
+        _manualSendHandler = manualSendHandler;
+        _manualReadySteps.Clear();
         _uvData = resolved.UvJobData;
         _jobStatus = resolved.Job.Status;
         _markingMethod = resolved.PlanRouting?.MarkingMethod;
@@ -265,6 +275,8 @@ public partial class OrderDetailUserControl : UserControl
         // รอบถัด ๆ ไปห้ามล้างเป็นสีเทา ไม่งั้นไฟจะกะพริบเทา-เขียวทุก 15 วิ
         _ = CheckConnectionsAsync(showChecking: true);
         tmrConnCheck.Start();
+        _ = RefreshManualStepButtonsAsync();
+        tmrManualQueueCheck.Start();
     }
 
     private void FillMkChipLabels()
@@ -1093,7 +1105,8 @@ public partial class OrderDetailUserControl : UserControl
         btnRemoteSend.Enabled = showRemote;
         if (remoteStep != null) btnRemoteSend.Text = $"ขอให้ ST1 ส่ง {remoteStep}";
 
-        // ปุ่มส่งมือเหลือไว้เฉพาะโหมดทดสอบ
+        // ปุ่ม Dev ใช้ยิงทดสอบตรงเหมือนเดิม ส่วนปุ่ม Manual หน้างานเปิดได้แยกต่างหาก
+        // และจะเห็นเฉพาะเครื่องในแผนที่ยังถือคิวงานนี้และส่งรอบแรกสำเร็จแล้ว
         //
         // การส่งงานจริงเป็นหน้าที่ของปุ่มเริ่มงานหน้า Order List กับปุ่มกดหน้างาน
         // ซึ่งเดินตามลำดับขั้นของ marking method ให้เอง ปุ่มพวกนี้กดข้ามลำดับได้
@@ -1107,12 +1120,12 @@ public partial class OrderDetailUserControl : UserControl
         // ปุ่มทดสอบส่ง PLC ก็อยู่ในชุดเดียวกัน — designer ซ่อนไว้เป็นค่าตั้งต้น
         // ที่นี่คือที่เดียวที่เปิดให้เห็น
         btnTestPlc.Visible = _isDevMode;
-        btnSendMk.Visible = _isDevMode;
-        btnSendUv1.Visible = _isDevMode;
-        btnSendUv2.Visible = _isDevMode;
 
         if (_isDevMode)
         {
+            btnSendMk.Visible = true;
+            btnSendUv1.Visible = true;
+            btnSendUv2.Visible = true;
             btnTestPlc.Enabled = true;
             btnSendMk.Enabled = true;
             btnSendUv1.Enabled = true;
@@ -1121,9 +1134,22 @@ public partial class OrderDetailUserControl : UserControl
         }
 
         btnTestPlc.Enabled = false;
-        btnSendMk.Enabled = false;
-        btnSendUv1.Enabled = false;
-        btnSendUv2.Enabled = false;
+
+        bool manualEnabled = StationService.ManualOrderDetailSendEnabled
+            && _manualSendHandler != null;
+        foreach (var (step, button) in new[]
+        {
+            ("MK", btnSendMk), ("UV1", btnSendUv1), ("UV2", btnSendUv2),
+        })
+        {
+            bool ready = manualEnabled && _manualReadySteps.Contains(step);
+            button.Visible = ready;
+            button.Enabled = ready && !_manualSendingSteps.Contains(step);
+        }
+
+        // ปุ่ม Manual อนุญาตให้ส่งเครื่องที่ถือคิวซ้ำ จึงไม่ใช้สถานะ ✓/ปิดปุ่ม
+        // ที่ใช้กับ flow เรียงขั้นตอนปกติ
+        if (manualEnabled) return;
 
         if (_currentStep < _sendSteps.Count)
         {
@@ -1186,6 +1212,130 @@ public partial class OrderDetailUserControl : UserControl
         "UV1" => btnSendUv1,
         _ => btnSendUv2,
     };
+
+    private async Task SendStepButtonAsync(string step, Func<Task> devSend)
+    {
+        if (_isDevMode)
+        {
+            await devSend();
+            return;
+        }
+
+        if (!StationService.ManualOrderDetailSendEnabled || _manualSendHandler == null)
+            return;
+
+        await RefreshManualStepButtonsAsync();
+        if (!_manualReadySteps.Contains(step))
+        {
+            Notify.Warn(this, $"{step}: งานนี้ไม่ได้ถือเครื่องอยู่ หรือคิวเปลี่ยนแล้ว");
+            return;
+        }
+
+        if (!_manualSendingSteps.Add(step)) return;
+        var button = GetSendButton(step);
+        var originalText = button.Text;
+        button.Enabled = false;
+        button.Text = "กำลังส่ง...";
+        try
+        {
+            await _manualSendHandler(_jobId, step);
+        }
+        finally
+        {
+            if (!IsDisposed)
+            {
+                button.Text = originalText;
+                _manualSendingSteps.Remove(step);
+                await RefreshManualStepButtonsAsync();
+            }
+        }
+    }
+
+    /// <summary>
+    /// แสดงปุ่ม Manual เฉพาะเครื่องที่แผนงานใช้และยังถือคิวที่สถานีนี้อยู่
+    /// ต้องส่งสำเร็จแล้วก่อน จึงอนุญาตให้กดส่งซ้ำโดยไม่แทรกการส่งอัตโนมัติรอบแรก
+    /// </summary>
+    private async Task RefreshManualStepButtonsAsync()
+    {
+        if (_isDevMode) return;
+
+        int jobId = _jobId;
+        if (_api == null || jobId <= 0
+            || !StationService.ManualOrderDetailSendEnabled
+            || _manualSendHandler == null
+            || string.Equals(_jobStatus, "Success", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(_jobStatus, "Cancel", StringComparison.OrdinalIgnoreCase))
+        {
+            _manualReadySteps.Clear();
+            ApplyStepButtons();
+            return;
+        }
+
+        if (_manualQueueRefreshBusy) return;
+        _manualQueueRefreshBusy = true;
+        try
+        {
+            // Order Detail อาจเปิดค้างอยู่ตอนงานถูกย้ายเข้า History หรือจบงาน
+            // อ่านสถานะล่าสุดด้วย ไม่ยึดเฉพาะ snapshot ตอนเปิด dialog
+            var liveJob = await _api.GetJobByIdAsync(jobId);
+            if (IsDisposed || jobId != _jobId) return;
+            if (liveJob == null)
+            {
+                _manualReadySteps.Clear();
+                return;
+            }
+
+            _jobStatus = liveJob.Status;
+            if (!string.Equals(_jobStatus, "Process", StringComparison.OrdinalIgnoreCase))
+            {
+                _manualReadySteps.Clear();
+                return;
+            }
+
+            var (rows, error) = await _api.GetMachineQueueAsync();
+            if (IsDisposed || jobId != _jobId) return;
+
+            if (error != null)
+            {
+                _manualReadySteps.Clear();
+                return;
+            }
+
+            var plan = MarkingMethodService.Resolve(_markingMethod);
+            var localMachines = StationService.IsSt3
+                ? new HashSet<string>(["UV2"], StringComparer.OrdinalIgnoreCase)
+                : new HashSet<string>(["MK", "UV1"], StringComparer.OrdinalIgnoreCase);
+
+            var ready = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var machine in localMachines)
+            {
+                if (!plan.Steps.Contains(machine, StringComparer.OrdinalIgnoreCase)) continue;
+
+                // ถ้ามีหลายรอบของเครื่องเดียวกัน ให้ดูรอบล่าสุดที่กำลัง active
+                // ห้ามใช้รอบแรกที่ส่งแล้วมาเปิดปุ่ม ขณะที่รอบถัดไปยังไม่ถึงเวลาส่ง
+                var holder = rows
+                    .Where(row => row.PrintJobsId == jobId
+                        && string.Equals(row.Machine, machine, StringComparison.OrdinalIgnoreCase)
+                        && row.State == "active")
+                    .OrderByDescending(row => row.Round)
+                    .ThenByDescending(row => row.Id)
+                    .FirstOrDefault();
+
+                if (holder is { AwaitingPick: false, SentAt: not null, NeedsSendReview: false })
+                    ready.Add(machine);
+            }
+            _manualReadySteps = ready;
+        }
+        catch
+        {
+            _manualReadySteps.Clear();
+        }
+        finally
+        {
+            _manualQueueRefreshBusy = false;
+            if (!IsDisposed && jobId == _jobId) ApplyStepButtons();
+        }
+    }
 
     private static void MarkButtonSent(AntdUI.Button btn)
     {

@@ -47,8 +47,16 @@ class MachineQueueController {
       // dispatch_error — สาเหตุที่ส่งไม่ผ่านรอบล่าสุด ให้จอบอกคนหน้างานได้ว่าต้องไปดูอะไร
       return ResponseManager.SuccessResponse(req, res, 200, rows.map(row => ({
         ...row.toJSON(),
-        dispatch_state: latest.get(row.id)?.outcome || null,
+        // การส่งซ้ำที่แน่ชัดว่าส่งไม่สำเร็จไม่ลบสถานะส่งสำเร็จเดิมของแถวคิว
+        dispatch_state: latest.get(row.id)?.manual_resend && latest.get(row.id)?.outcome === "not_sent" && row.sent_at
+          ? "sent"
+          : latest.get(row.id)?.manual_resend && latest.get(row.id)?.outcome === "requested"
+            ? "sending"
+          : latest.get(row.id)?.outcome || null,
         dispatch_error: latest.get(row.id)?.error || null,
+        manual_resend: latest.get(row.id)?.manual_resend === true,
+        manual_resend_outcome: latest.get(row.id)?.manual_resend ? latest.get(row.id)?.outcome || null : null,
+        dispatch_token: latest.get(row.id)?.manual_resend ? latest.get(row.id)?.token || null : null,
       })));
     } catch (err) {
       return ResponseManager.CatchResponse(req, res, err.message);
@@ -500,6 +508,97 @@ class MachineQueueController {
     } catch (err) { return reportError(req, res, err); }
   }
 
+  /**
+   * POST /machine-queue/:id/manual-resend/begin
+   * จองสิทธิ์ส่งซ้ำเฉพาะแถวที่ยัง active และเคยส่งสำเร็จแล้ว — ไม่ปล่อยหรือจองเครื่องใหม่
+   */
+  static async beginManualResend(req, res) {
+    try {
+      const result = await withQueueLock(async (t) => {
+        const row = await MachineQueue.findByPk(req.params.id, { transaction: t });
+        if (!row || row.state !== ACTIVE || !row.sent_at)
+          conflict("งานนี้ไม่ได้ถือเครื่องอยู่หรือยังไม่เคยส่งสำเร็จ");
+        if (row.awaiting_pick) conflict(`${row.machine}: รอ ST3 เลือกรุ่นก่อน ยังส่งไม่ได้`);
+        await assertNoUnresolved([row], t);
+
+        if (await PrintJobCommand.findOne({
+          where: { command: DISPATCH, payload: { token: req.body.token } }, transaction: t,
+        })) conflict("คำขอส่งนี้ถูกใช้แล้ว");
+
+        const job = await PrintJob.findByPk(row.print_jobs_id, { transaction: t });
+        if (!job || !["Waiting", "Process"].includes(job.status)) conflict("งานถูกยกเลิกหรือจบแล้ว");
+
+        await PrintJobCommand.create({
+          job_id: row.print_jobs_id, command: DISPATCH, success: false,
+          payload: { queue_id: row.id, token: req.body.token, outcome: "sending", manual_resend: true },
+          sent_at: new Date(),
+        }, { transaction: t });
+        await job.update({ status: "Process" }, { transaction: t });
+        return { token: req.body.token };
+      });
+      return ResponseManager.SuccessResponse(req, res, 200, result);
+    } catch (err) { return reportError(req, res, err); }
+  }
+
+  /**
+   * POST /machine-queue/:id/manual-resend/request
+   * ST3 ขอให้ ST1 ส่ง UV2 ซ้ำ — ST3 ไม่ต่อสายเครื่องพิมพ์โดยตรง
+   */
+  static async requestManualResend(req, res) {
+    try {
+      const result = await withQueueLock(async (t) => {
+        const row = await MachineQueue.findByPk(req.params.id, { transaction: t });
+        if (!row || row.machine !== "UV2" || row.state !== ACTIVE || !row.sent_at)
+          conflict("UV2 ไม่ได้ถือเครื่องอยู่หรือยังไม่เคยส่งสำเร็จ");
+        if (row.awaiting_pick) conflict("UV2 ยังรอ ST3 เลือกรุ่น ไม่สามารถส่งซ้ำได้");
+        await assertNoUnresolved([row], t);
+
+        if (await PrintJobCommand.findOne({
+          where: { command: DISPATCH, payload: { token: req.body.token } }, transaction: t,
+        })) conflict("คำขอส่งนี้ถูกใช้แล้ว");
+
+        const job = await PrintJob.findByPk(row.print_jobs_id, { transaction: t });
+        if (!job || job.status !== "Process") conflict("งานจบแล้วหรือไม่ได้อยู่ระหว่างผลิต");
+
+        await PrintJobCommand.create({
+          job_id: row.print_jobs_id, command: DISPATCH, success: false,
+          payload: { queue_id: row.id, token: req.body.token, outcome: "requested", manual_resend: true },
+          sent_at: new Date(),
+        }, { transaction: t });
+        return { token: req.body.token };
+      });
+      return ResponseManager.SuccessResponse(req, res, 200, result);
+    } catch (err) { return reportError(req, res, err); }
+  }
+
+  /**
+   * POST /machine-queue/:id/manual-resend/claim
+   * ST1 รับคำขอจาก ST3 ได้ครั้งเดียวก่อนแตะ UV2
+   */
+  static async claimManualResend(req, res) {
+    try {
+      const result = await withQueueLock(async (t) => {
+        const row = await MachineQueue.findByPk(req.params.id, { transaction: t });
+        if (!row || row.machine !== "UV2" || row.state !== ACTIVE || !row.sent_at)
+          conflict("UV2 ไม่ได้ถือเครื่องอยู่แล้ว");
+        const attempt = await latestDispatch(row.id, t);
+        if (!attempt || !attempt.payload.manual_resend
+          || attempt.payload.token !== req.body.token
+          || attempt.payload.outcome !== "requested")
+          conflict("คำขอส่งซ้ำถูกเปลี่ยนหรือมีคนรับไปแล้ว");
+
+        const job = await PrintJob.findByPk(row.print_jobs_id, { transaction: t });
+        if (!job || job.status !== "Process") conflict("งานจบแล้วหรือไม่ได้อยู่ระหว่างผลิต");
+
+        await attempt.update({
+          payload: { ...attempt.payload, outcome: "sending", claimed_at: new Date().toISOString() },
+        }, { transaction: t });
+        return { token: req.body.token };
+      });
+      return ResponseManager.SuccessResponse(req, res, 200, result);
+    } catch (err) { return reportError(req, res, err); }
+  }
+
   // เก็บประวัติกับผลคิวพร้อมกัน เรียกซ้ำด้วย token เดิมไม่เพิ่มประวัติซ้ำ
   static async finishSend(req, res) {
     try {
@@ -547,6 +646,43 @@ class MachineQueueController {
           }
           await attempt.update({ payload: { ...attempt.payload, outcome, error: error || null } }, { transaction: t });
           return { recorded: true };
+      });
+      return ResponseManager.SuccessResponse(req, res, 200, result);
+    } catch (err) { return reportError(req, res, err); }
+  }
+
+  /**
+   * POST /machine-queue/:id/manual-resend/finish
+   * บันทึกผลส่งซ้ำ แถวคิวยังคง active และ sent_at เดิมไว้ให้เจ้าของเครื่องเดิม
+   */
+  static async finishManualResend(req, res) {
+    try {
+      const result = await withQueueLock(async (t) => {
+        const row = await MachineQueue.findByPk(req.params.id, { transaction: t });
+        if (!row) conflict("ไม่พบคิวที่ส่ง");
+        const attempt = await latestDispatch(row.id, t);
+        const { token, outcome, detail, error } = req.body;
+        if (!attempt || attempt.payload.token !== token || !attempt.payload.manual_resend)
+          conflict("คำขอนี้ไม่ใช่รอบส่งซ้ำปัจจุบัน");
+        if (attempt.payload.outcome === outcome) return { recorded: true };
+        if (["sent", "not_sent"].includes(attempt.payload.outcome)) conflict("รอบส่งซ้ำนี้จบแล้ว");
+        if (row.state !== ACTIVE || !row.sent_at) conflict("งานไม่ถือเครื่องแล้วระหว่างส่งซ้ำ");
+        if (attempt.payload.outcome !== "sending") conflict("ST1 ยังไม่ได้รับคำขอส่งซ้ำ");
+        if (outcome === "not_sent" && attempt.payload.outcome !== "sending")
+          conflict("ผลไม่แน่นอน ต้องตรวจเครื่องก่อน");
+
+        if (outcome === "sent") {
+          await PrintJobCommand.create({
+            job_id: row.print_jobs_id, command: row.machine, success: true,
+            payload: detail ?? null, sent_at: new Date(),
+          }, { transaction: t });
+        }
+
+        // manual resend ที่ส่งไม่ผ่านไม่ยกเลิกการส่งเดิม ไม่คืนคิว และไม่เปลี่ยน status งาน
+        await attempt.update({
+          payload: { ...attempt.payload, outcome, error: error || null },
+        }, { transaction: t });
+        return { recorded: true };
       });
       return ResponseManager.SuccessResponse(req, res, 200, result);
     } catch (err) { return reportError(req, res, err); }
