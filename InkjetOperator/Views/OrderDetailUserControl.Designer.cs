@@ -3116,7 +3116,7 @@ partial class OrderDetailUserControl
         btnSendMk.Size = new System.Drawing.Size(325, 70);
         btnSendMk.TabIndex = 0;
         btnSendMk.Text = "ส่งหา MK1, MK2";
-        btnSendMk.Type = AntdUI.TTypeMini.Success;
+        btnSendMk.Type = AntdUI.TTypeMini.Primary;
         //
         // btnSendUv1
         //
