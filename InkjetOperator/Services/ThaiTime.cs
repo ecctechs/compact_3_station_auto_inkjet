@@ -50,6 +50,9 @@ public static class ThaiTime
         return TimeZoneInfo.ConvertTimeFromUtc(value.ToUniversalTime(), Zone);
     }
 
+    /// <summary>วันนี้ตามเวลาไทย (เที่ยงคืน) — ไม่ใช้ DateTime.Today เพราะเครื่องอาจตั้ง time zone ผิด</summary>
+    public static DateTime Today => ToThai(DateTime.UtcNow)!.Value.Date;
+
     /// <summary>
     /// ข้อความที่เอาไปแสดงได้เลย — ไม่มีค่าคืน <paramref name="empty"/>
     ///

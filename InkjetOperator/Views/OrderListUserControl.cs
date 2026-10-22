@@ -1133,6 +1133,7 @@ public partial class OrderListUserControl : UserControl
 
     private void SwitchTab(bool showHistory)
     {
+        bool enteringHistory = showHistory && !_showHistory;
         _showHistory = showHistory;
 
         ButtonStyles.SetSelected(btnTabList, !showHistory);
@@ -1140,11 +1141,15 @@ public partial class OrderListUserControl : UserControl
 
         // ตัวกรองวันที่มีเฉพาะแท็บ History — ออกจากแท็บแล้วล้างค่าทิ้ง
         // ไม่งั้นกลับเข้ามาใหม่จะเห็นรายการหายไปโดยไม่รู้ว่าโดนกรองอยู่
+        // เข้าแท็บแล้วตั้งเป็นวันนี้ถึงวันนี้ — หน้างานดูงานของวันนี้บ่อยสุด (ตกลง 22/10/2026)
+        // ตั้งเฉพาะตอนเข้ามาจากแท็บ List กดแท็บ History ซ้ำจะได้ไม่ทับช่วงที่เลือกเอง
+        // การตั้งค่ายิง ValueChanged ซึ่งดึงรายการใหม่ให้เลย · ปุ่มล้างยังเอาตัวกรองออกได้
         lblDateFilter.Visible = showHistory;
         dtpHistoryRange.Visible = showHistory;
         btnSearchDate.Visible = showHistory;
         btnClearDate.Visible = showHistory;
         if (!showHistory) dtpHistoryRange.Value = null;
+        else if (enteringHistory) dtpHistoryRange.Value = [ThaiTime.Today, ThaiTime.Today];
 
         // ออกจากแท็บแล้วการเลือกเดิมไม่มีความหมาย ล้างทั้งไฮไลต์และรูป
         _selectedJobId = null;
