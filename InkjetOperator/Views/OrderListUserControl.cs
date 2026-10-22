@@ -1853,30 +1853,15 @@ public partial class OrderListUserControl : UserControl
             ? plan
             : plan with { Steps = plan.Steps.Where(s => !deferred.Contains(s)).ToList() };
 
-        // เลือกโปรแกรม UV ให้เสร็จตรงนี้ ก่อนจะสรุปให้ดูและก่อนจองคิว
-        //
-        // กล่องเลือกรุ่นย่อยกับกล่องยืนยัน default ต้องเด้งที่จอของคนที่กดเริ่ม
-        // ไม่ใช่ไปเด้งตอนส่งจริงซึ่งเกิดที่ ST1 เสมอ
-        var uvPicks = await PickUvProgramsAsync(sendPlan, resolved);
-        timing.Mark("เลือกโปรแกรม UV");
-        if (uvPicks == null || IsDisposed) return;
-
-        // สรุปให้ดูก่อนว่าจะส่งอะไรเข้าเครื่องไหนบ้าง แล้วค่อยลงมือ
-        //
-        // ถามก่อนจอง ไม่ใช่หลังจอง — กดยกเลิกแล้วต้องไม่มีอะไรค้างอยู่ในคิวเลย
-        bool confirmed = await ConfirmStartAsync(jobId, resolved, plan, uvPicks, deferred);
-        timing.Mark("ยืนยัน (รวมเวลาคนกด)");
-        if (!confirmed) return;
-        if (IsDisposed) return;
-
-        // ต่อให้ครบทุกเครื่องก่อน ถึงจะจองคิวและเริ่มส่ง
+        // ต่อให้ครบทุกเครื่องก่อน ถึงจะเลือกรุ่นย่อย จองคิว และเริ่มส่ง
         //
         // งานที่ใช้หลายเครื่องต้องต่อได้ครบถึงจะเริ่มได้ ถ้าเริ่มทั้งที่เครื่องหลังต่อไม่ติด
         // เครื่องหน้าจะรับงานไปพ่นลงชิ้นงานจริงแล้ว ย้อนคืนไม่ได้ และงานจะค้างครึ่งทาง
         // คือกดเริ่มใหม่ก็ไม่ได้เพราะสถานะเป็นกำลังผลิตไปแล้ว
         //
-        // ตรวจหลังกล่องยืนยัน ไม่ใช่ก่อน เพราะการไล่ต่อทุกเครื่องกินเวลาหลายวินาที
-        // ไม่ควรให้คนที่แค่เปิดดูแล้วกดยกเลิกต้องรอ
+        // ตรวจก่อนกล่องเลือกรุ่นย่อย (ตกลง 22/10/2026) — เดิมตรวจหลังกล่องยืนยัน คนเลือกรุ่น UV
+        // จนเสร็จแล้วค่อยรู้ว่าเครื่องต่อไม่ได้ · ตรวจ UV2 ที่ฝาก ST3 เลือกรุ่นด้วย เดิมไม่ตรวจ
+        // งาน 11 ที่ UV2 ต่อไม่ได้จึงจองคิวรอ ST3 เลือกรุ่นไปทั้งที่ส่งไม่ได้แน่ ๆ
         //
         // ข้ามที่ ST3 เพราะ ST3 ไม่ได้เป็นคนส่ง มันแค่จองคิวไว้ให้ ST1 หยิบไปส่ง
         // เครื่องต่อสายอยู่กับ PC ของ ST1 ที่เดียว และพาธของ CPI.db3 ที่ตรวจด้วยก็
@@ -1891,16 +1876,38 @@ public partial class OrderListUserControl : UserControl
         var skipSteps = new List<string>();
         if (!StationService.IsSt3)
         {
-            var check = await UnreachableOrSkipAsync(jobId, sendPlan, resolved, plan.Steps);
+            var check = await UnreachableOrSkipAsync(jobId, sendPlan.Steps, resolved, plan.Steps);
             timing.Mark("ตรวจการเชื่อมต่อ");
             if (check == null || IsDisposed) return;
             skipSteps = check;
         }
         if (skipSteps.Count > 0)
+        {
             sendPlan = sendPlan with
             {
                 Steps = sendPlan.Steps.Where(s => !skipSteps.Contains(s, StringComparer.OrdinalIgnoreCase)).ToList(),
             };
+            // UV2 ที่ฝาก ST3 แล้วต่อไม่ได้ = ข้ามทั้งขั้น ไม่จองคิวรอเลือกรุ่น
+            deferred.ExceptWith(skipSteps);
+        }
+
+        // เลือกโปรแกรม UV ให้เสร็จตรงนี้ ก่อนจะสรุปให้ดูและก่อนจองคิว
+        // เฉพาะเครื่องที่ต่อได้ — เครื่องที่ข้ามไม่ถามรุ่น
+        //
+        // กล่องเลือกรุ่นย่อยกับกล่องยืนยัน default ต้องเด้งที่จอของคนที่กดเริ่ม
+        // ไม่ใช่ไปเด้งตอนส่งจริงซึ่งเกิดที่ ST1 เสมอ
+        var uvPicks = await PickUvProgramsAsync(sendPlan, resolved);
+        timing.Mark("เลือกโปรแกรม UV");
+        if (uvPicks == null || IsDisposed) return;
+
+        // สรุปให้ดูก่อนว่าจะส่งอะไรเข้าเครื่องไหนบ้าง แล้วค่อยลงมือ
+        //
+        // ถามก่อนจอง ไม่ใช่หลังจอง — กดยกเลิกแล้วต้องไม่มีอะไรค้างอยู่ในคิวเลย
+        // เครื่องที่ยืนยันข้ามไปแล้วยังไม่ได้บันทึก — ยกเลิกตรงนี้งานยังเป็น Waiting เหมือนไม่เคยกด
+        bool confirmed = await ConfirmStartAsync(jobId, resolved, plan, uvPicks, deferred, skipSteps);
+        timing.Mark("ยืนยัน (รวมเวลาคนกด)");
+        if (!confirmed) return;
+        if (IsDisposed) return;
 
         // ค่าของหัวพ่นผิด = ไม่ให้เข้าคิวตั้งแต่ต้น
         //
@@ -2116,19 +2123,19 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private async Task<bool> ConfirmStartAsync(
         int jobId, ResolvedJobResponse resolved, MarkingPlan plan,
-        Dictionary<string, string> uvPicks, ISet<string> deferred)
+        Dictionary<string, string> uvPicks, ISet<string> deferred, IReadOnlyCollection<string> skipped)
     {
         // อ่านคิวไปพร้อมกับเช็คโฟลเดอร์ UV ที่ข้อความสรุปต้องใช้ (แตะแชร์ของเครื่อง UV)
         // พอสร้างข้อความบนเธรดหน้าจอ ผลเช็คถูกจำไว้แล้ว ไม่ต้องรอเครือข่ายอีก
         var warm = Task.WhenAll(plan.Steps
-            .Where(step => !uvPicks.ContainsKey(step))
+            .Where(step => !uvPicks.ContainsKey(step) && !skipped.Contains(step, StringComparer.OrdinalIgnoreCase))
             .Select(UvNumberOf).OfType<int>().Distinct()
             .Select(UvSettingsManager.GetDocumentFolderAsync));
         var (rows, _) = await _api!.GetMachineQueueAsync();
         await warm;
         if (IsDisposed) return false;
 
-        return Confirm.Ask(this, BuildStartPreview(jobId, resolved, plan, rows, uvPicks, deferred));
+        return Confirm.Ask(this, BuildStartPreview(jobId, resolved, plan, rows, uvPicks, deferred, skipped));
     }
 
     /// <summary>
@@ -2140,7 +2147,8 @@ public partial class OrderListUserControl : UserControl
     /// </summary>
     private ConfirmSpec BuildStartPreview(
         int jobId, ResolvedJobResponse resolved, MarkingPlan plan, List<MachineQueueRow> rows,
-        Dictionary<string, string> uvPicks, ISet<string>? deferred = null)
+        Dictionary<string, string> uvPicks, ISet<string>? deferred = null,
+        IReadOnlyCollection<string>? skipped = null)
     {
         var job = _allJobs.FirstOrDefault(j => j.Id == jobId);
         var facts = new List<(string Caption, string Value)>
@@ -2163,6 +2171,13 @@ public partial class OrderListUserControl : UserControl
             if (rounds[step] > 1)
             {
                 facts.Add(($"{step} รอบ {rounds[step]}", "ยังไม่ส่ง" + Environment.NewLine + "กด เริ่มงานรอบสอง เมื่อติด shim เสร็จ"));
+                continue;
+            }
+
+            // ต่อไม่ได้ตอนกดเริ่ม และคนยืนยันข้ามแล้ว — บอกให้ชัดว่าเครื่องนี้ไม่พิมพ์
+            if (skipped?.Contains(step, StringComparer.OrdinalIgnoreCase) == true)
+            {
+                facts.Add(($"{step} · ST{station}", "ข้าม · ต่อไม่ได้" + Environment.NewLine + "งานนี้ไม่พิมพ์ที่เครื่องนี้"));
                 continue;
             }
 
@@ -2374,6 +2389,8 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
+        if (await UvUnreachableAsync(jobId, step, resolved, "เลือกรุ่นไม่ได้ — ต่อเครื่องไม่ได้") || IsDisposed) return;
+
         // เลือกจากโฟลเดอร์ของเครื่องนี้ — ถ้าไม่ได้ตั้งไว้ห้ามเดา ต้องบอกให้ไปตั้ง
         var docFolder = await UvSettingsManager.GetDocumentFolderAsync(uvNumber);
         if (IsDisposed) return;
@@ -2551,6 +2568,9 @@ public partial class OrderListUserControl : UserControl
             await RefreshDataAsync(force: true);
             return;
         }
+
+        // เครื่องต่อไม่ได้ = เปลี่ยนรุ่นไปก็ส่งไม่ถึง และ backend ปิดแถวรุ่นเดิมไปแล้ว — ตรวจก่อนเลือก
+        if (await UvUnreachableAsync(jobId, step, resolved, "เปลี่ยนรุ่นไม่ได้ — ต่อเครื่องไม่ได้") || IsDisposed) return;
 
         var program = resolved.UvJobData?.FirstOrDefault(r =>
             string.Equals(r.Machine, step, StringComparison.OrdinalIgnoreCase))?.ProgramName;
@@ -4544,6 +4564,39 @@ public partial class OrderListUserControl : UserControl
     }
 
     /// <summary>
+    /// ต่อเครื่อง UV ก่อนเปิดกล่องเลือกรุ่น — true = ต่อไม่ได้ บอกผู้ใช้ไปแล้ว ห้ามเลือกต่อ
+    ///
+    /// <para>
+    /// ตกลง 22/10/2026: ทุกที่ที่เลือกรุ่นย่อยต้องต่อเครื่องได้ก่อน ไม่ให้คนเลือกรุ่นจนเสร็จ
+    /// แล้วค่อยรู้ว่าส่งไม่ถึง · ตรวจเฉพาะที่ ST1 — ST3 ไม่ได้ต่อสายกับเครื่อง ตรวจแล้วตอบ
+    /// ว่าต่อไม่ได้เสมอ (เหตุผลเดียวกับการกดเริ่มงานที่ ST3)
+    /// </para>
+    /// </summary>
+    private async Task<bool> UvUnreachableAsync(int jobId, string step, ResolvedJobResponse resolved, string title)
+    {
+        if (StationService.IsSt3) return false;
+
+        ShowSending($"กำลังตรวจการเชื่อมต่อ · {JobName(jobId)}");
+        List<JobSendService.UnreachableMachine> bad;
+        try
+        {
+            bad = await JobSendService.UnreachableAsync([step], resolved.Pattern, resolved.UvJobData);
+        }
+        finally
+        {
+            if (!IsDisposed && !_sending) ShowSending(null);
+        }
+
+        if (bad.Count == 0 || IsDisposed) return bad.Count > 0;
+
+        Notify.ErrorModal(this, title,
+            string.Join(Environment.NewLine, bad.Select(m => $"• {m.Name} — {m.Reason}"))
+            + Environment.NewLine + Environment.NewLine
+            + $"{JobName(jobId)} ยังไม่ได้เปลี่ยนอะไร · ตรวจสายและเครื่องแล้วกดใหม่");
+        return true;
+    }
+
+    /// <summary>
     /// ต่อทุกเครื่องของแผน — ต่อไม่ได้บางเครื่องให้คนเลือกข้ามเครื่องนั้นแล้วเริ่มงานต่อ
     ///
     /// <para>
@@ -4561,16 +4614,20 @@ public partial class OrderListUserControl : UserControl
     /// งาน 12 ที่ UV2 ฝาก ST3 เลือกรุ่น รอบนี้ส่งแค่ MK — MK เสียแล้วนับว่าเสียทุกเครื่อง
     /// ข้ามไม่ได้ ทั้งที่ยังเหลือ UV2 ให้พิมพ์ (พบที่ DPX-730 · แก้ 20/10/2026)
     /// </para>
+    /// <para>
+    /// ต่อทุกเครื่องในแผนเต็ม รวม UV2 ที่ฝาก ST3 เลือกรุ่น (ตกลง 22/10/2026) —
+    /// <paramref name="sendSteps"/> ใช้แค่บอกในกล่องว่าเครื่องไหนเป็นของ ST3 เลือกรุ่น
+    /// </para>
     /// </summary>
     private async Task<List<string>?> UnreachableOrSkipAsync(
-        int jobId, MarkingPlan plan, ResolvedJobResponse resolved, IReadOnlyCollection<string> allSteps)
+        int jobId, IReadOnlyCollection<string> sendSteps, ResolvedJobResponse resolved, IReadOnlyCollection<string> allSteps)
     {
         ShowSending($"กำลังตรวจการเชื่อมต่อ · {JobName(jobId)}");
         List<JobSendService.UnreachableMachine> bad;
         try
         {
             bad = await JobSendService.UnreachableAsync(
-                plan.Steps, resolved.Pattern, resolved.UvJobData);
+                allSteps, resolved.Pattern, resolved.UvJobData);
         }
         finally
         {
@@ -4597,7 +4654,7 @@ public partial class OrderListUserControl : UserControl
 
         var keep = allSteps.Distinct(StringComparer.OrdinalIgnoreCase)
             .Where(s => !steps.Contains(s, StringComparer.OrdinalIgnoreCase))
-            .Select(s => plan.Steps.Contains(s, StringComparer.OrdinalIgnoreCase) ? s : $"{s} (ST3 เลือกรุ่น)");
+            .Select(s => sendSteps.Contains(s, StringComparer.OrdinalIgnoreCase) ? s : $"{s} (ST3 เลือกรุ่น)");
         var facts = new List<(string, string)> { ("งาน", JobName(jobId)) };
         facts.AddRange(bad.Take(4).Select(m => (m.Name, m.Reason)));
         facts.Add(("ส่งต่อ", string.Join(" · ", keep)));
