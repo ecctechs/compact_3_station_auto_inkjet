@@ -220,8 +220,6 @@ partial class OrderListUserControl
         dtpHistoryRange.Format = "dd/MM/yyyy";
         dtpHistoryRange.Margin = new System.Windows.Forms.Padding(3);
         dtpHistoryRange.Name = "dtpHistoryRange";
-        dtpHistoryRange.PlaceholderStart = "จากวันที่";
-        dtpHistoryRange.PlaceholderEnd = "ถึงวันที่";
         dtpHistoryRange.Radius = 6;
         dtpHistoryRange.Size = new System.Drawing.Size(312, 45);
         dtpHistoryRange.TabIndex = 3;
