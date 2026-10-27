@@ -4500,6 +4500,17 @@ public partial class OrderListUserControl : UserControl
     /// โหลดใหม่เฉพาะตอนเปลี่ยนตัวหรือ updated_at ขยับ ไม่ใช่ทุกรอบ poll
     /// </para>
     /// </summary>
+    /// <summary>
+    /// ตัวบอกว่าแผง Processing ต้องโหลดรูปใหม่ — updated_at ของงาน + จำนวนคำสั่งที่สำเร็จ
+    /// <para>
+    /// updated_at อย่างเดียวไม่พอ: ส่งเครื่องถัดไปของงานที่เป็น Working อยู่แล้ว backend เพิ่มแค่
+    /// คำสั่ง สถานะเดิมไม่เปลี่ยน updated_at ก็ไม่ขยับ แผงค้างรูปชุดก่อนส่ง — DPX-730 ข้าม MK
+    /// แล้วส่ง UV2 ทีหลัง แผงว่างทั้งที่งาน Working (พบ 27/10/2026)
+    /// </para>
+    /// </summary>
+    private static long ProcessingStamp(PrintJob job) =>
+        HashCode.Combine(job.UpdatedAt?.Ticks ?? 0, job.Commands?.Count(c => c.Success) ?? 0);
+
     private async Task UpdateProcessingAsync()
     {
         var job = _showHistory ? null : JobInMyMachine() ?? NewestProcessJob();
@@ -4512,7 +4523,7 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
-        long stamp = job.UpdatedAt?.Ticks ?? 0;
+        long stamp = ProcessingStamp(job);
         if (_processingJobId == job.Id && _processingStamp == stamp) return;
 
         _processingJobId = job.Id;
