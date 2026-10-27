@@ -44,6 +44,7 @@ public partial class MainShellForm : AntdUI.Window
         // ออกแบบไว้ที่ 1920x1080 — ถ้ามีอะไรคืนขนาด (เช่น Win+Down) จะดันกลับเต็มจอ
         titleBar.MinimizeRequested += (_, _) => Min();
         titleBar.CloseRequested += (_, _) => Close();
+        FormClosing += ConfirmCloseWhileSending;
         Resize += (_, _) => StayMaximized();
 
         // แถบหัวเป็นของเราเอง ไม่ได้ใช้กรอบของ Windows ไอคอนตรงนี้จึงไม่ได้โผล่
@@ -65,6 +66,38 @@ public partial class MainShellForm : AntdUI.Window
 
         btnLang.Click += (_, _) => ToggleLanguage();
         ApplyLanguage();
+    }
+
+    /// <summary>
+    /// กดปิดโปรแกรมระหว่างกำลังคุยกับเครื่อง — ถามก่อน ค่าเริ่มต้นคือไม่ปิด
+    ///
+    /// <para>
+    /// ปิดกลางการส่ง แถวคิวค้างเป็น "ไม่รู้ผล" ถือเครื่องไว้ ต้องมีคนไปตรวจเครื่องแล้วกดข้าม
+    /// หรือส่งใหม่เอง (DPX-730 ปิดโปรแกรม 2 วินาทีหลังเริ่มส่ง UV2 · เจอใน log 14 ครั้ง ·
+    /// ตกลง 27/10/2026) — <see cref="Services.MachineBusy.Active"/> ถูกถือตั้งแต่ก่อนจองการส่ง
+    /// (begin-send) จนบันทึกผลเสร็จ ทั้งทางคิวและปุ่มส่งในหน้า Order Detail
+    /// </para>
+    /// <para>
+    /// ถามเฉพาะคนกดปิดเอง Windows ปิดเครื่อง / Task Manager ไม่ถาม — ค้างกล่องไว้ตอนนั้น
+    /// ทำให้ปิดเครื่องไม่ลง และสุดท้ายก็ถูกปิดอยู่ดี
+    /// </para>
+    /// </summary>
+    private void ConfirmCloseWhileSending(object? sender, FormClosingEventArgs e)
+    {
+        if (e.CloseReason != CloseReason.UserClosing || !Services.MachineBusy.Active) return;
+
+        e.Cancel = !Confirm.Ask(this, new ConfirmSpec
+        {
+            Title = "กำลังส่งงานเข้าเครื่อง",
+            Headline = "ปิดโปรแกรมตอนนี้ไหม?",
+            Detail = "รอสักครู่ให้ส่งเสร็จก่อน แล้วค่อยปิด",
+            Warning = "ปิดตอนนี้ ระบบจะไม่รู้ว่าเครื่องได้รับงานหรือยัง — "
+                    + "ต้องไปดูที่เครื่อง แล้วกด ข้าม หรือส่งใหม่เอง",
+            OkText = "ปิดเลย",
+            CancelText = "รอให้ส่งเสร็จ",
+            Danger = true,
+            Icon = "WarningFilled",
+        });
     }
 
     /// <summary>
