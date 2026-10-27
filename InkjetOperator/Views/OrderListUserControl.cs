@@ -1984,6 +1984,18 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
+        // ข้ามทุกเครื่องที่ ST1 ต้องส่ง เหลือแค่ UV2 รอ ST3 เลือกรุ่น — ST1 ไม่ได้ส่งอะไรเลย
+        // สถานะ Working ปกติ backend ตั้งตอนเริ่มส่งจริง (begin-send) งานนี้จึงค้างเป็น Waiting
+        // ปุ่มเริ่มงานโผล่ให้กดซ้ำทั้งที่เริ่มไปแล้ว (DPX-730 ข้าม MK · พบ 27/10/2026) — ตั้งเองตรงนี้
+        if (skipSteps.Count > 0 && sendPlan.Steps.Count == 0)
+        {
+            var (marked, markError) = await _api.UpdateJobStatusAsync(jobId, "Process");
+            if (IsDisposed) return;
+            if (!marked)
+                Notify.Warn(this, $"{JobName(jobId)} เข้าคิวแล้ว แต่เปลี่ยนสถานะเป็น Working ไม่สำเร็จ · "
+                    + (markError ?? "ติดต่อ backend ไม่ได้") + " · อย่ากดเริ่มงานซ้ำ");
+        }
+
         await SendQueuedForJobAsync(jobId, resolved, $"เริ่มงาน {JobName(jobId)}");
         timing.Mark("ส่งเข้าเครื่อง");
     }
