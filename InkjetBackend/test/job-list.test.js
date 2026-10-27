@@ -67,3 +67,28 @@ test("สถานะเดียว และสถานะที่ไม่�
   assert.equal((await list("page=1&limit=10&status=Waiting,Nope")).status, 400);
   assert.equal((await list("page=1&limit=5000")).status, 400);
 });
+
+// History กรองตามวันจบ (date_by=finished) — งานรับนานแล้วแต่จบวันนี้ต้องขึ้น (ตกลง 27/10/2026)
+test("date_by=finished กรองและเรียงตาม updated_at · ค่าเดิมยังกรองตาม created_at", async () => {
+  await q("TRUNCATE print_jobs RESTART IDENTITY CASCADE");
+  const ins = (lot, status, created, updated) => q(`INSERT INTO print_jobs
+    (barcode_raw, lot_number, status, attempt, stations_required, created_at, updated_at)
+    VALUES ('${lot}', '${lot}', '${status}', 0, '[1,2,3,4]', ${created}, ${updated})`);
+  await ins("OLD-DONE-TODAY", "Success", "now() - interval '30 days'", "now() - interval '1 hour'");
+  await ins("NEW-DONE-TODAY", "Cancel", "now() - interval '3 hours'", "now() - interval '2 hours'");
+  await ins("TODAY-DONE-LAST-WEEK", "Success", "now() - interval '8 days'", "now() - interval '7 days'");
+  await ins("TODAY-OPEN", "Process", "now() - interval '10 minutes'", "now()");
+
+  const from = new Date(Date.now() - 6 * 3600e3).toISOString();
+  const to = new Date(Date.now() + 60e3).toISOString();
+  const range = `from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+
+  const fin = await list(`page=1&limit=100&status=Success,Cancel&date_by=finished&${range}`);
+  assert.equal(fin.status, 200);
+  assert.deepEqual(fin.body.data.data.map((j) => j.lot_number), ["OLD-DONE-TODAY", "NEW-DONE-TODAY"]);
+
+  const created = await list(`page=1&limit=100&status=Success,Cancel&${range}`);
+  assert.deepEqual(created.body.data.data.map((j) => j.lot_number), ["NEW-DONE-TODAY"]);
+
+  assert.equal((await list("page=1&limit=10&date_by=nope")).status, 400);
+});

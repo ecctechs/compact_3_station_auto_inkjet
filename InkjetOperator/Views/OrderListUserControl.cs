@@ -166,7 +166,10 @@ public partial class OrderListUserControl : UserControl
         ("Shim", "6%", "6%"),
         ("Station", "8%", "7%"),
         ("Status", "10%", "8%"),
-        ("Op", "15.7%", "14.7%"),
+        // End แสดงวินาทีแบบ Start (27/10/2026) จึงกว้าง 11% เท่า Start ในแท็บ History — เอามาจากคอลัมน์ปุ่ม
+        // ซึ่งแท็บนี้มีอย่างมากสองปุ่ม (พิมพ์ใหม่ · รายละเอียด) · แท็บ List ซ่อน End ค่านี้ไม่มีผล
+        ("End", "9%", "11%"),
+        ("Op", "15.7%", "12.7%"),
     ];
 
     /// <summary>
@@ -971,8 +974,12 @@ public partial class OrderListUserControl : UserControl
                 toUtc = ToUtcFromThai(to);
             }
 
+            // History กรองตามวันจบ (คอลัมน์ End) ไม่ใช่วันรับงาน — งานรับ 25/09 จบวันนี้ต้องขึ้นตอนเลือกวันนี้
+            // และขอเฉพาะงานจบ / ยกเลิก เดิมขอ 100 ใบล่าสุดทุกสถานะแล้วค่อยกรอง งานค้างกิน 100 ใบนั้นไปด้วย
+            // (ตกลง 27/10/2026)
             var (jobs, error) = _showHistory
-                ? await _api.GetAllJobsAsync(100, fromUtc, toUtc)
+                ? await _api.GetAllJobsAsync(100, fromUtc, toUtc,
+                    status: string.Join(",", HistoryStatuses), byFinished: true)
                 : await GetActiveJobsAsync();
             if (IsDisposed) return;
             NotePollResult(error == null);
@@ -4150,7 +4157,6 @@ public partial class OrderListUserControl : UserControl
     /// <summary>เวลาไทย → UTC สำหรับส่งเป็นเงื่อนไขให้ backend</summary>
     private static DateTime ToUtcFromThai(DateTime thai) => ThaiTime.ToUtc(thai);
 
-    private static string FormatThaiTime(DateTime? utc) => ThaiTime.Text(utc, TimeFormat, Dash);
     private static string FormatThaiStartTime(DateTime? utc) => ThaiTime.Text(utc, StartTimeFormat, Dash);
 
     /// <summary>
@@ -4378,7 +4384,8 @@ public partial class OrderListUserControl : UserControl
         {
             Id = job.Id,
             Start = FormatThaiStartTime(job.CreatedAt),
-            End = finished ? FormatThaiTime(job.UpdatedAt) : Dash,
+            // วินาทีด้วยแบบเดียวกับ Start — งานจบติด ๆ กันในนาทีเดียวแยกลำดับได้
+            End = finished ? FormatThaiStartTime(job.UpdatedAt) : Dash,
             ErpMfg = job.OrderNo ?? "",
             // barcode ที่สแกนเข้ามา = เลขล็อต — backend เก็บซ้ำไว้ใน lot_number ด้วย
             // ใช้ตัวที่มีค่าจริง เผื่องานเก่าที่กรอกมาคนละทาง

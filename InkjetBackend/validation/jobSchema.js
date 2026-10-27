@@ -43,6 +43,11 @@ const jobFilterSchema = z.object({
   // ดีกว่าปล่อยผ่านแล้วเงียบ ๆ ไม่กรองให้เหมือนเดิม
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
+
+  // from / to เทียบกับวันไหน — created = วันรับงานเข้า (ค่าเดิม) · finished = วันจบ / ยกเลิก
+  // (updated_at ตัวเดียวกับคอลัมน์ End) หน้า History ใช้ finished: งานรับ 25/09 จบวันนี้
+  // ต้องขึ้นตอนเลือกวันนี้ (ตกลง 27/10/2026) · client รุ่นเก่าไม่ส่ง = กรองแบบเดิม
+  date_by: z.enum(["created", "finished"]).default("created"),
 });
 
 const commandResultSchema = z.object({

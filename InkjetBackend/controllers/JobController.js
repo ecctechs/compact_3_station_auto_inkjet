@@ -84,7 +84,7 @@ class JobController {
 
   static async getAll(req, res) {
     try {
-      const { status, page, limit, from, to } = req.query;
+      const { status, page, limit, from, to, date_by } = req.query;
       const where = {};
 
       // หลายสถานะพร้อมกันได้ (schema แยกจุลภาคให้แล้ว) — แท็บรายการงานขอ Waiting + Process
@@ -94,14 +94,16 @@ class JobController {
 
       // ตัวกรองวันที่ของหน้า History — ส่งมาเป็น ISO (UTC) ที่ฝั่ง client
       // ขยายเป็นทั้งวันตามเวลาไทยไว้แล้ว ที่นี่จึงกรองตรง ๆ ไม่ตีความเพิ่ม
+      // date_by=finished กรองและเรียงตามวันจบ (updated_at) แทนวันรับงาน — ดู jobFilterSchema
+      const dateColumn = date_by === "finished" ? "updated_at" : "created_at";
       const fromAt = from ? new Date(from) : null;
       const toAt = to ? new Date(to) : null;
       if (fromAt && !isNaN(fromAt) && toAt && !isNaN(toAt)) {
-        where.created_at = { [Op.between]: [fromAt, toAt] };
+        where[dateColumn] = { [Op.between]: [fromAt, toAt] };
       } else if (fromAt && !isNaN(fromAt)) {
-        where.created_at = { [Op.gte]: fromAt };
+        where[dateColumn] = { [Op.gte]: fromAt };
       } else if (toAt && !isNaN(toAt)) {
-        where.created_at = { [Op.lte]: toAt };
+        where[dateColumn] = { [Op.lte]: toAt };
       }
 
       const offset = (page - 1) * limit;
@@ -114,7 +116,8 @@ class JobController {
           { model: PrintJobCommand, as: "commands" },
           { model: PlanRouting, as: "plan_routing" },
         ],
-        order: [["created_at", "DESC"]],
+        // ตัดที่ limit ใบล่าสุดตามวันเดียวกับที่กรอง — History ได้งานที่จบล่าสุด ไม่ใช่ที่รับเข้าล่าสุด
+        order: [[dateColumn, "DESC"]],
         offset,
         limit,
         distinct: true,

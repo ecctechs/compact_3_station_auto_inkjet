@@ -354,12 +354,16 @@ public class ApiClient
     /// งานเก่ากว่านั้นจะไม่ถูกส่งมาให้กรองตั้งแต่แรก
     /// </summary>
     public async Task<(List<PrintJob> jobs, string? error)> GetAllJobsAsync(
-        int limit = 100, DateTime? fromUtc = null, DateTime? toUtc = null, string? status = null)
+        int limit = 100, DateTime? fromUtc = null, DateTime? toUtc = null, string? status = null,
+        bool byFinished = false)
     {
         try
         {
             var url = $"/job/getAll?page=1&limit={limit}";
             if (!string.IsNullOrWhiteSpace(status)) url += $"&status={Uri.EscapeDataString(status)}";
+            // from / to เทียบวันจบ (updated_at) แทนวันรับงาน และเรียงงานที่จบล่าสุดก่อน
+            // backend รุ่นก่อนไม่รู้จักคีย์นี้ ตัดทิ้งเงียบ ๆ แล้วกรองตามวันรับงานแบบเดิม ไม่ error
+            if (byFinished) url += "&date_by=finished";
             if (fromUtc.HasValue) url += $"&from={Uri.EscapeDataString(fromUtc.Value.ToString("o"))}";
             if (toUtc.HasValue) url += $"&to={Uri.EscapeDataString(toUtc.Value.ToString("o"))}";
 
