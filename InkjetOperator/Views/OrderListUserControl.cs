@@ -373,12 +373,24 @@ public partial class OrderListUserControl : UserControl
 
         // ขาดการติดต่อไม่ใช่เรื่องต้องกดปิด — ใช้ข้อความลอย ไม่ใช่กล่อง modal
         // ตัวเฝ้าแจ้งครั้งเดียวตอนขาด และอีกครั้งตอนกลับมา ไม่ได้แจ้งทุกรอบ
+        //
+        // บนจอบอกแค่ว่าตอนนี้ต่อไม่ติด เป็นคำที่คนหน้างานอ่านเข้าใจ (ตกลง 27/10/2026) — ข้อความ error
+        // ของระบบ (เช่น "actively refused" ตอนโปรแกรมเก่าจับพอร์ตอยู่) ไว้ใน log สำหรับคนตามปัญหา
         _pushButton.Trouble += (_, error) =>
         {
             if (IsDisposed) return;
 
-            if (error == null) Notify.Success(this, "ปุ่มกดหน้างาน — กลับมาอ่านค่าได้แล้ว");
-            else Notify.Warn(this, $"ปุ่มกดหน้างาน — อ่านค่าจาก PLC ไม่ได้ ({error})");
+            // ข้อความบนจอลง log เองอยู่แล้ว (Notify) — ที่เขียนเพิ่มคือ error ของระบบที่ไม่ได้ขึ้นจอ
+            var plc = CustomSettingsManager.Read("CLAMP_PLC_NAME", "PLC แคลมป์");
+            if (error == null)
+            {
+                Notify.Success(this, $"ต่อ {plc} ได้แล้ว — ปุ่มกดหน้างานใช้ได้ตามปกติ");
+            }
+            else
+            {
+                AppLog.Warn("PushButton", $"ต่อ {plc} ไม่ติด · {error}");
+                Notify.WarnLong(this, $"ตอนนี้ต่อ {plc} ไม่ติด — ปุ่มกดหน้างานยังใช้ไม่ได้");
+            }
         };
     }
 

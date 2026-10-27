@@ -117,6 +117,17 @@ internal static class Notify
     public static void Warn(Control? owner, string text) =>
         Toast(owner, AntdUI.TType.Warn, text, WarnSeconds, MessageBoxIcon.Warning);
 
+    /// <summary>
+    /// เตือนที่ขึ้นครั้งเดียวแล้วไม่ซ้ำ แต่ผลกระทบยังค้างอยู่ — ค้างนาน <see cref="DetailSeconds"/> วินาที
+    ///
+    /// <para>
+    /// เช่นต่อ PLC แคลมป์ไม่ติด: แจ้งครั้งเดียวตอนขาด คนมักยืนหน้าเครื่องไม่ได้มองจอ
+    /// 5 วินาทีแบบเตือนทั่วไปพลาดง่าย แล้วจะไม่รู้เลยว่าปุ่มหน้างานใช้ไม่ได้ (ตกลง 27/10/2026)
+    /// </para>
+    /// </summary>
+    public static void WarnLong(Control? owner, string text) =>
+        Toast(owner, AntdUI.TType.Warn, text, DetailSeconds, MessageBoxIcon.Warning);
+
     /// <summary>Something failed.</summary>
     public static void Error(Control? owner, string text) =>
         Toast(owner, AntdUI.TType.Error, text, ErrorSeconds, MessageBoxIcon.Error);
