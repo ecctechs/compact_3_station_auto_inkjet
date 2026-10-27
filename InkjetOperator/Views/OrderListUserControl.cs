@@ -4724,13 +4724,38 @@ public partial class OrderListUserControl : UserControl
     /// งานต้องข้ามได้ ไม่งั้นถือเครื่องค้าง คิว UV2 ทั้งหมดหยุด · แถวที่ยังรอคิวไม่ขวางใคร
     /// ถึงคิวเมื่อไรปุ่มค่อยขึ้น (ตกลง 19/10/2026)
     /// · ขึ้นเฉพาะที่ ST3 (ตกลง 27/10/2026) — ST3 เป็นคนเลือกรุ่นและอยู่หน้าเครื่อง UV2
-    /// ที่ ST1 ปุ่มข้ามโผล่ทุกครั้งที่งานรอ ST3 เลือก ดูเหมือนงานมีปัญหาทั้งที่แค่รอคนเลือก</item>
+    /// ที่ ST1 ปุ่มข้ามโผล่ทุกครั้งที่งานรอ ST3 เลือก ดูเหมือนงานมีปัญหาทั้งที่แค่รอคนเลือก
+    /// · และเฉพาะตอนที่งานยังมีเครื่องอื่นค้าง (ตกลง 27/10/2026) — UV2 เป็นขั้นสุดท้ายแล้ว
+    /// ข้ามกับจบงานได้ผลเดียวกัน (งานจบ เครื่อง UV2 ว่าง) เหลือแค่ปุ่มจบงาน ดู <see cref="OtherMachinesOutstanding"/></item>
     /// </list>
     /// </summary>
-    private List<MachineQueueRow> StuckRows(int jobId, IEnumerable<MachineQueueRow> queue) =>
-        queue.Where(r => r.PrintJobsId == jobId
+    private List<MachineQueueRow> StuckRows(int jobId, IEnumerable<MachineQueueRow> queue)
+    {
+        var rows = queue as IList<MachineQueueRow> ?? queue.ToList();
+        return rows.Where(r => r.PrintJobsId == jobId
             && (r.State is "pending" or "active" && r.NeedsAttention
-                || r.State == "active" && r.AwaitingPick && StationService.IsSt3)).ToList();
+                || r.State == "active" && r.AwaitingPick && StationService.IsSt3
+                   && OtherMachinesOutstanding(jobId, r.Machine, rows))).ToList();
+    }
+
+    /// <summary>
+    /// งานนี้ยังมีเครื่องอื่นที่ไม่เสร็จไหม — ขั้นในแผนที่ยังไม่ได้ส่ง (และไม่ได้ข้าม)
+    /// หรือยังถือ / รอคิวเครื่องอื่นอยู่ (เช่นงาน 11 ที่ UV1 ยังพิมพ์อยู่ที่ ST1)
+    /// <para>
+    /// มี = ข้ามเฉพาะเครื่องนี้แล้วงานเดินต่อ ต่างจากจบงานที่ปิดทั้งใบ · ไม่มี = สองปุ่มได้ผลเดียวกัน
+    /// ไม่รู้จักงาน (ยังไม่อยู่ในรายการ) ตอบว่ามี — ขึ้นปุ่มไว้ก่อน ไม่ให้งานค้างโดยไม่มีทางออก
+    /// </para>
+    /// </summary>
+    private bool OtherMachinesOutstanding(int jobId, string machine, IEnumerable<MachineQueueRow> queue)
+    {
+        var job = _allJobs.FirstOrDefault(j => j.Id == jobId);
+        if (job == null) return true;
+
+        bool Other(string m) => !string.Equals(m, machine, StringComparison.OrdinalIgnoreCase);
+
+        return MarkingMethodService.MissingSteps(job.PlanRouting?.MarkingMethod, job.Commands).Any(Other)
+            || queue.Any(r => r.PrintJobsId == jobId && r.State is "pending" or "active" && Other(r.Machine));
+    }
 
     /// <summary>ชื่อเครื่องที่คนหน้างานเรียก — MK สองหัวเป็นเครื่องเดียวในคิว</summary>
     private static string MachineDisplayName(string machine) => machine.ToUpperInvariant() switch
