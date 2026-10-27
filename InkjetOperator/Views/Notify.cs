@@ -113,9 +113,26 @@ internal static class Notify
     public static void Info(Control? owner, string text) =>
         Toast(owner, AntdUI.TType.Info, text, InfoSeconds, MessageBoxIcon.Information);
 
+    /// <summary>
+    /// เสียงของข้อความลอยที่มีปัญหา — ตัวเดียวกับ <see cref="ResultToast"/> ตอนส่งไม่ผ่าน
+    ///
+    /// <para>
+    /// เดิมเตือน / ผิดพลาดเงียบ แต่ข้อความสำเร็จมีเสียง กลับด้านกับที่ควร กล่องสีขาวบนจอขาว
+    /// หางตาไม่สะดุด คนยืนหน้าเครื่องพลาดง่าย (ตกลง 27/10/2026) · Fallback เป็น MessageBox
+    /// ซึ่งมีเสียงของมันเอง จึงไม่เล่นซ้ำตอนไม่มีฟอร์มให้แสดง
+    /// </para>
+    /// </summary>
+    private static void PlayProblemSound(Control? owner)
+    {
+        if (Resolve(owner) != null) System.Media.SystemSounds.Exclamation.Play();
+    }
+
     /// <summary>Validation problem or a step that could not run as asked.</summary>
-    public static void Warn(Control? owner, string text) =>
+    public static void Warn(Control? owner, string text)
+    {
+        PlayProblemSound(owner);
         Toast(owner, AntdUI.TType.Warn, text, WarnSeconds, MessageBoxIcon.Warning);
+    }
 
     /// <summary>
     /// เตือนที่ขึ้นครั้งเดียวแล้วไม่ซ้ำ แต่ผลกระทบยังค้างอยู่ — ค้างนาน <see cref="DetailSeconds"/> วินาที
@@ -125,12 +142,18 @@ internal static class Notify
     /// 5 วินาทีแบบเตือนทั่วไปพลาดง่าย แล้วจะไม่รู้เลยว่าปุ่มหน้างานใช้ไม่ได้ (ตกลง 27/10/2026)
     /// </para>
     /// </summary>
-    public static void WarnLong(Control? owner, string text) =>
+    public static void WarnLong(Control? owner, string text)
+    {
+        PlayProblemSound(owner);
         Toast(owner, AntdUI.TType.Warn, text, DetailSeconds, MessageBoxIcon.Warning);
+    }
 
     /// <summary>Something failed.</summary>
-    public static void Error(Control? owner, string text) =>
+    public static void Error(Control? owner, string text)
+    {
+        PlayProblemSound(owner);
         Toast(owner, AntdUI.TType.Error, text, ErrorSeconds, MessageBoxIcon.Error);
+    }
 
     // ---- Centered modal dialog (blocks until OK) ----
 
