@@ -4710,13 +4710,15 @@ public partial class OrderListUserControl : UserControl
     /// <item>ส่งไม่ผ่าน หรือส่งแล้วไม่รู้ผล</item>
     /// <item>UV2 ถึงคิวแล้ว (ถือเครื่อง) แต่ยังรอ ST3 เลือกรุ่น — เครื่อง UV2 เสียระหว่างรอ
     /// งานต้องข้ามได้ ไม่งั้นถือเครื่องค้าง คิว UV2 ทั้งหมดหยุด · แถวที่ยังรอคิวไม่ขวางใคร
-    /// ถึงคิวเมื่อไรปุ่มค่อยขึ้น (ตกลง 19/10/2026)</item>
+    /// ถึงคิวเมื่อไรปุ่มค่อยขึ้น (ตกลง 19/10/2026)
+    /// · ขึ้นเฉพาะที่ ST3 (ตกลง 27/10/2026) — ST3 เป็นคนเลือกรุ่นและอยู่หน้าเครื่อง UV2
+    /// ที่ ST1 ปุ่มข้ามโผล่ทุกครั้งที่งานรอ ST3 เลือก ดูเหมือนงานมีปัญหาทั้งที่แค่รอคนเลือก</item>
     /// </list>
     /// </summary>
     private List<MachineQueueRow> StuckRows(int jobId, IEnumerable<MachineQueueRow> queue) =>
         queue.Where(r => r.PrintJobsId == jobId
             && (r.State is "pending" or "active" && r.NeedsAttention
-                || r.State == "active" && r.AwaitingPick)).ToList();
+                || r.State == "active" && r.AwaitingPick && StationService.IsSt3)).ToList();
 
     /// <summary>ชื่อเครื่องที่คนหน้างานเรียก — MK สองหัวเป็นเครื่องเดียวในคิว</summary>
     private static string MachineDisplayName(string machine) => machine.ToUpperInvariant() switch
