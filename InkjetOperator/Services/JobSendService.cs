@@ -624,6 +624,10 @@ public static class JobSendService
             var fm = await adapter.SendConfigAsync(config);
             if (!fm.Success) return (Reject(label, "ส่ง Config", fm), Note(notes));
 
+            // ส่งผ่าน แต่ใช้ความเร็วสายพานค่าเริ่มต้น เพราะในเครื่องยังไม่มีโปรแกรมเลขนี้ — ให้ไป Save ที่ MK
+            if (adapter.UsedDefaultLineSpeed)
+                notes.Add($"ไม่มีโปรแกรม No. {config.ProgramNumber ?? 1} ในเครื่อง ใช้ Line Speed ค่าเริ่มต้น · Save โปรแกรมที่ MK");
+
             return (null, Note(notes));
         }
         catch (Exception ex)

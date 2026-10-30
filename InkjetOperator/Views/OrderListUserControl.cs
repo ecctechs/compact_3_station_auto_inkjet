@@ -2836,7 +2836,12 @@ public partial class OrderListUserControl : UserControl
                 var (cleared, clearError) = await _api.ClearMachineQueueAsync(jobId, onlyUnsent: true);
                 if (!cleared) lines.Add(Notify.Bad($"ล้างคิวไม่สำเร็จ: {clearError}"));
             }
-            if (!IsDisposed) _sendReports.AddRange(lines.Select(l => l with { Text = $"{title} · {l.Text}" }));
+            // ชื่องานขึ้นบรรทัดเดียวเป็นหัว ไม่ต่อหน้าทุกบรรทัด — ข้อความยาวจนอ่านไม่ทัน (ตกลง 30/10/2026)
+            if (!IsDisposed && lines.Count > 0)
+            {
+                _sendReports.Add(Notify.Note(title));
+                _sendReports.AddRange(lines);
+            }
         }
         finally
         {
@@ -4936,6 +4941,16 @@ public partial class OrderListUserControl : UserControl
 
         var results = await PlcOrderService.SendAsync(plan);
         if (IsDisposed) return;
+
+        // ต่อ PLC ไม่ได้ = ทุกค่าล้มด้วยเหตุเดียวกัน — บอกบรรทัดเดียวสั้น ๆ แทนค่าละบรรทัด
+        // ข้อความดิบจาก Windows (ภาษาอังกฤษ) เก็บลง log ไว้ไล่ดู คนหน้างานไม่ต้องอ่าน (ตกลง 30/10/2026)
+        var failed = results.Where(r => r.Error != null).ToList();
+        if (failed.Count > 1 && failed.Count == results.Count && failed.Select(r => r.Error).Distinct().Count() == 1)
+        {
+            AppLog.Warn("OrderList.Plc", $"ส่งค่า PLC ไม่ได้ ({string.Join(", ", failed.Select(r => r.Name))}) — {failed[0].Error}");
+            lines.Add(Notify.Careful("PLC MK ส่งค่าไม่ได้ — ค่าของงานนี้ยังไม่เข้า PLC · ตรวจ PLC / IP ในหน้า Setting"));
+            return;
+        }
 
         foreach (var r in results)
         {

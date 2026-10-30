@@ -279,8 +279,7 @@ internal static class Notify
             // ไม่ต่อข้อความดิบท้ายบรรทัด เพราะมันเขียนเรื่องเดิมซ้ำด้วยชื่อภายใน
             // (เช่น "MK2: สั่งหยุดพิมพ์ไม่สำเร็จ") ซึ่งคนหน้างานไม่รู้จัก เขารู้จัก
             // เครื่องนี้ในชื่อ MK-059 ที่ขึ้นต้นบรรทัดอยู่แล้ว
-            { Suspended: true } => Note(
-                $"{m.Name} — ไม่มีงานอยู่แล้ว แต่สั่งหยุดพิมพ์ไม่ได้ · ไปดูว่าเครื่องหยุดจริงไหม"),
+            { Suspended: true } => Note($"{m.Name} — ไม่ได้ใช้ แต่สั่งหยุดไม่ได้ · ดูว่าเครื่องหยุดไหม"),
             _ => Bad($"{m.Name} — {m.Error}"),
         }).ToList();
 
@@ -319,6 +318,14 @@ internal static class Notify
             var plain = string.Join(Environment.NewLine, list.Select(l => l.Text));
             Toast(owner, AntdUI.TType.Success, $"{title}{Environment.NewLine}{plain}",
                 ResultSeconds, MessageBoxIcon.Information);
+            return;
+        }
+
+        // มีแค่คำเตือน (ส่งผ่านแล้ว แต่มีเรื่องให้รู้) = ข้อความลอยกลางจอด้านบน ค้าง 10 วินาที ไม่ต้องกดปิด
+        // ตกลง 30/10/2026 · ไม่ผ่านจริง (✖) ยังเป็นกล่องเหมือนเดิม เพราะต้องตัดสินใจทำอะไรต่อ
+        if (worst == AntdUI.TType.Warn)
+        {
+            ResultToast(owner, title, list);
             return;
         }
 

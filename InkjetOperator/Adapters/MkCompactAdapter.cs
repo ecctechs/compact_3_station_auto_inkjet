@@ -2,6 +2,7 @@
 using System.Text;
 using InkjetOperator.Managers;
 using InkjetOperator.Models;
+using InkjetOperator.Services;
 
 namespace InkjetOperator.Adapters;
 
@@ -204,18 +205,47 @@ public class MkCompactAdapter : IInkjetAdapter
 
         // FL,<program>,0 ส่งค่าที่บันทึกอยู่ของโปรแกรมนี้กลับมา โดย Line Speed คือช่อง j
         // อ่านก่อน FM เพื่อคงค่าเดิมของโปรแกรม และไม่เขียน -1/500 ทับลงไป
+        UsedDefaultLineSpeed = false;
         string flResponse = await SendAsync($"FL,{_programNumber},0\r");
-        if (!TryReadProgramLineSpeed(flResponse, _programNumber, out string lineSpeed))
+        if (TryReadProgramLineSpeed(flResponse, _programNumber, out string lineSpeed))
         {
-            string error = string.IsNullOrWhiteSpace(flResponse)
-                ? "ER,FL,NO_RESPONSE"
-                : IsRejected(flResponse) ? flResponse : "ER,FL,INVALID_RESPONSE";
-            return MakeResult("config", error);
+            string fmCmd = BuildConfigCommand(normalizedName, direction, delay, height, width, lineSpeed);
+            return MakeResult("config", await SendAsync(fmCmd));
         }
 
-        string fmCmd = BuildConfigCommand(normalizedName, direction, delay, height, width, lineSpeed);
-        string response = await SendAsync(fmCmd);
+        // เครื่องเงียบ = ไม่รู้ว่าเกิดอะไร ไม่เดาต่อ
+        if (string.IsNullOrWhiteSpace(flResponse))
+            return MakeResult("config", "ER,FL,NO_RESPONSE");
+
+        // เครื่องตอบแต่อ่าน Line Speed ไม่ได้ = ยังไม่มีโปรแกรมเลขนี้ในเครื่อง (ยังไม่ได้ Save ที่ MK)
+        //
+        // เดิมล้มทั้งการส่ง ข้อความเป็นรหัส ER,FL,INVALID_RESPONSE คนหน้างานไม่รู้ว่าต้องทำอะไร
+        // ตกลง 30/10/2026: ส่งต่อด้วยค่าที่โปรแกรมใช้มาก่อนอ่าน FL ได้ (-1 แล้ว 500 ถ้าเครื่องไม่รับ -1)
+        // FM สร้าง / บันทึกโปรแกรมเลขนี้ให้เอง ผู้เรียกดู UsedDefaultLineSpeed แล้วเตือนให้ไป Save ที่ MK
+        AppLog.Warn("MK.Config", $"อ่าน Line Speed โปรแกรม No. {_programNumber} ไม่ได้ · FL ตอบ: {flResponse.Trim()} · ส่งด้วยค่าเริ่มต้น");
+        UsedDefaultLineSpeed = true;
+        string response = await SendAsync(BuildConfigCommand(normalizedName, direction, delay, height, width, "-1"));
+
+        // Firmware บางเครื่องไม่รับ -1 ในช่อง Line Speed (j) และตอบ ER,FM,22 — ส่งซ้ำด้วย 500
+        if (IsInvalidFmParameter(response))
+            response = await SendAsync(BuildConfigCommand(normalizedName, direction, delay, height, width, "500"));
+
         return MakeResult("config", response);
+    }
+
+    /// <summary>
+    /// ส่ง Config ครั้งล่าสุดใช้ Line Speed ค่าเริ่มต้น เพราะอ่านค่าของโปรแกรมในเครื่องไม่ได้
+    /// (ยังไม่มีโปรแกรมเลขนี้ใน MK) — ส่งผ่าน แต่ต้องเตือนให้ไป Save โปรแกรมที่เครื่อง
+    /// </summary>
+    public bool UsedDefaultLineSpeed { get; private set; }
+
+    private static bool IsInvalidFmParameter(string response)
+    {
+        string[] fields = response.TrimEnd('\r', '\n').Split(',');
+        return fields.Length >= 3
+            && fields[0].Equals("ER", StringComparison.OrdinalIgnoreCase)
+            && fields[1].Equals("FM", StringComparison.OrdinalIgnoreCase)
+            && fields[2].Equals("22", StringComparison.Ordinal);
     }
 
     private static bool TryReadProgramLineSpeed(string response, int expectedProgram, out string lineSpeed)
