@@ -3,7 +3,7 @@ const sequelize = require("../database");
 const ResponseManager = require("../middleware/ResponseManager");
 const { PrintJob, PrintJobCommand } = require("../model/jobModel");
 const { MachineQueue } = require("../model/machineQueueModel");
-const { withQueueLock, assertNoUnresolved, conflict } = require("../services/queueGuard");
+const { withQueueLock, assertNoUnresolved, settleUnresolved, conflict } = require("../services/queueGuard");
 const {
   Pattern,
   InkjetConfig,
@@ -363,8 +363,10 @@ class JobController {
         const job = await PrintJob.findByPk(req.params.id, { transaction });
         if (!job) conflict("Job not found");
         const rows = await MachineQueue.findAll({ where: { print_jobs_id: job.id }, transaction });
-        // ห้ามเปลี่ยนเป็นรอ/จบ/ยกเลิก ขณะที่เครื่องอาจรับงานไปแล้ว — ข้ามเครื่องนั้นก่อน (POST /machine-queue/skip)
-        if (status !== "Process") await assertNoUnresolved(rows, transaction);
+        // จบ / ยกเลิก ทำได้เสมอ (ตกลง 30/10/2026) — ผลส่งที่ไม่รู้ถูกปลดเป็น "ไม่ได้ส่ง" พร้อมร่องรอย
+        // ยกเว้นกำลังส่งอยู่จริง ให้รอส่งจบก่อน · ถอยกลับเป็นรอ (Waiting) ยังห้ามเหมือนเดิม
+        if (["Success", "Cancel"].includes(status)) await settleUnresolved(rows, transaction, status === "Success" ? "complete" : "cancel");
+        else if (status !== "Process") await assertNoUnresolved(rows, transaction);
         if (["Success", "Cancel"].includes(status))
           await MachineQueue.destroy({ where: { print_jobs_id: job.id }, transaction });
         await job.update({ status }, { transaction });

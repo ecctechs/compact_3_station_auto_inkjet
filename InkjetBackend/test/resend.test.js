@@ -104,20 +104,27 @@ test("ส่งซ้ำไม่ถึงเครื่อง (not_sent): แ�
   assert.equal((await release("MK", row.id)).status, 200);
 });
 
-test("ส่งซ้ำไม่รู้ผล: ถือเครื่องไว้ตรวจ ปล่อย / จบงานไม่ได้ · ส่งซ้ำอีกครั้งได้ แล้วปล่อยได้", async () => {
-  const { job: j, row } = await sentHolder();
+// ตกลง 30/10/2026: ผลไม่รู้ไม่ขวางปุ่มหน้าเครื่อง / จบงานแล้ว — ปลดให้เองพร้อมร่องรอย
+test("ส่งซ้ำไม่รู้ผล (โปรแกรมรุ่นก่อน): ส่งซ้ำอีกครั้งได้ · ปล่อยเครื่อง / จบงานได้ ปลดผลพร้อมร่องรอย", async () => {
+  const { row } = await sentHolder();
   const t1 = randomUUID();
   await resend(row.id, t1);
   assert.equal((await finish(row.id, t1, "unknown")).status, 200);
-
-  assert.equal((await release("MK", row.id)).status, 409);
-  assert.equal((await request(`/job/${j.id}/status`, { status: "Success" }, "PATCH")).status, 409);
   assert.equal((await finish(row.id, t1, "not_sent")).status, 409, "ไม่รู้ผลแล้วย้อนเป็นไม่ได้ส่งเองไม่ได้");
 
   const t2 = randomUUID();
   assert.equal((await resend(row.id, t2)).status, 200);
-  assert.equal((await finish(row.id, t2, "sent")).status, 200);
+  assert.equal((await finish(row.id, t2, "unknown")).status, 200);
   assert.equal((await release("MK", row.id)).status, 200);
+  assert.equal((await latest(row.id)).payload.resolved_by, "release");
+
+  // จบงานตอนส่งซ้ำไม่รู้ผล
+  const { job: k, row: rowK } = await sentHolder();
+  const t3 = randomUUID();
+  await resend(rowK.id, t3);
+  await finish(rowK.id, t3, "unknown");
+  assert.equal((await request(`/job/${k.id}/status`, { status: "Success" }, "PATCH")).status, 200);
+  assert.equal((await latest(rowK.id)).payload.resolved_by, "complete");
 });
 
 test("ส่งซ้ำไม่ได้: ยังไม่ส่งรอบแรก · กำลังส่งอยู่ · ไม่ได้ถือเครื่อง · token ซ้ำ · งานจบแล้ว", async () => {

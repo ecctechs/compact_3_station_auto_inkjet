@@ -562,18 +562,15 @@ public partial class OrderListUserControl : UserControl
         if (holder == null) return null;
         var job = JobName(holder.PrintJobsId);
 
-        // ส่งไปแล้ว แต่ส่งซ้ำรอบล่าสุด (ปุ่มส่งใหม่ในหน้า Order Detail) ยังไม่จบ / ไม่รู้ผล
+        // ส่งไปแล้ว — ปล่อยได้ · กำลังส่งซ้ำอยู่ (ปุ่มส่งใหม่ในหน้า Order Detail) ให้รอส่งจบก่อน
         if (holder.SentAt != null)
             return holder.DispatchState == "sending"
                 ? $"{machine} กำลังส่งซ้ำ {job} อยู่ · รอสักครู่แล้วกดใหม่"
-                : holder.NeedsSendReview
-                    ? $"{machine} ยังปล่อยไม่ได้ — ส่ง {job} ซ้ำแล้วยังไม่รู้ผล · ตรวจเครื่องแล้วกดส่งใหม่อีกครั้ง หรือกด ข้ามเครื่อง ในแถวงาน"
-                    : null;
+                : null;
 
-        // ส่งออกไปแล้วไม่รู้ผล — ปุ่มหน้าเครื่องปล่อยไม่ได้ ทางออกคือปุ่ม "ข้ามเครื่อง" ในแถวงาน
-        // ซึ่งให้คนยืนยันพร้อมเห็นสาเหตุ และบันทึกร่องรอยไว้
-        if (holder.NeedsSendReview)
-            return $"{machine} ยังปล่อยไม่ได้ — ส่ง {job} ออกไปแล้วแต่ยังไม่รู้ผล · ตรวจที่เครื่องก่อน แล้วกด ข้ามเครื่อง ในแถวงาน";
+        // ผลส่งยังไม่รู้ (โปรแกรมรุ่นก่อน / ST1 ปิดกลางคัน) — ให้ backend ตัดสิน (ตกลง 30/10/2026)
+        // backend ปลดเป็น "ไม่ได้ส่ง" แล้วปล่อยเครื่อง หรือบอกให้รอถ้ายังส่งอยู่จริง (settleUnresolved)
+        if (holder.NeedsSendReview) return null;
 
         if (holder.AwaitingPick)
             return $"{machine} ยังไม่ได้รับงาน — {job} รอ ST3 เลือกรุ่น · กด เลือกรุ่น {machine} ในแถวงานก่อน";
@@ -1671,13 +1668,20 @@ public partial class OrderListUserControl : UserControl
     /// <summary>
     /// เครื่องที่งานนี้ถืออยู่ตอนนี้ (แถว active) — อ่านก่อนจบ / ยกเลิก เพราะหลังจากนั้นแถวถูกลบ
     /// อ่านคิวไม่ได้คืนว่าง งานยังจบ / ยกเลิกได้ เหลือแค่คิวไม่เดินเอง (เหมือนพฤติกรรมเดิม)
+    /// <para>
+    /// รวมเครื่องที่งานนี้ส่งไม่ผ่าน (แถวกลับไปรอ not_sent) — แถวนั้นได้เครื่องไปแล้วก่อนส่งไม่ผ่าน
+    /// งานอื่นที่รอคิวต่อจากมันจะค้างถ้าไม่เดินคิวให้ (ตกลง 30/10/2026: ส่งไม่ผ่านทุกกรณีเป็น not_sent)
+    /// เครื่องที่มีงานอื่นถืออยู่ backend ไม่ให้ปล่อยด้วย expected_holder_id = null อยู่แล้ว
+    /// </para>
     /// </summary>
     private async Task<List<string>> HeldMachinesAsync(int jobId)
     {
         var (rows, _) = await _api!.GetMachineQueueAsync();
         return rows
-            .Where(r => r.PrintJobsId == jobId && r.State == "active")
+            .Where(r => r.PrintJobsId == jobId
+                && (r.State == "active" || r.State == "pending" && r.DispatchState == "not_sent" && r.SentAt == null))
             .Select(r => r.Machine)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 
@@ -2991,11 +2995,21 @@ public partial class OrderListUserControl : UserControl
         }
         timing.Mark("คุยกับเครื่อง");
 
-        // ไม่ถึงเครื่องแน่นอน = not_sent (แถวกลับไปรอ) · ไม่แน่ใจ = unknown (ถือเครื่องไว้ตรวจ)
-        // ทั้งสองแบบขึ้นปุ่ม "ข้ามเครื่อง" ในแถวงานให้คนตัดสิน
-        var outcome = result.Sent ? "sent"
-            : result.SafeToRetry ? "not_sent"
-            : "unknown";
+        // ส่งไม่ผ่าน = ไม่ได้ส่ง (not_sent) ทุกกรณี ไม่มี "ไม่รู้ผล" ที่ถือคิวไว้ตรวจอีก (ตกลง 30/10/2026)
+        //
+        // เดิมล้มกลางทางเป็น unknown — ถือเครื่องค้าง ปล่อย / จบ / ยกเลิกไม่ได้จนกว่าจะมีคนกดข้ามเครื่อง
+        // ลูกค้าติดกดอะไรไม่ได้ ตอนนี้ถ้าแตะเครื่องไปแล้ว (ไม่ใช่ล้มตั้งแต่ด่านตรวจ) สั่งหยุดเครื่องนั้นก่อน
+        // กันข้อมูลครึ่ง ๆ ถูกพิมพ์ลงชิ้นงาน แล้วบันทึกว่าไม่ได้ส่ง · ส่งครั้งถัดไปเขียนทับทุกช่องอยู่แล้ว
+        if (!result.Sent && !result.SafeToRetry && !IsDisposed)
+        {
+            SetMachineStatus(row, "ส่งไม่ผ่าน · กำลังสั่งหยุดเครื่อง", AntdUI.TTypeMini.Warn);
+            var notStopped = await JobSendService.StopAfterFailedSendAsync(row.Machine, resolved.Pattern);
+            timing.Mark("สั่งหยุดเครื่อง");
+            result.Lines.Add(notStopped.Count == 0
+                ? Notify.Note($"{row.Machine}: สั่งหยุดเครื่องแล้ว")
+                : Notify.Careful($"{string.Join(" / ", notStopped)}: สั่งหยุดเครื่องไม่ได้ · ไปดูว่าเครื่องหยุดจริงไหม"));
+        }
+        var outcome = result.Sent ? "sent" : "not_sent";
         var error = string.Join(" · ", result.Lines.Where(l => l.Kind == Notify.ResultKind.Error).Select(l => l.Text));
         if (error.Length > 4000) error = error[..4000];
         SetMachineStatus(row, "กำลังบันทึกผล", AntdUI.TTypeMini.Primary);
@@ -3006,18 +3020,23 @@ public partial class OrderListUserControl : UserControl
         timing.Mark("บันทึกผล");
         timing.Write(outcome);
 
-        bool held = !recorded.ok || outcome == "unknown";
+        // บันทึกผลไม่ได้ = backend ยังเห็นแถวนี้ "กำลังส่ง" — ระบบไม่ส่งซ้ำเอง และ backend ปลดให้เอง
+        // ตอนกดจบ / ยกเลิก / ปุ่มหน้าเครื่องเมื่อค้างเกิน 2 นาที (settleUnresolved)
+        bool held = !recorded.ok;
         if (held)
-            result.Lines.Add(Notify.Bad(resend
-                ? $"{row.Machine}: ส่งซ้ำแล้วไม่รู้ผล · ถือเครื่องไว้ตรวจ ตรวจเครื่องแล้วกดส่งใหม่อีกครั้ง หรือกด ข้ามเครื่อง"
-                    + (recorded.ok ? "" : $" · บันทึกผลไม่ได้: {recorded.error}")
-                : $"{row.Machine}: ถือคิว {row.Id} ไว้ตรวจผล ห้ามส่งซ้ำหรือปล่อยเครื่อง"
-                    + (recorded.ok ? "" : $" · บันทึกผลไม่ได้: {recorded.error}")));
+            result.Lines.Add(Notify.Bad(
+                $"{row.Machine}: บันทึกผลการส่งไม่ได้ ({recorded.error}) · ระบบไม่ส่งซ้ำเอง"
+                + " · ถ้ากดจบงาน / ยกเลิกไม่ได้ รอ 2 นาทีแล้วกดใหม่"));
         else if (resend && !result.Sent)
-            result.Lines.Add(Notify.Careful($"{row.Machine}: ยังไม่ได้ส่งซ้ำ เครื่องยังมีข้อมูลชุดเดิม · แก้แล้วกดส่งใหม่อีกครั้ง"));
-        SetMachineStatus(row, held ? "ต้องตรวจสอบก่อนส่งซ้ำ"
+            result.Lines.Add(Notify.Careful(result.SafeToRetry
+                ? $"{row.Machine}: ยังไม่ได้ส่งซ้ำ เครื่องยังมีข้อมูลชุดเดิม · แก้แล้วกดส่งใหม่อีกครั้ง"
+                : $"{row.Machine}: ส่งซ้ำไม่ผ่าน · แก้แล้วกดส่งใหม่อีกครั้ง"));
+        else if (!result.Sent && result.Lines.Count > 0)
+            result.Lines.Add(Notify.Careful(
+                $"{row.Machine}: ยังไม่ได้ส่งงานนี้ · แก้แล้วกดเริ่มงานใหม่ (หรือยกเลิกแล้วกดพิมพ์ใหม่) หรือกดจบงาน"));
+        SetMachineStatus(row, held ? "บันทึกผลไม่ได้"
                 : result.Sent ? SentStatus(row.Machine)
-                : resend ? "ส่งซ้ำไม่สำเร็จ · ข้อมูลเดิมยังอยู่"
+                : resend ? (result.SafeToRetry ? "ส่งซ้ำไม่สำเร็จ · ข้อมูลเดิมยังอยู่" : "ส่งซ้ำไม่สำเร็จ")
                 : "ยังไม่ส่ง / ส่งไม่สำเร็จ",
             held ? AntdUI.TTypeMini.Warn : result.Sent ? AntdUI.TTypeMini.Success : AntdUI.TTypeMini.Error);
         return result with { HeldForReview = held };
@@ -3031,15 +3050,14 @@ public partial class OrderListUserControl : UserControl
         {
             // MK สองหัวคือเครื่องเดียว — หัวไหนที่งานใช้ต่อไม่ได้ ไม่ส่งทั้งคู่ (ตกลง 19/10/2026)
             //
-            // ส่งหัวเดียวแล้วอีกหัวล้ม ชิ้นงานได้แค่ครึ่งเดียวแล้วผล "ไม่แน่นอน" ถือเครื่องค้างรอตรวจ
-            // ตรวจก่อนแตะเครื่องหรือ PLC จึงบันทึกได้ว่ายังไม่ได้ส่งแน่นอน (not_sent) แถวกลับไปรอ
-            // ไม่ส่งซ้ำเอง คนไปตรวจเครื่องแล้วสั่งส่งใหม่ หรือกด "ข้ามเครื่อง" ข้ามขั้น MK ทั้งขั้น
+            // ส่งหัวเดียวแล้วอีกหัวล้ม ชิ้นงานได้แค่ครึ่งเดียว — ตรวจก่อนแตะเครื่องหรือ PLC
+            // จึงบันทึกได้ว่ายังไม่ได้ส่งแน่นอน (not_sent) แถวกลับไปรอ ไม่ส่งซ้ำเอง
             // ด่านตอนกดเริ่มงานตรวจแบบเดียวกันอยู่แล้ว ที่นี่กันทางคิว / ST3 / ปุ่มหน้าเครื่อง
             var down = await JobSendService.UnreachableAsync(["MK"], resolved.Pattern, null);
             if (down.Count > 0)
             {
                 var downLines = down.Select(d => Notify.Bad($"{d.Name} — {d.Reason}")).ToList();
-                downLines.Add(Notify.Careful("ยังไม่ส่ง MK ทั้งสองหัว · ตรวจเครื่องแล้วส่งใหม่ หรือกด \"ข้ามเครื่อง\""));
+                downLines.Add(Notify.Careful("ยังไม่ส่ง MK ทั้งสองหัว"));
                 return new StepSendResult(false, downLines, SafeToRetry: true);
             }
 
@@ -4366,11 +4384,8 @@ public partial class OrderListUserControl : UserControl
                 AddUvButtons(buttons, job);
             }
 
-            // เครื่องที่ส่งไม่ผ่าน / ไม่รู้ผล — ให้คนไปตรวจแล้วยืนยันข้าม งานจะได้ไม่ค้าง (ข้อ 2.2)
-            // ปุ่มขาวขอบ ไม่ใช่สีส้ม — สีส้มคือปุ่มจบงานที่ยังส่งไม่ครบ สองปุ่มสีเดียวกันดูเป็นปุ่มเดียวกัน
-            if (StuckRows(job.Id, _queueRows).Count > 0)
-                buttons.Add(new AntdUI.CellButton("skipmachine", SkipMachineButtonText, AntdUI.TTypeMini.Default)
-                { Radius = 6 });
+            // ไม่มีปุ่ม "ข้าม" ในแถวงานแล้ว (ตกลง 30/10/2026) — ส่งไม่ผ่านทุกกรณีเป็น "ไม่ได้ส่ง" ไม่มีคิวค้าง
+            // ให้ข้าม ทางออกคือเริ่มงานใหม่ / ยกเลิกแล้วพิมพ์ใหม่ / จบงาน ซึ่งกดได้เสมอ
 
             // ยกเลิกได้ทุกงานที่ยังไม่จบ ไม่ว่าเริ่มไปแล้วหรือยัง — เป็นทางออกเดียว
             // ของงานที่ยกเลิกหน้างานแล้วไม่ควรค้างอยู่ในตารางให้คนอื่นสับสน

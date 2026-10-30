@@ -38,12 +38,9 @@ async function assertNoUnresolved(rows, transaction) {
 
 // ปลดผลส่งที่ยังไม่รู้ (sending / unknown) ให้เป็น "ไม่ได้ส่ง"
 //
-// ทางเดียวที่เรียกได้คือคนหน้างานยืนยัน "ข้ามเครื่อง" (POST /machine-queue/skip) หลังตรวจเครื่องแล้ว
-// ทางอื่นทั้งหมด (ปุ่มหน้าเครื่อง ยกเลิก จบงาน ล้างคิว) ยังห้ามด้วย assertNoUnresolved
-// เดิมโหมด "ส่งไม่ครบ ไม่ส่งเลย" ส่งธงมาปลดผ่านทางเหล่านั้นได้ — เลิกโหมดนั้นแล้ว 19/10/2026
-//
-// เก็บร่องรอยไว้ใน payload ว่าใครปลด ไม่ลบแถว QUEUE_DISPATCH ทิ้ง
-async function resolveUnresolved(rows, transaction) {
+// เรียกจากปุ่มข้ามเครื่อง (POST /machine-queue/skip) และจาก settleUnresolved (จบงาน / ยกเลิก /
+// ปุ่มหน้าเครื่อง / ล้างคิว) · เก็บร่องรอยไว้ใน payload ว่าใครปลด ไม่ลบแถว QUEUE_DISPATCH ทิ้ง
+async function resolveUnresolved(rows, transaction, by = "operator") {
   let resolved = 0;
   for (const row of rows) {
     const attempt = await latestDispatch(row.id, transaction);
@@ -53,7 +50,7 @@ async function resolveUnresolved(rows, transaction) {
         ...attempt.payload,
         outcome: "not_sent",
         resolved_from: attempt.payload.outcome,
-        resolved_by: "operator",
+        resolved_by: by,
         resolved_at: new Date().toISOString(),
       },
     }, { transaction });
@@ -62,4 +59,27 @@ async function resolveUnresolved(rows, transaction) {
   return resolved;
 }
 
-module.exports = { DISPATCH, withQueueLock, conflict, latestDispatch, unresolved, assertNoUnresolved, resolveUnresolved };
+// "กำลังส่ง" ที่ใหม่กว่านี้ถือว่ายังคุยกับเครื่องอยู่จริง — การส่งหนึ่งครั้งนานสุดราว 40 วินาที
+// (MK หมดเวลาคำสั่งละ 3 วินาที · UV โหลดโปรแกรมรอได้ 15 วินาที) เผื่อไว้เป็น 2 นาที
+const SENDING_GRACE_MS = 2 * 60 * 1000;
+
+// ทางของคนหน้างาน (จบงาน / ยกเลิก / ปุ่มหน้าเครื่อง / ล้างคิว) ต้องไม่ติดค้างเพราะผลส่งที่ไม่รู้
+//
+// เดิม assertNoUnresolved ปฏิเสธทุกทางจนกว่าจะมีคนกด "ข้ามเครื่อง" ลูกค้ากดจบ / ยกเลิกงานไม่ได้
+// ตกลงใหม่ 30/10/2026: ส่งไม่ผ่าน = ไม่ได้ส่ง (โปรแกรมสั่งหยุดเครื่องให้) ไม่มีการถือคิวไว้ตรวจ
+// ทางเหล่านี้จึงปลดผลที่ไม่รู้ให้เองพร้อมร่องรอย — ยกเว้นแถวที่กำลังส่งอยู่จริง ยังรอให้ส่งจบก่อน
+// ไม่งั้นงานถัดไปจะถูกส่งทับเครื่องกลางการส่ง (ST1 ปิดกลางคัน = ค้างเกินเวลานี้ ปลดได้)
+//
+// คืนจำนวนแถวที่ปลด
+async function settleUnresolved(rows, transaction, by) {
+  for (const row of rows) {
+    const attempt = await latestDispatch(row.id, transaction);
+    if (!unresolved(attempt) || attempt.payload.outcome !== "sending") continue;
+    const age = Date.now() - new Date(attempt.sent_at || attempt.created_at || 0).getTime();
+    if (age < SENDING_GRACE_MS)
+      conflict(`${row.machine}: กำลังส่งงานเข้าเครื่องอยู่ — รอสักครู่แล้วกดใหม่ (คิว ${row.id})`);
+  }
+  return resolveUnresolved(rows, transaction, by);
+}
+
+module.exports = { DISPATCH, withQueueLock, conflict, latestDispatch, unresolved, assertNoUnresolved, resolveUnresolved, settleUnresolved, SENDING_GRACE_MS };

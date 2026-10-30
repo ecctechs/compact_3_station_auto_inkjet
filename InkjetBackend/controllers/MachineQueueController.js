@@ -3,7 +3,7 @@ const sequelize = require("../database");
 const ResponseManager = require("../middleware/ResponseManager");
 const { MachineQueue } = require("../model/machineQueueModel");
 const { PrintJob, PrintJobCommand } = require("../model/jobModel");
-const { DISPATCH, withQueueLock, conflict, latestDispatch, assertNoUnresolved, resolveUnresolved } = require("../services/queueGuard");
+const { DISPATCH, withQueueLock, conflict, latestDispatch, assertNoUnresolved, resolveUnresolved, settleUnresolved } = require("../services/queueGuard");
 
 const reportError = (req, res, error) =>
   ResponseManager.ErrorResponse(req, res, error.statusCode || 500, error.message);
@@ -200,10 +200,11 @@ class MachineQueueController {
         if ((holder?.id ?? null) !== expected_holder_id)
           conflict("คิวเปลี่ยนแล้ว กรุณาตรวจงานที่ถือเครื่องก่อนกดอีกครั้ง");
         if (holder) {
-          // ผลไม่รู้ปล่อยด้วยปุ่มหน้าเครื่องไม่ได้ — ทางออกคือ POST /machine-queue/skip
-          // ที่คนยืนยันพร้อมเห็นสาเหตุ (เลิกโหมด "ส่งไม่ครบ ไม่ส่งเลย" 19/10/2026)
-          await assertNoUnresolved([holder], t);
-          if (!holder.sent_at) conflict("งานนี้ยังไม่ได้ส่งเข้าเครื่อง ปล่อยคิวไม่ได้");
+          // ผลไม่รู้ปล่อยด้วยปุ่มหน้าเครื่องได้ (ตกลง 30/10/2026) — ปลดเป็น "ไม่ได้ส่ง" พร้อมร่องรอย
+          // ยกเว้นกำลังส่งอยู่จริง (settleUnresolved รอให้ส่งจบก่อน)
+          // แถวที่ยังไม่เคยเริ่มส่งเลยยังปล่อยไม่ได้เหมือนเดิม กันงานหลุดคิวไปเงียบ ๆ โดยไม่ได้พิมพ์
+          const settled = await settleUnresolved([holder], t, "release");
+          if (!holder.sent_at && !settled) conflict("งานนี้ยังไม่ได้ส่งเข้าเครื่อง ปล่อยคิวไม่ได้");
         }
 
         if (holder) {
@@ -455,13 +456,13 @@ class MachineQueueController {
    * ลบรวม done ด้วย ไม่ใช่เฉพาะที่ยังค้าง เพราะแถว done คือตัวกันไม่ให้จองเครื่องซ้ำ
    * งานที่กดพิมพ์ใหม่จึงต้องล้างประวัติตรงนี้ก่อน ไม่งั้นจองเครื่องไม่ได้อีกเลย
    *
-   * คิวที่เริ่มส่งแล้วแต่ยังไม่รู้ผลจะลบไม่ได้ ต้องตรวจเครื่องก่อน
+   * คิวที่ยังไม่รู้ผลถูกปลดเป็น "ไม่ได้ส่ง" พร้อมร่องรอยก่อนลบ — ยกเว้นกำลังส่งอยู่จริง (ตกลง 30/10/2026)
    */
   static async clearJob(req, res) {
     try {
       const removed = await withQueueLock(async (t) => {
         const rows = await MachineQueue.findAll({ where: { print_jobs_id: req.params.jobId }, transaction: t });
-        await assertNoUnresolved(rows, t);
+        await settleUnresolved(rows, t, "clear");
         if (req.query.only_unsent === "true" && rows.some(r => r.state !== PENDING || r.sent_at))
           conflict("มีคิวที่ถูกหยิบหรือส่งแล้ว ห้ามล้างทั้งงาน");
         return MachineQueue.destroy({

@@ -195,15 +195,42 @@ test("database failure during completion rolls back history and keeps the send g
   assert.equal((await finish(row.id, token)).status, 200); // retry DB only
 });
 
-test("uncertain send cannot be released, cleared, cancelled or deleted", async () => {
+// ตกลง 30/10/2026: ผลไม่รู้ไม่ขวางคนหน้างานแล้ว — ปุ่มหน้าเครื่อง / ล้างคิว / จบ / ยกเลิก ปลดให้เองพร้อมร่องรอย
+// ทางที่ไม่ใช่ของคนหน้างาน (ลบงาน · แก้แถวเป็นรอ · ย้อนผลเป็นไม่ได้ส่ง · เริ่มส่งซ้ำ) ยังห้ามเหมือนเดิม
+test("uncertain send is settled with a trace by release; delete / manual reset / resend stay blocked", async () => {
   const { job: j, row } = await active(); const token = randomUUID();
   await begin(row.id, token); await finish(row.id, token, "unknown");
-  assert.equal((await release(row.id)).status, 409);
-  assert.equal((await request(`/machine-queue/job/${j.id}`, undefined, "DELETE")).status, 409);
-  assert.equal((await request(`/job/${j.id}/status`, { status: "Cancel" }, "PATCH")).status, 409);
   assert.equal((await request(`/job/remove/${j.id}`, undefined, "DELETE")).status, 409);
   assert.equal((await request(`/machine-queue/${row.id}`, { state: "pending" }, "PATCH")).status, 409);
   assert.equal((await finish(row.id, token, "not_sent")).status, 409);
+  assert.equal((await begin(row.id)).status, 409);
+
+  assert.equal((await release(row.id)).status, 200);
+  assert.equal((await MachineQueue.findByPk(row.id)).state, "done");
+  const attempt = await PrintJobCommand.findOne({
+    where: { command: "QUEUE_DISPATCH", payload: { queue_id: row.id } }, order: [["id", "DESC"]],
+  });
+  assert.equal(attempt.payload.outcome, "not_sent");
+  assert.equal(attempt.payload.resolved_from, "unknown");
+  assert.equal(attempt.payload.resolved_by, "release");
+});
+
+test("uncertain send does not block clearing or cancelling the job", async () => {
+  for (const path of ["clear", "cancel"]) {
+    await MachineQueue.destroy({ where: {} });
+    const { job: j, row } = await active(); const token = randomUUID();
+    await begin(row.id, token); await finish(row.id, token, "unknown");
+    const reply = path === "clear"
+      ? await request(`/machine-queue/job/${j.id}`, undefined, "DELETE")
+      : await request(`/job/${j.id}/status`, { status: "Cancel" }, "PATCH");
+    assert.equal(reply.status, 200, path);
+    assert.equal(await MachineQueue.count({ where: { print_jobs_id: j.id } }), 0, path);
+    const attempt = await PrintJobCommand.findOne({
+      where: { command: "QUEUE_DISPATCH", payload: { queue_id: row.id } }, order: [["id", "DESC"]],
+    });
+    assert.equal(attempt.payload.outcome, "not_sent", path);
+    assert.equal(attempt.payload.resolved_by, path, path);
+  }
 });
 
 test("definite no-send returns to pending but does not automatically dispatch again", async () => {

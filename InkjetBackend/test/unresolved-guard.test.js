@@ -1,5 +1,5 @@
-// คิวที่ส่งแล้วไม่รู้ผล ปล่อย / ล้าง / ยกเลิก / จบ ไม่ได้ — ทางออกเดียวคือคนยืนยันข้ามเครื่อง
-// (POST /machine-queue/skip ดู machine-skip.test.js)
+// คิวที่ส่งแล้วไม่รู้ผล — เดิมปล่อย / ล้าง / ยกเลิก / จบ ไม่ได้ ทางออกเดียวคือคนยืนยันข้ามเครื่อง
+// ตกลงใหม่ 30/10/2026: ทางของคนหน้างานปลดให้เองพร้อมร่องรอย ยกเว้นกำลังส่งอยู่จริง (settleUnresolved)
 //
 // เดิมโหมด "ส่งไม่ครบ ไม่ส่งเลย" ส่งธง resolve_unresolved / ?resolve=true มาปลดได้
 // เลิกโหมดนั้นแล้ว 19/10/2026 — โปรแกรมรุ่นเก่าที่ยังส่งธงมา ต้องไม่มีผลอะไร
@@ -71,25 +71,48 @@ async function lastDispatch(rowId) {
   });
 }
 
-test("ไม่ส่งธง: คิวที่ไม่รู้ผลยังปล่อย / ล้าง / ยกเลิกไม่ได้ เหมือนเดิม", async () => {
-  const { job: j, row } = await stuckUv1();
-  assert.equal((await request("/machine-queue/release", { machine: "UV1", expected_holder_id: row.id })).status, 409);
-  assert.equal((await request(`/machine-queue/job/${j.id}`, undefined, "DELETE")).status, 409);
-  assert.equal((await request(`/job/${j.id}/status`, { status: "Cancel" }, "PATCH")).status, 409);
-  assert.equal((await lastDispatch(row.id)).payload.outcome, "unknown");
+// ตกลง 30/10/2026: คิวที่ไม่รู้ผล (จากโปรแกรมรุ่นก่อน / ST1 ปิดกลางคัน) ไม่ขวางคนหน้างานแล้ว
+// ปล่อย / ล้าง / ยกเลิก / จบ ทำได้ ผลถูกปลดเป็น not_sent พร้อมร่องรอยว่าปลดทางไหน
+test("คิวที่ไม่รู้ผล: ปล่อย / ล้าง / ยกเลิก / จบ ได้ ปลดเป็น not_sent พร้อมร่องรอย", async () => {
+  const cases = [
+    ["release", j => request("/machine-queue/release", { machine: "UV1", expected_holder_id: j.row.id })],
+    ["clear", j => request(`/machine-queue/job/${j.job.id}`, undefined, "DELETE")],
+    ["cancel", j => request(`/job/${j.job.id}/status`, { status: "Cancel" }, "PATCH")],
+    ["complete", j => request(`/job/${j.job.id}/status`, { status: "Success" }, "PATCH")],
+  ];
+  for (const [by, act] of cases) {
+    await MachineQueue.destroy({ where: {} });
+    const stuck = await stuckUv1();
+    assert.equal((await act(stuck)).status, 200, by);
+    const attempt = await lastDispatch(stuck.row.id);
+    assert.equal(attempt.payload.outcome, "not_sent", by);
+    assert.equal(attempt.payload.resolved_from, "unknown", by);
+    assert.equal(attempt.payload.resolved_by, by, by);
+  }
 });
 
-test("ธงเก่าของโหมดส่งไม่ครบไม่มีผลแล้ว: ปล่อย / ล้าง / ยกเลิก / จบ ยังไม่ได้ ผลยังเป็น unknown", async () => {
-  const { job: j, row } = await stuckUv1();
+test("กำลังส่งอยู่จริง (ไม่เกิน 2 นาที) ต้องรอ · ค้างเกิน 2 นาที (ST1 ปิดกลางคัน) ปลดได้ · ถอยเป็น Waiting ยังห้าม", async () => {
+  const j = await job();
+  assert.ok([200, 201].includes((await enqueue(j.id, [{ machine: "UV1" }])).status));
+  const row = (await claim(j.id, "UV1")).data.claimed;
+  assert.equal((await begin(row.id, randomUUID())).status, 200);
+
+  // กำลังส่ง — งานถัดไปห้ามถูกส่งทับเครื่องกลางการส่ง (ธงเก่าของโหมดส่งไม่ครบก็ไม่มีผล)
   assert.equal((await request("/machine-queue/release",
     { machine: "UV1", expected_holder_id: row.id, resolve_unresolved: true })).status, 409);
   assert.equal((await request(`/machine-queue/job/${j.id}?resolve=true`, undefined, "DELETE")).status, 409);
-  assert.equal((await request(`/job/${j.id}/status`, { status: "Cancel", resolve_unresolved: true }, "PATCH")).status, 409);
-  assert.equal((await request(`/job/${j.id}/status`, { status: "Success", resolve_unresolved: true }, "PATCH")).status, 409);
-
+  assert.equal((await request(`/job/${j.id}/status`, { status: "Cancel" }, "PATCH")).status, 409);
+  assert.equal((await request(`/job/${j.id}/status`, { status: "Success" }, "PATCH")).status, 409);
+  assert.equal((await lastDispatch(row.id)).payload.outcome, "sending");
   assert.equal((await MachineQueue.findByPk(row.id)).state, "active");
-  assert.equal((await lastDispatch(row.id)).payload.outcome, "unknown");
-  assert.ok(!["Cancel", "Success"].includes((await PrintJob.findByPk(j.id)).status));
+
+  // ค้างเกิน 2 นาที = ไม่มีใครส่งอยู่แล้ว
+  const attempt = await lastDispatch(row.id);
+  await attempt.update({ sent_at: new Date(Date.now() - 3 * 60 * 1000) });
+  assert.equal((await request(`/job/${j.id}/status`, { status: "Waiting" }, "PATCH")).status, 409);
+  assert.equal((await request(`/job/${j.id}/status`, { status: "Cancel" }, "PATCH")).status, 200);
+  assert.equal((await lastDispatch(row.id)).payload.resolved_from, "sending");
+  assert.equal((await PrintJob.findByPk(j.id)).status, "Cancel");
 });
 
 test("ข้ามเครื่องแล้ว ยกเลิกงานได้ตามปกติ", async () => {

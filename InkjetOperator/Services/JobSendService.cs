@@ -288,6 +288,59 @@ public static class JobSendService
         }
     }
 
+    /// <summary>
+    /// สั่งหยุดเครื่องของขั้นนี้หลังส่งไม่ผ่าน — คืนชื่อเครื่องที่สั่งหยุดไม่ได้ (ว่าง = หยุดครบ)
+    ///
+    /// <para>
+    /// ตกลง 30/10/2026: ส่งไม่ผ่าน = ไม่ได้ส่ง ไม่ถือคิวไว้ตรวจ แต่ข้อมูลอาจเข้าเครื่องไปครึ่งทางแล้ว
+    /// (เช่น MK รับ Block ไปแล้วล้มที่ Config) ถ้าปล่อยไว้เครื่องจะพิมพ์ข้อมูลครึ่ง ๆ ลงชิ้นงานที่วิ่งผ่าน
+    /// จึงสั่งหยุดให้ชัด · ส่งครั้งถัดไปเขียนทับทุกช่องอยู่แล้ว (MK ส่งครบ 5 Block + Config · UV โหลดโปรแกรมใหม่)
+    /// </para>
+    /// <para>
+    /// MK หยุดทุกหัวที่งานใช้ (หัวที่ไม่ใช้ถูกสั่งหยุดไปตอนส่งแล้ว) · สั่งหยุดไม่ได้ไม่ทำให้อะไรล้ม
+    /// แค่คืนชื่อไปเตือนคนหน้างานให้ไปดูเครื่อง
+    /// </para>
+    /// </summary>
+    public static async Task<List<string>> StopAfterFailedSendAsync(string step, PatternDetail? pattern)
+    {
+        var notStopped = new List<string>();
+
+        if (string.Equals(step, "MK", StringComparison.OrdinalIgnoreCase))
+        {
+            using var busy = MachineBusy.Hold("MK");
+            foreach (var (ipKey, nameKey, fallbackName, ordinal, label) in MkMachines)
+            {
+                var config = pattern?.InkjetConfigs.FirstOrDefault(c => c.Ordinal == ordinal);
+                var ip = CustomSettingsManager.Read(ipKey);
+                if (!HasProgram(config) || string.IsNullOrWhiteSpace(ip)) continue;
+
+                if (await StopOneMkAsync(ip, label) != null)
+                    notStopped.Add(CustomSettingsManager.Read(nameKey, fallbackName));
+            }
+            return notStopped;
+        }
+
+        int uvNumber = string.Equals(step, "UV1", StringComparison.OrdinalIgnoreCase) ? 1 : 2;
+        var uvName = UvSettingsManager.Read(uvNumber == 1 ? "UV1_NAME" : "UV2_NAME", $"UV-00{uvNumber}");
+        var uvIp = CustomSettingsManager.Read($"UV00{uvNumber}_IP");
+        if (string.IsNullOrWhiteSpace(uvIp)) return notStopped;
+
+        int uvPort = int.TryParse(CustomSettingsManager.Read($"UV00{uvNumber}_PORT"), out var p) ? p : UvDefaultPort;
+        using (MachineBusy.Hold(uvNumber == 1 ? "UV1" : "UV2"))
+        {
+            try
+            {
+                var (ok, _) = await new UvTcpService().StopAsync(uvIp, uvPort);
+                if (!ok) notStopped.Add(uvName);
+            }
+            catch (Exception)
+            {
+                notStopped.Add(uvName);
+            }
+        }
+        return notStopped;
+    }
+
     private static readonly (string IpKey, string NameKey, string Fallback, int Ordinal, string Label)[]
         MkMachines =
         [
