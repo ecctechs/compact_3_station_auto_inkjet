@@ -45,16 +45,59 @@ internal static class Confirm
     {
         bool answer;
         using (owner == null ? null : DimOverlay.ShowOver(owner))
-        using (var dialog = new ConfirmDialog(spec))
         {
-            if (owner == null) dialog.StartPosition = FormStartPosition.CenterScreen;
-            answer = (owner == null ? dialog.ShowDialog() : dialog.ShowDialog(owner)) == DialogResult.OK;
+            var dialog = new ConfirmDialog(spec);
+            try
+            {
+                if (owner == null) dialog.StartPosition = FormStartPosition.CenterScreen;
+                answer = (owner == null ? dialog.ShowDialog() : dialog.ShowDialog(owner)) == DialogResult.OK;
+            }
+            finally
+            {
+                DisposeSafely(dialog);
+            }
         }
 
         // คำถามลง log พร้อมคำตอบ — ย้อนดูได้ว่าใครกดยืนยันอะไร (กล่องแจ้งปุ่มเดียว Notify บันทึกเองแล้ว)
         if (spec.ShowCancel)
             Services.AppLog.Info("Confirm", $"[{spec.Title}] {Describe(spec)} → {(answer ? spec.OkText : spec.CancelText)}");
         return answer;
+    }
+
+    /// <summary>
+    /// ปิดกล่องทิ้งหลังได้คำตอบแล้ว — ปิดไม่ได้ต้องไม่ทำให้คำตอบหาย
+    ///
+    /// <para>
+    /// พบหน้างาน 30/10/2026 (DEX-1625 กล่อง "ข้ามแล้วเริ่มงาน" เปิดค้างราว 2 นาที): ปุ่มของ AntdUI
+    /// ในกล่องค้างสถานะกำลังสร้าง handle ตอนปิด WinForms โยน "Value Dispose() cannot be called while
+    /// doing CreateHandle()" error หลุดออกไปทั้งที่คนกดตอบแล้ว การเริ่มงานหยุดกลางทาง
+    /// ขึ้นกล่อง "เกิดข้อผิดพลาดที่ไม่ได้คาดไว้"
+    /// </para>
+    /// <para>
+    /// คำตอบได้มาก่อนปิดแล้ว จึงใช้คำตอบต่อตามปกติ ปิดไม่ได้ลง log แล้วลองปิดอีกครั้งรอบถัดไป
+    /// ของเธรดหน้าจอ (ตอนนั้นปุ่มสร้างเสร็จแล้ว) — ยังไม่ได้อีกก็ปล่อยไว้ หน้าต่างปิดจากจอไปแล้ว
+    /// </para>
+    /// </summary>
+    private static void DisposeSafely(Form dialog)
+    {
+        // อ่านชื่อไว้ก่อน — หลังปิดไม่ครบ ไม่แตะคุณสมบัติของหน้าต่างอีก
+        var title = dialog.Text;
+        try
+        {
+            dialog.Dispose();
+        }
+        catch (InvalidOperationException ex)
+        {
+            Services.AppLog.Warn("Confirm", $"ปิดกล่อง [{title}] ทันทีไม่ได้ ({ex.Message}) · ลองปิดอีกครั้งภายหลัง");
+            SynchronizationContext.Current?.Post(_ =>
+            {
+                try { dialog.Dispose(); }
+                catch (InvalidOperationException retry)
+                {
+                    Services.AppLog.Warn("Confirm", $"ปิดกล่อง [{title}] รอบสองไม่ได้ ({retry.Message}) · ปล่อยไว้");
+                }
+            }, null);
+        }
     }
 
     /// <summary>เนื้อหากล่องยืนยันเป็นบรรทัดเดียวสำหรับ log</summary>
