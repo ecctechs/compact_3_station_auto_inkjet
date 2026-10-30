@@ -1654,6 +1654,10 @@ public partial class OrderListUserControl : UserControl
             return;
         }
 
+        // เอาแถวออกจากตารางทันทีที่ backend ยืนยัน — เดิมแถวค้างอยู่จนเดินคิวต่อ (อาจส่งงานถัดไป
+        // หลายวินาที) แล้วค่อยรีเฟรช เห็นข้อความ "ยกเลิกแล้ว" ขึ้นก่อนทั้งที่แถวยังอยู่ (ตกลง 30/10/2026)
+        HideJobNow(jobId, "Cancel");
+
         // ยกเลิกตอนที่ ST3 ฝากคำขอค้างไว้ ธงต้องหายไปด้วย ไม่งั้นมันจะค้างอยู่กับงาน
         // ข้ามไปถึงตอนที่งานถูกนำกลับมาพิมพ์ใหม่
         await _api.SetRemoteStartAsync(jobId, requested: false);
@@ -1663,6 +1667,27 @@ public partial class OrderListUserControl : UserControl
         await AdvanceFreedMachinesAsync(held);
         if (IsDisposed) return;
         await RefreshDataAsync(force: true);
+    }
+
+    /// <summary>
+    /// เปลี่ยนสถานะงานในรายการที่โหลดไว้แล้ววาดตารางใหม่ทันที ไม่รออ่าน backend รอบหน้า
+    /// ใช้หลัง backend ยืนยันแล้วเท่านั้น · ระหว่างกำลังส่งงานไม่ผูกตารางใหม่ (แถวขยับใต้มือ /
+    /// กล่องเลือกรุ่นถูกวาดทับ — เหตุผลเดียวกับ RefreshDataAsync) ขอรีเฟรชไว้ วาดเมื่อส่งเสร็จ
+    /// </summary>
+    private void HideJobNow(int jobId, string status)
+    {
+        var job = _allJobs.FirstOrDefault(j => j.Id == jobId);
+        if (job == null || IsDisposed) return;
+        job.Status = status;
+
+        if (_selectedJobId == jobId)
+        {
+            _selectedJobId = null;
+            ShowPreviewSides(null, null);
+        }
+
+        if (_sending) { _refreshRequested = true; return; }
+        RebindTable();
     }
 
     /// <summary>
@@ -3721,6 +3746,8 @@ public partial class OrderListUserControl : UserControl
         var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Success");
         if (ok)
         {
+            // เอาแถวออกทันทีที่ backend ยืนยัน ไม่รอเดินคิวต่อ — เหตุผลเดียวกับยกเลิกงาน (ตกลง 30/10/2026)
+            HideJobNow(jobId, "Success");
             if (manual && !await _api.SaveSendStepAsync(jobId, "MANUAL_COMPLETE"))
                 Notify.Warn(this, "จบงานแล้ว แต่บันทึกประวัติการยืนยันด้วยมือไม่สำเร็จ");
             Notify.Success(this, manual
