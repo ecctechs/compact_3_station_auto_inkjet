@@ -467,31 +467,15 @@ public static class JobSendService
 
     private static string? InvalidConfig(InkjetConfigDto config, string label)
     {
-        // ช่องว่างไม่ส่ง — กฎเดียวกับโปรแกรมเดิมที่ฟ้อง "Width, Height & Delay not complete"
+        // ช่อง Width / Height / Trigger Delay ที่ว่างผ่านด่านนี้ได้ (ตกลง 30/10/2026) —
+        // ตอนส่ง Config ใช้ค่าที่บันทึกอยู่ในโปรแกรมของเครื่อง MK แทน (MkCompactAdapter.SendConfigAsync)
         //
-        // เดิมตรงนี้เว้นค่าว่างไว้ให้ผ่าน แล้วตัวส่งใส่ค่าแทนให้เอง (Width 200 ·
-        // Height 100 · Trigger Delay 0) เครื่องจึงได้ค่าที่ไม่ใช่ของงานไปพ่นลงชิ้นงาน
-        // จริงโดยไม่มีใครรู้ ผิดแบบเงียบซึ่งย้อนคืนไม่ได้ ต่างจากการฟ้องแล้วให้ไปกรอก
-        // ซึ่งเสียเวลาไม่กี่นาทีและแก้ได้
-        //
-        // Trigger Delay ที่ว่างแล้วกลายเป็น 0 ยิ่งไม่ควรหลุดไป เพราะโปรแกรมเดิมบังคับ
-        // ให้ค่าหลังคูณสิบอยู่ในช่วง 10-99999 เลข 0 จึงเป็นค่าที่ระบบเดิมไม่มีวันส่ง
+        // ไม่ใช่การใส่ค่าตายตัวแทนแบบเดิม (Width 200 · Height 100 · Trigger Delay 0) ซึ่งพิมพ์ผิด
+        // แบบเงียบ — ค่าในเครื่องคือค่าของโปรแกรมเลขนั้นเอง ถ้าเครื่องไม่มีโปรแกรมนี้ ไม่มีค่าเดิมให้ใช้
+        // การส่งจะหยุดและบอกให้ไปกรอก · ช่องที่กรอกไว้ยังต้องอยู่ในช่วงเหมือนเดิม
         //
         // ตรวจเฉพาะหัวที่งานนี้ใช้จริง — ผู้เรียกกรองด้วย HasProgram มาแล้ว หัวที่ไม่มี
         // โปรแกรมได้แค่คำสั่งสั่งหยุด ไม่เคยได้รับ FM จึงไม่ต้องมีค่าพวกนี้
-        foreach (var (name, _, _) in MachineRanges)
-        {
-            bool filled = name switch
-            {
-                "Width" => config.Width.HasValue,
-                "Height" => config.Height.HasValue,
-                _ => config.TriggerDelay.HasValue,
-            };
-
-            if (!filled)
-                return $"{label}: ยังไม่ได้กรอก {name} — กรอกที่หน้า Order Detail ก่อนส่ง";
-        }
-
         foreach (var (name, min, max) in MachineRanges)
         {
             int? value = name switch
@@ -624,9 +608,13 @@ public static class JobSendService
             var fm = await adapter.SendConfigAsync(config);
             if (!fm.Success) return (Reject(label, "ส่ง Config", fm), Note(notes));
 
-            // ส่งผ่าน แต่ใช้ความเร็วสายพานค่าเริ่มต้น เพราะในเครื่องยังไม่มีโปรแกรมเลขนี้ — ให้ไป Save ที่ MK
+            // ส่งผ่าน แต่บางค่าเป็นค่าเริ่มต้น เพราะในเครื่องยังไม่มีโปรแกรมเลขนี้ / ไม่มีค่าที่บันทึกไว้
+            // — เตือนให้ไป Save ที่ MK หรือกรอกที่หน้า Order Detail (ตกลง 30/10/2026)
             if (adapter.UsedDefaultLineSpeed)
-                notes.Add($"ไม่มีโปรแกรม No. {config.ProgramNumber ?? 1} ในเครื่อง ใช้ Line Speed ค่าเริ่มต้น · Save โปรแกรมที่ MK");
+                notes.Add($"ไม่มีโปรแกรม No. {config.ProgramNumber ?? 1} ในเครื่อง ใช้ค่าเริ่มต้น"
+                    + $" ({string.Join(", ", adapter.DefaultedValues.Prepend("Line Speed"))}) · Save โปรแกรมที่ MK");
+            else if (adapter.DefaultedValues.Count > 0)
+                notes.Add($"ในเครื่องไม่มีค่า {string.Join(", ", adapter.DefaultedValues)} ใช้ค่าเริ่มต้น · กรอกที่หน้า Order Detail");
 
             return (null, Note(notes));
         }

@@ -199,29 +199,50 @@ public class MkCompactAdapter : IInkjetAdapter
         // ค่าที่เก็บเป็นมิลลิเมตร แต่ช่องนี้ของคำสั่ง FM รับเป็นหน่วยสิบเท่า
         // จึงต้องคูณ 10 ก่อนส่ง ตรงกับโปรแกรมเดิมที่ทำ int(float(delay) * 10)
         // ลืมคูณแล้วหมึกจะลงเร็วกว่าที่ตั้งไว้สิบเท่า คือผิดตำแหน่งบนชิ้นงานจริง
-        string delay = ((config.TriggerDelay ?? 0) * TriggerDelayScale).ToString();
-        string height = (config.Height ?? 100).ToString();
-        string width = (config.Width ?? 200).ToString();
+        //
+        // ช่องที่งานไม่ได้กรอก (null) ใช้ค่าที่บันทึกอยู่ในโปรแกรมของเครื่อง (ตกลง 30/10/2026)
+        // เดิมฟ้องให้ไปกรอกก่อน — งานเก่าจำนวนมากไม่ได้กรอก แต่โปรแกรมใน MK ตั้งค่าไว้แล้ว
+        string? delay = config.TriggerDelay is int d ? (d * TriggerDelayScale).ToString() : null;
+        string? height = config.Height?.ToString();
+        string? width = config.Width?.ToString();
+        UsedMachineValues = [];
+        DefaultedValues = [];
 
         // FL,<program>,0 ส่งค่าที่บันทึกอยู่ของโปรแกรมนี้กลับมา โดย Line Speed คือช่อง j
         // อ่านก่อน FM เพื่อคงค่าเดิมของโปรแกรม และไม่เขียน -1/500 ทับลงไป
         UsedDefaultLineSpeed = false;
         string flResponse = await SendAsync($"FL,{_programNumber},0\r");
-        if (TryReadProgramLineSpeed(flResponse, _programNumber, out string lineSpeed))
-        {
-            string fmCmd = BuildConfigCommand(normalizedName, direction, delay, height, width, lineSpeed);
-            return MakeResult("config", await SendAsync(fmCmd));
-        }
+        bool saved = TryReadProgramLineSpeed(flResponse, _programNumber, out string lineSpeed);
 
         // เครื่องเงียบ = ไม่รู้ว่าเกิดอะไร ไม่เดาต่อ
-        if (string.IsNullOrWhiteSpace(flResponse))
+        if (!saved && string.IsNullOrWhiteSpace(flResponse))
             return MakeResult("config", "ER,FL,NO_RESPONSE");
+
+        // ช่องของคำตอบ FL เรียงเหมือนคำสั่ง FM (ยืนยันจากคำตอบจริงของเครื่อง
+        // FL,017,0,,-1,0,-1,-1,-1,-1,-1,00300,00300,01000,100,100,0015,000,0,-1)
+        // โปรแกรมที่ยังไม่ได้ Save เครื่องก็ตอบช่องพวกนี้มา (เป็นค่าเริ่มต้นของเครื่อง) ใช้ได้เหมือนกัน
+        string[] fields = flResponse.TrimEnd('\r', '\n').Split(',');
+        bool usable = IsFlOf(fields, _programNumber);
+        delay ??= FromMachine(fields, usable, saved, FlTriggerDelay, "Trigger Delay", DefaultTriggerDelay);
+        height ??= FromMachine(fields, usable, saved, FlHeight, "Height", DefaultHeight);
+        width ??= FromMachine(fields, usable, saved, FlWidth, "Width", DefaultWidth);
+
+        if (UsedMachineValues.Count > 0)
+            AppLog.Info("MK.Config", $"โปรแกรม No. {_programNumber} ใช้ค่าในเครื่อง: {string.Join(", ", UsedMachineValues)}");
+
+        if (saved)
+        {
+            if (DefaultedValues.Count > 0)
+                AppLog.Warn("MK.Config", $"โปรแกรม No. {_programNumber} ไม่มีค่า {string.Join(", ", DefaultedValues)} ใช้ค่าเริ่มต้น · FL ตอบ: {flResponse.Trim()}");
+            return MakeResult("config", await SendAsync(BuildConfigCommand(normalizedName, direction, delay, height, width, lineSpeed)));
+        }
 
         // เครื่องตอบแต่อ่าน Line Speed ไม่ได้ = ยังไม่มีโปรแกรมเลขนี้ในเครื่อง (ยังไม่ได้ Save ที่ MK)
         //
         // เดิมล้มทั้งการส่ง ข้อความเป็นรหัส ER,FL,INVALID_RESPONSE คนหน้างานไม่รู้ว่าต้องทำอะไร
         // ตกลง 30/10/2026: ส่งต่อด้วยค่าที่โปรแกรมใช้มาก่อนอ่าน FL ได้ (-1 แล้ว 500 ถ้าเครื่องไม่รับ -1)
-        // FM สร้าง / บันทึกโปรแกรมเลขนี้ให้เอง ผู้เรียกดู UsedDefaultLineSpeed แล้วเตือนให้ไป Save ที่ MK
+        // ช่องที่งานไม่ได้กรอกใช้ค่าเริ่มต้นแบบเดียวกัน · FM สร้าง / บันทึกโปรแกรมเลขนี้ให้เอง
+        // ผู้เรียกดู UsedDefaultLineSpeed / DefaultedValues แล้วเตือนให้ไป Save ที่ MK
         AppLog.Warn("MK.Config", $"อ่าน Line Speed โปรแกรม No. {_programNumber} ไม่ได้ · FL ตอบ: {flResponse.Trim()} · ส่งด้วยค่าเริ่มต้น");
         UsedDefaultLineSpeed = true;
         string response = await SendAsync(BuildConfigCommand(normalizedName, direction, delay, height, width, "-1"));
@@ -238,6 +259,49 @@ public class MkCompactAdapter : IInkjetAdapter
     /// (ยังไม่มีโปรแกรมเลขนี้ใน MK) — ส่งผ่าน แต่ต้องเตือนให้ไป Save โปรแกรมที่เครื่อง
     /// </summary>
     public bool UsedDefaultLineSpeed { get; private set; }
+
+    /// <summary>ช่องที่งานไม่ได้กรอก แล้วใช้ค่าที่บันทึกอยู่ในโปรแกรมของเครื่องแทน (ส่ง Config ครั้งล่าสุด)</summary>
+    public List<string> UsedMachineValues { get; private set; } = [];
+
+    /// <summary>
+    /// ช่องที่งานไม่ได้กรอก และในเครื่องไม่มีค่าที่บันทึกไว้ (ยังไม่ได้ Save โปรแกรมนี้ / ค่าไม่ใช่ตัวเลข)
+    /// — ใช้ค่าเริ่มต้นแทน ส่งผ่าน แต่ผู้เรียกต้องเตือน (แบบเดียวกับ Line Speed)
+    /// </summary>
+    public List<string> DefaultedValues { get; private set; } = [];
+
+    // ตำแหน่งช่องในคำตอบ FL — เรียงเหมือนคำสั่ง FM (BuildConfigCommand)
+    private const int FlTriggerDelay = 11;
+    private const int FlHeight = 14;
+    private const int FlWidth = 15;
+
+    // ค่าเริ่มต้นเมื่อเครื่องไม่มีค่าให้ใช้ — ชุดเดียวกับที่ MK ตอบมาสำหรับโปรแกรมที่ยังไม่ได้ Save
+    // (Delay 00300 · Height 100 · Width 100) Delay เป็นหน่วยของคำสั่ง FM แล้ว (สิบเท่าของ มม.)
+    private const string DefaultTriggerDelay = "300";
+    private const string DefaultHeight = "100";
+    private const string DefaultWidth = "100";
+
+    /// <summary>คำตอบ FL ของโปรแกรมเลขนี้จริงไหม — รวมโปรแกรมที่ยังไม่ได้ Save ซึ่งเครื่องตอบค่าเริ่มต้นมา</summary>
+    private static bool IsFlOf(string[] fields, int expectedProgram) =>
+        fields.Length > FlWidth
+        && fields[0].Equals("FL", StringComparison.OrdinalIgnoreCase)
+        && int.TryParse(fields[1], NumberStyles.None, CultureInfo.InvariantCulture, out int program)
+        && program == expectedProgram;
+
+    /// <summary>
+    /// ค่าของช่องนี้จากเครื่อง — โปรแกรมที่ Save แล้ว = ค่าเดิมของโปรแกรม (UsedMachineValues)
+    /// ยังไม่ได้ Save / อ่านไม่ได้ = ค่าเริ่มต้น (DefaultedValues) ส่งผ่านทุกกรณี
+    /// </summary>
+    private string FromMachine(string[] fields, bool usable, bool saved, int index, string name, string fallback)
+    {
+        if (usable && int.TryParse(fields[index].Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out int value))
+        {
+            (saved ? UsedMachineValues : DefaultedValues).Add(name);
+            return value.ToString(CultureInfo.InvariantCulture);
+        }
+
+        DefaultedValues.Add(name);
+        return fallback;
+    }
 
     private static bool IsInvalidFmParameter(string response)
     {
