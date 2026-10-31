@@ -180,11 +180,13 @@ public static class MarkingMethodService
     /// <summary>
     /// งานนี้จบไปแล้วทั้งที่ยังส่งไม่ครบทุกขั้นไหม — งานที่ถูกยกเลิกไม่นับ
     /// เพราะ "ไม่ได้ทำ" ไม่ใช่ "ทำไม่ครบ"
+    /// · จบทั้งที่ยังเหลือรุ่นย่อย UV ที่ไม่ได้พิมพ์ก็นับว่าไม่ครบ (หมุด <see cref="UvVariantService.LeftCommand"/>)
     /// </summary>
     public static bool FinishedIncomplete(
         string? status, string? markingMethod, IEnumerable<Models.CommandResult>? commands) =>
         string.Equals(status, "Success", StringComparison.OrdinalIgnoreCase)
-        && MissingSteps(markingMethod, commands).Count > 0;
+        && (MissingSteps(markingMethod, commands).Count > 0
+            || UvVariantService.FinishedWithVariantsLeft(commands));
 
     /// <summary>
     /// สถานีนี้กดเริ่มงาน marking นี้ได้ไหม

@@ -688,6 +688,10 @@ public partial class OrderListUserControl : UserControl
     /// ไม่ถามยืนยัน คนกดยืนอยู่หน้าเครื่องและงานครบจริง อ่านข้อมูลไม่ได้หรือไม่เข้าเงื่อนไข
     /// ไม่ทำอะไร งานค้างให้กดจบงานที่จอเหมือนเดิม
     /// </para>
+    /// <para>
+    /// ส่งครบทุกเครื่องแต่ยังเหลือรุ่นย่อย UV ที่ไม่ได้พิมพ์ — จบเหมือนกัน แต่จดรุ่นที่เหลือไว้
+    /// History ขึ้น Incomplete (ตกลง 31/10/2026)
+    /// </para>
     /// </summary>
     /// <param name="trigger">อะไรทำให้ตรวจ — ลง log</param>
     /// <param name="allowWaiting">
@@ -702,25 +706,30 @@ public partial class OrderListUserControl : UserControl
         if (!active) return;
         if (!CheckSteps(resolved.PlanRouting?.MarkingMethod, resolved.Commands).Complete) return;
 
-        // ยังเหลือรุ่นย่อยที่ไม่ได้พิมพ์ — ไม่จบเงียบ ๆ ให้คนกดจบที่จอซึ่งมีกล่องเตือนว่าเหลืออะไร
-        var unprinted = await UnprintedVariantNotesAsync(resolved);
-        if (IsDisposed) return;
-        if (unprinted.Count > 0)
-        {
-            var left = string.Join(" · ", unprinted.Select(u => $"{u.Step} {string.Join(", ", u.Variants)}"));
-            AppLog.Info("PushButton", $"ไม่จบงานอัตโนมัติ {JobName(jobId)} · ยังไม่พิมพ์ {left}");
-            Notify.Warn(this, $"{JobName(jobId)} ยังไม่พิมพ์รุ่น {left} — งานยังไม่จบ ถ้าพอแล้วกดจบงานที่จอ");
-            return;
-        }
-
         // อ่านคิวใหม่หลังปล่อย — ชุดที่อ่านก่อนปล่อยยังเห็นแถวที่เพิ่งปล่อยไป
+        // งานยังใช้เครื่องอื่นอยู่ (งาน 11 ที่ UV2 ยังพิมพ์) ยังไม่จบ — ระหว่างนั้นเครื่องนั้นยังเปลี่ยนรุ่นได้
         var (queue, queueError) = await _api.GetMachineQueueAsync();
         if (IsDisposed || queueError != null) return;
         if (queue.Any(r => r.PrintJobsId == jobId && r.State is "pending" or "active")) return;
 
+        // ยังเหลือรุ่นย่อยที่ไม่ได้พิมพ์ = จบไปเลย บันทึกเป็นจบไม่ครบ (ตกลง 31/10/2026)
+        // เครื่องถูกปล่อยไปแล้ว ปุ่มเปลี่ยนรุ่นหาย รุ่นที่เหลือพิมพ์ต่อในงานนี้ไม่ได้อยู่ดี
+        // เดิมไม่จบเอง ให้คนเดินมากดจบที่จอ ซึ่งได้ผลเดียวกันแต่ต้องเดินอีกรอบ
+        var unprinted = await UnprintedVariantNotesAsync(resolved);
+        if (IsDisposed) return;
+        var left = string.Join(" · ", unprinted.Select(u => $"{u.Step} {string.Join(", ", u.Variants)}"));
+
         var (ok, err) = await _api.UpdateJobStatusAsync(jobId, "Success");
         if (IsDisposed) return;
-        if (ok)
+        if (ok && unprinted.Count > 0)
+        {
+            AppLog.Info("PushButton", $"จบงานอัตโนมัติ (ไม่ครบ) {JobName(jobId)} · ยังไม่พิมพ์ {left} · {trigger}");
+            if (!await SaveVariantsLeftAsync(jobId, unprinted))
+                Notify.Warn(this, $"{JobName(jobId)} จบงานแล้ว แต่บันทึกรุ่นที่ยังไม่พิมพ์ไม่สำเร็จ ({left})");
+            else
+                Notify.Warn(this, $"{JobName(jobId)} จบงานแล้ว (Incomplete) · ยังไม่พิมพ์รุ่น {left}");
+        }
+        else if (ok)
         {
             AppLog.Info("PushButton", $"จบงานอัตโนมัติ {JobName(jobId)} · ส่งครบแล้ว · {trigger}");
             Notify.Success(this, $"{JobName(jobId)} ครบทุกเครื่อง · จบงานแล้ว ย้ายไป History");
@@ -3750,6 +3759,9 @@ public partial class OrderListUserControl : UserControl
             HideJobNow(jobId, "Success");
             if (manual && !await _api.SaveSendStepAsync(jobId, "MANUAL_COMPLETE"))
                 Notify.Warn(this, "จบงานแล้ว แต่บันทึกประวัติการยืนยันด้วยมือไม่สำเร็จ");
+            // จดรุ่นที่ยังไม่พิมพ์ไว้แบบเดียวกับตอนจบด้วยปุ่มหน้าเครื่อง — History ขึ้น Incomplete ทั้งสองทาง
+            if (unprinted.Count > 0 && !await SaveVariantsLeftAsync(jobId, unprinted))
+                Notify.Warn(this, "จบงานแล้ว แต่บันทึกรุ่นที่ยังไม่พิมพ์ไม่สำเร็จ");
             Notify.Success(this, manual
                 ? $"{JobName(jobId)} จบงานแล้ว (ยืนยันด้วยมือ)"
                 : $"{JobName(jobId)} จบงานแล้ว");
@@ -3885,6 +3897,14 @@ public partial class OrderListUserControl : UserControl
         }
         return notes;
     }
+
+    /// <summary>
+    /// จดรุ่นที่ยังไม่พิมพ์ลงประวัติงาน (<see cref="UvVariantService.LeftCommand"/>) — เรียกหลังจบงานสำเร็จแล้วเท่านั้น
+    /// จดก่อนจบไม่ได้ ถ้าจบไม่ผ่านงานยังเดินต่อ หมุดค้างจะทำให้จบครบทีหลังกลายเป็น Incomplete
+    /// </summary>
+    private Task<bool> SaveVariantsLeftAsync(int jobId, List<UnprintedVariants> unprinted) =>
+        _api!.SaveSendStepAsync(jobId, UvVariantService.LeftCommand,
+            unprinted.ToDictionary(u => u.Step, u => u.Variants));
 
     /// <summary>เหมือน <see cref="UnprintedVariantNotes"/> แต่อ่านโฟลเดอร์สด — ใช้ตอนตัดสินจบงาน</summary>
     private async Task<List<UnprintedVariants>> UnprintedVariantNotesAsync(ResolvedJobResponse resolved)

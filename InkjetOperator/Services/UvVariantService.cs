@@ -135,4 +135,19 @@ public static class UvVariantService
         var sent = SentVariants(commands, step);
         return all.Where(v => !sent.Contains(v)).ToList();
     }
+
+    /// <summary>
+    /// หมุดในประวัติงาน: งานจบไปทั้งที่ยังเหลือรุ่นย่อยที่ไม่ได้พิมพ์ — payload เก็บรายชื่อรุ่นต่อเครื่อง
+    ///
+    /// <para>
+    /// ตกลง 31/10/2026: กดปุ่มหน้าเครื่องตอนยังเหลือรุ่น = จบงานไปเลย บันทึกเป็นจบไม่ครบ
+    /// (เดิมไม่จบเอง ให้คนเดินมากดจบที่จอ — แต่ปล่อยเครื่องแล้วปุ่มเปลี่ยนรุ่นก็หาย พิมพ์รุ่นที่เหลือต่อไม่ได้อยู่ดี)
+    /// รายชื่อรุ่นต้องอ่านจากโฟลเดอร์ UV ซึ่งหน้า History ไม่อ่าน จึงต้องจดไว้ตอนจบ
+    /// </para>
+    /// </summary>
+    public const string LeftCommand = "UV_VARIANTS_LEFT";
+
+    /// <summary>งานนี้มีหมุด <see cref="LeftCommand"/> ไหม — ใช้ตัดสิน Incomplete</summary>
+    public static bool FinishedWithVariantsLeft(IEnumerable<CommandResult>? commands) =>
+        commands?.Any(c => c.Success && string.Equals(c.Command, LeftCommand, StringComparison.OrdinalIgnoreCase)) == true;
 }
