@@ -97,7 +97,7 @@ public partial class OrderListUserControl : UserControl
             new AntdUI.Column("ErpMfg", "ERP MFG", AntdUI.ColumnAlign.Center) { Width = "11%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("LotNo", "Lot Number", AntdUI.ColumnAlign.Center) { Width = "11%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Qty", "Qty", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
-            new AntdUI.Column("ProcessSequence", "Process Sequence", AntdUI.ColumnAlign.Center) { Width = "10%", SortOrder = true, ColBreak = true },
+            new AntdUI.Column("ProcessSequence", "Process Sequence", AntdUI.ColumnAlign.Center) { Width = "11.5%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Plate", "Plate", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Shim", "Shim", AntdUI.ColumnAlign.Center) { Width = "6%", SortOrder = true, ColBreak = true },
             new AntdUI.Column("Station", "Station", AntdUI.ColumnAlign.Center) { Width = "7%", SortOrder = true, ColBreak = true },
@@ -109,7 +109,7 @@ public partial class OrderListUserControl : UserControl
             // ปุ่มจึงเป็นคำสั้นบรรทัดเดียว แล้วขยายคอลัมน์นี้จาก 12% เป็น 15% (แท็บ List 16% ดู TabColumnWidths)
             // โดยเอามาจาก Process Sequence ซึ่งเหลือแค่คำสั้น ๆ In-line / Off-line — วัดแล้ว
             // ที่ 12% สี่ปุ่มล้นบนจอ FHD (ตารางกว้าง ~1660px) ปุ่มแรกโดนตัด ปุ่มท้ายตกขอบ
-            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "15%" },
+            new AntdUI.Column("Op", "", AntdUI.ColumnAlign.Center) { Width = "13.5%" },
         };
 
         // ColBreak above is what centres the titles, and it is not obvious why.
@@ -161,7 +161,9 @@ public partial class OrderListUserControl : UserControl
         ("ErpMfg", "13%", "11%"),
         ("LotNo", "13%", "11%"),
         ("Qty", "7%", "6%"),
-        ("ProcessSequence", "10%", "10%"),
+        // ขยายจาก 10% เป็น 11.5% เอามาจากคอลัมน์ปุ่ม (31/10/2026) — แท็บ List เหลือ 14.2% ≈ 236px บนจอ FHD
+        // ยังพอสี่ปุ่มของงาน 22 (ที่ 12% ≈ 199px ล้น ดูคอมเมนต์คอลัมน์ Op)
+        ("ProcessSequence", "11.5%", "11.5%"),
         ("Plate", "6%", "6%"),
         ("Shim", "6%", "6%"),
         ("Station", "8%", "7%"),
@@ -169,7 +171,7 @@ public partial class OrderListUserControl : UserControl
         // End แสดงวินาทีแบบ Start (27/10/2026) จึงกว้าง 11% เท่า Start ในแท็บ History — เอามาจากคอลัมน์ปุ่ม
         // ซึ่งแท็บนี้มีอย่างมากสองปุ่ม (พิมพ์ใหม่ · รายละเอียด) · แท็บ List ซ่อน End ค่านี้ไม่มีผล
         ("End", "9%", "11%"),
-        ("Op", "15.7%", "12.7%"),
+        ("Op", "14.2%", "11.2%"),
     ];
 
     /// <summary>
