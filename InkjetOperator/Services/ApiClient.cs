@@ -68,6 +68,52 @@ public class ApiClient
         };
     }
 
+    /// <summary>
+    /// ข้อความ error ที่คนหน้างานเห็น — เอาแค่ข้อความที่ backend ตอบมา (ช่อง <c>data</c>)
+    ///
+    /// <para>
+    /// เดิมคืน <c>[409] {"statusCode":409,"data":"..."}</c> ทั้งก้อน แล้วหลายหน้าเอาไปขึ้นจอตรง ๆ
+    /// คนหน้างานเห็นเลขสถานะกับ JSON อ่านไม่รู้เรื่อง (ตกลง 31/10/2026) — แก้ที่นี่ที่เดียว ทุกหน้าได้ผลพร้อมกัน
+    /// เลขสถานะกับข้อความเต็มลง log แทน (backend ก็บันทึกฝั่งตัวเองไว้แล้ว)
+    /// </para>
+    /// <para>
+    /// ไม่มีข้อความให้อ่าน (หน้า HTML ของ Express, ผลตรวจข้อมูลที่เป็นรายการ) ใช้คำกลาง ๆ ตามชนิด
+    /// </para>
+    /// </summary>
+    private static string Fail(HttpResponseMessage response, string body)
+    {
+        int code = (int)response.StatusCode;
+        var request = response.RequestMessage;
+        var raw = body.Length > 300 ? body[..300] + "…" : body;
+        AppLog.Warn("Api", $"{request?.Method} {request?.RequestUri?.PathAndQuery} → {code} {raw}");
+
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            if (doc.RootElement.ValueKind == JsonValueKind.Object)
+                foreach (var key in new[] { "data", "message", "error" })
+                    if (doc.RootElement.TryGetProperty(key, out var v)
+                        && v.ValueKind == JsonValueKind.String
+                        && !string.IsNullOrWhiteSpace(v.GetString()))
+                        return v.GetString()!;
+        }
+        catch (JsonException) { }
+
+        return code switch
+        {
+            400 => "backend ไม่รับข้อมูลที่ส่งไป",
+            404 => "backend ไม่มีคำสั่งหรือข้อมูลนี้ — ตรวจว่า backend เป็นรุ่นเดียวกับโปรแกรม",
+            >= 500 => "backend ทำงานผิดพลาด",
+            _ => "backend ตอบกลับไม่สำเร็จ",
+        };
+    }
+
+    /// <summary>
+    /// <see cref="GetAllJobsAsync"/> ตอบอันนี้เมื่อ backend รุ่นก่อนไม่รับตัวกรองสถานะ — ไม่ขึ้นจอ
+    /// ผู้เรียกเทียบค่านี้แล้วถอยไปดึงแบบไม่กรอง (เดิมเทียบขึ้นต้นด้วย "[400]")
+    /// </summary>
+    public const string StatusFilterNotSupported = "backend รุ่นนี้ยังไม่รับตัวกรองสถานะงาน";
+
     public async Task<bool> PingAsync()
     {
         try
@@ -85,7 +131,7 @@ public class ApiClient
             var response = await _http.PostAsJsonAsync("/job/create", request, JsonOptions);
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
-                return (null, $"[{(int)response.StatusCode}] {body}");
+                return (null, Fail(response, body));
             var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PrintJob>>(body, JsonOptions);
             return (wrapper?.Data, null);
         }
@@ -102,7 +148,7 @@ public class ApiClient
             var response = await _http.PostAsJsonAsync("/pattern/create", request, JsonOptions);
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
-                return (null, $"[{(int)response.StatusCode}] {body}");
+                return (null, Fail(response, body));
             var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PatternDetail>>(body, JsonOptions);
             return (wrapper?.Data, null);
         }
@@ -135,7 +181,7 @@ public class ApiClient
 
             return response.IsSuccessStatusCode
                 ? (true, null)
-                : (false, $"[{(int)response.StatusCode}] {body}");
+                : (false, Fail(response, body));
         }
         catch (Exception ex)
         {
@@ -157,7 +203,7 @@ public class ApiClient
         {
             var response = await _http.PostAsync("/system/resetRuntime", null);
             var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode) return (null, $"[{(int)response.StatusCode}] {body}");
+            if (!response.IsSuccessStatusCode) return (null, Fail(response, body));
 
             var wrapper = System.Text.Json.JsonSerializer
                 .Deserialize<ApiResponse<ResetRuntimeResult>>(body, JsonOptions);
@@ -187,7 +233,7 @@ public class ApiClient
             var response = await _http.GetAsync("/system/exportJobData");
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return (null, DatasetNotSupported);
             var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode) return (null, $"[{(int)response.StatusCode}] {body}");
+            if (!response.IsSuccessStatusCode) return (null, Fail(response, body));
 
             using var doc = System.Text.Json.JsonDocument.Parse(body);
             return (doc.RootElement.GetProperty("data").GetRawText(), null);
@@ -220,7 +266,7 @@ public class ApiClient
             if (!response.IsSuccessStatusCode)
                 return (null, data.ValueKind == System.Text.Json.JsonValueKind.String
                     ? data.GetString()
-                    : $"[{(int)response.StatusCode}] {body}");
+                    : Fail(response, body));
 
             var counts = new Dictionary<string, int>();
             if (data.TryGetProperty(countsKey, out var c))
@@ -241,7 +287,7 @@ public class ApiClient
             var response = await _http.PostAsJsonAsync("/uv-job/create", request, JsonOptions);
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
-                return (false, $"[{(int)response.StatusCode}] {body}");
+                return (false, Fail(response, body));
             return (true, null);
         }
         catch (Exception ex)
@@ -272,7 +318,7 @@ public class ApiClient
                 $"/pattern/update/{patternId}", pattern, JsonOptions);
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
-                return (false, $"[{(int)response.StatusCode}] {body}");
+                return (false, Fail(response, body));
             return (true, null);
         }
         catch (Exception ex)
@@ -289,7 +335,7 @@ public class ApiClient
             var response = await _http.PostAsJsonAsync("/iai/create", request, JsonOptions);
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
-                return (false, $"[{(int)response.StatusCode}] {body}");
+                return (false, Fail(response, body));
             return (true, null);
         }
         catch (Exception ex)
@@ -306,7 +352,7 @@ public class ApiClient
             var response = await _http.GetAsync($"/iai/getByJob/{jobId}");
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
-                return (null, $"[{(int)response.StatusCode}] {body}");
+                return (null, Fail(response, body));
 
             var wrapper = JsonSerializer.Deserialize<ApiResponse<IaiClampSettingDto>>(body, JsonOptions);
             return (wrapper?.Data, null);
@@ -324,7 +370,7 @@ public class ApiClient
             var response = await _http.PostAsJsonAsync("/plan-routing/create", request, JsonOptions);
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
-                return (false, $"[{(int)response.StatusCode}] {body}");
+                return (false, Fail(response, body));
             return (true, null);
         }
         catch (Exception ex)
@@ -369,8 +415,11 @@ public class ApiClient
 
             var response = await _http.GetAsync(url);
             var body = await response.Content.ReadAsStringAsync();
+            // backend รุ่นก่อนไม่รับตัวกรองสถานะ (ตอบ 400) — ผู้เรียกถอยไปใช้แบบไม่กรองเอง
+            if (response.StatusCode == System.Net.HttpStatusCode.BadRequest && !string.IsNullOrWhiteSpace(status))
+                return (new(), StatusFilterNotSupported);
             if (!response.IsSuccessStatusCode)
-                return (new(), $"[{(int)response.StatusCode}] {body}");
+                return (new(), Fail(response, body));
             var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<PaginatedResult<PrintJob>>>(body, JsonOptions);
             var jobs = wrapper?.Data?.Data ?? new();
             return (jobs, null);
@@ -491,7 +540,7 @@ public class ApiClient
             var response = await _http.GetAsync($"/job/getByMarkingMethod/{markingMethod}?limit={limit}");
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
-                return (new(), $"[{(int)response.StatusCode}] {body}");
+                return (new(), Fail(response, body));
             var wrapper = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<List<PrintJob>>>(body, JsonOptions);
             return (wrapper?.Data ?? new(), null);
         }
@@ -536,7 +585,7 @@ public class ApiClient
             var response = await _http.PatchAsync($"/job/{jobId}/remote-start", content);
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
-                return (false, $"[{(int)response.StatusCode}] {body}");
+                return (false, Fail(response, body));
             return (true, null);
         }
         catch (Exception ex)
@@ -561,7 +610,7 @@ public class ApiClient
 
             var response = await _http.GetAsync(url);
             var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode) return (new(), $"[{(int)response.StatusCode}] {body}");
+            if (!response.IsSuccessStatusCode) return (new(), Fail(response, body));
 
             var wrapper = System.Text.Json.JsonSerializer
                 .Deserialize<ApiResponse<List<MachineQueueRow>>>(body, JsonOptions);
@@ -585,7 +634,7 @@ public class ApiClient
 
             return response.IsSuccessStatusCode
                 ? (true, null)
-                : (false, $"[{(int)response.StatusCode}] {body}");
+                : (false, Fail(response, body));
         }
         catch (Exception ex)
         {
@@ -609,7 +658,7 @@ public class ApiClient
             var response = await _http.PostAsJsonAsync(
                 "/machine-queue/claim", payload, JsonOptions);
             var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode) return (null, $"[{(int)response.StatusCode}] {body}");
+            if (!response.IsSuccessStatusCode) return (null, Fail(response, body));
 
             var wrapper = System.Text.Json.JsonSerializer
                 .Deserialize<ApiResponse<MachineClaimResult>>(body, JsonOptions);
@@ -630,7 +679,7 @@ public class ApiClient
             var payload = new { machine, expected_holder_id = expectedHolderId, hold_for_next_round = holdForNextRound };
             var response = await _http.PostAsJsonAsync("/machine-queue/release", payload, JsonOptions);
             var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode) return (null, $"[{(int)response.StatusCode}] {body}");
+            if (!response.IsSuccessStatusCode) return (null, Fail(response, body));
 
             var wrapper = System.Text.Json.JsonSerializer
                 .Deserialize<ApiResponse<ReleaseResult>>(body, JsonOptions);
@@ -657,7 +706,7 @@ public class ApiClient
                 : new { print_jobs_id = jobId, machine, reason = reason.Length > 500 ? reason[..500] : reason };
             var response = await _http.PostAsJsonAsync("/machine-queue/skip", payload, JsonOptions);
             var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode) return (null, $"[{(int)response.StatusCode}] {body}");
+            if (!response.IsSuccessStatusCode) return (null, Fail(response, body));
 
             var wrapper = System.Text.Json.JsonSerializer
                 .Deserialize<ApiResponse<MachineSkipResult>>(body, JsonOptions);
@@ -681,7 +730,7 @@ public class ApiClient
             var payload = new { machine, expected_holder_id = expectedHolderId, program_name = programName };
             var response = await _http.PostAsJsonAsync("/machine-queue/switch-program", payload, JsonOptions);
             var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode) return (null, $"[{(int)response.StatusCode}] {body}");
+            if (!response.IsSuccessStatusCode) return (null, Fail(response, body));
 
             var wrapper = System.Text.Json.JsonSerializer
                 .Deserialize<ApiResponse<ReleaseResult>>(body, JsonOptions);
@@ -715,7 +764,7 @@ public class ApiClient
         {
             using var response = await _http.PostAsJsonAsync($"/machine-queue/{rowId}/{action}", payload, JsonOptions);
             var body = await response.Content.ReadAsStringAsync();
-            return response.IsSuccessStatusCode ? (true, null) : (false, $"[{(int)response.StatusCode}] {body}");
+            return response.IsSuccessStatusCode ? (true, null) : (false, Fail(response, body));
         }
         catch (Exception ex) { return (false, ex.Message); }
     }
@@ -749,7 +798,7 @@ public class ApiClient
 
             return response.IsSuccessStatusCode
                 ? (true, null)
-                : (false, $"[{(int)response.StatusCode}] {body}");
+                : (false, Fail(response, body));
         }
         catch (Exception ex)
         {
@@ -768,7 +817,7 @@ public class ApiClient
 
             return response.IsSuccessStatusCode
                 ? (true, null)
-                : (false, $"[{(int)response.StatusCode}] {body}");
+                : (false, Fail(response, body));
         }
         catch (Exception ex)
         {
@@ -796,7 +845,7 @@ public class ApiClient
             var response = await _http.PatchAsync($"/job/{jobId}/remote-start", content);
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
-                return (false, $"[{(int)response.StatusCode}] {body}");
+                return (false, Fail(response, body));
             return (true, null);
         }
         catch (Exception ex)
@@ -814,7 +863,7 @@ public class ApiClient
                 JsonContent.Create(payload, options: JsonOptions));
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
-                return (false, $"[{(int)response.StatusCode}] {body}");
+                return (false, Fail(response, body));
             return (true, null);
         }
         catch (Exception ex)

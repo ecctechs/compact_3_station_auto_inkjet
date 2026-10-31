@@ -1558,7 +1558,7 @@ public partial class OrderListUserControl : UserControl
     private async Task<(List<PrintJob> jobs, string? error)> GetActiveJobsAsync()
     {
         var active = await _api!.GetAllJobsAsync(ActiveJobsLimit, status: string.Join(",", ActiveStatuses));
-        if (active.error?.StartsWith("[400]", StringComparison.Ordinal) == true)
+        if (active.error == ApiClient.StatusFilterNotSupported)
             return await _api.GetAllJobsAsync(100);
         return active;
     }
