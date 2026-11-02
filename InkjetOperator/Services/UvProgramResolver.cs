@@ -178,9 +178,10 @@ public static class UvProgramResolver
     /// · null = ยกเลิก
     ///
     /// <para>
-    /// แสดงทุกรุ่นให้เห็นภาพรวม รุ่นที่อยู่ในเครื่องตอนนี้กับรุ่นที่พิมพ์ไปแล้วมีป้ายกำกับ
-    /// และเลือกไม่ได้ (ปุ่มกดไม่ได้) · ขึ้นกล่องเสมอแม้เหลือรุ่นเดียว คนกดต้องเห็นว่าจะได้รุ่นไหน
-    /// กล่องนี้คือการยืนยันในตัว ปุ่มบอกการกระทำตรง ๆ
+    /// แสดงทุกรุ่นและเลือกได้ทุกรุ่น — รุ่นที่อยู่ในเครื่องตอนนี้กับรุ่นที่พิมพ์ไปแล้วมีป้ายกำกับไว้ให้รู้
+    /// (ตกลง 2/11/2026: เดิมเลือกซ้ำไม่ได้ หน้างานต้องพิมพ์รุ่นเดิมซ้ำได้)
+    /// ไฮไลต์รุ่นแรกที่ยังไม่ได้พิมพ์ไว้ให้ ทางปกติคือพิมพ์รุ่นถัดไปจึงยังกดทีเดียว
+    /// · ขึ้นกล่องเสมอ คนกดต้องเห็นว่าจะได้รุ่นไหน กล่องนี้คือการยืนยันในตัว ปุ่มบอกการกระทำตรง ๆ
     /// </para>
     /// </summary>
     public static string? PickNextVariant(
@@ -192,16 +193,20 @@ public static class UvProgramResolver
             bool isCurrent = string.Equals(v, current, StringComparison.OrdinalIgnoreCase);
             bool isPrinted = printed.Contains(v);
             var label = v + ".uvdx" + (isCurrent ? "   · อยู่ในเครื่องตอนนี้" : isPrinted ? "   · พิมพ์แล้ว" : "");
-            return new MarkingRefOption(v, label, MarkingRefImageService.FindImagesExact(v), isCurrent || isPrinted);
+            return new MarkingRefOption(v, label, MarkingRefImageService.FindImagesExact(v));
         }).ToList();
+
+        var next = variants.FirstOrDefault(v =>
+            !string.Equals(v, current, StringComparison.OrdinalIgnoreCase) && !printed.Contains(v));
 
         var machine = MachineLabel(uvNumber);
         return MarkingRefPickerDialog.Pick(
             owner,
             machine == null ? "เปลี่ยนรุ่น" : $"เปลี่ยนรุ่น — {machine}",
-            "รุ่นเดิมพิมพ์เสร็จแล้ว? เลือกรุ่นถัดไป — กดแล้วเครื่องโหลดรุ่นใหม่ทันที · รุ่นที่พิมพ์แล้วเลือกซ้ำไม่ได้",
+            "รุ่นเดิมพิมพ์เสร็จแล้ว? เลือกรุ่นที่จะพิมพ์ต่อ — กดแล้วเครื่องโหลดรุ่นนั้นทันที · เลือกรุ่นที่พิมพ์แล้วซ้ำได้",
             options,
-            okText: "พิมพ์รุ่นนี้");
+            okText: "พิมพ์รุ่นนี้",
+            initialKey: next);
     }
 
     private static string? PromptVariant(List<string> variants, IWin32Window? owner, int? uvNumber)

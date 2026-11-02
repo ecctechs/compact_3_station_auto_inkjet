@@ -69,9 +69,10 @@ internal sealed partial class MarkingRefPickerDialog : AntdUI.BorderlessForm
     /// เปิด dialog แล้วคืน Key ของรายการที่เลือก · null = ยกเลิก
     /// </summary>
     /// <param name="okText">ข้อความปุ่มตกลง — ว่าง = "ตกลง" ตามเดิม</param>
+    /// <param name="initialKey">รายการที่ไฮไลต์ไว้ตอนเปิด — ว่าง / ไม่เจอ = รายการแรกที่เลือกได้</param>
     public static string? Pick(
         IWin32Window? owner, string title, string prompt, List<MarkingRefOption> options,
-        string? okText = null)
+        string? okText = null, string? initialKey = null)
     {
         if (options.Count == 0) return null;
 
@@ -79,7 +80,7 @@ internal sealed partial class MarkingRefPickerDialog : AntdUI.BorderlessForm
         dlg.Text = dlg.lblTitle.Text = title;
         dlg.lblPrompt.Text = prompt;
         if (!string.IsNullOrWhiteSpace(okText)) dlg.btnOk.Text = okText;
-        dlg.SetOptions(options);
+        dlg.SetOptions(options, initialKey);
 
         using var dim = OwnerForm(owner) is { } form ? DimOverlay.ShowOver(form) : null;
         var result = owner == null ? dlg.ShowDialog() : dlg.ShowDialog(owner);
@@ -131,7 +132,7 @@ internal sealed partial class MarkingRefPickerDialog : AntdUI.BorderlessForm
         InkjetOperator.Theme.ButtonStyles.Close(btnOk, fontSize: 15f);
     }
 
-    private void SetOptions(List<MarkingRefOption> options)
+    private void SetOptions(List<MarkingRefOption> options, string? initialKey = null)
     {
         _options = options;
 
@@ -140,8 +141,10 @@ internal sealed partial class MarkingRefPickerDialog : AntdUI.BorderlessForm
         foreach (var option in options) lstOptions.Items.Add(option.Display);
         lstOptions.EndUpdate();
 
-        // เริ่มที่รายการแรกที่เลือกได้ — ไม่ให้ปุ่มตกลงเทาตั้งแต่เปิด
-        int first = options.FindIndex(o => !o.Disabled);
+        // เริ่มที่รายการที่ผู้เรียกบอก ไม่งั้นรายการแรกที่เลือกได้ — ไม่ให้ปุ่มตกลงเทาตั้งแต่เปิด
+        int first = initialKey == null ? -1
+            : options.FindIndex(o => !o.Disabled && string.Equals(o.Key, initialKey, StringComparison.OrdinalIgnoreCase));
+        if (first < 0) first = options.FindIndex(o => !o.Disabled);
         lstOptions.SelectedIndex = first < 0 ? 0 : first;
         btnOk.Enabled = SelectedOption is { Disabled: false };
     }

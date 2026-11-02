@@ -2670,19 +2670,17 @@ public partial class OrderListUserControl : UserControl
         if (IsDisposed) return;
         _uvVariants[(jobId, step)] = all;
 
-        // รุ่นที่พิมพ์ไปแล้วอ่านจากของสด รวมรุ่นที่อยู่ในเครื่องตอนนี้ — ไม่ใช่จากแคชที่ใช้วาดปุ่ม
-        var remaining = UvVariantService.Remaining(all, resolved.Commands, step);
-        if (held.ProgramName is { Length: > 0 } current)
-            remaining.RemoveAll(v => string.Equals(v, current, StringComparison.OrdinalIgnoreCase));
-        if (remaining.Count == 0)
+        // โปรแกรมไม่มีรุ่นย่อยแล้ว (ไฟล์ในเครื่องถูกลบ / เปลี่ยนชื่อระหว่างงาน) — ไม่มีรุ่นอื่นให้เปลี่ยน
+        if (!UvVariantService.HasVariants(all))
         {
-            Notify.Info(this, $"{JobName(jobId)} · {step} พิมพ์ครบทุกรุ่นแล้ว · กดปุ่มหน้าเครื่องเพื่อจบงาน");
+            Notify.Info(this, $"{JobName(jobId)} · {step} ไม่มีรุ่นย่อยให้เปลี่ยน · กดปุ่มหน้าเครื่องเพื่อจบงาน");
             await RefreshDataAsync(force: true);
             return;
         }
 
-        // กล่องเลือกรุ่นตัวเดิม แต่คำบอกว่ากำลังเปลี่ยนรุ่น — เห็นทุกรุ่น รุ่นที่อยู่ในเครื่อง / พิมพ์แล้วเลือกไม่ได้
-        // ขึ้นเสมอแม้เหลือรุ่นเดียว และเป็นการยืนยันในตัว (ปุ่ม "พิมพ์รุ่นนี้")
+        // กล่องเลือกรุ่นตัวเดิม แต่คำบอกว่ากำลังเปลี่ยนรุ่น — เห็นและเลือกได้ทุกรุ่น รวมรุ่นที่พิมพ์แล้ว
+        // (ตกลง 2/11/2026) รุ่นที่พิมพ์แล้วอ่านจากของสด ไม่ใช่จากแคชที่ใช้วาดปุ่ม
+        // ขึ้นเสมอ และเป็นการยืนยันในตัว (ปุ่ม "พิมพ์รุ่นนี้")
         var printed = UvVariantService.SentVariants(resolved.Commands, step);
         var chosen = UvProgramResolver.PickNextVariant(all, held.ProgramName, printed, this, uvNumber);
         if (chosen == null || IsDisposed) return;
@@ -3817,11 +3815,12 @@ public partial class OrderListUserControl : UserControl
     private readonly Dictionary<(int JobId, string Step), List<string>> _uvVariants = new();
 
     /// <summary>
-    /// รุ่นที่ยังเปลี่ยนไปพิมพ์ได้ของขั้นนี้ — ว่าง = ไม่มีปุ่มเปลี่ยนรุ่น
+    /// รุ่นที่เปลี่ยนไปพิมพ์ได้ของขั้นนี้ — ว่าง = ไม่มีปุ่มเปลี่ยนรุ่น
     ///
     /// <para>
-    /// ต้องเปิดตัวเลือกพิมพ์หลายรุ่น สถานีนี้ดูแลเครื่องนั้น และงานถือเครื่องอยู่โดยส่งรุ่นเดิม
-    /// เข้าไปแล้ว (<see cref="UvVariantService.HeldRow"/>) ตัดรุ่นที่พิมพ์ไปแล้วและรุ่นที่อยู่ในเครื่องออก
+    /// ต้องเปิดตัวเลือกพิมพ์หลายรุ่น สถานีนี้ดูแลเครื่องนั้น งานถือเครื่องอยู่โดยส่งรุ่นเดิม
+    /// เข้าไปแล้ว (<see cref="UvVariantService.HeldRow"/>) และโปรแกรมมีรุ่นย่อย ·
+    /// คืนทุกรุ่น รวมรุ่นที่พิมพ์แล้ว — เลือกซ้ำได้ (ตกลง 2/11/2026) ปุ่มจึงไม่หายตอนพิมพ์ครบ
     /// </para>
     /// <para>
     /// ไม่แตะดิสก์เลย ใช้ได้จากเส้นทางที่วาดตาราง ค่าที่ยังไม่มีในแคชถือว่า "ไม่เหลือ"
@@ -3833,13 +3832,10 @@ public partial class OrderListUserControl : UserControl
         if (!UvVariantService.Enabled) return [];
         if (!UvVariantService.StationOwns(step)) return [];
         if (!UvVariantService.InPlan(job.Status, job.PlanRouting?.MarkingMethod, step)) return [];
-        if (UvVariantService.HeldRow(job.Id, step, _queueRows) is not { } held) return [];
+        if (UvVariantService.HeldRow(job.Id, step, _queueRows) == null) return [];
         if (!_uvVariants.TryGetValue((job.Id, step), out var all)) return [];
 
-        var remaining = UvVariantService.Remaining(all, job.Commands, step);
-        if (held.ProgramName is { Length: > 0 } current)
-            remaining.RemoveAll(v => string.Equals(v, current, StringComparison.OrdinalIgnoreCase));
-        return remaining;
+        return UvVariantService.HasVariants(all) ? all : [];
     }
 
     /// <summary>
@@ -3852,7 +3848,7 @@ public partial class OrderListUserControl : UserControl
     /// <list type="bullet">
     /// <item>"เลือกรุ่น UV2" — งานที่ ST1 ฝาก UV2 ให้ ST3 เลือก (ดู <see cref="Uv2PickAtSt3"/>) ขึ้นเสมอ
     /// ไม่ขึ้นกับตัวเลือกพิมพ์หลายรุ่น</item>
-    /// <item>"เปลี่ยนรุ่น" — งานถือเครื่องอยู่และยังมีรุ่นที่ไม่ได้พิมพ์ (ดู <see cref="RemainingVariants"/>)</item>
+    /// <item>"เปลี่ยนรุ่น" — งานถือเครื่องอยู่และโปรแกรมมีรุ่นย่อย (ดู <see cref="RemainingVariants"/>)</item>
     /// </list>
     /// </summary>
     private void AddUvButtons(List<AntdUI.CellButton> buttons, PrintJob job)

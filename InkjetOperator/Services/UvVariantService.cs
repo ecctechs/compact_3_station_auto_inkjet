@@ -9,7 +9,7 @@ namespace InkjetOperator.Services;
 /// งานหนึ่งใบที่โปรแกรม UV มีรุ่นย่อยหลายไฟล์ (เช่น SPK-LOT, SPK-LOT-1, SPK-LOT-2)
 /// พิมพ์ได้มากกว่าหนึ่งรุ่น โดยเลือกทีละรุ่น พิมพ์เสร็จแล้วกด "เปลี่ยนรุ่น" บนจอ
 /// ระหว่างที่งานยังถือเครื่องอยู่ (ข้อ 2.1 รายงานหน้างาน 18/10/2026) — ปุ่มหน้าเครื่อง
-/// มีความหมายเดียวคือจบงาน รุ่นที่พิมพ์ไปแล้วไม่โผล่ให้เลือกซ้ำ ไม่ต้องพิมพ์ครบทุกรุ่น
+/// มีความหมายเดียวคือจบงาน ไม่ต้องพิมพ์ครบทุกรุ่น · รุ่นที่พิมพ์ไปแล้วเลือกซ้ำได้ (ตกลง 2/11/2026)
 /// </para>
 /// <para>
 /// รุ่นที่พิมพ์ไปแล้วอ่านจาก payload ของ command ที่ส่งสำเร็จ ซึ่งเก็บชื่อไฟล์ไว้อยู่แล้ว
@@ -129,7 +129,16 @@ public static class UvVariantService
         && commands?.Any(c => c.Success
             && string.Equals(MarkingMethodService.SkippedStep(c.Command), step, StringComparison.OrdinalIgnoreCase)) != true;
 
-    /// <summary>รุ่นที่ยังไม่ได้พิมพ์ — ทั้งหมดลบที่ส่งไปแล้ว</summary>
+    /// <summary>
+    /// โปรแกรมนี้มีรุ่นย่อยให้เปลี่ยนไหม — ไฟล์เดียวไม่นับ ไม่งั้นทุกงาน UV มีปุ่มเปลี่ยนรุ่นเกินมา
+    /// (ไฟล์เดียวตอนเริ่มงานก็ไม่ถามเลือกรุ่น ดู <see cref="UvProgramResolver"/>)
+    /// </summary>
+    public static bool HasVariants(List<string> all) => all.Count >= 2;
+
+    /// <summary>
+    /// รุ่นที่ยังไม่ได้พิมพ์ — ทั้งหมดลบที่ส่งไปแล้ว · ใช้นับว่าจบไม่ครบ / ระบายปุ่มจบงาน
+    /// ไม่ได้ใช้กันการเลือก (เลือกซ้ำได้)
+    /// </summary>
     public static List<string> Remaining(List<string> all, IEnumerable<CommandResult>? commands, string step)
     {
         var sent = SentVariants(commands, step);
