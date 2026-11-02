@@ -887,7 +887,7 @@ public partial class OrderListUserControl : UserControl
     ///
     /// <para>
     /// ST1 สั่งที่เดียว — ST1 อ่านคิวทุกรอบอยู่แล้ว ให้ ST3 สั่งด้วยจะส่งซ้อนกันสองเครื่อง
-    /// ไม่รอผล (PLC ตอบช้าแล้วตารางไม่ค้าง) · พลาดแค่จด log ไม่เด้ง ไม่กระทบคิวหรืองาน
+    /// ไม่รอผล (PLC ตอบช้าแล้วตารางไม่ค้าง) · สำเร็จ / พลาดขึ้นป้ายลอย ไม่บังคับกดปิด ไม่กระทบคิวหรืองาน
     /// </para>
     /// </summary>
     private void ParkIdleClamps(List<MachineQueueRow> rows)
@@ -937,10 +937,29 @@ public partial class OrderListUserControl : UserControl
                 if (r.Ok) AppLog.Info("ClampPark", text);
                 else AppLog.Warn("ClampPark", text);
             }
+
+            // ป้ายลอยบอกผล — หน้างานขอให้รู้ทันทีว่าแคลมป์ถอยแล้วหรือยัง ไม่ต้องไปเปิด log
+            // ParkAsync คืนผลเรียงตามแกนที่ตั้ง address ไว้ จับคู่ชื่อแกนตามลำดับเดียวกัน
+            var axes = settings.For(side).Where(a => a.IsConfigured).Select(a => a.AxisLabel).ToList();
+            var failed = results.Select((r, i) => (r, Axis: i < axes.Count ? axes[i] : "?"))
+                .Where(x => !x.r.Ok).ToList();
+            if (failed.Count == 0)
+            {
+                Notify.Success(this, $"แคลมป์ {side} กลับตำแหน่งพักแล้ว ({string.Join(", ", axes)})");
+            }
+            else
+            {
+                // เหตุผลคือบรรทัด ❌ บรรทัดสุดท้ายใน log ของแกนแรกที่พลาด เช่นต่อ PLC ไม่ได้
+                var reason = failed[0].r.Log.Split('\n').LastOrDefault(l => l.Contains('❌'))
+                    ?.Replace("❌", "").Trim() ?? "";
+                Notify.Warn(this, $"ถอยแคลมป์ {side} ไม่สำเร็จ — แกน {string.Join(", ", failed.Select(f => f.Axis))}"
+                    + (reason.Length > 0 ? $"\n{reason}" : ""));
+            }
         }
         catch (Exception ex)
         {
             AppLog.Warn("ClampPark", $"ถอยแคลมป์ {side} ไม่สำเร็จ — {ex.Message}");
+            Notify.Warn(this, $"ถอยแคลมป์ {side} ไม่สำเร็จ\n{ex.Message}");
         }
         finally
         {
