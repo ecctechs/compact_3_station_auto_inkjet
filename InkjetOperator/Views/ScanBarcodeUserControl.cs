@@ -155,9 +155,34 @@ public partial class ScanBarcodeUserControl : UserControl
         return (_api, _sqlite);
     }
 
+    /// <summary>เพดานเวลาค้นระยะแคลมป์ทุกแกนของงานหนึ่ง — ปกติใช้ไม่ถึงวินาที</summary>
+    private static readonly TimeSpan ClampLookupTimeout = TimeSpan.FromSeconds(10);
+
     /// <summary>PrintData.db3 ตามที่ตั้งไว้ใน Setting — เปิดแบบอ่านอย่างเดียวเสมอ</summary>
     private static SqliteDataService OpenSourceDb() =>
         new(CustomSettingsManager.Read("DB_PATH", ""));
+
+    /// <summary>
+    /// ไฟล์อยู่บนเครื่องอื่น (แชร์ / ไดรฟ์ที่ map ไว้) แล้วเครื่องนั้นไม่ตอบ → คืนชื่อเครื่อง
+    ///
+    /// <para>
+    /// ไฟล์เกือบทั้งหมดหน้างานอยู่บนไดรฟ์ที่ map ไว้ <c>File.Exists</c> / เปิด SQLite บนแชร์ที่หลุด
+    /// ค้างหน้าจอ 20–60 วินาที ถามเครื่องก่อน (TCP 445 ไม่เกิน 1 วินาที) แบบเดียวกับโฟลเดอร์ UV
+    /// ไม่ตอบก็ไม่แตะไฟล์เลย · ไฟล์ในเครื่องตัวเองคืน null ทันที
+    /// </para>
+    /// <para>
+    /// ต้องรอผ่าน Task.Run — HostUpAsync ไม่ได้ ConfigureAwait(false) รอบนเธรดหน้าจอตรง ๆ จะ deadlock
+    /// </para>
+    /// </summary>
+    private static string? DownHost(string? path)
+    {
+        if (PathProbe.HostOf(path) is not string host) return null;
+        bool up = Task.Run(() => PathProbe.HostUpAsync(host)).GetAwaiter().GetResult();
+        return up ? null : host;
+    }
+
+    private static string HostDownMessage(string host, string file) =>
+        $"เครื่อง {host} ที่เก็บ {file} ไม่ตอบ\nเช็คสายแลนหรือเครื่องปลายทาง แล้วลองใหม่";
 
     // ---- สแกนแล้วดึงข้อมูลมาโชว์ ----
 
@@ -217,6 +242,16 @@ public partial class ScanBarcodeUserControl : UserControl
             if (!quiet)
             {
                 ShowWarning("กรุณาสแกนหรือพิมพ์ Barcode");
+                ReturnToBarcode();
+            }
+            return false;
+        }
+
+        if (DownHost(CustomSettingsManager.Read("DB_PATH", "")) is string host)
+        {
+            if (!quiet)
+            {
+                ShowError(HostDownMessage(host, "PrintData.db3"));
                 ReturnToBarcode();
             }
             return false;
@@ -401,6 +436,12 @@ public partial class ScanBarcodeUserControl : UserControl
         var (api, sqlite) = GetServices();
 
         // Pre-flight: check SQLite + backend
+        if (DownHost(CustomSettingsManager.Read("DB_PATH", "")) is string host)
+        {
+            ShowError(HostDownMessage(host, "PrintData.db3"));
+            return;
+        }
+
         if (!sqlite.CanConnect())
         {
             ShowError("ไม่สามารถเชื่อมต่อ PrintData.db3 ได้\nกรุณาตรวจสอบ Database Path ใน Setting");
@@ -559,16 +600,19 @@ public partial class ScanBarcodeUserControl : UserControl
     private static bool ConfirmClampDatabase()
     {
         var path = CustomSettingsManager.Read("CLAMP_DB_PATH", "");
-        bool ready = !string.IsNullOrWhiteSpace(path) && File.Exists(path);
+        var down = string.IsNullOrWhiteSpace(path) ? null : DownHost(path);
+        bool ready = !string.IsNullOrWhiteSpace(path) && down == null && File.Exists(path);
         if (ready) return true;
 
         var reason = string.IsNullOrWhiteSpace(path)
             ? "ยังไม่ได้เลือกไฟล์ mydatabase.db3"
-            : $"ไม่พบไฟล์ที่ตั้งไว้: {path}";
+            : down != null
+                ? $"เครื่อง {down} ที่เก็บไฟล์ไม่ตอบ: {path}"
+                : $"ไม่พบไฟล์ที่ตั้งไว้: {path}";
 
         return Confirm.Ask(null, new ConfirmSpec
         {
-            Title = "ยังไม่ได้ตั้งค่า Clamp Database",
+            Title = down != null ? "เปิด Clamp Database ไม่ได้" : "ยังไม่ได้ตั้งค่า Clamp Database",
             Headline = "ลงทะเบียนต่อโดยไม่มีระยะแคลมป์?",
             Message = reason,
             Detail = "ระยะแคลมป์ (IAI) ของงานนี้จะเป็นค่าว่าง" + Environment.NewLine
@@ -591,41 +635,64 @@ public partial class ScanBarcodeUserControl : UserControl
     private static async Task SyncIaiAsync(ApiClient api, int jobId, List<UvJobItem> uvItems)
     {
         var settings = ClampSettings.Load();
-        bool canRead = !string.IsNullOrWhiteSpace(settings.DbPath) && File.Exists(settings.DbPath);
 
-        var request = new IaiCreateRequest { PrintJobsId = jobId };
-
-        foreach (var item in uvItems)
+        IaiCreateRequest Build(bool canRead)
         {
-            var program = (item.ProgramName ?? "").Trim();
-            if (program.Length == 0) continue;
+            var request = new IaiCreateRequest { PrintJobsId = jobId };
 
-            // แยกช่องด้วย prefix ของชื่อโปรแกรม กฎเดียวกับ backend และระบบเดิม
-            bool isPlate = program.StartsWith("P-", StringComparison.OrdinalIgnoreCase);
-            var side = isPlate ? ClampSide.Plate : ClampSide.Shim;
-
-            if (isPlate) request.M1ProgramName = program;
-            else request.M2ProgramName = program;
-
-            // เก็บครบทุกแกนของฝั่งนี้ — ไม่มี path หรือหาไม่เจอก็เก็บเป็น null
-            foreach (var axis in settings.For(side))
+            foreach (var item in uvItems)
             {
-                int? value = canRead
-                    ? ClampService.Lookup(settings.DbPath, program, axis) is { Found: true } hit
-                        ? hit.ValueMm
-                        : null
-                    : null;
+                var program = (item.ProgramName ?? "").Trim();
+                if (program.Length == 0) continue;
 
-                switch (axis.Key)
+                // แยกช่องด้วย prefix ของชื่อโปรแกรม กฎเดียวกับ backend และระบบเดิม
+                bool isPlate = program.StartsWith("P-", StringComparison.OrdinalIgnoreCase);
+                var side = isPlate ? ClampSide.Plate : ClampSide.Shim;
+
+                if (isPlate) request.M1ProgramName = program;
+                else request.M2ProgramName = program;
+
+                // เก็บครบทุกแกนของฝั่งนี้ — ไม่มี path หรือหาไม่เจอก็เก็บเป็น null
+                foreach (var axis in settings.For(side))
                 {
-                    case "IAIP": request.Iaip = value; break;
-                    case "IAIPZ1": request.IaipZ1 = value; break;
-                    case "IAIPZ2": request.IaipZ2 = value; break;
-                    case "IAI": request.Iai = value; break;
-                    case "IAIZ1": request.IaiZ1 = value; break;
-                    case "IAIZ2": request.IaiZ2 = value; break;
+                    int? value = canRead
+                        ? ClampService.Lookup(settings.DbPath, program, axis) is { Found: true } hit
+                            ? hit.ValueMm
+                            : null
+                        : null;
+
+                    switch (axis.Key)
+                    {
+                        case "IAIP": request.Iaip = value; break;
+                        case "IAIPZ1": request.IaipZ1 = value; break;
+                        case "IAIPZ2": request.IaipZ2 = value; break;
+                        case "IAI": request.Iai = value; break;
+                        case "IAIZ1": request.IaiZ1 = value; break;
+                        case "IAIZ2": request.IaiZ2 = value; break;
+                    }
                 }
             }
+
+            return request;
+        }
+
+        // mydatabase.db3 อยู่บนไดรฟ์ที่ map ไว้ — อ่านนอกเธรดหน้าจอและมีเพดานเวลา
+        // หลุดกลางทาง (เครื่องตอบ TCP แต่อ่านไฟล์ไม่ได้) จอไม่ค้าง ได้ค่าว่างเหมือนไม่มีไฟล์
+        // ตัวที่หมดเวลายังวิ่งค้างอยู่เบื้องหลังได้ จึงสร้าง request ใหม่ ไม่ใช้ตัวที่มันแก้อยู่
+        IaiCreateRequest request;
+        try
+        {
+            request = await Task.Run(() => Build(
+                    !string.IsNullOrWhiteSpace(settings.DbPath)
+                    && DownHost(settings.DbPath) == null
+                    && File.Exists(settings.DbPath)))
+                .WaitAsync(ClampLookupTimeout);
+        }
+        catch (TimeoutException)
+        {
+            AppLog.Warn("ScanBarcode.Iai",
+                $"อ่าน mydatabase.db3 ไม่ทันใน {ClampLookupTimeout.TotalSeconds:0} วินาที — งาน {jobId} เก็บระยะแคลมป์เป็นค่าว่าง");
+            request = Build(canRead: false);
         }
 
         // ไม่มีชื่อโปรแกรมเลย = งานนี้ไม่เกี่ยวกับ UV → ไม่ต้องสร้างแถว
