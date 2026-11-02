@@ -34,6 +34,17 @@ public sealed class ClampAxis
     public string AddrReset { get; set; } = "";
     public string AddrStatus { get; set; } = "";
 
+    /// <summary>
+    /// ค่าตั้งต้นของสูตรแปลงระยะ: raw = (Offset − mm) × 100 — ดู <see cref="ClampService.ToRaw"/>
+    ///
+    /// <para>
+    /// แต่ละแกนไม่เท่ากัน วัดหน้างาน 1/11/2026 (ตำแหน่งบน HMI เทียบความสูงที่วัดจริง):
+    /// แกน X ใช้ 155 ตามสูตรเดิมของ Node-RED · Z1 = 70 · Z2 = 90
+    /// ให้หน้างานกรอกเองในหน้า Clamp Setting (คุณภาสกรเสนอ) — เปลี่ยนชุดแคลมป์แล้วไม่ต้องแก้โปรแกรม
+    /// </para>
+    /// </summary>
+    public int OffsetMm { get; set; } = ClampService.DefaultOffsetMm;
+
     /// <summary>ชื่อที่โชว์ให้คน เช่น "Plate X"</summary>
     public string Display => $"{(Side == ClampSide.Plate ? "Plate" : "Shim")} {AxisLabel}";
 
@@ -97,6 +108,7 @@ public sealed class ClampSettings
                 AddrRun = ReadAddr(key, "RUN"),
                 AddrReset = ReadAddr(key, "RESET"),
                 AddrStatus = ReadAddr(key, "STATUS"),
+                OffsetMm = ReadOffset(key),
             });
         }
 
@@ -128,6 +140,16 @@ public sealed class ClampSettings
         };
     }
 
+    /// <summary>
+    /// ยังไม่เคยตั้ง / ค่าเสีย → 155 ค่าเดิมที่ทุกแกนใช้มาก่อนมีช่องนี้
+    /// ลงโปรแกรมใหม่แล้วเครื่องจึงยังวิ่งเหมือนเดิม จนกว่าหน้างานจะกรอกค่าของแกน Z
+    /// </summary>
+    private static int ReadOffset(string key) =>
+        int.TryParse(CustomSettingsManager.Read($"CLAMP_OFFSET_{key}", "").Trim(), out int v)
+        && ClampService.IsValidOffset(v)
+            ? v
+            : ClampService.DefaultOffsetMm;
+
     public void Save()
     {
         CustomSettingsManager.Write("CLAMP_PLC_IP", Ip.Trim());
@@ -140,6 +162,7 @@ public sealed class ClampSettings
             CustomSettingsManager.Write($"CLAMP_ADDR_{a.Key}_RUN", a.AddrRun.Trim());
             CustomSettingsManager.Write($"CLAMP_ADDR_{a.Key}_RESET", a.AddrReset.Trim());
             CustomSettingsManager.Write($"CLAMP_ADDR_{a.Key}_STATUS", a.AddrStatus.Trim());
+            CustomSettingsManager.Write($"CLAMP_OFFSET_{a.Key}", a.OffsetMm.ToString());
         }
     }
 }
@@ -164,6 +187,15 @@ public static class ClampService
 {
     public const int MinMm = 0;
     public const int MaxMm = 155;
+
+    /// <summary>Offset เดิมที่ใช้กับทุกแกนก่อนมีช่องกรอก — มาจากสูตรของ Node-RED</summary>
+    public const int DefaultOffsetMm = 155;
+
+    public const int MinOffsetMm = 1;
+    public const int MaxOffsetMm = 999;
+
+    public static bool IsValidOffset(int offsetMm) =>
+        offsetMm >= MinOffsetMm && offsetMm <= MaxOffsetMm;
 
     private const int RunPulseMs = 100;
     private const int ResetPulseMs = 1000;
@@ -294,11 +326,12 @@ public static class ClampService
     /// ลอกจาก action "send" ของ Clamp UI router (ปุ่ม Sent ที่ operator กดจริง):
     ///     Math.round((149 - (next - 6)) * 100)  ==  (155 - mm) * 100
     ///
-    /// ยังไม่ยืนยันว่าแกน Z ใช้สูตรเดียวกับ X — ถ้าต่างต้องแยกสูตรต่อแกน
+    /// 155 ใช้ได้แค่แกน X — แกน Z วัดหน้างานแล้วได้ Z1 = 70, Z2 = 90 จึงรับ Offset
+    /// ของแต่ละแกนเข้ามาแทน (<see cref="ClampAxis.OffsetMm"/>) ส่วน × 100 และเพดานคงเดิม
     /// </summary>
-    public static int ToRaw(int valueMm)
+    public static int ToRaw(int valueMm, int offsetMm)
     {
-        int raw = (MaxMm - valueMm) * 100;
+        int raw = (offsetMm - valueMm) * 100;
         if (raw > 14900) raw = 14900;
         if (raw < 0) raw = 100;
         return raw;
@@ -310,7 +343,7 @@ public static class ClampService
     public static async Task<ClampResult> ApplyAsync(ClampSettings s, ClampAxis axis, int valueMm)
     {
         int mm = ClampMm(valueMm);
-        int raw = ToRaw(mm);
+        int raw = ToRaw(mm, axis.OffsetMm);
         var log = new List<string> { $"── {axis.Display} ({axis.Column}) ──" };
 
         if (!axis.IsConfigured)

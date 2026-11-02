@@ -19,7 +19,7 @@ public partial class ClampSettingUserControl : UserControl
 
     /// <summary>ช่องในตารางที่แก้แล้วมีผลกับเครื่อง — ล็อกไว้จนกว่าจะปลดล็อก</summary>
     private static readonly HashSet<string> LockedColumns =
-        new(StringComparer.Ordinal) { "ValueMm", "AddrTarget", "AddrRun", "AddrReset", "AddrStatus" };
+        new(StringComparer.Ordinal) { "ValueMm", "OffsetMm", "AddrTarget", "AddrRun", "AddrReset", "AddrStatus" };
 
     private ClampSettings _settings = new();
     private PushButtonSettings _push = new();
@@ -53,14 +53,16 @@ public partial class ClampSettingUserControl : UserControl
     {
         tblAxes.Columns =
         [
-            new AntdUI.Column("Axis", "Axis", AntdUI.ColumnAlign.Center) { Width = "11%" },
-            new AntdUI.Column("Column", "DB Column", AntdUI.ColumnAlign.Center) { Width = "10%" },
-            new AntdUI.Column("ValueMm", "Value (mm)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "9%" },
-            new AntdUI.Column("AddrTarget", "Target (D)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "10%" },
-            new AntdUI.Column("AddrRun", "Run (M)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "10%" },
-            new AntdUI.Column("AddrReset", "Reset (M)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "10%" },
-            new AntdUI.Column("AddrStatus", "Status", AntdUI.ColumnAlign.Center) { Editable = true, Width = "9%" },
-            new AntdUI.Column("Raw", "Raw", AntdUI.ColumnAlign.Center) { Width = "9%" },
+            new AntdUI.Column("Axis", "Axis", AntdUI.ColumnAlign.Center) { Width = "10%" },
+            new AntdUI.Column("Column", "DB Column", AntdUI.ColumnAlign.Center) { Width = "9%" },
+            new AntdUI.Column("ValueMm", "Value (mm)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "8%" },
+            // raw = (Offset − mm) × 100 — แต่ละแกนไม่เท่ากัน หน้างานกรอกเอง (ดู ClampAxis.OffsetMm)
+            new AntdUI.Column("OffsetMm", "Offset (mm)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "8%" },
+            new AntdUI.Column("AddrTarget", "Target (D)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "9%" },
+            new AntdUI.Column("AddrRun", "Run (M)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "9%" },
+            new AntdUI.Column("AddrReset", "Reset (M)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "9%" },
+            new AntdUI.Column("AddrStatus", "Status", AntdUI.ColumnAlign.Center) { Editable = true, Width = "8%" },
+            new AntdUI.Column("Raw", "Raw", AntdUI.ColumnAlign.Center) { Width = "8%" },
             new AntdUI.Column("Op", "Action", AntdUI.ColumnAlign.Center) { Width = "22%" },
         ];
     }
@@ -104,6 +106,7 @@ public partial class ClampSettingUserControl : UserControl
             Axis = a.Display,
             Column = a.Column,
             ValueMm = "",
+            OffsetMm = a.OffsetMm.ToString(),
             AddrTarget = a.AddrTarget,
             AddrRun = a.AddrRun,
             AddrReset = a.AddrReset,
@@ -357,6 +360,9 @@ public partial class ClampSettingUserControl : UserControl
             axis.AddrRun = (row.AddrRun ?? "").Trim();
             axis.AddrReset = (row.AddrReset ?? "").Trim();
             axis.AddrStatus = (row.AddrStatus ?? "").Trim();
+
+            // ช่องนี้รับเฉพาะค่าที่ใช้ได้อยู่แล้ว (ดู CellEndEdit) — อ่านไม่ออกก็คงค่าเดิมไว้
+            if (ParseOffset(row.OffsetMm) is int offset) axis.OffsetMm = offset;
         }
     }
 
@@ -514,7 +520,7 @@ public partial class ClampSettingUserControl : UserControl
             if (result.Found)
             {
                 row.ValueMm = result.ValueMm.ToString();
-                row.Raw = ClampService.ToRaw(result.ValueMm).ToString();
+                row.Raw = RawText(row);
                 loaded++;
                 Log($"{axis.Display} ({axis.Column}) = {result.ValueMm} mm");
             }
@@ -644,8 +650,8 @@ public partial class ClampSettingUserControl : UserControl
                 {
                     Title = "สั่งแคลมป์",
                     Headline = $"สั่ง {axis.Display} ไปที่ {mm} mm?",
-                    Facts = [("แกน", axis.Display), ("ระยะ", $"{mm} mm")],
-                    Detail = $"{axis.AddrTarget} = {ClampService.ToRaw(mm.Value)}" + Environment.NewLine + $"{axis.AddrRun} (pulse)",
+                    Facts = [("แกน", axis.Display), ("ระยะ", $"{mm} mm"), ("Offset", $"{axis.OffsetMm} mm")],
+                    Detail = $"{axis.AddrTarget} = {ClampService.ToRaw(mm.Value, axis.OffsetMm)}" + Environment.NewLine + $"{axis.AddrRun} (pulse)",
                     OkText = "สั่งแคลมป์",
                     Icon = "AimOutlined",
                     OkIcon = "SendOutlined",
@@ -829,8 +835,19 @@ public partial class ClampSettingUserControl : UserControl
             case "ValueMm":
                 row.ValueMm = value;
                 // อัปเดตค่าที่จะเขียนให้เห็นทันที จะได้ตรวจก่อนกดสั่ง
-                var mm = ParseMm(value);
-                row.Raw = mm.HasValue ? ClampService.ToRaw(mm.Value).ToString() : "-";
+                row.Raw = RawText(row);
+                BeginInvoke(RebindTable);
+                break;
+
+            case "OffsetMm":
+                // ค่าเสียห้ามเข้าตาราง ไม่งั้นกด Write แล้วแกนวิ่งด้วยค่าที่คนไม่ได้ตั้งใจ
+                if (ParseOffset(value) is not int offset)
+                {
+                    Log($"{row.Axis}: Offset ต้องเป็นจำนวนเต็ม {ClampService.MinOffsetMm}–{ClampService.MaxOffsetMm}");
+                    return false;
+                }
+                row.OffsetMm = offset.ToString();
+                row.Raw = RawText(row);
                 BeginInvoke(RebindTable);
                 break;
 
@@ -852,6 +869,15 @@ public partial class ClampSettingUserControl : UserControl
         if (s.Length == 0) return null;
         return double.TryParse(s, out double v) ? ClampService.ClampMm(v) : null;
     }
+
+    private static int? ParseOffset(string? text) =>
+        int.TryParse((text ?? "").Trim(), out int v) && ClampService.IsValidOffset(v) ? v : null;
+
+    /// <summary>ค่าที่จะเขียนลง PLC จากค่าที่กรอกอยู่ในแถว — ยังไม่กด Save ก็เห็นผลของ Offset ใหม่</summary>
+    private static string RawText(AxisRow row) =>
+        ParseMm(row.ValueMm) is int mm && ParseOffset(row.OffsetMm) is int offset
+            ? ClampService.ToRaw(mm, offset).ToString()
+            : "-";
 
     private void SetBusy(bool busy)
     {
@@ -887,6 +913,7 @@ internal class AxisRow
     public string Axis { get; set; } = "";
     public string Column { get; set; } = "";
     public string ValueMm { get; set; } = "";
+    public string OffsetMm { get; set; } = "";
     public string AddrTarget { get; set; } = "";
     public string AddrRun { get; set; } = "";
     public string AddrReset { get; set; } = "";
