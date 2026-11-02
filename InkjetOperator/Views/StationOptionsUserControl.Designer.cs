@@ -30,6 +30,7 @@ partial class StationOptionsUserControl
         divRow9 = new AntdUI.Divider();
         divRow10 = new AntdUI.Divider();
         divRow11 = new AntdUI.Divider();
+        divRow12 = new AntdUI.Divider();
         tlpProcessTabs = new System.Windows.Forms.TableLayoutPanel();
         lblProcessTabsHeading = new AntdUI.Label();
         lblProcessTabsHelp = new AntdUI.Label();
@@ -53,6 +54,10 @@ partial class StationOptionsUserControl
         lblScanTabHeading = new AntdUI.Label();
         lblScanTabHelp = new AntdUI.Label();
         chkScanTab = new AntdUI.Switch();
+        tlpClampPark = new System.Windows.Forms.TableLayoutPanel();
+        lblClampParkHeading = new AntdUI.Label();
+        lblClampParkHelp = new AntdUI.Label();
+        chkClampPark = new AntdUI.Switch();
         tlpReset = new System.Windows.Forms.TableLayoutPanel();
         lblResetHeading = new AntdUI.Label();
         lblResetHelp = new AntdUI.Label();
@@ -71,6 +76,7 @@ partial class StationOptionsUserControl
         tlpUv2Pick.SuspendLayout();
         tlpUvRepeat.SuspendLayout();
         tlpScanTab.SuspendLayout();
+        tlpClampPark.SuspendLayout();
         tlpReset.SuspendLayout();
         tlpJobData.SuspendLayout();
         flpJobData.SuspendLayout();
@@ -93,19 +99,23 @@ partial class StationOptionsUserControl
         tlpOptionsRoot.Controls.Add(divRow7, 0, 10);
         tlpOptionsRoot.Controls.Add(tlpScanTab, 0, 11);
         tlpOptionsRoot.Controls.Add(divRow8, 0, 12);
-        tlpOptionsRoot.Controls.Add(lblSectionTools, 0, 13);
-        tlpOptionsRoot.Controls.Add(divRow9, 0, 14);
-        tlpOptionsRoot.Controls.Add(tlpReset, 0, 15);
-        tlpOptionsRoot.Controls.Add(divRow10, 0, 16);
-        tlpOptionsRoot.Controls.Add(tlpJobData, 0, 17);
-        tlpOptionsRoot.Controls.Add(divRow11, 0, 18);
+        tlpOptionsRoot.Controls.Add(tlpClampPark, 0, 13);
+        tlpOptionsRoot.Controls.Add(divRow12, 0, 14);
+        tlpOptionsRoot.Controls.Add(lblSectionTools, 0, 15);
+        tlpOptionsRoot.Controls.Add(divRow9, 0, 16);
+        tlpOptionsRoot.Controls.Add(tlpReset, 0, 17);
+        tlpOptionsRoot.Controls.Add(divRow10, 0, 18);
+        tlpOptionsRoot.Controls.Add(tlpJobData, 0, 19);
+        tlpOptionsRoot.Controls.Add(divRow11, 0, 20);
         tlpOptionsRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpOptionsRoot.Location = new System.Drawing.Point(32, 32);
         tlpOptionsRoot.Margin = new System.Windows.Forms.Padding(0);
         tlpOptionsRoot.Name = "tlpOptionsRoot";
-        tlpOptionsRoot.RowCount = 20;
+        tlpOptionsRoot.RowCount = 22;
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 66F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
+        tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 116F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 116F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
@@ -124,7 +134,7 @@ partial class StationOptionsUserControl
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 184F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 9F));
         tlpOptionsRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 1215);
+        tlpOptionsRoot.Size = new System.Drawing.Size(1216, 1340);
         tlpOptionsRoot.TabIndex = 0;
         //
         // lblOptionsTitle
@@ -449,6 +459,59 @@ partial class StationOptionsUserControl
         chkScanTab.TabIndex = 30;
         chkScanTab.UnCheckedText = "ปิด";
         //
+        // tlpClampPark
+        //
+        tlpClampPark.ColumnCount = 2;
+        tlpClampPark.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpClampPark.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
+        tlpClampPark.Controls.Add(lblClampParkHeading, 0, 0);
+        tlpClampPark.Controls.Add(lblClampParkHelp, 0, 1);
+        tlpClampPark.Controls.Add(chkClampPark, 1, 0);
+        tlpClampPark.Dock = System.Windows.Forms.DockStyle.Fill;
+        tlpClampPark.Margin = new System.Windows.Forms.Padding(0);
+        tlpClampPark.Name = "tlpClampPark";
+        tlpClampPark.Padding = new System.Windows.Forms.Padding(0, 14, 0, 14);
+        tlpClampPark.RowCount = 2;
+        tlpClampPark.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
+        tlpClampPark.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        tlpClampPark.SetRowSpan(chkClampPark, 2);
+        tlpClampPark.Size = new System.Drawing.Size(1216, 116);
+        tlpClampPark.TabIndex = 51;
+        //
+        // lblClampParkHeading
+        //
+        lblClampParkHeading.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblClampParkHeading.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        lblClampParkHeading.ForeColor = System.Drawing.Color.FromArgb(36, 71, 101);
+        lblClampParkHeading.Margin = new System.Windows.Forms.Padding(0);
+        lblClampParkHeading.Name = "lblClampParkHeading";
+        lblClampParkHeading.Size = new System.Drawing.Size(1076, 36);
+        lblClampParkHeading.TabIndex = 52;
+        lblClampParkHeading.Text = "คิว UV ว่าง แคลมป์กลับตำแหน่ง 0";
+        //
+        // lblClampParkHelp
+        //
+        lblClampParkHelp.Dock = System.Windows.Forms.DockStyle.Fill;
+        lblClampParkHelp.Font = new System.Drawing.Font("Segoe UI", 11F);
+        lblClampParkHelp.ForeColor = System.Drawing.Color.FromArgb(102, 102, 102);
+        lblClampParkHelp.Margin = new System.Windows.Forms.Padding(0);
+        lblClampParkHelp.Name = "lblClampParkHelp";
+        lblClampParkHelp.Size = new System.Drawing.Size(1076, 52);
+        lblClampParkHelp.TabIndex = 53;
+        lblClampParkHelp.Text = "ไม่มีงานถือและไม่มีงานรอ — UV1 ว่าง แกน Plate กลับ 0 · UV2 ว่าง แกน Shim กลับ 0\r\nตั้งที่เครื่อง ST1 · แกนขยับเองหลังกดปุ่มจบงาน ตรวจว่ามือไม่อยู่ใกล้แคลมป์";
+        lblClampParkHelp.TextAlign = System.Drawing.ContentAlignment.TopLeft;
+        //
+        // chkClampPark
+        //
+        chkClampPark.Anchor = System.Windows.Forms.AnchorStyles.Right;
+        chkClampPark.CheckedText = "เปิด";
+        chkClampPark.Font = new System.Drawing.Font("Segoe UI", 11F);
+        chkClampPark.Margin = new System.Windows.Forms.Padding(0);
+        chkClampPark.Name = "chkClampPark";
+        chkClampPark.Size = new System.Drawing.Size(84, 36);
+        chkClampPark.TabIndex = 54;
+        chkClampPark.UnCheckedText = "ปิด";
+        //
         // lblSectionTools
         //
         lblSectionTools.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -695,6 +758,16 @@ partial class StationOptionsUserControl
         divRow11.TabIndex = 50;
         divRow11.Thickness = 1F;
         //
+        // divRow12
+        //
+        divRow12.ColorSplit = System.Drawing.Color.FromArgb(229, 229, 229);
+        divRow12.Dock = System.Windows.Forms.DockStyle.Fill;
+        divRow12.Margin = new System.Windows.Forms.Padding(0);
+        divRow12.Name = "divRow12";
+        divRow12.Size = new System.Drawing.Size(1216, 9);
+        divRow12.TabIndex = 55;
+        divRow12.Thickness = 1F;
+        //
         // StationOptionsUserControl
         //
         AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
@@ -703,10 +776,11 @@ partial class StationOptionsUserControl
         Controls.Add(tlpOptionsRoot);
         Name = "StationOptionsUserControl";
         Padding = new System.Windows.Forms.Padding(32);
-        Size = new System.Drawing.Size(1280, 1279);
+        Size = new System.Drawing.Size(1280, 1404);
         flpJobData.ResumeLayout(false);
         tlpJobData.ResumeLayout(false);
         tlpReset.ResumeLayout(false);
+        tlpClampPark.ResumeLayout(false);
         tlpScanTab.ResumeLayout(false);
         tlpUvRepeat.ResumeLayout(false);
         tlpUv2Pick.ResumeLayout(false);
@@ -736,6 +810,7 @@ partial class StationOptionsUserControl
     private AntdUI.Divider divRow9;
     private AntdUI.Divider divRow10;
     private AntdUI.Divider divRow11;
+    private AntdUI.Divider divRow12;
     private System.Windows.Forms.TableLayoutPanel tlpProcessTabs;
     private AntdUI.Label lblProcessTabsHeading;
     private AntdUI.Label lblProcessTabsHelp;
@@ -759,6 +834,10 @@ partial class StationOptionsUserControl
     private AntdUI.Label lblScanTabHeading;
     private AntdUI.Label lblScanTabHelp;
     private AntdUI.Switch chkScanTab;
+    private System.Windows.Forms.TableLayoutPanel tlpClampPark;
+    private AntdUI.Label lblClampParkHeading;
+    private AntdUI.Label lblClampParkHelp;
+    private AntdUI.Switch chkClampPark;
     private System.Windows.Forms.TableLayoutPanel tlpReset;
     private AntdUI.Label lblResetHeading;
     private AntdUI.Label lblResetHelp;

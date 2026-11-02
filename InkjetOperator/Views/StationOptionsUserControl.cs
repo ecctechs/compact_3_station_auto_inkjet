@@ -36,6 +36,9 @@ public partial class StationOptionsUserControl : UserControl
         chkScanTab.Checked = ScanTabAtSt1.Enabled;
         chkScanTab.CheckedChanged += ScanTab_CheckedChanged;
 
+        chkClampPark.Checked = ClampIdlePark.Enabled;
+        chkClampPark.CheckedChanged += ClampPark_CheckedChanged;
+
         btnResetRuntime.Click += async (_, _) => await ResetRuntimeAsync();
 
         btnSaveJobData.Click += async (_, _) => await SaveJobDataAsync();
@@ -101,6 +104,25 @@ public partial class StationOptionsUserControl : UserControl
         chkUvRepeat.CheckedChanged -= UvRepeat_CheckedChanged;
         chkUvRepeat.Checked = !e.Value;
         chkUvRepeat.CheckedChanged += UvRepeat_CheckedChanged;
+
+        Notify.WarnModal(this, "บันทึกไม่สำเร็จ",
+            CustomSettingsManager.LastError ?? "เขียนไฟล์ตั้งค่าไม่ได้");
+    }
+
+    /// <summary>เปิด/ปิดการถอยแคลมป์ตอนคิว UV ว่าง — ดู <see cref="ClampIdlePark"/></summary>
+    private void ClampPark_CheckedChanged(object? sender, AntdUI.BoolEventArgs e)
+    {
+        if (CustomSettingsManager.Write(ClampIdlePark.Key, e.Value ? "1" : "0"))
+        {
+            Notify.Success(this, e.Value
+                ? "เปิดแล้ว — คิว UV ว่างเมื่อไหร่ แคลมป์ฝั่งนั้นกลับตำแหน่ง 0 (ต้องเปิดที่เครื่อง ST1)"
+                : "ปิดแล้ว — แคลมป์ไม่ขยับเองตอนคิวว่าง เหมือนเดิม");
+            return;
+        }
+
+        chkClampPark.CheckedChanged -= ClampPark_CheckedChanged;
+        chkClampPark.Checked = !e.Value;
+        chkClampPark.CheckedChanged += ClampPark_CheckedChanged;
 
         Notify.WarnModal(this, "บันทึกไม่สำเร็จ",
             CustomSettingsManager.LastError ?? "เขียนไฟล์ตั้งค่าไม่ได้");

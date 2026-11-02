@@ -340,11 +340,34 @@ public static class ClampService
     // ── สั่งงาน PLC ────────────────────────────────────────
 
     /// <summary>เขียนค่าเป้าหมายของแกนหนึ่ง แล้วพัลส์สั่งวิ่ง จากนั้นอ่านสถานะกลับ</summary>
-    public static async Task<ClampResult> ApplyAsync(ClampSettings s, ClampAxis axis, int valueMm)
+    public static Task<ClampResult> ApplyAsync(ClampSettings s, ClampAxis axis, int valueMm)
     {
         int mm = ClampMm(valueMm);
-        int raw = ToRaw(mm, axis.OffsetMm);
-        var log = new List<string> { $"── {axis.Display} ({axis.Column}) ──" };
+        return SendRawAsync(s, axis, mm, ToRaw(mm, axis.OffsetMm), $"── {axis.Display} ({axis.Column}) ──");
+    }
+
+    /// <summary>ตำแหน่งพักบน HMI ตอนคิว UV ว่าง — ดู <see cref="ClampIdlePark"/></summary>
+    public const int ParkPosition = 0;
+
+    /// <summary>
+    /// ถอยทุกแกนของฝั่งนี้ไปตำแหน่งพัก — เขียนตำแหน่ง HMI ตรง ๆ ไม่ผ่านสูตร Offset
+    /// แกนที่ยังไม่ได้ตั้ง address ข้ามไป ไม่นับว่าพลาด
+    /// </summary>
+    public static async Task<List<ClampResult>> ParkAsync(ClampSettings s, ClampSide side)
+    {
+        var results = new List<ClampResult>();
+        foreach (var axis in s.For(side).Where(a => a.IsConfigured))
+        {
+            // ตำแหน่ง 0 ตรงกับระยะเท่า Offset — เก็บไว้ใน ValueMm ให้ log อ่านเข้าใจ
+            results.Add(await SendRawAsync(s, axis, axis.OffsetMm, ParkPosition * 100,
+                $"── {axis.Display} ({axis.Column}) กลับตำแหน่ง {ParkPosition} ──"));
+        }
+        return results;
+    }
+
+    private static async Task<ClampResult> SendRawAsync(ClampSettings s, ClampAxis axis, int mm, int raw, string header)
+    {
+        var log = new List<string> { header };
 
         if (!axis.IsConfigured)
         {

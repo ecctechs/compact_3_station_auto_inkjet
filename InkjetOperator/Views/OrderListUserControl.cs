@@ -763,6 +763,7 @@ public partial class OrderListUserControl : UserControl
 
         // เก็บไว้ให้แผง Processing ใช้ต่อ จะได้ไม่ต้องยิงถามคิวซ้ำอีกรอบ
         _queueRows = rows;
+        ParkIdleClamps(rows);
         ReconcileMachineStatus();
         UpdateMachineStatusCells();
 
@@ -874,6 +875,78 @@ public partial class OrderListUserControl : UserControl
 
     /// <summary>คิวของทุกเครื่องจากรอบล่าสุด — ว่างแปลว่ายังไม่เคยอ่านสำเร็จ</summary>
     private List<MachineQueueRow> _queueRows = [];
+
+    /// <summary>จำว่าคิว UV ไหนเพิ่งว่าง — ดู <see cref="ClampIdlePark"/></summary>
+    private readonly ClampIdlePark _clampPark = new();
+
+    /// <summary>ฝั่งแคลมป์ที่กำลังสั่งถอยอยู่ — กันสั่งซ้อนถ้า PLC ตอบช้ากว่ารอบ poll</summary>
+    private readonly HashSet<ClampSide> _parkingClamps = [];
+
+    /// <summary>
+    /// คิว UV เพิ่งว่าง → ถอยแคลมป์ฝั่งนั้นไปตำแหน่ง 0 (เปิดตัวเลือกไว้เท่านั้น)
+    ///
+    /// <para>
+    /// ST1 สั่งที่เดียว — ST1 อ่านคิวทุกรอบอยู่แล้ว ให้ ST3 สั่งด้วยจะส่งซ้อนกันสองเครื่อง
+    /// ไม่รอผล (PLC ตอบช้าแล้วตารางไม่ค้าง) · พลาดแค่จด log ไม่เด้ง ไม่กระทบคิวหรืองาน
+    /// </para>
+    /// </summary>
+    private void ParkIdleClamps(List<MachineQueueRow> rows)
+    {
+        if (StationService.IsSt3) return;
+
+        // ดูคิวทุกรอบแม้ปิดตัวเลือก — เปิดกลางคันจะได้ไม่สั่งถอยจากสถานะที่ไม่รู้
+        var idle = _clampPark.Observe(rows);
+        if (idle.Count == 0 || !ClampIdlePark.Enabled) return;
+
+        foreach (var side in idle)
+        {
+            if (!_parkingClamps.Add(side)) continue;
+            _ = ParkClampAsync(side);
+        }
+    }
+
+    private async Task ParkClampAsync(ClampSide side)
+    {
+        try
+        {
+            var settings = ClampSettings.Load();
+            if (settings.Ip.Trim().Length == 0)
+            {
+                AppLog.Warn("ClampPark", $"คิว {side} ว่าง แต่ยังไม่ได้ตั้ง IP ของ PLC แคลมป์ — ไม่ได้ถอยแคลมป์");
+                return;
+            }
+
+            // โหมด Mockup สถานะ = ถ่ายรูปคู่มือ ไม่แตะเครื่องจริง
+            if (StatusMockup.Enabled)
+            {
+                AppLog.Info("ClampPark", $"คิว {side} ว่าง · โหมด Mockup ไม่ได้สั่ง PLC");
+                return;
+            }
+
+            var results = await ClampService.ParkAsync(settings, side);
+            if (results.Count == 0)
+            {
+                AppLog.Warn("ClampPark", $"คิว {side} ว่าง แต่ยังไม่มีแกน {side} ที่ตั้ง address ไว้");
+                return;
+            }
+
+            foreach (var r in results)
+            {
+                // log ของแกนหลายบรรทัด รวมเป็นบรรทัดเดียวให้ไล่อ่านใน app log ได้
+                var text = r.Log.Replace("\n", " · ");
+                if (r.Ok) AppLog.Info("ClampPark", text);
+                else AppLog.Warn("ClampPark", text);
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warn("ClampPark", $"ถอยแคลมป์ {side} ไม่สำเร็จ — {ex.Message}");
+        }
+        finally
+        {
+            _parkingClamps.Remove(side);
+        }
+    }
 
     /// <summary>สีของเครื่องที่ไม่ว่าง หรือว่างแต่ยังมีงานค้างคิวอยู่</summary>
     private static readonly Color WaitingColor = Color.FromArgb(214, 108, 0);
