@@ -52,6 +52,9 @@ partial class ClampSettingUserControl
         btnUnlock = new AntdUI.Button();
         tblAxes = new AntdUI.Table();
 
+        grpAxesAdv = new System.Windows.Forms.GroupBox();
+        tblAxesAdv = new AntdUI.Table();
+
         grpPushButton = new System.Windows.Forms.GroupBox();
         tlpPush = new System.Windows.Forms.TableLayoutPanel();
         lblPushAddrSt1 = new System.Windows.Forms.Label();
@@ -81,6 +84,7 @@ partial class ClampSettingUserControl
         tlpProgram.SuspendLayout();
         flpProgramActions.SuspendLayout();
         grpAxes.SuspendLayout();
+        grpAxesAdv.SuspendLayout();
         tlpAxes.SuspendLayout();
         tlpAxesHeader.SuspendLayout();
         grpPushButton.SuspendLayout();
@@ -98,21 +102,23 @@ partial class ClampSettingUserControl
         tlpRoot.Controls.Add(grpConnection, 0, 0);
         tlpRoot.Controls.Add(grpProgram, 0, 1);
         tlpRoot.Controls.Add(grpAxes, 0, 2);
-        tlpRoot.Controls.Add(grpPushButton, 0, 3);
-        tlpRoot.Controls.Add(grpLog, 0, 4);
-        tlpRoot.Controls.Add(flpActions, 0, 5);
+        tlpRoot.Controls.Add(grpAxesAdv, 0, 3);
+        tlpRoot.Controls.Add(grpPushButton, 0, 4);
+        tlpRoot.Controls.Add(grpLog, 0, 5);
+        tlpRoot.Controls.Add(flpActions, 0, 6);
         tlpRoot.Dock = System.Windows.Forms.DockStyle.Fill;
         tlpRoot.Location = new System.Drawing.Point(0, 0);
         tlpRoot.Name = "tlpRoot";
         tlpRoot.Padding = new System.Windows.Forms.Padding(16);
-        tlpRoot.RowCount = 6;
+        tlpRoot.RowCount = 7;
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 478F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
+        tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 325F));
         tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 85F));
-        tlpRoot.Size = new System.Drawing.Size(1350, 1775);
+        tlpRoot.Size = new System.Drawing.Size(1350, 2245);
         tlpRoot.TabIndex = 0;
         //
         // grpConnection
@@ -539,6 +545,37 @@ partial class ClampSettingUserControl
         tblAxes.RowHeight = 58;
         tblAxes.TabIndex = 1;
         //
+        // grpAxesAdv — ช่องที่เหลือของเอกสาร address PLC ต่อแกน (สูตร True Value / Type / Pulse)
+        //
+        grpAxesAdv.Controls.Add(tblAxesAdv);
+        grpAxesAdv.Dock = System.Windows.Forms.DockStyle.Fill;
+        grpAxesAdv.Font = new System.Drawing.Font("Segoe UI", 17.5F, System.Drawing.FontStyle.Bold);
+        grpAxesAdv.ForeColor = System.Drawing.Color.FromArgb(17, 17, 17);
+        grpAxesAdv.Margin = new System.Windows.Forms.Padding(3, 3, 3, 10);
+        grpAxesAdv.Name = "grpAxesAdv";
+        grpAxesAdv.Padding = new System.Windows.Forms.Padding(16, 24, 16, 10);
+        grpAxesAdv.Size = new System.Drawing.Size(1312, 470);
+        grpAxesAdv.TabIndex = 3;
+        grpAxesAdv.TabStop = false;
+        grpAxesAdv.Text = "สูตรและชนิดข้อมูลต่อแกน (ตามเอกสาร address PLC)";
+        //
+        // tblAxesAdv
+        //
+        tblAxesAdv.AutoSizeColumnsMode = AntdUI.ColumnsMode.Fill;
+        tblAxesAdv.Bordered = true;
+        tblAxesAdv.ColumnBack = System.Drawing.Color.FromArgb(30, 30, 30);
+        tblAxesAdv.ColumnFont = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+        tblAxesAdv.ColumnFore = System.Drawing.Color.White;
+        tblAxesAdv.Dock = System.Windows.Forms.DockStyle.Fill;
+        tblAxesAdv.EditMode = AntdUI.TEditMode.Click;
+        tblAxesAdv.EmptyText = "No axis data";
+        tblAxesAdv.Font = new System.Drawing.Font("Segoe UI", 14F);
+        tblAxesAdv.Margin = new System.Windows.Forms.Padding(0);
+        tblAxesAdv.Name = "tblAxesAdv";
+        tblAxesAdv.Radius = 8;
+        tblAxesAdv.RowHeight = 58;
+        tblAxesAdv.TabIndex = 0;
+        //
         // grpPushButton — สัญญาณจากปุ่มกดหน้างาน อ่านจาก PLC ตัวเดียวกับแคลมป์ข้างบน
         //
         grpPushButton.AutoSize = true;
@@ -550,7 +587,7 @@ partial class ClampSettingUserControl
         grpPushButton.Margin = new System.Windows.Forms.Padding(3, 3, 3, 10);
         grpPushButton.Name = "grpPushButton";
         grpPushButton.Padding = new System.Windows.Forms.Padding(16, 24, 16, 10);
-        grpPushButton.TabIndex = 3;
+        grpPushButton.TabIndex = 4;
         grpPushButton.TabStop = false;
         grpPushButton.Text = "ปุ่มกดหน้างาน (Push Button)";
         //
@@ -727,7 +764,7 @@ partial class ClampSettingUserControl
         grpLog.Margin = new System.Windows.Forms.Padding(3, 3, 3, 10);
         grpLog.Name = "grpLog";
         grpLog.Padding = new System.Windows.Forms.Padding(16, 24, 16, 10);
-        grpLog.TabIndex = 4;
+        grpLog.TabIndex = 5;
         grpLog.TabStop = false;
         grpLog.Text = "ผลการทำงาน";
         //
@@ -753,7 +790,7 @@ partial class ClampSettingUserControl
         flpActions.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
         flpActions.Margin = new System.Windows.Forms.Padding(0);
         flpActions.Name = "flpActions";
-        flpActions.TabIndex = 5;
+        flpActions.TabIndex = 6;
         flpActions.WrapContents = false;
         //
         // btnSave
@@ -789,7 +826,7 @@ partial class ClampSettingUserControl
         BackColor = System.Drawing.Color.White;
         Controls.Add(tlpRoot);
         Name = "ClampSettingUserControl";
-        Size = new System.Drawing.Size(1350, 1775);
+        Size = new System.Drawing.Size(1350, 2245);
 
         tlpRoot.ResumeLayout(false);
         grpConnection.ResumeLayout(false);
@@ -802,6 +839,7 @@ partial class ClampSettingUserControl
         grpAxes.ResumeLayout(false);
         tlpAxes.ResumeLayout(false);
         tlpAxesHeader.ResumeLayout(false);
+        grpAxesAdv.ResumeLayout(false);
         grpPushButton.ResumeLayout(false);
         grpPushButton.PerformLayout();
         tlpPush.ResumeLayout(false);
@@ -854,6 +892,9 @@ partial class ClampSettingUserControl
     private System.Windows.Forms.Label lblAxesHint;
     private AntdUI.Button btnUnlock;
     private AntdUI.Table tblAxes;
+
+    private System.Windows.Forms.GroupBox grpAxesAdv;
+    private AntdUI.Table tblAxesAdv;
 
     private System.Windows.Forms.GroupBox grpPushButton;
     private System.Windows.Forms.TableLayoutPanel tlpPush;

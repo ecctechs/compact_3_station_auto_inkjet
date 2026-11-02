@@ -35,7 +35,7 @@ public sealed class ClampAxis
     public string AddrStatus { get; set; } = "";
 
     /// <summary>
-    /// ค่าตั้งต้นของสูตรแปลงระยะ: raw = (Offset − mm) × 100 — ดู <see cref="ClampService.ToRaw"/>
+    /// ค่าตั้งต้นของสูตรแปลงระยะ: raw = (Offset − mm) × 100 — ดู <see cref="ToRaw"/>
     ///
     /// <para>
     /// แต่ละแกนไม่เท่ากัน วัดหน้างาน 1/11/2026 (ตำแหน่งบน HMI เทียบความสูงที่วัดจริง):
@@ -44,6 +44,78 @@ public sealed class ClampAxis
     /// </para>
     /// </summary>
     public int OffsetMm { get; set; } = ClampService.DefaultOffsetMm;
+
+    // ── ค่าตั้งตามเอกสาร address ของ PLC (ลูกค้าส่งมา 2/11/2026) ──────────────
+    // เอกสารบอกสูตร (True Value), ชนิดข้อมูล (Type) และพัลส์ของแต่ละแกน ไม่เท่ากันทุกแกน
+    // เช่นแกน X ใช้ (149 − (X − 6)) × 100 แต่แกน Z ใช้ X × 100 — ให้หน้างานกรอกตามเอกสารเอง
+    // เปลี่ยนชุดแคลมป์ / PLC แล้วไม่ต้องแก้โปรแกรม · ค่าเริ่มต้นทุกตัว = พฤติกรรมเดิมก่อนมีช่องเหล่านี้
+
+    /// <summary>true = raw = (Offset − mm) × ตัวคูณ (กลับทิศ เหมือนเดิม) · false = (Offset + mm) × ตัวคูณ</summary>
+    public bool Reverse { get; set; } = true;
+
+    /// <summary>ตัวคูณในสูตร — เอกสารเขียน "× 100" ตำแหน่งบน HMI ทศนิยม 2 หลัก</summary>
+    public int Scale { get; set; } = ClampService.DefaultScale;
+
+    /// <summary>Type ในเอกสาร — true = INT 32 เขียน / อ่าน 2 word ติดกัน · false = INT 16 word เดียว (เดิม)</summary>
+    public bool Int32 { get; set; }
+
+    /// <summary>ค่า raw ต่ำสุด / สูงสุดที่ยอมเขียน — นอกช่วงปัดเข้าขอบ (เดิมล็อก 100 / 14900)</summary>
+    public int MinRaw { get; set; } = ClampService.DefaultMinRaw;
+    public int MaxRaw { get; set; } = ClampService.DefaultMaxRaw;
+
+    /// <summary>ตำแหน่งบน HMI ที่ถอยไปตอนคิว UV ว่าง — ดู <see cref="ClampIdlePark"/> · เขียน raw = ค่านี้ × ตัวคูณ</summary>
+    public int ParkPosition { get; set; }
+
+    /// <summary>เวลาพัลส์ Start / Reset (ms) — Unit "Pulse" ในเอกสาร</summary>
+    public int RunPulseMs { get; set; } = ClampService.DefaultRunPulseMs;
+    public int ResetPulseMs { get; set; } = ClampService.DefaultResetPulseMs;
+
+    /// <summary>แปลงระยะ mm เป็นค่าที่เขียนลง PLC ตามสูตรของแกนนี้ แล้วปัดเข้าช่วงที่ยอม</summary>
+    public int ToRaw(int valueMm)
+    {
+        long raw = (long)(Reverse ? OffsetMm - valueMm : OffsetMm + valueMm) * Scale;
+        // ไม่ใช้ Math.Clamp — ระหว่างพิมพ์ในตารางค่าต่ำสุดอาจมากกว่าสูงสุดชั่วคราว (Validate กันตอน Save)
+        if (raw > MaxRaw) raw = MaxRaw;
+        if (raw < MinRaw) raw = MinRaw;
+        return (int)raw;
+    }
+
+    /// <summary>ค่าที่เขียนตอนถอยไปตำแหน่งพัก — ไม่ปัดเข้าช่วง ตำแหน่งพักตั้งตรง ๆ บน HMI</summary>
+    public int ParkRaw => ParkPosition * Scale;
+
+    /// <summary>สูตรแบบอ่านง่าย ไว้เทียบกับคอลัมน์ True Value ในเอกสาร เช่น "(155 − X) × 100"</summary>
+    public string Formula
+    {
+        get
+        {
+            string inner = Reverse ? $"({OffsetMm} − X)"
+                : OffsetMm == 0 ? "X"
+                : OffsetMm > 0 ? $"({OffsetMm} + X)"
+                : $"(X − {-OffsetMm})";
+            return Scale == 1 ? inner : $"{inner} × {Scale}";
+        }
+    }
+
+    /// <summary>ตรวจค่าตั้งที่ต้องดูหลายช่องพร้อมกัน — คืน null = ใช้ได้</summary>
+    public string? Validate()
+    {
+        if (!ClampService.IsValidOffset(OffsetMm))
+            return $"Offset ต้องอยู่ระหว่าง {ClampService.MinOffsetMm} ถึง {ClampService.MaxOffsetMm}";
+        if (Scale < 1 || Scale > ClampService.MaxScale)
+            return $"ตัวคูณต้องอยู่ระหว่าง 1 ถึง {ClampService.MaxScale}";
+        if (MinRaw > MaxRaw)
+            return $"ค่าต่ำสุด ({MinRaw}) มากกว่าค่าสูงสุด ({MaxRaw})";
+        if (!Int32 && (MinRaw < short.MinValue || MaxRaw > short.MaxValue))
+            return $"INT 16 รับได้ {short.MinValue} ถึง {short.MaxValue} — ค่าเกินนี้ต้องเลือก INT 32";
+        long park = (long)ParkPosition * Scale;
+        long parkMin = Int32 ? int.MinValue : short.MinValue;
+        long parkMax = Int32 ? int.MaxValue : short.MaxValue;
+        if (park < parkMin || park > parkMax)
+            return $"ตำแหน่งพัก {ParkPosition} × {Scale} เกินช่วงของ INT {(Int32 ? 32 : 16)}";
+        if (!ClampService.IsValidPulse(RunPulseMs) || !ClampService.IsValidPulse(ResetPulseMs))
+            return $"เวลาพัลส์ต้องอยู่ระหว่าง {ClampService.MinPulseMs} ถึง {ClampService.MaxPulseMs} ms";
+        return null;
+    }
 
     /// <summary>ชื่อที่โชว์ให้คน เช่น "Plate X"</summary>
     public string Display => $"{(Side == ClampSide.Plate ? "Plate" : "Shim")} {AxisLabel}";
@@ -109,6 +181,16 @@ public sealed class ClampSettings
                 AddrReset = ReadAddr(key, "RESET"),
                 AddrStatus = ReadAddr(key, "STATUS"),
                 OffsetMm = ReadOffset(key),
+                Reverse = CustomSettingsManager.Read($"CLAMP_DIR_{key}", "-").Trim() != "+",
+                Scale = ReadInt($"CLAMP_SCALE_{key}", ClampService.DefaultScale, 1, ClampService.MaxScale),
+                Int32 = CustomSettingsManager.Read($"CLAMP_TYPE_{key}", "16").Trim() == "32",
+                MinRaw = ReadInt($"CLAMP_RAWMIN_{key}", ClampService.DefaultMinRaw, int.MinValue, int.MaxValue),
+                MaxRaw = ReadInt($"CLAMP_RAWMAX_{key}", ClampService.DefaultMaxRaw, int.MinValue, int.MaxValue),
+                ParkPosition = ReadInt($"CLAMP_PARKPOS_{key}", 0, int.MinValue, int.MaxValue),
+                RunPulseMs = ReadInt($"CLAMP_PULSE_RUN_{key}", ClampService.DefaultRunPulseMs,
+                    ClampService.MinPulseMs, ClampService.MaxPulseMs),
+                ResetPulseMs = ReadInt($"CLAMP_PULSE_RESET_{key}", ClampService.DefaultResetPulseMs,
+                    ClampService.MinPulseMs, ClampService.MaxPulseMs),
             });
         }
 
@@ -150,6 +232,12 @@ public sealed class ClampSettings
             ? v
             : ClampService.DefaultOffsetMm;
 
+    /// <summary>ยังไม่เคยตั้ง / อ่านไม่ออก / นอกช่วง → ค่าเริ่มต้น (= พฤติกรรมเดิม)</summary>
+    private static int ReadInt(string key, int fallback, int min, int max) =>
+        int.TryParse(CustomSettingsManager.Read(key, "").Trim(), out int v) && v >= min && v <= max
+            ? v
+            : fallback;
+
     public void Save()
     {
         CustomSettingsManager.Write("CLAMP_PLC_IP", Ip.Trim());
@@ -163,6 +251,14 @@ public sealed class ClampSettings
             CustomSettingsManager.Write($"CLAMP_ADDR_{a.Key}_RESET", a.AddrReset.Trim());
             CustomSettingsManager.Write($"CLAMP_ADDR_{a.Key}_STATUS", a.AddrStatus.Trim());
             CustomSettingsManager.Write($"CLAMP_OFFSET_{a.Key}", a.OffsetMm.ToString());
+            CustomSettingsManager.Write($"CLAMP_DIR_{a.Key}", a.Reverse ? "-" : "+");
+            CustomSettingsManager.Write($"CLAMP_SCALE_{a.Key}", a.Scale.ToString());
+            CustomSettingsManager.Write($"CLAMP_TYPE_{a.Key}", a.Int32 ? "32" : "16");
+            CustomSettingsManager.Write($"CLAMP_RAWMIN_{a.Key}", a.MinRaw.ToString());
+            CustomSettingsManager.Write($"CLAMP_RAWMAX_{a.Key}", a.MaxRaw.ToString());
+            CustomSettingsManager.Write($"CLAMP_PARKPOS_{a.Key}", a.ParkPosition.ToString());
+            CustomSettingsManager.Write($"CLAMP_PULSE_RUN_{a.Key}", a.RunPulseMs.ToString());
+            CustomSettingsManager.Write($"CLAMP_PULSE_RESET_{a.Key}", a.ResetPulseMs.ToString());
         }
     }
 }
@@ -191,14 +287,27 @@ public static class ClampService
     /// <summary>Offset เดิมที่ใช้กับทุกแกนก่อนมีช่องกรอก — มาจากสูตรของ Node-RED</summary>
     public const int DefaultOffsetMm = 155;
 
-    public const int MinOffsetMm = 1;
+    /// <summary>
+    /// ติดลบได้ — สูตรแบบ "(X − 6) × 100" คือ Offset −6 ไม่กลับทิศ · 0 = "X × 100" ของแกน Z ในเอกสาร
+    /// </summary>
+    public const int MinOffsetMm = -999;
     public const int MaxOffsetMm = 999;
 
     public static bool IsValidOffset(int offsetMm) =>
         offsetMm >= MinOffsetMm && offsetMm <= MaxOffsetMm;
 
-    private const int RunPulseMs = 100;
-    private const int ResetPulseMs = 1000;
+    // ค่าเริ่มต้นของช่องตั้งค่าตามเอกสาร PLC — ตรงกับค่าที่เคยล็อกในโค้ด ลงโปรแกรมใหม่แล้วเครื่องวิ่งเหมือนเดิม
+    public const int DefaultScale = 100;
+    public const int MaxScale = 10000;
+    public const int DefaultMinRaw = 100;
+    public const int DefaultMaxRaw = 14900;
+    public const int DefaultRunPulseMs = 100;
+    public const int DefaultResetPulseMs = 1000;
+    public const int MinPulseMs = 10;
+    public const int MaxPulseMs = 10000;
+
+    public static bool IsValidPulse(int ms) => ms >= MinPulseMs && ms <= MaxPulseMs;
+
     private const int SettleMs = 100;
 
     // ── อ่านค่าจากฐานข้อมูล ────────────────────────────────
@@ -320,22 +429,9 @@ public static class ClampService
     public static int ClampMm(double value) =>
         (int)Math.Max(MinMm, Math.Min(MaxMm, Math.Round(value)));
 
-    /// <summary>
-    /// แปลงระยะ mm เป็นค่า raw ที่เขียนลง PLC — ห้ามแก้สูตรเอง
-    ///
-    /// ลอกจาก action "send" ของ Clamp UI router (ปุ่ม Sent ที่ operator กดจริง):
-    ///     Math.round((149 - (next - 6)) * 100)  ==  (155 - mm) * 100
-    ///
-    /// 155 ใช้ได้แค่แกน X — แกน Z วัดหน้างานแล้วได้ Z1 = 70, Z2 = 90 จึงรับ Offset
-    /// ของแต่ละแกนเข้ามาแทน (<see cref="ClampAxis.OffsetMm"/>) ส่วน × 100 และเพดานคงเดิม
-    /// </summary>
-    public static int ToRaw(int valueMm, int offsetMm)
-    {
-        int raw = (offsetMm - valueMm) * 100;
-        if (raw > 14900) raw = 14900;
-        if (raw < 0) raw = 100;
-        return raw;
-    }
+    // สูตรแปลง mm → raw อยู่ที่ ClampAxis.ToRaw — ค่าเริ่มต้นตรงกับ action "send" ของ Clamp UI router
+    // (Node-RED เดิม): Math.round((149 - (next - 6)) * 100) == (155 - mm) * 100 ปัดเข้า 100–14900
+    // ส่วนที่ต่างกันต่อแกน (Offset, ทิศ, ตัวคูณ, เพดาน) หน้างานกรอกตามเอกสาร PLC ในหน้า Clamp Setting
 
     // ── สั่งงาน PLC ────────────────────────────────────────
 
@@ -343,24 +439,22 @@ public static class ClampService
     public static Task<ClampResult> ApplyAsync(ClampSettings s, ClampAxis axis, int valueMm)
     {
         int mm = ClampMm(valueMm);
-        return SendRawAsync(s, axis, mm, ToRaw(mm, axis.OffsetMm), $"── {axis.Display} ({axis.Column}) ──");
+        return SendRawAsync(s, axis, mm, axis.ToRaw(mm), $"── {axis.Display} ({axis.Column}) ──");
     }
-
-    /// <summary>ตำแหน่งพักบน HMI ตอนคิว UV ว่าง — ดู <see cref="ClampIdlePark"/></summary>
-    public const int ParkPosition = 0;
 
     /// <summary>
     /// ถอยทุกแกนของฝั่งนี้ไปตำแหน่งพัก — เขียนตำแหน่ง HMI ตรง ๆ ไม่ผ่านสูตร Offset
-    /// แกนที่ยังไม่ได้ตั้ง address ข้ามไป ไม่นับว่าพลาด
+    /// (<see cref="ClampAxis.ParkPosition"/> ค่าเริ่มต้น 0) แกนที่ยังไม่ได้ตั้ง address ข้ามไป ไม่นับว่าพลาด
     /// </summary>
     public static async Task<List<ClampResult>> ParkAsync(ClampSettings s, ClampSide side)
     {
         var results = new List<ClampResult>();
         foreach (var axis in s.For(side).Where(a => a.IsConfigured))
         {
-            // ตำแหน่ง 0 ตรงกับระยะเท่า Offset — เก็บไว้ใน ValueMm ให้ log อ่านเข้าใจ
-            results.Add(await SendRawAsync(s, axis, axis.OffsetMm, ParkPosition * 100,
-                $"── {axis.Display} ({axis.Column}) กลับตำแหน่ง {ParkPosition} ──"));
+            // ระยะ mm ที่ตรงกับตำแหน่งพัก (ย้อนสูตร) — เก็บไว้ใน ValueMm ให้ log อ่านเข้าใจ
+            int mm = axis.Reverse ? axis.OffsetMm - axis.ParkPosition : axis.ParkPosition - axis.OffsetMm;
+            results.Add(await SendRawAsync(s, axis, mm, axis.ParkRaw,
+                $"── {axis.Display} ({axis.Column}) กลับตำแหน่ง {axis.ParkPosition} ──"));
         }
         return results;
     }
@@ -375,21 +469,23 @@ public static class ClampService
             return new ClampResult(false, mm, raw, null, string.Join("\n", log));
         }
 
-        var (wOk, wErr) = await McProtocolService.WriteWordAsync(s.Ip, s.Port, axis.AddrTarget, raw);
-        log.Add($"เขียน {axis.AddrTarget} = {raw} → {(wOk ? "OK" : "❌ " + wErr)}");
+        var (wOk, wErr) = axis.Int32
+            ? await McProtocolService.WriteDWordAsync(s.Ip, s.Port, axis.AddrTarget, raw)
+            : await McProtocolService.WriteWordAsync(s.Ip, s.Port, axis.AddrTarget, raw);
+        log.Add($"เขียน {axis.AddrTarget} = {raw}{(axis.Int32 ? " (INT 32)" : "")} → {(wOk ? "OK" : "❌ " + wErr)}");
         if (!wOk) return new ClampResult(false, mm, raw, null, string.Join("\n", log));
 
         // Node-RED หน่วงตรงนี้ก่อนพัลส์ — ให้ PLC รับค่าเข้า D ก่อนเห็นขอบขาขึ้นของ M
         await Task.Delay(SettleMs);
 
-        var (pOk, _) = await PulseAsync(s, axis.AddrRun, RunPulseMs, log);
+        var (pOk, _) = await PulseAsync(s, axis.AddrRun, axis.RunPulseMs, log);
         if (!pOk) return new ClampResult(false, mm, raw, null, string.Join("\n", log));
 
         int? status = null;
         if (axis.AddrStatus.Trim().Length > 0)
         {
-            var (rOk, value, rErr) = await McProtocolService.ReadWordAsync(s.Ip, s.Port, axis.AddrStatus);
-            log.Add($"อ่าน {axis.AddrStatus} → {(rOk ? value.ToString() : "❌ " + rErr)}");
+            var (rOk, value, rErr) = await ReadStatusAsync(s, axis);
+            log.Add($"อ่าน {axis.AddrStatus} → {(rOk ? StatusText(axis, value) : "❌ " + rErr)}");
             if (rOk) status = value;
         }
 
@@ -407,19 +503,25 @@ public static class ClampService
             return (false, string.Join("\n", log));
         }
 
-        var (ok, _) = await PulseAsync(s, axis.AddrReset, ResetPulseMs, log);
+        var (ok, _) = await PulseAsync(s, axis.AddrReset, axis.ResetPulseMs, log);
         return (ok, string.Join("\n", log));
     }
 
-    /// <summary>อ่านสถานะของแกนหนึ่ง ไม่สั่งอะไร</summary>
+    /// <summary>อ่านสถานะของแกนหนึ่ง ไม่สั่งอะไร — INT 32 อ่าน 2 word ตามชนิดของแกน</summary>
     public static async Task<(bool ok, int value, string error)> ReadStatusAsync(
         ClampSettings s, ClampAxis axis)
     {
         if (axis.AddrStatus.Trim().Length == 0)
             return (false, 0, "ยังไม่ได้กำหนด address อ่านสถานะของแกนนี้");
 
-        return await McProtocolService.ReadWordAsync(s.Ip, s.Port, axis.AddrStatus);
+        return axis.Int32
+            ? await McProtocolService.ReadDWordAsync(s.Ip, s.Port, axis.AddrStatus)
+            : await McProtocolService.ReadWordAsync(s.Ip, s.Port, axis.AddrStatus);
     }
+
+    /// <summary>ค่าที่อ่านได้พร้อมตำแหน่งบน HMI (÷ ตัวคูณ) — เอกสารเขียน Position Real Value = X / 100</summary>
+    public static string StatusText(ClampAxis axis, int value) =>
+        axis.Scale == 1 ? value.ToString() : $"{value} ({(double)value / axis.Scale:0.##})";
 
     /// <summary>
     /// พัลส์ ON → หน่วง → OFF

@@ -19,7 +19,11 @@ public partial class ClampSettingUserControl : UserControl
 
     /// <summary>ช่องในตารางที่แก้แล้วมีผลกับเครื่อง — ล็อกไว้จนกว่าจะปลดล็อก</summary>
     private static readonly HashSet<string> LockedColumns =
-        new(StringComparer.Ordinal) { "ValueMm", "OffsetMm", "AddrTarget", "AddrRun", "AddrReset", "AddrStatus" };
+        new(StringComparer.Ordinal)
+        {
+            "ValueMm", "OffsetMm", "AddrTarget", "AddrRun", "AddrReset", "AddrStatus",
+            "Direction", "Scale", "DataType", "MinRaw", "MaxRaw", "ParkPos", "PulseRun", "PulseReset",
+        };
 
     private ClampSettings _settings = new();
     private PushButtonSettings _push = new();
@@ -33,6 +37,10 @@ public partial class ClampSettingUserControl : UserControl
         // หัวข้อชื่อโปรแกรมกับปุ่ม Load / สั่ง / Upload ทั้งชุด ไม่ให้เห็นในเมนูของ ST1
         // แถวนี้เป็น AutoSize ซ่อนแล้วหัวข้อข้างล่างเลื่อนขึ้นมาแทนเอง
         grpProgram.Visible = !StationService.IsSt1Menu;
+
+        // ตารางสูตร / ชนิดข้อมูล / พัลส์ ตั้งครั้งเดียวตอนติดตั้งตามเอกสาร PLC — โชว์เฉพาะโหมด Dev
+        // หน้างานไม่ต้องเห็น แก้ผิดแล้วแกนวิ่งไปผิดที่ · แถวนี้เป็น AutoSize ซ่อนแล้วหัวข้อข้างล่างเลื่อนขึ้นมาเอง
+        grpAxesAdv.Visible = StationService.IsDevMode;
 
         ConfigureColumns();
         SetupEvents();
@@ -56,7 +64,7 @@ public partial class ClampSettingUserControl : UserControl
             new AntdUI.Column("Axis", "Axis", AntdUI.ColumnAlign.Center) { Width = "10%" },
             new AntdUI.Column("Column", "DB Column", AntdUI.ColumnAlign.Center) { Width = "9%" },
             new AntdUI.Column("ValueMm", "Value (mm)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "8%" },
-            // raw = (Offset − mm) × 100 — แต่ละแกนไม่เท่ากัน หน้างานกรอกเอง (ดู ClampAxis.OffsetMm)
+            // Offset แต่ละแกนไม่เท่ากัน หน้างานกรอกเอง — ทิศ / ตัวคูณ / เพดานอยู่ในตารางล่าง (ดู ClampAxis.ToRaw)
             new AntdUI.Column("OffsetMm", "Offset (mm)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "8%" },
             new AntdUI.Column("AddrTarget", "Target (D)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "9%" },
             new AntdUI.Column("AddrRun", "Run (M)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "9%" },
@@ -64,6 +72,22 @@ public partial class ClampSettingUserControl : UserControl
             new AntdUI.Column("AddrStatus", "Status", AntdUI.ColumnAlign.Center) { Editable = true, Width = "8%" },
             new AntdUI.Column("Raw", "Raw", AntdUI.ColumnAlign.Center) { Width = "8%" },
             new AntdUI.Column("Op", "Action", AntdUI.ColumnAlign.Center) { Width = "22%" },
+        ];
+
+        // ตารางที่สอง ผูกกับแถวชุดเดียวกัน — ช่องที่เหลือของเอกสาร address PLC (True Value / Type / Pulse)
+        // แยกตารางเพราะรวมกันแล้วเกิน 15 คอลัมน์ ล้นจอ 1920
+        tblAxesAdv.Columns =
+        [
+            new AntdUI.Column("Axis", "Axis", AntdUI.ColumnAlign.Center) { Width = "10%" },
+            new AntdUI.Column("Direction", "ทิศ (−/+)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "8%" },
+            new AntdUI.Column("Scale", "ตัวคูณ", AntdUI.ColumnAlign.Center) { Editable = true, Width = "8%" },
+            new AntdUI.Column("Formula", "สูตร (True Value)", AntdUI.ColumnAlign.Center) { Width = "17%" },
+            new AntdUI.Column("DataType", "INT (16/32)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "9%" },
+            new AntdUI.Column("MinRaw", "Raw ต่ำสุด", AntdUI.ColumnAlign.Center) { Editable = true, Width = "9%" },
+            new AntdUI.Column("MaxRaw", "Raw สูงสุด", AntdUI.ColumnAlign.Center) { Editable = true, Width = "9%" },
+            new AntdUI.Column("ParkPos", "ตำแหน่งพัก", AntdUI.ColumnAlign.Center) { Editable = true, Width = "10%" },
+            new AntdUI.Column("PulseRun", "Start (ms)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "10%" },
+            new AntdUI.Column("PulseReset", "Reset (ms)", AntdUI.ColumnAlign.Center) { Editable = true, Width = "10%" },
         ];
     }
 
@@ -86,6 +110,8 @@ public partial class ClampSettingUserControl : UserControl
         tblAxes.CellButtonClick += TblAxes_CellButtonClick;
         tblAxes.CellBeginEdit += TblAxes_CellBeginEdit;
         tblAxes.CellEndEdit += TblAxes_CellEndEdit;
+        tblAxesAdv.CellBeginEdit += TblAxes_CellBeginEdit;
+        tblAxesAdv.CellEndEdit += TblAxes_CellEndEdit;
 
         txtIp.TextChanged += (_, _) => txtIp.BackColor = Color.LightYellow;
         txtPort.TextChanged += (_, _) => txtPort.BackColor = Color.LightYellow;
@@ -113,6 +139,15 @@ public partial class ClampSettingUserControl : UserControl
             AddrStatus = a.AddrStatus,
             Raw = "-",
             Op = NewButtons(),
+            Direction = a.Reverse ? "-" : "+",
+            Scale = a.Scale.ToString(),
+            Formula = a.Formula,
+            DataType = a.Int32 ? "32" : "16",
+            MinRaw = a.MinRaw.ToString(),
+            MaxRaw = a.MaxRaw.ToString(),
+            ParkPos = a.ParkPosition.ToString(),
+            PulseRun = a.RunPulseMs.ToString(),
+            PulseReset = a.ResetPulseMs.ToString(),
         }).ToList();
 
         _push = PushButtonSettings.Load();
@@ -275,6 +310,8 @@ public partial class ClampSettingUserControl : UserControl
     {
         tblAxes.DataSource = null;
         tblAxes.DataSource = _rows;
+        tblAxesAdv.DataSource = null;
+        tblAxesAdv.DataSource = _rows;
     }
 
     // ── Lock / Unlock ──────────────────────────────────────
@@ -361,8 +398,16 @@ public partial class ClampSettingUserControl : UserControl
             axis.AddrReset = (row.AddrReset ?? "").Trim();
             axis.AddrStatus = (row.AddrStatus ?? "").Trim();
 
-            // ช่องนี้รับเฉพาะค่าที่ใช้ได้อยู่แล้ว (ดู CellEndEdit) — อ่านไม่ออกก็คงค่าเดิมไว้
+            // ช่องพวกนี้รับเฉพาะค่าที่ใช้ได้อยู่แล้ว (ดู CellEndEdit) — อ่านไม่ออกก็คงค่าเดิมไว้
             if (ParseOffset(row.OffsetMm) is int offset) axis.OffsetMm = offset;
+            if (ParseDirection(row.Direction) is bool reverse) axis.Reverse = reverse;
+            if (ParseDataType(row.DataType) is bool int32) axis.Int32 = int32;
+            if (ParseInt(row.Scale, 1, ClampService.MaxScale) is int scale) axis.Scale = scale;
+            if (ParseInt(row.MinRaw) is int min) axis.MinRaw = min;
+            if (ParseInt(row.MaxRaw) is int max) axis.MaxRaw = max;
+            if (ParseInt(row.ParkPos) is int park) axis.ParkPosition = park;
+            if (ParsePulse(row.PulseRun) is int run) axis.RunPulseMs = run;
+            if (ParsePulse(row.PulseReset) is int reset) axis.ResetPulseMs = reset;
         }
     }
 
@@ -413,6 +458,13 @@ public partial class ClampSettingUserControl : UserControl
     {
         foreach (var axis in _settings.Axes)
         {
+            // ค่าที่ต้องดูหลายช่องพร้อมกัน เช่น ต่ำสุด > สูงสุด หรือค่าเกินช่วงของ INT 16
+            if (axis.Validate() is string problem)
+            {
+                error = $"{axis.Display} — {problem}";
+                return false;
+            }
+
             foreach (var (label, address) in new[]
                      {
                          ("Target", axis.AddrTarget),
@@ -520,7 +572,7 @@ public partial class ClampSettingUserControl : UserControl
             if (result.Found)
             {
                 row.ValueMm = result.ValueMm.ToString();
-                row.Raw = RawText(row);
+                row.Raw = axis.ToRaw(result.ValueMm).ToString(); // SyncRowsToSettings ข้างบนแล้ว
                 loaded++;
                 Log($"{axis.Display} ({axis.Column}) = {result.ValueMm} mm");
             }
@@ -650,8 +702,8 @@ public partial class ClampSettingUserControl : UserControl
                 {
                     Title = "สั่งแคลมป์",
                     Headline = $"สั่ง {axis.Display} ไปที่ {mm} mm?",
-                    Facts = [("แกน", axis.Display), ("ระยะ", $"{mm} mm"), ("Offset", $"{axis.OffsetMm} mm")],
-                    Detail = $"{axis.AddrTarget} = {ClampService.ToRaw(mm.Value, axis.OffsetMm)}" + Environment.NewLine + $"{axis.AddrRun} (pulse)",
+                    Facts = [("แกน", axis.Display), ("ระยะ", $"{mm} mm"), ("สูตร", axis.Formula)],
+                    Detail = $"{axis.AddrTarget} = {axis.ToRaw(mm.Value)}" + Environment.NewLine + $"{axis.AddrRun} (pulse)",
                     OkText = "สั่งแคลมป์",
                     Icon = "AimOutlined",
                     OkIcon = "SendOutlined",
@@ -696,7 +748,7 @@ public partial class ClampSettingUserControl : UserControl
         if (IsDisposed) return;
 
         Log(ok
-            ? $"{axis.Display} — อ่าน {axis.AddrStatus} → {value}"
+            ? $"{axis.Display} — อ่าน {axis.AddrStatus} → {ClampService.StatusText(axis, value)}"
             : $"{axis.Display} — ❌ {error}");
     }
 
@@ -830,25 +882,62 @@ public partial class ClampSettingUserControl : UserControl
         // กันไว้อีกชั้น เผื่อมีทางเข้าโหมดแก้ไขที่ไม่ผ่าน CellBeginEdit
         if (!_unlocked && e.Column != null && LockedColumns.Contains(e.Column.Key)) return false;
 
-        switch (e.Column?.Key)
+        string key = e.Column?.Key ?? "";
+        switch (key)
         {
             case "ValueMm":
                 row.ValueMm = value;
                 // อัปเดตค่าที่จะเขียนให้เห็นทันที จะได้ตรวจก่อนกดสั่ง
-                row.Raw = RawText(row);
-                BeginInvoke(RebindTable);
+                RefreshDerived(row);
                 break;
 
+            // ช่องสูตร / ชนิดข้อมูล / พัลส์ — ค่าเสียห้ามเข้าตาราง ไม่งั้นกด Write แล้วแกนวิ่ง
+            // ด้วยค่าที่คนไม่ได้ตั้งใจ · ผ่านแล้วอัปเดตสูตรกับ Raw ให้เห็นทันที เทียบกับเอกสารได้
             case "OffsetMm":
-                // ค่าเสียห้ามเข้าตาราง ไม่งั้นกด Write แล้วแกนวิ่งด้วยค่าที่คนไม่ได้ตั้งใจ
                 if (ParseOffset(value) is not int offset)
-                {
-                    Log($"{row.Axis}: Offset ต้องเป็นจำนวนเต็ม {ClampService.MinOffsetMm}–{ClampService.MaxOffsetMm}");
-                    return false;
-                }
+                    return Reject(row, $"Offset ต้องเป็นจำนวนเต็ม {ClampService.MinOffsetMm} ถึง {ClampService.MaxOffsetMm}");
                 row.OffsetMm = offset.ToString();
-                row.Raw = RawText(row);
-                BeginInvoke(RebindTable);
+                RefreshDerived(row);
+                break;
+
+            case "Direction":
+                if (ParseDirection(value) is not bool reverse)
+                    return Reject(row, "ทิศใส่ - (กลับทิศ: Offset − X) หรือ + (Offset + X)");
+                row.Direction = reverse ? "-" : "+";
+                RefreshDerived(row);
+                break;
+
+            case "Scale":
+                if (ParseInt(value, 1, ClampService.MaxScale) is not int scale)
+                    return Reject(row, $"ตัวคูณต้องเป็นจำนวนเต็ม 1 ถึง {ClampService.MaxScale}");
+                row.Scale = scale.ToString();
+                RefreshDerived(row);
+                break;
+
+            case "DataType":
+                if (ParseDataType(value) is not bool int32)
+                    return Reject(row, "ชนิดข้อมูลใส่ 16 หรือ 32");
+                row.DataType = int32 ? "32" : "16";
+                RefreshDerived(row);
+                break;
+
+            case "MinRaw":
+            case "MaxRaw":
+            case "ParkPos":
+                if (ParseInt(value) is not int number)
+                    return Reject(row, $"{(key == "ParkPos" ? "ตำแหน่งพัก" : "Raw")} ต้องเป็นจำนวนเต็ม");
+                if (key == "MinRaw") row.MinRaw = number.ToString();
+                else if (key == "MaxRaw") row.MaxRaw = number.ToString();
+                else row.ParkPos = number.ToString();
+                RefreshDerived(row);
+                break;
+
+            case "PulseRun":
+            case "PulseReset":
+                if (ParsePulse(value) is not int ms)
+                    return Reject(row, $"เวลาพัลส์ต้องเป็น {ClampService.MinPulseMs} ถึง {ClampService.MaxPulseMs} ms");
+                if (key == "PulseRun") row.PulseRun = ms.ToString();
+                else row.PulseReset = ms.ToString();
                 break;
 
             case "AddrTarget": row.AddrTarget = value; break;
@@ -858,6 +947,25 @@ public partial class ClampSettingUserControl : UserControl
         }
 
         return true;
+    }
+
+    /// <summary>บอกเหตุผลในกล่องผลการทำงาน แล้วไม่รับค่าที่พิมพ์ (คืน false ให้ตารางคงค่าเดิม)</summary>
+    private bool Reject(AxisRow row, string message)
+    {
+        Log($"{row.Axis}: {message}");
+        return false;
+    }
+
+    /// <summary>คำนวณสูตรกับค่า Raw ของแถวใหม่จากค่าที่กรอกอยู่ — ยังไม่กด Save ก็เห็นผล</summary>
+    private void RefreshDerived(AxisRow row)
+    {
+        SyncRowsToSettings();
+        if (_settings.Find(row.Key) is { } axis)
+        {
+            row.Formula = axis.Formula;
+            row.Raw = ParseMm(row.ValueMm) is int mm ? axis.ToRaw(mm).ToString() : "-";
+        }
+        BeginInvoke(RebindTable);
     }
 
     // ── Helpers ────────────────────────────────────────────
@@ -871,13 +979,31 @@ public partial class ClampSettingUserControl : UserControl
     }
 
     private static int? ParseOffset(string? text) =>
-        int.TryParse((text ?? "").Trim(), out int v) && ClampService.IsValidOffset(v) ? v : null;
+        ParseInt(text, ClampService.MinOffsetMm, ClampService.MaxOffsetMm);
 
-    /// <summary>ค่าที่จะเขียนลง PLC จากค่าที่กรอกอยู่ในแถว — ยังไม่กด Save ก็เห็นผลของ Offset ใหม่</summary>
-    private static string RawText(AxisRow row) =>
-        ParseMm(row.ValueMm) is int mm && ParseOffset(row.OffsetMm) is int offset
-            ? ClampService.ToRaw(mm, offset).ToString()
-            : "-";
+    private static int? ParsePulse(string? text) =>
+        ParseInt(text, ClampService.MinPulseMs, ClampService.MaxPulseMs);
+
+    private static int? ParseInt(string? text, int min = int.MinValue, int max = int.MaxValue) =>
+        int.TryParse((text ?? "").Trim(), out int v) && v >= min && v <= max ? v : null;
+
+    /// <summary>"-" = กลับทิศ (Offset − X) · "+" = Offset + X — รับเครื่องหมายลบแบบยูนิโค้ดด้วย</summary>
+    private static bool? ParseDirection(string? text) =>
+        (text ?? "").Trim() switch
+        {
+            "-" or "−" => true,
+            "+" => false,
+            _ => null,
+        };
+
+    /// <summary>true = INT 32 · false = INT 16</summary>
+    private static bool? ParseDataType(string? text) =>
+        (text ?? "").Trim().ToUpperInvariant().Replace("INT", "").Trim() switch
+        {
+            "32" => true,
+            "16" => false,
+            _ => null,
+        };
 
     private void SetBusy(bool busy)
     {
@@ -920,4 +1046,15 @@ internal class AxisRow
     public string AddrStatus { get; set; } = "";
     public string Raw { get; set; } = "-";
     public AntdUI.CellButton[] Op { get; set; } = [];
+
+    // ตารางตั้งค่าตามเอกสาร PLC (tblAxesAdv) — ดู ClampAxis
+    public string Direction { get; set; } = "-";
+    public string Scale { get; set; } = "";
+    public string Formula { get; set; } = "";
+    public string DataType { get; set; } = "16";
+    public string MinRaw { get; set; } = "";
+    public string MaxRaw { get; set; } = "";
+    public string ParkPos { get; set; } = "";
+    public string PulseRun { get; set; } = "";
+    public string PulseReset { get; set; } = "";
 }

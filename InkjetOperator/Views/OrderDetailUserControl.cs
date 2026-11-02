@@ -2054,8 +2054,8 @@ public partial class OrderDetailUserControl : UserControl
             {
                 Title = "สั่งแคลมป์",
                 Headline = $"สั่ง {axis.Display} ไปที่ {mm} mm?",
-                Facts = [("แกน", axis.Display), ("ระยะ", $"{mm} mm"), ("Offset", $"{axis.OffsetMm} mm")],
-                Detail = $"{axis.AddrTarget} = {ClampService.ToRaw(mm, axis.OffsetMm)}" + Environment.NewLine + $"{axis.AddrRun} (pulse)",
+                Facts = [("แกน", axis.Display), ("ระยะ", $"{mm} mm"), ("สูตร", axis.Formula)],
+                Detail = $"{axis.AddrTarget} = {axis.ToRaw(mm)}" + Environment.NewLine + $"{axis.AddrRun} (pulse)",
                 Warning = "ตรวจแกนให้ถูกก่อนกด — สั่งผิดแกนชิ้นงานเสีย",
                 OkText = "สั่งแคลมป์",
                 Icon = "AimOutlined",

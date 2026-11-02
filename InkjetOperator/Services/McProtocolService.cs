@@ -6,7 +6,7 @@ namespace InkjetOperator.Services;
 /// MC Protocol (3E frame, binary) client สำหรับ PLC Mitsubishi — ใช้กับ PLC แคลมป์
 ///
 /// รองรับเท่าที่งานแคลมป์ต้องใช้จริง 3 อย่าง:
-///   WriteWordAsync  เขียนค่าเป้าหมาย เช่น D216
+///   WriteWordAsync  เขียนค่าเป้าหมาย เช่น D216 (INT 32 ใช้ WriteDWordAsync / ReadDWordAsync)
 ///   WriteBitAsync   พัลส์สั่งงาน เช่น M700 / M701
 ///   ReadWordAsync   อ่านสถานะกลับ เช่น W38
 ///   ReadBitAsync    อ่านสถานะปุ่มกดหน้างาน เช่น M800
@@ -45,6 +45,39 @@ public static class McProtocolService
 
         var (ok, _, error) = await SendAsync(ip, port, CmdBatchWrite, SubWord, data.ToArray(), 0);
         return (ok, error);
+    }
+
+    /// <summary>
+    /// เขียนค่า 2 word ติดกัน (INT 32) เช่น D216 + D217 — word ล่างอยู่ที่ address ที่ให้มา
+    /// ใช้กับแกนที่เอกสาร PLC ระบุ Type INT 32 เขียนคำสั่งเดียว PLC ไม่เห็นค่าครึ่งเดียว
+    /// </summary>
+    public static async Task<(bool ok, string error)> WriteDWordAsync(
+        string ip, int port, string address, int value)
+    {
+        if (!TryParseAddress(address, out byte code, out int number, out string parseError))
+            return (false, parseError);
+
+        var data = new List<byte>(DeviceSpec(code, number, 2));
+        data.AddRange(BitConverter.GetBytes(value)); // little-endian = word ล่างก่อน ตรงกับ MC protocol
+
+        var (ok, _, error) = await SendAsync(ip, port, CmdBatchWrite, SubWord, data.ToArray(), 0);
+        return (ok, error);
+    }
+
+    /// <summary>อ่านค่า 2 word ติดกัน (INT 32) เช่น W38 + W39</summary>
+    public static async Task<(bool ok, int value, string error)> ReadDWordAsync(
+        string ip, int port, string address)
+    {
+        if (!TryParseAddress(address, out byte code, out int number, out string parseError))
+            return (false, 0, parseError);
+
+        var (ok, payload, error) = await SendAsync(
+            ip, port, CmdBatchRead, SubWord, DeviceSpec(code, number, 2), 4);
+
+        if (!ok) return (false, 0, error);
+        if (payload.Length < 4) return (false, 0, "ตอบกลับสั้นกว่าที่ควร");
+
+        return (true, BitConverter.ToInt32(payload, 0), "");
     }
 
     /// <summary>เขียน 1 bit เช่น M700 = ON</summary>
