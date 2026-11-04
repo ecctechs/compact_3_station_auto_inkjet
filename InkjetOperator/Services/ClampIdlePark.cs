@@ -47,8 +47,7 @@ public sealed class ClampIdlePark
 
         foreach (var (machine, side) in Machines)
         {
-            bool busy = list.Any(r => string.Equals(r.Machine, machine, StringComparison.OrdinalIgnoreCase)
-                && r.State is "active" or "pending");
+            bool busy = IsBusy(list, machine);
 
             if (_busy.TryGetValue(machine, out bool wasBusy) && wasBusy && !busy) idle.Add(side);
             _busy[machine] = busy;
@@ -56,4 +55,15 @@ public sealed class ClampIdlePark
 
         return idle;
     }
+
+    /// <summary>
+    /// เครื่อง UV ของฝั่งนี้ยังมีงานไหม — ใช้ถามซ้ำจากคิวสด ๆ ก่อนถอยจริง
+    /// (ระหว่างรอ งานใหม่อาจเข้าคิวแล้วส่งค่าแคลมป์ของมันไปแล้ว ถอยตามคิวรอบก่อนจะทับ)
+    /// </summary>
+    public static bool Busy(IEnumerable<MachineQueueRow> rows, ClampSide side) =>
+        Machines.Where(m => m.Side == side).Any(m => IsBusy(rows, m.Machine));
+
+    private static bool IsBusy(IEnumerable<MachineQueueRow> rows, string machine) =>
+        rows.Any(r => string.Equals(r.Machine, machine, StringComparison.OrdinalIgnoreCase)
+            && r.State is "active" or "pending");
 }

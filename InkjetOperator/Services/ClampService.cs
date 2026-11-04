@@ -1,3 +1,4 @@
+using InkjetOperator.Models;
 using Microsoft.Data.Sqlite;
 
 namespace InkjetOperator.Services;
@@ -441,6 +442,38 @@ public static class ClampService
         int mm = ClampMm(valueMm);
         return SendRawAsync(s, axis, mm, axis.ToRaw(mm), $"── {axis.Display} ({axis.Column}) ──");
     }
+
+    // ── ส่งค่าของงานตอนส่ง UV ──────────────────────────────
+
+    /// <summary>
+    /// ฝั่งแคลมป์ของขั้น UV — UV1 = Plate · UV2 = Shim · ขั้นอื่น (MK) ไม่มีแคลมป์
+    /// <para>
+    /// ไม่ตีความรหัส marking เอง ขั้น UV1 / UV2 มาจาก MarkingMethodService ที่เดียว
+    /// (01 → UV1 · 10 → UV2 · 11 → ทั้งคู่ · 12 → UV2 · 02 / 20 / 22 ไม่มี UV)
+    /// </para>
+    /// </summary>
+    public static ClampSide? SideOfStep(string? step) => (step ?? "").Trim().ToUpperInvariant() switch
+    {
+        "UV1" => ClampSide.Plate,
+        "UV2" => ClampSide.Shim,
+        _ => null,
+    };
+
+    /// <summary>ระยะ (mm) ของแกนนี้ในแถวระยะแคลมป์ของงาน — null = ยังไม่มีค่า ซึ่งไม่ใช่ 0</summary>
+    public static int? JobValue(IaiClampSettingDto iai, ClampAxis axis) => axis.Key switch
+    {
+        "IAIP" => iai.Iaip,
+        "IAIPZ1" => iai.IaipZ1,
+        "IAIPZ2" => iai.IaipZ2,
+        "IAI" => iai.Iai,
+        "IAIZ1" => iai.IaiZ1,
+        "IAIZ2" => iai.IaiZ2,
+        _ => null,
+    };
+
+    /// <summary>เหตุที่แกนนี้ส่งไม่ผ่าน — บรรทัด ❌ บรรทัดสุดท้ายใน log เช่นต่อ PLC ไม่ได้</summary>
+    public static string FailReason(ClampResult r) =>
+        r.Log.Split('\n').LastOrDefault(l => l.Contains('❌'))?.Replace("❌ ", "").Replace("❌", "").Trim() ?? "";
 
     /// <summary>
     /// ถอยทุกแกนของฝั่งนี้ไปตำแหน่งพัก — เขียนตำแหน่ง HMI ตรง ๆ ไม่ผ่านสูตร Offset

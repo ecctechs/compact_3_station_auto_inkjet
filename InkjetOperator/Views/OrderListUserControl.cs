@@ -883,6 +883,12 @@ public partial class OrderListUserControl : UserControl
     private readonly HashSet<ClampSide> _parkingClamps = [];
 
     /// <summary>
+    /// คำสั่งแคลมป์จากหน้านี้ทีละชุด — ถอยตอนคิวว่างกับส่งค่าของงานใหม่ห้ามเขียนสลับแกนกัน
+    /// งานจบแล้วคนกดเริ่มงานถัดไปทันที สองอย่างนี้เกิดพร้อมกันได้จริง
+    /// </summary>
+    private readonly SemaphoreSlim _clampGate = new(1, 1);
+
+    /// <summary>
     /// คิว UV เพิ่งว่าง → ถอยแคลมป์ฝั่งนั้นไปตำแหน่ง 0 (เปิดตัวเลือกไว้เท่านั้น)
     ///
     /// <para>
@@ -923,7 +929,30 @@ public partial class OrderListUserControl : UserControl
                 return;
             }
 
-            var results = await ClampService.ParkAsync(settings, side);
+            List<ClampResult> results;
+            await _clampGate.WaitAsync();
+            try
+            {
+                // ถามคิวสด ๆ อีกรอบหลังได้คิวแคลมป์ — ระหว่างรอ งานใหม่อาจเข้าคิวแล้วส่งค่าแคลมป์
+                // ของมันไปแล้ว ถอยตามคิวรอบก่อนจะทับตำแหน่งของงานนั้น · อ่านคิวไม่ได้ก็ไม่ถอย
+                (List<MachineQueueRow> rows, string? queueError) = _api == null
+                    ? (new List<MachineQueueRow>(), "ยังไม่ได้ต่อ backend")
+                    : await _api.GetMachineQueueAsync();
+                if (queueError != null || ClampIdlePark.Busy(rows, side))
+                {
+                    AppLog.Info("ClampPark", queueError != null
+                        ? $"คิว {side} ว่าง แต่อ่านคิวซ้ำไม่ได้ — ไม่ถอย ({queueError})"
+                        : $"คิว {side} มีงานเข้ามาแล้ว — ไม่ถอย");
+                    return;
+                }
+
+                results = await ClampService.ParkAsync(settings, side);
+            }
+            finally
+            {
+                _clampGate.Release();
+            }
+
             if (results.Count == 0)
             {
                 AppLog.Warn("ClampPark", $"คิว {side} ว่าง แต่ยังไม่มีแกน {side} ที่ตั้ง address ไว้");
@@ -949,9 +978,7 @@ public partial class OrderListUserControl : UserControl
             }
             else
             {
-                // เหตุผลคือบรรทัด ❌ บรรทัดสุดท้ายใน log ของแกนแรกที่พลาด เช่นต่อ PLC ไม่ได้
-                var reason = failed[0].r.Log.Split('\n').LastOrDefault(l => l.Contains('❌'))
-                    ?.Replace("❌", "").Trim() ?? "";
+                var reason = ClampService.FailReason(failed[0].r);
                 Notify.Warn(this, $"ถอยแคลมป์ {side} ไม่สำเร็จ — แกน {string.Join(", ", failed.Select(f => f.Axis))}"
                     + (reason.Length > 0 ? $"\n{reason}" : ""));
             }
@@ -3230,7 +3257,21 @@ public partial class OrderListUserControl : UserControl
         }
 
         int uvNumber = step == "UV1" ? 1 : 2;
+
+        // ระยะแคลมป์ของงานส่งตรงนี้ ไม่ใช่ตอนกดเริ่มงาน — เหตุผลเดียวกับ PLC MK ข้างบน
+        // (เครื่องยังพิมพ์งานก่อนหน้าอยู่ แคลมป์จะขยับใต้ชิ้นงานที่กำลังพิมพ์) ส่งพร้อม UV ไม่รอกัน
+        // แคลมป์ไม่ผ่านไม่หยุด UV (ตกลง 4/11/2026) · ดู SendJobClampAsync
+        var clampLines = new List<Notify.ResultLine>();
+        var clampTask = SendJobClampAsync(jobId, step, clampLines);
         var uv = await JobSendService.SendUvAsync(this, uvNumber, resolved.UvJobData, forcedProgram, allowPrompt: false);
+
+        // แคลมป์พังต้องไม่ทำให้ผลของ UV หาย — UV อาจรับงานเข้าเครื่องไปแล้ว
+        try { await clampTask; }
+        catch (Exception ex)
+        {
+            AppLog.Warn("ClampSend", $"งาน {jobId} {step} — {ex.Message}");
+            clampLines.Add(Notify.Careful($"แคลมป์ — {ex.Message}"));
+        }
 
         if (uv.Status == SendStatus.Ok)
         {
@@ -3247,17 +3288,111 @@ public partial class OrderListUserControl : UserControl
                 { Notify.Ok($"{uv.MachineName} — ส่งข้อมูลแล้ว ({uv.ProgramFile}.uvdx)") };
             if (uv.StartWarning != null)
                 lines.Add(Notify.Careful($"{uv.MachineName} — {uv.StartWarning} · ตรวจสถานะเริ่มพิมพ์ที่เครื่อง"));
+            lines.AddRange(clampLines);
             return new StepSendResult(true, lines, Detail: detail);
         }
 
-        return new StepSendResult(false, uv.Status switch
+        List<Notify.ResultLine> failLines = uv.Status switch
         {
             // ยกเลิกที่กล่องเลือกรุ่นย่อย ไม่ใช่ความผิดพลาด ไม่ต้องขึ้นกล่องสรุป
             SendStatus.Cancelled => [],
             SendStatus.Unreachable =>
                 [Notify.Bad($"{uv.MachineName} — เชื่อมต่อไม่ได้ ({uv.Ip}:{uv.Port})")],
             _ => [Notify.Bad($"{uv.MachineName} — {uv.FailReason}")],
-        }, SafeToRetry: uv.Status is SendStatus.Cancelled or SendStatus.Unreachable or SendStatus.NotConfigured);
+        };
+
+        // UV ไม่ผ่านแต่แคลมป์ขยับไปแล้ว ก็ต้องเห็นว่าขยับไปแล้ว (เครื่อง UV ว่างอยู่ ไม่ได้ทับงานใคร)
+        if (failLines.Count > 0) failLines.AddRange(clampLines);
+
+        return new StepSendResult(false, failLines,
+            SafeToRetry: uv.Status is SendStatus.Cancelled or SendStatus.Unreachable or SendStatus.NotConfigured);
+    }
+
+    /// <summary>
+    /// ส่งระยะแคลมป์ของงานเข้า PLC แคลมป์ — ทำพร้อมกับการส่ง UV ของฝั่งนั้น (ตกลง 4/11/2026)
+    ///
+    /// <para>
+    /// UV1 → แกน Plate · UV2 → แกน Shim · ขั้นมาจาก MarkingMethodService ที่เดียว
+    /// (01 Plate · 10 Shim · 11 ทั้งสองฝั่ง แยกส่งตอน UV ของแต่ละฝั่ง · 12 Shim · 02 / 20 / 22 ไม่ส่ง)
+    /// </para>
+    /// <para>
+    /// แกนที่ไม่มีค่าข้าม ไม่ส่ง 0 แทน — 0 ของแกน X คือ (155 − 0) × 100 วิ่งสุดระยะ
+    /// ส่งไม่ผ่านแค่เตือนในผลการส่ง งาน UV เดินต่อ · เครื่องที่ไม่มีแคลมป์ (ยังไม่ตั้ง IP / address)
+    /// จด log อย่างเดียว ไม่เตือนทุกงาน
+    /// </para>
+    /// </summary>
+    private async Task SendJobClampAsync(int jobId, string step, List<Notify.ResultLine> lines)
+    {
+        if (ClampService.SideOfStep(step) is not ClampSide side || _api == null) return;
+
+        var settings = ClampSettings.Load();
+        var axes = settings.For(side).Where(a => a.IsConfigured).ToList();
+        if (settings.Ip.Trim().Length == 0 || axes.Count == 0)
+        {
+            AppLog.Info("ClampSend", $"งาน {jobId} {step} · ยังไม่ได้ตั้ง IP / address แคลมป์ {side} — ไม่ได้ส่ง");
+            return;
+        }
+
+        // โหมด Mockup สถานะ = ถ่ายรูปคู่มือ ไม่แตะเครื่องจริง
+        if (StatusMockup.Enabled)
+        {
+            AppLog.Info("ClampSend", $"งาน {jobId} {step} · โหมด Mockup ไม่ได้สั่ง PLC แคลมป์");
+            return;
+        }
+
+        var (iai, error) = await _api.GetIaiByJobAsync(jobId);
+        if (error != null)
+        {
+            AppLog.Warn("ClampSend", $"งาน {jobId} อ่านระยะแคลมป์จาก backend ไม่ได้ — {error}");
+            lines.Add(Notify.Careful($"แคลมป์ {side} — อ่านระยะแคลมป์ของงานไม่ได้ แคลมป์ไม่ได้ขยับ · ส่งเองในหน้า Order Detail"));
+            return;
+        }
+
+        var sent = new List<string>();
+        var missing = new List<string>();
+        var skipped = new List<string>();
+        string? failure = null;
+
+        await _clampGate.WaitAsync();
+        try
+        {
+            foreach (var axis in axes)
+            {
+                // ไม่มีแถวระยะแคลมป์เลย (งานเก่า / ไม่ได้ผ่าน Scan Barcode) = ทุกแกนไม่มีค่า
+                int? mm = iai == null ? null : ClampService.JobValue(iai, axis);
+                if (mm == null) { missing.Add(axis.AxisLabel); continue; }
+
+                // แกนก่อนหน้าส่งไม่ผ่าน = ต่อ PLC ไม่ได้ ไม่ต้องรอ timeout ซ้ำทุกแกน
+                if (failure != null) { skipped.Add(axis.AxisLabel); continue; }
+
+                var r = await ClampService.ApplyAsync(settings, axis, mm.Value);
+                var text = $"งาน {jobId} · " + r.Log.Replace("\n", " · ");
+                if (r.Ok)
+                {
+                    AppLog.Info("ClampSend", text);
+                    sent.Add($"{axis.AxisLabel} {r.ValueMm}");
+                }
+                else
+                {
+                    AppLog.Warn("ClampSend", text);
+                    var reason = ClampService.FailReason(r);
+                    failure = $"แกน {axis.AxisLabel}" + (reason.Length > 0 ? $" — {reason}" : "");
+                }
+            }
+        }
+        finally
+        {
+            _clampGate.Release();
+        }
+
+        if (sent.Count > 0)
+            lines.Add(Notify.Ok($"แคลมป์ {side} — {string.Join(" · ", sent)} mm"));
+        if (failure != null)
+            lines.Add(Notify.Careful($"แคลมป์ {side} ส่งไม่สำเร็จ · {failure}"
+                + (skipped.Count > 0 ? $" · แกน {string.Join(", ", skipped)} ไม่ได้ส่ง" : "")));
+        if (missing.Count > 0)
+            lines.Add(Notify.Careful($"แคลมป์ {side} แกน {string.Join(", ", missing)} ไม่มีค่า — แกนนี้ไม่ได้ขยับ"
+                + " · ใส่ค่าในหน้า Order Detail แล้วกดส่งแคลมป์เอง"));
     }
 
     // ── งานที่ไม่ต้องส่งคำสั่ง (marking 00) ─────────────────
