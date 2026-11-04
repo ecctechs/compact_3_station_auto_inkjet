@@ -29,10 +29,10 @@ public partial class InkjetSettingUserControl : UserControl
         btnUv1Edit.Click += (_, _) => EditUvName("UV1_NAME", lblUv1Badge);
         btnUv2Edit.Click += (_, _) => EditUvName("UV2_NAME", lblUv2Badge);
 
-        btnUv1Browse.Click += (_, _) => BrowseFolder(txtUv1Folder, lblUv1Status);
-        btnUv2Browse.Click += (_, _) => BrowseFolder(txtUv2Folder, lblUv2Status);
+        btnUv1Browse.Click += async (_, _) => await BrowseFolderAsync(txtUv1Folder, lblUv1Status);
+        btnUv2Browse.Click += async (_, _) => await BrowseFolderAsync(txtUv2Folder, lblUv2Status);
 
-        btnMarkingRefBrowse.Click += (_, _) => BrowseMarkingRefFolder();
+        btnMarkingRefBrowse.Click += async (_, _) => await BrowseMarkingRefFolderAsync();
         txtMarkingRefFolder.TextChanged += (_, _) => MarkDirty(txtMarkingRefFolder);
 
         btnCheckStatus.Click += async (_, _) => await CheckAllStatusAsync();
@@ -64,12 +64,32 @@ public partial class InkjetSettingUserControl : UserControl
 
         txtMarkingRefFolder.Text = CustomSettingsManager.Read("MARKING_REF_FOLDER", "");
 
-        ShowFolderStatus(txtUv1Folder.Text, lblUv1Status);
-        ShowFolderStatus(txtUv2Folder.Text, lblUv2Status);
+        // ไม่รอผล — เครื่อง UV ดับตอนเปิดหน้า หน้าต้องขึ้นมาก่อน ไฟสถานะค่อยตามมา
+        _ = ShowFolderStatusAsync(txtUv1Folder.Text, lblUv1Status);
+        _ = ShowFolderStatusAsync(txtUv2Folder.Text, lblUv2Status);
         ResetColors();
     }
 
-    private void BtnSave_Click(object? sender, EventArgs e)
+    private async void BtnSave_Click(object? sender, EventArgs e)
+    {
+        // async void ของ event — กันกดซ้ำระหว่างรอตรวจโฟลเดอร์ และห้าม exception หลุด
+        btnSave.Enabled = false;
+        try
+        {
+            await SaveAsync();
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("InkjetSetting.Save", ex);
+            Notify.ErrorModal(this, "บันทึกไม่สำเร็จ", ex.Message);
+        }
+        finally
+        {
+            if (!IsDisposed) btnSave.Enabled = true;
+        }
+    }
+
+    private async Task SaveAsync()
     {
         // หัวพ่นสองตัวใช้ IP เดียวกันได้
         //
@@ -80,16 +100,9 @@ public partial class InkjetSettingUserControl : UserControl
 
         var f1 = txtUv1Folder.Text.Trim();
         var f2 = txtUv2Folder.Text.Trim();
-        if (!string.IsNullOrEmpty(f1) && !Directory.Exists(f1))
-        {
-            Notify.WarnModal(this, "ไม่พบโฟลเดอร์", $"ไม่พบโฟลเดอร์โปรแกรม UV1\n\n{f1}");
-            return;
-        }
-        if (!string.IsNullOrEmpty(f2) && !Directory.Exists(f2))
-        {
-            Notify.WarnModal(this, "ไม่พบโฟลเดอร์", $"ไม่พบโฟลเดอร์โปรแกรม UV2\n\n{f2}");
-            return;
-        }
+        if (!await ConfirmFolderAsync(f1, "UV1")) return;
+        if (!await ConfirmFolderAsync(f2, "UV2")) return;
+        if (IsDisposed) return;
 
         CustomSettingsManager.Write("MK058_COM", ip058);
         CustomSettingsManager.Write("MK059_COM", ip059);
@@ -164,13 +177,15 @@ public partial class InkjetSettingUserControl : UserControl
         string ip, string portText, string folder,
         Label dot, Label statusLabel)
     {
-        var folderOk = ValidateFolder(folder).Count == 0
-                       && !string.IsNullOrWhiteSpace(folder);
+        // โหมด Mockup สถานะ (ตัวเลือกหน้างาน) — ขึ้นว่าต่อได้โดยไม่ต่อจริง ใช้ถ่ายรูปคู่มือ
+        bool mockup = StatusMockup.Enabled && !string.IsNullOrWhiteSpace(ip);
+
+        var check = mockup ? FolderCheck.Fine : await ValidateFolderAsync(folder);
+        var folderOk = check.Problems.Count == 0 && !string.IsNullOrWhiteSpace(folder);
 
         var ipOk = false;
 
-        // โหมด Mockup สถานะ (ตัวเลือกหน้างาน) — ขึ้นว่าต่อได้โดยไม่ต่อจริง ใช้ถ่ายรูปคู่มือ
-        if (StatusMockup.Enabled && !string.IsNullOrWhiteSpace(ip))
+        if (mockup)
         {
             folderOk = true;
             ipOk = true;
@@ -200,7 +215,7 @@ public partial class InkjetSettingUserControl : UserControl
                 var parts = new List<string>();
                 if (!ipOk) parts.Add("เชื่อมต่อ IP:Port ไม่ได้");
                 if (!folderOk && !string.IsNullOrWhiteSpace(folder))
-                    parts.Add("ไฟล์ไม่ครบ");
+                    parts.Add(check.Unreachable ?? "ไฟล์ไม่ครบ");
                 else if (string.IsNullOrWhiteSpace(folder))
                     parts.Add("ยังไม่ได้เลือกโฟลเดอร์");
                 statusLabel.Text = "⚠ " + string.Join(" / ", parts);
@@ -208,31 +223,53 @@ public partial class InkjetSettingUserControl : UserControl
             }
         }
 
+        if (dot.IsDisposed) return;
         if (dot.InvokeRequired) dot.Invoke(Apply); else Apply();
     }
 
     // ── Folder browsing & validation ────────────────────────────────
 
-    private void BrowseFolder(AntdUI.Input target, Label statusLabel)
+    private async Task BrowseFolderAsync(AntdUI.Input target, Label statusLabel)
     {
         using var dlg = new FolderBrowserDialog { ShowNewFolderButton = false };
-        if (!string.IsNullOrEmpty(target.Text) && Directory.Exists(target.Text))
-            dlg.SelectedPath = target.Text;
-        if (dlg.ShowDialog(this) != DialogResult.OK) return;
+
+        // กล่องเลือกโฟลเดอร์ของ Windows เปิดไปที่แชร์ที่หลุดก็ค้างเหมือนกัน — เปิดที่เดิมเฉพาะตอนเข้าถึงได้
+        if (await ReachableFolderAsync(target.Text)) dlg.SelectedPath = target.Text;
+        if (IsDisposed || dlg.ShowDialog(this) != DialogResult.OK) return;
 
         target.Text = dlg.SelectedPath;
         MarkDirty(target);
 
-        var problems = ValidateFolder(dlg.SelectedPath);
-        ShowFolderStatus(dlg.SelectedPath, statusLabel);
-        if (problems.Count > 0)
-            Notify.WarnModal(this, "แจ้งเตือน", string.Join("\n\n", problems));
+        var check = await ValidateFolderAsync(dlg.SelectedPath);
+        if (IsDisposed) return;
+
+        ApplyFolderStatus(dlg.SelectedPath, statusLabel, check);
+        if (check.Problems.Count > 0)
+            Notify.WarnModal(this, "แจ้งเตือน", string.Join("\n\n", check.Problems));
     }
 
-    private static List<string> ValidateFolder(string folder)
+    /// <summary>
+    /// ผลตรวจโฟลเดอร์ UV — Problems ว่าง = พร้อมใช้ ·
+    /// Unreachable มีค่า = เครื่องที่เก็บโฟลเดอร์ไม่ตอบ บอกไม่ได้ว่าไฟล์อยู่ครบไหม
+    /// </summary>
+    private sealed record FolderCheck(List<string> Problems, string? Unreachable)
     {
-        var problems = new List<string>();
-        if (string.IsNullOrWhiteSpace(folder)) return problems;
+        public static FolderCheck Fine => new([], null);
+    }
+
+    /// <summary>
+    /// ตรวจว่าโฟลเดอร์โปรแกรม UV มีไฟล์ที่ต้องใช้ครบไหม
+    ///
+    /// <para>
+    /// โฟลเดอร์นี้อยู่บนเครื่อง UV ผ่านเครือข่าย เดิมเรียก <c>File.Exists</c> บนหน้าจอตรง ๆ
+    /// ถอดสายเครื่อง UV แล้วรอ 20–60 วินาทีต่อครั้ง หน้านี้ตรวจซ้ำทุก 15 วินาที
+    /// โปรแกรมจึงค้างเกือบตลอด (เจอที่หน้างาน 4/11/2026 — call stack ค้างที่ตรงนี้)
+    /// ใช้ <see cref="PathProbe"/> ถามเครื่องก่อนไม่เกิน 1 วินาที แล้วอ่านไฟล์นอกหน้าจอ
+    /// </para>
+    /// </summary>
+    private static async Task<FolderCheck> ValidateFolderAsync(string folder)
+    {
+        if (string.IsNullOrWhiteSpace(folder)) return FolderCheck.Fine;
 
         // ตรวจแค่ว่ามีไฟล์ไหม ไม่เปิดเข้าไปดูชื่อตารางข้างใน
         //
@@ -241,28 +278,76 @@ public partial class InkjetSettingUserControl : UserControl
         // ใช้งานได้จริงจึงถูกตีว่าใช้ไม่ได้ ทั้งที่ส่งงานเข้าเครื่องได้ปกติ
         //
         // ชื่อตารางที่ใช้ตอนเขียนจริงอยู่ที่ JobSendService ไม่ได้อ่านจากหน้านี้
-        var cpiPath = Path.Combine(folder, REL_CPI);
-        if (!File.Exists(cpiPath))
-            problems.Add($"ไม่พบ {REL_CPI}");
+        var problems = new List<string>();
+        foreach (var rel in new[] { REL_CPI, REL_DEFAULT_UVDX })
+        {
+            var result = await PathProbe.FileAsync(Path.Combine(folder, rel));
 
-        if (!File.Exists(Path.Combine(folder, REL_DEFAULT_UVDX)))
-            problems.Add($"ไม่พบ {REL_DEFAULT_UVDX}");
+            // เครื่องไม่ตอบ / อ่านไม่ทัน — ไม่ใช่ไฟล์หาย ไม่ต้องลองไฟล์ถัดไปให้รอซ้ำ
+            if (result.State is PathState.HostDown or PathState.Slow)
+                return new FolderCheck([result.Detail], result.Detail);
 
-        return problems;
+            if (result.State != PathState.Ok)
+                problems.Add($"ไม่พบ {rel}");
+        }
+
+        return new FolderCheck(problems, null);
     }
 
-    private static void ShowFolderStatus(string folder, Label lbl)
+    /// <summary>โฟลเดอร์นี้เปิดได้จริงไหม โดยไม่ค้าง — ใช้ก่อนส่งให้กล่องของ Windows</summary>
+    private static async Task<bool> ReachableFolderAsync(string? folder) =>
+        !string.IsNullOrWhiteSpace(folder) && (await PathProbe.FolderAsync(folder)).State == PathState.Ok;
+
+    /// <summary>
+    /// ตรวจโฟลเดอร์ก่อนบันทึก — ไม่มีจริง = ไม่ให้บันทึก ·
+    /// เครื่องไม่ตอบ = ถามก่อน เพราะไฟล์อาจอยู่ครบ แค่ตอนนี้เครื่อง UV ปิดหรือสายหลุด
+    /// </summary>
+    private async Task<bool> ConfirmFolderAsync(string folder, string uv)
+    {
+        if (string.IsNullOrEmpty(folder)) return true;
+
+        var result = await PathProbe.FolderAsync(folder);
+        if (IsDisposed) return false;
+
+        switch (result.State)
+        {
+            case PathState.Ok:
+                return true;
+            case PathState.HostDown or PathState.Slow:
+                return Confirm.Ask(this, new ConfirmSpec
+                {
+                    Title = "ตรวจโฟลเดอร์ไม่ได้",
+                    Headline = $"บันทึกโฟลเดอร์ {uv} ทั้งที่ยังตรวจไม่ได้?",
+                    Message = $"{result.Detail}\n{folder}",
+                    Detail = "เครื่อง UV อาจปิดอยู่หรือสายหลุด — เปิดเครื่องแล้วกลับมาดูไฟสถานะอีกครั้ง",
+                    OkText = "บันทึก",
+                    CancelText = "ยกเลิก",
+                    Icon = "ExclamationCircleFilled",
+                });
+            default:
+                Notify.WarnModal(this, "ไม่พบโฟลเดอร์", $"ไม่พบโฟลเดอร์โปรแกรม {uv}\n\n{folder}");
+                return false;
+        }
+    }
+
+    private async Task ShowFolderStatusAsync(string folder, Label lbl)
+    {
+        var check = await ValidateFolderAsync(folder);
+        if (lbl.IsDisposed) return;
+        ApplyFolderStatus(folder, lbl, check);
+    }
+
+    private static void ApplyFolderStatus(string folder, Label lbl, FolderCheck check)
     {
         if (string.IsNullOrWhiteSpace(folder)) { lbl.Text = ""; lbl.ForeColor = Color.Gray; return; }
-        var problems = ValidateFolder(folder);
-        if (problems.Count == 0)
+        if (check.Problems.Count == 0)
         {
             lbl.Text = "✓ CPI.db3 + default.uvdx พร้อมใช้งาน";
             lbl.ForeColor = DesignTokens.SuccessText;
         }
         else
         {
-            lbl.Text = $"⚠ พบ {problems.Count} ปัญหา";
+            lbl.Text = check.Unreachable != null ? $"⚠ {check.Unreachable}" : $"⚠ พบ {check.Problems.Count} ปัญหา";
             lbl.ForeColor = DesignTokens.Danger;
         }
     }
@@ -295,12 +380,12 @@ public partial class InkjetSettingUserControl : UserControl
         else dot.ForeColor = color;
     }
 
-    private void BrowseMarkingRefFolder()
+    private async Task BrowseMarkingRefFolderAsync()
     {
         using var dlg = new FolderBrowserDialog { ShowNewFolderButton = false };
-        if (!string.IsNullOrEmpty(txtMarkingRefFolder.Text) && Directory.Exists(txtMarkingRefFolder.Text))
+        if (await ReachableFolderAsync(txtMarkingRefFolder.Text))
             dlg.SelectedPath = txtMarkingRefFolder.Text;
-        if (dlg.ShowDialog(this) != DialogResult.OK) return;
+        if (IsDisposed || dlg.ShowDialog(this) != DialogResult.OK) return;
 
         txtMarkingRefFolder.Text = dlg.SelectedPath;
         MarkDirty(txtMarkingRefFolder);
